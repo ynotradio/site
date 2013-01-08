@@ -18,7 +18,7 @@ open_db();
       <div class="six columns">six columns</div>
     </div>
   </div>
-  <div class="three columns">Ads go here!</div>
+  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
 <div style="clear:both;"></div>
 <?php require ("ext/footer.php"); ?>
