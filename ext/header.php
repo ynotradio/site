@@ -33,12 +33,8 @@ if ($page_file != "logout.php"){
 <div id="fb-root"></div>
 <div id="container">
     <header>
-      <div class="row">
-        <div class="twelve columns">
           <img src="imgs/header_front.png" alt="logo" usemap="#Map"/>
           <iframe  src="http://www.live365.com/mini/playlist.html?ads=0&cb=0&site=pro&irows=0&hide=TBW&rows=6&station=ynotradio&css=/scp/css/playlist.css" name="Live365Playlist" scrolling="AUTO" noresize frameborder="No" marginwidth="0" marginheight="0" width=390 height=125></iframe>
-        </div>
-      </div>
   <map name="Map">
     <area shape="rect" coords="15,5,300,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/> 
     <area shape="rect" coords="325,5,430,55" href="http://www.live365.com/cgi-bin/mini.cgi?station_name=ynotradio&amp;site=pro&amp;tm=5300" onclick="return popup(this, &#39;notes&#39;)" alt="Listen Live"/> 
@@ -49,21 +45,19 @@ if ($page_file != "logout.php"){
     <area shape="rect" coords="398,115,432,145" href="mobile.php" alt="mobile"/>
   </map>
   </header>
-<body>
   <nav>
-    <div id="row">
-      <ul class="twelve columns">
-  <?php
-  $nav = array("index.php" => "Home", "concerts.php" => "Concerts", "top11.php" => "Top 11 @ 11", "music.php" => "New Music", "schedule.php" => "Schedule", "deejays.php" => "Dee Jays", "ondemand.php" => "On Demand", "cdoftheweek.php" => "CD of The Week", "ymail.php" => "Y-Mail", "donate.php" => "Donate");
-  foreach ($nav as $url => $title) {
-    if ($url == $page_file){
-      echo "<li><a href=\"/$url\" class=\"active\">$title</a></li>\n";
-    }
-    else {
-      echo "<li><a href=\"/$url\">$title</a></li>\n";
-    }
+    <ul>
+<?php
+$nav = array("index.php" => "Home", "concerts.php" => "Concerts", "top11.php" => "Top 11 @ 11", "music.php" => "New Music", "schedule.php" => "Schedule", "deejays.php" => "Dee Jays", "ondemand.php" => "On Demand", "cdoftheweek.php" => "CD of The Week", "ymail.php" => "Y-Mail", "donate.php" => "Donate");
+foreach ($nav as $url => $title) {
+  if ($url == $page_file){
+    echo "<li><a href=\"/$url\" class=\"active\">$title</a></li>\n";
   }
-  ?>
-      </ul>
-    </div>
+  else {
+    echo "<li><a href=\"/$url\">$title</a></li>\n";
+  }
+}
+?>
+    </ul>
   </nav>
+<body>
