@@ -29,6 +29,10 @@ a:hover {
 
 /* LAYOUT */
 
+.content {
+  padding: 0 10px 0 20px;
+}
+
 header {
   background: url('../imgs/header_bg.jpg');
   background-repeat: repeat;
@@ -143,15 +147,15 @@ nav a:hover {
   padding: 0 5px;
 }
 
-#footer {
-  font-family: "Courier New", Courier, mono;
-  font-weight: bold;
-  font-size: medium;
+footer {
   color: white;
+  font-family: "Courier New", Courier, mono;
+  font-size: medium;
+  margin: 20px 0;
   text-align: center;
 }
 
-#footer a {
+footer a, a:hover {
   color: white;
 }
 

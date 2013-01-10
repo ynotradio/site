@@ -25,8 +25,8 @@ if ($page_file != "logout.php"){
       content="YNot Radio"/>
   <meta property="og:description"
       content="YNot Radio | Philadelphia's Real Alternative"/>
-  <link href="style/typography.css" rel="stylesheet" type="text/css" media="all">
   <link href="style/grid.css" rel="stylesheet" type="text/css" media="all">
+  <link href="style/typography.css" rel="stylesheet" type="text/css" media="all">
   <script type="text/javascript" src="/js/jquery-1.7.1.js"></script>
   <script type="text/javascript" src="/js/common_functions.js"></script>
 </head>
