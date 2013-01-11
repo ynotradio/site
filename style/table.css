@@ -5,16 +5,12 @@
 }
 
 .table thead {
-  background-image: -ms-linear-gradient(top, #fafbfb, #eaebeb);
-  background-image: -webkit-gradient(top, #fafbfb, #eaebeb);
-  background-image: -webkit-linear-gradient(top, #fafbfb, #eaebeb);
-  background-image: -o-linear-gradient(top, #fafbfb, #eaebeb);
-  background-image: linear-gradient(top, #fafbfb, #eaebeb);
-  background-image: -moz-linear-gradient(top, #fafbfb, #eaebeb);
+  background-color: #CC3333;
 }
 
 .table thead th {
-  text-shadow: 0 1px 0 white;
+  color: white;
+  text-shadow: 0.1em 0.1em black;
 }
 
 .table tbody td, .table tfoot td {
