@@ -1,0 +1,86 @@
+.table {
+  background-color: transparent;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table thead {
+  background-image: -ms-linear-gradient(top, #fafbfb, #eaebeb);
+  background-image: -webkit-gradient(top, #fafbfb, #eaebeb);
+  background-image: -webkit-linear-gradient(top, #fafbfb, #eaebeb);
+  background-image: -o-linear-gradient(top, #fafbfb, #eaebeb);
+  background-image: linear-gradient(top, #fafbfb, #eaebeb);
+  background-image: -moz-linear-gradient(top, #fafbfb, #eaebeb);
+}
+
+.table thead th {
+  text-shadow: 0 1px 0 white;
+}
+
+.table tbody td, .table tfoot td {
+  border-top: 1px solid darkGray;
+}
+
+.table tbody:first-of-type tr:first-child td {
+  border-top: 1px solid darkGray;
+}
+
+.table td {
+  font-size: 12px;
+  line-height: 18px;
+  padding: 10px 15px;
+  color: black;
+  text-align: left;
+}
+
+.table-row-hover.table-striped > tbody tr:nth-child(odd):hover td,
+.table-row-hover.table-striped > tfoot tr:nth-child(odd):hover td {
+  background-color: #fafafa;
+}
+
+.table-striped tbody tr:nth-child(odd) td, .table-striped tfoot tr:nth-child(odd) td {
+  background-color: lightgray;
+}
+
+.table-bordered, .table-bordered-horizontal {
+  border: 1px solid darkGray;
+  -webkit-border-top-left-radius: 6px;
+  -moz-border-top-left-radius: 6px;
+  -ms-border-top-left-radius: 6px;
+  -o-border-top-left-radius: 6px;
+  border-top-left-radius: 6px;
+  -webkit-border-top-right-radius: 6px;
+  -moz-border-top-right-radius: 6px;
+  -ms-border-top-right-radius: 6px;
+  -o-border-top-right-radius: 6px;
+  border-top-right-radius: 6px;
+  overflow: hidden;
+}
+
+
+.table-bordered tbody td, .table-bordered tfoot td {
+  border-left: 1px solid darkGray;
+}
+
+.table-bordered tbody td:first-child, .table-bordered tfoot td:first-child {
+  border-left: 0;
+}
+
+.table-row-hover > tbody tr:hover td {
+  background-color: black;
+  color: white;
+}
+
+.table-row-hover > tbody tr:hover a {
+  color: yellow;
+}
+
+.table-row-hover.table-striped > tbody tr:nth-child(odd):hover td,
+.table-row-hover.table-striped > tfoot tr:nth-child(odd):hover td {
+  background-color: black;
+  color: white;
+}
+
+.table-condensed th, .table-condensed td {
+  padding: 0 15px;
+}

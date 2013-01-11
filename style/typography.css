@@ -27,6 +27,11 @@ a:hover {
   text-decoration: underline;
 }
 
+.soldout a {
+  color: red;
+  font-weight: bold
+}
+
 /* LAYOUT */
 
 .content {
@@ -155,7 +160,6 @@ footer {
   text-align: center;
 }
 
-footer a, a:hover {
+footer a, footer a:hover {
   color: white;
 }
-

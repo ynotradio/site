@@ -16,6 +16,5 @@ require ("ext/header.php");
   </div>
   <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<div style="clear:both;"></div>
 <?php require ("ext/footer.php"); ?>
 
