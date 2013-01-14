@@ -116,6 +116,13 @@ nav a:hover {
   text-decoration: none;
 }
 
+.active, .active:hover {
+  background: white;
+  box-shadow: none;
+  color: black;
+  text-shadow: 0 -1px 0 white;
+}
+
 .featured_concert {
   margin-bottom: 10px;
 }
@@ -165,6 +172,26 @@ nav a:hover {
   display: inline-block;
   font-style: italic;
   margin-top: 20px;
+}
+
+.review img {
+  float: left;
+  padding: 3px 15px 0 0;
+}
+
+.past_review img {
+  filter:alpha(opacity=35);
+  -moz-opacity: 0.35;
+  opacity: 0.35;
+  border: 1px solid black;
+}
+
+.past_review:hover img {
+  filter:alpha(opacity=100);
+  -moz-opacity: 1.0;
+  opacity: 1.0;
+  cursor: pointer;
+  border: 1px solid black;
 }
 
 footer {
