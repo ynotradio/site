@@ -161,6 +161,12 @@ nav a:hover {
   width: 100%;
 }
 
+.footnote {
+  display: inline-block;
+  font-style: italic;
+  margin-top: 20px;
+}
+
 footer {
   color: white;
   font-family: "Courier New", Courier, mono;
