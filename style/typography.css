@@ -157,6 +157,10 @@ nav a:hover {
   text-align: center;
 }
 
+#iframeform {
+  width: 100%;
+}
+
 footer {
   color: white;
   font-family: "Courier New", Courier, mono;
