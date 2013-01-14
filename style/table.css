@@ -84,3 +84,16 @@
 .table-center {
   margin: 0 auto;
 }
+
+.ondemand {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.ondemand tr td:first-child {
+  padding-right: 20px;
+}
+
+.ondemand td {
+  padding-bottom: 10px;
+}

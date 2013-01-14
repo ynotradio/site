@@ -194,6 +194,42 @@ nav a:hover {
   border: 1px solid black;
 }
 
+.ondemand img {
+  float: right;
+  height: 100px;
+}
+
+.pagination {
+  padding: 20px;
+}
+
+.pagination a {
+  border: 1px solid #AAAADD;
+  color: #000099;
+  margin: 2px;
+  padding: 2px 5px 2px 5px;
+  text-decoration: none;
+}
+.pagination a:hover, .pagination a:active {
+  border: 1px solid #000099;
+  color: #000;
+}
+.pagination .current {
+  background-color: black;
+  border: 1px solid black;
+  color: #FFF;
+  font-weight: bold;
+  margin: 2px;
+  padding: 2px 5px 2px 5px;
+}
+
+.pagination .disabled {
+  border: 1px solid #EEE;
+  color: #DDD;
+  margin: 2px;
+  padding: 2px 5px 2px 5px;
+}
+
 footer {
   color: white;
   font-family: "Courier New", Courier, mono;
