@@ -6,7 +6,6 @@ $page_title = "Concerts";
 require ("ext/main_fns.php");
 require ("ext/header.php");
 require ("ext/concert_fns.php");
-open_db();
 
 /*----- CONTENT ------*/
 ?>

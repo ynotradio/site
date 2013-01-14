@@ -6,7 +6,7 @@ $page_title = "";
 require ("ext/main_fns.php");
 require ("ext/header.php");
 require ("ext/story_fns.php");
-open_db();
+
 $amount_of_stories = "all";
 $story_groups= get_stories($amount_of_stories);
 
