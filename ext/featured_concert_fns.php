@@ -2,6 +2,7 @@
 
 function display_featured_concerts(){
   $results = get_featured_concerts();
+  echo "<div class=\"feature-box\">";
   echo "<h3>Featured Concerts</h3><p>\n";
   if  (mysql_num_rows($results) > 0) {
     for ($i=1; $i<=mysql_num_rows($results);$i++)
@@ -15,6 +16,7 @@ function display_featured_concerts(){
           "<div><a href=\"" . $info['ticketurl']. "\" target=_new>" . $info['venue']. "</a></div>\n".
         "</div>\n";
     }
+    echo "</div>";
   } else {
     echo "Welcome to the all new Y-Not Radio. You've discovered the station that carries on the legacy of Y100, Y100Rocks, and WDRE. Y-Not Radio is run by former Y-Rock Operations Director Josh T. Landow along with hosts Adrienne, Andre, Brendan McNulty, Cat, Heather, Jeff St. Pierre, Joey O., Liz Romaine, Matt McGrath, Matt Summers, Rafe Pilling, Ramon, and Rob Huff, plus some new voices as well. Together we will continue to bring you the high quality alternative, modern, and indie rock programming that we always have. Thanks for joining us!";
   }

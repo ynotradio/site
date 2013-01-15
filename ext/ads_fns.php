@@ -40,7 +40,7 @@ echo '<ol>';
 	for ($i=1; $i<=mysql_num_rows($result);$i++)
 		{
 			$info = mysql_fetch_assoc($result);
-			echo 
+			echo
 			 	 "<br><b>Name: </b>". $info['name'].
 				 "<br><b>Start Date: </b>". $info['start_date'].
 				 "<br><b>End Date: </b>". $info['end_date'].
@@ -136,12 +136,16 @@ function show_ads(){
 		echo "error: ". $query;
 		die('Invalid');
 		}
+  if (mysql_num_rows($result) > 0)
+	  echo "<div class=\"ads\">";
+
 	for ($i=1; $i<=mysql_num_rows($result);$i++)
 	{
 		$info = mysql_fetch_assoc($result);
-		echo
-		"<a href=\"".$info['web_url']."\" target='_blank'><img src=\"".$info['pic_url']."\"></a>";
-		echo "<p>";
-	}
+		echo "<a href=\"".$info['web_url']."\" target='_blank'><img src=\"".$info['pic_url']."\"></a>";
+  }
+
+  if (mysql_num_rows($result) > 0)
+	  echo "</div>";
 }
 ?>
