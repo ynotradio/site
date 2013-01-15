@@ -32,6 +32,11 @@ a:hover {
   font-weight: bold
 }
 
+.show_title {
+  font-weight: bold;
+  font-style: italic;
+}
+
 /* LAYOUT */
 
 .content {
@@ -174,7 +179,11 @@ nav a:hover {
   margin-top: 20px;
 }
 
-.review img {
+.deejay {
+  min-height: 130px;
+}
+
+.review img, .deejay img{
   float: left;
   padding: 3px 15px 0 0;
 }
