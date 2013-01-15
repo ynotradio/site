@@ -11,7 +11,6 @@ require ("ext/cdotw_fns.php");
 ?>
 <div class="row">
   <div class="nine columns">
-    <h1></h1>
     <h1>CD of The Week</h1>
     <?php cdotw($_GET['id']); ?>
   </div>

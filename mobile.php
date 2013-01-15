@@ -10,7 +10,6 @@ require ("ext/header.php");
 ?>
 <div class="row">
   <div class="nine columns content">
-    <h1></h1>
     <h1>Mobile</h1>
     Many of you have been asking how you can listen to Y-Not Radio on your iPhones, Androids, Blackberries, etc... and we now have two geat options for you. <strong>Once you get started, you can text your requests to 267-293-YNOT (9668).</strong>
     <p>

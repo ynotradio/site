@@ -11,7 +11,6 @@ require ("ext/custom_text_fns.php");
 ?>
 <div class="row">
   <div class="nine columns content">
-    <h1></h1>
     <h1>Donate to Y-Not Radio</h1>
     <?php display_custom_text(1); ?>
   </div>
