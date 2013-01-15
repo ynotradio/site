@@ -165,6 +165,16 @@ nav a:hover {
   padding: 0 5px;
 }
 
+.new_music dt {
+  font-weight: bold;
+  margin-top: 10px;
+  text-decoration: underline;
+}
+
+.subtitle {
+  font-style: italic;
+}
+
 .center {
   text-align: center;
 }
