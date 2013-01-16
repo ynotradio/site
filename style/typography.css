@@ -205,7 +205,7 @@ nav a:hover {
 }
 
 .deejay {
-  min-height: 130px;
+  clear: both;
 }
 
 .review img, .deejay img{
