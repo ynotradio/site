@@ -27,6 +27,12 @@ a:hover {
   text-decoration: underline;
 }
 
+.information {
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
 .soldout a {
   color: red;
   font-weight: bold
@@ -35,6 +41,23 @@ a:hover {
 .show_title {
   font-weight: bold;
   font-style: italic;
+}
+
+.error {
+  font-weight: bold;
+  color: red;
+  font-size: 16px;
+}
+
+.success {
+  font-weight: bold;
+  color: green;
+  font-size: 16px;
+}
+
+.full_height {
+  clear: both;
+  overflow:hidden;
 }
 
 /* LAYOUT */
@@ -178,6 +201,17 @@ nav a:hover {
 .featured_concert img {
   border: 1px solid black;
   float: none;
+}
+
+.top11-message img{
+  float: left;
+  width: 100px;
+  margin: 0 10px 0 5px;
+}
+
+.top11_entry {
+  width: 93%;
+  float: right;
 }
 
 .new_music dt {

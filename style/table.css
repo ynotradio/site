@@ -85,6 +85,14 @@
   margin: 0 auto;
 }
 
+.no-header {
+  border-radius: 0;
+}
+
+.no-header tbody:first-of-type tr:first-child td {
+  border-top: none;
+}
+  
 .ondemand {
   margin-top: 20px;
   font-size: 14px;
@@ -96,4 +104,8 @@
 
 .ondemand td {
   padding-bottom: 10px;
+}
+
+.table-center {
+  margin: 0 auto;
 }

@@ -26,8 +26,9 @@ if ($page_file != "logout.php"){
   <meta property="og:description"
       content="YNot Radio | Philadelphia's Real Alternative"/>
   <link href="style/base.css" rel="stylesheet" type="text/css" media="all">
-  <script type="text/javascript" src="/js/jquery-1.7.1.js"></script>
-  <script type="text/javascript" src="/js/common_functions.js"></script>
+  <script type="text/javascript" src="js/jquery-1.7.1.js"></script>
+  <?php require("js/common_functions.js"); ?>
+
 </head>
 <div id="fb-root"></div>
 <div id="container">
