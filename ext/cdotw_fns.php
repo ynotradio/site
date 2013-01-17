@@ -79,16 +79,14 @@ function edit_cdotw($id) {
 }
 
 function save_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band, $reviewer, $date) {
-  if (!get_magic_quotes_gpc()) {
-    $artist = addslashes($artist);
-    $title = addslashes($title);
-    $label = addslashes($label);
-    $review = addslashes($review);
-    $cd_pic_url = addslashes($cd_pic_url);
-    $band = addslashes($band);
-    $reviewer = addslashes($reviewer);
-    $date = addslashes($date);
-  }
+  $artist = mysql_real_escape_string($artist);
+  $title = mysql_real_escape_string($title);
+  $label = mysql_real_escape_string($label);
+  $review = mysql_real_escape_string($review);
+  $cd_pic_url = mysql_real_escape_string($cd_pic_url);
+  $band = mysql_real_escape_string($band);
+  $reviewer = mysql_real_escape_string($reviewer);
+  $date = mysql_real_escape_string($date);
 
   $update = "UPDATE cdotw SET artist=\"$artist\", title=\"$title\", label=\"$label\", review=\"$review\", cd_pic_url=\"$cd_pic_url\", band=\"$band\", reviewer=\"$reviewer\", date=\"$date\" WHERE id=".$id;
   $result = mysql_query($update);
@@ -102,16 +100,14 @@ function save_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band, $
 }
 
 function add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band, $reviewer, $date) {
-  if (!get_magic_quotes_gpc()) {
-    $artist = addslashes($artist);
-    $title = addslashes($title);
-    $label = addslashes($label);
-    $review = addslashes($review);
-    $cd_pic_url = addslashes($cd_pic_url);
-    $band = addslashes($band);
-    $reviewer = addslashes($reviewer);	
-    $date = addslashes($date);	
-  }
+  $artist = mysql_real_escape_string($artist);
+  $title = mysql_real_escape_string($title);
+  $label = mysql_real_escape_string($label);
+  $review = mysql_real_escape_string($review);
+  $cd_pic_url = mysql_real_escape_string($cd_pic_url);
+  $band = mysql_real_escape_string($band);
+  $reviewer = mysql_real_escape_string($reviewer);	
+  $date = mysql_real_escape_string($date);	
 
   $insert = "INSERT INTO cdotw VALUES (id, '".$artist ."', '".$title ."', '".$label ."', '".$review ."', '".$cd_pic_url ."', '".$band ."', '".$reviewer ."', '".$date ."', 'no')";
   $result = mysql_query($insert);
@@ -149,7 +145,7 @@ function cdotw($id){
     if (!$date_result) {
       die('Invalid');
     }
-    
+
     $datepicker = mysql_fetch_assoc($date_result);
 
     $query = "SELECT * FROM cdotw WHERE deleted = 'no' AND date = \"". $datepicker['date'] . "\"";

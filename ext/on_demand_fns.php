@@ -84,16 +84,13 @@ function edit_on_demand($id) {
 }
 
 function save_on_demand($id, $date, $image, $headline, $note, $songs, $url, $source) {
-  if (!get_magic_quotes_gpc())
-  {
-    $date = addslashes($date);
-    $image = addslashes($image);
-    $headline = addslashes($headline);
-    $note = addslashes($note);
-    $songs = addslashes($songs);		
-    $url = addslashes($url);
-    $source = addslashes($source);
-  }
+  $date = mysql_real_escape_string($date);
+  $image = mysql_real_escape_string($image);
+  $headline = mysql_real_escape_string($headline);
+  $note = mysql_real_escape_string($note);
+  $songs = mysql_real_escape_string($songs);		
+  $url = mysql_real_escape_string($url);
+  $source = mysql_real_escape_string($source);
 
   $update = "UPDATE ondemand2 SET date=\"$date\", image=\"$image\", headline=\"$headline\", note=\"$note\", songs=\"$songs\", audio_url=\"$url\", source=\"$source\" WHERE id=".$id;
   $result = mysql_query($update);
@@ -107,15 +104,13 @@ function save_on_demand($id, $date, $image, $headline, $note, $songs, $url, $sou
 }
 
 function add_on_demand($date, $image, $headline, $note, $songs, $url, $source) {
-  if (!get_magic_quotes_gpc()){
-    $date = addslashes($date);
-    $image = addslashes($image);
-    $headline = addslashes($headline);
-    $note = addslashes($note);
-    $songs = addslashes($songs);
-    $url = addslashes($url);
-    $source = addslashes($source);
-  }
+  $date = mysql_real_escape_string($date);
+  $image = mysql_real_escape_string($image);
+  $headline = mysql_real_escape_string($headline);
+  $note = mysql_real_escape_string($note);
+  $songs = mysql_real_escape_string($songs);
+  $url = mysql_real_escape_string($url);
+  $source = mysql_real_escape_string($source);
 
   $insert = "INSERT INTO ondemand2 VALUES (id, '".$date ."', '".$image ."', '".$headline. "', '".$note. "', '".$songs. "', '".$url. "', '".$source. "', 'no')";
   $result = mysql_query($insert);

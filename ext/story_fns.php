@@ -78,17 +78,14 @@ function edit_story($id) {
 }
 
 function save_story($id, $start_date, $end_date, $headline, $story, $pic, $pic_url, $priority) {
-  if (!get_magic_quotes_gpc())
-  {
-    $id = addslashes($id);
-    $start_date = addslashes($start_date);
-    $end_date = addslashes($end_date);
-    $headline = addslashes($headline);
-    $story = addslashes($story);
-    $priority = addslashes($priority);
-    $pic = addslashes($pic);
-    $pic_url = addslashes($pic_url);
-  }
+  $id = mysql_real_escape_string($id);
+  $start_date = mysql_real_escape_string($start_date);
+  $end_date = mysql_real_escape_string($end_date);
+  $headline = mysql_real_escape_string($headline);
+  $story = mysql_real_escape_string($story);
+  $priority = mysql_real_escape_string($priority);
+  $pic = mysql_real_escape_string($pic);
+  $pic_url = mysql_real_escape_string($pic_url);
 
   $update = "UPDATE stories SET start_date=\"$start_date\", end_date=\"$end_date\", headline=\"$headline\", story=\"$story\", pic=\"$pic\", pic_url=\"$pic_url\", priority=\"$priority\" WHERE id=".$id;
   $result = mysql_query($update);
@@ -100,10 +97,8 @@ function save_story($id, $start_date, $end_date, $headline, $story, $pic, $pic_u
 }
 
 function add_story($start_date, $end_date, $headline, $story, $pic, $pic_url, $priority) {
-  if (!get_magic_quotes_gpc()){
-    $headline = addslashes($headline);
-    $story = addslashes($story);
-  }
+  $headline = mysql_real_escape_string($headline);
+  $story = mysql_real_escape_string($story);
 
   $insert = "INSERT INTO stories VALUES (id, '".$start_date ."', '".$end_date. "', '". $headline ."', '". $story ."', '". $pic ."', '". $pic_url ."', '". $priority ."', 'n')";
   $result = mysql_query($insert);

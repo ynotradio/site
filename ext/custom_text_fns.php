@@ -50,11 +50,8 @@ function edit_custom_text($id){
 }
 
 function save_custom_text($id, $html) {
-  if (!get_magic_quotes_gpc())
-  {
-    $id = addslashes($id);
-    $html = addslashes($html);
-  }
+  $id = mysql_real_escape_string($id);
+  $html = mysql_real_escape_string($html);
 
   $update = "UPDATE custom_text SET html=\"$html\" WHERE id=".$id;
   $result = mysql_query($update);

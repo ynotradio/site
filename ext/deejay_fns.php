@@ -86,14 +86,12 @@ function edit_deejay($id) {
 }
 
 function add_deejay($name, $show, $email, $external_connect_text, $external_connect_url, $pic) {
-  if (!get_magic_quotes_gpc()){
-    $name = addslashes($name);
-    $show = addslashes($show);
-    $email = addslashes($email);
-    $external_connect_text = addslashes($external_connect_text);
-    $external_connect_url = addslashes($external_connect_url);
-    $pic = addslashes($pic);
-  }
+  $name = mysql_real_escape_string($name);
+  $show = mysql_real_escape_string($show);
+  $email = mysql_real_escape_string($email);
+  $external_connect_text = mysql_real_escape_string($external_connect_text);
+  $external_connect_url = mysql_real_escape_string($external_connect_url);
+  $pic = mysql_real_escape_string($pic);
 
   $insert = "INSERT INTO deejays VALUES (id, '".$name ."', '".$show. "', '".$email. "', '".$external_connect_text. "', '". $external_connect_url ."', '". $pic ."', '1', 'no')";
   $result = mysql_query($insert);
@@ -115,14 +113,12 @@ function add_deejay($name, $show, $email, $external_connect_text, $external_conn
 }
 
 function save_deejay($id, $name, $show, $email, $external_connect_text, $external_connect_url, $pic) {
-  if (!get_magic_quotes_gpc()){
-    $name = addslashes($name);
-    $show = addslashes($show);
-    $email = addslashes($email);
-    $external_connect_text = addslashes($external_connect_text);
-    $external_connect_url = addslashes($external_connect_url);
-    $pic = addslashes($pic);
-  }
+  $name = mysql_real_escape_string($name);
+  $show = mysql_real_escape_string($show);
+  $email = mysql_real_escape_string($email);
+  $external_connect_text = mysql_real_escape_string($external_connect_text);
+  $external_connect_url = mysql_real_escape_string($external_connect_url);
+  $pic = mysql_real_escape_string($pic);
 
   $update = "UPDATE deejays SET name=\"$name\", `show`=\"$show\", email=\"$email\", external_connect_text=\"$external_connect_text\",external_connect_url=\"$external_connect_url\", pic=\"$pic\" WHERE id=".$id;
   $result = mysql_query($update);
@@ -155,8 +151,8 @@ function get_deejays() {
   $josh_result = mysql_query($josh_query);
 
   if (!$josh_result) {
-	  echo "error: ". $josh_query;
-	  die('Invalid');
+    echo "error: ". $josh_query;
+    die('Invalid');
   }
 
   $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort, name";
@@ -190,14 +186,14 @@ function display_deejay($deejays){
     echo "<div class=\"deejay\">".
       "<img src=\"". $info['pic']. "\" width='150px';>\n".
       "<h2>" . $info['name']. "</h2>\n";
-      if ($info['name'] == "Josh T. Landow")
-        echo "Josh has been with the Y for many years now dating back to his days as an intern at Y100 in 1997. Josh went on to be a weekend/fill-in DJ at Y100 as well as the Promotions Director until the station went off the air in February 2005. He then carried the brand on with Jim McGuinn as Y100 Rocks before partnering with another radio station until July 2010. Now Josh has gone indie again with Y-Not Radio - Philadelphia's Real Alternative!";
+    if ($info['name'] == "Josh T. Landow")
+      echo "Josh has been with the Y for many years now dating back to his days as an intern at Y100 in 1997. Josh went on to be a weekend/fill-in DJ at Y100 as well as the Promotions Director until the station went off the air in February 2005. He then carried the brand on with Jim McGuinn as Y100 Rocks before partnering with another radio station until July 2010. Now Josh has gone indie again with Y-Not Radio - Philadelphia's Real Alternative!";
     if ($info['show'])
       echo "<div class=\"show_title\">" . $info['show']. "</div>\n";
     echo "<div><a href=\"mailto:".$info['email']."\">E-Mail </a></div>\n";
     if ($info['external_connect_text'] && $info['external_connect_url'])
       echo "<div><a href=\"" . $info['external_connect_url'] ."\" target=_new>". $info['external_connect_text'] . "</a></div>\n";
-    echo "</div>";    
+    echo "</div>";
   }
 }
 

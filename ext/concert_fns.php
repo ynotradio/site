@@ -88,17 +88,15 @@ function edit_concert($id) {
 }
 
 function save_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  if (!get_magic_quotes_gpc())
-  {
-    $id = addslashes($id);
-    $date = addslashes($date);
-    $artist = addslashes($artist);
-    $band_pic_url = addslashes($band_pic_url);
-    $band_url = addslashes($band_url);
-    $venue = addslashes($venue);
-    $ticketinfo = addslashes($ticketinfo);
-    $ticketurl = addslashes($ticketurl);
-  }
+  $id = mysql_real_escape_string($id);
+  $date = mysql_real_escape_string($date);
+  $artist = mysql_real_escape_string($artist);
+  $band_pic_url = mysql_real_escape_string($band_pic_url);
+  $band_url = mysql_real_escape_string($band_url);
+  $venue = mysql_real_escape_string($venue);
+  $ticketinfo = mysql_real_escape_string($ticketinfo);
+  $ticketurl = mysql_real_escape_string($ticketurl);
+
   if ($featured != "Yes")
     $featured = "No";
 
@@ -114,15 +112,13 @@ function save_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $ti
 }
 
 function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  if (!get_magic_quotes_gpc()){
-    $date = addslashes($date);
-    $artist = addslashes($artist);
-    $band_pic_url = addslashes($band_pic_url);
-    $band_url = addslashes($band_url);
-    $venue = addslashes($venue);
-    $ticketinfo = addslashes($ticketinfo);
-    $ticketurl = addslashes($ticketurl);
-  }
+  $date = mysql_real_escape_string($date);
+  $artist = mysql_real_escape_string($artist);
+  $band_pic_url = mysql_real_escape_string($band_pic_url);
+  $band_url = mysql_real_escape_string($band_url);
+  $venue = mysql_real_escape_string($venue);
+  $ticketinfo = mysql_real_escape_string($ticketinfo);
+  $ticketurl = mysql_real_escape_string($ticketurl);
 
   if ($featured != "Yes")
     $featured = "No";

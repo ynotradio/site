@@ -36,12 +36,10 @@ function display_music() {
 }
 
 function add_music($date, $artist, $song, $url) {
-  if (!get_magic_quotes_gpc()){
-    $date = addslashes($date);
-    $artist = addslashes($artist);
-    $song = addslashes($song);
-    $ticketurl = addslashes($url);
-  }
+  $date = mysql_real_escape_string($date);
+  $artist = mysql_real_escape_string($artist);
+  $song = mysql_real_escape_string($song);
+  $ticketurl = mysql_real_escape_string($url);
 
   $insert = "INSERT INTO music VALUES (id, '".$artist. "', '". $song ."', '". $url ."', '". $date ."', 'n')";
   $result = mysql_query($insert);
@@ -119,14 +117,11 @@ function edit_music($id) {
 }
 
 function save_music($id, $date, $artist, $song, $url) {
-  if (!get_magic_quotes_gpc())
-  {
-    $id = addslashes($id);
-    $date = addslashes($date);
-    $artist = addslashes($artist);
-    $song = addslashes($song);
-    $url = addslashes($url);
-  }
+  $id = mysql_real_escape_string($id);
+  $date = mysql_real_escape_string($date);
+  $artist = mysql_real_escape_string($artist);
+  $song = mysql_real_escape_string($song);
+  $url = mysql_real_escape_string($url);
 
   $update = "UPDATE music SET date=\"$date\", artist=\"$artist\", song=\"$song\", url=\"$url\" WHERE id=".$id;
   $result = mysql_query($update);
