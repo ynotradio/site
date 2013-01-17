@@ -1,6 +1,6 @@
 <?php
 
-$page_file = "dontate.php";
+$page_file = "donate.php";
 $page_title = "Donate";
 
 require ("ext/main_fns.php");
