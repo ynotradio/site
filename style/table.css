@@ -17,6 +17,7 @@
   border-top: 1px solid darkGray;
 }
 
+
 .table tbody:first-of-type tr:first-child td {
   border-top: 1px solid darkGray;
 }
@@ -27,15 +28,6 @@
   padding: 10px 15px;
   color: black;
   text-align: left;
-}
-
-.table-row-hover.table-striped > tbody tr:nth-child(odd):hover td,
-.table-row-hover.table-striped > tfoot tr:nth-child(odd):hover td {
-  background-color: #fafafa;
-}
-
-.table-striped tbody tr:nth-child(odd) td, .table-striped tfoot tr:nth-child(odd) td {
-  background-color: lightgray;
 }
 
 .table-bordered, .table-bordered-horizontal {
@@ -53,7 +45,6 @@
   overflow: hidden;
 }
 
-
 .table-bordered tbody td, .table-bordered tfoot td {
   border-left: 1px solid darkGray;
 }
@@ -62,15 +53,20 @@
   border-left: 0;
 }
 
-.table-row-hover > tbody tr:hover td {
-  background-color: black;
-  color: white;
+.table-striped tbody tr:nth-child(odd) td, .table-striped tfoot tr:nth-child(odd) td {
+  background-color: lightgray;
 }
 
 .table-row-hover > tbody tr:hover a {
   color: yellow;
 }
 
+.table-row-hover.table-striped > tbody tr:nth-child(odd):hover td,
+.table-row-hover.table-striped > tfoot tr:nth-child(odd):hover td {
+  background-color: #fafafa;
+}
+
+.table-row-hover > tbody tr:hover td,
 .table-row-hover.table-striped > tbody tr:nth-child(odd):hover td,
 .table-row-hover.table-striped > tfoot tr:nth-child(odd):hover td {
   background-color: black;
@@ -92,7 +88,18 @@
 .no-header tbody:first-of-type tr:first-child td {
   border-top: none;
 }
-  
+
+.table tbody .subheader:nth-child(odd) td, .table tbody .subheader:nth-child(even) td {
+  background: black;
+  border-top: black;
+  color: white;
+}
+
+.table tbody:first-of-type .subheader:first-child td {
+  border-top: black;
+}
+
+
 .ondemand {
   margin-top: 20px;
   font-size: 14px;
