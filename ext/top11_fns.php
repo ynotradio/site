@@ -287,39 +287,33 @@ function display_form() {
   }
   echo "<h2 class=\"center\">Vote for Your Top 3 Y-Not Songs of the Week</h2>\n";
   echo "<form action=\"top11.php\" method=\"post\" name=\"top11\" class=\"form-default\">
-    <table class=\"top11-picks control-group\">\n".
-    "<col> <col width=\"320\">";
+    <fieldset>\n<div class=\"control-group\">\n<div class=\"controls\">\n";
 
   for ($i=1; $i<=mysql_num_rows($result);$i++)
   {
     $info = mysql_fetch_assoc($result);
-    if (fmod($i,2) == 1) {	
-      echo "<tr>\n";
-    }
-    echo "<td class=\"controls\"><label for=\"".$info['id']."\"><input type=\"checkbox\" name=\"top11[]\" id=\"".$info['id']."\" value=\"".$info['id']."\">".
-      "<span class=\"top11_entry\"> ".$info['artist'] ." - ".$info['song'] ."</span>\n</label>\n</td>\n";
+    echo "<label for=\"".$info['id']."\" class=\"half\"><input type=\"checkbox\" name=\"top11[]\" id=\"".$info['id']."\" value=\"".$info['id']."\">".
+      "<span class=\"top11_entry\"> " . $info['artist'] ." - ".$info['song'] ."\n</span>\n</label>\n";
   }
-  if (fmod($i,2) == 1) {	
-    echo "</tr>\n";
-  }
-  echo "<tr><td colspan=\"2\"><input type=\"checkbox\" id=\"top11_write_in\"> <input type=\"text\" disabled=\"disabled\" class=\"input-xl\" id=\"write_in_value\" name=\"write_in_value\"></td>\n</tr>\n".
-    "<td class=\"form-other\">Other (please specify)</td>\n</tr>\n<tr>\n";
-  echo "<tr>\n" .
-    "<td>First name:<input type=\"text\" name=\"firstname\" class=\"input-l\"/></td></tr>".
-    "<tr>\n<td>Last name:</td>\n<tr>\n<td><input type=\"text\" name=\"lastname\" class=\"input-l\"/></td>\n</tr>\n".
-    "<tr>\n<td>E-mail:</td>\n<tr>\n<td><input type=\"text\" name=\"email\" class=\"input-l\"/></td>\n</tr\n>".
-    "<tr>\n<td>Phone #:</td>\n<tr>\n<td><input type=\"text\" name=\"phone\" class=\"input-l\"/></td>\n</tr>\n".
-    "<tr>\n<td colspan=2>Would you like to be entered into this week's contest?</td>\n</tr>\n".
-    "<tr><td class=\"controls inline\"><label for=\"yes\"><input type=\"radio\" name=\"contest\" id=\"yes\" value=\"yes\" />Yes</label>".
-    "<label for=\"no\"><input type=\"radio\" name=\"contest\" id=\"no\" value=\"no\" />No</label></td>\n</tr>\n".
-    "<tr>\n<td colspan=2>Would you like to receive Y-Not Radio's weekly Y-Mail newsletter?</td>\n</tr>\n".
-    "<tr><td class=\"controls inline\"><label for=\"newsletter-yes\"><input type=\"radio\" name=\"newsletter\" id=\"newsletter-yes\" value=\"yes\" />Yes</label>".
+  echo "</div></div>\n<div class=\"control-group\">\n<div class=\"controls\">\n";
+  echo "<input type=\"checkbox\" id=\"top11_write_in\"> <input type=\"text\" disabled=\"disabled\" class=\"input-xl\" id=\"write_in_value\" name=\"write_in_value\">\n".
+    "<div class=\"form-other\">Other (please specify)</div>\n</div>\n</div>\n";
+
+  echo "<div class=\"control-group top-spacer_20 input-seperation\">\n".
+    "<label>First Name</label>\n<div class=\"controls\">\n<input type=\"text\" name=\"firstname\" class=\"input-l\"></div>\n".
+    "<label>Last Name</label>\n<div class=\"controls\">\n<input type=\"text\" name=\"lastname\" class=\"input-l\"/></div>\n".
+    "<label>E-mail</label>\n<div class=\"controls\"><input type=\"text\" name=\"email\" class=\"input-l\"/></div>\n".
+    "<label>Phone Number</label>\n<div class=\"controls\"><input type=\"text\" name=\"phone\" class=\"input-l\"/></div>\n".
+    "<label>Would you like to be entered into this week's contest?</label>\n".
+    "<div class=\"controls inline clearfix\"><label for=\"yes\"><input type=\"radio\" name=\"contest\" id=\"yes\" value=\"yes\" />Yes</label>".
+    "<label for=\"no\"><input type=\"radio\" name=\"contest\" id=\"no\" value=\"no\" />No</label></div>\n".
+    "<label>Would you like to receive Y-Not Radio's weekly Y-Mail newsletter?</label>\n".
+    "<div class=\"controls inline clearfix\"><label for=\"newsletter-yes\"><input type=\"radio\" name=\"newsletter\" id=\"newsletter-yes\" value=\"yes\" />Yes</label>".
     "<label for=\"newsletter-no\"><input type=\"radio\" name=\"newsletter\" id=\"newsletter-no\" value=\"no\" />No</label>".
-    "<label for=\"newsletter-already\"><input type=\"radio\" name=\"newsletter\" id=\"newsletter-already\" value=\"already\" />I Already Receive It</label></td>\n</tr>\n".
-    "<tr><td class=\"form-actions\"><button class=\"btn-info\" type=\"submit\">Cast Your Vote</button></td></tr>\n" .
-    "<tr><td><input type=\"hidden\" name=\"action\" value=\"write\"></td></tr>".
-    "</table>\n" .
-    "</form>\n"; 	
+    "<label for=\"newsletter-already\"><input type=\"radio\" name=\"newsletter\" id=\"newsletter-already\" value=\"already\" />I Already Receive It</label></div>\n".
+    "<div class=\"form-actions\"><button class=\"btn-info\" type=\"submit\">Cast Your Vote</button>\n" .
+    "<input type=\"hidden\" name=\"action\" value=\"write\"></div>".
+    "</form>\n</div>\n</fieldset>";
 }	
 
 function display_message() {

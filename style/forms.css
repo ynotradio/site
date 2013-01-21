@@ -32,7 +32,6 @@
 label {
   font-weight: bold;
   line-height: 18px;
-  color: #666666;
   font-size: 14px;
 }
 
@@ -72,7 +71,6 @@ select,
 }
 
 option {
-  color: #666666;
   font-size: 13px;
   line-height: 18px;
   padding: 2px 0;
@@ -103,7 +101,14 @@ fieldset:last-child {
 }
 
 .controls label {
+  font-size: 12px;
   font-weight: normal;
+}
+
+.half {
+  float: left;
+  width: 50%;
+  vertical-align: top;
 }
 
 .inline .pull-left + label {
@@ -592,5 +597,9 @@ form .row > .pull-left {
 .form-other {
   color: #909090;
   font-size: 12px;
-  padding: 0 0 20px 28px
+  padding-left: 28px
+}
+
+.input-seperation input {
+  margin-bottom: 15px;
 }

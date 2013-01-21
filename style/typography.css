@@ -214,6 +214,10 @@ nav a:hover {
   float: right;
 }
 
+.top-spacer_20 {
+  padding-top: 20px;
+}
+
 .new_music dt {
   font-weight: bold;
   margin-top: 10px;

@@ -12,7 +12,7 @@
     echo("<div class=\"center error\">You selected more than 3 songs, please <a href='top11.php'>go back</a> and select only 3 songs.</div>");
   } else {
     $ip = $_SERVER['REMOTE_ADDR'];
-    $ip = rand(0, 1000000);
+    //$ip = rand(0, 1000000);
     if ($_SERVER['HTTP_REFERER'] == "http://ynotradio.net/addtop11vote.php" || check_ip($ip) == "true") {
       $count = count($top11picks);	
       for($i=0; $i < $count; $i++)
