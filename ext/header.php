@@ -33,7 +33,7 @@ if ($page_file != "logout.php"){
 <div id="fb-root"></div>
 <div id="container">
     <header>
-          <img src="imgs/header_front.png" alt="logo" usemap="#Map"/>
+          <img src="imgs/header.png" alt="logo" usemap="#Map"/>
           <iframe  src="http://www.live365.com/mini/playlist.html?ads=0&cb=0&site=pro&irows=0&hide=TBW&rows=6&station=ynotradio&css=/scp/css/playlist.css" name="Live365Playlist" scrolling="AUTO" noresize frameborder="No" marginwidth="0" marginheight="0" width=390 height=125></iframe>
   <map name="Map">
     <area shape="rect" coords="15,5,300,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/> 

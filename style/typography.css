@@ -78,8 +78,8 @@ a:hover {
 }
 
 header {
-  background: url('../imgs/header_bg.jpg');
-  background-repeat: repeat;
+  background: url('../imgs/header_bg.png');
+  border: 1px solid black;
   border-radius: 4px 4px 0 0;
   height: 156px;
   margin: 10px 10px 0 10px;
