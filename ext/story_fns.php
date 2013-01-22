@@ -191,7 +191,7 @@ function save_order($id, $priority) {
 }
 
 function get_stories($amount){
-  $query = "SELECT * FROM stories WHERE deleted = 'n' AND end_date >= now() ORDER BY priority";
+  $query = "SELECT * FROM stories WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
 
   $limit = ($amount == "all") ? "" : " LIMIT ". $amount;
   $query = $query . $limit;
