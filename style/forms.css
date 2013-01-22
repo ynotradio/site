@@ -9,6 +9,17 @@
   padding: 20px;
 }
 
+.form-internal fieldset{
+  background: #f9f9f9;
+  border: 2px groove threedface;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  -ms-border-radius: 6px;
+  -o-border-radius: 6px;
+  border-radius: 6px;
+  padding: 20px;
+}
+
 .help-text {
   color: #999999;
   font-weight: normal;
@@ -41,6 +52,7 @@ label + .controls label {
 
 input[type=text],
 input[type=number],
+input[type=password],
 textarea,
 select,
 .spinbox {
@@ -117,7 +129,7 @@ fieldset:last-child {
 
 legend {
   background-color: transparent;
-  color: #779f46;
+  color: #336699;
   padding: 0 0 5px 0;
   font-size: 16px;
   line-height: 25px;
@@ -607,4 +619,9 @@ form .row > .pull-left {
 #contact_us {
   width: 500px;
   margin: 0 auto;
+}
+
+#login {
+  width: 450px;
+  margin: 10 auto;
 }

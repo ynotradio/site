@@ -73,6 +73,10 @@ a:hover {
   padding: 0 10px 0 20px;
 }
 
+.full-width {
+  width: 100%;
+}
+
 header {
   background: url('../imgs/header_bg.jpg');
   background-repeat: repeat;

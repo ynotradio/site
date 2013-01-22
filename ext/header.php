@@ -1,7 +1,7 @@
 <?php
 
 if ($page_file != "logout.php"){
-  loginCheck();
+  login_check();
 }
 #error_reporting( E_ALL);
 #ini_set('display_errors', '1 ');
