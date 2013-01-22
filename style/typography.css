@@ -60,6 +60,12 @@ a:hover {
   overflow:hidden;
 }
 
+.required:after {
+  color: red;
+  content: " *";
+  font-size: 12px;
+}
+
 /* LAYOUT */
 
 .content {

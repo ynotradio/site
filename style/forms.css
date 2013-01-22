@@ -600,6 +600,11 @@ form .row > .pull-left {
   padding-left: 28px
 }
 
-.input-seperation input {
+.input-seperation input, .input-seperation select, .input-seperation textarea {
   margin-bottom: 15px;
+}
+
+#contact_us {
+  width: 500px;
+  margin: 0 auto;
 }
