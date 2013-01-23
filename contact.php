@@ -3,8 +3,8 @@
 $page_file = "contact.php";
 $page_title = "Contact Us";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
+require ("functions/main_fns.php");
+require ("partials/_header.php");
 
 $action = "fill_out";
 if ($_POST['action'])
@@ -48,10 +48,10 @@ if ($_POST['action'])
     </fieldset>
   </form>
 <?php } else {
-  require ("ext/_sendmail.php");
+  require ("partials/_sendmail.php");
   } ?>
       <div class="center top-spacer_20"> To make a request contact us via <a href="http://www.facebook.com/ynotradio" target=_new>Facebook</a>, AIM at IMYNotRadio, or text to 267-293-YNOT (9668).</div>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

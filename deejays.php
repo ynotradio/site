@@ -3,9 +3,9 @@
 $page_file = "deejays.php";
 $page_title = "DeeJays";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
-require ("ext/deejay_fns.php");
+require ("functions/main_fns.php");
+require ("functions/deejay_fns.php");
+require ("partials/_header.php");
 
 $deejays = get_deejays();
 
@@ -26,6 +26,6 @@ $deejays = get_deejays();
       </div>
     </div>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

@@ -3,9 +3,9 @@
 $page_file = "top11.php";
 $page_title = "Top 11 @ 11";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
-require ("ext/top11_fns.php");
+require ("functions/main_fns.php");
+require ("functions/top11_fns.php");
+require ("partials/_header.php");
 
 /*----- CONTENT ------*/
 ?>
@@ -14,7 +14,7 @@ require ("ext/top11_fns.php");
     <h1>Top 11 @ 11</h1>
     <?php 
       if ($_POST['action']) {
-        require ("_top11save.php");
+        require ("partials/__top11save.php");
       } else {
         display_message();
         show_top11();
@@ -26,6 +26,6 @@ require ("ext/top11_fns.php");
       }
     ?>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

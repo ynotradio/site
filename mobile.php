@@ -3,8 +3,8 @@
 $page_file = "mobile.php";
 $page_title = "Mobile";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
+require ("functions/main_fns.php");
+require ("partials/_header.php");
 
 /*----- CONTENT ------*/
 ?>
@@ -22,6 +22,6 @@ require ("ext/header.php");
       *As with any streaming media, charges may be applied from your mobile phone provider depending on your data plan.
     </div>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

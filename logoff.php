@@ -3,13 +3,10 @@
 $page_file = "logoff.php";
 $page_title = "Logoff";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
+require ("functions/main_fns.php");
+require ("partials/_header.php");
 
-//if (!$_SESSION["logged_in"]) {
-//  login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
-//} else {
-  logoff();
+logoff();
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -18,7 +15,4 @@ require ("ext/header.php");
     <a href="cp.php">Enter the control panel</a>
   </div>
 </div> <!-- end of row div -->
-<?php
-//  } 
-  require ("ext/footer.php"); 
-?>
+<?php require ("partials/_footer.php"); ?>

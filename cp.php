@@ -3,8 +3,8 @@
 $page_file = "cp.php";
 $page_title = "Control Panel";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
+require ("functions/main_fns.php");
+require ("partials/_header.php");
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
@@ -76,5 +76,5 @@ if (!$_SESSION["logged_in"]) {
   </div>
 </div> <!-- end of row div -->
 <?php }
-  require ("ext/footer.php"); 
+  require ("partials/_footer.php"); 
 ?>

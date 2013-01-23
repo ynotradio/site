@@ -3,9 +3,9 @@
 $page_file = "cdoftheweek.php";
 $page_title = "CD of The Week";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
-require ("ext/cdotw_fns.php");
+require ("functions/main_fns.php");
+require ("functions/cdotw_fns.php");
+require ("partials/_header.php");
 
 /*----- CONTENT ------*/
 ?>
@@ -14,7 +14,7 @@ require ("ext/cdotw_fns.php");
     <h1>CD of The Week</h1>
     <?php cdotw($_GET['id']); ?>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
 <div class ="row">
   <div class="twelve columns content">
@@ -22,4 +22,4 @@ require ("ext/cdotw_fns.php");
     <?php cover_art(); ?>
   </div>
 </div>
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

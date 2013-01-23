@@ -3,9 +3,9 @@
 $page_file = "";
 $page_title = "";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
-require ("ext/story_fns.php");
+require ("functions/main_fns.php");
+require ("functions/story_fns.php");
+require ("partials/_header.php");
 
 $amount_of_stories = "all";
 $story_groups= get_stories($amount_of_stories);
@@ -24,6 +24,6 @@ $story_groups= get_stories($amount_of_stories);
       </div>
     </div>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>

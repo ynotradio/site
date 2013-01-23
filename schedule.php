@@ -3,9 +3,9 @@
 $page_file = "schedule.php";
 $page_title = "Schedule";
 
-require ("ext/main_fns.php");
-require ("ext/header.php");
-require ("ext/schedule_fns.php");
+require ("functions/main_fns.php");
+require ("functions/schedule_fns.php");
+require ("partials/_header.php");
 
 /*----- CONTENT ------*/
 ?>
@@ -14,7 +14,7 @@ require ("ext/schedule_fns.php");
     <h1>Schedule</h1>
     <?php display_schedule(); ?>
   </div>
-  <div class="three columns"><?php require ("featured_concerts_and_ads.php") ?></div>
+  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
-<?php require ("ext/footer.php"); ?>
+<?php require ("partials/_footer.php"); ?>
 
