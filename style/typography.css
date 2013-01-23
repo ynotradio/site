@@ -266,6 +266,11 @@ nav a:hover {
   -moz-opacity: 0.35;
   opacity: 0.35;
   border: 1px solid black;
+  -webkit-transition: opacity 0.5s linear;
+  -moz-transition: opacity 0.5s linear;
+  -ms-transition: opacity 0.5s linear;
+  -o-transition: opacity 0.5s linear;
+  transition: opacity 0.5s linear;
 }
 
 .past_review:hover img {
