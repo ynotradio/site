@@ -328,3 +328,15 @@ footer {
 footer a, footer a:hover {
   color: white;
 }
+
+#control_panel dt{
+  font-weight: bold;
+}
+
+#control_panel dt:before, dt:after {
+  content: " -- ";
+}
+
+#control_panel td {
+  vertical-align: top;
+}
