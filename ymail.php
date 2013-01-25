@@ -19,12 +19,6 @@ require ("partials/_header.php");
           <div class="controls"><input type="text" name="data[name]" class="input-l"></div>
           <label class="required">Email</label>
           <div class="controls"><input type="text" name="data[email_address]" class="input-l"></div>
-          <label>Area</label>
-          <div class="controls">
-            <select name="data[area]" id="area">
-              <option value="0">Unknown</option>
-            </select>
-          </div>
           <label>Birthday</label>
           <div class="controls">
             <select name="send_date_month" id="send_date_month" onchange="javascript:setDays();">
