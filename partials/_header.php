@@ -20,7 +20,7 @@ if ($page_file != "logout.php"){
   <meta property="og:image"
     content="http://ynotradio.net/imgs/ynot.jpg"/>
   <meta property="og:url"
-    content="http://ynotradio.net"/>  
+    content="http://ynotradio.net"/>
   <meta property="og:title"
       content="YNot Radio"/>
   <meta property="og:description"
@@ -34,15 +34,15 @@ if ($page_file != "logout.php"){
 <div id="container">
     <header>
           <img src="imgs/header.png" alt="logo" usemap="#Map"/>
-          <iframe  src="http://www.live365.com/mini/playlist.html?ads=0&cb=0&site=pro&irows=0&hide=TBW&rows=6&station=ynotradio&css=/scp/css/playlist.css" name="Live365Playlist" scrolling="AUTO" noresize frameborder="No" marginwidth="0" marginheight="0" width=390 height=125></iframe>
+          <iframe  src="http://www.live365.com/mini/playlist.html?ads=0&cb=0&site=pro&irows=0&hide=TBW&rows=6&station=ynotradio&css=/scp/css/playlist.css" name="Live365Playlist" scrolling="AUTO" noresize frameborder="No" marginwidth="0" marginheight="0" width=425 height=125></iframe>
   <map name="Map">
-    <area shape="rect" coords="15,5,300,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/> 
-    <area shape="rect" coords="325,5,430,55" href="http://www.live365.com/cgi-bin/mini.cgi?station_name=ynotradio&amp;site=pro&amp;tm=5300" onclick="return popup(this, &#39;notes&#39;)" alt="Listen Live"/> 
-    <area shape="rect" coords="325,65,430,105" href="http://www.live365.com/cgi-bin/play.pls?stationid=ynotradio&tag=itunes"
+    <area shape="rect" coords="30,5,295,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
+    <area shape="rect" coords="345,5,450,55" href="http://www.live365.com/cgi-bin/mini.cgi?station_name=ynotradio&amp;site=pro&amp;tm=5300" onclick="return popup(this, &#39;notes&#39;)" alt="Listen Live"/>
+    <area shape="rect" coords="345,65,450,102" href="http://www.live365.com/cgi-bin/play.pls?stationid=ynotradio&tag=itunes"
      alt="iTunes">
-    <area shape="rect" coords="325,115,358,145" href="https://www.facebook.com/ynotradio" alt="facebook" target="_new"/>
-    <area shape="rect" coords="362,115,394,145" href="http://twitter.com/ynotradio" alt="twitter" target="_new"/>
-    <area shape="rect" coords="398,115,432,145" href="mobile.php" alt="mobile"/>
+    <area shape="rect" coords="345,110,378,145" href="https://www.facebook.com/ynotradio" alt="facebook" target="_new"/>
+    <area shape="rect" coords="382,110,414,145" href="http://twitter.com/ynotradio" alt="twitter" target="_new"/>
+    <area shape="rect" coords="418,110,452,145" href="mobile.php" alt="mobile"/>
   </map>
   </header>
   <nav>
