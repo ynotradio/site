@@ -96,6 +96,17 @@ header .columns {
   height: 155px;
 }
 
+#on-air {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  left: 675px;
+  max-width: 250px;
+  position: relative;
+  text-shadow: 0.2em 0.2em black;
+  top: -272;
+}
+
 nav {
   margin: 0 10px;
 }

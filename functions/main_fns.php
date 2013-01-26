@@ -116,4 +116,13 @@ function active_ad_count(){
 
   return $info['total'];
 }
+
+function on_air(){
+  $query = "SELECT host FROM schedule WHERE date = date(now()) AND time(now()) > start_time AND deleted='n' ORDER BY start_time DESC LIMIT 1";
+  $result = mysql_query($query);
+
+  $info = mysql_fetch_assoc($result);
+
+  return $info['host'];
+}
 ?>
