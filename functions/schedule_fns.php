@@ -13,7 +13,7 @@ function display_schedule(){
   }
 
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n".
-    "<thead><tr><th width=125px>Time</th><th>Host</th><th>Notes</th></thead></tr>\n";
+    "<thead><tr><th width=130px>Time</th><th>Host</th><th>Notes</th></thead></tr>\n";
 
   for ($i=1; $i<=mysql_num_rows($date_result);$i++)
   {
