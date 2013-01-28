@@ -78,9 +78,10 @@ a:hover {
 }
 
 header {
-  background: url('../imgs/header_bg.png');
+  background: url('../imgs/header_background.png');
   border: 1px solid black;
   border-radius: 4px 4px 0 0;
+  display: block;
   height: 156px;
   margin: 10px 10px 0 10px;
 }
@@ -88,26 +89,32 @@ header {
 header iframe {
   border: 1px solid black;
   position: relative;
-  top: -126px;
-  left: 490px;
+  top: -130px;
+  left: 475px;
 }
 
 header .columns {
   height: 155px;
 }
 
+header img {
+  min-width: 950px;
+  max-width: 950px;
+}
+
 #on-air {
-  color: white;
+  color: black;
   font-size: 14px;
   font-weight: bold;
-  left: 675px;
-  max-width: 250px;
+  left: 665px;
+  max-width: 260px;
   position: relative;
-  text-shadow: 0.2em 0.2em black;
-  top: -272;
+  text-shadow: 0.1em 0.1em white;
+  top: -277px;
 }
 
 nav {
+  display: block;
   margin: 0 10px;
 }
 
@@ -163,6 +170,10 @@ nav a:hover {
   border-right: 1px solid rgba(0, 0, 0, 0.2);
   color: white;
   text-decoration: none;
+}
+
+.last {
+  float:none
 }
 
 .active, .active:hover {
