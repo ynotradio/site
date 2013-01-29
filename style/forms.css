@@ -33,7 +33,7 @@
 }
 
 .control-group > label {
-  min-width: 90px;
+  min-width: 105px;
 }
 
 .controls label {
@@ -198,7 +198,7 @@ form h3 {
 .inline .form-actions {
   border-top: 0;
   margin-top: 0;
-  padding-left: 110px;
+  padding-left: 125px;
   padding-top: 0;
 }
 
@@ -500,7 +500,7 @@ input[disabled], textarea[disabled], select[disabled] {
 
 .date {
   width: 125px;
-  background: url(/assets/calendar-padded.png) no-repeat right 50%;
+  background: url(../icons/calendar-padded.png) no-repeat right 50%;
   padding: 5px 28px 5px 8px !important;
 }
 
@@ -617,11 +617,16 @@ form .row > .pull-left {
 }
 
 #contact_us {
-  width: 500px;
+  width: 550px;
   margin: 0 auto;
 }
 
 #login {
   width: 450px;
   margin: 10 auto;
+}
+
+#admin {
+  width: 750px;
+  margin: 0 auto;
 }
