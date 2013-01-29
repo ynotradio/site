@@ -23,8 +23,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="ad_image_uploader.php">Upload an Ad Image</a></dd>
             <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
             <dt>CD of The Week</dt>
-            <dd><a href="addcdotw.php">Add CD Of The Week</a><dd>
-            <dd><a href="viewallcdotw.php">View all CD Of The Weeks</a><dd>
+            <dd><a href="cdotw_add.php">Add CD Of The Week</a><dd>
+            <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a><dd>
             <dt>Concerts</dt>
             <dd><a href="addconcert.php">Add a Concert</a><dd>
             <dd><a href="viewallconcerts.php">View all Concerts</a><dd>	
