@@ -70,7 +70,7 @@ a:hover {
 /* LAYOUT */
 
 .content {
-  padding: 0 10px 0 20px;
+  padding-left: 20px;
 }
 
 .full-width {
