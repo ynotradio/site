@@ -12,20 +12,6 @@
 </script>
 
 <script type="text/javascript">
-function popup(mylink, windowname)
-{
-if (! window.focus)return true;
-var href;
-if (typeof(mylink) == 'string')
-   href=mylink;
-else
-   href=mylink.href;
-window.open(href, windowname, 'width=500,height=300,scrollbars=yes');
-return false;
-}
-</script>
-
-<script type="text/javascript">
   function setDays() {
     var m = document.getElementById("send_date_month").value;
     m = parseInt(m,10);
