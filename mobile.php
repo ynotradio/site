@@ -11,13 +11,14 @@ require ("partials/_header.php");
 <div class="row">
   <div class="nine columns content">
     <h1>Mobile</h1>
-    Many of you have been asking how you can listen to Y-Not Radio on your iPhones, Androids, Blackberries, etc... and we now have two geat options for you. <strong>Once you get started, you can text your requests to 267-293-YNOT (9668).</strong>
-    <p>
-    <a href="http://www.live365.com/web/components/content/downloads/mobile.live" target="_blank"><img src="http://ynotradio.net/images/live365app.jpg" alt="Live 365" width="100" border="0" align="left" style="margin: 0px 10px 0px 0px;" title=""></a>
-     Y-Not Radio streams 24/7 and now you can tune in for free on your <strong>iPhone</strong>, <strong>iPad</strong>, or <strong>iPod Touch</strong> with the new <em>Live 365 v. 2.0 iPhone App</em>. This app will allow you to multi-task with Y-Not Radio playing in the background. You can download the app from <a href="http://www.live365.com/web/components/content/downloads/mobile.live" target="_blank">Live 365</a> or directly from the <a href="http://itunes.apple.com/app/live365-radio/id301645072?mt=8" target="_blank">iTunes App Store</a>. After downloading and launching the app, just search for Y-Not Radio (spelled just like that) and then make us a preset for easy access every time. <em>The Live 365 App will soon be available for <strong>Android</strong> as well.</em>
-    <p>
-    <a href="http://tunein.com/mobile/" target="_blank"><img src="http://ynotradio.net/images/tunein_radio_logo.jpg" alt="TuneIn Radio" width="100" border="0" align="left" style="margin: 0px 10px 0px 0px;" title=""></a>
-    Y-Not Radio is also available through the free <em>TuneIn Radio App</em> on <strong>iPhone</strong>, <strong>Android</strong>, <strong>Blackberry</strong>, <strong>Palm</strong>, and <strong>Windows Phone</strong>. Find your phone and download the app <a href="http://tunein.com/mobile/" target="_blank">here</a>. After downloading and launching the TuneIn Radio,  search for Y-Not Radio (spelling counts) and then make us a preset for easy access every time.
+    <div class="clearfix">
+      <img src="imgs/ynot_on_i_radio_philly.jpg" alt="iRadioPhilly" width="150px" align="left" style="margin-right: 10px;">
+      Listen to Y-Not Radio on the go with the <b>iRadioPhilly</b> app for iOS devices (iPhone, iPad, iPod) and Android.  Get it from the <a href="http://itunes.apple.com/us/app/iradiophilly/id428128166?mt=8" target="_new">iTunes App Store</a> or <a href="https://market.android.com/details?id=com.internetradiopartners.iradiophilly" target="_new">Android Market</a>.  Then just find Y-Not Radio in the list of iRadioPhilly's 20 stations.  Once you're in the app, tap the arrow in the upper right corner to see the last 10 songs played.
+    </div>
+    <div class="top-spacer_20">
+      <a href="http://tunein.com/mobile/" target="_blank"><img src="images/tunein_radio_logo.jpg" alt="TuneIn Radio" width="150px" align="right" style="margin-left: 10px;"></a>
+      If you're a Blackberry, Windows Phone, or Palm user, Y-Not Radio is also available through the free TuneIn Radio app. Find your phone and download the app <a href="http://tunein.com/mobile/">here</a>. After downloading and launching the TuneIn Radio, search for Y-Not Radio (spelling counts) and then make us a preset for easy access every time.
+    </div>
     <div class="footnote">
       *As with any streaming media, charges may be applied from your mobile phone provider depending on your data plan.
     </div>
