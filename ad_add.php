@@ -10,6 +10,8 @@ require ("partials/_header.php");
 if ($_POST['action'] != "insert")
 	$action = "insert";
 
+$target = $_GET['target'];
+
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
 } else {

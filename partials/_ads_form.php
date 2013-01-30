@@ -1,4 +1,9 @@
 <?php
+  if ($ad['name'] == '')
+    $pic_url = $target;
+  else
+    $pic_url = $ad["pic_url"];
+
   echo"<fieldset>
     <div class=\"control-group\">
       <label class=\"required\">Name</label>
@@ -21,7 +26,7 @@
     <div class=\"control-group\">
       <label class=\"required\">Picture Url</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"pic_url\" maxlength=\"120\" class=\"input-xl\" value=\"".$ad["pic_url"]."\">
+        <input type=\"text\" name=\"pic_url\" maxlength=\"120\" class=\"input-xl\" value=\"".$pic_url."\">
       <div>
     </div>
     <div class=\"control-group\">
