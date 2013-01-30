@@ -26,8 +26,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="cdotw_add.php">Add CD Of The Week</a><dd>
             <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a><dd>
             <dt>Concerts</dt>
-            <dd><a href="addconcert.php">Add a Concert</a><dd>
-            <dd><a href="viewallconcerts.php">View all Concerts</a><dd>	
+            <dd><a href="concert_add.php">Add a Concert</a><dd>
+            <dd><a href="concert_view_all.php">View all Concerts</a><dd>
             <dt>Custom Text Pages</dt>
             <dd><a href="viewdonate.php">View Donate Text</a><dd>
             <dd><a href="viewrecordstoreday.php">View Record Store Day Text</a><dd>
