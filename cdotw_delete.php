@@ -17,6 +17,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
+    <h1>Delete a CD of the Week</h1>
     <?php
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
@@ -25,7 +26,7 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
-      <a href="cdotw_view_all.php">Back to all CD of the Weeks</a>
+      <a href="cdotw_view_all.php">Back to all CD of the weeks</a>
       <p>
       <a href="cp.php">Back to the control panel</a>
     </div>

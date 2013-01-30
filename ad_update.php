@@ -1,7 +1,7 @@
 <?php
 
 $page_file = "ad_update.php";
-$page_title = "update Ad";
+$page_title = "Update Ad";
 
 require ("functions/main_fns.php");
 require ("functions/ads_fns.php");
@@ -38,7 +38,7 @@ if (!$_SESSION["logged_in"]) {
         $web_url = $_POST['web_url'];
 
         if (!$name || !$start_date || !$end_date || !$pic_url || !$web_url) {
-          echo '<div class="top-spacer_20 center error">Error - missing value(s)</div>';
+          echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
           $result = update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url);
           if ($result) {

@@ -17,6 +17,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
+    <h1>Delete an Ad</h1>
     <?php
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';

@@ -1,7 +1,7 @@
 <?php
 
 $page_file = "cdotw_update.php";
-$page_title = "update CD of the Week";
+$page_title = "Update CD of the Week";
 
 require ("functions/main_fns.php");
 require ("functions/cdotw_fns.php");
@@ -41,7 +41,7 @@ if (!$_SESSION["logged_in"]) {
         $date = $_POST['date'];
 
         if (!$artist || !$title || !$label || !$review || !$cd_pic_url || !$band_url || !$reviewer || !$date) {
-          echo '<div class="top-spacer_20 center error">Error - missing value(s)</div>';
+          echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
           $result = update_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band_url, $reviewer, $date);
           if ($result) {

@@ -35,7 +35,7 @@ if (!$_SESSION["logged_in"]) {
         $date = $_POST['date'];
 
         if (!$artist || !$title || !$label || !$review || !$cd_pic_url || !$band_url|| !$reviewer || !$date)
-          echo '<div class="top-spacer_20 center error">Error - missing value(s)</div>';
+          echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         else
           add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band_url, $reviewer, $date);
       }

@@ -35,7 +35,7 @@ if (!$_SESSION["logged_in"]) {
       $web_url = $_POST['web_url'];
 
       if (!$start_date || !$end_date || !$name || !$pic_url || !$web_url) {
-        echo '<div class="top-spacer_20 center error">Error - missing value(s)</div>';
+        echo '<div class="top-spacer_20 center error">Error - missing requried value(s)</div>';
       } else {
         add_ad($name, $start_date, $end_date, $pic_url, $web_url);
       }
