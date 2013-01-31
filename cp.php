@@ -17,7 +17,7 @@ if (!$_SESSION["logged_in"]) {
     <h1>Control Panel</h1>
       <table class="table no-header table-center" id="control_panel">
         <tr>
-          <td width="225px">
+          <td width="275px">
             <dt>Ads</dt>
             <dd><a href="ad_add.php">Add an Ad</a></dd>
             <dd><a href="ad_image_uploader.php">Upload an Ad Image</a></dd>
@@ -39,7 +39,7 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="image_uploader.php">Upload an Image</a><dd>
             <dd><a href="viewallimages.php">View all Images</a><dd>			
           </td>
-          <td>
+          <td width="275px">
             <dt>Modern Rock Madness</dt>
             <dd><a href="addmrmband.php">Add A Band</a><dd>
             <dd><a href="viewallmrmbands.php">View all Bands</a><dd>
@@ -58,7 +58,7 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="viewallstories.php">View all Stories</a></dd>
             <dd><a href="orderstories.php">Order Stories</a></dd>	
           </td>
-          <td>
+          <td width="275px">
             <dt>Top 11 @ 11</dt>
             <dd><a href="edittop11.php">Edit Top 11 @ 11</a><dd>
             <dd><a href="edittop11message.php">Edit Top 11 @ 11 Message</a><dd>
