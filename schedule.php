@@ -13,6 +13,7 @@ require ("partials/_header.php");
   <div class="nine columns content">
     <h1>Schedule</h1>
     <?php display_schedule(); ?>
+    <div class="footnote">**All times listed are in Eastern Standard Time (EST)</div>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
