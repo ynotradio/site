@@ -18,10 +18,12 @@ require ("partials/_header.php");
       } else {
         display_message();
         show_top11();
-        if (top11_status() != "open"){
+        if (top11_status() == "open") {
           display_form();
         } else {
-          echo "<div class=\"information center\">Sorry but voting is currently closed.\n<br>\nCheck back soon to vote for next week's Top 11 @ 11</div>";
+          echo "<div class=\"information center\">Sorry but voting is currently closed.
+                <br>
+                Check back soon to vote for next week's Top 11 @ 11</div>";
         }
       }
     ?>
