@@ -24,8 +24,6 @@
 .row:after, .clearfix:after { clear: both; }
 .row, .clearfix { zoom: 1; }  
 
-img { max-width: 100%; }
-
 .first { padding-left: 0px; }
 .last { padding-right: 0px; }
 [class*="column"] + [class*="column"].end { float: left; }
