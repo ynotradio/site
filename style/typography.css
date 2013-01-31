@@ -90,7 +90,7 @@ header iframe {
   border: 1px solid black;
   position: relative;
   top: -130px;
-  left: 475px;
+  left: 470px;
 }
 
 header .columns {
@@ -106,8 +106,8 @@ header img {
   color: black;
   font-size: 14px;
   font-weight: bold;
-  left: 665px;
-  max-width: 260px;
+  left: 660px;
+  max-width: 265px;
   position: relative;
   text-shadow: 0.1em 0.1em white;
   top: -277px;
