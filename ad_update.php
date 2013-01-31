@@ -20,7 +20,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>Update Ad</h1>
+    <h1>Update a Ad</h1>
     <?php
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';

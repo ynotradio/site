@@ -15,7 +15,7 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url) {
   }
 
   echo "<div class=\"center\"><h1>Success!</h1>".
-       "<h3>New Ad for ". $name. "has been saved</h3>".
+       "<h3>New Ad for ". $name. " has been saved</h3>".
        "<hr width=75%>";
   display_ad(get_ad(mysql_insert_id()));
   echo "</div>";
@@ -44,7 +44,7 @@ function display_ad($ad) {
 }
 
 function get_ad($id) {
- $query = "SELECT * FROM ads where id=".$id;
+  $query = "SELECT * FROM ads where id=".$id;
   $result = mysql_query($query);
 
   if (!$result)
