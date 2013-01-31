@@ -110,7 +110,7 @@ require ("partials/_header.php");
     </form>
     <a href="http://mailblast.vazoom.com/index.php?c=front&amp;m=changeEmail&amp;uk=4YAr3M" target="_blank">Change Your Email Address</a>
     <br>
-    <a href="http://mailblast.vazoom.com/index.php?c=front&amp;m=unsubscribe&amp;uk=4YAr3M" target="_blank">Unsubscription</a>
+    <a href="http://mailblast.vazoom.com/index.php?c=front&amp;m=unsubscribe&amp;uk=4YAr3M" target="_blank">Subscription Settings</a>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
