@@ -16,13 +16,13 @@ $deejays = get_deejays();
     <h1>DeeJays</h1>
     <div class="row">
       <div class="twelve columns">
-        <?php display_deejay($deejays[0]); ?>
+        <?php display_all_deejays($deejays[0]); ?>
       </div>
       <div class="six columns">
-        <?php display_deejay($deejays[1]); ?>
+        <?php display_all_deejays($deejays[1]); ?>
       </div>
       <div class="six columns">
-        <?php display_deejay($deejays[2]); ?>
+        <?php display_all_deejays($deejays[2]); ?>
       </div>
     </div>
   </div>

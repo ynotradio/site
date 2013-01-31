@@ -33,8 +33,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="viewrecordstoreday.php">View Record Store Day Text</a><dd>
             <dd><a href="viewcontests.php">View Contests Text</a><dd>
             <dt>Deejays</dt>
-            <dd><a href="adddeejay.php">Add a Deejay</a><dd>
-            <dd><a href="viewalldeejays.php">View all Deejays</a><dd>
+            <dd><a href="deejay_add.php">Add a Deejay</a><dd>
+            <dd><a href="deejay_view_all.php">View all Deejays</a><dd>
             <dt>Images</dt>
             <dd><a href="image_uploader.php">Upload an Image</a><dd>
             <dd><a href="viewallimages.php">View all Images</a><dd>			
