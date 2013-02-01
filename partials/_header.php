@@ -41,10 +41,10 @@ if ($page_file != "logout.php"){
         <iframe src="http://www.live365.com/mini/playlist.html?ads=0&cb=0&site=pro&irows=0&hide=TBW&rows=6&station=ynotradio&css=/scp/css/playlist.css" name="Live365Playlist" scrolling="AUTO" noresize frameborder="No" marginwidth="0" marginheight="0" width=445 height=125></iframe>
         <map name="Map">
           <area shape="rect" coords="20,5,310,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
-          <area shape="rect" coords="340,10,452,85" href="http://www.iradiophilly.com/index.php?idStation=42" alt="Listen Live" target="_new"/>
-          <area shape="rect" coords="337,93,447,102" href=" http://www.iradiophilly.com/pls/ynot.pls" target="_new" alt="iTunes">
-          <area shape="rect" coords="328,115,372,149" href="https://www.facebook.com/ynotradio" alt="facebook" target="_new"/>
-          <area shape="rect" coords="382,115,410,149" href="http://twitter.com/ynotradio" alt="twitter" target="_new"/>
+          <area shape="rect" coords="340,10,452,85" href="http://www.iradiophilly.com/index.php?idStation=42" alt="Listen Live" target="_blank"/>
+          <area shape="rect" coords="337,93,447,102" href=" http://www.iradiophilly.com/pls/ynot.pls" target="_blank" alt="iTunes">
+          <area shape="rect" coords="328,115,372,149" href="https://www.facebook.com/ynotradio" alt="facebook" target="_blank"/>
+          <area shape="rect" coords="382,115,410,149" href="http://twitter.com/ynotradio" alt="twitter" target="_blank"/>
           <area shape="rect" coords="414,115,447,149" href="mobile.php" alt="mobile"/>
         </map>
       <?php
