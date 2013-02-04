@@ -3,37 +3,37 @@
     <div class=\"control-group\">
       <label class=\"required\">Name</label>
       <div class=\"control\">
-      <input type=\"text\" name=\"name\" maxlength=\"50\" class=\"input-l\" value=\"".$deejay["name"]."\">
+      <input type=\"text\" name=\"name\" class=\"input-l\" value=\"".$deejay["name"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label class=\"required\">Email</label>
       <div class=\"control\">
-      <input type=\"text\" name=\"email\" maxlength=\"50\" class=\"input-l\" value=\"".$deejay["email"]."\">
+      <input type=\"text\" name=\"email\" class=\"input-l\" value=\"".$deejay["email"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label>Show</label>
       <div class=\"control\">
-      <input type=\"text\" name=\"show\" maxlength=\"50\" class=\"input-l\" value=\"".$deejay["show"]."\">
+      <input type=\"text\" name=\"show\" class=\"input-l\" value=\"".$deejay["show"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label>Social Text</label>
       <div class=\"control\">
-      <input type=\"text\" name=\"external_connect_text\" maxlength=\"50\" class=\"input-l\" value=\"".$deejay["external_connect_text"]."\">
+      <input type=\"text\" name=\"external_connect_text\" class=\"input-l\" value=\"".$deejay["external_connect_text"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label>Social Url</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"external_connect_url\" maxlength=\"120\" class=\"input-xl\" value=\"".$deejay["external_connect_url"]."\">
+        <input type=\"text\" name=\"external_connect_url\" class=\"input-xl\" value=\"".$deejay["external_connect_url"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label>Picture</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"pic\" maxlength=\"120\" class=\"input-xl\" value=\"".$deejay["pic"]."\">
+        <input type=\"text\" name=\"pic\" class=\"input-xl\" value=\"".$deejay["pic"]."\">
       </div>
     </div>
     <div class=\"form-actions\">";

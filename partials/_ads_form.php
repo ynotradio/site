@@ -8,31 +8,31 @@
     <div class=\"control-group\">
       <label class=\"required\">Name</label>
       <div class=\"control\">
-      <input type=\"text\" name=\"name\" maxlength=\"55\" class=\"input-l\" value=\"".$ad["name"]."\">
+      <input type=\"text\" name=\"name\" class=\"input-l\" value=\"".$ad["name"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label class=\"required\">Start Date</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"start_date\" maxlength=\"25\" class=\"date\" placeholder=\"YYYY/MM/DD\" value=\"".$ad["start_date"]."\">
+        <input type=\"text\" name=\"start_date\" class=\"date\" placeholder=\"YYYY/MM/DD\" value=\"".$ad["start_date"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label class=\"required\">End Date</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"end_date\" maxlength=\"25\" class=\"date\" placeholder=\"YYYY/MM/DD\" value=\"".$ad["end_date"]."\">
+        <input type=\"text\" name=\"end_date\" class=\"date\" placeholder=\"YYYY/MM/DD\" value=\"".$ad["end_date"]."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label class=\"required\">Picture Url</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"pic_url\" maxlength=\"120\" class=\"input-xl\" value=\"".$pic_url."\">
+        <input type=\"text\" name=\"pic_url\" class=\"input-xl\" value=\"".$pic_url."\">
       </div>
     </div>
     <div class=\"control-group\">
       <label class=\"required\">Link Url</label>
       <div class=\"control\">
-        <input type=\"text\" name=\"web_url\" maxlength=\"120\" class=\"input-xl\" value=\"".$ad["web_url"]."\">
+        <input type=\"text\" name=\"web_url\" class=\"input-xl\" value=\"".$ad["web_url"]."\">
       </div>
     </div>
     <div class=\"form-actions\">";
