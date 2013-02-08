@@ -134,7 +134,7 @@ function update_deejay($id, $name, $show, $email, $external_connect_text, $exter
   $result = mysql_query($update);
 
   if (!$result)
-    echo "There was an error updaing: <br>" . $update;
+    echo "There was an error updating: <br>" . $update;
   else
     return $result;
 }

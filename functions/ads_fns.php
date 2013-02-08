@@ -86,7 +86,7 @@ function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url) {
   $result = mysql_query($update);
 
   if (!$result)
-    echo "There was an error updaing: <br>" . $update;
+    echo "There was an error updating: <br>" . $update;
   else
     return $result;
 }

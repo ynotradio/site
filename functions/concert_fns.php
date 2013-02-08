@@ -128,7 +128,7 @@ function update_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $
   $result = mysql_query($update);
 
   if (!$result)
-    echo "There was an error updaing: <br>" . $update;
+    echo "There was an error updating: <br>" . $update;
   else
     return $result;
 }
