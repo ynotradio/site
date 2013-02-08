@@ -45,8 +45,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="viewallmrmbands.php">View all Bands</a><dd>
             <dd><a href="viewallmrmmatches.php">Manage Matches</a><dd>
             <dt>Music</dt>
-            <dd><a href="addmusic.php">Add Music</a><dd>
-            <dd><a href="viewallmusic.php">View all Music</a><dd>		
+            <dd><a href="music_add.php">Add Music</a><dd>
+            <dd><a href="music_view_all.php">View all Music</a><dd>
             <dt>On Demand</dt>
             <dd><a href="addondemand.php">Add an On Demand entry</a><dd>
             <dd><a href="viewallondemands.php">View all On Demands</a><dd>

@@ -1,6 +1,47 @@
 <?php
 
-function display_music() {
+function add_music($date, $artist, $song, $url) {
+  $date = mysql_real_escape_string($date);
+  $artist = mysql_real_escape_string($artist);
+  $song = mysql_real_escape_string($song);
+  $url = mysql_real_escape_string($url);
+
+  $insert = "INSERT INTO music VALUES (id, '".$artist. "', '". $song ."', '". $url ."', '". $date ."', 'n')";
+  $result = mysql_query($insert);
+
+  if (!$result) {
+    echo $insert ."<br>";
+    die('Error Inserting into Database.');
+  }
+
+  echo "<div class=\"center\"><h1>Success!</h1>".
+       "<h3>New Music, ". $artist. " - ". $song. ", has been saved</h3>".
+       "<hr width=75%>";
+  display_music(get_music(mysql_insert_id()));
+  echo "</div>";
+}
+
+function delete_music($id){
+  $update = "UPDATE music SET deleted ='y' where id=".$id;
+  $result = mysql_query($update);
+
+  if (!$result) {
+    echo "'Error deleting the music entry from the database: ". $update ."<br>";
+  } else {
+    $music = get_music($id);
+    echo "<div class=\"center\"><h1>Success!</h1>".
+      "<h3>The music entry <span class=\"success\">". $music['artist'] ." - ".  $music['song'] ."</span> has been deleted.</h3></div>";
+  }
+}
+
+function display_music($music) {
+    echo "<br><b>Date:</b> ". $music['date'].
+    "<br><b>Artist:</b> ". $music['artist'].
+    "<br><b>Song:</b> ". $music['song'].
+    '<br><b>Song URL:</b> <a href="'. $music['url'] . '" target="_blank">'.$music['url'] .'</a> ';
+}
+
+function display_all_music() {
   $date_query = "SELECT date FROM music WHERE deleted = 'n' AND date > CURDATE() - INTERVAL 6 MONTH GROUP BY date ORDER BY date DESC";
   $date_result = mysql_query($date_query);
 
@@ -35,28 +76,30 @@ function display_music() {
   echo "</dl>";
 }
 
-function add_music($date, $artist, $song, $url) {
+function get_music($id) {
+  $query = "SELECT * FROM music where id=".$id;
+  $result = mysql_query($query);
+
+  if (!$result)
+    echo 'No results in database.';
+  else
+    return mysql_fetch_assoc($result);
+}
+
+function update_music($id, $date, $artist, $song, $url) {
+  $id = mysql_real_escape_string($id);
   $date = mysql_real_escape_string($date);
   $artist = mysql_real_escape_string($artist);
   $song = mysql_real_escape_string($song);
-  $ticketurl = mysql_real_escape_string($url);
+  $url = mysql_real_escape_string($url);
 
-  $insert = "INSERT INTO music VALUES (id, '".$artist. "', '". $song ."', '". $url ."', '". $date ."', 'n')";
-  $result = mysql_query($insert);
+  $update = "UPDATE music SET date=\"$date\", artist=\"$artist\", song=\"$song\", url=\"$url\" WHERE id=".$id;
+  $result = mysql_query($update);
 
-  if (!$result) {
-    echo $insert ."<br>";
-    die('Error Inserting into Database.');
-  }
-
-  echo "<center><h1>Success!</h1>".
-    "<p>".
-    "<br><hr width=75%>".
-    "<br><b>Date:</b> ". $date.
-    "<br><b>Artist:</b> ". $artist.
-    "<br><b>Song:</b> ". $song.
-    '<br><b>Ticket URL:</b> <a href="'. $ticketurl . '">'.$ticketurl .'</a> '.
-    "<p>";
+  if (!$result)
+    echo "There was an error updating: <br>" . $update;
+  else
+    return $result;
 }
 
 function view_all_music(){
@@ -69,80 +112,12 @@ function view_all_music(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
-  {
+  for ($i=1; $i<=mysql_num_rows($result);$i++) {
     $info = mysql_fetch_assoc($result);
-    echo
-      "<br><b>Date: </b>". $info['date'].
-      "<br><b>Artist: </b>". $info['artist'].
-      "<br><b>Song: </b>". $info['song'].
-      "<br><b>Song URL: </b>". $info['url'].
-      '<br>[ <a href="editmusic.php?id=' .$info[id]. '">Edit</a> | <a href="deletemusic.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    display_music($info);
+    echo'<br>[ <a href="music_update.php?id=' .$info[id]. '">Edit</a> | <a href="music_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
   echo '</ol>';
-}
-
-function edit_music($id) {
-  $query = "SELECT * FROM music where id=".$id;
-  $result = mysql_query($query);
-
-  if (!$result) {
-    die('No results in database.');
-  }
-  $info = mysql_fetch_assoc($result);
-  echo '<center><h3>Edit Music:</h3></center><p>';
-
-  echo '<form action="savemusic.php?id='.$info["id"].'" method="post">
-    <table id="edit_music" border="0">
-    <tr>
-    <td>Date:</td>
-    <td><input type="text" value="'.$info["date"].'" name="date" maxlength="25" size="25"></td>
-    </tr>
-    <tr>
-    <td>Artist:</td>
-    <td><input type="text" value="'.$info["artist"].'" name="artist" maxlength="50" size="50"></td>
-    </tr>
-    <tr>
-    <td>Song:</td>
-    <td><input type="text" value="'.$info["song"].'" name="song" maxlength="50" size="50"></td>
-    </tr>
-    <tr>
-    <td>Song URL:</td>
-    <td><input type="text" value="'.$info["url"].'" name="url" maxlength="100" size="100"></td>
-    </tr>
-    <tr><td colspan="2">
-    <input type="submit" value="Save Music"></td></tr>
-    </table>
-    </form>';
-}
-
-function save_music($id, $date, $artist, $song, $url) {
-  $id = mysql_real_escape_string($id);
-  $date = mysql_real_escape_string($date);
-  $artist = mysql_real_escape_string($artist);
-  $song = mysql_real_escape_string($song);
-  $url = mysql_real_escape_string($url);
-
-  $update = "UPDATE music SET date=\"$date\", artist=\"$artist\", song=\"$song\", url=\"$url\" WHERE id=".$id;
-  $result = mysql_query($update);
-
-  if (!$result) {
-    echo $update ."<br>";
-    die('Error Updating Database.');
-  }
-}
-
-function delete_music($id){
-  $update = "UPDATE music SET deleted ='y' where id=".$id;
-  $result = mysql_query($update);
-
-  if (!$result) {
-    echo $update ."<br>";
-    die('Error Updating Database.');
-  }
-
-  echo "<center><h1>Success!</h1>".
-    "<p><h3>The New Music entry has been deleted.</h3></center><p>";
 }
 
 ?>
