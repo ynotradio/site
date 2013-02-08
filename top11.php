@@ -14,7 +14,7 @@ require ("partials/_header.php");
     <h1>Top 11 @ 11</h1>
     <?php 
       if ($_POST['action']) {
-        require ("partials/__top11save.php");
+        require ("partials/_top11save.php");
       } else {
         display_message();
         show_top11();
