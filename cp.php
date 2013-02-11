@@ -48,8 +48,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="music_add.php">Add Music</a><dd>
             <dd><a href="music_view_all.php">View all Music</a><dd>
             <dt>On Demand</dt>
-            <dd><a href="addondemand.php">Add an On Demand entry</a><dd>
-            <dd><a href="viewallondemands.php">View all On Demands</a><dd>
+            <dd><a href="ondemand_add.php">Add an On Demand entry</a><dd>
+            <dd><a href="ondemand_view_all.php">View all On Demands</a><dd>
             <dt>Schedule</dt>
             <dd><a href="addschedule.php">Add to Schedule</a><dd>
             <dd><a href="viewschedule.php">View Schedule</a><dd>
