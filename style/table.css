@@ -89,7 +89,7 @@
   border-top: none;
 }
 
-.table tbody .subheader:nth-child(odd) td, .table tbody .subheader:nth-child(even) td {
+.table tbody .subheader:nth-child(odd) td, .table tbody .subheader:nth-child(even) td, .subheader a {
   background: black;
   border-top: black;
   color: white;

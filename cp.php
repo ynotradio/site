@@ -51,8 +51,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
             <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>
             <dt>Schedule</dt>
-            <dd><a href="addschedule.php">Add to Schedule</a></dd>
-            <dd><a href="viewschedule.php">View Schedule</a></dd>
+            <dd><a href="schedule_add.php">Add to Schedule</a></dd>
+            <dd><a href="schedule_view_all.php">View Schedule</a></dd>
             <dt>Stories</dt>
             <dd><a href="addstory.php">Add a Story</a></dd>
             <dd><a href="viewallstories.php">View all Stories</a></dd>

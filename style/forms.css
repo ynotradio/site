@@ -504,6 +504,12 @@ input[disabled], textarea[disabled], select[disabled] {
   padding: 5px 28px 5px 8px !important;
 }
 
+.time {
+  width: 100px;
+  background: url(../icons/clock-padded.png) no-repeat right 50%;
+  padding: 5px 30px 5px 8px !important;
+}
+
 input.currency:before {
   content: "$";
   float: left;
