@@ -193,7 +193,6 @@ function update_schedule($id, $host, $date, $start_time, $end_time, $note){
   $date = mysql_real_escape_string($date);
   $start_time = mysql_real_escape_string($start_time);
   $end_time = mysql_real_escape_string($end_time);
-  $host = mysql_real_escape_string($host);
   $note = mysql_real_escape_string($note);
 
   if (($timestamp = strtotime($date)) !== false) {

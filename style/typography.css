@@ -104,11 +104,12 @@ header img {
 
 #on-air {
   color: black;
-  font-size: 14px;
+  font-size: 100%;
   font-weight: bold;
   left: 660px;
   max-width: 265px;
   position: relative;
+  text-align: center;
   text-shadow: 0.1em 0.1em white;
   top: -277px;
 }

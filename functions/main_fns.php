@@ -118,11 +118,15 @@ function active_ad_count(){
 }
 
 function on_air(){
-  $query = "SELECT host FROM schedule WHERE date = date(now()) AND time(now()) > start_time AND deleted='n' ORDER BY start_time DESC LIMIT 1";
+  $query = "SELECT host FROM schedule WHERE date = date(now()) AND time(now()) > start_time AND time(now()) < end_time AND deleted='n' ORDER BY start_time DESC LIMIT 1";
   $result = mysql_query($query);
 
   $info = mysql_fetch_assoc($result);
 
-  return $info['host'];
+  $display_name = str_replace("<br>", " ", $info['host']);
+  $display_name = str_replace("<i>", "", $display_name);
+  $display_name = str_replace("</i>", "", $display_name);
+ 
+  return substr($display_name, 0, 35);
 }
 ?>
