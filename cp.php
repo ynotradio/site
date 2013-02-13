@@ -54,9 +54,9 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="schedule_add.php">Add to Schedule</a></dd>
             <dd><a href="schedule_view_all.php">View Schedule</a></dd>
             <dt>Stories</dt>
-            <dd><a href="addstory.php">Add a Story</a></dd>
-            <dd><a href="viewallstories.php">View all Stories</a></dd>
-            <dd><a href="orderstories.php">Order Stories</a></dd>
+            <dd><a href="story_add.php">Add a Story</a></dd>
+            <dd><a href="story_view_all.php">View all Stories</a></dd>
+            <dd><a href="stories_order.php">Order Stories</a></dd>
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>
