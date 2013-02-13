@@ -36,8 +36,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="deejay_add.php">Add a Deejay</a></dd>
             <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
             <dt>Images</dt>
-            <dd><a href="image_uploader.php">Upload an Image</a></dd>
-            <dd><a href="viewallimages.php">View all Images</a></dd>
+            <dd><a href="image_add.php">Upload an Image</a></dd>
+            <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
           <td width="275px">
             <dt>Modern Rock Madness</dt>

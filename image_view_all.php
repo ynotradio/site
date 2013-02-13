@@ -1,10 +1,10 @@
 <?php
 
-$page_file = "ad_image_uploader.php";
-$page_title = "Ad Image Uploader";
-$upload_type = "ads";
+$page_file = "image_view_all.php";
+$page_title = "View All Images";
 
 require ("functions/main_fns.php");
+require ("functions/image_fns.php");
 require ("partials/_header.php");
 
 if (!$_SESSION["logged_in"]) {
@@ -15,8 +15,9 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>Upload an Ad Image</h1>
-      <?php require ("partials/_image_upload_form.php"); ?>
+    <h1>View all Images</h1>
+      <?php view_all_images(); ?>
+    <div class="top-spacer_20">
       <a href="cp.php">Back to the control panel</a>
     </div>
   </div>

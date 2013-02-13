@@ -1,11 +1,13 @@
 <?php
 
-$page_file = "ad_image_uploader.php";
-$page_title = "Ad Image Uploader";
-$upload_type = "ads";
+$page_file = "image_add.php";
+$page_title = "Upload an Image";
 
 require ("functions/main_fns.php");
+require ("functions/image_fns.php");
 require ("partials/_header.php");
+
+$action = $_POST['action'];
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
@@ -15,8 +17,9 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>Upload an Ad Image</h1>
-      <?php require ("partials/_image_upload_form.php"); ?>
+    <h1>Upload an Image</h1>
+    <?php require ("partials/_image_upload_form.php"); ?>
+    <div class="top-spacer_20">
       <a href="cp.php">Back to the control panel</a>
     </div>
   </div>
