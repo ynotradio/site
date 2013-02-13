@@ -103,7 +103,7 @@ function delete_cdotw($id){
   $result = mysql_query($update);
 
   if (!$result) {
-    echo "'Error deleting the ad from the database: ". $update ."<br>";
+    echo "'Error deleting the CD of the week from the database: ". $update ."<br>";
   } else {
     $cdotw = get_cdotw($id);
     echo "<div class=\"center\"><h1>Success!</h1>".

@@ -28,7 +28,7 @@ function delete_on_demand($id){
   $result = mysql_query($update);
 
   if (!$result) {
-    echo "'Error deleting the deejay from the database: ". $update ."<br>";
+    echo "'Error deleting the on demand entry from the database: ". $update ."<br>";
   } else {
     $ondemand = get_on_demand($id);
     echo "<div class=\"center\"><h1>Success!</h1>".

@@ -45,7 +45,7 @@ function delete_schedule($id){
   $result = mysql_query($update);
 
   if (!$result) {
-    echo "'Error deleting the deejay from the database: ". $update ."<br>";
+    echo "'Error deleting the schedule from the database: ". $update ."<br>";
   } else {
     $schedule = get_schedule($id);
     echo "<div class=\"center\"><h1>Success!</h1>".
