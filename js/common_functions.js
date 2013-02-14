@@ -47,7 +47,7 @@
 }(document, 'script', 'facebook-jssdk'));</script>
 
 <?php
-  if ($page_file == "top11.php") {
+  if ($page_file == "top11.php" || $page_file == "top11_vote_add.php") {
 ?>
 <script type="text/javascript">
   $('#top11_write_in').live('click', function(){
@@ -59,6 +59,6 @@
     }
   });
 </script>
-<?php
-}
+<?php } ?>
+
 

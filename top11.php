@@ -14,12 +14,12 @@ require ("partials/_header.php");
     <h1>Top 11 @ 11</h1>
     <?php 
       if ($_POST['action']) {
-        require ("partials/_top11save.php");
+        require ("partials/_top11_save.php");
       } else {
-        display_message();
+        display_top11_message();
         show_top11();
         if (top11_status() == "open") {
-          display_form();
+          display_form($page_file);
         } else {
           echo "<div class=\"information center\">Sorry but voting is currently closed.
                 <br>

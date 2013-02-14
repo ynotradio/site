@@ -13,7 +13,7 @@
   } else {
     $ip = $_SERVER['REMOTE_ADDR'];
     //$ip = rand(0, 1000000);
-    if ($_SERVER['HTTP_REFERER'] == "http://ynotradio.net/addtop11vote.php" || check_ip($ip) == "true") {
+    if ($by_pass_ip_check || check_ip($ip)) {
       $count = count($top11picks);	
       for($i=0; $i < $count; $i++)
       {

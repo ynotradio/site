@@ -367,3 +367,8 @@ footer a, footer a:hover {
 #control_panel td {
   vertical-align: top;
 }
+
+.sample-below {
+  border-bottom: 1px solid black;
+  padding-bottom: 10px;
+}

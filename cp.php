@@ -60,12 +60,12 @@ if (!$_SESSION["logged_in"]) {
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>
-            <dd><a href="edittop11.php">Edit Top 11 @ 11</a></dd>
-            <dd><a href="edittop11message.php">Edit Top 11 @ 11 Message</a></dd>
-            <dd><a href="addtop11song.php">Add Top 11 @ 11 Songs</a></dd>
-            <dd><a href="viewalltop11songs.php">View all Top 11 @ 11 Songs</a></dd>
-            <dd><a href="top11operations.php">Top 11 @ 11 Operations</a></dd>
-            <dd><a href="addtop11vote.php">Add Top 11 @ 11 Vote</a></dd>
+            <dd><a href="top11_update.php">Update Top 11 @ 11</a></dd>
+            <dd><a href="top11_update_message.php">Update Top 11 @ 11 Message</a></dd>
+            <dd><a href="top11_song_add.php">Add Top 11 @ 11 Songs</a></dd>
+            <dd><a href="top11_song_view_all.php">View all Top 11 @ 11 Songs</a></dd>
+            <dd><a href="top11_operations.php">Top 11 @ 11 Operations</a></dd>
+            <dd><a href="top11_vote_add.php">Add Top 11 @ 11 Vote</a></dd>
             <dt>Year End Picks & Polls</dt>
             <dd><a href="addyearendstaff.php">Add Year End Staff Pick</a></dd>
             <dd><a href="viewallyearendstaff.php">View all Year End Staff Picks</a></dd>

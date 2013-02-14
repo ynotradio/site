@@ -1,7 +1,7 @@
 <?php
 
-function display_featured_concerts(){
-  $results = get_featured_concerts();
+function display_featured_concerts($max){
+  $results = get_featured_concerts($max);
   echo "<div class=\"feature-box\">";
   echo "<h3>Featured Concerts</h3><p>\n";
   if  (mysql_num_rows($results) > 0) {
@@ -22,8 +22,8 @@ function display_featured_concerts(){
   }
 }
 
-function get_featured_concerts(){
-	$query = "SELECT DATE_FORMAT(date, '%a %M %D' ) as fdate, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl FROM concerts WHERE deleted = 'n' AND date >= date(now()) AND band_pic_url like 'http%' AND featured = 'Yes' AND ticketinfo != 'SOLD OUT' ORDER BY date LIMIT 0,4";
+function get_featured_concerts($limit){
+	$query = "SELECT DATE_FORMAT(date, '%a %M %D' ) as fdate, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl FROM concerts WHERE deleted = 'n' AND date >= date(now()) AND band_pic_url like 'http%' AND featured = 'Yes' AND ticketinfo != 'SOLD OUT' ORDER BY date LIMIT 0,$limit";
 
 	$result = mysql_query($query);
 
