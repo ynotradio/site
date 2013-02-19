@@ -11,6 +11,9 @@
 
 </script>
 
+<?php
+  if ($page_file == "ymail.php") {
+?>
 <script type="text/javascript">
   function setDays() {
     var m = document.getElementById("send_date_month").value;
@@ -37,6 +40,7 @@
     return true;
   }
 </script>
+<?php } ?>
 
 <script>(function(d, s, id) {
   var js, fjs = d.getElementsByTagName(s)[0];
