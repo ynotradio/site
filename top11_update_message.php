@@ -45,7 +45,7 @@ if (!$_SESSION["logged_in"]) {
       <input type="submit" value="Update Top 11 Message" class="btn-info">
     </form>
     <?php } ?>
-    <a href="cp.php">Back to the control panel</a>
+    <a href="cp.php">Control Panel</a>
   </div>
 </div> <!-- end of row div -->
 <?php

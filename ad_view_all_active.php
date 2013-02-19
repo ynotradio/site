@@ -18,7 +18,7 @@ if (!$_SESSION["logged_in"]) {
     <h1>All Active Ads</h1>
       <?php view_all_active_ads(); ?>
     <div class="top-spacer_20">
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

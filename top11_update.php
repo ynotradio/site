@@ -49,7 +49,7 @@ if (!$_SESSION["logged_in"]) {
     <?php require ("partials/_top11_form.php"); ?>
     </form>
     <?php } ?>
-    <a href="cp.php">Back to the control panel</a>
+    <a href="cp.php">Control Panel</a>
   </div>
 </div> <!-- end of row div -->
 <?php }

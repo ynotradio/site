@@ -47,10 +47,10 @@ if (!$_SESSION["logged_in"]) {
       </ul>';
       }
       if ($action != '')
-        echo "<p>\n<a href=\"top11_operations.php\">Back to Top 11 Operations</a>";
+        echo "<p>\n<a href=\"top11_operations.php\">Top 11 Operations</a>";
   ?>
   <p>
-  <a href="cp.php">Back to the control panel</a>
+  <a href="cp.php">Control Panel</a>
   </div>
 </div> <!-- end of row div -->
 <?php }

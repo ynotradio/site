@@ -18,7 +18,7 @@ if (!$_SESSION["logged_in"]) {
     <h1>All (last 64) CDs of the Weeks</h1>
       <?php view_all_cdotw(); ?>
     <div class="top-spacer_20">
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

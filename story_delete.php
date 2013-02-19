@@ -26,9 +26,9 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
-      <a href="story_view_all.php">Back to view all stories</a>
+      <a href="story_view_all.php">View all Stories</a>
       <p>
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

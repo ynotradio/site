@@ -20,7 +20,7 @@ if (!$_SESSION["logged_in"]) {
     <div class="top-spacer_20">
       <a href="stories_order.php">Order Stories</a>
       <p>
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

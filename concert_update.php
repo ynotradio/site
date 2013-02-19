@@ -53,9 +53,9 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
-      <a href="concert_view_all.php">Back to all Concerts</a>
+      <a href="concert_view_all.php">Vie wall Concerts</a>
       <p>
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

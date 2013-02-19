@@ -18,7 +18,7 @@ if (!$_SESSION["logged_in"]) {
     <h1>View all Top 11 Songs</h1>
       <?php view_all_top11_songs(); ?>
     <div class="top-spacer_20">
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

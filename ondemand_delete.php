@@ -26,9 +26,9 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
-      <a href="ondemand_view_all.php">Back to view all on demands</a>
+      <a href="ondemand_view_all.php">View all On Demands</a>
       <p>
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

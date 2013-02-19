@@ -22,7 +22,7 @@ require ("partials/_header.php");
     <div class="top-spacer_20">
       <a href="top11_vote_add.php">Add another Top 11 Vote</a>
       <p>
-      <a href="cp.php">Back to the control panel</a>
+      <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

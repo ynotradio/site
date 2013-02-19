@@ -45,7 +45,7 @@ if (!$_SESSION["logged_in"]) {
         echo "<a href=\"ad_image_uploader.php\">Upload another ad image</a>";
     ?>
     <p>
-    <a href="cp.php">Back to Control Panel</a>
+    <a href="cp.php">Control Panel</a>
   </div>
 </div>
 <?php

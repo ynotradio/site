@@ -74,7 +74,7 @@ if (!$_SESSION["logged_in"]) {
          </td>
       </tr>
     </table>
-    <a href="logoff.php">Exit the control panel</a>
+    <a href="logoff.php">Exit the Control Panel</a>
   </div>
 </div> <!-- end of row div -->
 <?php }
