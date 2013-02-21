@@ -72,20 +72,10 @@ function get_custom_text($id) {
     return mysql_fetch_assoc($result);
 }
 
-function save_custom_text($id, $html) {
-  $id = mysql_real_escape_string($id);
-  $html = mysql_real_escape_string($html);
-
-  $update = "UPDATE custom_texts SET html=\"$html\" WHERE id=".$id;
-  $result = mysql_query($update);
-
-  if (!$result) {
-    echo $update ."<br>";
-    die('Error Updating Database.');
-  }
-}
-
 function update_custom_text($id, $title, $html) {
+  $html = mysql_real_escape_string($html);
+  $title = mysql_real_escape_string($title);
+
   $update = "UPDATE custom_texts SET title=\"$title\", html=\"$html\" WHERE id=".$id;
   $result = mysql_query($update);
 

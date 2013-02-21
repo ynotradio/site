@@ -397,6 +397,8 @@ function update_top11_date($date){
 }
 
 function update_top11_message($message){
+  $message = mysql_real_escape_string($message);
+
   $update = 'UPDATE top11message SET message =\''.$message .'\' WHERE id=1';
   $result = mysql_query($update);
 
