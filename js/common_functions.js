@@ -42,14 +42,6 @@
 </script>
 <?php } ?>
 
-<script>(function(d, s, id) {
-  var js, fjs = d.getElementsByTagName(s)[0];
-  if (d.getElementById(id)) {return;}
-  js = d.createElement(s); js.id = id;
-  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=272336702790140";
-  fjs.parentNode.insertBefore(js, fjs);
-}(document, 'script', 'facebook-jssdk'));</script>
-
 <?php
   if ($page_file == "top11.php" || $page_file == "top11_vote_add.php") {
 ?>

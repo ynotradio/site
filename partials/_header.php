@@ -18,9 +18,9 @@ if ($page_file != "logout.php"){
       <title><?php if ($page_title) { echo "$page_title | "; } ?> Y-Not Radio </title>
       <link rel="shortcut icon" href="/imgs/favicon.ico" />
       <meta property="og:image"
-        content="http://ynotradio.net/imgs/ynot.jpg"/>
+        content="http://www.ynotradio.net/imgs/ynot.jpg"/>
       <meta property="og:url"
-        content="http://ynotradio.net"/>
+        content="http://www.ynotradio.net"/>
       <meta property="og:title"
           content="YNot Radio"/>
       <meta property="og:description"
@@ -35,6 +35,13 @@ if ($page_file != "logout.php"){
     </head>
     <body>
       <div id="fb-root"></div>
+      <script>(function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=272336702790140";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'facebook-jssdk'));</script>
       <div id="container">
       <header>
         <img src="imgs/header_front.png" alt="logo" usemap="#Map"/>
