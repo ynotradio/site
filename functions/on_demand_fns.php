@@ -78,6 +78,9 @@ function on_demand_player($id) {
 
 function paginate($lastpage, $targetpage, $adjacents, $page, $lpm1){
   $pagination = "";
+  $prev = $page - 1;							          //previous page is page - 1
+  $next = $page + 1;							          //next page is page + 1
+
   if($lastpage > 1) {
     $pagination .= "<div class=\"pagination center\">";
     //previous button
@@ -199,8 +202,6 @@ function show_on_demand($sort) {
 
     /* Setup page vars for display. */
     if ($page == 0) $page = 1;					      //if no page var is given, default to 1.
-    $prev = $page - 1;							          //previous page is page - 1
-    $next = $page + 1;							          //next page is page + 1
     $lastpage = ceil($total_pages/$limit);		//lastpage is = total pages / items per page, rounded UP
     $lpm1 = $lastpage - 1;						        //last page minus 1
 
