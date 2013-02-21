@@ -12,7 +12,7 @@ require ("partials/_header.php");
 <div class="row">
   <div class="nine columns content">
     <?php
-      $custom_text = find_custom_text_by_permalink('contest');
+      $custom_text = find_custom_text_by_permalink('contests');
       echo "<h1>".$custom_text['title']."</h1>" .
       $custom_text['html'];
     ?>
