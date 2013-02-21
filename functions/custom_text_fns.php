@@ -1,59 +1,82 @@
 <?php
 
-function display_custom_text($id){
-  $query = "SELECT * FROM custom_text WHERE id =".$id;
-  $result = mysql_query($query);
+function add_custom_text($title, $html) {
+  $permalink = create_permalink($title);
+
+  $insert = "INSERT INTO custom_texts VALUES (id, '".$title ."', '".$permalink. "', '".$html. "', 'active')";
+  $result = mysql_query($insert);
 
   if (!$result) {
-    echo "There was an error getting this text";
+    echo $insert ."<br>";
+    die('Error Inserting into Database.');
+  }
+
+  echo "<div class=\"center\"><h1>Success!</h1>".
+       "<h3>New Custom Text has been saved</h3>".
+       "<hr width=75%>";
+  display_custom_text(get_custom_text(mysql_insert_id()));
+  echo "</div>";
+}
+
+function create_permalink($title) {
+  $permalink = strtolower($title);
+  $permalink = str_replace(' ', '-', $permalink);
+
+  if (!valid_permalink($permalink)) {
+    $count = 0;
+    do {
+      $count = $count + 1;
+      $temp_permalink = $permalink . '-' . $count;
+    } while (valid_permalink($temp_permalink) == false);
+
+    $permalink = $temp_permalink;
+  }
+  return $permalink;
+}
+
+function delete_custom_text($id) {
+  $update = "UPDATE custom_texts SET status ='deleted' WHERE id=".$id;
+  $result = mysql_query($update);
+
+  if (!$result) {
+    echo "'Error deleting the custom text from the database: ". $update ."<br>";
   } else {
-    $info = mysql_fetch_assoc($result);
-    echo $info['html'];
+    $custom_text = get_custom_text($id);
+    echo "<div class=\"center\"><h1>Success!</h1>".
+    "<h3>The custom text <span class=\"success\">". $custom_text['title'] ."</span> has been deleted.</h3></div>";
   }
 }
 
-function view_custom_text($id) {
-  $query = "SELECT * FROM custom_text WHERE id =".$id;
-  $result = mysql_query($query);
-
-  if (!$result) {
-    echo "There was an error getting this text";
-  } else {
-    $info = mysql_fetch_assoc($result);
-    echo $info['html'].
-      '<p>'.
-      '<center><h3> - - - - - - - - - - - - - - - - - - - - - - - </h3>'.
-      '[ <a href="editcustomtext.php?id=' .$info[id]. '">Edit</a> ]</center>';
-  }
+function display_custom_text($custom_text) {
+  echo "<b>Title:</b> ". $custom_text['title'].
+  "<br><b>Permalink:</b> ". $custom_text['permalink'].
+  "<br><b>Url:</b> <a href=\"pages.php?page=".$custom_text['permalink']."\" target=\"_new\">http://www.ynotradio.net/pages.php?page=".$custom_text['permalink']."</a>".
+  "<br><b>Copy:</b><br>". $custom_text['html'];
 }
 
-function edit_custom_text($id){
-  $query = "SELECT * FROM custom_text where id=".$id;
+function find_custom_text_by_permalink($permalink) {
+  $query = "SELECT * FROM custom_texts WHERE status = 'active' AND permalink = '".$permalink."'";
   $result = mysql_query($query);
 
-  if (!$result) {
-    die('No results in database.');
-  }
+  if ($result)
+    return mysql_fetch_assoc($result);
+}
 
-  $info = mysql_fetch_assoc($result);
-  echo '<center><h3>Edit Custom Text:</h3></center><p>';
-  echo '<form action="savecustomtext.php?id='.$info["id"].'" method="post">
-    <table id="edit_customtext" border="0">
-    <tr>
-    <td>Text:</td>
-    <td><textarea name="html" cols=100 rows=25>'. $info["html"].'</textarea></td>
-    </tr>
-    <tr><td colspan="2">
-    <input type="submit" value="Save Custom Text"></td></tr>
-    </table>
-    </form>';
+function get_custom_text($id) {
+  $query = "SELECT * FROM custom_texts WHERE status = 'active' AND id=".$id;
+  $result = mysql_query($query);
+
+  if (!$result)
+    echo 'No results in database.';
+  else
+    return mysql_fetch_assoc($result);
 }
 
 function save_custom_text($id, $html) {
   $id = mysql_real_escape_string($id);
   $html = mysql_real_escape_string($html);
 
-  $update = "UPDATE custom_text SET html=\"$html\" WHERE id=".$id;
+  $update = "UPDATE custom_texts SET html=\"$html\" WHERE id=".$id;
   $result = mysql_query($update);
 
   if (!$result) {
@@ -61,4 +84,45 @@ function save_custom_text($id, $html) {
     die('Error Updating Database.');
   }
 }
+
+function update_custom_text($id, $title, $html) {
+  $update = "UPDATE custom_texts SET title=\"$title\", html=\"$html\" WHERE id=".$id;
+  $result = mysql_query($update);
+
+  if (!$result)
+    echo "There was an error updating: <br>" . $update;
+  else
+    return $result;
+}
+
+function valid_permalink($permalink){
+  $count = "SELECT count('permalink') AS 'permalink' FROM custom_texts WHERE permalink ='".$permalink."'";
+  $result = mysql_query($count);
+
+  $info = mysql_fetch_assoc($result);
+
+  if ($info['permalink'] == '0')
+    return true;
+  else
+    return false;
+}
+
+function view_all_custom_texts() {
+  $query = "SELECT * FROM custom_texts WHERE status = 'active'";
+  $result = mysql_query($query);
+
+  if (!$result) {
+    echo "error: ". $query;
+    die('Invalid');
+  }
+
+  echo '<ol>';
+  for ($i=1; $i<=mysql_num_rows($result);$i++) {
+    $info = mysql_fetch_assoc($result);
+    display_custom_text($info);
+    echo '<br>[ <a href="custom_text_update.php?id=' .$info[id]. '">Edit</a> | <a href="custom_text_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+  }
+  echo '</ol>';
+}
+
 ?>

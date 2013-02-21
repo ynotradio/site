@@ -29,9 +29,8 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="concert_add.php">Add a Concert</a></dd>
             <dd><a href="concert_view_all.php">View all Concerts</a></dd>
             <dt>Custom Text Pages</dt>
-            <dd><a href="viewdonate.php">View Donate Text</a></dd>
-            <dd><a href="viewrecordstoreday.php">View Record Store Day Text</a></dd>
-            <dd><a href="viewcontests.php">View Contests Text</a></dd>
+            <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
+            <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
             <dt>Deejays</dt>
             <dd><a href="deejay_add.php">Add a Deejay</a></dd>
             <dd><a href="deejay_view_all.php">View all Deejays</a></dd>

@@ -11,8 +11,11 @@ require ("partials/_header.php");
 ?>
 <div class="row">
   <div class="nine columns content">
-    <h1>Donate to Y-Not Radio</h1>
-    <?php display_custom_text(1); ?>
+    <?php
+      $custom_text = find_custom_text_by_permalink('donate');
+      echo "<h1>".$custom_text['title']."</h1>" .
+      $custom_text['html'];
+    ?>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
