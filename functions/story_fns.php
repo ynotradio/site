@@ -67,7 +67,7 @@ function display_stories($stories) {
   for ($i=0; $i < sizeof($stories);$i++)
   {
     $info = $stories[$i];
-    echo "<div class=\"feature-box\">" .
+    echo "<div class=\"feature-box clearfix\">" .
       "<h3>". $info['headline']. "</h3>\n";
     display_pic($info['pic_url'], $info['pic']);
     echo "<div>" .$info['story'] . "</div>\n</div>";
