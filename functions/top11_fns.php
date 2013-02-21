@@ -377,6 +377,11 @@ function top11_status() {
 }
 
 function update_top11($placement, $artist, $song, $note){
+  $placement = mysql_real_escape_string($placement);
+  $artist = mysql_real_escape_string($artist);
+  $song = mysql_real_escape_string($song);
+  $note = mysql_real_escape_string($note);
+
   $update = 'UPDATE top11 SET artist =\''.$artist .'\', song=\''.$song . '\', note=\''.$note. '\' WHERE placement='.$placement;
   $result = mysql_query($update);
 
