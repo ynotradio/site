@@ -19,57 +19,57 @@ if (!$_SESSION["logged_in"]) {
         <tr>
           <td width="275px">
             <dt>Ads</dt>
-            <dd><a href="ad_add.php">Add an Ad</a></dd>
-            <dd><a href="ad_image_uploader.php">Upload an Ad Image</a></dd>
-            <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
+              <dd><a href="ad_add.php">Add an Ad</a></dd>
+              <dd><a href="ad_image_uploader.php">Upload an Ad Image</a></dd>
+              <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
             <dt>CD of The Week</dt>
-            <dd><a href="cdotw_add.php">Add CD Of The Week</a></dd>
-            <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a></dd>
+              <dd><a href="cdotw_add.php">Add CD Of The Week</a></dd>
+              <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a></dd>
             <dt>Concerts</dt>
-            <dd><a href="concert_add.php">Add a Concert</a></dd>
-            <dd><a href="concert_view_all.php">View all Concerts</a></dd>
+              <dd><a href="concert_add.php">Add a Concert</a></dd>
+              <dd><a href="concert_view_all.php">View all Concerts</a></dd>
             <dt>Custom Text Pages</dt>
-            <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
-            <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
+              <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
+              <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
             <dt>Deejays</dt>
-            <dd><a href="deejay_add.php">Add a Deejay</a></dd>
-            <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
+              <dd><a href="deejay_add.php">Add a Deejay</a></dd>
+              <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
             <dt>Images</dt>
-            <dd><a href="image_add.php">Upload an Image</a></dd>
-            <dd><a href="image_view_all.php">View all Images</a></dd>
+              <dd><a href="image_add.php">Upload an Image</a></dd>
+              <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
           <td width="275px">
-            <dt>New Music</dt>
-            <dd><a href="music_add.php">Add New Music</a></dd>
-            <dd><a href="music_view_all.php">View all New Music</a></dd>
             <dt>Modern Rock Madness</dt>
-            <dd><a href="addmrmband.php">Add A Band</a></dd>
-            <dd><a href="viewallmrmbands.php">View all Bands</a></dd>
-            <dd><a href="viewallmrmmatches.php">Manage Matches</a></dd>
+              <dd>Add A Band</dd>
+              <dd>View all Bands</dd>
+              <dd>Manage Matches</dd>
+            <dt>New Music</dt>
+              <dd><a href="music_add.php">Add New Music</a></dd>
+              <dd><a href="music_view_all.php">View all New Music</a></dd>
             <dt>On Demand</dt>
-            <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
-            <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>
+              <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
+              <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>
             <dt>Schedule</dt>
-            <dd><a href="schedule_add.php">Add to Schedule</a></dd>
-            <dd><a href="schedule_view_all.php">View Schedule</a></dd>
+              <dd><a href="schedule_add.php">Add to Schedule</a></dd>
+              <dd><a href="schedule_view_all.php">View Schedule</a></dd>
             <dt>Stories</dt>
-            <dd><a href="story_add.php">Add a Story</a></dd>
-            <dd><a href="story_view_all.php">View all Stories</a></dd>
-            <dd><a href="stories_order.php">Order Stories</a></dd>
+              <dd><a href="story_add.php">Add a Story</a></dd>
+              <dd><a href="story_view_all.php">View all Stories</a></dd>
+              <dd><a href="stories_order.php">Order Stories</a></dd>
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>
-            <dd><a href="top11_update.php">Update Top 11 @ 11</a></dd>
-            <dd><a href="top11_update_message.php">Update Top 11 @ 11 Message</a></dd>
-            <dd><a href="top11_song_add.php">Add Top 11 @ 11 Songs</a></dd>
-            <dd><a href="top11_song_view_all.php">View all Top 11 @ 11 Songs</a></dd>
-            <dd><a href="top11_operations.php">Top 11 @ 11 Operations</a></dd>
-            <dd><a href="top11_vote_add.php">Add Top 11 @ 11 Vote</a></dd>
+              <dd><a href="top11_update.php">Update Top 11 @ 11</a></dd>
+              <dd><a href="top11_update_message.php">Update Top 11 @ 11 Message</a></dd>
+              <dd><a href="top11_song_add.php">Add Top 11 @ 11 Songs</a></dd>
+              <dd><a href="top11_song_view_all.php">View all Top 11 @ 11 Songs</a></dd>
+              <dd><a href="top11_operations.php">Top 11 @ 11 Operations</a></dd>
+              <dd><a href="top11_vote_add.php">Add Top 11 @ 11 Vote</a></dd>
             <dt>Year End Picks & Polls</dt>
-            <dd><a href="addyearendstaff.php">Add Year End Staff Pick</a></dd>
-            <dd><a href="viewallyearendstaff.php">View all Year End Staff Picks</a></dd>
-            <dd><a href="viewallyearendpollresults.php">View all Year End Polls</a></dd>
-            <dd><a href="viewallyearendcontestants.php">View all Year End Contestants</a></dd>
+              <dd>Add Year End Staff Pick</dd>
+              <dd>View all Year End Staff Picks</dd>
+              <dd>View all Year End Polls</dd>
+              <dd>View all Year End Contestants</dd>
          </td>
       </tr>
     </table>
