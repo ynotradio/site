@@ -45,6 +45,7 @@ function add_top11_song($artist, $song) {
     "<h3>The new Top 11 song has been saved</h3>".
     "<hr width=75%>";
   display_top11_song(get_top11_song(mysql_insert_id()));
+  echo "</div>";
 }
 
 function check_ip($ip) {
