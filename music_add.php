@@ -1,7 +1,7 @@
 <?php
 
 $page_file = "music_add.php";
-$page_title = "Add a Music";
+$page_title = "Add a New Music";
 
 require ("functions/main_fns.php");
 require ("functions/music_fns.php");
@@ -17,7 +17,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>Add Music</h1>
+    <h1>Add New Music</h1>
       <?php if ($action != "insert") { ?>
       <form action="music_add.php" method="post" class="form-internal inline input-seperation" id="admin">
         <?php require ("partials/_music_form.php"); ?>
@@ -37,6 +37,9 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
+      <?php if ($action == 'insert')
+        echo "<a href=\"".$page_file."\">Add another New Music</a>\n<p>";
+      ?>
       <a href="cp.php">Control Panel</a>
     </div>
   </div>

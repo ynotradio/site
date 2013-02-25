@@ -39,6 +39,9 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
+      <?php if ($action == 'insert')
+        echo "<a href=\"".$page_file."\">Add another Deejay</a>\n<p>";
+      ?>
       <a href="cp.php">Control Panel</a>
     </div>
   </div>

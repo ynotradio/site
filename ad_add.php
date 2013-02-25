@@ -7,8 +7,7 @@ require ("functions/main_fns.php");
 require ("functions/ads_fns.php");
 require ("partials/_header.php");
 
-if ($_POST['action'] != "insert")
-	$action = "insert";
+$action = $_POST['action'];
 
 $target = $_GET['target'];
 
@@ -20,7 +19,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <?php if ($action == "insert") { ?>
+    <?php if ($action != "insert") { ?>
     <h1>Add an Ad</h1>
     <form action="ad_add.php" method="post" class="form-internal inline input-seperation" id="admin">
     <?php require ("partials/_ads_form.php"); ?>
@@ -40,9 +39,11 @@ if (!$_SESSION["logged_in"]) {
         add_ad($name, $start_date, $end_date, $pic_url, $web_url);
       }
     }
-
 ?>
     <div class="top-spacer_20">
+      <?php if ($action == 'insert')
+        echo "<a href=\"".$page_file."\">Add another Ad</a>\n<p>";
+      ?>
       <a href="cp.php">Control Panel</a>
     </div>
   </div>
