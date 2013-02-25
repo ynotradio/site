@@ -20,7 +20,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>Update a Music Entry</h1>
+    <h1>Update a New Music Entry</h1>
     <?php
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
@@ -49,7 +49,7 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
-      <a href="music_view_all.php">View all Music</a>
+      <a href="music_view_all.php">View all New Music</a>
       <p>
       <a href="cp.php">Control Panel</a>
     </div>

@@ -39,13 +39,13 @@ if (!$_SESSION["logged_in"]) {
             <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
           <td width="275px">
+            <dt>New Music</dt>
+            <dd><a href="music_add.php">Add New Music</a></dd>
+            <dd><a href="music_view_all.php">View all New Music</a></dd>
             <dt>Modern Rock Madness</dt>
             <dd><a href="addmrmband.php">Add A Band</a></dd>
             <dd><a href="viewallmrmbands.php">View all Bands</a></dd>
             <dd><a href="viewallmrmmatches.php">Manage Matches</a></dd>
-            <dt>Music</dt>
-            <dd><a href="music_add.php">Add Music</a></dd>
-            <dd><a href="music_view_all.php">View all Music</a></dd>
             <dt>On Demand</dt>
             <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
             <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>

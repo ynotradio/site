@@ -30,7 +30,7 @@ function delete_music($id){
   } else {
     $music = get_music($id);
     echo "<div class=\"center\"><h1>Success!</h1>".
-      "<h3>The music entry <span class=\"success\">". $music['artist'] ." - ".  $music['song'] ."</span> has been deleted.</h3></div>";
+      "<h3>The new music entry <span class=\"success\">". $music['artist'] ." - ".  $music['song'] ."</span> has been deleted.</h3></div>";
   }
 }
 
