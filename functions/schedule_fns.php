@@ -24,7 +24,7 @@ function add_schedule($host, $date , $start_time, $end_time, $note) {
     "<h3>New Schedule for ". $host ." on " .$date . " has been saved</h3>".
     "<hr width=75%>";
     display_schedule(get_schedule(mysql_insert_id()));
-    "</div>";
+    echo "</div>";
 }
 
 function copy_day($new_date, $original_date){
@@ -37,7 +37,10 @@ function copy_day($new_date, $original_date){
     die('Error Inserting into Database.');
   }
 
-  echo "<center><h1>The Full Day has been Copied.</h1></center>";
+  echo "<div class=\"center\"><h1>Success!</h1>
+    <span class=\"success\">The full day has been copied.</span></div>
+    <hr width=75%>";
+  display_day($new_date);
 }
 
 function delete_schedule($id){
@@ -54,42 +57,34 @@ function delete_schedule($id){
 }
 
 function display_day($date) {
-  $day_query = "SELECT id, date, DATE_FORMAT(date, '%m/%d/%y' ) as fdate, day, host, note, start_time, TIME_FORMAT(start_time, '%l:%i%p' ) as stime, TIME_FORMAT(start_time, '%l%p' ) as stime_no_min, TIME_FORMAT(start_time, '%i' ) as start_min, TIME_FORMAT(end_time, '%l:%i%p' ) as etime, TIME_FORMAT(end_time, '%l%p' ) as etime_no_min, TIME_FORMAT(end_time, '%i' ) as end_min FROM schedule WHERE date ='". $date."' ORDER BY start_time";
+  $day_query = "SELECT id, date, DATE_FORMAT(date, '%M %d, %Y' ) as fdate, day, host, note, start_time, TIME_FORMAT(start_time, '%l:%i%p' ) as stime, TIME_FORMAT(start_time, '%l%p' ) as stime_no_min, TIME_FORMAT(start_time, '%i' ) as start_min, TIME_FORMAT(end_time, '%l:%i%p' ) as etime, TIME_FORMAT(end_time, '%l%p' ) as etime_no_min, TIME_FORMAT(end_time, '%i' ) as end_min FROM schedule WHERE date ='". $date."' ORDER BY start_time";
   $day_result = mysql_query($day_query);
 
   if (!$day_result) {
     die('Error finding data in database.');
   }
   $info = mysql_fetch_assoc($day_result);
-  echo '<center><h3>Copy This Day: '.$info['fdate'].'</h3></center><p>';
+  echo "<h3 class=\"center\">".$info['fdate']."</h3>";
   //reset data collection back to 0
   mysql_data_seek( $day_result, 0 );
 
-  echo "<table id=\"edit_schedule\">\n".
-    "<tr><th width=125px>Time</th><th>Host</th><th>Notes</th></tr>\n";
+  echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n".
+    "<thead><tr><th width=125px>Time</th><th>Host</th><th>Notes</th></tr></thead>\n";
 
-  for ($i=1; $i<=mysql_num_rows($day_result);$i++)
-  {			
+  for ($i=1; $i<=mysql_num_rows($day_result);$i++) {
     $day_info = mysql_fetch_assoc($day_result);
-    if ($day_info['stime'] != $day_info['etime'] )
-    {
-      if (fmod($row,2) == 1) {	
-        echo "<tr class=\"d0\">\n";
-      } else {
-        echo "<tr class=\"d1\">\n";
-      }	
-      echo "<td>";
-      if ($day_info['start_min'] != "00") {
+    if ($day_info['stime'] != $day_info['etime'] ) {
+      echo "<tr><td>";
+      if ($day_info['start_min'] != "00")
         echo $day_info['stime']." - ";
-      } else {
+      else
         echo $day_info['stime_no_min']." - ";
-      }
 
-      if ($day_info['end_min'] != "00") {
+      if ($day_info['end_min'] != "00")
         echo $day_info['etime'];
-      } else {
+      else
         echo $day_info['etime_no_min'];
-      }
+
       echo "</td>\n<td>".$day_info['host']."</td>\n<td>".$day_info['note']."</td>\n";
       $row = $row + 1;
     }
@@ -100,20 +95,21 @@ function display_day($date) {
     }
   }
   echo "</table>";
-  echo '<center><form action="copyday.php" method="post">
-    <table id="copy_schedule" border="0">
-    <tr>
-    <td>New Date:</td>
-    <td><input type="text" name="new_date" maxlength="25" size="25"></td>
-    <td>Format: yyyy-mm-dd</td>
-    </tr>
-    <tr><td colspan="2">
-    <input type="hidden" name="action" value="write">
-    <input type="hidden" name="original_date" value="'.$info['date'].'">
-    <input type="submit" value="Copy Full Day"></td></tr>
-    </table>
-    </form></center>';
+}
 
+function copy_schedule($date) {
+  echo "<form action=\"schedule_copy_day.php?date=".$date."\" method=\"post\" class=\"form-internal input-seperation inline shorten\">
+       <fieldset>
+        <div class=\"control-group\">
+          <label class=\"required\">New Date:</label>
+          <div class=\"control\">
+          <input type=\"text\" name=\"new_date\" class=\"date\" placeholder=\"YYYY/MM/DD\">
+          </div>
+        </div>
+        <input type=\"hidden\" name=\"action\" value=\"copy\">
+        <div class=\"center\"><input type=\"submit\" class=\"btn-inverse\" value=\"Copy Full Day\">
+      </fieldset>
+    </form>";
 }
 
 function display_schedule($schedule) {
@@ -225,7 +221,7 @@ function view_all_schedules() {
   for ($i=1; $i<=mysql_num_rows($date_result);$i++) {
     $date_info = mysql_fetch_assoc($date_result);
     echo "<tr class=\"subheader\"><td colspan=3>". $date_info['day'] ." - ". $date_info['fdate'] ."</td>\n".
-      "<td colspan=3><div class=\"center\"><a href=\"copyday.php?date=". $date_info['date'] ."\">Copy Full Day</a><div></td></tr>\n";
+      "<td colspan=3><div class=\"center\"><a href=\"schedule_copy_day.php?date=". $date_info['date'] ."\">Copy Full Day</a><div></td></tr>\n";
     for ($j=1; $j<=mysql_num_rows($day_result);$j++) {
       $day_info = mysql_fetch_assoc($day_result);
       if ($date_info['day'] == $day_info['day'])	 			
