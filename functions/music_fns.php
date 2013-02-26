@@ -103,7 +103,7 @@ function update_music($id, $date, $artist, $song, $url) {
 }
 
 function view_all_music(){
-  $query = "SELECT * FROM music WHERE deleted = 'n' ORDER BY date DESC, artist";
+  $query = "SELECT * FROM music WHERE deleted = 'n' AND date > DATE_SUB(now(), INTERVAL 6 MONTH) ORDER BY date DESC, artist";
   $result = mysql_query($query);
 
   if (!$result) {
