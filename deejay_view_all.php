@@ -15,7 +15,7 @@ if (!$_SESSION["logged_in"]) {
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
-    <h1>View all Concerts</h1>
+    <h1>View all Deejays</h1>
       <?php view_all_deejays(); ?>
     <div class="top-spacer_20">
       <a href="cp.php">Control Panel</a>
