@@ -265,6 +265,14 @@ nav a:hover {
   font-style: italic;
 }
 
+.text-right {
+  text-align: right;
+}
+
+.text-left {
+  text-align: left;
+}
+
 .center {
   text-align: center;
 }
@@ -371,4 +379,12 @@ footer a, footer a:hover {
 .sample-below {
   border-bottom: 1px solid black;
   padding-bottom: 10px;
+}
+
+.hidden {
+  display: none;
+}
+
+.no-border {
+  border: none !important;
 }

@@ -30,6 +30,12 @@ if ($page_file != "logout.php"){
     <![endif]-->
       <link href="style/base.css" rel="stylesheet" type="text/css" media="all">
       <script type="text/javascript" src="js/jquery-1.7.1.js"></script>
+      <?php if ($page_file == "madness.php" || $page_file == "mrm_manage_matches.php")
+        echo "<script type=\"text/javascript\" src=\"js/countdown.js\"></script>";
+      ?>
+      <?php if ($page_file == "mrm_manage_matches.php")
+        echo "<script type=\"text/javascript\" src=\"js/admin_madness.js\"></script>";
+      ?>
       <?php require("js/common_functions.js"); ?>
 
     </head>
