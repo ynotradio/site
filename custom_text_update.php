@@ -38,7 +38,7 @@ if (!$_SESSION["logged_in"]) {
         } else {
           $result = update_custom_text($id, $title, $html);
           if ($result) {
-            echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
+            echo '<div class="top-spacer_20"><h1 class="center">Update was successful!</h1>';
             display_custom_text(get_custom_text($id));
             echo "</div>";
           }

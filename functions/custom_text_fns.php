@@ -54,6 +54,10 @@ function display_custom_text($custom_text) {
   "<br><b>Copy:</b><br>". $custom_text['html'];
 }
 
+function display_custom_text_title($custom_text) {
+  echo "<b>Title:</b> ". $custom_text['title'];
+}
+
 function find_custom_text_by_permalink($permalink) {
   $query = "SELECT * FROM custom_texts WHERE status = 'active' AND permalink = '".$permalink."'";
   $result = mysql_query($query);
@@ -109,7 +113,7 @@ function view_all_custom_texts() {
   echo '<ol>';
   for ($i=1; $i<=mysql_num_rows($result);$i++) {
     $info = mysql_fetch_assoc($result);
-    display_custom_text($info);
+    display_custom_text_title($info);
     echo '<br>[ <a href="custom_text_update.php?id=' .$info[id]. '">Edit</a> | <a href="custom_text_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
   echo '</ol>';
