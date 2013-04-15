@@ -59,13 +59,10 @@ function on_demand_player($id) {
   $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, image, headline, note, songs, audio_url FROM ondemand WHERE id = $id";
   $result = mysql_query($query);
 
-  if (!$result) {
-    echo "error: ". $query;
-    die('Invalid');
-  }
-
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
-  {
+  if (!$result || mysql_num_rows($result) == 0) {
+    echo "<div class=\"center error\">Something went wrong, go back and try again.</div>";
+  } else {
+    for ($i=1; $i<=mysql_num_rows($result);$i++) {
     $info = mysql_fetch_assoc($result);
     echo "<tr>\n<td><img src=\"" . $info['image']. "\"></td>\n".
       "<td>\n<div class='t'><strong>". $info['headline']."</strong></div>\n".
@@ -73,6 +70,7 @@ function on_demand_player($id) {
       "<div>Songs Performed: ".$info['songs']. "</div>\n".
       "<div>Recorded: ".$info['fdate']. "</div>\n".
       "<div><iframe src=\"https://www.opendrive.com/listen/". $info['audio_url'] ."\" height=\"25\" width=\"370\" style=\"border:0\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\"></iframe>\n</div>\n</tr>";
+    }
   }
 }
 
