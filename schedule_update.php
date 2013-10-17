@@ -42,8 +42,8 @@ if (!$_SESSION["logged_in"]) {
       } else {
         $host = $_POST['host'];
         $date = $_POST['date'];
-        $start_time = $_POST['start_time'];
-        $end_time = $_POST['end_time'];
+        $start_time = $_POST['start_time_submit'];
+        $end_time = $_POST['end_time_submit'];
         $note = $_POST['note'];
 
         if (!$host || !$date || !$start_time || !$end_time) {

@@ -114,10 +114,10 @@ function copy_schedule($date) {
 
 function display_schedule($schedule) {
     echo "<br><b>Host:</b> ". $schedule['host'].
-    "<br><b>Date:</b> ". $schedule['date'].
+    "<br><b>Date:</b> ". date('F jS', strtotime($schedule['date'])).
     "<br><b>Day:</b> " . $schedule['day'].
-    "<br><b>Start Time:</b> ". $schedule['start_time'].
-    "<br><b>End Time:</b> ". $schedule['end_time'].
+    "<br><b>Start Time:</b> ". date('g:i a', strtotime($schedule['start_time'])).
+    "<br><b>End Time:</b> ". date('g:i a', strtotime($schedule['end_time'])).
     "<br><b>Note:</b> ". $schedule['note'];
 }
 

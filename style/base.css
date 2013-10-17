@@ -3,4 +3,7 @@
 @import url("table.css");
 @import url("forms.css");
 @import url("buttons.css");
+@import url("classic.css");
+@import url("classic.date.css");
+@import url("classic.time.css");
 @import url("madness.css");
