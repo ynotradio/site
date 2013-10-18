@@ -17,14 +17,15 @@ if ($page_file != "logout.php"){
       <meta name="author" content="YNot Radio" />
       <title><?php if ($page_title) { echo "$page_title | "; } ?> Y-Not Radio </title>
       <link rel="shortcut icon" href="/imgs/favicon.ico" />
-      <meta property="og:image"
-        content="http://www.ynotradio.net/imgs/ynot.jpg"/>
-      <meta property="og:url"
-        content="http://www.ynotradio.net"/>
-      <meta property="og:title"
-          content="YNot Radio"/>
-      <meta property="og:description"
-          content="YNot Radio | Philadelphia's Real Alternative"/>
+
+      <!-- social meta start -->
+      <meta property="og:site_name" content="YNot Radio">
+      <meta property="og:image" content="http://www.ynotradio.net/imgs/ynot-fb.jpg">
+      <meta property="og:title" content="YNot Radio">
+      <meta property="og:description" content="YNot Radio | Philadelphia's Real Alternative">
+      <meta property="og:type" content="article">
+      <meta property="og:url" content="http://www.ynotradio.net">
+      <!-- social meta end -->
     <!--[if lte IE 8]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
