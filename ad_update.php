@@ -36,11 +36,12 @@ if (!$_SESSION["logged_in"]) {
         $end_date = $_POST['end_date'];
         $pic_url = $_POST['pic_url'];
         $web_url = $_POST['web_url'];
+        $priority = $_POST['priority'];
 
-        if (!$name || !$start_date || !$end_date || !$pic_url || !$web_url) {
+        if (!$name || !$start_date || !$end_date || !$pic_url || !$web_url || !$priority) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url);
+          $result = update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $priority);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
             display_ad(get_ad($id));

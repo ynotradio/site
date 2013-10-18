@@ -34,6 +34,11 @@
       <div class=\"control\">
         <input type=\"text\" name=\"web_url\" class=\"input-xl\" value=\"".$ad["web_url"]."\">
       </div>
+      <div class=\"control-group\">
+      <label class=\"required\">Priority</label>
+      <div class=\"control\">
+        <input type=\"text\" name=\"priority\" class=\"input-s\" value=\"".$ad["priority"]."\">
+      </div>
     </div>
     <div class=\"form-actions\">";
       if ($ad['name'] == ''){

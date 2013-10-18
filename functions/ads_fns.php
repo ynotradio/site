@@ -1,11 +1,11 @@
 <?php
 
-function add_ad($name, $start_date, $end_date, $pic_url, $web_url) {
+function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
   $name = mysql_real_escape_string($name);
   $pic_url = mysql_real_escape_string($pic_url);
   $web_url = mysql_real_escape_string($web_url);
 
-  $insert = "INSERT INTO ads VALUES (id, '".$name ."', '".$start_date. "', '". $end_date ."', '". $pic_url ."', '". $web_url ."', 'n')";
+  $insert = "INSERT INTO ads VALUES (id, '".$name ."', '".$start_date. "', '". $end_date ."', '". $pic_url ."', '". $web_url ."', '". $priority ."', 'n')";
 
   $result = mysql_query($insert);
 
@@ -19,6 +19,29 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url) {
        "<hr width=75%>";
   display_ad(get_ad(mysql_insert_id()));
   echo "</div>";
+}
+
+function current_ads_order() {
+  $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
+  $result = mysql_query($query);
+
+  if (!$result) {
+    echo "error: ". $query;
+    die('Invalid');
+  }
+
+  echo '<form action="ads_order.php" method="post">';
+  for ($i=1; $i<=mysql_num_rows($result);$i++) {
+    $info = mysql_fetch_assoc($result);
+    echo "<div class=\"bottom-spacer_20\">
+      Name: <b>" . $info['name']. "</b>
+      <br>
+      Priority: <input type=\"text\" class= \"input-xs\" value=\"".$info['priority']."\" name=\"".$info['id']."\">
+      </div>";
+  }
+  echo "<input type=\"hidden\" name=\"action\" value=\"order\">
+    <input type=\"submit\" class=\"btn-inverse\" value=\"Update Stories\">
+    </form>";
 }
 
 function delete_ad($id){
@@ -40,7 +63,8 @@ function display_ad($ad) {
     "<br><b>End Date:</b> ". $ad['end_date'].
     "<br><b>Picture:</b><br> ".
     "<img src='". $ad['pic_url']. "' width='200px'>".
-    "<br><b>Link:</b> ". $ad['web_url'];
+    "<br><b>Link:</b> ". $ad['web_url'].
+    "<br><b>Priority:</b> ". $ad['priority'];
 }
 
 function get_ad($id) {
@@ -53,8 +77,18 @@ function get_ad($id) {
     return mysql_fetch_assoc($result);
 }
 
+function save_ad_order($id, $priority) {
+  $update = "UPDATE ads set priority ='".$priority."' where id=".$id;
+  $result = mysql_query($update);
+
+  if (!$result) {
+    echo $update ."<br>";
+    die('Error Updating Database.');
+  }
+}
+
 function show_ads(){
-  $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY end_date";
+  $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
   $result = mysql_query($query);
 
   if (!$result) {
@@ -74,15 +108,16 @@ function show_ads(){
     echo "</div>";
 }
 
-function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url) {
+function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $priority) {
   $id = mysql_real_escape_string($id);
   $start_date = mysql_real_escape_string($start_date);
   $end_date = mysql_real_escape_string($end_date);
   $name = mysql_real_escape_string($name);
   $pic_url = mysql_real_escape_string($pic_url);
   $web_url = mysql_real_escape_string($web_url);
+  $priority = mysql_real_escape_string($priority);
 
-  $update = "UPDATE ads SET start_date=\"$start_date\", end_date=\"$end_date\", name=\"$name\", pic_url=\"$pic_url\", web_url=\"$web_url\" WHERE id=".$id;
+  $update = "UPDATE ads SET start_date=\"$start_date\", end_date=\"$end_date\", name=\"$name\", pic_url=\"$pic_url\", web_url=\"$web_url\", priority=\"$priority\" WHERE id=".$id;
   $result = mysql_query($update);
 
   if (!$result)
@@ -92,7 +127,7 @@ function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url) {
 }
 
 function view_all_active_ads(){
-  $query = "SELECT * FROM ads WHERE deleted = 'n' AND end_date >= now() ORDER BY end_date";
+  $query = "SELECT * FROM ads WHERE deleted = 'n' AND end_date >= now() ORDER BY priority";
   $result = mysql_query($query);
 
   if (!$result) {

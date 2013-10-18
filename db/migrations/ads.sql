@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `ads` (
   `end_date` date NOT NULL,
   `pic_url` char(180) NOT NULL,
   `web_url` char(180) NOT NULL,
+  `priority` int(11) NOT NULL,
   `deleted` char(1) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14 ;
