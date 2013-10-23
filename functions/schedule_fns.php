@@ -205,6 +205,15 @@ function update_schedule($id, $host, $date, $start_time, $end_time, $note){
     return $result;
 }
 
+function validate_time($submited_time, $id, $time_field){
+  $schedule = get_schedule($id);
+
+  if ($submited_time == "")
+    return $schedule[$time_field];
+  else
+    return $submited_time;
+}
+
 function view_all_schedules() {
   $date_query = "SELECT date, day, DATE_FORMAT(date, '%m/%d/%y' ) as fdate FROM schedule WHERE deleted = 'n' AND date >= date(now()) GROUP BY date, day ORDER BY date";
   $date_result = mysql_query($date_query);

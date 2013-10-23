@@ -9,6 +9,10 @@ require ("partials/_header.php");
 
 $id = $_GET['id'];
 
+if ($id != '')
+ $schedule = get_schedule($id);
+
+
 if ($_POST['action'] != "update")
 	$action = "update";
 
@@ -28,23 +32,26 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update") {
-        $schedule = get_schedule($id);
         echo "<form action=\"schedule_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("partials/_schedule_form.php");
         echo "</form>
         <div class=\"footnote\">** if any links are over 128 characters: use <a href=\"http://www.bit.ly\" target=_new>bit.ly</a> to shorten the url</div>";
       } elseif ($action == "copy") {
-        $schedule = get_schedule($id);
         echo "<form action=\"schedule_add.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("partials/_schedule_form.php");
         echo "</form>
-        <div class=\"footnote\">** if any links are over 128 characters: use <a href=\"http://www.bit.ly\" target=_new>bit.ly</a> to shorten the url</div>";        
+        <div class=\"footnote\">** if any links are over 128 characters: use <a href=\"http://www.bit.ly\" target=_new>bit.ly</a> to shorten the url</div>";
       } else {
         $host = $_POST['host'];
         $date = $_POST['date'];
-        $start_time = $_POST['start_time_submit'];
-        $end_time = $_POST['end_time_submit'];
+        $start_time_submit = $_POST['start_time_submit'];
+        $end_time_submit = $_POST['end_time_submit'];
+        $start_time = $_POST['end_time'];
+        $end_time = $_POST['end_time'];
         $note = $_POST['note'];
+
+        $start_time = validate_time($start_time_submit, $id, "start_time");
+        $end_time = validate_time($end_time_submit, $id, "end_time");
 
         if (!$host || !$date || !$start_time || !$end_time) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';

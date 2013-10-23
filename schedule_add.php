@@ -9,6 +9,8 @@ require ("partials/_header.php");
 
 $action = $_POST['action'];
 
+$id = $_GET['id'];
+
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
 } else {
@@ -27,9 +29,19 @@ if (!$_SESSION["logged_in"]) {
       } else {
         $host = $_POST['host'];
         $date = $_POST['date'];
-        $start_time = $_POST['start_time_submit'];
-        $end_time = $_POST['end_time_submit'];
+        $start_time_submit = $_POST['start_time_submit'];
+        $end_time_submit = $_POST['end_time_submit'];
+        $start_time = $_POST['end_time'];
+        $end_time = $_POST['end_time'];
         $note = $_POST['note'];
+
+        if ($id != '') {
+          $start_time = validate_time($start_time_submit, $id, "start_time");
+          $end_time = validate_time($end_time_submit, $id, "end_time");
+        } else {
+          $start_time = $start_time_submit;
+          $end_time = $end_time_submit;
+        }
 
         if (!$host || !$date || !$start_time || !$end_time)
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
