@@ -42,10 +42,18 @@ if ($page_file != "logout.php"){
       <?php if ($page_file == "mrm_manage_matches.php")
         echo "<script type=\"text/javascript\" src=\"js/admin_madness.js\"></script>";
       ?>
+      <?php if ($page_file == "yearendpoll.php") 
+        echo "<script type=\"text/javascript\" src=\"js/year_end_poll.js\"></script>";
+      ?>
       <?php require("js/common_functions.js"); ?>
 
     </head>
-    <body>
+    <?php
+      if ($page_file == "yearendpoll.php")
+        echo "<body onload=\"init()\">";
+      else
+        echo "<body>";
+    ?>
       <div id="fb-root"></div>
       <script>(function(d, s, id) {
         var js, fjs = d.getElementsByTagName(s)[0];

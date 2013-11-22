@@ -255,6 +255,14 @@ nav a:hover {
   padding-bottom: 20px;
 }
 
+.left-spacer_30 {
+  margin-left: 30px;
+}
+
+.right-spacer_30 {
+  margin-right: 30px;
+}
+
 .new_music dt {
   font-weight: bold;
   margin-top: 10px;

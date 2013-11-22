@@ -69,8 +69,8 @@ if (!$_SESSION["logged_in"]) {
             <dt>Year End Picks & Polls</dt>
               <dd>Add Year End Staff Pick</dd>
               <dd>View all Year End Staff Picks</dd>
-              <dd>View all Year End Polls</dd>
-              <dd>View all Year End Contestants</dd>
+              <dd><a href="year_end_poll_view_all.php">View all Year End Polls</a></dd>
+              <dd><a href="year_end_poll_contestants.php">View all Year End Contestants</a></dd>
          </td>
       </tr>
     </table>
