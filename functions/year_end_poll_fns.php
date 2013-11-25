@@ -68,9 +68,10 @@ function add_votes_for($poll_form, $votes){
 
 function format_poll_header($current_poll, $category) {
   $category = str_replace('Tv', 'TV', $category);
+  $saddest = ($current_poll == 'celebrity_deaths') ? ' Saddest ' : '';
   $suffix = ($current_poll != 'most_anticipated_albums') ? ' of this Year' : ' for next Year';
 
-  return "Vote for Your Top <span id=\"max_pick\">" . max_picks_for($current_poll) ."</span> " . $category . $suffix;
+  return "Vote for Your Top <span id=\"max_pick\">" . max_picks_for($current_poll) ."</span> " . $saddest . $category . $suffix;
 }
 
 function format_poll_name($str) {

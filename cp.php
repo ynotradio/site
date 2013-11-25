@@ -67,8 +67,8 @@ if (!$_SESSION["logged_in"]) {
               <dd><a href="top11_operations.php">Top 11 @ 11 Operations</a></dd>
               <dd><a href="top11_vote_add.php">Add Top 11 @ 11 Vote</a></dd>
             <dt>Year End Picks & Polls</dt>
-              <dd>Add Year End Staff Pick</dd>
-              <dd>View all Year End Staff Picks</dd>
+              <dd><a href="year_end_staff_picks_add.php">Add Year End Staff Pick</a></dd>
+              <dd><a href="year_end_staff_picks_view_all">View all Year End Staff Picks</a></dd>
               <dd><a href="year_end_poll_view_all.php">View all Year End Polls</a></dd>
               <dd><a href="year_end_poll_contestants.php">View all Year End Contestants</a></dd>
          </td>

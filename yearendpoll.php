@@ -62,7 +62,7 @@ if ($_POST['contest_form']) {
 <div class="row">
   <div class="twelve columns">
     <h1>Year End Poll <?php echo date('Y'); ?></h1>
-    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Wednesday, December 27th. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> from January 2nd thru 4th.</em> Check out the Y-Not DJs' top albums and songs <a href=\"yearendstaff.php\">here</a>
+    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Wednesday, December 27th. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> from January 2nd thru 4th.</em> Check out the Y-Not DJs' top albums and songs <a href="yearendstaffpicks.php">here</a>
     <?php require ("partials/_year_end_poll_dashboard.php") ?>
     <br>
     <?php
