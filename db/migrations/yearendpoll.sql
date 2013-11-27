@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `year_end_concerts` (
 
 CREATE TABLE IF NOT EXISTS `year_end_late_night_tv` (
   `id` int(5) NOT NULL auto_increment,
-  `show` varchar(64) NOT NULL,
+  `title` varchar(64) NOT NULL,
   `votes` int(5) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=0;
@@ -195,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `year_end_song_votes` (
 
 CREATE TABLE IF NOT EXISTS `year_end_tv_comedies` (
   `id` int(5) NOT NULL auto_increment,
-  `show` varchar(64) NOT NULL,
+  `title` varchar(64) NOT NULL,
   `votes` int(5) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=0;
@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `year_end_tv_comedies` (
 
 CREATE TABLE IF NOT EXISTS `year_end_tv_dramas` (
   `id` int(5) NOT NULL auto_increment,
-  `show` varchar(64) NOT NULL,
+  `title` varchar(64) NOT NULL,
   `votes` int(5) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=0;

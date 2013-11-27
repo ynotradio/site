@@ -135,7 +135,7 @@ function get_song($id) {
 function get_values($table_name) {
   $columns = get_column_names($table_name);
 
-  $query = "SELECT * FROM year_end_". $table_name . " ORDER BY '".$columns[1]."'";
+  $query = "SELECT * FROM year_end_". $table_name . " ORDER BY ".$columns[1];
   $result = mysql_query($query);
 
   if (!$result)
@@ -239,7 +239,7 @@ function view_all_year_end_poll_for($poll) {
     }
   echo "</thead>\n";
 
-  $query = "SELECT * FROM year_end_".$poll. " ORDER BY votes DESC, '" . $column_names[0] . "' ASC";
+  $query = "SELECT * FROM year_end_".$poll. " ORDER BY votes DESC, " . $column_names[1] . " ASC";
 	$result = mysql_query($query);
 
   for ($i=1; $i<=mysql_num_rows($result); $i++) {
