@@ -54,9 +54,9 @@ if ($_POST['contest_form']) {
   else
     $new_contestant = add_contestant($name, $email, $phone, $hometown, $contest, $newsletter, $ip);
 
-  echo "<div class=\"row\" id=\"flash\">";
-  if ($new_contestant == 1) 
-    echo "<div class=\"twelve columns top-spacer_20 center success\">Thanks! <br> We have received your contest entry. Good Luck!</div>";
+  echo "<div class=\"row\">";
+  if ($new_contestant == 1)
+    echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2013 Year End Poll!<br>Find out all the results when we countdown The Top 213 Songs of 2013.<br>December 30<sup>th</sup> -  January <sup>2nd</sup></div>";
   elseif($new_contestant == "missing_values") {
     echo "<div class=\"twelve columns top-spacer_20 center error\">Sorry! <br> Seems like you may be missing some value(s), please try again.</div>";
   } else {
@@ -70,7 +70,7 @@ if ($_POST['contest_form']) {
 <div class="row">
   <div class="twelve columns">
     <h1>Year End Poll <?php echo date('Y'); ?></h1>
-    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Friday, December 20<sup>th</sup>. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> on December 30 - 31 and January 2 - 3.</em> Check out the Y-Not DJs' top albums and songs <a href="yearendstaffpicks.php">here</a>
+    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Friday, December 20th. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> on December 30 - 31 and January 2 - 3.</em> Check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a>!
     <?php require ("partials/_year_end_poll_dashboard.php") ?>
     <br>
     <?php
@@ -83,23 +83,25 @@ if ($_POST['contest_form']) {
     ?>
 </div>
 <?php
-  if (has_voted($ip, 'songs') && has_voted($ip, 'albums') && has_entered_contest($ip)) {        
+  if ($new_contestant == 1) {
+  } else if (has_entered_contest($ip)) {
     echo "<div class=\"center top-spacer_20\">Our records indicate that you have already entered to win the <b>$100 iTunes gift card</b>.<br>Good Luck!</div>";
-  } elseif (has_voted($ip, 'songs') && has_voted($ip, 'albums')) {
+  } elseif (can_enter_contest($ip)) {
 ?>
-<div class="row top-spacer_20">
+<div class="row">
   <div class="three columns"></div>
   <div class="six columns">
+    <h3 class="center">Enter To Win A $100 iTunes Gift Card</h3>
     <form action="yearendpoll.php" method="post" class="form-default">
     <?php require ("partials/_year_end_poll_form.php"); ?>
-  </div>      
+  </div>
   <div class="three columns"></div>
 </div>
 <?php
   } else {
-    echo "<div class=\"center top-spacer_20\">After you fill out your favorite Songs and Albums of this year you may enter to win the <b>$100 iTunes gift card</b></div>";
+    echo "<div class=\"center top-spacer_20\">After you fill out the first two rows of polls, you may enter to win the <b>$100 iTunes gift card</b>.</div>";
   }
-} //end of else 
+} //end of else
   echo "</div>";
-  require ("partials/_footer.php"); 
+  require ("partials/_footer.php");
 ?>

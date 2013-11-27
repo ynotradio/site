@@ -66,6 +66,18 @@ function add_votes_for($poll_form, $votes){
   return true;
 }
 
+function can_enter_contest($ip) {
+  $answer = true;
+  $needed_polls = array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
+                       'most_anticipated_albums', 'concerts', 'biggest_comebacks',
+                       'music_videos');
+
+  foreach ($needed_polls as $poll) {
+    $answer = $answer && has_voted($ip, $poll);
+  }
+  return $answer;
+}
+
 function format_poll_header($current_poll, $category) {
   $category = str_replace('Tv', 'TV', $category);
   $saddest = ($current_poll == 'celebrity_deaths') ? ' Saddest ' : '';
