@@ -15,8 +15,16 @@ $polls = get_poll_names();
 $votes = $_POST['year_end_votes'];
 $poll_form = $_POST['poll'];
 
+$vote_count = ($_POST['write_in_value'] == '') ? count($votes) : count($votes) + 1;
+
+if ($vote_count != max_picks_for($poll_form)) {
+  echo "<div class=\"row\" id=\"flash\">\n
+  <div class=\"twelve columns top-spacer_20 center error\">Wow, this is embarissing...<br>It seems that you didn't pick enough, please try again.</div>\n
+  \n</div>";
+}
+
 if (has_voted($ip, $poll_form) == false) {
-  if ($poll_form && count($votes) >= 1)
+  if ($poll_form && count($votes) == max_picks_for($poll_form))
     $insert = add_votes_for($poll_form, $votes);
 
   if ($poll_form == 'songs')
@@ -28,7 +36,7 @@ if (has_voted($ip, $poll_form) == false) {
   if ($insert) {
     add_ip($ip, $poll_form);
     echo "<div class=\"row\" id=\"flash\">\n
-    <div class=\"twelve columns top-spacer_20 center success\">Thanks! <br> Your votes have been recorded!</div>\n
+    <div class=\"twelve columns top-spacer_20 center success\">Thanks!<br>Your votes have been recorded!</div>\n
     \n</div>";
   }
 }
@@ -62,7 +70,7 @@ if ($_POST['contest_form']) {
 <div class="row">
   <div class="twelve columns">
     <h1>Year End Poll <?php echo date('Y'); ?></h1>
-    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Wednesday, December 27th. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> from January 2nd thru 4th.</em> Check out the Y-Not DJs' top albums and songs <a href="yearendstaffpicks.php">here</a>
+    The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Friday, December 20<sup>th</sup>. <em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> on December 30 - 31 and January 2 - 3.</em> Check out the Y-Not DJs' top albums and songs <a href="yearendstaffpicks.php">here</a>
     <?php require ("partials/_year_end_poll_dashboard.php") ?>
     <br>
     <?php

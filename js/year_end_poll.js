@@ -8,28 +8,21 @@ function init(){
 function enableSubmit() {
 	var max = $('#max_pick').html();
 	$('input[type="checkbox"]').change(function() {
-		var numberOfChecked = $("input[type=checkbox]:checked").length
-		if ( numberOfChecked > 0 && numberOfChecked <= max){
-			$('#vote').attr('disabled', false);
+		var numberOfChecked = $("input[type=checkbox]:checked").length;
+		if (numberOfChecked == max){
+      $('#vote').text('Vote now!');
       $('#vote').removeClass('disabled');
-			$('#error_message').fadeOut('fast');
+			$('#vote').attr('disabled', false);
+    } else if (numberOfChecked > max) {
+      $('#vote').text("You've picked too many.");
+      $('#vote').addClass('disabled');
+			$('#vote').attr('disabled', true);
 		} else {
-			$('#error_message').html(errorMessage(numberOfChecked, max));
-			$('#error_message').fadeIn();
+      $('#vote').text('Pick ' + (max - numberOfChecked) + " more!");
       $('#vote').addClass('disabled');
 			$('#vote').attr('disabled', true);
 		}
 	});
-}
-
-function errorMessage(numberOfChecked, max) {
-	if (numberOfChecked === 0) {
-		return "You need to select at least one option above.";
-	}
-	
-	if (numberOfChecked > max) {
-		return "You have selected too many.";
-	}
 }
 
 function otherWatcher() {
@@ -54,7 +47,7 @@ function enterToWinWatcher() {
   $(inputs).keyup(function() {
     submitButtonLogic();
   })
-  
+
   $(radios).change(function() {
     submitButtonLogic();
   })
@@ -62,7 +55,7 @@ function enterToWinWatcher() {
 
 function formValidator() {
   return $('#name').val() != "" && $('#email').val() != "" &&
-    $('#phone').val() != "" && $('#hometown').val() != "" && 
+    $('#phone').val() != "" && $('#hometown').val() != "" &&
     ($("input[name='contest']:checked").length > 0) &&
     ($("input[name='newsletter']:checked").length > 0);
 }

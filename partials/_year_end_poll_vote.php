@@ -21,8 +21,7 @@
     <div class=\"controls\">\n
     <input type=\"checkbox\" id=\"song_write_in\"> <input type=\"text\" disabled=\"disabled\" class=\"input-xl\" id=\"write_in_value\" name=\"write_in_value\">\n
     <div class=\"form-other\">Other (please specify)</div>\n</div>\n</div>\n
-    </div>\n<div class=\"form-actions\">\n<button class=\"btn-info disabled\" type=\"submit\" disabled=\"disabled\" id=\"vote\">Vote!</button>\n
-    <span id=\"error_message\" class=\"center error left-spacer_30\">\n</span>\n
+    </div>\n<div class=\"form-actions\">\n<button class=\"btn-info disabled\" type=\"submit\" disabled=\"disabled\" id=\"vote\">Pick " . max_picks_for($current_poll) . " more!</button>\n
     <input type=\"hidden\" name=\"poll\" value=". $current_poll .">\n</div>\n
     </form>\n</div>\n</fieldset>";
 ?>
