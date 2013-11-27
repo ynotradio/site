@@ -122,12 +122,22 @@ function get_poll_names() {
                'best_movies', 'worst_movies', 'unnecessary_sequels','celebrity_deaths');
 }
 
+function get_song($id) {
+  $query = "SELECT * FROM year_end_songs WHERE id =" .$id;
+  $result = mysql_query($query);
+
+  if (!$result)
+   return;
+  else
+    return mysql_fetch_assoc($result);
+}
+
 function get_values($table_name) {
   $query = "SELECT * FROM year_end_". $table_name . ";";
   $result = mysql_query($query);
 
   if (!$result)
-    die('1: No results in database.');
+    die('No results in database.');
   else
     return $result;
 }
@@ -202,8 +212,12 @@ function view_all_contestants() {
     <th>Name</th><th>Email</th><th>Phone</th><th>Home Town</th><th>Contest</th><th>Newsletter</th></thead>";
   for ($i=1; $i<=mysql_num_rows($result); $i++) {
     $info = mysql_fetch_assoc($result);
-    echo "<tr><td>" . ucwords($info['name']) ."</td>
-    <td>" . $info['email'] . "</td>
+    echo "<tr>";
+    if ($info['contest'] == 'yes')
+      echo "<td><a href=\"year_end_poll_song_picks.php?contestant_id=". $info['id']. "\">" . ucwords($info['name']) ."</a></td>";
+    else
+      echo "<td>" . ucwords($info['name']) ."</td>";
+    echo "<td>" . $info['email'] . "</td>
     <td>" . $info['phone'] . "</td>
     <td>" . ucwords($info['hometown']) . "</td>
     <td>" . $info['contest'] . "</td>
@@ -252,5 +266,39 @@ function view_all_year_end_poll_write_ins_for($poll) {
     echo "</ul>\n</div>\n</div>";
   } else
     echo "<h3>There are no write-ins.</h3>";
+}
+
+function view_contestants_song_picks($contestant_id) {
+  $contestant_query = "SELECT * FROM year_end_contestants WHERE id = ".$contestant_id;
+  $contestant_result = mysql_query($contestant_query);
+
+  if (!$contestant_result)
+    die('No results in database.');
+  else
+    $contestant = mysql_fetch_assoc($contestant_result);
+
+  $song_vote_query = "SELECT * FROM year_end_song_votes WHERE ip_address = \"".$contestant['ip_address']."\"";
+  $song_vote_result = mysql_query($song_vote_query);
+
+  if (mysql_num_rows($song_vote_result) == 0)
+    die('No song results in database.');
+  else
+    $song_votes = mysql_fetch_assoc($song_vote_result);
+
+  if ($contestant['contest'] == 'yes') {
+    echo "<h3 class=\"center\">" .ucwords($contestant['name']). "'s Top 20 Songs</h3>";
+    echo "<ul>";
+      for($i=1; $i<=20; $i++) {
+        $song = get_song($song_votes['song'.$i]);
+        if ($song)
+          echo "<li>".$song['artist']. " - " . $song['title'] . "</li>";
+        else
+          echo "<li><b>WRITE IN:</b> ". $song_votes['song'.$i] . "</li>";
+      }
+    echo "</ul>";
+
+  } else {
+    echo "<div class=\"center\"><strong>This contestant does not wish to participate in the contest</strong></div>";
+  }
 }
 ?>
