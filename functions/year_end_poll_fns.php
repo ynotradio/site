@@ -133,7 +133,9 @@ function get_song($id) {
 }
 
 function get_values($table_name) {
-  $query = "SELECT * FROM year_end_". $table_name . ";";
+  $columns = get_column_names($table_name);
+
+  $query = "SELECT * FROM year_end_". $table_name . " ORDER BY '".$columns[1]."'";
   $result = mysql_query($query);
 
   if (!$result)
