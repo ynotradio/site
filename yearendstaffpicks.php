@@ -10,10 +10,10 @@ require ("partials/_header.php");
 /*----- CONTENT ------*/
 ?>
 <div class="row">
-  <div class="nine columns content">
+  <div class="twelve columns content">
     <h1>Year End Staff Picks</h1>
+    <div class="center bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
     <?php show_year_end_staff_picks(); ?>
   </div>
-  <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
 <?php require ("partials/_footer.php"); ?>
