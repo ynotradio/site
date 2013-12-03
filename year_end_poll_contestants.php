@@ -18,7 +18,7 @@ if (!$_SESSION["logged_in"]) {
     <h1>View all Year End Poll Contestants</h1>
       <?php view_all_contestants(); ?>
     <br>
-    Click on the name to see thier picks.
+    Click on the name to see their picks.
     <div class="top-spacer_20">
       <a href="cp.php">Control Panel</a>
     </div>
