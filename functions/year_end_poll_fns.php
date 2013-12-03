@@ -211,7 +211,7 @@ function view_all_contestants() {
     die('Invalid');
   }
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n<thead>\n
-    <th>Name</th><th>Email</th><th>Phone</th><th>Home Town</th><th>Contest</th><th>Newsletter</th></thead>";
+    <th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Contest</th><th>Newsletter</th></thead>";
   for ($i=1; $i<=mysql_num_rows($result); $i++) {
     $info = mysql_fetch_assoc($result);
     echo "<tr>";

@@ -19,7 +19,7 @@ $vote_count = ($_POST['write_in_value'] == '') ? count($votes) : count($votes) +
 
 if ($vote_count != max_picks_for($poll_form)) {
   echo "<div class=\"row\" id=\"flash\">\n
-  <div class=\"twelve columns top-spacer_20 center error\">Wow, this is embarissing...<br>It seems that you didn't pick enough, please try again.</div>\n
+  <div class=\"twelve columns top-spacer_20 center error\">Wow, this is embarrassing...<br>It seems that you didn't pick enough, please try again.</div>\n
   \n</div>";
 }
 
