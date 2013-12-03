@@ -11,8 +11,8 @@ require ("partials/_header.php");
 ?>
 <div class="row">
   <div class="twelve columns content">
-    <h1>Year End Staff Picks</h1>
-    <div class="center bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
+    <div class="center top-spacer_20 bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
+    <h1><?php echo date('Y');?> Y-Not Staff Favorites</h1>
     <?php show_year_end_staff_picks(); ?>
   </div>
 </div> <!-- end of row div -->

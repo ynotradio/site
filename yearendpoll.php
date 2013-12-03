@@ -69,8 +69,7 @@ if ($_POST['contest_form']) {
 ?>
 <div class="row">
   <div class="twelve columns">
-    <h1>Year End Poll <?php echo date('Y'); ?></h1>
-    <div class="center bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
+    <div class="center top-spacer_20 bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
     The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Friday, December 20th at 5pm EST.<em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> on December 30 - 31 and January 2 - 3.</em> Check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a>!
     <?php require ("partials/_year_end_poll_dashboard.php") ?>
     <br>
