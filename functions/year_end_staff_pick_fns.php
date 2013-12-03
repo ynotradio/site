@@ -100,7 +100,7 @@ function view_all_year_end_staff_picks() {
   {
     $info = mysql_fetch_assoc($result);
     display_year_end_staff_pick($info);
-    echo '<br>[ <a href="year_end_staff_picks_update.php?id=' .$info[id]. '">Edit</a> | <a href="year_end_staff_picks_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo '[ <a href="year_end_staff_picks_update.php?id=' .$info[id]. '">Edit</a> | <a href="year_end_staff_picks_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }
