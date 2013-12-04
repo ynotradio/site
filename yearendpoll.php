@@ -21,23 +21,22 @@ if ($vote_count != max_picks_for($poll_form)) {
   echo "<div class=\"row\" id=\"flash\">\n
   <div class=\"twelve columns top-spacer_20 center error\">Wow, this is embarrassing...<br>It seems that you didn't pick enough, please try again.</div>\n
   \n</div>";
-}
-
-if (has_voted($ip, $poll_form) == false) {
-  if ($poll_form && count($votes) == max_picks_for($poll_form))
+} else {
+  if (has_voted($ip, $poll_form) == false) {
     $insert = add_votes_for($poll_form, $votes);
 
-  if ($poll_form == 'songs')
-    add_song_votes_for($ip, $votes, $_POST['write_in_value']);
+    if ($poll_form == 'songs')
+      add_song_votes_for($ip, $votes, $_POST['write_in_value']);
 
-  if ($_POST['write_in_value'])
-    $insert = add_manual_vote_for($ip, $poll_form, $_POST['write_in_value']);
+    if ($_POST['write_in_value'])
+      $insert = add_manual_vote_for($ip, $poll_form, $_POST['write_in_value']);
 
-  if ($insert) {
-    add_ip($ip, $poll_form);
-    echo "<div class=\"row\" id=\"flash\">\n
-    <div class=\"twelve columns top-spacer_20 center success\">Thanks!<br>Your votes have been recorded!</div>\n
-    \n</div>";
+    if ($insert) {
+      add_ip($ip, $poll_form);
+      echo "<div class=\"row\" id=\"flash\">\n
+      <div class=\"twelve columns top-spacer_20 center success\">Thanks!<br>Your votes have been recorded!</div>\n
+      \n</div>";
+    }
   }
 }
 
