@@ -68,18 +68,20 @@ if ($_POST['contest_form']) {
 ?>
 <div class="row">
   <div class="twelve columns">
+    <?php if (date("Y-m-d H:i:s", time()) <= date("Y-m-d H:i:s ", strtotime("12/20/13 5pm"))) { ?>
     <div class="center top-spacer_20 bottom-spacer_20"><img src="images/yearend2013_banner.jpg" alt="YNot Year End Poll 2013" width="900px"></div>
     The time has come to vote for all of your favorite stuff from 2013! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Friday, December 20th at 5pm EST.<em>Then tune in to hear all the results when we count down the <b>Top 213 of 2013</b> on December 30 - 31 and January 2 - 3.</em> Check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a>!
-    <?php require ("partials/_year_end_poll_dashboard.php") ?>
-    <br>
     <?php
-      if (in_array($current_poll, $polls)) {
-        echo "</div>";
-        echo "<div class=\"row\">\n<div class=\"twelve columns\">";
-        require ("partials/_year_end_poll_vote.php");
-        echo "</div>";
-      } else {
-    ?>
+        require ("partials/_year_end_poll_dashboard.php") ?>
+        <br>
+        <?php
+          if (in_array($current_poll, $polls)) {
+            echo "</div>";
+            echo "<div class=\"row\">\n<div class=\"twelve columns\">";
+            require ("partials/_year_end_poll_vote.php");
+            echo "</div>";
+          } else {
+        ?>
 </div>
 <?php
   if ($new_contestant == 1) {
@@ -100,7 +102,13 @@ if ($_POST['contest_form']) {
   } else {
     echo "<div class=\"center top-spacer_20\">After you fill out the first two rows of polls, you may enter to win the <b>$100 iTunes gift card</b>.</div>";
   }
-} //end of else
+    } //end of else
+      } else {
+        echo "<div class=\"center top-spacer_20 bottom-spacer_20\">
+            <img src=\"images/yearend2013_banner.jpg\" alt=\"YNot Year End Poll 2013\" width=\"900px\">
+          </div>
+          Thanks to everyone who voted in Y-Not's 2013 Year End Poll! Voting is now closed and we'll be tabulating over the holiday. Tune in to hear all the results when we count down the Top 213 of 2013 on December 30 - 31 and January 2 - 3. In the meantime, check out the Y-Not DJs' <a href=\"yearendstaffpicks.php\">top albums and songs</a>!</div>";
+      }// end of time check
   echo "</div>";
   require ("partials/_footer.php");
 ?>
