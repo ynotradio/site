@@ -3,7 +3,7 @@ if ($year_end_staff_pick['html'] == '') {
     $order_id = get_year_end_staff_pick_count() + 1;
     $html = "<table class=\"year_end_staff_pick\">
   <tr>
-    <td colspan=\"2\" class=\bottom-spacer_20\">
+    <td colspan=\"2\" class=\"bottom-spacer_20\">
       <div style=\"float: left;\">
         <strong>NAME HERE<br>
         <em>SHOW NAME</em></strong>
@@ -71,7 +71,7 @@ if ($year_end_staff_pick['html'] == '') {
     <div class=\"control-group\">
       <label class=\"required\">HTML</label>
       <div class=\"control\">
-        <textarea name=\"html\" rows=\"55\" class=\"input-xl\">".$html."</textarea>
+        <textarea name=\"html\" rows=\"45\" class=\"input-xl\">".$html."</textarea>
       </div>
     </div>
     <div class=\"form-actions\">";

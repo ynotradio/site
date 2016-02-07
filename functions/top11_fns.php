@@ -1,8 +1,18 @@
 <?php
 
+/*umca  - This needs to be sanitized! */
 function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsletter) {
-  $insert = "INSERT INTO top11contest VALUES (id, '".$firstname ."', '".$lastname. "', '".$email. "', '".$phone. "', '".$contest. "', '".$newsletter. "', 'yes')";
-  $result = mysql_query($insert);
+
+   //Need to sanitize the input
+    $firstname = mysql_real_escape_string($firstname);
+    $lastname = mysql_real_escape_string($lastname);
+    $email = mysql_real_escape_string($email);
+    $phone = mysql_real_escape_string($phone);
+    $contest = mysql_real_escape_string($contest);
+    $newsletter = mysql_real_escape_string($newsletter);
+
+    $insert = "INSERT INTO top11contest VALUES (id, '".$firstname ."', '".$lastname. "', '".$email. "', '".$phone. "', '".$contest. "', '".$newsletter. "', 'yes')";
+    $result = mysql_query($insert);
 
   if (!$result) {
     echo $insert;
@@ -11,6 +21,7 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
 }
 
 function add_ip($ip) {
+  $ip = mysql_real_escape_string($ip);
   $insert = "INSERT INTO ip_address VALUES (id, '".$ip ."', 'n')";
   $result = mysql_query($insert);
 
@@ -21,6 +32,7 @@ function add_ip($ip) {
 }
 
 function add_top11_plus1($id){
+  $id = mysql_real_escape_string($id);
   $update = "UPDATE top11songs SET value = value + 1  WHERE id=".$id;
   $result = mysql_query($update);
 
@@ -49,6 +61,7 @@ function add_top11_song($artist, $song) {
 }
 
 function check_ip($ip) {
+  $ip = mysql_real_escape_string($ip);
   $select = "SELECT * FROM ip_address WHERE address = '$ip' AND deleted = 'n'";
   $result = mysql_query($select);
   $info = mysql_fetch_assoc($result);
@@ -81,6 +94,8 @@ function contestant_count() {
 }
 
 function delete_top11_song($id){
+
+  $id = mysql_real_escape_string($id);
   $update = "UPDATE top11songs set deleted ='y' where id=".$id;
   $result = mysql_query($update);
 
@@ -112,7 +127,8 @@ function display_contestants() {
       "<br><b>Newsletter: </b>". $info['newsletter'] . "</ol>";
   }
 }
-function display_form($action_file) {
+function display_form($action_file)
+{
   $select = "SELECT * FROM top11songs WHERE deleted = 'n' ORDER BY artist";
   $result = mysql_query($select);
 

@@ -3,8 +3,8 @@ date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 
 function open_db(){
-  $db_name="ynot_db";
-  $db_user="root";
+  $db_name="";
+  $db_user="";
   $db_pass="";
   $db_hostname="localhost";
 
@@ -23,7 +23,12 @@ function format($text) {
 function validate_user($username,$password,$remember_me) {
   $current_page = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);
   open_db();
-  if ($username && $password) {
+
+    //Need to sanitize the input
+    $username = mysql_real_escape_string($username);
+    $password = mysql_real_escape_string($password);
+
+    if ($username && $password) {
 
     $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password' OR password = password('$password'))";
     $result = mysql_query($query);

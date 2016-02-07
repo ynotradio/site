@@ -56,7 +56,10 @@ function get_on_demand($id) {
 }
 
 function on_demand_player($id) {
-  $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, image, headline, note, songs, audio_url FROM ondemand WHERE id = $id";
+  
+  $cleanId = filter_var($id,FILTER_SANITIZE_NUMBER_INT);
+  
+  $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, image, headline, note, songs, audio_url FROM ondemand WHERE id = $cleanId";
   $result = mysql_query($query);
 
   if (!$result || mysql_num_rows($result) == 0) {
@@ -68,8 +71,8 @@ function on_demand_player($id) {
       "<td>\n<div class='t'><strong>". $info['headline']."</strong></div>\n".
       "<div>". $info['note']. "</div>\n".
       "<div>Songs Performed: ".$info['songs']. "</div>\n".
-      "<div>Recorded: ".$info['fdate']. "</div>\n".
-      "<div><iframe src=\"https://www.opendrive.com/listen/". $info['audio_url'] ."\" height=\"25\" width=\"370\" style=\"border:0\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\"></iframe>\n</div>\n</tr>";
+      "<div>Date: ".$info['fdate']. "</div>\n".
+      "<div><iframe src=\"https://www.opendrive.com/player/". $info['audio_url'] ."\" height=\"40\" width=\"370\" style=\"border:0\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\"></iframe>\n</div>\n</tr>";
     }
   }
 }

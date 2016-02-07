@@ -69,8 +69,7 @@ function add_votes_for($poll_form, $votes){
 function can_enter_contest($ip) {
   $answer = true;
   $needed_polls = array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
-                       'most_anticipated_albums', 'concerts', 'biggest_comebacks',
-                       'music_videos');
+                       'most_anticipated_albums', 'concerts', 'music_videos');
 
   foreach ($needed_polls as $poll) {
     $answer = $answer && has_voted($ip, $poll);
@@ -80,6 +79,7 @@ function can_enter_contest($ip) {
 
 function format_poll_header($current_poll, $category) {
   $category = str_replace('Tv', 'TV', $category);
+  $category = ($current_poll == 'unnecessary_sequels') ? $category . ' or Reboots ': $category;
   $saddest = ($current_poll == 'celebrity_deaths') ? ' Saddest ' : '';
   $suffix = ($current_poll != 'most_anticipated_albums') ? ' of this Year' : ' for next Year';
 
@@ -117,8 +117,7 @@ function get_number_of_votes_for($poll_form, $value) {
 
 function get_poll_names() {
   return array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
-               'most_anticipated_albums', 'concerts', 'biggest_comebacks',
-               'music_videos', 'tv_dramas', 'tv_comedies', 'late_night_tv',
+               'most_anticipated_albums', 'concerts', 'music_videos', 'tv_dramas', 'tv_comedies', 'late_night_tv',
                'best_movies', 'worst_movies', 'unnecessary_sequels','celebrity_deaths');
 }
 
@@ -135,7 +134,7 @@ function get_song($id) {
 function get_values($table_name) {
   $columns = get_column_names($table_name);
 
-  $query = "SELECT * FROM year_end_". $table_name . " ORDER BY ".$columns[1];
+  $query = "SELECT * FROM year_end_". $table_name . " ORDER BY " . $columns[1];
   $result = mysql_query($query);
 
   if (!$result)
@@ -240,7 +239,7 @@ function view_all_year_end_poll_for($poll) {
   echo "</thead>\n";
 
   $query = "SELECT * FROM year_end_".$poll. " ORDER BY votes DESC, " . $column_names[1] . " ASC";
-	$result = mysql_query($query);
+  $result = mysql_query($query);
 
   for ($i=1; $i<=mysql_num_rows($result); $i++) {
     $info = mysql_fetch_assoc($result);

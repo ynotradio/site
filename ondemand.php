@@ -22,7 +22,7 @@ $id = "";
     <h1>On Demand</h1>
     <?php
       if ($id == "") {
-        echo '<div class="center">Sort: [ <a href="ondemand.php?sort=date">Newest</a> | <a href="ondemand.php?sort=artist">Artist</a> | <a href="ondemand.php?sort=text">List</a> | <a href="http://www.youtube.com/ynotradio" target="_new">Videos</a> ] </div>';
+        echo '<div class="center">Sort: [ <a href="ondemand.php?sort=date">Newest</a> | <a href="ondemand.php?sort=artist">Artist</a> | <a href="ondemand.php?sort=text">List</a> | <a href="http://www.youtube.com/ynotradio" target="_new">Videos</a> | <a href="shows.php">Specialty Shows</a>  ] </div>';
         show_on_demand($sort);
       } else {
         echo '<table class="ondemand">';

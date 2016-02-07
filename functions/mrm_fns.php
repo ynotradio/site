@@ -67,17 +67,17 @@ function countdown_values($match_id) {
 
 function display_first_row(){
   echo "<ul id='time_line'>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 18</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 20</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 21</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 21</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 22</li>\n
-          <li class=\"top-pad_3\"><strong>CHAMPION</strong>March 22</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 22</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 21</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 21</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 20</li>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 19</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 30</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>April 1</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>April 2</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 2</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 3</li>\n
+          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 3</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 3</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 2</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>April 2</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>April 1</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 31</li>\n
       </ul>\n";
 }
 
@@ -348,7 +348,7 @@ function get_match_status($match_id) {
 
   if ( now() > $info['end_time']) {
     return "over";
-  } elseif  ( now () > $info['start_time']){
+  } elseif  ( now() > $info['start_time']){
     return "running";
   } else {
     return "early";
@@ -576,8 +576,7 @@ function scoreboard($match) {
   $('.live_match > dl .band2 .percentage').text(\"".vote_percentage($match['band2_votes'], $match['band1_votes'])."\");
   </script>";
    } else {
-    echo "<tr>\n<td colspan=\"3\" class=\"center no-border\">Tune in at ".date('g:ia', strtotime($match['end_time']))." to find out the Modern Rock Madness 2013 Champion.</td>\n<tr>\n";
-
+    #echo "<tr>\n<td colspan=\"3\" class=\"center no-border\">Tune in at ".date('g:ia', strtotime($match['end_time']))." to find out the Modern Rock Madness 2014 Champion.</td>\n<tr>\n";
     echo "<script type='text/javascript'>
     $('.live_match > dl .band1 .percentage').text(\"".vote_percentage($match['band1_votes'], $match['band2_votes'])."\");
   $('.live_match > dl .band2 .percentage').text(\"".vote_percentage($match['band2_votes'], $match['band1_votes'])."\");
@@ -586,7 +585,7 @@ function scoreboard($match) {
 }
 
 function next_match() {
-  $next_query = "SELECT id, band1_id, band2_id, start_time, DATE_FORMAT(start_time, '%h:%i') as fdate FROM mrm_matches WHERE now() < start_time ORDER BY id LIMIT 1";
+  $next_query = "SELECT id, band1_id, band2_id, start_time, DATE_FORMAT(start_time, '%h:%i') as fdate FROM mrm_matches WHERE now() < start_time ORDER BY start_time LIMIT 1";
   $next_result = mysql_query($next_query);
 
   if (!$next_result) {

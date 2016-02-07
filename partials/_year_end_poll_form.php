@@ -19,7 +19,7 @@
       </div>
     </div>        
     <div class=\"control-group\">
-      <label class=\"required\">City</label>
+      <label class=\"required\">Home Town</label>
       <div class=\"control\">
       <input type=\"text\" id=\"hometown\" name=\"hometown\" class=\"input-l\" value=\"\">
       </div>

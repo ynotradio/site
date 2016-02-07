@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function() {  
   $('.date').pickadate();
-  $('.time').pickatime();  
+  $('.time').pickatime();
 });

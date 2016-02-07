@@ -30,7 +30,11 @@ if ($page_file != "logout.php"){
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
       <link href="style/base.css" rel="stylesheet" type="text/css" media="all">
-      <script type="text/javascript" src="js/jquery-1.7.1.js"></script>
+      
+      <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
+      <script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+      <!--http://code.jquery.com/jquery-1.7.1.min.js -->
+
       <script src="js/picker.js"></script>
       <script src="js/picker.date.js"></script>
       <script src="js/picker.time.js"></script>

@@ -647,7 +647,7 @@ TimePicker.defaults = (function( prefix ) {
         formatSubmit: 'HH:i',
 
         // The interval between each time
-        interval: 15,
+        interval: 30,
 
         // Classes
         klass: {
