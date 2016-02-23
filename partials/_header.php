@@ -89,6 +89,7 @@ if ($page_file != "logout.php"){
         <?php
           $nav = array("index.php" => "Home", "concerts.php" => "Concerts", "top11.php" => "Top 11 @ 11", "music.php" => "New Music", "schedule.php" => "Schedule", "deejays.php" => "Dee Jays", "ondemand.php" => "On Demand", "cdoftheweek.php" => "CD of The Week", "ymail.php" => "Y-Mail", "donate.php" => "Donate");
       foreach ($nav as $url => $title) {
+          $last_class = '';
           if (end($nav) == $title) $last_class = "class =\"last\""; //silly IE Hack for last
           if ($url == $page_file)
             echo "<li $last_class><a href=\"/$url\" class=\"active\">$title</a></li>\n";
