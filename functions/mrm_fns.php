@@ -91,7 +91,7 @@ function display_mrm_band($mrm_band) {
 }
 
 function get_band_abbr($id) {
-  $query = "SELECT abbr FROM mrm_bands where id=".$id;
+  $query = "SELECT abbr FROM mrm_bands where placement=".$id;
   $result = mysql_query($query);
 
   if (!$result) {
@@ -156,8 +156,8 @@ function get_mrm_band($id) {
     return mysql_fetch_assoc($result);
 }
 
-function seed($id){
-  $query = "SELECT seed FROM mrm_bands where id=".$id;
+function seed($placement){
+  $query = "SELECT seed FROM mrm_bands where placement=".$placement;
   $result = mysql_query($query);
 
   if (!$result) {
@@ -479,13 +479,13 @@ function show_match($match_id) {
         <td> '. get_band_name($match['band2_id']) . '</td>
       </tr>
       <tr>
-        <td> <img src="' . band_pic($match['band1_id']) . '"></td>
+        <td> <img src="' . get_band_pic_url($match['band1_id']) . '"></td>
         <td class="middle" id="mrm_timer">';
         if ($match_status == 'over')
           echo 'Match Over';
 
     echo '</td>
-      <td> <img src="' . band_pic($match['band2_id']) . '"></td></tr>
+      <td> <img src="' . get_band_pic_url($match['band2_id']) . '"></td></tr>
       <tr>';
         echo "<td class=\"hidden\">";
           countdown_values($match_id);
@@ -597,7 +597,7 @@ function next_match() {
 
   if ($next_match) {
     echo '<div id="next_match">
-      <span>Next Match: </span><span class="seed_size">('. seed($next_match['band1_id']) . ')</span> '. band_name($next_match['band1_id']) .' vs <span class="seed_size">('. seed($next_match['band2_id']) . ')</span> '. band_name($next_match['band2_id']) .' | ';
+      <span>Next Match: </span><span class="seed_size">('. seed($next_match['band1_id']) . ')</span> '. get_band_name($next_match['band1_id']) .' vs <span class="seed_size">('. seed($next_match['band2_id']) . ')</span> '. get_band_name($next_match['band2_id']) .' | ';
     if(date('Ymd') + 1 == date('Ymd', strtotime($next_match['start_time'])))
       echo "Tomorrow at ";
     elseif (date('Ymd') + 1 < date('Ymd', strtotime($next_match['start_time'])))
@@ -802,6 +802,6 @@ function winner_banner(){
   $info = mysql_fetch_assoc($result);
 
   echo "<div class=\"center\"><h2>Congratulations to your ". date('Y')." <br>Y-Not Modern Rock Madness Champions</h2><h1>". band_name($info['winner_id']) ."!</h1>".
-    '<img src="' . band_pic($info['winner_id']) . '" height="200px"></div>';
+    '<img src="' . get_band_pic_url($info['winner_id']) . '" height="200px"></div>';
 }
 ?>
