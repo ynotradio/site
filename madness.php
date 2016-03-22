@@ -2,6 +2,7 @@
 
 $page_file = "madness.php";
 $page_title = "Modern Rock Madness";
+header("Location: /pages.php?page=modern-rock-madness");
 
 require ("functions/main_fns.php");
 require ("functions/mrm_fns.php");
