@@ -17,7 +17,7 @@ $band_id = $_POST['band_id'];
 
 <div class="row">
   <div class="twelve columns">
-	<a href="madness.php"><img src="images/mrm2015-banner.png" alt="Modern Rock Madness 2014" width="930px"></a>
+	<a href="madness.php"><img src="images/mrm2016-banner.jpg" alt="Modern Rock Madness 2016" width="930px"></a>
     <div id="mrm_text">
   Download your Modern Rock Madness <?php echo date('Y'); ?> brackets <a href="http://ynotradio.opendrive.com/files/98800526_19BFV_7dd0/YNot_MRM2015_Bracket.pdf">here</a> and listen all week as Y-Not bands go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 267-293-YNOT.  Plus get more color commentary on each day's matches by visiting our partner site <a href=" http://tristateindie.com/modern-rock-madness-2015" target="_new">Tri State Indie</a>.
       <div class="social">
