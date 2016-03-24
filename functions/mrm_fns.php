@@ -156,6 +156,16 @@ function get_mrm_band($id) {
     return mysql_fetch_assoc($result);
 }
 
+function get_mrm_sponsor($id) {
+  $query = "SELECT * FROM mrm_matches where id=".$id;
+  $result = mysql_query($query);
+
+  if (!$result)
+    echo 'No results in database.';
+  else
+    return mysql_fetch_assoc($result);
+}
+
 function seed($placement){
   $query = "SELECT seed FROM mrm_bands where placement=".$placement;
   $result = mysql_query($query);
@@ -191,6 +201,20 @@ function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr) {
     $abbr = mysql_real_escape_string($abbr);
 
   $update = "UPDATE mrm_bands SET name=\"$name\", url=\"$url\", pic_url=\"$pic_url\", placement=\"$placement\", seed=\"$seed\", abbr=\"$abbr\" WHERE id=".$id;
+  $result = mysql_query($update);
+
+  if (!$result)
+    echo "There was an error updating: <br>" . $update;
+  else
+    return $result;
+}
+
+function update_mrm_sponsor($match, $sponsor, $sponsor_msg) {
+    $id = mysql_real_escape_string($match);
+    $sponsor = mysql_real_escape_string($sponsor);
+    $sponsor_msg = mysql_real_escape_string($sponsor_msg);
+  
+  $update = "UPDATE mrm_matches SET sponsor=\"$sponsor\", sponsor_msg=\"$sponsor_msg\" WHERE id=".$id;
   $result = mysql_query($update);
 
   if (!$result)
@@ -266,6 +290,12 @@ function view_matches($round){
     echo "<tr>\n<td class=\"text-right\">End Time:</td><td colspan=\"2\">".date('F d @ g:i a', strtotime($match['end_time']))."</td></tr>";
 
     echo "</table>\n";	
+
+    echo "<table class=\"bottom-spacer_20 table-center\"" .$live_match.">\n
+          <tr><td><strong>Match sponsored by: " . $match['sponsor'] . "</strong></td></tr>\n
+          <tr><td>" . $match['sponsor_msg'] . "</td></tr>\n
+          <tr><td><a href='/mrm_manage_sponsor.php?match=". $match['id']. "'>Edit</a></td></tr>";
+    echo "</table>\n";
   }
 }
 

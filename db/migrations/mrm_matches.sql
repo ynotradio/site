@@ -13,5 +13,7 @@ CREATE TABLE IF NOT EXISTS `mrm_matches` (
   `start_time` timestamp NOT NULL default '0000-00-00 00:00:00',
   `end_time` timestamp NOT NULL default '0000-00-00 00:00:00',
   `winner_id` int(11) NOT NULL default '0',
+  `sponsor` varchar(255) NOT NULL,
+  `sponsor_msg` varchar(3000) NOT NULL,
   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=64 ;
