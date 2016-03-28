@@ -750,16 +750,24 @@ function prep_match($match, $side){
 }
 
 function sponsor(){
-  echo "<div class=\"sponsor\" id='sponsor_top'>\n".
-    "<a href='http://sixpoint.com/' target='_new'>Brought To You By\n".
-    "<br><img src='sponsors/sixpoint.png' width='130px'>\n".
-    "<br>Beer Is Culture</a>\n".
-    "</div>\n";
-  echo "<div class=\"sponsor\" id='sponsor_bottom'>\n".
-    "<a href='http://sixpoint.com/' target='_new'>Brought To You By\n".
-    "<br><img src='sponsors/sixpoint.png' width='130px'>\n".
-    "<br>Beer Is Culture</a>\n".
-    "</div>\n";
+  $current_match = now_match();
+  if(isset($current_match['sponsor'])) {
+
+    echo "<div class=\"sponsor\" id='sponsor_top'>\n".
+      "Match sponsored by\n".
+      "<br>\n". $current_match['sponsor'];
+      if(isset($current_match['sponsor_msg'])) {
+        echo "<br>\n". $current_match['sponsor_msg'];
+      }
+      echo "</div>\n";
+    echo "<div class=\"sponsor\" id='sponsor_bottom'>\n".
+      "Match sponsored by\n".
+      "<br>\n". $current_match['sponsor'];
+      if(isset($current_match['sponsor_msg'])) {
+        echo "<br>\n". $current_match['sponsor_msg'];
+      }
+      echo "</div>\n";
+  }
 }
 
 function has_voted($match_id){
