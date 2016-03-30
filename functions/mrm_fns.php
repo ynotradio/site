@@ -497,11 +497,11 @@ function show_match($match_id) {
     } elseif ($match_status  == 'running') {
       if (has_voted($match_id) == false){
         echo '<td class="center">';
-          vote_form($match[id], 1);
+          vote_form($match["id"], 1);
         echo "</td>\n
           <td></td>\n
           <td class='center'>";
-            vote_form($match[id], 2);
+            vote_form($match["id"], 2);
         echo '</td>';
       } else {
         echo '<td colspan=3 class="center">Thanks for Voting!</td>';
@@ -786,7 +786,7 @@ function view_all_mrm_bands(){
   for ($i=1; $i<=mysql_num_rows($result);$i++) {
     $info = mysql_fetch_assoc($result);
     display_mrm_band($info);
-    echo '<br>[ <a href="mrm_band_update.php?id=' .$info[id]. '">Edit</a> | <a href="mrm_band_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo '<br>[ <a href="mrm_band_update.php?id=' .$info["id"]. '">Edit</a> | <a href="mrm_band_delete.php?id=' .$info["id"]. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }
