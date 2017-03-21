@@ -68,17 +68,17 @@ function countdown_values($match_id) {
 
 function display_first_row(){
   echo "<ul id='time_line'>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 27</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>March 29</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 30</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>CHAMPION</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 30</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>March 29</li>\n
           <li><strong>1<sup>st</sup> ROUND</strong>March 28</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 30</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 30</li>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 29</li>\n
       </ul>\n";
 }
 
