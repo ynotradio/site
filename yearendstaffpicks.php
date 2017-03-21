@@ -14,22 +14,27 @@ require ("partials/_header.php");
     
     <div class="twelve" style="display:inline-block;">
     <div class="nine columns top-spacer_20">
-    		<img src="images/2015YearEndSponsoredBanner.png" style="margin-bottom:18px;" alt="YNot Year End Poll 2015" width="100%">
-    		<!-- <div class="center top-spacer_20">-->
-    		<table width="100%" style="font-size:small;" border="0" cellspacing="5">
-  					<tr>
-    					<td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=top215of2015">TOP 215 SONGS OF 2015</a></strong></div></td>
-    					<td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2015">YEAR END POLL RESULTS</a></strong></div></td>
-    					<td bgcolor="#666666"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td>
-  					</tr>
-			</table>
+    		<img src="images/yearendpoll2016_banner.jpg" style="margin-bottom:18px;" alt="YNot Year End Poll 2016" width="100%"><br/>
+        <h1><?php echo date('Y');?> Y-Not Staff Favorites</h1>
     </div>
-	<div class="three columns top-spacer_20">
-		<!-- <a href="http://www.ticketmaster.com/venue/17012?C=DISP_CT_Philadelphia_YNotRadio_121615" target="_blank"> -->
-    		<img src="images/fillmore300.gif" height="218px" alt="Fillmore">
-    	<!-- </a>-->
-	</div>
-	</div>
+    <div class="column three">
+    <a href="http://LNPhilly.com">
+      <img style="margin-right: 1em; margin-top: 1em; margin-bottom: 1em; max-width: 200px;" src="http://i.imgur.com/cfpO3Qu.gif" /></a>
+    </div>
+  </div>
+  <div class="twelve columns top-spacer_20">
+        <table width="100%" border="0" cellspacing="5" style="font-size: 13px;">
+          <tbody><tr>
+            <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=top216of2016">TOP 216 SONGS OF 2016</a></strong></div></td>
+            <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2016">YEAR END POLL RESULTS</a></strong></div></td>
+            <td bgcolor="#666666"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td>
+          </tr>
+        </tbody></table>
+
+        
+    </div>
+
+
 					<!--	<a href='pages.php?page=top214of2014'>TOP 214 OF 2014</a> | -->
 					<!--	<a href="yearendpoll.php">2015 YEAR END POLL</a>-->
 					<!--	<a href='yearendstaffpicks.php'>Y-NOT STAFF FAVORITES</a> -->
@@ -42,7 +47,7 @@ require ("partials/_header.php");
 		<!-- <center><h3>Vote now for your favorite songs, albums, and more in <a href="yearendpoll.php">Y-Not's 2014 Year End Poll</a>!</h3></center>
 	-->
 
-    <h1><?php echo date('Y');?> Y-Not Staff Favorites</h1>
+   
     <?php show_year_end_staff_picks(); ?>
 	<div><a href="yearendpoll.php" >Go Back To Year End Poll</a></div>
   </div>

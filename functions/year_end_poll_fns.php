@@ -88,7 +88,7 @@ function format_poll_header($current_poll, $category) {
 
 function format_poll_name($str) {
   if ($str == 'most_anticipated_albums')
-      $str = 'most_anticipated_albums_of_'.(date('Y') + 1);
+      $str = 'most_anticipated_'.(date('Y') + 1). '_albums';
   return str_replace("_", " ", $str);
 }
 
@@ -196,7 +196,7 @@ function max_picks_for($poll) {
     "best_movies" => "3",
     "worst_movies" => "2",
     "unnecessary_sequels" => "2",
-    "celebrity_deaths" => "2");
+    "celebrity_deaths" => "3");
 
   return $max_picks[$poll];
 }

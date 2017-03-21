@@ -11,9 +11,12 @@
     $info = mysql_fetch_assoc($poll_values);
     echo "<label for=\"".$info['id']."\" class=\"half\"><input type=\"checkbox\" name=\"year_end_votes[]\" id=\"".$info['id']."\" value=\"".$info['id']."\">";
     for ($c=1; $c<=count($column_names)-2; $c++) {
-      echo "<span>" . $info[$column_names[$c]];
-      if ($column_names[$c+1] != 'votes')
-        echo " - ";
+        
+        echo "<span>" . $info[$column_names[$c]];
+        if ($column_names[$c+1] != 'votes' && $info[$column_names[$c+1]] !== '')
+          echo " - ";
+      
+     
     }
     echo "\n</span>\n</label>\n";
   }
