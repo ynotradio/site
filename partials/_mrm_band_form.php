@@ -36,6 +36,12 @@
       <input type=\"text\" name=\"placement\" class=\"input-s\" value=\"".$mrm_band["placement"]."\">
       </div>
     </div>
+    <div class=\"control-group\">
+      <label class=\"required\">Sponsor</label>
+      <div class=\"control\">
+      <input type=\"text\" name=\"sponsor\" class=\"input-l\" value=\"".$mrm_band["sponsor"]."\">
+      </div>
+    </div>
     <div class=\"form-actions\">";
       if ($mrm_band['name'] == ''){
         echo "<input type=\"hidden\" name=\"action\" value=\"insert\">

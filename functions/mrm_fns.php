@@ -1,14 +1,15 @@
 <?php
 
-function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr) {
+function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor) {
   $name = mysql_real_escape_string($name);
   $url = mysql_real_escape_string($url);
   $pic_url = mysql_real_escape_string($pic_url);
   $placement = mysql_real_escape_string($placement);
   $seed = mysql_real_escape_string($seed);
   $abbr = mysql_real_escape_string($abbr);
+  $sponsor = mysql_real_escape_string($sponsor);
 
-  $insert = "INSERT INTO mrm_bands VALUES (id, '".$name ."', '".$url. "', '".$pic_url. "', '".$placement. "', '".$seed. "', '".$abbr. "')";
+  $insert = "INSERT INTO mrm_bands VALUES (id, '".$name ."', '".$url. "', '".$pic_url. "', '".$placement. "', '".$seed. "', '".$abbr. "','".$sponsor. "')";
   $result = mysql_query($insert);
 
   if (!$result) {
@@ -87,7 +88,8 @@ function display_mrm_band($mrm_band) {
     "\n<br><b>Url:</b> ". $mrm_band['url'].
     "\n<br><b>Seed:</b> ". $mrm_band['seed'].
     "\n<br><b>Picture:</b><br> <img src=\"". $mrm_band['pic_url']. "\" width=\"250px\"/>".
-    "\n<br><b>Placement:</b> ". $mrm_band['placement'];
+    "\n<br><b>Placement:</b> ". $mrm_band['placement']. 
+    "\n<br><b>Sponsor:</b> ". $mrm_band['sponsor'];
 }
 
 function get_band_abbr($id) {
@@ -192,15 +194,16 @@ function band_pic($id){
   return $info['pic_url'];	
 }
 
-function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr) {
+function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor) {
     $name = mysql_real_escape_string($name);
     $url = mysql_real_escape_string($url);
     $pic_url = mysql_real_escape_string($pic_url);
     $placement = mysql_real_escape_string($placement);
     $seed = mysql_real_escape_string($seed);
     $abbr = mysql_real_escape_string($abbr);
+    $sponsor = mysql_real_escape_string($sponsor);
 
-  $update = "UPDATE mrm_bands SET name=\"$name\", url=\"$url\", pic_url=\"$pic_url\", placement=\"$placement\", seed=\"$seed\", abbr=\"$abbr\" WHERE id=".$id;
+  $update = "UPDATE mrm_bands SET name=\"$name\", url=\"$url\", pic_url=\"$pic_url\", placement=\"$placement\", seed=\"$seed\", abbr=\"$abbr\", sponsor=\"$sponsor\" WHERE id=".$id;
   $result = mysql_query($update);
 
   if (!$result)

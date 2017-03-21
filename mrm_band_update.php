@@ -35,11 +35,12 @@ if (!$_SESSION["logged_in"]) {
         $placement = $_POST['placement'];
         $seed = $_POST['seed'];
         $abbr = $_POST['abbr'];
+        $sponsor = $_POST['sponsor'];
 
-        if (!$name || !$url || !$pic_url || !$placement || !$seed || !$abbr) {
+        if (!$name || !$url || !$pic_url || !$placement || !$seed || !$abbr || !$sponsor) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr);
+          $result = update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
               display_mrm_band(get_mrm_band($id));
