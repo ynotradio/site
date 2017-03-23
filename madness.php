@@ -17,9 +17,12 @@ $band_id = $_POST['band_id'];
 
 <div class="row">
   <div class="twelve columns">
-	<a href="madness.php"><img src="https://goo.gl/wXGwut" alt="Modern Rock Madness 2017" width="930px"></a>
+	<a href="madness.php"><img src="http://i.imgur.com/e1slsJG.png" alt="Modern Rock Madness 2017" width="930px"></a>
     <div id="mrm_text">
-  <p>Download your Modern Rock Madness <?php echo date('Y'); ?> brackets <a href="https://od.lk/d/119447479_QtRV5/MRM17Bracket.pdf">here</a> and listen all week as Y-Not bands go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 267-293-YNOT.  Plus get more color commentary on each day's matches by visiting our partner site <a href=" http://www.tristateindie.com/category/y-not-radio/" target="_new">Tri State Indie</a>.</p>
+  <p>Download your Modern Rock Madness <?php echo date('Y'); ?> brackets <a href="https://od.lk/d/119447479_QtRV5/MRM17Bracket.pdf">here</a> and listen all week as Y-Not bands go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 267-293-YNOT. 
+
+<!-- Plus get more color commentary on each day's matches by visiting our partner site <a href=" http://www.tristateindie.com/category/y-not-radio/" target="_new">Tri State Indie</a>. -->
+</p>
 <!--     <p><strong>Want to sponsor a match?</strong> Some are still available <a href="/donate.php">here</a>.</p>
  -->      <div class="social">
         <a href="https://twitter.com/share" class="twitter-share-button" data-text="Tune in now to @YNotRadio's Modern Rock Madness - 64 bands go head to head! #modernrockmadness" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
