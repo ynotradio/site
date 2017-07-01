@@ -641,3 +641,33 @@ form .row > .pull-left {
   width: 400px;
   margin: 0 auto;
 }
+
+.sort-item {
+  box-shadow: 1px 3px 10px rgba(0,0,0,.25);
+  padding: 2em 2em 2em 4em;
+  background: #fff;
+  margin-bottom: 1em;
+}
+
+.handle {
+
+  content: '....';
+  width: 10px;
+  height: 20px;
+  display: inline-block;
+  overflow: hidden;
+  line-height: 5px;
+  padding: 3px 4px;
+  cursor: move;
+  vertical-align: middle;
+  margin-left: -2em;
+  margin-right: 1.2em;
+  font-size: 12px;
+  font-family: sans-serif;
+  letter-spacing: 2px;
+  color: #cccccc;
+  text-shadow: 1px 0 1px black;
+}
+.handle::after {
+  content: '.. .. .. ..';
+}

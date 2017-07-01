@@ -297,6 +297,11 @@ nav a:hover {
 
 .deejay {
   clear: both;
+  min-height: 12em;
+}
+
+.deejay + .deejay {
+  margin-top: 1em;
 }
 
 .review img, .deejay img{

@@ -16,12 +16,24 @@ if (!$_SESSION["logged_in"]) {
 <div class="row">
   <div class="tweleve columns content full-width">
     <h1>View all Deejays</h1>
+    	<div class="sortable">
       <?php view_all_deejays(); ?>
+      </div>
     <div class="top-spacer_20">
       <a href="cp.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->
+
+
+<script
+  src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+  integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+  crossorigin="anonymous"></script>
+
+
+  <script src="js/deejay-sort.js"></script>
+  
 <?php }
   require ("partials/_footer.php");
 ?>

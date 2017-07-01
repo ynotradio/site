@@ -1,5 +1,23 @@
 <?php
 
+function sort_deejays() {
+  // var_dump($_POST);
+  if(!isset($_POST['item'])) {
+    return false;
+  }
+  require ("main_fns.php");
+  $i = 0;
+  open_db();
+
+  foreach ($_POST['item'] as $value) {
+      $query = "UPDATE deejays SET sort = $i WHERE id = $value";
+      $result = mysql_query($query);
+      $i++;
+  }
+}
+
+sort_deejays();
+
 function add_deejay($name, $show, $email, $external_connect_text, $external_connect_url, $pic) {
   $name = mysql_real_escape_string($name);
   $show = mysql_real_escape_string($show);
@@ -50,15 +68,22 @@ function delete_deejay($id){
 }
 
 function display_deejay($deejay) {
-  echo "<b>Name:</b> ". $deejay['name'].
+  echo "<div class='sort-item' id='item-" . $deejay['id'] . "'>". 
+  "<div class='handle'></div>" . 
+  "<b>Name:</b> ". $deejay['name'].
   "<br><b>Show:</b> ". $deejay['show'].
   "<br><b>Email:</b> ". $deejay['email'].
   "<br><b>External Connect Text:</b> ". $deejay['external_connect_text'].
   "<br><b>External Connect URL:</b> ". $deejay['external_connect_url'];
-    if ($deejay['pic'] != "")
-      echo "<br><b>Deejay Picture:</b><br><img src=\"". $deejay['pic']. "\" height='150px';>\n";
-    else
-      echo "<br><b>Deejay Picture:</b><br> <img src=\"/imgs/na.jpg\" height='100px';>\n";
+  if ($deejay['pic'] != "") {
+    echo "<br><b>Deejay Picture:</b><br><img src=\"". $deejay['pic']. "\" height='150px';>\n";
+  } else {
+    echo "<br><b>Deejay Picture:</b><br> <img src=\"/imgs/na.jpg\" height='100px';>\n";
+  }
+
+  echo '<br>[ <a href="deejay_update.php?id=' .$deejay['id']. '">Edit</a> | <a href="deejay_delete.php?id=' .$deejay['id']. '">Delete</a> ] <p>';
+  echo '</div>';
+
 }
 
 function display_all_deejays($deejays){
@@ -98,7 +123,7 @@ function get_deejays() {
     die('Invalid');
   }
 
-  $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort, name";
+  $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort";
   $result = mysql_query($query);
 
   if (!$result) {
@@ -140,7 +165,7 @@ function update_deejay($id, $name, $show, $email, $external_connect_text, $exter
 }
 
 function view_all_deejays(){
-  $query = "SELECT * FROM deejays WHERE deleted = 'no' ORDER BY name";
+  $query = "SELECT * FROM deejays WHERE deleted = 'no' ORDER BY sort";
   $result = mysql_query($query);
 
   if (!$result) {
@@ -152,7 +177,6 @@ function view_all_deejays(){
   for ($i=1; $i<=mysql_num_rows($result);$i++) {
     $info = mysql_fetch_assoc($result);
     display_deejay($info);
-    echo '<br>[ <a href="deejay_update.php?id=' .$info[id]. '">Edit</a> | <a href="deejay_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }
