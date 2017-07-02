@@ -105,6 +105,19 @@ function get_band_abbr($id) {
   return $info['abbr'];
 }
 
+function get_sponsor_name($placement) {
+	$query = "SELECT sponsor, seed FROM mrm_bands WHERE placement = ".$placement;
+	$result = mysql_query($query);
+
+	if (!$result) {
+	echo "error: ". $query;
+	die('Invalid');
+	}
+	$info = mysql_fetch_assoc($result);
+
+	return "<span class='seed_size'>Sponsored by: ". $info['sponsor'] ."</span> ";
+}
+
 function get_band_name($placement) {
   if ($placement == 0){
     return "TBD";
@@ -491,6 +504,8 @@ function get_new_match($old_match) {
   return $info['new'];
 }
 
+
+
 function show_match($match_id) {
   if ($match_id != 8888){
     $match_status = get_match_status($match_id);
@@ -507,9 +522,9 @@ function show_match($match_id) {
 
     echo '<table id="mrm_current_match" border="0">
       <tr>
-        <td> '. get_band_name($match['band1_id']) . '</td>
+        <td> '. get_band_name($match['band1_id']) . '<br>' . get_sponsor_name($match['band1_id']) .  '</td>
         <td></td>
-        <td> '. get_band_name($match['band2_id']) . '</td>
+        <td> '. get_band_name($match['band2_id']) . '<br>' . get_sponsor_name($match['band2_id']) . '</td>
       </tr>
       <tr>
         <td> <img src="' . get_band_pic_url($match['band1_id']) . '"></td>
