@@ -4,6 +4,8 @@ sudo: required
 
 install: true
 
+script: echo "hello"
+
 deploy:
   - provider: script
     script: ./bin/deploy.sh
