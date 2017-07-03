@@ -1,0 +1,10 @@
+# .travis.yml
+dist: trusty
+sudo: required
+
+deploy:
+  - provider: script
+    script: ./bin/deploy.sh
+    skip_cleanup: true
+    on:
+      branch: master
