@@ -1,0 +1,52 @@
+{
+  "name": "tbi/ynotradio",
+  "description": "A WordPress install built with varying vagrant vagrants.",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Dan Gautsch",
+      "email": "dan.gautsch@thinkbrownstone.com",
+      "homepage": "http://www.thinkbrownstone.com/",
+      "role": "Development Lead"
+    },
+    {
+      "name": "Dan Grebb",
+      "email": "dan.grebb@thinkbrownstone.com",
+      "homepage": "http://www.thinkbrownstone.com/",
+      "role": "Developer"
+    }
+  ],
+  "type": "project",
+  "minimum-stability": "dev",
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://wpackagist.org"
+    }
+  ],
+  "config": {
+    "vendor-dir": "vendor",
+    "secure-http": false
+  },
+  "require": {
+    "johnpbloch/wordpress": "^4.7",
+    "wpackagist-plugin/google-analytics-for-wordpress": "^6.0",
+    "wpackagist-plugin/akismet": "3.1.*",
+    "wpackagist-plugin/wp-super-cache": "1.4.*",
+    "wpackagist-plugin/wordpress-seo": "^4.4"
+  },
+  "require-dev": {
+    "wpackagist-plugin/log-deprecated-notices": "*"
+  },
+  "extra": {
+    "wordpress-install-dir": "htdocs",
+    "installer-paths": {
+      "htdocs/wp-content/plugins/{$name}/": [
+        "type:wordpress-plugin"
+      ],
+      "htdocs/wp-content/themes/{$name}/": [
+        "type:wordpress-theme"
+      ]
+    }
+  }
+}

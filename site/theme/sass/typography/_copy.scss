@@ -1,0 +1,53 @@
+p {
+    margin-bottom: 1.5em;
+}
+
+dfn,
+cite,
+em,
+i {
+    font-style: italic;
+}
+
+blockquote {
+    margin: 0 1.5em;
+}
+
+address {
+    margin: 0 0 1.5em;
+}
+
+pre {
+    background: $color-background-pre;
+    font-family: $font-pre;
+    @include font-size(0.9375); //sass-lint:disable-line mixins-before-declarations
+    line-height: $font-line-height-pre;
+    margin-bottom: 1.6em;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1.6em;
+}
+
+code,
+kbd,
+tt,
+var {
+    font-family: $font-code;
+    @include font-size(0.9375); //sass-lint:disable-line mixins-before-declarations
+}
+
+abbr,
+acronym {
+    border-bottom: 1px dotted $color-border-abbr;
+    cursor: help;
+}
+
+mark,
+ins {
+    background: $color-background-ins;
+    text-decoration: none;
+}
+
+big {
+    font-size: 125%;
+}

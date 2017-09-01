@@ -1,0 +1,38 @@
+{
+  "name": "ynotradio",
+  "version": "2.0.0",
+  "description": "Build tools for ynotradio.net",
+  "scripts": {
+    "start": "npm run watch",
+    "dev": "npm run watch",
+    "build": "./bin/build.sh",
+    "lint": "./bin/lint.sh",
+    "lint:js": "./bin/lint-js.sh",
+    "lint:scss": "./bin/lint-scss.sh",
+    "watch": "./bin/watch.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:ynotradio/site.git"
+  },
+  "keywords": [
+    "Wordpress",
+    "Node",
+    "Tools",
+    "Webpack"
+  ],
+  "author": "Think Company Development Team",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/ynotradio/site",
+  "devDependencies": {
+    "concurrently": "^3.1.0",
+    "eslint": "^3.2.2",
+    "eslint-config-thinkcompany": "^1.1.1",
+    "eslint-loader": "^1.5.0",
+    "node-sass": "^3.10.1",
+    "nodemon": "^1.11.0",
+    "sass-lint": "^1.10.2",
+    "webpack": "^1.13.1",
+    "webpack-dev-server": "^1.14.1"
+  }
+}

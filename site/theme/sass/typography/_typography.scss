@@ -1,0 +1,14 @@
+body,
+button,
+input,
+select,
+textarea {
+    color: $color-text-main;
+    font-family: $font-main;
+    @include font-size(1); //sass-lint:disable-line mixins-before-declarations
+    line-height: $font-line-height-body;
+}
+
+@import "headings";
+
+@import "copy";

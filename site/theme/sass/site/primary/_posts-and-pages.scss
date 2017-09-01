@@ -1,0 +1,35 @@
+.sticky {
+    display: block;
+}
+
+.hentry {
+    margin: 0 0 1.5em;
+}
+
+.byline {
+    display: none;
+}
+
+.updated {
+    :not(.published) {
+        display: none;
+    }
+}
+
+.single,
+.group-blog {
+    .byline {
+        display: inline;
+    }
+}
+
+.page-content,
+.entry-content,
+.entry-summary {
+    margin: 1.5em 0 0;
+}
+
+.page-links {
+    clear: both;
+    margin: 0 0 1.5em;
+}

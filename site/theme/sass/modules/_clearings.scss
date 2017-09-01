@@ -1,0 +1,15 @@
+.clear,
+.entry-content,
+.comment-content,
+.site-header,
+.site-content,
+.site-footer {
+    &::after {
+        @include clearfix;
+        @include clearfix-after;
+    }
+
+    &::before {
+        @include clearfix;
+    }
+}
