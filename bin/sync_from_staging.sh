@@ -5,7 +5,7 @@ REMOTE_MYSQL_HOST="127.0.0.1"
 REMOTE_MYSQL_DB="ynotradio_dev_wp"
 REMOTE_MYSQL_USER="ynotradio_dev_wp_user"
 REMOTE_MYSQL_PASS=$2
-REMOTE_BASE_URL="ynotradio.dev.thinkbrownstone.com"
+REMOTE_BASE_URL="ynotradio.dev.thinkcompany.com"
 
 LOCAL_MYSQL_HOST="localhost"
 LOCAL_MYSQL_DB="ynotradio_dev"

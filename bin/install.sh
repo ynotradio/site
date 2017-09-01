@@ -1,7 +1,7 @@
 #!/bin/bash
 # Setup the ynotradio.com Dev Environment
-# Author: Dan Gautsch (@iamdaninphilly), Think Brownstone <http://thinkbrownstone.com>
-# Contributor: Dan Grebb (@dgrebb), Think Brownstone <http://thinkbrownstone.com>
+# Author: Dan Gautsch (@iamdaninphilly), Think Company <http://thinkcompany.com>
+# Contributor: Dan Grebb (@dgrebb), Think Company <http://thinkcompany.com>
 # Usage: bin/install.sh
 
 RED='\033[0;31m'
