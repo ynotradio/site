@@ -4,3 +4,8 @@ imgs
 pdfs
 small_imgs
 sponsors
+site/htdocs
+site/vendor
+site/theme/**/bundle.js
+composer.lock
+site/theme/**/style.css

@@ -1,8 +1,7 @@
 #!/bin/sh
 # deploy.sh
-set -e
 
-sudo apt-get install -y lftp
-
-# deployment via ftp upload. Using FTPS for that
-lftp -c "set net:max-retries 2;set net:reconnect-interval-base 5;set net:reconnect-interval-multiplier 1; open ftp://$FTP_USER:$FTP_PASS@$FTP_HOST:21; cd public; mirror --reverse --parallel=20 --verbose --exclude functions/main_fns.php; quit;"
+# compile
+npm run build
+# sync on staging
+rsync --rsync-path="sudo -u www-data rsync" -az -vv --no-p --no-g --chmod=ugo=rwX -O -e 'ssh -p 22' ~/clone/dist/site/themes bitnami@54.84.246.119:~/apps/beta.ynotradio.net/htdocs/wp-content/themes/ynotradio
