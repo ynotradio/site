@@ -29,11 +29,7 @@
     "secure-http": false
   },
   "require": {
-    "johnpbloch/wordpress": "^4.7",
-    "wpackagist-plugin/google-analytics-for-wordpress": "^6.0",
-    "wpackagist-plugin/akismet": "3.1.*",
-    "wpackagist-plugin/wp-super-cache": "1.4.*",
-    "wpackagist-plugin/wordpress-seo": "^4.4"
+    "johnpbloch/wordpress": "^4.7"
   },
   "require-dev": {
     "wpackagist-plugin/log-deprecated-notices": "*"

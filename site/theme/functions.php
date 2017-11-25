@@ -138,3 +138,8 @@ require get_template_directory() . '/inc/customizer.php';
  * Load Jetpack compatibility file.
  */
 require get_template_directory() . '/inc/jetpack.php';
+
+/**
+ * Add Carbon Fields functionality
+ */
+require get_template_directory() . '/inc/carbon-fields-setup.php';
