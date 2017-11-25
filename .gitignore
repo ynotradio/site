@@ -9,3 +9,5 @@ site/vendor
 site/theme/**/bundle.js
 composer.lock
 site/theme/**/style.css
+.env
+tmp
