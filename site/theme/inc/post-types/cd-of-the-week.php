@@ -35,6 +35,7 @@ function crb_register__cd_of_the_week()
             Field::make('text', 'cdotw_artist_url', 'Artist Website'),
             Field::make('text', 'cdotw_label', "Record Label"),
             Field::make('text', 'cdotw_reviewer', "Reviewer's Name"),
+            Field::make('hidden', 'cdotw_legacy_id'),
         ));
 
     Container::make('post_meta', 'CD Artwork')
