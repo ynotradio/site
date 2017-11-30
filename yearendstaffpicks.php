@@ -13,16 +13,16 @@ require ("partials/_header.php");
   <div class="twelve columns content" style="white-space:nowrap;">
     
     <div class="twelve" style="display:inline-block;">
-    <div class="nine columns top-spacer_20">
-    		<img src="images/yearendpoll2016_banner.jpg" style="margin-bottom:18px;" alt="YNot Year End Poll 2016" width="100%"><br/>
+    <div class="twelve columns top-spacer_20">
+    		<img src="images/yearendpoll2017_banner.png" style="margin-bottom:18px;" alt="YNot Year End Poll 2017" width="100%"><br/>
         <h1><?php echo date('Y');?> Y-Not Staff Favorites</h1>
     </div>
-    <div class="column three">
+<!--     <div class="column three">
     <a href="http://LNPhilly.com">
       <img style="margin-right: 1em; margin-top: 1em; margin-bottom: 1em; max-width: 200px;" src="http://i.imgur.com/cfpO3Qu.gif" /></a>
-    </div>
+    </div> -->
   </div>
-  <div class="twelve columns top-spacer_20">
+ <!--  <div class="twelve columns top-spacer_20">
         <table width="100%" border="0" cellspacing="5" style="font-size: 13px;">
           <tbody><tr>
             <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=top216of2016">TOP 216 SONGS OF 2016</a></strong></div></td>
@@ -32,7 +32,7 @@ require ("partials/_header.php");
         </tbody></table>
 
         
-    </div>
+    </div> -->
 
 
 					<!--	<a href='pages.php?page=top214of2014'>TOP 214 OF 2014</a> | -->
