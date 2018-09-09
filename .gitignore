@@ -11,3 +11,4 @@ composer.lock
 site/theme/**/style.css
 .env
 tmp
+*.map
