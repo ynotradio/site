@@ -3,13 +3,13 @@
   "version": "2.0.0",
   "description": "Build tools for ynotradio.net",
   "scripts": {
-    "start": "npm run watch",
+    "start": "docker-compose up -d && sleep 10 && npm run build && npm run watch",
     "dev": "npm run watch",
     "build": "./bin/build.sh",
     "sync": "(source '.env' && bash './bin/db-sync.sh') && npm run build",
     "lint": "./bin/lint.sh",
     "lint:js": "./bin/lint-js.sh",
-    "lint:scss": "./bin/lint-scss.sh",
+    "lint:scss": "echo 0",
     "watch": "./bin/watch.sh",
     "deploy": "./bin/deploy.sh"
   },
@@ -27,14 +27,14 @@
   "license": "UNLICENSED",
   "homepage": "https://github.com/ynotradio/site",
   "devDependencies": {
-    "concurrently": "^3.1.0",
-    "eslint": "^3.2.2",
+    "concurrently": "^4.0.1",
+    "eslint": "^5.5.0",
     "eslint-config-thinkcompany": "^1",
-    "eslint-loader": "^1.5.0",
-    "node-sass": "^3.10.1",
+    "eslint-loader": "^2.1.0",
+    "node-sass": "^4.9.3",
     "nodemon": "^1.11.0",
-    "sass-lint": "^1.10.2",
-    "webpack": "^1.13.1",
-    "webpack-dev-server": "^1.14.1"
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0",
+    "webpack-dev-server": "^3.1.8"
   }
 }
