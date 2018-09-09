@@ -1,123 +1,54 @@
 # Y-Not Radio #
 ----------------
 
-## Setup ##
+## Table of Contents
 
-**Required**
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Development](#development)
+- [Teardown](#teardown)
+- [Support](#support)
+- [Contributing](#contributing)
 
-* [Install Vagrant](https://www.vagrantup.com/downloads.html)
+## Requirements
+To spin up a working copy of this WordPress site on your local machine, you'll need a few important pieces before getting started:
 
-* [Install Composer](https://getcomposer.org/download/) - make sure to [set it up globally](https://getcomposer.org/doc/00-intro.md#globally)
+- [Install Docker Community Edition](https://www.docker.com/community-edition)
+- [Install Node.js LTS](https://nodejs.org/en/download/)
+    - or use [nvm](https://github.com/creationix/nvm) or [nvm-windows](https://github.com/coreybutler/nvm-windows)
+- Windows users will need to [Install Ruby](https://rubyinstaller.org/) and run `gem install sass`
+- Windows users will need to [configure Docker to access local drives](https://rominirani.com/docker-on-windows-mounting-host-directories-d96f3f056a2c)
 
-**Recommended**
+## Installation
+- Clone this repository to your local machine: `git clone git@github.com:ynotradio/site.git`
+- In your terminal, `cd` to the root of this project directory
+- Run `npm install` to install Node dependencies and build the site
+- Run `npm start` to pull and build the Docker images
+- Once the installation is finished, a site will be available for you to visit at: [http://localhost:8000](http://localhost:8000)
 
-[Install VVV Dashboard](https://github.com/leogopal/VVV-Dashboard)
+If you would like to run Docker without `npm` or BrowserSync, use `docker-compose up -d` to run the containers in the background. If you wish to see a verbose, trailing output from your Docker containers in the foreground, use `docker-compose up`. Some helpful documentation about `docker-compose` can be found in the [Docker Docs](https://docs.docker.com/compose/reference/overview/#command-options-overview-and-help).
 
-Run these commands from the `vvv/www` directory.
+If you run into challenges with a Docker container, this is a [helpful cheatsheet for removing images and volumes](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) before starting over. 
 
-    git clone git@github.com:leogopal/VVV-Dashboard.git VVV-Dash-Files-tmp
-    sudo ditto VVV-Dash-Files-tmp/dashboard default/dashboard/
-    sudo ditto VVV-Dash-Files-tmp/dashboard-custom.php default/dashboard-custom.php
-    sudo rm -rf VVV-Dash-Files-tmp
+## Development
 
-### Preliminary ###
--------------------
+### Theme Files
+You can find the WordPress theme contents -- including images, JavaScript, PHP templates, and SCSS -- in the `site/theme` directory of this project. When you edit these, you should see your changes automatically synced at [http://localhost:8000](http://localhost:8000).
 
-Checkout the VVV repository into your HOME or preferred working directory
+## Teardown
+- When you are finished development, run `docker-compose down` from your terminal to halt the containers.
 
-    cd $HOME
-    git clone https://github.com/Varying-Vagrant-Vagrants/VVV.git vvv
+## Support
+Please [open an issue](https://github.com/ynotradio/site/issues) for support.
 
-Install VVV (this will take some time)
+## Contributing
+Please contribute using [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Create a branch, add commits, and [open a pull request](https://github.com/ynotradio/site/pulls).
 
-	cd vvv
-	vagrant up
+Branch names should follow the following formats:
 
+- New features / additions: `feature/new-feature-name`
+- Bugfixes: `fix/bugfix-description`
+- Releases: `release/release-2.0.0` 
 
-### Install this Repository ###
+If you solve a tricky bug, the next person who works on this codebase will appreciate you including a Stack Overflow or Github Issue link to help understand why the change was made!
 
-Clone this repo to your `vvv/www` folder. You will be working out of this folder.
-
-	git clone git@github.com:ynotradio/site.git ynotradio
-
-### Register New VVV Site
-
-Copy the file `vvv/vvv-config.yml`, save it as `vvv/vvv-custom.yml`, and add a new site entry for `ynotradio`:
-
-	sites:
-	  ynotradio:
-
-This ensures the provisioning script for the site will be run by Vagrant.
-
-### Installation Script ###
----------------------------
-
-On your local machine, change your working directory to vvv/www/ynotradio
-
-* Run this `./bin/install.sh`
-* Then this `vagrant up --provision`
-
-If your vagrant box is already up, and you're not seeing the WordPress installation complete, try:
-* `vagrant reload --provision`
-
-## URLS ##
-----------
-
-[VVV Dashboard](http://vvv.dev/)
-
-[ynotradio.dev](http://ynotradio.dev/)
-
-## Commands ##
---------------
-
-To halt the vagrant box run
-
-	vagrant halt
-
-To run it up again run
-
-	vagrant up
-
-To delete the box run
-
-	vagrant destroy
-
-To ssh into the box
-
-	vagrant ssh
-
-## Usernames and  Passwords
----------------------------
-
-To access the back-end of WP & MySQL the logins are below:
-
-### WordPress WP-Admin credentials are
-
-	admin
-	admin
-
-### MySQL db and dbUser is
-
-	wp
-	wp
-
-### MySQL root user is
-
-	root
-	root
-
-## Development Workflow ##
---------------------------
-
-### Importing Database Changes ###
-
-SSH into Vagrant and run `./bin/load-db.sh` *command needs to be run from the `/srv/www/ynotradio` directory*
-
-
-### Syncing Database / wp-content Changes from staging ###
-
-SSH into Vagrant and run `./bin/sync_from_staging.sh staging_username mysql_db_password` *command needs to be run from the `/srv/www/ynotradio` directory*
-
-### Exporting Database Changes ###
-
-SSH into Vagrant and run `./bin/dump-db.sh` *command needs to be run from the `/srv/www/ynotradio` directory*
