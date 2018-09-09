@@ -1,23 +1,16 @@
 'use strict';
+
+const path = require('path');
+
 module.exports = {
     entry: {
         main: './site/theme/assets/js/main.js'
     },
     output: {
         filename: 'bundle.js',
-        path: './site/theme/assets/js'
+        path: path.resolve(__dirname, '../../site/theme/assets/js'),
     },
     plugins: [
     ],
-    eslint: {
-        configFile: './.eslintrc'
-    },
-    module: {
-        preLoaders: [{
-            test: /\.js$/,
-            loader: 'eslint-loader',
-            exclude: /node_modules/
-        }]
-    },
     watch: false
 };
