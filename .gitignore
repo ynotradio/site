@@ -5,3 +5,5 @@ pdfs
 small_imgs
 sponsors
 *.log
+
+db/docker/*.sql

@@ -1,0 +1,31 @@
+# ./docker-compose.yml
+
+version: '3'
+
+services:
+  db:
+    build:
+      context: ./
+      dockerfile: ./bin/docker/mysql/Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ynot_site
+      MYSQL_USER: ynot_sql_user
+      MYSQL_PASSWORD: ynot_sql_pass
+    ports:
+      - "9906:3306"
+    stdin_open: true
+    tty: true
+  web:
+    build:
+      context: ./
+      dockerfile: ./bin/docker/php/Dockerfile
+    container_name: php_web
+    depends_on:
+      - db
+    volumes:
+      - ./:/var/www/html/
+    ports:
+      - "8100:80"
+    stdin_open: true
+    tty: true
