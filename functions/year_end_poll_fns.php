@@ -69,7 +69,7 @@ function add_votes_for($poll_form, $votes){
 function can_enter_contest($ip) {
   $answer = true;
   $needed_polls = array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
-                       'most_anticipated_albums', 'concerts', 'music_videos');
+                       'most_anticipated_albums', 'concerts');
 
   foreach ($needed_polls as $poll) {
     $answer = $answer && has_voted($ip, $poll);
@@ -117,7 +117,7 @@ function get_number_of_votes_for($poll_form, $value) {
 
 function get_poll_names() {
   return array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
-               'most_anticipated_albums', 'concerts', 'music_videos', 'tv_dramas', 'tv_comedies', 'late_night_tv',
+               'most_anticipated_albums', 'concerts', 'tv_dramas', 'tv_comedies', 'late_night_tv',
                'best_movies', 'worst_movies', 'unnecessary_sequels','celebrity_deaths');
 }
 
