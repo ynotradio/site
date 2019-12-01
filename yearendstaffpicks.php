@@ -13,26 +13,33 @@ require ("partials/_header.php");
   <div class="twelve columns content" style="white-space:nowrap;">
     
     <div class="twelve" style="display:inline-block;">
+    		<div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/7EUo1i3.png" alt="YNot Year End Poll 2019" ></div></div>
+
+        <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div>
+        </div>
     <div class="twelve columns top-spacer_20">
-    		<img src="images/yearendpoll2017_banner.png" style="margin-bottom:18px;" alt="YNot Year End Poll 2017" width="100%"><br/>
+
         <h1><?php echo date('Y');?> Y-Not Staff Favorites</h1>
     </div>
-<!--     <div class="column three">
+<!--
+    <div class="column three">
     <a href="http://LNPhilly.com">
       <img style="margin-right: 1em; margin-top: 1em; margin-bottom: 1em; max-width: 200px;" src="http://i.imgur.com/cfpO3Qu.gif" /></a>
-    </div> -->
+    </div>
+-->
   </div>
- <!--  <div class="twelve columns top-spacer_20">
-        <table width="100%" border="0" cellspacing="5" style="font-size: 13px;">
-          <tbody><tr>
-            <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=top216of2016">TOP 216 SONGS OF 2016</a></strong></div></td>
-            <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2016">YEAR END POLL RESULTS</a></strong></div></td>
-            <td bgcolor="#666666"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td>
-          </tr>
-        </tbody></table>
+  <div class="twelve columns top-spacer_20">
+<table width="100%" border="0" cellspacing="5">
+  <tr>
+    <td bgcolor="#666666"><div align="center"><strong><a href="yearendpoll.php">2019 YEAR END POLL</a></strong></div></td>
+    <!-- <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2019">YEAR END POLL RESULTS</a></strong></div></td> -->
+    <td bgcolor="#CCCCCC"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td>
+  </tr>
+</table>
+
 
         
-    </div> -->
+    </div>
 
 
 					<!--	<a href='pages.php?page=top214of2014'>TOP 214 OF 2014</a> | -->
