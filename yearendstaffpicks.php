@@ -13,9 +13,9 @@ require ("partials/_header.php");
   <div class="twelve columns content" style="white-space:nowrap;">
     
     <div class="twelve" style="display:inline-block;">
-    		<div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/7EUo1i3.png" alt="YNot Year End Poll 2019" ></div></div>
+    		<div class="twelve columns" style="max-width: 100%"><div class="center top-spacer_20 bottom-spacer_20" ><img src="https://i.imgur.com/LGccI17.jpg" alt="YNot Year End Poll 2019" style="max-width: 100%" ></div>
 
-        <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div>
+        <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div> -->
         </div>
     <div class="twelve columns top-spacer_20">
 
