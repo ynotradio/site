@@ -75,7 +75,7 @@ if ($_POST['contest_form']) {
   <div class="twelve columns">
     <?php if (date("Y-m-d H:i:s", time()) <= date("Y-m-d H:i:s ", $poll_end_datetime)) { ?>
         
-        <div class="twelve columns"><div class="center top-spacer_20 bottom-spacer_20" style="max-width: 100%"><img src="https://i.imgur.com/LGccI17.jpg" alt="YNot Year End Poll 2019"  style="max-width: 100%"></div>
+        <div class="twelve columns"><div class="center top-spacer_20 bottom-spacer_20" style="max-width: 100%"><img src="https://i.imgur.com/XfpNj1L.jpg" alt="YNot Year End Poll 2019"  style="max-width: 100%"></div>
 
         <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/LGccI17.jpg" style="max-width: 100%" /></div> -->
         </div>
