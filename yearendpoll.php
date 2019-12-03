@@ -84,7 +84,7 @@ if ($_POST['contest_form']) {
     
     <div class="column twelve">
     <p>As another year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2019! Cast your votes and you could win a $100 iTunes gift card and the chance to play your own top 20 songs of the year on Y-Not Radio! <a href="http://ynotradio.net/yearendpoll">Vote now</a> thru Dec. 23rd. We'll count down The Top 219 of 2019 December 30th thru January 3rd and you can sponsor a 10 song block of the countdown by making a $20 donation <a href="http://www.ynotradio.net/donate.php">here</a>.</p>
-
+      <p>Need some ideas? Check out the Y-Not DJs best of lists <a href="/yearendstaffpicks.php">here</a>.</p>
     </div>
 
     </div>
