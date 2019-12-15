@@ -1,11 +1,12 @@
 <?php
 
 /*Redirect to be used after year end poll*/
-header("Location: http://www.ynotradio.net/pages.php?page=top216of2016");
-die();
+// header("Location: http://www.ynotradio.net/pages.php?page=top219of2019");
+// die();
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
+$poll_end_datetime = strtotime("12/23/19 4pm");
 
 require ("functions/main_fns.php");
 require ("functions/year_end_poll_fns.php");
@@ -59,7 +60,7 @@ if ($_POST['contest_form']) {
 
   echo "<div class=\"row\">";
   if ($new_contestant == 1)
-    echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2016 Year End Poll!<br>Find out all the results when we countdown The Top 216 Songs of 2016, <br>December 27<sup>th</sup> thru 30<sup>th</sup> (with a replay on New Year's Eve and New Year's Day).</div>";
+    echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2019 Year End Poll!<br>Find out all the results when we countdown The Top 219 Songs of 2019, <br>December 30th<sup>th</sup> thru January 3<sup>rd</sup> .</div>";
   elseif($new_contestant == "missing_values") {
     echo "<div class=\"twelve columns top-spacer_20 center error\">Sorry! <br> Seems like you may be missing some value(s), please try again.</div>";
   } else {
@@ -72,24 +73,33 @@ if ($_POST['contest_form']) {
 ?>
 <div class="row">
   <div class="twelve columns">
-    <?php if (date("Y-m-d H:i:s", time()) <= date("Y-m-d H:i:s ", strtotime("12/22/16 4pm"))) { ?>
-    <div class="center top-spacer_20 bottom-spacer_20"><img src="images/yearendpoll2016_banner.jpg" alt="YNot Year End Poll 2016" width="900px"></div>
+    <?php if (date("Y-m-d H:i:s", time()) <= date("Y-m-d H:i:s ", $poll_end_datetime)) { ?>
+        
+        <div class="twelve columns"><div class="center top-spacer_20 bottom-spacer_20" style="max-width: 100%">
+          <img src="https://i.imgur.com/XfpNj1L.jpg" alt="YNot Year End Poll 2019"  style="max-width: 100%">
+        </div>
+
+        <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/LGccI17.jpg" style="max-width: 100%" /></div> -->
+        </div>
+    
     <div class="row">
     
-    <div class="column nine">
-    <p> The time has come to vote for all of your favorite stuff from 2016! Music, movies, TV, and more. Cast your vote and you could win a <b>$100 iTunes gift card</b> and the chance to play your personal top 20 songs of the year on Y-Not Radio for all to hear! Not from Philly? You can still win and host via Skype! Voting ends on Thursday, December 22nd at 4pm EST. Then tune in to hear all the results when we count down the <i>Top 216 of 2016</i> on December 27th - 30th (with a replay on New Year's Eve and New Year's Day). Need some ideas? Check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a></p>
-    <p><i>Y-Not's Year End Poll is brought to you by the Theatre of Living Arts - get tickets for upcoming shows at the TLA including <b>Los Campesinos</b> on March 8th, <b>The Damned</b> on May 7th and much more now at <a href="http://venue.tlaphilly.com/" target=_blank>TLAPhilly.com</a>.</i></p>
+    <div class="column twelve">
+    <p>As another year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2019! Cast your votes and you could win a <strong>$100 iTunes gift card</strong> and the chance to play your own top 20 songs of the year on Y-Not Radio! 
+    <a href="http://ynotradio.net/yearendpoll">Vote now</a> thru Dec. 23rd. Then we'll count down <em>The Top 219 of 2019</em> from December 30th thru January 3rd!  
+    Need some ideas? Check out the Y-Not DJs best of lists <a href="/yearendstaffpicks.php">here</a></p>
+
+      <p><em>Y-Not's 2019 Year End Poll is sponsored by goPuff!  goPuff delivers snacks, drinks, essentials and basically all of your convenience needs right to your door, so you can just sit back and relax!  What you need, when you need it, anytime.  goPuff delivers in over 150 locations like Philadelphia, Boston, D.C., Seattle, Portland, Dallas, Chicago, and more.  <a href="https://gopuff.com/">Download the goPuff app</a> and use code "YNOTRADIO" for $5 off your first two orders! New customers only. </em></p>
+      <div class="center">
+        <p><a href="https://gopuff.com/"><img src="https://i.imgur.com/MdzqySO.jpg" alt="GoPuff advertisement" /></p>
+      </div>
     </div>
 
-    <div class="column three">
-    <a href="http://LNPhilly.com">
-    <img style="margin-right: 1em; max-width: 200px;" src="http://i.imgur.com/cfpO3Qu.gif" /></a>
-    </div>
     </div>
 
   <div class="center social">
-    	<a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out @YNotRadio's 2016 Year End Poll #YNotYearEndPoll" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
-        <div class="fb-like" data-href="http://www.ynotradio.net/yearendpoll.php?2016" data-send="true" data-width="450" data-show-faces="false"></div>
+    	<a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out @YNotRadio's 2019 Year End Poll #YNotYearEndPoll" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
+        <div class="fb-like" data-href="http://www.ynotradio.net/yearendpoll.php?2019" data-send="true" data-width="450" data-show-faces="false"></div>
     </div>
     <?php
         require ("partials/_year_end_poll_dashboard.php") ?>
@@ -125,9 +135,13 @@ if ($_POST['contest_form']) {
     } //end of else
       } else {
         echo "<div class=\"center top-spacer_20 bottom-spacer_20\">
-            <img src=\"images/yearendpoll2016_banner.jpg\" alt=\"YNot Year End Poll 2016\" width=\"900px\">
+        <img src=\"https://i.imgur.com/XfpNj1L.jpg\" alt=\"YNot Year End Poll 2019\"  style=\"max-width: 100%\">
             </div>
-              Thanks to everyone who voted in Y-Not's 2016 Year End Poll!  Voting is now closed and we'll be tabulating over the holiday. Tune in Tuesday thru Friday next week (December 27th-30th) to hear all the results in Y-Not’s Top 216 of 2016 countdown, starting at 10am each day (with replays on New Year's Eve and New Year's Day). In the meantime, check out the Y-Not DJs' <a href=\"yearendstaffpicks.php\">top albums and songs</a>!
+<p>Thanks to everyone who voted in Y-Not's 2019 Year End Poll!  Voting is now closed and we'll be tabulating over the holiday. Tune in from December 30th - January 3rd to hear all the results in Y-Not’s Top 219 of 2019 countdown, starting at 10am each day. In the meantime, check out the Y-Not DJs' <a href=\"yearendstaffpicks.php\">top albums and songs</a>!</p>
+          </div>
+          <p><em>Y-Not's 2019 Year End Poll is sponsored by goPuff!  goPuff delivers snacks, drinks, essentials and basically all of your convenience needs right to your door, so you can just sit back and relax!  What you need, when you need it, anytime.  goPuff delivers in over 150 locations like Philadelphia, Boston, D.C., Seattle, Portland, Dallas, Chicago, and more.  <a href=\"https://gopuff.com/\">Download the goPuff app</a> and use code \"YNOTRADIO\" for $5 off your first two orders! New customers only. </em></p>
+          <div class=\"center\">
+          <p><a href=\"https://gopuff.com/\"><img src=\"https://i.imgur.com/MdzqySO.jpg\" alt=\"GoPuff advertisement\" /></p>
           </div>";
       }// end of time check
   echo "</div>";
