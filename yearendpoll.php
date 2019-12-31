@@ -1,8 +1,8 @@
 <?php
 
 /*Redirect to be used after year end poll*/
-// header("Location: http://www.ynotradio.net/pages.php?page=top219of2019");
-// die();
+header("Location: pages.php?page=top219of2019");
+die();
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
