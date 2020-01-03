@@ -3,6 +3,10 @@
 version: '3'
 
 services:
+  phpcs:
+    build:
+      context: ./
+      dockerfile: ./bin/docker/phpcs/Dockerfile
   db:
     build:
       context: ./
