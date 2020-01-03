@@ -1,1 +1,0 @@
-FROM vfac/php7compatibility
