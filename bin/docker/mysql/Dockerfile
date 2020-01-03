@@ -7,5 +7,5 @@ FROM mysql:5.5
 # RUN addgroup --gid $gid --system mysql \
 #     && adduser --uid $uid --disabled-password --system --gid $gid mysql
 
-ADD ./db/docker/*.sql /docker-entrypoint-initdb.d
+ADD ./src/db/docker/*.sql /docker-entrypoint-initdb.d
 
