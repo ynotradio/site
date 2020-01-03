@@ -1,1 +1,1 @@
-FROM herloct/phpcs:2.8.1
+FROM vfac/php7compatibility

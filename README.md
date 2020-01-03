@@ -21,7 +21,7 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 ## Development
 
 ### PHP Linting
-- From the root of the project, use `docker-compose run --rm --volume $(pwd):/project phpcs --standard=PSR1,PSR2 ./src/ -v --extensions=php` to see errors in the PHP code.
+- From the root of the project, use `docker run --rm --volume $(pwd):/app vfac/php7compatibility 7.4 ./src -d memory_limit=1G --extensions=php` to see errors in the PHP code.
 
 ## Teardown
 - When you are finished development, run `docker-compose down` from your terminal to halt the containers.
