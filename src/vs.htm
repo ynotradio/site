@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Vs.</title>
+    <style>
+    body {
+      width: 960px;
+      margin: 20px auto;
+    }
+    
+    ul {
+      list-style: none;
+      display: block;
+      border: 1px solid #999;
+      border-radius: 6px;
+      margin: 0;
+      padding: 0;
+      float: left;
+      width: 100%;
+
+      // http://gradients.glrzad.com/
+      background-image: linear-gradient(right , rgb(20,112,224) 0%, rgb(148,27,27) 94%);
+      background-image: -o-linear-gradient(right , rgb(20,112,224) 0%, rgb(148,27,27) 94%);
+      background-image: -moz-linear-gradient(right , rgb(20,112,224) 0%, rgb(148,27,27) 94%);
+      background-image: -webkit-linear-gradient(right , rgb(20,112,224) 0%, rgb(148,27,27) 94%);
+      background-image: -ms-linear-gradient(right , rgb(20,112,224) 0%, rgb(148,27,27) 94%);      
+      background-image: -webkit-gradient(
+      	linear,
+      	right 50%,
+      	left 50%,
+      	color-stop(0, rgb(20,112,224)),
+      	color-stop(0.67, rgb(148,27,27))
+      );
+      filter:  progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#81a8cb', endColorstr='#4477a1'); /* IE6 & IE7 */
+      5
+          -ms-filter: "progid:DXImageTransform.Microsoft.gradient(GradientType=0,startColorstr='#81a8cb', endColorstr='#4477a1')"; /* IE8 */
+    }
+
+    ul li {
+      display: block;
+      float: left;
+      color: #fff;
+      font-weight: bold;
+      font-family: 'Helvetica Neue', sans-serif;
+    }
+
+    ul li span {
+      display: block;
+      padding: 10px;
+    }
+
+    li.a {
+      width: 67%;
+      border-top-left-radius: 6px;
+      border-bottom-left-radius: 6px;
+    }
+    
+    li.b {
+      width: 33%;
+      border-top-right-radius: 6px;
+      border-bottom-right-radius: 6px;
+      text-align: right;
+    }
+    </style>
+    </head>
+  <body>
+  
+  <ul>
+  <li class="a"><span>67%</span></li>
+  <li class="b"><span>33%</span></li>
+  </ul>
+  
+  </body>
+</hmtl>
