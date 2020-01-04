@@ -42,15 +42,13 @@ if($write_in){
 	      addtop11plus1($top11picks[$i]);
 	     }
 	
-		if (!get_magic_quotes_gpc()){
-			$firstname = addslashes($_POST['firstname']);
-			$lastname = addslashes($_POST['lastname']);
-			$email = addslashes($_POST['email']);
-			$phone = addslashes($_POST['phone']);
-			$write_in = addslashes($_POST['write_in']);
-		}
-			$contest = $_POST['contest'];
-			$newsletter = $_POST['newsletter'];
+		$firstname = addslashes($_POST['firstname']);
+		$lastname = addslashes($_POST['lastname']);
+		$email = addslashes($_POST['email']);
+		$phone = addslashes($_POST['phone']);
+		$write_in = addslashes($_POST['write_in']);
+		$contest = $_POST['contest'];
+		$newsletter = $_POST['newsletter'];
 			
 		if ($write_in) {
 			write_in($write_in);

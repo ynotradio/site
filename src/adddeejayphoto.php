@@ -147,10 +147,7 @@ if ($_POST[submit] == "Submit") {
 				// insert into db
 				$dj = $_POST['deejay'];
 				$deejay = $_POST['deejay'];
-				if (!get_magic_quotes_gpc())
-					{
-						$deejay = addslashes($deejay);
-					}
+				$deejay = addslashes($deejay);
 				addphotostodb($image_height, $image_width, $file, $deejay);
 
 			}

@@ -1,15 +1,13 @@
 <?php
 
 function add_contestant($name, $email, $phone, $hometown, $contest, $newsletter, $ip){
-  if (!get_magic_quotes_gpc()){
-		$name = addslashes($name);
-		$email = addslashes($email);
-		$phone = addslashes($phone);
-		$hometown = addslashes($hometown);
-		$contest = addslashes($contest);
-		$newsletter  = addslashes($newsletter);
-		$ip = addslashes($ip);
-		}
+  $name = addslashes($name);
+  $email = addslashes($email);
+  $phone = addslashes($phone);
+  $hometown = addslashes($hometown);
+  $contest = addslashes($contest);
+  $newsletter  = addslashes($newsletter);
+  $ip = addslashes($ip);
 
 	$insert = "INSERT INTO year_end_contestants VALUES (id, '".$name. "', '".$email. "', '".$phone. "', '".$hometown. "', '".$contest. "', '".$newsletter. "', '".$ip. "')";
 	$result = mysqli_query(open_db(), $insert);
