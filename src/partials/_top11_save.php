@@ -20,11 +20,11 @@
         add_top11_plus1($top11picks[$i]);
       }
 
-      $firstname = mysql_real_escape_string($_POST['firstname']);
-      $lastname = mysql_real_escape_string($_POST['lastname']);
-      $email = mysql_real_escape_string($_POST['email']);
-      $phone = mysql_real_escape_string($_POST['phone']);
-      $write_in_value = mysql_real_escape_string($_POST['write_in_value']);
+      $firstname = mysqli_real_escape_string($_POST['firstname']);
+      $lastname = mysqli_real_escape_string($_POST['lastname']);
+      $email = mysqli_real_escape_string($_POST['email']);
+      $phone = mysqli_real_escape_string($_POST['phone']);
+      $write_in_value = mysqli_real_escape_string($_POST['write_in_value']);
       $contest = $_POST['contest'];
       $newsletter = $_POST['newsletter'];
 

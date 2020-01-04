@@ -1,7 +1,7 @@
 <?php
 
 function add_year_end_staff_pick($order, $html) {
-  $order = mysql_real_escape_string($order);
+  $order = mysqli_real_escape_string($order);
 
   $insert = "INSERT INTO year_end_staff_picks VALUES (id, '".$order ."', '".$html."', 'n')";
   $result = mysql_query($insert);
@@ -74,8 +74,8 @@ function show_year_end_staff_picks() {
 }
 
 function update_year_end_staff_picks($id, $order, $html) {
-  $order = mysql_real_escape_string($order);
-  $html = mysql_real_escape_string($html);
+  $order = mysqli_real_escape_string($order);
+  $html = mysqli_real_escape_string($html);
 
   $update = "UPDATE year_end_staff_picks SET order_id=\"$order\", html=\"".$html."\" WHERE id=".$id;
   $result = mysql_query($update);

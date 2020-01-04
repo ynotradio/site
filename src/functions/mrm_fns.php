@@ -1,13 +1,13 @@
 <?php
 
 function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor) {
-  $name = mysql_real_escape_string($name);
-  $url = mysql_real_escape_string($url);
-  $pic_url = mysql_real_escape_string($pic_url);
-  $placement = mysql_real_escape_string($placement);
-  $seed = mysql_real_escape_string($seed);
-  $abbr = mysql_real_escape_string($abbr);
-  $sponsor = mysql_real_escape_string($sponsor);
+  $name = mysqli_real_escape_string($name);
+  $url = mysqli_real_escape_string($url);
+  $pic_url = mysqli_real_escape_string($pic_url);
+  $placement = mysqli_real_escape_string($placement);
+  $seed = mysqli_real_escape_string($seed);
+  $abbr = mysqli_real_escape_string($abbr);
+  $sponsor = mysqli_real_escape_string($sponsor);
 
   $insert = "INSERT INTO mrm_bands VALUES (id, '".$name ."', '".$url. "', '".$pic_url. "', '".$placement. "', '".$seed. "', '".$abbr. "','".$sponsor. "')";
   $result = mysql_query($insert);
@@ -208,13 +208,13 @@ function band_pic($id){
 }
 
 function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor) {
-    $name = mysql_real_escape_string($name);
-    $url = mysql_real_escape_string($url);
-    $pic_url = mysql_real_escape_string($pic_url);
-    $placement = mysql_real_escape_string($placement);
-    $seed = mysql_real_escape_string($seed);
-    $abbr = mysql_real_escape_string($abbr);
-    $sponsor = mysql_real_escape_string($sponsor);
+    $name = mysqli_real_escape_string($name);
+    $url = mysqli_real_escape_string($url);
+    $pic_url = mysqli_real_escape_string($pic_url);
+    $placement = mysqli_real_escape_string($placement);
+    $seed = mysqli_real_escape_string($seed);
+    $abbr = mysqli_real_escape_string($abbr);
+    $sponsor = mysqli_real_escape_string($sponsor);
 
   $update = "UPDATE mrm_bands SET name=\"$name\", url=\"$url\", pic_url=\"$pic_url\", placement=\"$placement\", seed=\"$seed\", abbr=\"$abbr\", sponsor=\"$sponsor\" WHERE id=".$id;
   $result = mysql_query($update);
@@ -226,9 +226,9 @@ function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $
 }
 
 function update_mrm_sponsor($match, $sponsor, $sponsor_msg) {
-    $id = mysql_real_escape_string($match);
-    $sponsor = mysql_real_escape_string($sponsor);
-    $sponsor_msg = mysql_real_escape_string($sponsor_msg);
+    $id = mysqli_real_escape_string($match);
+    $sponsor = mysqli_real_escape_string($sponsor);
+    $sponsor_msg = mysqli_real_escape_string($sponsor_msg);
   
   $update = "UPDATE mrm_matches SET sponsor=\"$sponsor\", sponsor_msg=\"$sponsor_msg\" WHERE id=".$id;
   $result = mysql_query($update);

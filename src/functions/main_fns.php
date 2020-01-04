@@ -26,8 +26,8 @@ function validate_user($username,$password,$remember_me) {
   open_db();
 
     //Need to sanitize the input
-    $username = mysql_real_escape_string($username);
-    $password = mysql_real_escape_string($password);
+    $username = mysqli_real_escape_string($username);
+    $password = mysqli_real_escape_string($password);
 
     if ($username && $password) {
 

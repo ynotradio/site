@@ -1,13 +1,13 @@
 <?php
 
 function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  $date = mysql_real_escape_string($date);
-  $artist = mysql_real_escape_string($artist);
-  $band_pic_url = mysql_real_escape_string($band_pic_url);
-  $band_url = mysql_real_escape_string($band_url);
-  $venue = mysql_real_escape_string($venue);
-  $ticketinfo = mysql_real_escape_string($ticketinfo);
-  $ticketurl = mysql_real_escape_string($ticketurl);
+  $date = mysqli_real_escape_string($date);
+  $artist = mysqli_real_escape_string($artist);
+  $band_pic_url = mysqli_real_escape_string($band_pic_url);
+  $band_url = mysqli_real_escape_string($band_url);
+  $venue = mysqli_real_escape_string($venue);
+  $ticketinfo = mysqli_real_escape_string($ticketinfo);
+  $ticketurl = mysqli_real_escape_string($ticketurl);
 
   if ($featured != "Yes")
     $featured = "No";
@@ -112,14 +112,14 @@ function show_concerts(){
 }
 
 function update_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  $id = mysql_real_escape_string($id);
-  $date = mysql_real_escape_string($date);
-  $artist = mysql_real_escape_string($artist);
-  $band_pic_url = mysql_real_escape_string($band_pic_url);
-  $band_url = mysql_real_escape_string($band_url);
-  $venue = mysql_real_escape_string($venue);
-  $ticketinfo = mysql_real_escape_string($ticketinfo);
-  $ticketurl = mysql_real_escape_string($ticketurl);
+  $id = mysqli_real_escape_string($id);
+  $date = mysqli_real_escape_string($date);
+  $artist = mysqli_real_escape_string($artist);
+  $band_pic_url = mysqli_real_escape_string($band_pic_url);
+  $band_url = mysqli_real_escape_string($band_url);
+  $venue = mysqli_real_escape_string($venue);
+  $ticketinfo = mysqli_real_escape_string($ticketinfo);
+  $ticketurl = mysqli_real_escape_string($ticketurl);
 
   if ($featured != "Yes")
     $featured = "No";
