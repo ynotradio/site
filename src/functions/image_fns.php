@@ -2,7 +2,7 @@
 
 function add_image($file_name) {
   $insert = "INSERT INTO images VALUES (id, '".$file_name ."')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -19,17 +19,17 @@ function disply_image($image) {
 
 function get_image($id) {
   $query = "SELECT * FROM images where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function view_all_images(){
   $query = "SELECT * FROM images ORDER BY file";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -37,9 +37,9 @@ function view_all_images(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     disply_image($info);
   }
   echo '</ol>';
