@@ -8,8 +8,8 @@
     </tr>
   </thead>
   <?php
-    for ($i=1; $i <= mysql_num_rows($top11); $i++) {
-      $info = mysql_fetch_assoc($top11);
+    for ($i=1; $i <= mysqli_num_rows($top11); $i++) {
+      $info = mysqli_fetch_assoc($top11);
       if ($info['placement'] == 98) {
         echo "<tr>
           <td><b>Status:</b></td>

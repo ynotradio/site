@@ -7,8 +7,8 @@
     <form action=\"yearendpoll.php\" method=\"post\" name=\"year_end_". $current_poll ."\" class=\"form-default\">
     <fieldset>\n<div class=\"control-group\">\n<div class=\"controls\">\n";
 
-  for ($i=1; $i<=mysql_num_rows($poll_values); $i++) {
-    $info = mysql_fetch_assoc($poll_values);
+  for ($i=1; $i<=mysqli_num_rows($poll_values); $i++) {
+    $info = mysqli_fetch_assoc($poll_values);
     echo "<label for=\"".$info['id']."\" class=\"half\"><input type=\"checkbox\" name=\"year_end_votes[]\" id=\"".$info['id']."\" value=\"".$info['id']."\">";
     for ($c=1; $c<=count($column_names)-2; $c++) {
         
