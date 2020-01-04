@@ -36,7 +36,7 @@ if (!$_SESSION["logged_in"]) {
             <a href=\"top11_update_message.php\">Update Top 11 @ 11 Message</a>
             <p>";
       } else {
-      $top11_message = mysql_fetch_assoc(get_top11_message());
+      $top11_message = mysqli_fetch_assoc(get_top11_message());
     ?>
     <form action="top11_update_message.php" method="post" class="form-internal inline" id="admin">
       <textarea name="message" cols=90 rows=10><?php echo $top11_message["message"] ?></textarea>

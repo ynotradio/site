@@ -32,9 +32,9 @@ function validate_user($username,$password,$remember_me) {
     if ($username && $password) {
 
     $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password' OR password = password('$password'))";
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
 
-    if (!$result || (mysql_num_rows($result) < 1)) {
+    if (!$result || (mysqli_num_rows($result) < 1)) {
       $_SESSION["error"] = "Your login could not be validated";
     } else {
       $info = mysql_fetch_array($result);
@@ -112,13 +112,13 @@ function logoff(){
 
 function active_ad_count(){
   $query = "SELECT count(*) AS total FROM ads WHERE deleted = 'n' AND end_date >= now()";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['total'];
 }

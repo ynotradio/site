@@ -11,7 +11,7 @@ function add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band, $review
   $date = mysqli_real_escape_string(open_db(), $date);	
 
   $insert = "INSERT INTO cdotw VALUES (id, '".$artist ."', '".$title ."', '".$label ."', '".$review ."', '".$cd_pic_url ."', '".$band ."', '".$reviewer ."', '".$date ."', 'no')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -21,7 +21,7 @@ function add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band, $review
   echo "<div class=\"center\"><h1>Success!</h1>".
     "<h3>New review for <span class=\"success\">". $artist. " - ". $title. "</span> has been saved</h3>".
     "<hr width=75%>";
-    display_cdotw(get_cdotw(mysql_insert_id()));
+    display_cdotw(get_cdotw(mysqli_insert_id(open_db())));
     echo "</div>";
 }
 
@@ -30,28 +30,28 @@ function cdotw($id){
 
   if ($id == '') {
     $date = "SELECT date, DATE_FORMAT(date, '%c/%d/%y' ) as fdate FROM cdotw GROUP BY date ORDER BY date DESC LIMIT 0,1";
-    $date_result = mysql_query($date);
+    $date_result = mysqli_query(open_db(), $date);
 
     if (!$date_result) {
       die('Invalid');
     }
 
-    $datepicker = mysql_fetch_assoc($date_result);
+    $datepicker = mysqli_fetch_assoc($date_result);
 
     $query = "SELECT * FROM cdotw WHERE deleted = 'no' AND date = \"". $datepicker['date'] . "\"";
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
   } else {
     $date = "SELECT DATE_FORMAT(date, '%c/%d/%y' ) as fdate FROM cdotw WHERE id = ".$id;
-    $date_result = mysql_query($date);
+    $date_result = mysqli_query(open_db(), $date);
 
     if (!$date_result) {
       die('Invalid');
     }
 
-    $datepicker = mysql_fetch_assoc($date_result);
+    $datepicker = mysqli_fetch_assoc($date_result);
 
     $query = "SELECT * FROM cdotw WHERE deleted = 'no' AND id = " . $id;
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
   }
 
   if (!$result) {
@@ -61,14 +61,14 @@ function cdotw($id){
 
   echo "Week of ". $datepicker['fdate'];
   echo '<ul>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo "<h3>" . $info['artist']. " - <em>". $info['title']. "</em> (".$info['label']. ")</h3>\n".
       "<div class='review'> <a href=\"" . $info['band'] ."\" target=_new><img src=\"" . $info['cd_pic_url'] . "\" height=\"200\"> </a>\n".
       $info['review'] . "</div>\n".
       "<div class=\"footnote\">Review by " . $info['reviewer'] . "</div>\n";
-    if ($i != mysql_num_rows($result))
+    if ($i != mysqli_num_rows($result))
       echo "<p>\n<hr width=80%>\n";
   }	
   echo '</ul>';			
@@ -76,7 +76,7 @@ function cdotw($id){
 
 function cover_art() {
   $query = "SELECT * FROM cdotw WHERE deleted = 'no' ORDER BY date DESC LIMIT 64";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -84,9 +84,9 @@ function cover_art() {
   }
 
   echo '<table class="table-center">';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     if (fmod($i,8) == 1) {	
       echo "<tr>\n";
     }
@@ -100,7 +100,7 @@ function cover_art() {
 
 function delete_cdotw($id){
   $update = "UPDATE cdotw SET deleted ='yes' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the CD of the week from the database: ". $update ."<br>";
@@ -125,12 +125,12 @@ function display_cdotw($cdotw) {
 
 function get_cdotw($id) {
   $query = "SELECT * FROM cdotw where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function update_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band, $reviewer, $date) {
@@ -144,7 +144,7 @@ function update_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band,
   $date = mysqli_real_escape_string(open_db(), $date);
 
   $update = "UPDATE cdotw SET artist=\"$artist\", title=\"$title\", label=\"$label\", review=\"$review\", cd_pic_url=\"$cd_pic_url\", band=\"$band\", reviewer=\"$reviewer\", date=\"$date\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo 'There was an error updating: <br> '. $update;
@@ -154,7 +154,7 @@ function update_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band,
 
 function validate_id($id) {
   $query = "SELECT id FROM cdotw WHERE id = ".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     return '';
@@ -164,7 +164,7 @@ function validate_id($id) {
 
 function view_all_cdotw(){
   $query = "SELECT * FROM cdotw WHERE deleted = 'no' ORDER BY date DESC LIMIT 64";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -172,8 +172,8 @@ function view_all_cdotw(){
   }
 
   echo '<ol>';
-    for ($i=1; $i<=mysql_num_rows($result);$i++) {
-      $info = mysql_fetch_assoc($result);
+    for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+      $info = mysqli_fetch_assoc($result);
       display_cdotw($info);
       echo '<br>[ <a href="cdotw_update.php?id=' .$info[id]. '">Edit</a> | <a href="cdotw_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
     }

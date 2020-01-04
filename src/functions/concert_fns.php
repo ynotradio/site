@@ -13,7 +13,7 @@ function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketin
     $featured = "No";
 
   $insert = "INSERT INTO concerts VALUES (id, '".$date ."', '".$artist. "', '".$band_pic_url. "', '".$band_url. "', '". $venue ."', '". $ticketinfo ."', '". $ticketurl ."', '". $featured ."', 'n')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -23,20 +23,20 @@ function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketin
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Concert with ". $artist. " at ". $venue ." has been saved</h3>".
        "<hr width=75%>";
-  display_concert(get_concert(mysql_insert_id()));
+  display_concert(get_concert(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function concert_info($id) {
   $select = "SELECT * FROM concerts where id=".$id;
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select ."<br>";
     die('Error Getting Database Entry.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   $artistvenue = $info['artist']. " at " . $info['venue'];
   return $artistvenue;
@@ -44,7 +44,7 @@ function concert_info($id) {
 
 function delete_concert($id){
   $update = "UPDATE concerts SET deleted ='y' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the concert from the database: ". $update ."<br>";
@@ -72,17 +72,17 @@ function display_concert($concert) {
 
 function get_concert($id) {
   $query = "SELECT * FROM concerts where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function show_concerts(){
   $query = "SELECT DATE_FORMAT(date, '%a %m/%d' ) as fdate, artist, venue, ticketinfo, ticketurl FROM concerts WHERE deleted = 'n' AND date >= date(now()) ORDER BY date";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -92,9 +92,9 @@ function show_concerts(){
   echo '<table class="table table-striped table-bordered-horizontal table-condensed">';
   echo '<col width="100"><col><col width="175"><col width="150">';
   echo "<thead><tr><th width=\"100px\">Date</th><th>Artist</th><th width=\"150px\">Venue</th><th width=\"125px\">Ticket Info</th></tr></thead>\n";
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
 
     echo "<tr><td>" . $info['fdate']. "</td>\n".
       "<td>" . $info['artist']. "</td>\n".
@@ -125,7 +125,7 @@ function update_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $
     $featured = "No";
 
   $update = "UPDATE concerts SET date=\"$date\", artist=\"$artist\", band_pic_url=\"$band_pic_url\", band_url=\"$band_url\",venue=\"$venue\", ticketinfo=\"$ticketinfo\", ticketurl=\"$ticketurl\", featured=\"$featured\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -135,7 +135,7 @@ function update_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $
 
 function view_all_concerts(){
   $query = "SELECT * FROM concerts WHERE deleted = 'n' AND date >= date(now()) ORDER BY date";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -143,9 +143,9 @@ function view_all_concerts(){
   }
 
   echo '<ol>';
-    for ($i=1; $i<=mysql_num_rows($result);$i++)
+    for ($i=1; $i<=mysqli_num_rows($result);$i++)
     {
-      $info = mysql_fetch_assoc($result);
+      $info = mysqli_fetch_assoc($result);
       display_concert($info);
       echo '<br>[ <a href="concert_update.php?id=' .$info[id]. '">Edit</a> | <a href="concert_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
     }

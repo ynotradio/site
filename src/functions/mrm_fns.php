@@ -10,7 +10,7 @@ function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
   $sponsor = mysqli_real_escape_string(open_db(), $sponsor);
 
   $insert = "INSERT INTO mrm_bands VALUES (id, '".$name ."', '".$url. "', '".$pic_url. "', '".$placement. "', '".$seed. "', '".$abbr. "','".$sponsor. "')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -20,19 +20,19 @@ function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New MRM band, ". $name. ", has been saved</h3>".
        "<hr width=75%>";
-  display_mrm_band(get_mrm_band(mysql_insert_id()));
+  display_mrm_band(get_mrm_band(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function band_name($id) {
   $query = "SELECT name FROM mrm_bands where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     die('No results in database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['name'];
 }
@@ -41,7 +41,7 @@ function delete_mrm_band($id){
   $mrm_band = get_mrm_band($id);
 
   $update = "DELETE FROM mrm_bands where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the modern rock band from the database: ". $update ."<br>";
@@ -53,14 +53,14 @@ function delete_mrm_band($id){
 
 function countdown_values($match_id) {
   $select = "SELECT HOUR(TIMEDIFF(end_time, now())) as hr, MINUTE(TIMEDIFF(end_time, now())) as min, SECOND(TIMEDIFF(end_time, now())) as sec FROM mrm_matches WHERE id = " . $match_id;
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select . "<br>";
     die ('Invalid');
   }
 
-  $countdown_values = mysql_fetch_assoc($result);
+  $countdown_values = mysqli_fetch_assoc($result);
   echo "<div class=\"hidden\" id=\"hr\">". $countdown_values['hr'] . "</div>
     <div class=\"hidden\" id=\"min\">". $countdown_values['min'] . "</div>
     <div class=\"hidden\" id=\"sec\">". $countdown_values['sec'] . "</div>";
@@ -94,26 +94,26 @@ function display_mrm_band($mrm_band) {
 
 function get_band_abbr($id) {
   $query = "SELECT abbr FROM mrm_bands where placement=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     die('No results in database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['abbr'];
 }
 
 function get_sponsor_name($placement) {
 	$query = "SELECT sponsor, seed FROM mrm_bands WHERE placement = ".$placement;
-	$result = mysql_query($query);
+	$result = mysqli_query(open_db(), $query);
 
 	if (!$result) {
 	echo "error: ". $query;
 	die('Invalid');
 	}
-	$info = mysql_fetch_assoc($result);
+	$info = mysqli_fetch_assoc($result);
 
 	return "<span class='seed_size'>Sponsored by: ". $info['sponsor'] ."</span> ";
 }
@@ -124,85 +124,85 @@ function get_band_name($placement) {
   }
 
   $query = "SELECT name, seed FROM mrm_bands WHERE placement = ".$placement;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return "<span class='seed_size'>". $info['seed'] ."</span> ". $info['name'];
 }
 
 function get_band_pic_url($placement){
   $query = "SELECT pic_url FROM mrm_bands WHERE placement = ".$placement;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['pic_url'];
 }
 
 function get_band_url($placement){
   $query = "SELECT url FROM mrm_bands WHERE placement = ".$placement;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['url'];	
 }
 
 function get_mrm_band($id) {
   $query = "SELECT * FROM mrm_bands where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function get_mrm_sponsor($id) {
   $query = "SELECT * FROM mrm_matches where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function seed($placement){
   $query = "SELECT seed FROM mrm_bands where placement=".$placement;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     die('No results seed in database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['seed'];	
 }
 
 function band_pic($id){
   $query = "SELECT pic_url FROM mrm_bands where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     die('No results in database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['pic_url'];	
 }
@@ -217,7 +217,7 @@ function update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $
     $sponsor = mysqli_real_escape_string(open_db(), $sponsor);
 
   $update = "UPDATE mrm_bands SET name=\"$name\", url=\"$url\", pic_url=\"$pic_url\", placement=\"$placement\", seed=\"$seed\", abbr=\"$abbr\", sponsor=\"$sponsor\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -231,7 +231,7 @@ function update_mrm_sponsor($match, $sponsor, $sponsor_msg) {
     $sponsor_msg = mysqli_real_escape_string(open_db(), $sponsor_msg);
   
   $update = "UPDATE mrm_matches SET sponsor=\"$sponsor\", sponsor_msg=\"$sponsor_msg\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -254,18 +254,18 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round=1) {
   $band_id = "band".$band_number."_id";
 
   $query = "SELECT " . $band_id . ", " . $band . " FROM mrm_matches WHERE id =". $match_id;
-  $q_result = mysql_query($query);
+  $q_result = mysqli_query(open_db(), $query);
 
   if (!$q_result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($q_result);
+  $info = mysqli_fetch_assoc($q_result);
   $voted_band = $info["band".$band_number."_id"];
 
   if (!has_voted($match_id) || $by_pass_ip_check) {
     $update = "UPDATE mrm_matches SET ". $band ." = ". ($info["band".$band_number."_votes"] + 1) . " WHERE id = ". $match_id;
-    $u_result = mysql_query($update);
+    $u_result = mysqli_query(open_db(), $update);
 
     if (!$u_result) {
       echo "error: ". $update;
@@ -281,15 +281,15 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round=1) {
 
 function view_matches($round){
   $query = get_query($round);
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++){
-    $match = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++){
+    $match = mysqli_fetch_assoc($result);
 
     $live_match = (now_match() == $match) ? "id=\"live_match\"" : '';
     echo "<table class=\"bottom-spacer_20 table-center\"" .$live_match.">\n
@@ -374,23 +374,23 @@ function show_close_match($match, $round) {
 
 function get_match($id) {
   $query = "SELECT * FROM mrm_matches WHERE id =" . $id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function get_match_status($match_id) {
   $query = "SELECT * FROM mrm_matches WHERE id =" . $match_id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error with ".$match_id .": ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
   
   if ( now() > $info['end_time']) {
     return "over";
@@ -407,14 +407,14 @@ function match_is_tied($match) {
 
 function is_match_closed($match_id) {
   $query = "SELECT * FROM mrm_matches WHERE id =" . $match_id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   if ($info['winner_id'] != 0)
     return true;
@@ -438,7 +438,7 @@ function close_match($match_id, $round){
 
 function enable_score($match_id) {
   $update = "UPDATE mrm_matches SET show_score = true WHERE id =".$match_id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -448,14 +448,14 @@ function enable_score($match_id) {
 
 function set_winner($match_id){
   $query = "SELECT * FROM mrm_matches WHERE id =". $match_id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo $query ."<br>";
     die('Error Updating Database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   if ($info['band1_votes'] > $info['band2_votes']){
     $winner = $info['band1_id'];
@@ -464,7 +464,7 @@ function set_winner($match_id){
   }
 
   $update = "UPDATE mrm_matches SET winner_id=\"".$winner."\" WHERE id=".$match_id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -483,7 +483,7 @@ function setup_next_match($last_match_id, $winner_id){
   else
     $update = "UPDATE mrm_matches SET band2_id=\"$winner_id\" WHERE id=".$new_match;
 
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -493,13 +493,13 @@ function setup_next_match($last_match_id, $winner_id){
 
 function get_new_match($old_match) {
   $query = "SELECT * FROM mrm_matches_flow WHERE old =" . $old_match;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['new'];
 }
@@ -511,14 +511,14 @@ function show_match($match_id) {
     $match_status = get_match_status($match_id);
 
     $query = "SELECT * FROM mrm_matches WHERE id =". $match_id;
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
       echo $update ."<br>";
       die('Error Querying Database. Code: sm123');
     }
 
-    $match = mysql_fetch_assoc($result);
+    $match = mysqli_fetch_assoc($result);
 
     echo '<table id="mrm_current_match" border="0">
       <tr>
@@ -576,26 +576,26 @@ function show_match($match_id) {
 
 function waiting_for_final() {
   $query = "SELECT * FROM mrm_matches WHERE id=63";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return ($info['end_time'] < now()) ? true : false;
 }
 
 function end_of_madness(){
   $query = "SELECT * FROM mrm_matches WHERE id=63";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return ($info['winner_id'] == 0) ? false : true;
 }
@@ -634,14 +634,14 @@ function scoreboard($match) {
 
 function next_match() {
   $next_query = "SELECT id, band1_id, band2_id, start_time, DATE_FORMAT(start_time, '%h:%i') as fdate FROM mrm_matches WHERE now() < start_time ORDER BY start_time LIMIT 1";
-  $next_result = mysql_query($next_query);
+  $next_result = mysqli_query(open_db(), $next_query);
 
   if (!$next_result) {
     echo $next_update ."<br>";
     die('Error Finding Database.');
   }
 
-  $next_match = mysql_fetch_assoc($next_result);
+  $next_match = mysqli_fetch_assoc($next_result);
 
   if ($next_match) {
     echo '<div id="next_match">
@@ -657,14 +657,14 @@ function next_match() {
 
 function now_match() {
   $select = "SELECT * FROM mrm_matches WHERE now() >= start_time AND now() < end_time;";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
-  if (mysql_errno()) {
-    echo mysql_error() ."<br>";
+  if (mysqli_errno(open_db())) {
+    echo mysqli_error(open_db()) ."<br>";
     die('Error Finding Database.');
   }
 
-  $now_match = mysql_fetch_assoc($result);
+  $now_match = mysqli_fetch_assoc($result);
 
   if ($now_match['id'] > 0 )
     return $now_match;
@@ -676,14 +676,14 @@ function now_match() {
 
 function winner($band_id, $match_id){
   $query = "SELECT * FROM mrm_matches WHERE id =".$match_id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo $query ."<br>";
     die('Error Finding Database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   if ($info['winner_id'] == 0)
     return '';
@@ -718,15 +718,15 @@ function display_bracket(){
     $round_counter = 1;
 
     $query = "SELECT * FROM mrm_matches WHERE region = " . $r;
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
       echo $update ."<br>";
       die('Error getting bracket data.');
     }
 
-    for ($i=1; $i <= mysql_num_rows($result) ; $i++) { //loop through all matches in region
-      $info = mysql_fetch_assoc($result);
+    for ($i=1; $i <= mysqli_num_rows($result) ; $i++) { //loop through all matches in region
+      $info = mysqli_fetch_assoc($result);
       if (($i == 1 || $i == 9 || $i == 13 || $i == 15) && $r < 5) {
         echo "\n<div class='round".$round_counter."'>";
         $round_counter++;
@@ -792,14 +792,14 @@ function has_voted($match_id){
   $voter_ip = $_SERVER['REMOTE_ADDR'];
 
   $query = "SELECT match_id, voter_ip FROM mrm_votes WHERE match_id = " . $match_id . " AND voter_ip = '". $voter_ip."'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo $update ."<br>";
     die('Error getting voter data.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   if ($info['match_id'] == '')
     return false;
@@ -820,7 +820,7 @@ function record_ip($match_id, $voted_band) {
 
   if (has_voted($match_id) == false) {
     $insert = "INSERT INTO mrm_votes VALUES (id, '".$match_id ."', '".$voter_ip. "', '".$voted_band. "')";
-    $result = mysql_query($insert);
+    $result = mysqli_query(open_db(), $insert);
 
     if (!$result) {
       echo $insert ."<br>";
@@ -831,7 +831,7 @@ function record_ip($match_id, $voted_band) {
 
 function view_all_mrm_bands(){
   $query = "SELECT * FROM mrm_bands ORDER BY Placement";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -839,8 +839,8 @@ function view_all_mrm_bands(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     display_mrm_band($info);
     echo '<br>[ <a href="mrm_band_update.php?id=' .$info["id"]. '">Edit</a> | <a href="mrm_band_delete.php?id=' .$info["id"]. '">Delete</a> ] <p>';
   }
@@ -849,13 +849,13 @@ function view_all_mrm_bands(){
 
 function winner_banner(){
   $query = "SELECT * FROM mrm_matches WHERE id=63";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   echo "<div class=\"center\"><h2>Congratulations to your ". date('Y')." <br>Y-Not Modern Rock Madness Champions</h2><h1>". band_name($info['winner_id']) ."!</h1>".
     '<img src="' . get_band_pic_url($info['winner_id']) . '" height="200px"></div>';

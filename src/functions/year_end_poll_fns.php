@@ -12,7 +12,7 @@ function add_contestant($name, $email, $phone, $hometown, $contest, $newsletter,
 		}
 
 	$insert = "INSERT INTO year_end_contestants VALUES (id, '".$name. "', '".$email. "', '".$phone. "', '".$hometown. "', '".$contest. "', '".$newsletter. "', '".$ip. "')";
-	$result = mysql_query($insert);
+	$result = mysqli_query(open_db(), $insert);
 
 	return ($result) ? true : false;
 }
@@ -21,7 +21,7 @@ function add_manual_vote_for($ip, $poll_form, $manual_vote) {
   $manual_vote = mysqli_real_escape_string(open_db(), $manual_vote);
 
   $insert = "INSERT INTO year_end_write_ins (ip_address, poll, write_in) VALUES (\"". $ip ."\", \"" . $poll_form . "\", \"" . $manual_vote . "\")";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -33,7 +33,7 @@ function add_manual_vote_for($ip, $poll_form, $manual_vote) {
 
 function add_ip($ip, $poll) {
   $insert = "INSERT INTO year_end_ips VALUES (id, '".$ip ."', '" . $poll . "')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 	
   if (!$result) {
 	  echo $insert ."<br>";
@@ -45,7 +45,7 @@ function add_song_votes_for($ip, $votes, $write_in_value) {
   $last_value = ( $write_in_value != '') ? $write_in_value : $votes[19];
 
   $insert = "INSERT INTO year_end_song_votes VALUES (NULL, '".$ip."', '".$votes[0]."', '".$votes[1]."', '".$votes[2]."', '".$votes[3]."', '".$votes[4]."', '".$votes[5]."', '".$votes[6]."', '".$votes[7]."', '".$votes[8]."', '".$votes[9]."', '".$votes[10]."', '".$votes[11]."', '".$votes[12]."', '".$votes[13]."', '".$votes[14]."', '".$votes[15]."', '".$votes[16]."', '".$votes[17]."', '".$votes[18]."', '".$last_value."')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -56,7 +56,7 @@ function add_song_votes_for($ip, $votes, $write_in_value) {
 function add_votes_for($poll_form, $votes){
   foreach ($votes as $value) {
     $update = "UPDATE year_end_". $poll_form ." SET votes = votes + 1 WHERE id=". $value;
-    $result = mysql_query($update);
+    $result = mysqli_query(open_db(), $update);
 
     if (!$result) {
       echo $insert ."<br>";
@@ -93,11 +93,11 @@ function format_poll_name($str) {
 }
 
 function get_column_names($poll) {
-  $describe = mysql_query('DESCRIBE year_end_'.$poll);
+  $describe = mysqli_query(open_db(), 'DESCRIBE year_end_'.$poll);
   $column_names = array();
 
-  for ($i=1; $i<=mysql_num_rows($describe); $i++) {
-    $info = mysql_fetch_assoc($describe);
+  for ($i=1; $i<=mysqli_num_rows($describe); $i++) {
+    $info = mysqli_fetch_assoc($describe);
     array_push($column_names, $info['Field']);
   }
 
@@ -106,8 +106,8 @@ function get_column_names($poll) {
 
 function get_number_of_votes_for($poll_form, $value) {
   $query = "SELECT votes FROM year_end_" . $poll_form . " WHERE id=" . $value . ";";
-  $result = mysql_query($query);
-  $votes = mysql_fetch_assoc($result);
+  $result = mysqli_query(open_db(), $query);
+  $votes = mysqli_fetch_assoc($result);
 
   if (!$result)
     die('No results in database.');
@@ -123,19 +123,19 @@ function get_poll_names() {
 
 function get_song($id) {
   $query = "SELECT * FROM year_end_songs WHERE id =" .$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
    return;
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function get_values($table_name) {
   $columns = get_column_names($table_name);
 
   $query = "SELECT * FROM year_end_". $table_name . " ORDER BY " . $columns[1];
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     die('No results in database.');
@@ -145,17 +145,17 @@ function get_values($table_name) {
 
 function has_entered_contest($ip) {
   $query = "SELECT ip_address FROM year_end_contestants WHERE ip_address = '".$ip."'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
   return ($info['ip_address'] == $ip) ? true : false;
 }
 
 function has_voted($ip, $poll){
   $query = "SELECT * FROM year_end_ips WHERE ip_address = '".$ip."' AND poll = '".$poll."'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
   if ($info['ip_address']) {
 		return true;
 	} else {
@@ -203,7 +203,7 @@ function max_picks_for($poll) {
 
 function view_all_contestants() {
   $query = "SELECT * FROM year_end_contestants";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -211,8 +211,8 @@ function view_all_contestants() {
   }
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n<thead>\n
     <th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Contest</th><th>Newsletter</th></thead>";
-  for ($i=1; $i<=mysql_num_rows($result); $i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result); $i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<tr>";
     if ($info['contest'] == 'yes')
       echo "<td><a href=\"year_end_poll_song_picks.php?contestant_id=". $info['id']. "\">" . ucwords($info['name']) ."</a></td>";
@@ -239,10 +239,10 @@ function view_all_year_end_poll_for($poll) {
   echo "</thead>\n";
 
   $query = "SELECT * FROM year_end_".$poll. " ORDER BY votes DESC, " . $column_names[1] . " ASC";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  for ($i=1; $i<=mysql_num_rows($result); $i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result); $i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<tr>";
     for ($j=1; $j <=count($column_names); $j++) {
       echo "<td>" .$info[$column_names[$j]] . "</td>";
@@ -254,14 +254,14 @@ function view_all_year_end_poll_for($poll) {
 
 function view_all_year_end_poll_write_ins_for($poll) {
   $query = "SELECT * FROM year_end_write_ins WHERE poll = '".$poll."'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  if (mysql_num_rows($result) > 0 ) {
+  if (mysqli_num_rows($result) > 0 ) {
     echo "<div class=\"row\">\n<div class=\"tweleve columns content full-width\">\n
     <h1>Write-ins</h1>\n<ul>\n";
-    for ($i=1; $i<=mysql_num_rows($result);$i++)
+    for ($i=1; $i<=mysqli_num_rows($result);$i++)
    	{
-  		$info = mysql_fetch_assoc($result);
+  		$info = mysqli_fetch_assoc($result);
       echo "<li>" . $info['write_in'] . "</li>";
     }
     echo "</ul>\n</div>\n</div>";
@@ -271,20 +271,20 @@ function view_all_year_end_poll_write_ins_for($poll) {
 
 function view_contestants_song_picks($contestant_id) {
   $contestant_query = "SELECT * FROM year_end_contestants WHERE id = ".$contestant_id;
-  $contestant_result = mysql_query($contestant_query);
+  $contestant_result = mysqli_query(open_db(), $contestant_query);
 
   if (!$contestant_result)
     die('No results in database.');
   else
-    $contestant = mysql_fetch_assoc($contestant_result);
+    $contestant = mysqli_fetch_assoc($contestant_result);
 
   $song_vote_query = "SELECT * FROM year_end_song_votes WHERE ip_address = \"".$contestant['ip_address']."\"";
-  $song_vote_result = mysql_query($song_vote_query);
+  $song_vote_result = mysqli_query(open_db(), $song_vote_query);
 
-  if (mysql_num_rows($song_vote_result) == 0)
+  if (mysqli_num_rows($song_vote_result) == 0)
     die('No song results in database.');
   else
-    $song_votes = mysql_fetch_assoc($song_vote_result);
+    $song_votes = mysqli_fetch_assoc($song_vote_result);
 
   if ($contestant['contest'] == 'yes') {
     echo "<h3 class=\"center\">" .ucwords($contestant['name']). "'s Top 20 Songs</h3>";

@@ -4,7 +4,7 @@ function add_custom_text($title, $html) {
   $permalink = create_permalink($title);
 
   $insert = "INSERT INTO custom_texts VALUES (id, '".$title ."', '".$permalink. "', '".$html. "', 'active')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -14,7 +14,7 @@ function add_custom_text($title, $html) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Custom Text has been saved</h3>".
        "<hr width=75%>";
-  display_custom_text(get_custom_text(mysql_insert_id()));
+  display_custom_text(get_custom_text(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
@@ -36,7 +36,7 @@ function create_permalink($title) {
 
 function delete_custom_text($id) {
   $update = "UPDATE custom_texts SET status ='deleted' WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the custom text from the database: ". $update ."<br>";
@@ -61,20 +61,20 @@ function display_custom_text_title_and_permalink($custom_text) {
 
 function find_custom_text_by_permalink($permalink) {
   $query = "SELECT * FROM custom_texts WHERE status = 'active' AND permalink = '".$permalink."'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if ($result)
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function get_custom_text($id) {
   $query = "SELECT * FROM custom_texts WHERE status = 'active' AND id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function update_custom_text($id, $title, $html) {
@@ -82,7 +82,7 @@ function update_custom_text($id, $title, $html) {
   $title = mysqli_real_escape_string(open_db(), $title);
 
   $update = "UPDATE custom_texts SET title=\"$title\", html=\"$html\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -92,9 +92,9 @@ function update_custom_text($id, $title, $html) {
 
 function valid_permalink($permalink){
   $count = "SELECT count('permalink') AS 'permalink' FROM custom_texts WHERE permalink ='".$permalink."'";
-  $result = mysql_query($count);
+  $result = mysqli_query(open_db(), $count);
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   if ($info['permalink'] == '0')
     return true;
@@ -104,7 +104,7 @@ function valid_permalink($permalink){
 
 function view_all_custom_texts() {
   $query = "SELECT * FROM custom_texts WHERE status = 'active'";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -112,8 +112,8 @@ function view_all_custom_texts() {
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     display_custom_text_title_and_permalink($info);
     echo '<br>[ <a href="custom_text_update.php?id=' .$info[id]. '">Edit</a> | <a href="custom_text_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }

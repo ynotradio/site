@@ -7,7 +7,7 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
 
   $insert = "INSERT INTO ads VALUES (id, '".$name ."', '".$start_date. "', '". $end_date ."', '". $pic_url ."', '". $web_url ."', '". $priority ."', 'n')";
 
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -17,13 +17,13 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Ad for ". $name. " has been saved</h3>".
        "<hr width=75%>";
-  display_ad(get_ad(mysql_insert_id()));
+  display_ad(get_ad(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function current_ads_order() {
   $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -31,8 +31,8 @@ function current_ads_order() {
   }
 
   echo '<form action="ads_order.php" method="post">';
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<div class=\"bottom-spacer_20\">
       Name: <b>" . $info['name']. "</b>
       <br>
@@ -46,7 +46,7 @@ function current_ads_order() {
 
 function delete_ad($id){
   $update = "UPDATE ads set deleted ='y' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the ad from the database: ". $update ."<br>";
@@ -69,17 +69,17 @@ function display_ad($ad) {
 
 function get_ad($id) {
   $query = "SELECT * FROM ads where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function save_ad_order($id, $priority) {
   $update = "UPDATE ads set priority ='".$priority."' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -89,22 +89,22 @@ function save_ad_order($id, $priority) {
 
 function show_ads(){
   $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
-  if (mysql_num_rows($result) > 0)
+  if (mysqli_num_rows($result) > 0)
     echo "<div class=\"ads\">";
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo "<a href=\"".$info['web_url']."\" target='_blank'><img src=\"".$info['pic_url']."\"></a>";
   }
 
-  if (mysql_num_rows($result) > 0)
+  if (mysqli_num_rows($result) > 0)
     echo "</div>";
 }
 
@@ -118,7 +118,7 @@ function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $prio
   $priority = mysqli_real_escape_string(open_db(), $priority);
 
   $update = "UPDATE ads SET start_date=\"$start_date\", end_date=\"$end_date\", name=\"$name\", pic_url=\"$pic_url\", web_url=\"$web_url\", priority=\"$priority\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -128,7 +128,7 @@ function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $prio
 
 function view_all_active_ads(){
   $query = "SELECT * FROM ads WHERE deleted = 'n' AND end_date >= now() ORDER BY priority";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -136,9 +136,9 @@ function view_all_active_ads(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     display_ad($info);
       echo '<br>[ <a href="ad_update.php?id=' .$info[id]. '">Edit</a> | <a href="ad_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }

@@ -11,7 +11,7 @@ function sort_deejays() {
 
   foreach ($_POST['item'] as $value) {
       $query = "UPDATE deejays SET sort = $i WHERE id = $value";
-      $result = mysql_query($query);
+      $result = mysqli_query(open_db(), $query);
       $i++;
   }
 }
@@ -27,7 +27,7 @@ function add_deejay($name, $show, $email, $external_connect_text, $external_conn
   $pic = mysqli_real_escape_string(open_db(), $pic);
 
   $insert = "INSERT INTO deejays VALUES (id, '".$name ."', '".$show. "', '".$email. "', '".$external_connect_text. "', '". $external_connect_url ."', '". $pic ."', '1', 'no')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -37,26 +37,26 @@ function add_deejay($name, $show, $email, $external_connect_text, $external_conn
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Deejay, ". $name. ", has been saved</h3>".
        "<hr width=75%>";
-  display_deejay(get_deejay(mysql_insert_id()));
+  display_deejay(get_deejay(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function deejay_name($id) {
   $query = "SELECT name FROM deejays where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     die('No results in database.');
   }
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['name'];
 }
 
 function delete_deejay($id){
   $update = "UPDATE deejays SET deleted ='yes' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the deejay from the database: ". $update ."<br>";
@@ -106,17 +106,17 @@ function display_all_deejays($deejays){
 
 function get_deejay($id) {
   $query = "SELECT * FROM deejays where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function get_deejays() {
   $josh_query = "SELECT * FROM deejays WHERE deleted = 'no' AND name = 'Josh T. Landow' ORDER BY name";
-  $josh_result = mysql_query($josh_query);
+  $josh_result = mysqli_query(open_db(), $josh_query);
 
   if (!$josh_result) {
     echo "error: ". $josh_query;
@@ -124,19 +124,19 @@ function get_deejays() {
   }
 
   $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
     die('Invalid');
   }
 
-  $josh = array(mysql_fetch_assoc($josh_result));
+  $josh = array(mysqli_fetch_assoc($josh_result));
   $odd_results = array();
   $even_results = array();
 
-  for ($i=1; $i <= mysql_num_rows($result); $i++){
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i <= mysqli_num_rows($result); $i++){
+    $info = mysqli_fetch_assoc($result);
     if (fmod($i,2) == 0) {
       array_push($even_results , $info);
     } else {
@@ -156,7 +156,7 @@ function update_deejay($id, $name, $show, $email, $external_connect_text, $exter
   $pic = mysqli_real_escape_string(open_db(), $pic);
 
   $update = "UPDATE deejays SET name=\"$name\", `show`=\"$show\", email=\"$email\", external_connect_text=\"$external_connect_text\",external_connect_url=\"$external_connect_url\", pic=\"$pic\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -166,7 +166,7 @@ function update_deejay($id, $name, $show, $email, $external_connect_text, $exter
 
 function view_all_deejays(){
   $query = "SELECT * FROM deejays WHERE deleted = 'no' ORDER BY sort";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -174,8 +174,8 @@ function view_all_deejays(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     display_deejay($info);
   }
   echo '</ol>';

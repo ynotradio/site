@@ -12,7 +12,7 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
     $newsletter = mysqli_real_escape_string(open_db(), $newsletter);
 
     $insert = "INSERT INTO top11contest VALUES (id, '".$firstname ."', '".$lastname. "', '".$email. "', '".$phone. "', '".$contest. "', '".$newsletter. "', 'yes')";
-    $result = mysql_query($insert);
+    $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert;
@@ -23,7 +23,7 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
 function add_ip($ip) {
   $ip = mysqli_real_escape_string(open_db(), $ip);
   $insert = "INSERT INTO ip_address VALUES (id, '".$ip ."', 'n')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -34,7 +34,7 @@ function add_ip($ip) {
 function add_top11_plus1($id){
   $id = mysqli_real_escape_string(open_db(), $id);
   $update = "UPDATE top11songs SET value = value + 1  WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     die('error updating database. Code: 353');
@@ -46,7 +46,7 @@ function add_top11_song($artist, $song) {
   $song = mysqli_real_escape_string(open_db(), $song);
 
   $insert = "INSERT INTO top11songs VALUES (id, '".$artist ."', '".$song. "', 0, 'n')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -56,15 +56,15 @@ function add_top11_song($artist, $song) {
   echo "<div class=\"center\"><h1>Success!</h1>".
     "<h3>The new Top 11 song has been saved</h3>".
     "<hr width=75%>";
-  display_top11_song(get_top11_song(mysql_insert_id()));
+  display_top11_song(get_top11_song(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function check_ip($ip) {
   $ip = mysqli_real_escape_string(open_db(), $ip);
   $select = "SELECT * FROM ip_address WHERE address = '$ip' AND deleted = 'n'";
-  $result = mysql_query($select);
-  $info = mysql_fetch_assoc($result);
+  $result = mysqli_query(open_db(), $select);
+  $info = mysqli_fetch_assoc($result);
   if ($info['address']) {
     return false;
   } else {
@@ -75,7 +75,7 @@ function check_ip($ip) {
 
 function close_top11() {
   $update = 'UPDATE top11 SET artist ="closed" WHERE placement=98';
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     die('Error Opening Top11.');
@@ -84,20 +84,20 @@ function close_top11() {
 
 function contestant_count() {
   $select = "SELECT * FROM top11contest WHERE display = 'yes' AND contest = 'yes'";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
     die('error selecting from database.');
   }
-  return "(" .mysql_num_rows($result) ." total entries)";
+  return "(" .mysqli_num_rows($result) ." total entries)";
 }
 
 function delete_top11_song($id){
 
   $id = mysqli_real_escape_string(open_db(), $id);
   $update = "UPDATE top11songs set deleted ='y' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the Top 11 song from the database: ". $update ."<br>";
@@ -110,16 +110,16 @@ function delete_top11_song($id){
 
 function display_contestants() {
   $select = "SELECT * FROM top11contest WHERE display = 'yes' AND contest = 'yes' ORDER BY id";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
     die('error selecting from database.');
   }
   echo "<h2 class=\"center\">All Top 11 Contestants</h2>";
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
     echo "<ol>";
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo
       "<b>Name: </b>". $info['firstname']. " " . $info['lastname'] .
       "<br><b>Email: </b>". $info['email'].
@@ -130,7 +130,7 @@ function display_contestants() {
 function display_form($action_file)
 {
   $select = "SELECT * FROM top11songs WHERE deleted = 'n' ORDER BY artist";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
@@ -140,9 +140,9 @@ function display_form($action_file)
   echo "<form action=".$action_file." method=\"post\" name=\"top11\" class=\"form-default\">
     <fieldset>\n<div class=\"control-group\">\n<div class=\"controls\">\n";
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo "<label for=\"".$info['id']."\" class=\"half\"><input type=\"checkbox\" name=\"top11[]\" id=\"".$info['id']."\" value=\"".$info['id']."\">".
       "<span class=\"top11_entry\"> " . $info['artist'] ." - ".$info['song'] ."\n</span>\n</label>\n";
   }
@@ -169,13 +169,13 @@ function display_form($action_file)
 
 function display_top11_message() {
   $select = "SELECT * FROM top11message WHERE id = '1'";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
     die('error selecting from database.');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
   echo "<div class=\"top11-message full_height\">
     <img src=\"imgs/knob_11.jpg\" alt=\"Top 11\" /></td>
     <td id=\"top11message\">" . $info['message'] .
@@ -189,7 +189,7 @@ function display_top11_song($top11_song) {
 
 function export() {
   $select = "SELECT * FROM top11contest WHERE contest =  'yes' AND display = 'yes' ORDER BY id";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
@@ -198,9 +198,9 @@ function export() {
   echo "<h2 class=\"center\">Top 11 Contestants</h2>";
   echo "<table class='table table-striped table-bordered-horizontal table-condensed table-center'>
     <thead><tr>\n<th>Name</th><th>Email</th><th>Phone</th><th>Newsletter</th></tr></thead>\n";
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
 
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo
       "<tr><td>". $info['firstname']. " " . $info['lastname']. " </td>".
       "<td>". $info['email']."</td>".
@@ -212,7 +212,7 @@ function export() {
 
 function export_newsletter() {
   $select = "SELECT * FROM top11contest WHERE contest = 'no' AND newsletter = 'yes' AND display = 'yes' ORDER BY id";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
@@ -220,9 +220,9 @@ function export_newsletter() {
   }
   echo "<h2 class=\"center\">Non-contestant voters - add to Newsletter</h2>
     <table class='table table-striped table-bordered-horizontal table-condensed no-header table-center'>";
-    for ($i=1; $i<=mysql_num_rows($result);$i++) {
+    for ($i=1; $i<=mysqli_num_rows($result);$i++) {
 
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo
       "<tr><td>". $info['firstname']. " " . $info['lastname']. "</td>".
       "<td>". $info['email']."</td></tr>";
@@ -232,7 +232,7 @@ function export_newsletter() {
 
 function get_top11() {
   $query = "SELECT * FROM top11";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     die('No results in database.');
@@ -242,7 +242,7 @@ function get_top11() {
 
 function get_top11_message() {
   $query = "SELECT * FROM top11message where id=1";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     die('No results in database.');
@@ -252,32 +252,32 @@ function get_top11_message() {
 
 function get_top11_song($id) {
   $query = "SELECT * FROM top11songs where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function show_top11() {
   $query = "SELECT * FROM top11";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
   $title = "SELECT artist FROM top11 where placement = 99";
-  $result_title = mysql_query($title);
+  $result_title = mysqli_query(open_db(), $title);
 
   if (!$result || !$result_title) {
     die('No results in database.');
   }
 
-  $title_output = mysql_fetch_assoc($result_title);
+  $title_output = mysqli_fetch_assoc($result_title);
   echo "<h2 class=\"center\">Top 11 @ 11 for ". $title_output['artist']. "</h2>\n";
 
   echo "<table class='table table-striped table-bordered-horizontal table-condensed no-header table-center'>";
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     if ($info['placement'] != 99 && $info['placement'] != 98) {
       echo "<tr>\n<td>" .  $info['placement'] . " </td>\n" .
         "<td>".$info['artist'] . "</td>\n".
@@ -292,7 +292,7 @@ function show_top11() {
 function nuke() {
   echo "<div class=\"center\"><h2>Top 11 Values have been nuked</h2></div>";
   $update = "UPDATE top11songs SET value = 0";
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     die('error updating database. Code: 261');
@@ -300,7 +300,7 @@ function nuke() {
     echo "<div class=\"center\">Top 11 Stats - <b>NUKED</b></div>";
 
   $update = "UPDATE write_in SET deleted = 'yes'";
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     die('error updating database. Code: 269');
@@ -308,7 +308,7 @@ function nuke() {
     echo "<div class=\"center\">Top 11 Write-ins - <b>NUKED</b></div>";
 
   $update = "UPDATE top11contest SET display = 'no'";
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     die('error updating database. Code: 277');
@@ -316,7 +316,7 @@ function nuke() {
     echo "<div class=\"center\">Top 11 Contestants - <b>NUKED</b></div>";
 
   $update = "UPDATE ip_address SET deleted = 'yes'";
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     die('error updating database. Code: 285');
@@ -327,7 +327,7 @@ function nuke() {
 
 function open_top11() {
   $update = 'UPDATE top11 SET artist ="open" WHERE placement=98';
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     die('Error Opening Top11.');
@@ -336,14 +336,14 @@ function open_top11() {
 
 function pick_a_winner() {
   $select = "SELECT * FROM top11contest WHERE display = 'yes' AND contest = 'yes' ORDER BY RAND() LIMIT 1";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
     die('error selecting from database.');
   }
   echo "<div class=\"center\">\n<h1>Winner!</h1>";
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
   echo "<b>Name: </b>" . $info['firstname'] . " " . $info['lastname'] . "<br>".
     "<b>Email: </b>" . $info['email'] . "<br>".
     "<b>Phone: </b>" . $info['phone'] . "<p>".
@@ -352,7 +352,7 @@ function pick_a_winner() {
 
 function stats() {
   $select = "SELECT * FROM top11songs WHERE deleted = 'n' ORDER BY value DESC";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     die('error updating database. Code: 229');
@@ -360,8 +360,8 @@ function stats() {
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">";
   echo "<thead><tr><th>Spot</th><th>Arist</th><th>Song</th><th>Value</th></tr></thead>";
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<tr><td>" .$i . "</td>\n".
       "<td>".$info['artist'] . "</td>\n".
       "<td>" .$info['song']. "</td>\n".
@@ -383,12 +383,12 @@ function toggle_status($current_status) {
 
 function top11_status() {
   $select = "SELECT artist FROM top11 WHERE placement = 98";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     die('error selecting from database.');
   }
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   return $info['artist'];	
 }
@@ -400,7 +400,7 @@ function update_top11($placement, $artist, $song, $note){
   $note = mysqli_real_escape_string(open_db(), $note);
 
   $update = 'UPDATE top11 SET artist =\''.$artist .'\', song=\''.$song . '\', note=\''.$note. '\' WHERE placement='.$placement;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -410,7 +410,7 @@ function update_top11($placement, $artist, $song, $note){
 
 function update_top11_date($date){
   $update = 'UPDATE top11 SET artist =\''.$date .'\' WHERE placement=99';
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -422,7 +422,7 @@ function update_top11_message($message){
   $message = mysqli_real_escape_string(open_db(), $message);
 
   $update = 'UPDATE top11message SET message =\''.$message .'\' WHERE id=1';
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -435,7 +435,7 @@ function update_top11_song($id, $artist, $song) {
   $song = mysqli_real_escape_string(open_db(), $song);
 
   $update = "UPDATE top11songs SET artist=\"$artist\", song=\"$song\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -445,7 +445,7 @@ function update_top11_song($id, $artist, $song) {
 
 function view_all_top11_songs() {
   $query = "SELECT * FROM top11songs WHERE deleted = 'n' ORDER BY artist";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -455,8 +455,8 @@ function view_all_top11_songs() {
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">";
   echo "<thead><tr><th>Arist</th><th>Song</th><th colspan='2'>Actions</th></tr></thead>";
 
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<tr>\n
       <td>".$info['artist'] . "</td>\n".
       "<td>" .$info['song']. "</td>\n".
@@ -469,16 +469,16 @@ function view_all_top11_songs() {
 
 function view_write_ins() {
   $select = "SELECT * FROM write_in WHERE deleted = 'no' ORDER BY id";
-  $result = mysql_query($select);
+  $result = mysqli_query(open_db(), $select);
 
   if (!$result) {
     echo $select;
     die('error selecting from database.');
   }
   echo "<ol>";
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
 
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     echo "<li>" .$info['write_in']. "</li>";
   }
   echo "</ol>";	
@@ -486,7 +486,7 @@ function view_write_ins() {
 
 function write_in($write_in) {
   $insert = "INSERT INTO write_in VALUES (id, '".$write_in ."', 'no')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";

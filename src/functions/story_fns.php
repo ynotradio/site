@@ -5,7 +5,7 @@ function add_story($headline, $story, $start_date, $end_date, $pic, $pic_url, $p
   $story = mysqli_real_escape_string(open_db(), $story);
 
   $insert = "INSERT INTO stories VALUES (id, '".$start_date ."', '".$end_date. "', '". $headline ."', '". $story ."', '". $pic ."', '". $pic_url ."', '". $priority ."', 'n')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -15,13 +15,13 @@ function add_story($headline, $story, $start_date, $end_date, $pic, $pic_url, $p
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Story about ". $headline. ", has been saved</h3>".
        "<hr width=75%>";
-  display_story(get_story(mysql_insert_id()));
+  display_story(get_story(mysqli_insert_id(open_db())));
   echo "</div>";
 }
 
 function current_order() {
   $query = "SELECT * FROM stories WHERE deleted = 'n' AND end_date >= now() ORDER BY priority";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -29,8 +29,8 @@ function current_order() {
   }
 
   echo '<form action="stories_order.php" method="post">';
-  for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<div class=\"bottom-spacer_20\">
       Headline: <b>" . $info['headline']. "</b>
       <br>
@@ -44,7 +44,7 @@ function current_order() {
 
 function delete_story($id){
   $update = "UPDATE stories SET deleted ='y' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the stories from the database: ". $update ."<br>";
@@ -90,7 +90,7 @@ function get_stories($amount){
   $limit = ($amount == "all") ? "" : " LIMIT ". $amount;
   $query = $query . $limit;
 
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -99,8 +99,8 @@ function get_stories($amount){
   $odd_results = array();
   $even_results = array();
 
-  for ($i=1; $i <= mysql_num_rows($result); $i++){
-    $info = mysql_fetch_assoc($result);
+  for ($i=1; $i <= mysqli_num_rows($result); $i++){
+    $info = mysqli_fetch_assoc($result);
     if (fmod($i,2) == 0) {
       array_push($even_results , $info);
     } else {
@@ -113,17 +113,17 @@ function get_stories($amount){
 
 function get_story($id) {
   $query = "SELECT * FROM stories where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function save_order($id, $priority) {
   $update = "UPDATE stories set priority ='".$priority."' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo $update ."<br>";
@@ -142,7 +142,7 @@ function update_story($id, $headline, $story, $start_date, $end_date, $pic, $pic
   $pic_url = mysqli_real_escape_string(open_db(), $pic_url);
 
   $update = "UPDATE stories SET start_date=\"$start_date\", end_date=\"$end_date\", headline=\"$headline\", story=\"$story\", pic=\"$pic\", pic_url=\"$pic_url\", priority=\"$priority\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -152,7 +152,7 @@ function update_story($id, $headline, $story, $start_date, $end_date, $pic, $pic
 
 function view_all_stories(){
   $query = "SELECT * FROM stories WHERE deleted = 'n' AND end_date >= now() ORDER BY priority";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -160,9 +160,9 @@ function view_all_stories(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     display_story($info);
     echo '<br>[ <a href="story_update.php?id=' .$info[id]. '">Edit</a> | <a href="story_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
