@@ -8,8 +8,9 @@ function open_db(){
   $db_pass="";
   $db_hostname="localhost";
 
-  mysql_connect($db_hostname, $db_user, $db_pass);
-  mysql_select_db($db_name);
+  $db = mysqli_connect($db_hostname, $db_user, $db_pass);
+  mysqli_select_db($db, $db_name);
+  return $db;
 }
 
 function format($text) {
@@ -124,9 +125,9 @@ function active_ad_count(){
 
 function on_air(){
   $query = "SELECT host FROM schedule WHERE date = date(now()) AND time(now()) > start_time AND time(now()) < end_time AND deleted='n' ORDER BY start_time DESC LIMIT 1";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  $info = mysql_fetch_assoc($result);
+  $info = mysqli_fetch_assoc($result);
 
   $display_name = str_replace("<br>", " ", $info['host']);
   $display_name = str_replace("<i>", "", $display_name);

@@ -1,15 +1,15 @@
 <?php
 
 function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
-  $date = mysql_real_escape_string($date);
-  $image = mysql_real_escape_string($image);
-  $headline = mysql_real_escape_string($headline);
-  $note = mysql_real_escape_string($note);
-  $songs = mysql_real_escape_string($songs);
-  $audio_id = mysql_real_escape_string($audio_id);
+  $date = mysqli_real_escape_string($date);
+  $image = mysqli_real_escape_string($image);
+  $headline = mysqli_real_escape_string($headline);
+  $note = mysqli_real_escape_string($note);
+  $songs = mysqli_real_escape_string($songs);
+  $audio_id = mysqli_real_escape_string($audio_id);
 
   $insert = "INSERT INTO ondemand VALUES (id, '".$date ."', '".$image ."', '".$headline. "', '".$note. "', '".$songs. "', '".$audio_id. "', 'opendrive', 'no')";
-  $result = mysql_query($insert);
+  $result = mysqli_query(open_db(), $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -19,13 +19,13 @@ function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New On Demand, ". $headline. ", has been saved</h3>".
        "<hr width=75%>";
-  display_on_demand(get_on_demand(mysql_insert_id()));
+  display_on_demand(get_on_demand(mysqli_insert_id()));
   echo "</div>";
 }
 
 function delete_on_demand($id){
   $update = "UPDATE ondemand SET deleted ='yes' where id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result) {
     echo "'Error deleting the on demand entry from the database: ". $update ."<br>";
@@ -47,12 +47,12 @@ function display_on_demand($ondemand) {
 
 function get_on_demand($id) {
   $query = "SELECT * FROM ondemand where id=".$id;
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result)
     echo 'No results in database.';
   else
-    return mysql_fetch_assoc($result);
+    return mysqli_fetch_assoc($result);
 }
 
 function on_demand_player($id) {
@@ -60,13 +60,13 @@ function on_demand_player($id) {
   $cleanId = filter_var($id,FILTER_SANITIZE_NUMBER_INT);
   
   $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, image, headline, note, songs, audio_url FROM ondemand WHERE id = $cleanId";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
-  if (!$result || mysql_num_rows($result) == 0) {
+  if (!$result || mysqli_num_rows($result) == 0) {
     echo "<div class=\"center error\">Something went wrong, go back and try again.</div>";
   } else {
-    for ($i=1; $i<=mysql_num_rows($result);$i++) {
-    $info = mysql_fetch_assoc($result);
+    for ($i=1; $i<=mysqli_num_rows($result);$i++) {
+    $info = mysqli_fetch_assoc($result);
     echo "<tr>\n<td><img src=\"" . $info['image']. "\"></td>\n".
       "<td>\n<div class='t'><strong>". $info['headline']."</strong></div>\n".
       "<div>". $info['note']. "</div>\n".
@@ -151,15 +151,15 @@ function paginate($lastpage, $targetpage, $adjacents, $page, $lpm1){
 }
 
 function update_on_demand($id, $date, $image, $headline, $note, $songs, $url) {
-  $date = mysql_real_escape_string($date);
-  $image = mysql_real_escape_string($image);
-  $headline = mysql_real_escape_string($headline);
-  $note = mysql_real_escape_string($note);
-  $songs = mysql_real_escape_string($songs);
-  $url = mysql_real_escape_string($url);
+  $date = mysqli_real_escape_string($date);
+  $image = mysqli_real_escape_string($image);
+  $headline = mysqli_real_escape_string($headline);
+  $note = mysqli_real_escape_string($note);
+  $songs = mysqli_real_escape_string($songs);
+  $url = mysqli_real_escape_string($url);
 
   $update = "UPDATE ondemand SET date=\"$date\", image=\"$image\", headline=\"$headline\", note=\"$note\", songs=\"$songs\", audio_url=\"$url\" WHERE id=".$id;
-  $result = mysql_query($update);
+  $result = mysqli_query(open_db(), $update);
 
   if (!$result)
     echo "There was an error updating: <br>" . $update;
@@ -173,7 +173,7 @@ function show_on_demand($sort) {
     $adjacents = 3;
 
     $count_query = "SELECT COUNT(*) as num FROM $tbl_name WHERE DELETED = 'no'";
-    $total_pages = mysql_fetch_array(mysql_query($count_query));
+    $total_pages = mysqli_fetch_array(mysqli_query(open_db(), $count_query));
     $total_pages = $total_pages[num];
 
     if ($sort == "date")
@@ -194,7 +194,7 @@ function show_on_demand($sort) {
     else
       $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, id, image, headline, note, songs, audio_url FROM $tbl_name  WHERE deleted = 'no' ORDER BY headline LIMIT $start, $limit";
 
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
       echo "error: ". $query;
@@ -207,9 +207,9 @@ function show_on_demand($sort) {
     $lpm1 = $lastpage - 1;						        //last page minus 1
 
     echo '<table class="ondemand">';
-    for ($i=1; $i<=mysql_num_rows($result);$i++)
+    for ($i=1; $i<=mysqli_num_rows($result);$i++)
     {
-      $info = mysql_fetch_assoc($result);
+      $info = mysqli_fetch_assoc($result);
       on_demand_player($info['id']);
     }	
     echo '</table>';			
@@ -219,7 +219,7 @@ function show_on_demand($sort) {
   else
   {
     $query = "SELECT DATE_FORMAT(date, '%m/%d/%y' ) as fdate, id, headline FROM $tbl_name WHERE deleted = 'no' ORDER BY headline, date DESC";
-    $result = mysql_query($query);
+    $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
       echo "error: ". $query;
@@ -227,9 +227,9 @@ function show_on_demand($sort) {
     }
 
     echo '<table class="ondemand">';
-    for ($i=1; $i<=mysql_num_rows($result);$i++)
+    for ($i=1; $i<=mysqli_num_rows($result);$i++)
     {
-      $info = mysql_fetch_assoc($result);
+      $info = mysqli_fetch_assoc($result);
       echo "<tr>\n<td>\n<a href=\"ondemand.php?id=". $info['id']. "\">". $info['headline'] ."\n( ". $info['fdate']." )</a></td>\n</tr>\n";			
     }	
     echo '</table>';
@@ -238,7 +238,7 @@ function show_on_demand($sort) {
 
 function view_all_on_demands(){
   $query = "SELECT * FROM ondemand WHERE deleted = 'no' ORDER BY date Desc";
-  $result = mysql_query($query);
+  $result = mysqli_query(open_db(), $query);
 
   if (!$result) {
     echo "error: ". $query;
@@ -246,9 +246,9 @@ function view_all_on_demands(){
   }
 
   echo '<ol>';
-  for ($i=1; $i<=mysql_num_rows($result);$i++)
+  for ($i=1; $i<=mysqli_num_rows($result);$i++)
   {
-    $info = mysql_fetch_assoc($result);
+    $info = mysqli_fetch_assoc($result);
     display_on_demand($info);
     echo '<br>[ <a href="ondemand.php?id=' .$info[id].'" target=_new >Listen</a> | <a href="ondemand_update.php?id=' .$info[id]. '">Edit</a> | <a href="ondemand_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
   }
