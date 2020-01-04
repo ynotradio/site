@@ -66,7 +66,7 @@ function display_day($date) {
   $info = mysqli_fetch_assoc($day_result);
   echo "<h3 class=\"center\">".$info['fdate']."</h3>";
   //reset data collection back to 0
-  mysql_data_seek( $day_result, 0 );
+  mysqli_data_seek( $day_result, 0 );
 
   echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n".
     "<thead><tr><th width=125px>Time</th><th>Host</th><th>Notes</th></tr></thead>\n";
@@ -169,7 +169,7 @@ function display_all_schedules(){
       }
     }
 
-    mysql_data_seek( $day_result, 0 );
+    mysqli_data_seek( $day_result, 0 );
   }
   echo "</table>";	
 }
@@ -260,7 +260,7 @@ function view_all_schedules() {
       }
     }
 
-    mysql_data_seek( $day_result, 0 );
+    mysqli_data_seek( $day_result, 0 );
   }
   echo "</table>";
 }

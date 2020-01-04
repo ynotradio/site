@@ -37,7 +37,7 @@ function validate_user($username,$password,$remember_me) {
     if (!$result || (mysqli_num_rows($result) < 1)) {
       $_SESSION["error"] = "Your login could not be validated";
     } else {
-      $info = mysql_fetch_array($result);
+      $info = mysqli_fetch_array($result);
       $_SESSION["username"] = $info[username];
       $_SESSION["logged_in"] = "Y";
 
