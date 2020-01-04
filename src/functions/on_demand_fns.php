@@ -1,12 +1,12 @@
 <?php
 
 function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
-  $date = mysqli_real_escape_string($date);
-  $image = mysqli_real_escape_string($image);
-  $headline = mysqli_real_escape_string($headline);
-  $note = mysqli_real_escape_string($note);
-  $songs = mysqli_real_escape_string($songs);
-  $audio_id = mysqli_real_escape_string($audio_id);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $image = mysqli_real_escape_string(open_db(), $image);
+  $headline = mysqli_real_escape_string(open_db(), $headline);
+  $note = mysqli_real_escape_string(open_db(), $note);
+  $songs = mysqli_real_escape_string(open_db(), $songs);
+  $audio_id = mysqli_real_escape_string(open_db(), $audio_id);
 
   $insert = "INSERT INTO ondemand VALUES (id, '".$date ."', '".$image ."', '".$headline. "', '".$note. "', '".$songs. "', '".$audio_id. "', 'opendrive', 'no')";
   $result = mysqli_query(open_db(), $insert);
@@ -151,12 +151,12 @@ function paginate($lastpage, $targetpage, $adjacents, $page, $lpm1){
 }
 
 function update_on_demand($id, $date, $image, $headline, $note, $songs, $url) {
-  $date = mysqli_real_escape_string($date);
-  $image = mysqli_real_escape_string($image);
-  $headline = mysqli_real_escape_string($headline);
-  $note = mysqli_real_escape_string($note);
-  $songs = mysqli_real_escape_string($songs);
-  $url = mysqli_real_escape_string($url);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $image = mysqli_real_escape_string(open_db(), $image);
+  $headline = mysqli_real_escape_string(open_db(), $headline);
+  $note = mysqli_real_escape_string(open_db(), $note);
+  $songs = mysqli_real_escape_string(open_db(), $songs);
+  $url = mysqli_real_escape_string(open_db(), $url);
 
   $update = "UPDATE ondemand SET date=\"$date\", image=\"$image\", headline=\"$headline\", note=\"$note\", songs=\"$songs\", audio_url=\"$url\" WHERE id=".$id;
   $result = mysqli_query(open_db(), $update);

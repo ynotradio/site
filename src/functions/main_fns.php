@@ -3,10 +3,10 @@ date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 
 function open_db(){
-  $db_name="";
-  $db_user="";
-  $db_pass="";
-  $db_hostname="localhost";
+  $db_name="ynot_site";
+  $db_user="root";
+  $db_pass="root";
+  $db_hostname="db";
 
   $db = mysqli_connect($db_hostname, $db_user, $db_pass);
   mysqli_select_db($db, $db_name);
@@ -26,8 +26,8 @@ function validate_user($username,$password,$remember_me) {
   open_db();
 
     //Need to sanitize the input
-    $username = mysqli_real_escape_string($username);
-    $password = mysqli_real_escape_string($password);
+    $username = mysqli_real_escape_string(open_db(), $username);
+    $password = mysqli_real_escape_string(open_db(), $password);
 
     if ($username && $password) {
 

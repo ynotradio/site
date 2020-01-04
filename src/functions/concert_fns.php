@@ -1,13 +1,13 @@
 <?php
 
 function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  $date = mysqli_real_escape_string($date);
-  $artist = mysqli_real_escape_string($artist);
-  $band_pic_url = mysqli_real_escape_string($band_pic_url);
-  $band_url = mysqli_real_escape_string($band_url);
-  $venue = mysqli_real_escape_string($venue);
-  $ticketinfo = mysqli_real_escape_string($ticketinfo);
-  $ticketurl = mysqli_real_escape_string($ticketurl);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $band_pic_url = mysqli_real_escape_string(open_db(), $band_pic_url);
+  $band_url = mysqli_real_escape_string(open_db(), $band_url);
+  $venue = mysqli_real_escape_string(open_db(), $venue);
+  $ticketinfo = mysqli_real_escape_string(open_db(), $ticketinfo);
+  $ticketurl = mysqli_real_escape_string(open_db(), $ticketurl);
 
   if ($featured != "Yes")
     $featured = "No";
@@ -112,14 +112,14 @@ function show_concerts(){
 }
 
 function update_concert($id, $date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured) {
-  $id = mysqli_real_escape_string($id);
-  $date = mysqli_real_escape_string($date);
-  $artist = mysqli_real_escape_string($artist);
-  $band_pic_url = mysqli_real_escape_string($band_pic_url);
-  $band_url = mysqli_real_escape_string($band_url);
-  $venue = mysqli_real_escape_string($venue);
-  $ticketinfo = mysqli_real_escape_string($ticketinfo);
-  $ticketurl = mysqli_real_escape_string($ticketurl);
+  $id = mysqli_real_escape_string(open_db(), $id);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $band_pic_url = mysqli_real_escape_string(open_db(), $band_pic_url);
+  $band_url = mysqli_real_escape_string(open_db(), $band_url);
+  $venue = mysqli_real_escape_string(open_db(), $venue);
+  $ticketinfo = mysqli_real_escape_string(open_db(), $ticketinfo);
+  $ticketurl = mysqli_real_escape_string(open_db(), $ticketurl);
 
   if ($featured != "Yes")
     $featured = "No";

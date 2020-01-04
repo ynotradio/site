@@ -1,8 +1,8 @@
 <?php
 
 function add_story($headline, $story, $start_date, $end_date, $pic, $pic_url, $priority) {
-  $headline = mysqli_real_escape_string($headline);
-  $story = mysqli_real_escape_string($story);
+  $headline = mysqli_real_escape_string(open_db(), $headline);
+  $story = mysqli_real_escape_string(open_db(), $story);
 
   $insert = "INSERT INTO stories VALUES (id, '".$start_date ."', '".$end_date. "', '". $headline ."', '". $story ."', '". $pic ."', '". $pic_url ."', '". $priority ."', 'n')";
   $result = mysql_query($insert);
@@ -132,14 +132,14 @@ function save_order($id, $priority) {
 }
 
 function update_story($id, $headline, $story, $start_date, $end_date, $pic, $pic_url, $priority) {
-  $id = mysqli_real_escape_string($id);
-  $start_date = mysqli_real_escape_string($start_date);
-  $end_date = mysqli_real_escape_string($end_date);
-  $headline = mysqli_real_escape_string($headline);
-  $story = mysqli_real_escape_string($story);
-  $priority = mysqli_real_escape_string($priority);
-  $pic = mysqli_real_escape_string($pic);
-  $pic_url = mysqli_real_escape_string($pic_url);
+  $id = mysqli_real_escape_string(open_db(), $id);
+  $start_date = mysqli_real_escape_string(open_db(), $start_date);
+  $end_date = mysqli_real_escape_string(open_db(), $end_date);
+  $headline = mysqli_real_escape_string(open_db(), $headline);
+  $story = mysqli_real_escape_string(open_db(), $story);
+  $priority = mysqli_real_escape_string(open_db(), $priority);
+  $pic = mysqli_real_escape_string(open_db(), $pic);
+  $pic_url = mysqli_real_escape_string(open_db(), $pic_url);
 
   $update = "UPDATE stories SET start_date=\"$start_date\", end_date=\"$end_date\", headline=\"$headline\", story=\"$story\", pic=\"$pic\", pic_url=\"$pic_url\", priority=\"$priority\" WHERE id=".$id;
   $result = mysql_query($update);

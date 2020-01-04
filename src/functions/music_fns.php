@@ -1,10 +1,10 @@
 <?php
 
 function add_music($date, $artist, $song, $url) {
-  $date = mysqli_real_escape_string($date);
-  $artist = mysqli_real_escape_string($artist);
-  $song = mysqli_real_escape_string($song);
-  $url = mysqli_real_escape_string($url);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $song = mysqli_real_escape_string(open_db(), $song);
+  $url = mysqli_real_escape_string(open_db(), $url);
 
   $insert = "INSERT INTO music VALUES (id, '".$artist. "', '". $song ."', '". $url ."', '". $date ."', 'n')";
   $result = mysql_query($insert);
@@ -87,11 +87,11 @@ function get_music($id) {
 }
 
 function update_music($id, $date, $artist, $song, $url) {
-  $id = mysqli_real_escape_string($id);
-  $date = mysqli_real_escape_string($date);
-  $artist = mysqli_real_escape_string($artist);
-  $song = mysqli_real_escape_string($song);
-  $url = mysqli_real_escape_string($url);
+  $id = mysqli_real_escape_string(open_db(), $id);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $song = mysqli_real_escape_string(open_db(), $song);
+  $url = mysqli_real_escape_string(open_db(), $url);
 
   $update = "UPDATE music SET date=\"$date\", artist=\"$artist\", song=\"$song\", url=\"$url\" WHERE id=".$id;
   $result = mysql_query($update);

@@ -1,9 +1,9 @@
 <?php
 
 function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
-  $name = mysqli_real_escape_string($name);
-  $pic_url = mysqli_real_escape_string($pic_url);
-  $web_url = mysqli_real_escape_string($web_url);
+  $name = mysqli_real_escape_string(open_db(), $name);
+  $pic_url = mysqli_real_escape_string(open_db(), $pic_url);
+  $web_url = mysqli_real_escape_string(open_db(), $web_url);
 
   $insert = "INSERT INTO ads VALUES (id, '".$name ."', '".$start_date. "', '". $end_date ."', '". $pic_url ."', '". $web_url ."', '". $priority ."', 'n')";
 
@@ -109,13 +109,13 @@ function show_ads(){
 }
 
 function update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $priority) {
-  $id = mysqli_real_escape_string($id);
-  $start_date = mysqli_real_escape_string($start_date);
-  $end_date = mysqli_real_escape_string($end_date);
-  $name = mysqli_real_escape_string($name);
-  $pic_url = mysqli_real_escape_string($pic_url);
-  $web_url = mysqli_real_escape_string($web_url);
-  $priority = mysqli_real_escape_string($priority);
+  $id = mysqli_real_escape_string(open_db(), $id);
+  $start_date = mysqli_real_escape_string(open_db(), $start_date);
+  $end_date = mysqli_real_escape_string(open_db(), $end_date);
+  $name = mysqli_real_escape_string(open_db(), $name);
+  $pic_url = mysqli_real_escape_string(open_db(), $pic_url);
+  $web_url = mysqli_real_escape_string(open_db(), $web_url);
+  $priority = mysqli_real_escape_string(open_db(), $priority);
 
   $update = "UPDATE ads SET start_date=\"$start_date\", end_date=\"$end_date\", name=\"$name\", pic_url=\"$pic_url\", web_url=\"$web_url\", priority=\"$priority\" WHERE id=".$id;
   $result = mysql_query($update);

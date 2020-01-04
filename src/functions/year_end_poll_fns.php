@@ -18,7 +18,7 @@ function add_contestant($name, $email, $phone, $hometown, $contest, $newsletter,
 }
 
 function add_manual_vote_for($ip, $poll_form, $manual_vote) {
-  $manual_vote = mysqli_real_escape_string($manual_vote);
+  $manual_vote = mysqli_real_escape_string(open_db(), $manual_vote);
 
   $insert = "INSERT INTO year_end_write_ins (ip_address, poll, write_in) VALUES (\"". $ip ."\", \"" . $poll_form . "\", \"" . $manual_vote . "\")";
   $result = mysql_query($insert);

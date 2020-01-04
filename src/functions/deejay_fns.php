@@ -19,12 +19,12 @@ function sort_deejays() {
 sort_deejays();
 
 function add_deejay($name, $show, $email, $external_connect_text, $external_connect_url, $pic) {
-  $name = mysqli_real_escape_string($name);
-  $show = mysqli_real_escape_string($show);
-  $email = mysqli_real_escape_string($email);
-  $external_connect_text = mysqli_real_escape_string($external_connect_text);
-  $external_connect_url = mysqli_real_escape_string($external_connect_url);
-  $pic = mysqli_real_escape_string($pic);
+  $name = mysqli_real_escape_string(open_db(), $name);
+  $show = mysqli_real_escape_string(open_db(), $show);
+  $email = mysqli_real_escape_string(open_db(), $email);
+  $external_connect_text = mysqli_real_escape_string(open_db(), $external_connect_text);
+  $external_connect_url = mysqli_real_escape_string(open_db(), $external_connect_url);
+  $pic = mysqli_real_escape_string(open_db(), $pic);
 
   $insert = "INSERT INTO deejays VALUES (id, '".$name ."', '".$show. "', '".$email. "', '".$external_connect_text. "', '". $external_connect_url ."', '". $pic ."', '1', 'no')";
   $result = mysql_query($insert);
@@ -148,12 +148,12 @@ function get_deejays() {
 }
 
 function update_deejay($id, $name, $show, $email, $external_connect_text, $external_connect_url, $pic) {
-  $name = mysqli_real_escape_string($name);
-  $show = mysqli_real_escape_string($show);
-  $email = mysqli_real_escape_string($email);
-  $external_connect_text = mysqli_real_escape_string($external_connect_text);
-  $external_connect_url = mysqli_real_escape_string($external_connect_url);
-  $pic = mysqli_real_escape_string($pic);
+  $name = mysqli_real_escape_string(open_db(), $name);
+  $show = mysqli_real_escape_string(open_db(), $show);
+  $email = mysqli_real_escape_string(open_db(), $email);
+  $external_connect_text = mysqli_real_escape_string(open_db(), $external_connect_text);
+  $external_connect_url = mysqli_real_escape_string(open_db(), $external_connect_url);
+  $pic = mysqli_real_escape_string(open_db(), $pic);
 
   $update = "UPDATE deejays SET name=\"$name\", `show`=\"$show\", email=\"$email\", external_connect_text=\"$external_connect_text\",external_connect_url=\"$external_connect_url\", pic=\"$pic\" WHERE id=".$id;
   $result = mysql_query($update);

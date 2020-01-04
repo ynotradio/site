@@ -1,11 +1,11 @@
 <?php
 
 function add_schedule($host, $date , $start_time, $end_time, $note) {
-  $host = mysqli_real_escape_string($host);
-  $date = mysqli_real_escape_string($date);
-  $start_time = mysqli_real_escape_string($start_time);
-  $end_time = mysqli_real_escape_string($end_time);
-  $note = mysqli_real_escape_string($note);
+  $host = mysqli_real_escape_string(open_db(), $host);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $start_time = mysqli_real_escape_string(open_db(), $start_time);
+  $end_time = mysqli_real_escape_string(open_db(), $end_time);
+  $note = mysqli_real_escape_string(open_db(), $note);
 
   if (($timestamp = strtotime($date)) !== false) {
     $day_insert = date("l", $timestamp);
@@ -185,11 +185,11 @@ function get_schedule($id) {
 }
 
 function update_schedule($id, $host, $date, $start_time, $end_time, $note){
-  $id = mysqli_real_escape_string($id);
-  $date = mysqli_real_escape_string($date);
-  $start_time = mysqli_real_escape_string($start_time);
-  $end_time = mysqli_real_escape_string($end_time);
-  $note = mysqli_real_escape_string($note);
+  $id = mysqli_real_escape_string(open_db(), $id);
+  $date = mysqli_real_escape_string(open_db(), $date);
+  $start_time = mysqli_real_escape_string(open_db(), $start_time);
+  $end_time = mysqli_real_escape_string(open_db(), $end_time);
+  $note = mysqli_real_escape_string(open_db(), $note);
 
   if (($timestamp = strtotime($date)) !== false) {
     $day_insert = date("l", $timestamp);

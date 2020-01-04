@@ -4,12 +4,12 @@
 function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsletter) {
 
    //Need to sanitize the input
-    $firstname = mysqli_real_escape_string($firstname);
-    $lastname = mysqli_real_escape_string($lastname);
-    $email = mysqli_real_escape_string($email);
-    $phone = mysqli_real_escape_string($phone);
-    $contest = mysqli_real_escape_string($contest);
-    $newsletter = mysqli_real_escape_string($newsletter);
+    $firstname = mysqli_real_escape_string(open_db(), $firstname);
+    $lastname = mysqli_real_escape_string(open_db(), $lastname);
+    $email = mysqli_real_escape_string(open_db(), $email);
+    $phone = mysqli_real_escape_string(open_db(), $phone);
+    $contest = mysqli_real_escape_string(open_db(), $contest);
+    $newsletter = mysqli_real_escape_string(open_db(), $newsletter);
 
     $insert = "INSERT INTO top11contest VALUES (id, '".$firstname ."', '".$lastname. "', '".$email. "', '".$phone. "', '".$contest. "', '".$newsletter. "', 'yes')";
     $result = mysql_query($insert);
@@ -21,7 +21,7 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
 }
 
 function add_ip($ip) {
-  $ip = mysqli_real_escape_string($ip);
+  $ip = mysqli_real_escape_string(open_db(), $ip);
   $insert = "INSERT INTO ip_address VALUES (id, '".$ip ."', 'n')";
   $result = mysql_query($insert);
 
@@ -32,7 +32,7 @@ function add_ip($ip) {
 }
 
 function add_top11_plus1($id){
-  $id = mysqli_real_escape_string($id);
+  $id = mysqli_real_escape_string(open_db(), $id);
   $update = "UPDATE top11songs SET value = value + 1  WHERE id=".$id;
   $result = mysql_query($update);
 
@@ -42,8 +42,8 @@ function add_top11_plus1($id){
 }
 
 function add_top11_song($artist, $song) {
-  $artist = mysqli_real_escape_string($artist);
-  $song = mysqli_real_escape_string($song);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $song = mysqli_real_escape_string(open_db(), $song);
 
   $insert = "INSERT INTO top11songs VALUES (id, '".$artist ."', '".$song. "', 0, 'n')";
   $result = mysql_query($insert);
@@ -61,7 +61,7 @@ function add_top11_song($artist, $song) {
 }
 
 function check_ip($ip) {
-  $ip = mysqli_real_escape_string($ip);
+  $ip = mysqli_real_escape_string(open_db(), $ip);
   $select = "SELECT * FROM ip_address WHERE address = '$ip' AND deleted = 'n'";
   $result = mysql_query($select);
   $info = mysql_fetch_assoc($result);
@@ -95,7 +95,7 @@ function contestant_count() {
 
 function delete_top11_song($id){
 
-  $id = mysqli_real_escape_string($id);
+  $id = mysqli_real_escape_string(open_db(), $id);
   $update = "UPDATE top11songs set deleted ='y' where id=".$id;
   $result = mysql_query($update);
 
@@ -394,10 +394,10 @@ function top11_status() {
 }
 
 function update_top11($placement, $artist, $song, $note){
-  $placement = mysqli_real_escape_string($placement);
-  $artist = mysqli_real_escape_string($artist);
-  $song = mysqli_real_escape_string($song);
-  $note = mysqli_real_escape_string($note);
+  $placement = mysqli_real_escape_string(open_db(), $placement);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $song = mysqli_real_escape_string(open_db(), $song);
+  $note = mysqli_real_escape_string(open_db(), $note);
 
   $update = 'UPDATE top11 SET artist =\''.$artist .'\', song=\''.$song . '\', note=\''.$note. '\' WHERE placement='.$placement;
   $result = mysql_query($update);
@@ -419,7 +419,7 @@ function update_top11_date($date){
 }
 
 function update_top11_message($message){
-  $message = mysqli_real_escape_string($message);
+  $message = mysqli_real_escape_string(open_db(), $message);
 
   $update = 'UPDATE top11message SET message =\''.$message .'\' WHERE id=1';
   $result = mysql_query($update);
@@ -431,8 +431,8 @@ function update_top11_message($message){
 }
 
 function update_top11_song($id, $artist, $song) {
-  $artist = mysqli_real_escape_string($artist);
-  $song = mysqli_real_escape_string($song);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $song = mysqli_real_escape_string(open_db(), $song);
 
   $update = "UPDATE top11songs SET artist=\"$artist\", song=\"$song\" WHERE id=".$id;
   $result = mysql_query($update);

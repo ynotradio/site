@@ -78,8 +78,8 @@ function get_custom_text($id) {
 }
 
 function update_custom_text($id, $title, $html) {
-  $html = mysqli_real_escape_string($html);
-  $title = mysqli_real_escape_string($title);
+  $html = mysqli_real_escape_string(open_db(), $html);
+  $title = mysqli_real_escape_string(open_db(), $title);
 
   $update = "UPDATE custom_texts SET title=\"$title\", html=\"$html\" WHERE id=".$id;
   $result = mysql_query($update);

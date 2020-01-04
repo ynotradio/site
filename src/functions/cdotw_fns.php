@@ -1,14 +1,14 @@
 <?php
 
 function add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band, $reviewer, $date) {
-  $artist = mysqli_real_escape_string($artist);
-  $title = mysqli_real_escape_string($title);
-  $label = mysqli_real_escape_string($label);
-  $review = mysqli_real_escape_string($review);
-  $cd_pic_url = mysqli_real_escape_string($cd_pic_url);
-  $band = mysqli_real_escape_string($band);
-  $reviewer = mysqli_real_escape_string($reviewer);	
-  $date = mysqli_real_escape_string($date);	
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $title = mysqli_real_escape_string(open_db(), $title);
+  $label = mysqli_real_escape_string(open_db(), $label);
+  $review = mysqli_real_escape_string(open_db(), $review);
+  $cd_pic_url = mysqli_real_escape_string(open_db(), $cd_pic_url);
+  $band = mysqli_real_escape_string(open_db(), $band);
+  $reviewer = mysqli_real_escape_string(open_db(), $reviewer);	
+  $date = mysqli_real_escape_string(open_db(), $date);	
 
   $insert = "INSERT INTO cdotw VALUES (id, '".$artist ."', '".$title ."', '".$label ."', '".$review ."', '".$cd_pic_url ."', '".$band ."', '".$reviewer ."', '".$date ."', 'no')";
   $result = mysql_query($insert);
@@ -134,14 +134,14 @@ function get_cdotw($id) {
 }
 
 function update_cdotw($id, $artist, $title, $label, $review, $cd_pic_url, $band, $reviewer, $date) {
-  $artist = mysqli_real_escape_string($artist);
-  $title = mysqli_real_escape_string($title);
-  $label = mysqli_real_escape_string($label);
-  $review = mysqli_real_escape_string($review);
-  $cd_pic_url = mysqli_real_escape_string($cd_pic_url);
-  $band = mysqli_real_escape_string($band);
-  $reviewer = mysqli_real_escape_string($reviewer);
-  $date = mysqli_real_escape_string($date);
+  $artist = mysqli_real_escape_string(open_db(), $artist);
+  $title = mysqli_real_escape_string(open_db(), $title);
+  $label = mysqli_real_escape_string(open_db(), $label);
+  $review = mysqli_real_escape_string(open_db(), $review);
+  $cd_pic_url = mysqli_real_escape_string(open_db(), $cd_pic_url);
+  $band = mysqli_real_escape_string(open_db(), $band);
+  $reviewer = mysqli_real_escape_string(open_db(), $reviewer);
+  $date = mysqli_real_escape_string(open_db(), $date);
 
   $update = "UPDATE cdotw SET artist=\"$artist\", title=\"$title\", label=\"$label\", review=\"$review\", cd_pic_url=\"$cd_pic_url\", band=\"$band\", reviewer=\"$reviewer\", date=\"$date\" WHERE id=".$id;
   $result = mysql_query($update);
