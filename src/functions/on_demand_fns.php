@@ -174,7 +174,7 @@ function show_on_demand($sort) {
 
     $count_query = "SELECT COUNT(*) as num FROM $tbl_name WHERE DELETED = 'no'";
     $total_pages = mysqli_fetch_array(mysqli_query(open_db(), $count_query));
-    $total_pages = $total_pages[num];
+    $total_pages = $total_pages['num'];
 
     if ($sort == "date")
       $targetpage = "ondemand.php?sort=date";
