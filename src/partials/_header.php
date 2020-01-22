@@ -92,9 +92,9 @@ if ($page_file != "logout.php"){
           $last_class = '';
           if (end($nav) == $title) $last_class = "class =\"last\""; //silly IE Hack for last
           if ($url == $page_file)
-            echo "<li $last_class><a href=\"/$url\" class=\"active\">$title</a></li>\n";
+            echo "<li $last_class><a href=\"$url\" class=\"active\">$title</a></li>\n";
           else
-            echo "<li $last_class><a href=\"/$url\">$title</a></li>\n";
+            echo "<li $last_class><a href=\"$url\">$title</a></li>\n";
           }
         ?>
         </ul>
