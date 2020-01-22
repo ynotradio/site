@@ -249,7 +249,7 @@ function view_all_on_demands(){
   {
     $info = mysqli_fetch_assoc($result);
     display_on_demand($info);
-    echo '<br>[ <a href="ondemand.php?id=' .$info[id].'" target=_new >Listen</a> | <a href="ondemand_update.php?id=' .$info[id]. '">Edit</a> | <a href="ondemand_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo '<br>[ <a href="ondemand.php?id=' .$info['id'].'" target=_new >Listen</a> | <a href="ondemand_update.php?id=' .$info['id']. '">Edit</a> | <a href="ondemand_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }

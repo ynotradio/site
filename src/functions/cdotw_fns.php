@@ -175,7 +175,7 @@ function view_all_cdotw(){
     for ($i=1; $i<=mysqli_num_rows($result);$i++) {
       $info = mysqli_fetch_assoc($result);
       display_cdotw($info);
-      echo '<br>[ <a href="cdotw_update.php?id=' .$info[id]. '">Edit</a> | <a href="cdotw_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+      echo '<br>[ <a href="cdotw_update.php?id=' .$info['id']. '">Edit</a> | <a href="cdotw_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
     }
   echo '</ol>';
 }

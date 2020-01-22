@@ -164,7 +164,7 @@ function view_all_stories(){
   {
     $info = mysqli_fetch_assoc($result);
     display_story($info);
-    echo '<br>[ <a href="story_update.php?id=' .$info[id]. '">Edit</a> | <a href="story_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo '<br>[ <a href="story_update.php?id=' .$info['id']. '">Edit</a> | <a href="story_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }

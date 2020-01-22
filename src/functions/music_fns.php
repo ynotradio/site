@@ -115,7 +115,7 @@ function view_all_music(){
   for ($i=1; $i<=mysqli_num_rows($result);$i++) {
     $info = mysqli_fetch_assoc($result);
     display_music($info);
-    echo'<br>[ <a href="music_update.php?id=' .$info[id]. '">Edit</a> | <a href="music_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo'<br>[ <a href="music_update.php?id=' .$info['id']. '">Edit</a> | <a href="music_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }

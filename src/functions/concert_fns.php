@@ -147,7 +147,7 @@ function view_all_concerts(){
     {
       $info = mysqli_fetch_assoc($result);
       display_concert($info);
-      echo '<br>[ <a href="concert_update.php?id=' .$info[id]. '">Edit</a> | <a href="concert_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+      echo '<br>[ <a href="concert_update.php?id=' .$info['id']. '">Edit</a> | <a href="concert_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
     }
   echo '</ol>';
 }

@@ -140,7 +140,7 @@ function view_all_active_ads(){
   {
     $info = mysqli_fetch_assoc($result);
     display_ad($info);
-      echo '<br>[ <a href="ad_update.php?id=' .$info[id]. '">Edit</a> | <a href="ad_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+      echo '<br>[ <a href="ad_update.php?id=' .$info['id']. '">Edit</a> | <a href="ad_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }

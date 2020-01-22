@@ -115,7 +115,7 @@ function view_all_custom_texts() {
   for ($i=1; $i<=mysqli_num_rows($result);$i++) {
     $info = mysqli_fetch_assoc($result);
     display_custom_text_title_and_permalink($info);
-    echo '<br>[ <a href="custom_text_update.php?id=' .$info[id]. '">Edit</a> | <a href="custom_text_delete.php?id=' .$info[id]. '">Delete</a> ] <p>';
+    echo '<br>[ <a href="custom_text_update.php?id=' .$info['id']. '">Edit</a> | <a href="custom_text_delete.php?id=' .$info['id']. '">Delete</a> ] <p>';
   }
   echo '</ol>';
 }

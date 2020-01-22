@@ -460,8 +460,8 @@ function view_all_top11_songs() {
     echo "<tr>\n
       <td>".$info['artist'] . "</td>\n".
       "<td>" .$info['song']. "</td>\n".
-      "<td><a href=\"top11_song_update.php?id=" .$info[id]. "\">Edit</a></td>\n".
-      "<td><a href=\"top11_song_delete.php?id=" .$info[id]. "\">Delete</a></td>\n".
+      "<td><a href=\"top11_song_update.php?id=" .$info['id']. "\">Edit</a></td>\n".
+      "<td><a href=\"top11_song_delete.php?id=" .$info['id']. "\">Delete</a></td>\n".
       "</tr>\n";
   }
   echo "</table>";
