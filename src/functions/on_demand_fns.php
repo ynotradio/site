@@ -182,11 +182,10 @@ function show_on_demand($sort) {
       $targetpage = "ondemand.php?sort=artist";
     $limit = 5;
 
-    $page = $_GET['page'];
-    if($page)
-      $start = ($page - 1) * $limit;	//first item to display on this page
-    else
-      $start = 0;								      //if no page var is given, set start to 0
+    $page = isset($_GET['page']) ? $_GET['page'] : 1;
+    
+    $start = ($page - 1) * $limit;	//first item to display on this page
+
 
     /* Get data */
     if ($sort == "date")

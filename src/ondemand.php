@@ -8,11 +8,11 @@ require ("functions/on_demand_fns.php");
 require ("partials/_header.php");
 
 $sort = "date";
-	if ($_GET['sort'] != '') {
+	if (isset($_GET['sort']) && $_GET['sort'] != '') {
 		$sort = $_GET['sort'];
 	}
 $id = "";
-  if ($_GET['id'] != '') {
+  if (isset($_GET['id']) && $_GET['id'] != '') {
   	$id = $_GET['id'];
   }
 /*----- CONTENT ------*/
