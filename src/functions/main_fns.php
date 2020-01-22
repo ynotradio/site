@@ -85,13 +85,13 @@ function login_prompt($username,$remember_me,$error) {
 
 function login_check() {
 
-  if ($_SESSION["username"]) {
+  if (isset($_SESSION["username"])) {
     validate_user($_SESSION["username"],$_SESSION["password"],"");
-  } else if ($_COOKIE["username"]) {
+  } else if (isset($_COOKIE["username"])) {
     $_SESSION["username"] = $_COOKIE["username"];
     $_SESSION["password"] = $_COOKIE["password"];
     validate_user($_SESSION["username"],$_SESSION["password"],"Y");
-  } else {
+  } else if(isset($_POST["username"])) {
     validate_user($_POST["username"],$_POST["password"],$_POST["remember_me"]);
   }
 
