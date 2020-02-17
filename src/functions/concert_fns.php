@@ -13,7 +13,8 @@ function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketin
     $featured = "No";
 
   $insert = "INSERT INTO concerts VALUES (id, '".$date ."', '".$artist. "', '".$band_pic_url. "', '".$band_url. "', '". $venue ."', '". $ticketinfo ."', '". $ticketurl ."', '". $featured ."', 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -23,7 +24,7 @@ function add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketin
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Concert with ". $artist. " at ". $venue ." has been saved</h3>".
        "<hr width=75%>";
-  display_concert(get_concert(mysqli_insert_id(open_db())));
+  display_concert(get_concert(mysqli_insert_id($link)));
   echo "</div>";
 }
 
