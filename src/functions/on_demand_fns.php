@@ -9,7 +9,8 @@ function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
   $audio_id = mysqli_real_escape_string(open_db(), $audio_id);
 
   $insert = "INSERT INTO ondemand VALUES (id, '".$date ."', '".$image ."', '".$headline. "', '".$note. "', '".$songs. "', '".$audio_id. "', 'opendrive', 'no')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";

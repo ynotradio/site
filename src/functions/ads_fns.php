@@ -6,8 +6,8 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
   $web_url = mysqli_real_escape_string(open_db(), $web_url);
 
   $insert = "INSERT INTO ads VALUES (id, '".$name ."', '".$start_date. "', '". $end_date ."', '". $pic_url ."', '". $web_url ."', '". $priority ."', 'n')";
-
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);
 
   if (!$result) {
     echo $insert ."<br>";
@@ -17,7 +17,7 @@ function add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Ad for ". $name. " has been saved</h3>".
        "<hr width=75%>";
-  display_ad(get_ad(mysqli_insert_id(open_db())));
+  display_ad(get_ad(mysqli_insert_id($link)));
   echo "</div>";
 }
 

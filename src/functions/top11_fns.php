@@ -12,7 +12,8 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
     $newsletter = mysqli_real_escape_string(open_db(), $newsletter);
 
     $insert = "INSERT INTO top11contest VALUES (id, '".$firstname ."', '".$lastname. "', '".$email. "', '".$phone. "', '".$contest. "', '".$newsletter. "', 'yes')";
-    $result = mysqli_query(open_db(), $insert);
+    $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert;
@@ -23,7 +24,8 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
 function add_ip($ip) {
   $ip = mysqli_real_escape_string(open_db(), $ip);
   $insert = "INSERT INTO ip_address VALUES (id, '".$ip ."', 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -46,7 +48,8 @@ function add_top11_song($artist, $song) {
   $song = mysqli_real_escape_string(open_db(), $song);
 
   $insert = "INSERT INTO top11songs VALUES (id, '".$artist ."', '".$song. "', 0, 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -56,7 +59,7 @@ function add_top11_song($artist, $song) {
   echo "<div class=\"center\"><h1>Success!</h1>".
     "<h3>The new Top 11 song has been saved</h3>".
     "<hr width=75%>";
-  display_top11_song(get_top11_song(mysqli_insert_id(open_db())));
+  display_top11_song(get_top11_song(mysqli_insert_id($link)));
   echo "</div>";
 }
 
@@ -486,7 +489,8 @@ function view_write_ins() {
 
 function write_in($write_in) {
   $insert = "INSERT INTO write_in VALUES (id, '".$write_in ."', 'no')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";

@@ -7,7 +7,8 @@ function add_music($date, $artist, $song, $url) {
   $url = mysqli_real_escape_string(open_db(), $url);
 
   $insert = "INSERT INTO music VALUES (id, '".$artist. "', '". $song ."', '". $url ."', '". $date ."', 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -17,7 +18,7 @@ function add_music($date, $artist, $song, $url) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Music, ". $artist. " - ". $song. ", has been saved</h3>".
        "<hr width=75%>";
-  display_music(get_music(mysqli_insert_id(open_db())));
+  display_music(get_music(mysqli_insert_id($link)));
   echo "</div>";
 }
 

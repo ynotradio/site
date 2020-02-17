@@ -10,7 +10,8 @@ function add_schedule($host, $date , $start_time, $end_time, $note) {
   if (($timestamp = strtotime($date)) !== false) {
     $day_insert = date("l", $timestamp);
     $insert = "INSERT INTO schedule VALUES (id, '".$date. "', '".$day_insert. "', '". $start_time ."', '". $end_time ."', '". $host ."', '". $note ."', 'n')";
-    $result = mysqli_query(open_db(), $insert);
+    $link = open_db();
+  $result = mysqli_query($link, $insert);;
   } else {
     echo 'invalid timestamp!';
   }
@@ -23,14 +24,15 @@ function add_schedule($host, $date , $start_time, $end_time, $note) {
   echo "<div class=\"center\"><h1>Success!</h1>".
     "<h3>New Schedule for ". $host ." on " .$date . " has been saved</h3>".
     "<hr width=75%>";
-    display_schedule(get_schedule(mysqli_insert_id(open_db())));
+    display_schedule(get_schedule(mysqli_insert_id($link)));
     echo "</div>";
 }
 
 function copy_day($new_date, $original_date){
   $insert = "INSERT INTO schedule (date, day, start_time, end_time, host, note, deleted) (SELECT \"".$new_date."\", day, start_time, end_time, host, note, deleted FROM schedule WHERE date = \"".$original_date. "\")";
 
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
