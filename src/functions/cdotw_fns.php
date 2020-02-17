@@ -11,18 +11,23 @@ function add_cdotw($artist, $title, $label, $review, $cd_pic_url, $band, $review
   $date = mysqli_real_escape_string(open_db(), $date);	
 
   $insert = "INSERT INTO cdotw VALUES (id, '".$artist ."', '".$title ."', '".$label ."', '".$review ."', '".$cd_pic_url ."', '".$band ."', '".$reviewer ."', '".$date ."', 'no')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);
+
 
   if (!$result) {
     echo $insert ."<br>";
     die('Error Inserting into Database.');
   }
 
-  echo "<div class=\"center\"><h1>Success!</h1>".
+    echo "<div class=\"center\"><h1>Success!</h1>".
     "<h3>New review for <span class=\"success\">". $artist. " - ". $title. "</span> has been saved</h3>".
     "<hr width=75%>";
-    display_cdotw(get_cdotw(mysqli_insert_id(open_db())));
+    display_cdotw(get_cdotw(mysqli_insert_id($link)));
     echo "</div>";
+  
+
+
 }
 
 function cdotw($id){
