@@ -1,16 +1,14 @@
-name: Deploy main branch
+name: Deploy branch to production on demand
 
-on: 
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - '.github/**'
+on:
+  issue_comment:
+    types: [created, edited]
 
 jobs:
   deploy-via-ftp:
     name: deploy-via-ftp
     runs-on: ubuntu-latest
+    if: github.event.comment.body == 'OK to test'
 
     steps:
       - name: Deploy initiated
