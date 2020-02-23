@@ -9,7 +9,8 @@ function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
   $audio_id = mysqli_real_escape_string(open_db(), $audio_id);
 
   $insert = "INSERT INTO ondemand VALUES (id, '".$date ."', '".$image ."', '".$headline. "', '".$note. "', '".$songs. "', '".$audio_id. "', 'opendrive', 'no')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -19,7 +20,7 @@ function add_on_demand($date, $image, $headline, $note, $songs, $audio_id) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New On Demand, ". $headline. ", has been saved</h3>".
        "<hr width=75%>";
-  display_on_demand(get_on_demand(mysqli_insert_id()));
+  display_on_demand(get_on_demand(mysqli_insert_id($link)));
   echo "</div>";
 }
 

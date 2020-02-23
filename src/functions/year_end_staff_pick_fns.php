@@ -4,7 +4,8 @@ function add_year_end_staff_pick($order, $html) {
   $order = mysqli_real_escape_string(open_db(), $order);
 
   $insert = "INSERT INTO year_end_staff_picks VALUES (id, '".$order ."', '".$html."', 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -14,7 +15,7 @@ function add_year_end_staff_pick($order, $html) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Year End Staff Pick has been saved</h3>".
        "<hr width=75%>";
-        display_year_end_staff_pick(get_year_end_staff_pick(mysqli_insert_id(open_db())));
+        display_year_end_staff_pick(get_year_end_staff_pick(mysqli_insert_id($link)));
   echo "</div>";
 }
 

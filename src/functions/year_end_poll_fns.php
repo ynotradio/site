@@ -10,7 +10,8 @@ function add_contestant($name, $email, $phone, $hometown, $contest, $newsletter,
   $ip = addslashes($ip);
 
 	$insert = "INSERT INTO year_end_contestants VALUES (id, '".$name. "', '".$email. "', '".$phone. "', '".$hometown. "', '".$contest. "', '".$newsletter. "', '".$ip. "')";
-	$result = mysqli_query(open_db(), $insert);
+	$link = open_db();
+  $result = mysqli_query($link, $insert);;
 
 	return ($result) ? true : false;
 }
@@ -19,7 +20,8 @@ function add_manual_vote_for($ip, $poll_form, $manual_vote) {
   $manual_vote = mysqli_real_escape_string(open_db(), $manual_vote);
 
   $insert = "INSERT INTO year_end_write_ins (ip_address, poll, write_in) VALUES (\"". $ip ."\", \"" . $poll_form . "\", \"" . $manual_vote . "\")";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -31,7 +33,8 @@ function add_manual_vote_for($ip, $poll_form, $manual_vote) {
 
 function add_ip($ip, $poll) {
   $insert = "INSERT INTO year_end_ips VALUES (id, '".$ip ."', '" . $poll . "')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 	
   if (!$result) {
 	  echo $insert ."<br>";
@@ -43,7 +46,8 @@ function add_song_votes_for($ip, $votes, $write_in_value) {
   $last_value = ( $write_in_value != '') ? $write_in_value : $votes[19];
 
   $insert = "INSERT INTO year_end_song_votes VALUES (NULL, '".$ip."', '".$votes[0]."', '".$votes[1]."', '".$votes[2]."', '".$votes[3]."', '".$votes[4]."', '".$votes[5]."', '".$votes[6]."', '".$votes[7]."', '".$votes[8]."', '".$votes[9]."', '".$votes[10]."', '".$votes[11]."', '".$votes[12]."', '".$votes[13]."', '".$votes[14]."', '".$votes[15]."', '".$votes[16]."', '".$votes[17]."', '".$votes[18]."', '".$last_value."')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";

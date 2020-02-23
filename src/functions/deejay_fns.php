@@ -27,7 +27,8 @@ function add_deejay($name, $show, $email, $external_connect_text, $external_conn
   $pic = mysqli_real_escape_string(open_db(), $pic);
 
   $insert = "INSERT INTO deejays VALUES (id, '".$name ."', '".$show. "', '".$email. "', '".$external_connect_text. "', '". $external_connect_url ."', '". $pic ."', '1', 'no')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -37,7 +38,7 @@ function add_deejay($name, $show, $email, $external_connect_text, $external_conn
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Deejay, ". $name. ", has been saved</h3>".
        "<hr width=75%>";
-  display_deejay(get_deejay(mysqli_insert_id(open_db())));
+  display_deejay(get_deejay(mysqli_insert_id($link)));
   echo "</div>";
 }
 

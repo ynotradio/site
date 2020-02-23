@@ -10,7 +10,8 @@ function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
   $sponsor = mysqli_real_escape_string(open_db(), $sponsor);
 
   $insert = "INSERT INTO mrm_bands VALUES (id, '".$name ."', '".$url. "', '".$pic_url. "', '".$placement. "', '".$seed. "', '".$abbr. "','".$sponsor. "')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -20,7 +21,7 @@ function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New MRM band, ". $name. ", has been saved</h3>".
        "<hr width=75%>";
-  display_mrm_band(get_mrm_band(mysqli_insert_id(open_db())));
+  display_mrm_band(get_mrm_band(mysqli_insert_id($link)));
   echo "</div>";
 }
 
@@ -820,7 +821,8 @@ function record_ip($match_id, $voted_band) {
 
   if (has_voted($match_id) == false) {
     $insert = "INSERT INTO mrm_votes VALUES (id, '".$match_id ."', '".$voter_ip. "', '".$voted_band. "')";
-    $result = mysqli_query(open_db(), $insert);
+    $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
     if (!$result) {
       echo $insert ."<br>";

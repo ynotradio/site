@@ -2,7 +2,8 @@
 
 function add_image($file_name) {
   $insert = "INSERT INTO images VALUES (id, '".$file_name ."')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";

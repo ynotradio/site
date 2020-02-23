@@ -4,7 +4,8 @@ function add_custom_text($title, $html) {
   $permalink = create_permalink($title);
 
   $insert = "INSERT INTO custom_texts VALUES (id, '".$title ."', '".$permalink. "', '".$html. "', 'active')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -14,7 +15,7 @@ function add_custom_text($title, $html) {
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Custom Text has been saved</h3>".
        "<hr width=75%>";
-  display_custom_text(get_custom_text(mysqli_insert_id(open_db())));
+  display_custom_text(get_custom_text(mysqli_insert_id($link)));
   echo "</div>";
 }
 

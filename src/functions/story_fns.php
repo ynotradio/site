@@ -5,7 +5,8 @@ function add_story($headline, $story, $start_date, $end_date, $pic, $pic_url, $p
   $story = mysqli_real_escape_string(open_db(), $story);
 
   $insert = "INSERT INTO stories VALUES (id, '".$start_date ."', '".$end_date. "', '". $headline ."', '". $story ."', '". $pic ."', '". $pic_url ."', '". $priority ."', 'n')";
-  $result = mysqli_query(open_db(), $insert);
+  $link = open_db();
+  $result = mysqli_query($link, $insert);;
 
   if (!$result) {
     echo $insert ."<br>";
@@ -15,7 +16,7 @@ function add_story($headline, $story, $start_date, $end_date, $pic, $pic_url, $p
   echo "<div class=\"center\"><h1>Success!</h1>".
        "<h3>New Story about ". $headline. ", has been saved</h3>".
        "<hr width=75%>";
-  display_story(get_story(mysqli_insert_id(open_db())));
+  display_story(get_story(mysqli_insert_id($link)));
   echo "</div>";
 }
 
