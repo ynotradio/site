@@ -1,2 +1,0 @@
-name: Deploy initiated
-run: echo Deploy initiated by ${GITHUB_ACTOR}
