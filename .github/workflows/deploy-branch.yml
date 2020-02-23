@@ -10,7 +10,6 @@ jobs:
   deploy-via-ftp:
     name: deploy-via-ftp
     runs-on: ubuntu-latest
-    if: github.event.comment.body == 'OK to test'
 
     steps:
       - name: Deploy initiated
