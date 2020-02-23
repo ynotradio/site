@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 2
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - uses: khan/pull-request-comment-trigger@master
         id: check
