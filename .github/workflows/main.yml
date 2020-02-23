@@ -11,11 +11,11 @@ jobs:
     if: github.event.comment.body == 'OK to test'
 
     steps:
-      - uses: ./.github/actions/initiate
-
       - uses: actions/checkout@master
         with:
           fetch-depth: 2
+
+      - uses: ./.github/actions/initiate
 
       - name: deploy-via-ftp
         uses: SamKirkland/FTP-Deploy-Action@3.0.0
