@@ -22,8 +22,7 @@ jobs:
       - uses: khan/pull-request-comment-trigger@master
         id: check
         with:
-          trigger: "@deploy"
-          reaction: rocket
+          trigger: "🚀"
 
       - name: deploy-via-ftp
         uses: SamKirkland/FTP-Deploy-Action@3.0.0
