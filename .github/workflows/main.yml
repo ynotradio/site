@@ -11,7 +11,7 @@ jobs:
     if: github.event.comment.body == 'OK to test'
 
     steps:
-      - uses: ./.github/actions/initiate.yml
+      - uses: ./.github/actions/initiate
 
       - uses: actions/checkout@master
         with:
