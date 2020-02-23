@@ -11,8 +11,7 @@ jobs:
     if: github.event.comment.body == 'OK to test'
 
     steps:
-      - name: Deploy initiated
-        run: echo Deploy initiated by ${GITHUB_ACTOR}
+      - uses: ./github/actions/initiate.yml
 
       - uses: actions/checkout@master
         with:
