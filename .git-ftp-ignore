@@ -1,0 +1,11 @@
+.gitignore
+*/.gitignore      # ignore files in sub directories
+*/.gitkeep
+.git-ftp-ignore
+.git-ftp-include
+.gitlab-ci.yml
+.github/*
+
+bin/*
+src/db/*
+src/functions/main_fns.php
