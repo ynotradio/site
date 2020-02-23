@@ -22,7 +22,7 @@ jobs:
       - uses: khan/pull-request-comment-trigger@master
         id: check
         with:
-          trigger: "@deploy-via-ftp"
+          trigger: "@deploy"
           reaction: rocket
 
       - name: deploy-via-ftp
