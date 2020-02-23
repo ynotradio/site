@@ -17,7 +17,7 @@ if ($page_file != "logout.php"){
       <meta name="author" content="YNot Radio" />
       <title><?php if ($page_title) { echo "$page_title | "; } ?> Y-Not Radio </title>
       <link rel="shortcut icon" href="/imgs/favicon.ico" />
-
+      <!-- Contribute at https://github.com/ynotradio -->
       <!-- social meta start -->
       <meta property="og:site_name" content="YNot Radio">
       <meta property="og:image" content="http://www.ynotradio.net/imgs/ynot-fb.jpg">
