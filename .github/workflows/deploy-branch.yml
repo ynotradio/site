@@ -1,8 +1,10 @@
 name: Deploy branch to production on demand
 
 on:
-  pull_request_review_comment:
-    types: [created, deleted]
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
 
 jobs:
   deploy-via-ftp:
@@ -17,6 +19,12 @@ jobs:
       - uses: actions/checkout@master
         with:
           fetch-depth: 2
+
+      - uses: khan/pull-request-comment-trigger@master
+        id: check
+        with:
+          trigger: "@deploy-via-ftp"
+          reaction: rocket
 
       - name: deploy-via-ftp
         uses: SamKirkland/FTP-Deploy-Action@3.0.0
