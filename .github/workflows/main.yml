@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: Deploy initiated
-        run: Deploy initiated by ${GITHUB_ACTOR}
+        run: echo Deploy initiated by ${GITHUB_ACTOR}
 
       - uses: actions/checkout@master
         with:
           fetch-depth: 2
-          
+
       - name: deploy-via-ftp
         uses: SamKirkland/FTP-Deploy-Action@3.0.0
         with:
