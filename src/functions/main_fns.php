@@ -24,7 +24,7 @@ function format($text) {
 
 function validate_user($username,$password,$remember_me) {
   $current_page = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);
-  open_db();
+  $link = open_db();
 
     //Need to sanitize the input
     $username = mysqli_real_escape_string(open_db(), $username);
@@ -33,7 +33,7 @@ function validate_user($username,$password,$remember_me) {
     if ($username && $password) {
 
     $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password' OR password = password('$password'))";
-    $result = mysqli_query(open_db(), $query);
+    $result = mysqli_query($link, $query);
 
     if (!$result || (mysqli_num_rows($result) < 1)) {
       $_SESSION["error"] = "Your login could not be validated";
