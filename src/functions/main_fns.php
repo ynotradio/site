@@ -27,13 +27,13 @@ function validate_user($username,$password,$remember_me) {
   $link = open_db();
 
     //Need to sanitize the input
-    $username = mysqli_real_escape_string(open_db(), $username);
-    $password = mysqli_real_escape_string(open_db(), $password);
+    $username = mysqli_real_escape_string($link, $username);
+    $password = mysqli_real_escape_string($link, $password);
 
     if ($username && $password) {
 
     $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password')";
-    $result = mysqli_query(open_db(), $query);
+    $result = mysqli_query($link, $query);
 
     if (!$result || (mysqli_num_rows($result) < 1)) {
       $_SESSION["error"] = "Your login could not be validated";
