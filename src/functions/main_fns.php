@@ -113,11 +113,9 @@ function logoff(){
     setcookie("username", NULL, time()-3600);
     setcookie("password", NULL, time()-3600);
     setcookie("remember_me", NULL, time()-3600);
-    header('Location: /loggedoff.php');
-    return true;
-  } else {
-      return false;
   }
+
+  header('Location: /loggedoff.php');
 
 }
 
