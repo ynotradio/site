@@ -22,7 +22,6 @@ function format($text) {
   return $text;
 }
 
-
 function validate_user($username,$password,$remember_me) {
   $current_page = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);
   $link = open_db();
@@ -34,18 +33,18 @@ function validate_user($username,$password,$remember_me) {
     if ($username && $password) {
 
     $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password')";
-    $result = mysqli_query($link, $query);
+    $result = mysqli_query(open_db(), $query);
 
     if (!$result || (mysqli_num_rows($result) < 1)) {
       $_SESSION["error"] = "Your login could not be validated";
     } else {
       $info = mysqli_fetch_array($result);
-      $_SESSION["username"] = $info[username];
+      $_SESSION["username"] = $info['username'];
       $_SESSION["logged_in"] = "Y";
 
       if ($remember_me) {
-        setcookie("username",$info[username],time()+60*60*24*90,"/");
-        setcookie("password",$info[password],time()+60*60*24*90,"/");
+        setcookie("username",$info['username'],time()+60*60*24*90,"/");
+        setcookie("password",$info['password'],time()+60*60*24*90,"/");
         setcookie("remember_me",$remember_me,time()+60*60*24*90,"/");
       }
     }
@@ -107,9 +106,19 @@ function logoff(){
   unset($_SESSION["remember_me"]);
 
   session_destroy();
-  //setcookie("username", NULL, time()-3600);
-  //setcookie("password", NULL, time()-3600);
-  //setcookie("remember_me", NULL, time()-3600);
+  if (isset($_COOKIE['remember_me'])) {
+    unset($_COOKIE['username']); 
+    unset($_COOKIE['password']); 
+    unset($_COOKIE['remember_me']); 
+    setcookie("username", NULL, time()-3600);
+    setcookie("password", NULL, time()-3600);
+    setcookie("remember_me", NULL, time()-3600);
+    header('Location: /loggedoff.php');
+    return true;
+  } else {
+      return false;
+  }
+
 }
 
 function active_ad_count(){
