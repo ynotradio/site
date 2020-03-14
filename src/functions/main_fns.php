@@ -22,6 +22,7 @@ function format($text) {
   return $text;
 }
 
+
 function validate_user($username,$password,$remember_me) {
   $current_page = substr($_SERVER["SCRIPT_NAME"],strrpos($_SERVER["SCRIPT_NAME"],"/")+1);
   $link = open_db();
@@ -32,7 +33,7 @@ function validate_user($username,$password,$remember_me) {
 
     if ($username && $password) {
 
-    $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password' OR password = password('$password'))";
+    $query = "SELECT * FROM users WHERE username = '$username' and (password = '$password')";
     $result = mysqli_query($link, $query);
 
     if (!$result || (mysqli_num_rows($result) < 1)) {
