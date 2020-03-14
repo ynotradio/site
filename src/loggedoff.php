@@ -1,11 +1,9 @@
 <?php
 
-$page_file = "logoff.php";
-$page_title = "Logoff";
+$page_file = "loggedoff.php";
+$page_title = "Logged Off";
 
 require ("functions/main_fns.php");
-logoff();
-
 require ("partials/_header.php");
 
 /*----- CONTENT ------*/

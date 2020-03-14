@@ -4,9 +4,10 @@ $page_file = "logoff.php";
 $page_title = "Logoff";
 
 require ("functions/main_fns.php");
+logoff();
+
 require ("partials/_header.php");
 
-logoff();
 /*----- CONTENT ------*/
 ?>
 <div class="row">
