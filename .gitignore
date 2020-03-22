@@ -12,3 +12,4 @@ src/theme/**/style.css
 .env
 tmp
 *.map
+node_modules

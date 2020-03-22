@@ -27,12 +27,12 @@
   "license": "UNLICENSED",
   "homepage": "https://github.com/ynotradio/site",
   "devDependencies": {
-    "concurrently": "^4.0.1",
-    "eslint": "^5.5.0",
+    "concurrently": "^5.1.0",
+    "eslint": "^6.8.0",
     "eslint-config-thinkcompany": "^1",
-    "eslint-loader": "^2.1.0",
+    "eslint-loader": "^3.0.3",
     "node-sass": "^4.9.3",
-    "nodemon": "^1.11.0",
+    "nodemon": "^2.0.2",
     "webpack": "^4.17.2",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.8"
