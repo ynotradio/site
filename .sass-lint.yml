@@ -2,7 +2,7 @@ options:
   formatter: stylish
   merge-default-rules: false
 files:
-  include: './site/theme/sass/*.s+(a|c)ss'
+  include: './src/theme/sass/*.s+(a|c)ss'
   ignore:
     - 'node_modules/**'
 rules:

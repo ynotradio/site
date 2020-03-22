@@ -3,9 +3,12 @@
 
 ## Table of Contents
 
+- [# Y-Not Radio](#h1-id%22y-not-radio-8%22y-not-radioh1)
+- [Table of Contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Development](#development)
+  - [Theme Files](#theme-files)
 - [Teardown](#teardown)
 - [Support](#support)
 - [Contributing](#contributing)
@@ -33,7 +36,7 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 ## Development
 
 ### Theme Files
-You can find the WordPress theme contents -- including images, JavaScript, PHP templates, and SCSS -- in the `site/theme` directory of this project. When you edit these, you should see your changes automatically synced at [http://localhost:8000](http://localhost:8000).
+You can find the WordPress theme contents -- including images, JavaScript, PHP templates, and SCSS -- in the `src/theme` directory of this project. When you edit these, you should see your changes automatically synced at [http://localhost:8000](http://localhost:8000).
 
 ## Teardown
 - When you are finished development, run `docker-compose down` from your terminal to halt the containers.

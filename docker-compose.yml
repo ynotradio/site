@@ -17,8 +17,8 @@ services:
        - db
      image: wordpress:latest
      volumes: 
-       - ./site/theme:/var/www/html/wp-content/themes/ynotradio
-       - ./site/plugins:/var/www/html/wp-content/plugins
+       - ./src/theme:/var/www/html/wp-content/themes/ynotradio
+       - ./src/plugins:/var/www/html/wp-content/plugins
      ports:
        - "8000:80"
      restart: always

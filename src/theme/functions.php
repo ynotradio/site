@@ -152,3 +152,4 @@ require get_template_directory() . '/inc/carbon-fields-setup.php';
  * Add CD of the Week Post Type
  */
 require get_template_directory() . '/inc/post-types/cd-of-the-week.php';
+

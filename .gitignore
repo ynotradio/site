@@ -4,11 +4,12 @@ imgs
 pdfs
 small_imgs
 sponsors
-site/htdocs
-site/vendor
-site/theme/**/bundle.js
+src/htdocs
+src/vendor
+src/theme/**/bundle.js
 composer.lock
-site/theme/**/style.css
+src/theme/**/style.css
 .env
 tmp
 *.map
+node_modules
