@@ -17,7 +17,6 @@
 		<div class="site-info">
 			<a href="<?php echo esc_url( __( 'https://wordpress.org/', 'ynotradio' ) ); ?>"><?php printf( esc_html__( 'Proudly powered by %s', 'ynotradio' ), 'WordPress' ); ?></a>
 			<span class="sep"> | </span>
-			<?php printf( esc_html__( 'Theme: %1$s by %2$s.', 'ynotradio' ), 'ynotradio', '<a href="http://thinkcompany.com" rel="designer">Think Company</a>' ); ?>
 		</div><!-- .site-info -->
 	</footer><!-- #colophon -->
 </div><!-- #page -->
