@@ -114,6 +114,10 @@ function ynotradio_scripts() {
 }
 add_action( 'wp_enqueue_scripts', 'ynotradio_scripts' );
 
+if (isset($_REQUEST['migrate']) && current_user_can('install_themes')) {
+	include_once 'migrations/migration.php';
+}
+
 /**
  * Implement the Custom Header feature.
  */
@@ -143,3 +147,9 @@ require get_template_directory() . '/inc/jetpack.php';
  * Add Carbon Fields functionality
  */
 require get_template_directory() . '/inc/carbon-fields-setup.php';
+
+/**
+ * Add CD of the Week Post Type
+ */
+require get_template_directory() . '/inc/post-types/cd-of-the-week.php';
+
