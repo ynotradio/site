@@ -13,3 +13,5 @@ src/theme/**/style.css
 tmp
 *.map
 node_modules
+src/plugins/akismet
+src/plugins/hello.php
