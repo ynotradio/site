@@ -3,12 +3,13 @@
 
 ## Table of Contents
 
-- [# Y-Not Radio](#h1-id%22y-not-radio-66%22y-not-radioh1)
+- [# Y-Not Radio](#h1-id%22y-not-radio-303%22y-not-radioh1)
 - [Table of Contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Development](#development)
   - [Theme Files](#theme-files)
+  - [Connecting to MySQL](#connecting-to-mysql)
 - [Teardown](#teardown)
 - [Support](#support)
 - [Contributing](#contributing)
@@ -37,6 +38,11 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ### Theme Files
 You can find the WordPress theme contents -- including images, JavaScript, PHP templates, and SCSS -- in the `site/theme` directory of this project. When you edit these, you should see your changes automatically synced at [http://localhost:8000](http://localhost:8000).
+
+### Connecting to MySQL
+You can connect to the MySQL powering this WordPress development environment. Use the root user credentials within [docker-compose.yml](docker-compose.yml) and connect to `127.0.0.1:9906`.
+
+A [Sequel Pro bookmark](db/ynotradio%20docker%20-%20WordPress.plist) is available for connecting to this environment easily.
 
 ## Teardown
 - When you are finished development, run `docker-compose down` from your terminal to halt the containers.

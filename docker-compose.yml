@@ -11,7 +11,10 @@ services:
        MYSQL_DATABASE: wordpress
        MYSQL_USER: wordpress
        MYSQL_PASSWORD: wordpress
-
+     ports:
+      - "9906:3306"
+     stdin_open: true
+     tty: true
    wordpress:
      depends_on:
        - db
