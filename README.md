@@ -3,7 +3,7 @@
 
 ## Table of Contents
 
-- [# Y-Not Radio](#h1-id%22y-not-radio-792%22y-not-radioh1)
+- [# Y-Not Radio](#h1-id%22y-not-radio-843%22y-not-radioh1)
 - [Table of Contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -12,6 +12,7 @@
   - [Migrate Content from Current Site to WordPress](#migrate-content-from-current-site-to-wordpress)
 - [Development](#development)
   - [Theme Files](#theme-files)
+  - [Linting](#linting)
   - [Connecting to MySQL](#connecting-to-mysql)
 - [Teardown](#teardown)
 - [Support](#support)
@@ -55,6 +56,9 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ### Theme Files
 You can find the WordPress theme contents -- including images, JavaScript, PHP templates, and SCSS -- in the `site/theme` directory of this project. When you edit these, you should see your changes automatically synced at [http://localhost:8000](http://localhost:8000).
+
+### Linting
+Run `npm run lint` to validate JavaScript conventions and formatting.
 
 ### Connecting to MySQL
 You can connect to the MySQL powering this WordPress development environment. Use the root user credentials within [docker-compose.yml](docker-compose.yml) and connect to `127.0.0.1:9906`.
