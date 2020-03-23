@@ -15,6 +15,11 @@ class Migration
 		}
 	}
 
+	public function log($message)
+    {
+        echo '<pre>' . $message . '</pre>';
+    }
+
 	public function migrate() {
 		try {
 			$this->runMigrationScript();
@@ -89,7 +94,7 @@ class Migration
 	}
 
 	private function completeProcess() {
-		echo sprintf('Migration to %s complete!', $this->version);
+		echo sprintf('<pre>Migration to %s complete!</pre>', $this->version);
 		exit;
 	}
 

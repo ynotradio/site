@@ -5,7 +5,7 @@
 
 global $wpdb;
 
-class Migrate_2_0_0
+class Migrate_2_0_0 extends Migration
 {
 
     private $wpdb;
@@ -14,22 +14,19 @@ class Migrate_2_0_0
     {
         $this->wpdb = $wpdb;
         include 'config-2.0.0.php';
-    }
+        $this->log('Configuring migration...');
 
+    }
     public function run()
     {
         $this->log('Running migration to 2.0.0...');
         $this->getCDOTW();
     }
 
-    private function log($message)
-    {
-        echo $message . '<br />';
-    }
-
     private function getCDOTW()
     {
-        $rows = $this->migration_db->get_results("select * from cdotw");
+        $rows = $this->migration_db->get_results("SELECT * from cdotw");
+
         foreach ($rows as $obj):
             $this->log($obj->title);
             if ($this->checkForUniqueCDOTW($obj->id)) {

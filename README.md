@@ -3,12 +3,13 @@
 
 ## Table of Contents
 
-- [# Y-Not Radio](#h1-id%22y-not-radio-659%22y-not-radioh1)
+- [# Y-Not Radio](#h1-id%22y-not-radio-792%22y-not-radioh1)
 - [Table of Contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Installation](#installation)
   - [Clone Repo and Install Dependencies](#clone-repo-and-install-dependencies)
   - [Set up WordPress](#set-up-wordpress)
+  - [Migrate Content from Current Site to WordPress](#migrate-content-from-current-site-to-wordpress)
 - [Development](#development)
   - [Theme Files](#theme-files)
   - [Connecting to MySQL](#connecting-to-mysql)
@@ -39,6 +40,10 @@ To spin up a working copy of this WordPress site on your local machine, you'll n
 - Navigate to the setup page at: [http://localhost:8000/wp-admin](http://localhost:8000/wp-admin). Choose simple-to-remember values for the site name, username, and password.
 - Finish WordPress setup and log in as the new admin user.
 - Navigate to Appearance > Themes and activate the `ynotradio` theme.
+
+### Migrate Content from Current Site to WordPress
+- Copy [src/theme/migrations/example.config-2.0.0.php](src/theme/migrations/example.config-2.0.0.php) to `config-2.0.0.php`.
+- Populate the new config file with database connection details.
 - Then, navigate to [http://localhost:8000/?migrate=1&version=2.0.0](http://localhost:8000/?migrate=1&version=2.0.0) to run the content migrations from the old site tables to the new WordPress content schema.
 
 If you would like to run Docker without `npm` or BrowserSync, use `docker-compose up -d` to run the containers in the background. If you wish to see a verbose, trailing output from your Docker containers in the foreground, use `docker-compose up`. Some helpful documentation about `docker-compose` can be found in the [Docker Docs](https://docs.docker.com/compose/reference/overview/#command-options-overview-and-help).
