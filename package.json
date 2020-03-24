@@ -12,7 +12,8 @@
     "lint:js": "./bin/lint-js.sh",
     "lint:scss": "echo 0",
     "watch": "./bin/watch.sh",
-    "deploy": "./bin/deploy.sh"
+    "deploy": "./bin/deploy.sh",
+    "install:wp": "docker-compose run wordpress composer install"
   },
   "repository": {
     "type": "git",

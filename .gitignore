@@ -15,4 +15,6 @@ tmp
 node_modules
 src/plugins/akismet
 src/plugins/hello.php
+src/plugins/carbon-fields-plugin
 src/theme/migrations/config-*.php
+vendor

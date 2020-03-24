@@ -17,13 +17,17 @@ services:
       - "9906:3306"
      stdin_open: true
      tty: true
+
    wordpress:
      depends_on:
        - db
-     image: wordpress:latest
+     build: 
+      context: ./
+      dockerfile: ./bin/docker/wordpress/Dockerfile
      volumes: 
        - ./src/theme:/var/www/html/wp-content/themes/ynotradio
        - ./src/plugins:/var/www/html/wp-content/plugins
+       - ./src/vendor:/var/www/html/vendor
      ports:
        - "8000:80"
      restart: always
@@ -31,5 +35,7 @@ services:
        WORDPRESS_DB_HOST: db:3306
        WORDPRESS_DB_USER: wordpress
        WORDPRESS_DB_PASSWORD: wordpress
+       WORDPRESS_DEBUG: 1
+         
 volumes:
     db_data:
