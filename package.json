@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Build tools for ynotradio.net",
   "scripts": {
-    "prestart": "docker-compose up -d && sleep 10 && npm run build",
+    "prestart": "docker-compose up -d && sleep 10 && npm run build && npm run install:wp",
     "start": "npm run watch",
     "dev": "npm run watch",
     "build": "./bin/build.sh",

@@ -3,7 +3,7 @@
 
 ## Table of Contents
 
-- [# Y-Not Radio](#h1-id%22y-not-radio-843%22y-not-radioh1)
+- [# Y-Not Radio](#h1-id%22y-not-radio-38%22y-not-radioh1)
 - [Table of Contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -37,6 +37,7 @@ To spin up a working copy of this WordPress site on your local machine, you'll n
 - Run `npm start` to pull and build the Docker images
 
 ### Set up WordPress
+- - Run `npm run install:wp` to pull down vendor files and plugins for the WordPress site after `npm start` is completed
 - Once the installation is finished, a site will be available for you to visit at: [http://localhost:8000](http://localhost:8000)
 - Navigate to the setup page at: [http://localhost:8000/wp-admin](http://localhost:8000/wp-admin). Choose simple-to-remember values for the site name, username, and password.
 - Finish WordPress setup and log in as the new admin user.
