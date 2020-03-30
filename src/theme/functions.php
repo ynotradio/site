@@ -161,3 +161,8 @@ require get_template_directory() . '/inc/post-types/cd-of-the-week.php';
  * Add Artist Post Type
  */
 require get_template_directory() . '/inc/post-types/artist.php';
+
+/**
+ * Add Artist Post Type
+ */
+require get_template_directory() . '/inc/post-types/song.php';
