@@ -15,10 +15,9 @@ function create_post_type__cd_of_the_week()
             'has_archive' => true,
             'rewrite' => array('slug' => 'cd-of-the-week'),
             'menu_icon' => 'dashicons-album',
+            'supports' => array('title', 'author', 'editor'),
         )
     );
-
-    //remove_post_type_support( 'cd_of_the_week', 'editor');
 
 }
 add_action('init', 'create_post_type__cd_of_the_week');
@@ -38,8 +37,8 @@ function crb_register__cd_of_the_week()
                         'post_type' => 'artist',
                     ))),
             Field::make('text', 'crb_cdotw__label', "Record Label"),
-            Field::make('text', 'crb_cdotw__reviewer', "Reviewer's Name"),
-            Field::make('hidden', 'crb_cdotw__legacy_id'),
+            Field::make('text', 'crb_cdotw__reviewer', "Reviewer's Name (Imported)"),
+            Field::make('hidden', 'crb_cdotw__legacy_id', 'ID (Imported)'),
         ));
 
     Container::make('post_meta', 'CD Artwork')
