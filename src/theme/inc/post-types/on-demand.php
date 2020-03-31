@@ -22,6 +22,12 @@ add_action('init', 'create_post_type__on_demand');
 
 function crb_register__on_demand()
 {
+    Container::make('post_meta', 'Audio')
+        ->where('post_type', '=', 'on-demand')
+        ->add_fields(array(
+
+            Field::make('text', 'crb_on_demand__audio_id', "Audio ID"),
+        ));
     Container::make('post_meta', 'Artist')
         ->where('post_type', '=', 'on-demand')
         ->add_fields(array(
@@ -33,15 +39,11 @@ function crb_register__on_demand()
                         'post_type' => 'artist',
                     ))),
         ));
-    Container::make('post_meta', 'Audio')
-        ->where('post_type', '=', 'on-demand')
-        ->add_fields(array(
 
-            Field::make('text', 'crb_on_demand__audio_id', "Audio ID"),
-        ));
     Container::make('post_meta', 'Details')
         ->where('post_type', '=', 'on-demand')
         ->add_fields(array(
+            Field::make('date', 'crb_on_demand__recorded_date', 'Recorded on:'),
 
             Field::make('text', 'crb_on_demand__songs', "Songs"),
             Field::make('text', 'crb_on_demand__image_url', "Image (Imported)"),
