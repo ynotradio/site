@@ -55,3 +55,13 @@ function crb_register__artist()
 }
 
 add_action('carbon_fields_register_fields', 'crb_register__artist');
+
+function custom_enter_title__artist($input)
+{
+    if ('artist' === get_post_type()) {
+        return __('Enter artist or band name', 'ynotradio_text');
+    }
+
+    return $input;
+}
+add_filter('enter_title_here', 'custom_enter_title__artist');

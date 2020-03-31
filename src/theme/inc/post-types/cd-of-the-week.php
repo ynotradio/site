@@ -52,3 +52,13 @@ function crb_register__cd_of_the_week()
 }
 
 add_action('carbon_fields_register_fields', 'crb_register__cd_of_the_week');
+
+function custom_enter_title__cdotw($input)
+{
+    if ('cd_of_the_week' === get_post_type()) {
+        return __('Enter CD name', 'ynotradio_text');
+    }
+
+    return $input;
+}
+add_filter('enter_title_here', 'custom_enter_title__cdotw');
