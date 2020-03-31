@@ -178,6 +178,11 @@ require get_template_directory() . '/inc/post-types/on-demand.php';
 require get_template_directory() . '/inc/post-types/schedule.php';
 
 /**
+ * Add Custom Deejay fields to Users
+ */
+require get_template_directory() . '/inc/post-types/deejay.php';
+
+/**
  * Remove Comments
  */
 require get_template_directory() . '/inc/remove-comments.php';
