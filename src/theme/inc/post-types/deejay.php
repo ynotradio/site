@@ -10,6 +10,7 @@ function crb_register__deejay_users()
         ->add_fields(array(
             Field::make('text', 'crb_deejay__show_name', 'Show'),
             Field::make('text', 'crb_deejay__picture', 'Picture (Imported)'),
+            Field::make('hidden', 'crb_deejay__legacy_id'),
         ));
 
     Container::make('user_meta', 'Social Links')

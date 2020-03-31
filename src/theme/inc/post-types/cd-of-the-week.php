@@ -29,12 +29,17 @@ function crb_register__cd_of_the_week()
     Container::make('post_meta', 'CD Information')
         ->where('post_type', '=', 'cd_of_the_week')
         ->add_fields(array(
-            Field::make('date', 'cdotw_date', 'Week of:'),
-            Field::make('text', 'cdotw_artist', 'Artist'),
-            Field::make('text', 'cdotw_artist_url', 'Artist Website'),
-            Field::make('text', 'cdotw_label', "Record Label"),
-            Field::make('text', 'cdotw_reviewer', "Reviewer's Name"),
-            Field::make('hidden', 'cdotw_legacy_id'),
+            Field::make('date', 'crb_cdotw__date', 'Week of:'),
+            Field::make('association', 'crb_cdotw__artist', 'Artist')
+                ->set_min(1)
+                ->set_types(array(
+                    array(
+                        'type' => 'post',
+                        'post_type' => 'artist',
+                    ))),
+            Field::make('text', 'crb_cdotw__label', "Record Label"),
+            Field::make('text', 'crb_cdotw__reviewer', "Reviewer's Name"),
+            Field::make('hidden', 'crb_cdotw__legacy_id'),
         ));
 
     Container::make('post_meta', 'CD Artwork')
