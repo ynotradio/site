@@ -186,3 +186,8 @@ require get_template_directory() . '/inc/remove-comments.php';
  * Customize Admin Menu Order
  */
 require get_template_directory() . '/inc/customize-admin-menu-order.php';
+
+/**
+ * Rename Default Post Types
+ */
+require get_template_directory() . '/inc/rename-default-post-types.php';
