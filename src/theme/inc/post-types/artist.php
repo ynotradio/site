@@ -34,7 +34,7 @@ function crb_register__artist()
     Container::make('post_meta', 'Social Links')
         ->where('post_type', '=', 'artist')
         ->add_fields(array(
-            Field::make('complex', 'crb_social_urls', 'Social Links')
+            Field::make('complex', 'crb_artist__social_urls', 'Social Links')
                 ->add_fields(array(
                     Field::make('text', 'label', 'Label')
                         ->set_width(50) // condense layout so field takes only 50% of the available width
