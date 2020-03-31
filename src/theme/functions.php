@@ -181,3 +181,8 @@ require get_template_directory() . '/inc/post-types/schedule.php';
  * Remove Comments
  */
 require get_template_directory() . '/inc/remove-comments.php';
+
+/**
+ * Customize Admin Menu Order
+ */
+require get_template_directory() . '/inc/customize-admin-menu-order.php';
