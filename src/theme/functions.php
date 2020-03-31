@@ -171,3 +171,8 @@ require get_template_directory() . '/inc/post-types/song.php';
  * Add On Demand Post Type
  */
 require get_template_directory() . '/inc/post-types/on-demand.php';
+
+/**
+ * Add Schedule Post Type
+ */
+require get_template_directory() . '/inc/post-types/schedule.php';
