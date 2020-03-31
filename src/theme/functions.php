@@ -176,3 +176,8 @@ require get_template_directory() . '/inc/post-types/on-demand.php';
  * Add Schedule Post Type
  */
 require get_template_directory() . '/inc/post-types/schedule.php';
+
+/**
+ * Remove Comments
+ */
+require get_template_directory() . '/inc/remove-comments.php';
