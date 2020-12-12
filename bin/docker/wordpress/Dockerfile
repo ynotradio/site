@@ -1,6 +1,6 @@
 FROM wordpress:latest
 
-COPY --from=composer:1.9.3 /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2.0.8 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
