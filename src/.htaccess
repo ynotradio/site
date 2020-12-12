@@ -1,0 +1,15 @@
+RewriteEngine on
+
+# RewriteMap lc int:tolower
+# Only apply conversion if path contains uppercase characters
+RewriteCond %{REQUEST_URI} [A-Z]
+RewriteRule ^(.*?[A-Z]+.*)$ ${lc:$1} [NC,L]
+
+#unless directory, remove trailing slash
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)/$ /$1 [R=301,L]
+
+#resolve .php file for extensionless php urls
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^(.*)$ $1.php [L]
