@@ -37,7 +37,12 @@ echo "<div class=\"row top-spacer_20\">
     <div class=\"three columns center\">
       <a href=\"" . create_link($ip, $polls[10]) . "\" class=\"" . klass($ip, $polls[10]) . "\">" . format_poll_name($polls[10]) . "</a>
     </div>
-
+    <div class=\"three columns center\">
+      <a href=\"" . create_link($ip, $polls[11]) . "\" class=\"" . klass($ip, $polls[11]) . "\">" . format_poll_name($polls[11]) . "</a>
+    </div>
+    <div class=\"three columns center\">
+      <a href=\"" . create_link($ip, $polls[12]) . "\" class=\"" . klass($ip, $polls[12]) . "\">" . format_poll_name($polls[12]) . "</a>
+    </div>
   </div>
   <div class=\"row\">
     <div class=\"two columns center\">
