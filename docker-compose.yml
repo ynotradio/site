@@ -18,24 +18,28 @@ services:
       MYSQL_DATABASE: ynot_site
       MYSQL_USER: ynot_sql_user
       MYSQL_PASSWORD: ynot_sql_pass
-    healthcheck:
-      test: ['CMD', '/opt/bitnami/scripts/mysql/healthcheck.sh']
-      interval: 15s
-      timeout: 5s
-      retries: 6
     networks:
       - app-tier
-
-  apache:
-    image: docker.io/bitnami/apache:2.4-debian-10
+  phpfpm:
+    image: docker.io/bitnami/php-fpm:latest
+    restart: unless-stopped
     ports:
-      - 80:8180
-    container_name: apache
+      - 9000:9000
+    networks:
+      - app-tier
+    volumes:
+      - ./src:/app
+  apache:
+    image: docker.io/bitnami/apache:latest
+    ports:
+      - 80:8080
     networks:
       - app-tier
     depends_on:
       - mysql
+      - phpfpm
     volumes:
-      - ./src/:/var/www/html/
-    stdin_open: true
-    tty: true
+      - type: bind
+        source: ./bin/docker/apache-vhost/my_vhost.conf
+        target: /opt/bitnami/apache/conf/vhosts/my_vhost.conf
+      - ./src:/app
