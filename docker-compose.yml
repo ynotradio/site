@@ -1,31 +1,45 @@
 # ./docker-compose.yml
 
-version: '3'
+version: '2.1'
+
+networks:
+  app-tier:
+    driver: bridge
 
 services:
-  db:
+  mysql:
     build:
       context: ./
       dockerfile: ./bin/docker/mysql/Dockerfile
+    ports:
+      - '3306:3306'
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ynot_site
       MYSQL_USER: ynot_sql_user
       MYSQL_PASSWORD: ynot_sql_pass
+    networks:
+      - app-tier
+  phpfpm:
+    image: docker.io/bitnami/php-fpm:latest
+    restart: unless-stopped
     ports:
-      - "9906:3306"
-    stdin_open: true
-    tty: true
-  web:
-    build:
-      context: ./
-      dockerfile: ./bin/docker/php/Dockerfile
-    container_name: php_web
-    depends_on:
-      - db
+      - 9000:9000
+    networks:
+      - app-tier
     volumes:
-      - ./src/:/var/www/html/
+      - ./src:/app
+  apache:
+    image: docker.io/bitnami/apache:latest
     ports:
-      - "8100:80"
-    stdin_open: true
-    tty: true
+      - 8080:8080
+    networks:
+      - app-tier
+    depends_on:
+      - mysql
+      - phpfpm
+    volumes:
+      - type: bind
+        source: ./bin/docker/apache-vhost/my_vhost.conf
+        target: /opt/bitnami/apache/conf/vhosts/my_vhost.conf
+      - ./src:/app

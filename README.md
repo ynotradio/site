@@ -11,8 +11,8 @@ To spin up a working copy of this site on your local machine, you'll need a few 
 - Clone this repository to your local machine: `git clone git@github.com:ynotradio/site.git`
 - In your terminal, `cd` to the root of this project directory
 - Replace `/src/db/docker/ynot_db.sql` with the latest copy of the YNotRadio.net MySQL database.
-- Run `docker-compose up` to build the Docker images and run the PHP and MySQL services
-- Once the installation is finished, a site will be available for you to visit at: [http://localhost:8100](http://localhost:8100)
+- Run `docker-compose up` to build the Docker images and run the [https://docs.bitnami.com/containers/how-to/create-amp-environment-containers/](Apache, PHP and MySQL) services
+- Once the installation is finished, a site will be available for you to visit at: [http://localhost:8080](http://localhost:8080)
 
 If you would like to run Docker without seeing the terminal output, use `docker-compose up -d` to run the containers in the background. Some helpful documentation about `docker-compose` can be found in the [Docker Docs](https://docs.docker.com/compose/reference/overview/#command-options-overview-and-help).
 
