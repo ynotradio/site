@@ -1,6 +1,9 @@
- <?php
+<?php
+$page_file = "social_login.php";
+$page_title = "Social Login";
+
 require 'vendor/autoload.php';
-require '__env_loader.php';
+require 'partials/__env_loader.php';
 
 $uri = $_SERVER["HTTP_HOST"];
 $protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
@@ -14,23 +17,5 @@ $auth0 = new Auth0\SDK\Auth0([
      // See: https://auth0.com/docs/scopes/current
      'scope' => 'openid email profile',
 ]);
-$userInfo = $auth0->getUser();
 
-?>
-  </div>
-    <footer>
-    Copyright <?php echo date('Y'); ?> Y-Not Radio
-      <br>
-      <a href="/aboutus.php">About Us</a> | <a href="/contact.php">Contact</a>
-      <?php
-
-if ($userInfo) {
-    ?>
-| <a href="/social_logout.php">Log out</a>
-        <?php
-}
-?>
-  </footer>
-  <?php mysqli_close(open_db()); ?>
-  </body>
-</html>
+$auth0->login();
