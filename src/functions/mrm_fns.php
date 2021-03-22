@@ -1,5 +1,26 @@
 <?php
 
+require 'vendor/autoload.php';
+require 'partials/__env_loader.php';
+
+$uri = $_SERVER["HTTP_HOST"];
+$protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
+
+function auth0_init()
+{
+
+    return new Auth0\SDK\Auth0([
+        'domain' => $_ENV['AUTH0_DOMAIN'],
+        'client_id' => $_ENV['AUTH0_CLIENT_ID'],
+        'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
+        'redirect_uri' => $protocol . "://" . $uri . "/madness",
+        // The scope determines what data is provided in the ID token.
+         // See: https://auth0.com/docs/scopes/current
+         'scope' => 'openid email profile',
+    ]);
+
+}
+
 function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
 {
     $name = mysqli_real_escape_string(open_db(), $name);
@@ -873,9 +894,10 @@ function sponsor()
 
 function has_voted($match_id)
 {
-    $voter_ip = $_SERVER['REMOTE_ADDR'];
 
-    $query = "SELECT match_id, voter_ip FROM mrm_votes WHERE match_id = " . $match_id . " AND voter_ip = '" . $voter_ip . "'";
+    $auth0 = auth0_init();
+    $userInfo = $auth0->getUser();
+    $query = "SELECT match_id, voter_email FROM mrm_votes WHERE match_id = " . $match_id . " AND voter_email = '" . $userInfo['email'] . "'";
     $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
@@ -895,19 +917,33 @@ function has_voted($match_id)
 
 function vote_form($match_id, $band_id)
 {
-    echo '<form action="madness.php" method="post">
-      <input type="submit" class="btn-success" value="Vote!">
-      <input type="hidden" name="match_id" value ="' . $match_id . '">
-      <input type="hidden" name="band_id" value ="' . $band_id . '">
-    </form>';
+
+    $auth0 = auth0_init();
+
+    $userInfo = $auth0->getUser();
+
+    if ($userInfo) {
+        $voter_email = $userInfo['email'];
+
+        echo '<form action="madness.php" method="post">
+        <input type="submit" class="btn-success" value="Vote!">
+        <input type="hidden" name="match_id" value ="' . $match_id . '">
+        <input type="hidden" name="band_id" value ="' . $band_id . '">
+        <input type="hidden" name="voter_email" value ="' . $voter_email . '">
+        </form>';
+    } else {
+        echo '<a href="social_login.php" class="btn-success">Log in to vote</a>';
+    }
 }
 
 function record_ip($match_id, $voted_band)
 {
     $voter_ip = $_SERVER['REMOTE_ADDR'];
+    $auth0 = auth0_init();
+    $userInfo = $auth0->getUser();
 
     if (has_voted($match_id) == false) {
-        $insert = "INSERT INTO mrm_votes VALUES (id, '" . $match_id . "', '" . $voter_ip . "', '" . $voted_band . "')";
+        $insert = "INSERT INTO mrm_votes VALUES (id, '" . $match_id . "', '" . $voter_ip . "', '" . $voted_band . "', '" . $userInfo['email'] . "')";
         $link = open_db();
         $result = mysqli_query($link, $insert);
 
