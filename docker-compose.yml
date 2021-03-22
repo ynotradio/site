@@ -20,6 +20,19 @@ services:
       MYSQL_PASSWORD: ynot_sql_pass
     networks:
       - app-tier
+    volumes:
+      - 'mysqldb_data:/bitnami'
+  phpmyadmin:
+    image: 'docker.io/bitnami/phpmyadmin:latest'
+    ports:
+      - '8181:8181'
+    depends_on:
+      - mysql
+    environment:
+      - APACHE_HTTP_PORT_NUMBER=8181
+      - DATABASE_HOST=mysql
+    networks:
+      - app-tier
   phpfpm:
     image: docker.io/bitnami/php-fpm:latest
     restart: unless-stopped
@@ -43,3 +56,6 @@ services:
         source: ./bin/docker/apache-vhost/my_vhost.conf
         target: /opt/bitnami/apache/conf/vhosts/my_vhost.conf
       - ./src:/app
+volumes:
+  mysqldb_data:
+    driver: local
