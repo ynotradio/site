@@ -12,7 +12,7 @@ $auth0 = new Auth0\SDK\Auth0([
     'domain' => $_ENV['AUTH0_DOMAIN'],
     'client_id' => $_ENV['AUTH0_CLIENT_ID'],
     'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
-    'redirect_uri' => $protocol . "://" . $uri,
+    'redirect_uri' => $protocol . "://" . $uri . "/madness",
     // The scope determines what data is provided in the ID token.
      // See: https://auth0.com/docs/scopes/current
      'scope' => 'openid email profile',

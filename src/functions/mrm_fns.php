@@ -1,26 +1,5 @@
 <?php
 
-require 'vendor/autoload.php';
-require 'partials/__env_loader.php';
-
-$uri = $_SERVER["HTTP_HOST"];
-$protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
-
-function auth0_init()
-{
-
-    return new Auth0\SDK\Auth0([
-        'domain' => $_ENV['AUTH0_DOMAIN'],
-        'client_id' => $_ENV['AUTH0_CLIENT_ID'],
-        'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
-        'redirect_uri' => $protocol . "://" . $uri . "/madness",
-        // The scope determines what data is provided in the ID token.
-         // See: https://auth0.com/docs/scopes/current
-         'scope' => 'openid email profile',
-    ]);
-
-}
-
 function add_mrm_band($name, $url, $pic_url, $placement, $seed, $abbr, $sponsor)
 {
     $name = mysqli_real_escape_string(open_db(), $name);
@@ -895,7 +874,7 @@ function sponsor()
 function has_voted($match_id)
 {
 
-    $auth0 = auth0_init();
+    $auth0 = $GLOBALS['auth0'];
     $userInfo = $auth0->getUser();
     $query = "SELECT match_id, voter_email FROM mrm_votes WHERE match_id = " . $match_id . " AND voter_email = '" . $userInfo['email'] . "'";
     $result = mysqli_query(open_db(), $query);
@@ -918,7 +897,7 @@ function has_voted($match_id)
 function vote_form($match_id, $band_id)
 {
 
-    $auth0 = auth0_init();
+    $auth0 = $GLOBALS['auth0'];
 
     $userInfo = $auth0->getUser();
 
@@ -939,7 +918,7 @@ function vote_form($match_id, $band_id)
 function record_ip($match_id, $voted_band)
 {
     $voter_ip = $_SERVER['REMOTE_ADDR'];
-    $auth0 = auth0_init();
+    $auth0 = $GLOBALS['auth0'];
     $userInfo = $auth0->getUser();
 
     if (has_voted($match_id) == false) {
