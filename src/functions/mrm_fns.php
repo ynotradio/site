@@ -873,6 +873,9 @@ function sponsor()
 
 function has_voted($match_id)
 {
+    if ($_SESSION["logged_in"]) {
+        return false;
+    }
 
     $auth0 = $GLOBALS['auth0'];
     $userInfo = $auth0->getUser();
