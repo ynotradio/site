@@ -11,6 +11,7 @@ function crb_register__deejay_users()
             Field::make('text', 'crb_deejay__show_name', 'Show'),
             Field::make('text', 'crb_deejay__picture', 'Picture (Imported)'),
             Field::make('hidden', 'crb_deejay__legacy_id'),
+            Field::make('hidden', 'crb_deejay__legacy_sort'),
         ));
 
     Container::make('user_meta', 'Social Links')

@@ -22,6 +22,7 @@ class Migrate_2_0_0 extends Migration
         $this->log('Running migration to 2.0.0...');
         $this->__importCDOTW();
         $this->__importCustomText();
+        $this->__importDeejays();
     }
 
     /**
@@ -131,6 +132,68 @@ class Migrate_2_0_0 extends Migration
                 '_custom_texts_legacy_id' => $obj->id,
             ),
         ));
+    }
+
+    /**
+     * Deejays
+     */
+
+    private function __importDeejays()
+    {
+        $this->log("****************************************");
+        $this->log("Importing Deejays");
+        $rows = $this->migration_db->get_results("SELECT * from deejays");
+        $this->log("Found " . count($rows) . " deejays rows to import");
+        foreach ($rows as $obj):
+            $this->log($obj->name);
+            if ($this->__checkForUniqueDeejay($obj->id)) {
+                $this->__addDeejay($obj);
+            };
+        endforeach;
+
+        $this->log("****************************************");
+    }
+
+    private function __checkForUniqueDeejay($id)
+    {
+        $args = array(
+            'post_type' => 'user_meta',
+            'post_status' => 'any',
+            'meta_query' => array(
+                array(
+                    'key' => 'crb_deejay__legacy_id',
+                    'value' => $id,
+                    'compare' => '=',
+                ),
+            ),
+        );
+        $query = new WP_Query($args);
+        return $query->found_posts <= 0;
+    }
+
+    private function __addDeejay($obj)
+    {
+        $role = $obj->deleted === 'no' ? 'contributor' : null;
+        $user_id = wp_insert_user(array(
+            'display_name' => $obj->name,
+            'user_nickname' => $obj->name,
+            'user_email' => $obj->email,
+            'user_login' => $obj->email,
+            'user_pass' => wp_generate_password(24, true),
+            'user_role' => $role,
+        ));
+
+        add_user_meta($user_id, '_crb_deejay__legacy_id', $obj->id);
+        add_user_meta($user_id, '_crb_deejay__show_name', strip_tags(str_replace('<', ' <', $obj->show)));
+        add_user_meta($user_id, '_crb_deejay__picture', $obj->pic);
+        add_user_meta($user_id, '_crb_deejay__legacy_sort', $obj->sort);
+
+        if ($obj->external_connect_url) {
+            add_user_meta($user_id, '_crb_deejay__social_urls|||0|value', '_');
+            add_user_meta($user_id, '_crb_deejay__social_urls|label|0|0|value', $obj->external_connect_text);
+            add_user_meta($user_id, '_crb_deejay__social_urls|url|0|0|value', $obj->external_connect_url);
+        }
+
     }
 
 }
