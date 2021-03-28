@@ -23,6 +23,9 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 ### PHP Linting
 - From the root of the project, use `docker run --rm --volume $(pwd):/app vfac/php7compatibility 7.4 ./src -d memory_limit=1G --extensions=php` to see errors in the PHP code.
 
+### Database
+Access PHPMyAdmin in development by visiting [http://localhost:8181](http://localhost:8181)
+
 ## Teardown
 - When you are finished development, run `docker-compose down` from your terminal to halt the containers.
 
