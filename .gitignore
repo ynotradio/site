@@ -5,5 +5,7 @@ pdfs
 small_imgs
 sponsors
 *.log
+src/vendor
+src/partials/.env
 
 db/docker/*.sql
