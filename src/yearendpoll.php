@@ -91,7 +91,7 @@ if ($_POST['contest_form']) {
 
     <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2021! Cast your votes and you could win an <b>Apple TV</b> with 3 months of <i>Apple TV+</i> included and the chance to play your own top 20 songs of the year on Y-Not Radio!
     <br><br>
-    Vote now thru Dec. 20th. Then we'll count down <i>The Top 221 of 2021</i> from December 27th thru 30th!  <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a>.
+    Vote now thru Dec. 20th. Then we'll count down <i>The Top 221 of 2021</i> from December 27th thru 30th!  <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.
     <br><br>
     Need some ideas? Check out the Y-Not DJs best of lists <a href="yearendstaffpicks.php">here</a>.</p>
 
