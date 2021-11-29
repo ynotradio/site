@@ -133,7 +133,7 @@ function get_number_of_votes_for($poll_form, $value)
 
 function get_poll_names()
 {
-    return array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
+    return array('songs', 'albums', 'artists', 'concerts', 'new_artists', 'philly_artists',
         'most_anticipated_albums', 'tv_dramas', 'tv_comedies', 'late_night_tv',
         'best_movies', 'worst_movies', 'unnecessary_sequels');
 }
