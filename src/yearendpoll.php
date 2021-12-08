@@ -128,7 +128,7 @@ if ($new_contestant == 1) {
 <div class="row">
   <div class="three columns"></div>
   <div class="six columns">
-    <h3 class="center">Enter To Win A $100 iTunes Gift Card</h3>
+    <h3 class="center">Enter To Win an Apple TV.</h3>
     <form action="yearendpoll.php" method="post" class="form-default">
     <?php require "partials/_year_end_poll_form.php"; ?>
   </div>
