@@ -74,17 +74,17 @@ function countdown_values($match_id)
 function display_first_row()
 {
     echo "<ul id='time_line'>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 22-23</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 21-22</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>March 28</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 1</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
           <li><strong>2<sup>nd</sup> ROUND</strong>March 29</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 2</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 30</li>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 24-25</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 23-24</li>\n
       </ul>\n";
 }
 
@@ -530,7 +530,7 @@ function setup_next_match($last_match_id, $winner_id)
 {
     //if last_match_id is even vs. odd figures out if band1_id / band2_id
     $new_match = get_new_match($last_match_id);
-    $band_value = $last_match_id & 1; // 0 = even, 1 = odd
+    $band_value = $last_match_id&1; // 0 = even, 1 = odd
 
     if ($band_value == 1) {
         $update = "UPDATE mrm_matches SET band1_id=\"$winner_id\" WHERE id=" . $new_match;

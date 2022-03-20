@@ -3,7 +3,7 @@
 $page_file = "madness.php";
 $page_title = "Modern Rock Madness";
 
-$madness_start_date = '2021-03-22';
+$madness_start_date = '2022-03-18';
 if (strtotime($madness_start_date) > strtotime('now')) {
     header('Location: /pages.php?page=modern-rock-madness');
 }
@@ -21,8 +21,8 @@ $auth0 = new Auth0\SDK\Auth0([
     'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
     'redirect_uri' => $protocol . "://" . $uri . "/madness",
     // The scope determines what data is provided in the ID token.
-     // See: https://auth0.com/docs/scopes/current
-     'scope' => 'openid email profile',
+    // See: https://auth0.com/docs/scopes/current
+    'scope' => 'openid email profile',
 ]);
 
 require "functions/mrm_fns.php";
@@ -38,13 +38,13 @@ $band_id = $_POST['band_id'];
 
 <div class="row">
   <div class="twelve columns">
-	<a href="madness.php"><img src="https://i.imgur.com/JP5eNww.png" alt="Modern Rock Madness 2021" width="930px"></a>
+	<a href="madness.php"><img src="https://i.imgur.com/QTejSzf.png" alt="Modern Rock Madness 2022" width="930px"></a>
     <div id="mrm_text">
-      <p>Download your Modern Rock Madness <?php echo date('Y'); ?> brackets <a href="https://od.lk/d/162936776_pz1ab/MRM2021Bracket.pdf">here</a> and listen all throughout the tournament as Y-Not bands from The U.S., Canada, The U.K, and the rest of the world go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 707-800-YNOT.</p>
+      <p>Download your Modern Rock Madness 2022 brackets <a href="https://od.lk/d/172668250_hG3iV/MRM2022Bracket.pdf">here</a> and listen all throughout the tournament as Y-Not bands go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 707-800-YNOT.</p>
 
       <div class="social">
         <a href="https://twitter.com/share" class="twitter-share-button" data-text="Tune in now to @YNotRadio's Modern Rock Madness - 64 bands go head to head! #modernrockmadness" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
-        <div class="fb-like" data-href="http://www.ynotradio.net/madness.php?2021" data-send="true" data-width="450" data-show-faces="false"></div>
+        <div class="fb-like" data-href="http://www.ynotradio.net/madness.php?2022" data-send="true" data-width="450" data-show-faces="false"></div>
       </div>
     </div>
 <?php
