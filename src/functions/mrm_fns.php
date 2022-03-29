@@ -284,7 +284,7 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round = 1)
     $band = "band" . $band_number . "_votes";
     $band_id = "band" . $band_number . "_id";
 
-    $query = "SELECT " . $band_id . ", " . $band . " FROM mrm_matches WHERE id =" . $match_id;
+    $query = "SELECT " . $band_id . ", " . $band . ", end_time FROM mrm_matches WHERE id =" . $match_id;
     $q_result = mysqli_query(open_db(), $query);
 
     if (!$q_result) {
@@ -292,9 +292,14 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round = 1)
         die('Invalid');
     }
     $info = mysqli_fetch_assoc($q_result);
+
     $voted_band = $info["band" . $band_number . "_id"];
 
-    if (!has_voted($match_id) || $by_pass_ip_check) {
+    $match_end_time = $info["end_time"];
+
+    $match_has_passed = strtotime($match_end_time) < strtotime('now');
+
+    if ((!has_voted($match_id) || $by_pass_ip_check) && !$match_has_passed) {
         $update = "UPDATE mrm_matches SET " . $band . " = " . ($info["band" . $band_number . "_votes"] + 1) . " WHERE id = " . $match_id;
         $u_result = mysqli_query(open_db(), $update);
 
@@ -562,6 +567,7 @@ function get_new_match($old_match)
 
 function show_match($match_id)
 {
+
     if ($match_id != 8888) {
         $match_status = get_match_status($match_id);
 
@@ -595,7 +601,6 @@ function show_match($match_id)
         countdown_values($match_id);
         echo "</td>";
         echo "</tr>\n<tr>";
-
         if ($match_status == 'early') {
             echo '<td colspan=3 class="center">Voting has not started yet</td>';
         } elseif ($match_status == 'running') {
@@ -894,12 +899,10 @@ function has_voted($match_id)
     } else {
         return true;
     }
-
 }
 
 function vote_form($match_id, $band_id)
 {
-
     $auth0 = $GLOBALS['auth0'];
 
     $userInfo = $auth0->getUser();
