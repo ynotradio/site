@@ -74,17 +74,17 @@ function countdown_values($match_id)
 function display_first_row()
 {
     echo "<ul id='time_line'>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 22-23</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 21-22</li>\n
+          <li><strong>2<sup>nd</sup> ROUND</strong>March 28</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 1</li>\n
+          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 31</li>\n
+          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 30</li>\n
           <li><strong>2<sup>nd</sup> ROUND</strong>March 29</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>CHAMPION</strong>April 2</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>April 1</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 31</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 30</li>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 24-25</li>\n
+          <li><strong>1<sup>st</sup> ROUND</strong>March 23-24</li>\n
       </ul>\n";
 }
 
@@ -284,7 +284,7 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round = 1)
     $band = "band" . $band_number . "_votes";
     $band_id = "band" . $band_number . "_id";
 
-    $query = "SELECT " . $band_id . ", " . $band . " FROM mrm_matches WHERE id =" . $match_id;
+    $query = "SELECT " . $band_id . ", " . $band . ", end_time FROM mrm_matches WHERE id =" . $match_id;
     $q_result = mysqli_query(open_db(), $query);
 
     if (!$q_result) {
@@ -292,9 +292,14 @@ function vote($match_id, $band_number, $by_pass_ip_check, $round = 1)
         die('Invalid');
     }
     $info = mysqli_fetch_assoc($q_result);
+
     $voted_band = $info["band" . $band_number . "_id"];
 
-    if (!has_voted($match_id) || $by_pass_ip_check) {
+    $match_end_time = $info["end_time"];
+
+    $match_has_passed = strtotime($match_end_time) < strtotime('now');
+
+    if ((!has_voted($match_id) || $by_pass_ip_check) && !$match_has_passed) {
         $update = "UPDATE mrm_matches SET " . $band . " = " . ($info["band" . $band_number . "_votes"] + 1) . " WHERE id = " . $match_id;
         $u_result = mysqli_query(open_db(), $update);
 
@@ -530,7 +535,7 @@ function setup_next_match($last_match_id, $winner_id)
 {
     //if last_match_id is even vs. odd figures out if band1_id / band2_id
     $new_match = get_new_match($last_match_id);
-    $band_value = $last_match_id & 1; // 0 = even, 1 = odd
+    $band_value = $last_match_id&1; // 0 = even, 1 = odd
 
     if ($band_value == 1) {
         $update = "UPDATE mrm_matches SET band1_id=\"$winner_id\" WHERE id=" . $new_match;
@@ -562,6 +567,7 @@ function get_new_match($old_match)
 
 function show_match($match_id)
 {
+
     if ($match_id != 8888) {
         $match_status = get_match_status($match_id);
 
@@ -595,7 +601,6 @@ function show_match($match_id)
         countdown_values($match_id);
         echo "</td>";
         echo "</tr>\n<tr>";
-
         if ($match_status == 'early') {
             echo '<td colspan=3 class="center">Voting has not started yet</td>';
         } elseif ($match_status == 'running') {
@@ -894,12 +899,10 @@ function has_voted($match_id)
     } else {
         return true;
     }
-
 }
 
 function vote_form($match_id, $band_id)
 {
-
     $auth0 = $GLOBALS['auth0'];
 
     $userInfo = $auth0->getUser();
