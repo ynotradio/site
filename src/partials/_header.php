@@ -82,12 +82,12 @@ if ($page_file == "yearendpoll.php") {
       }(document, 'script', 'facebook-jssdk'));</script>
       <div id="container">
       <header>
-        <img src="imgs/header_front.png" alt="logo" usemap="#Map"/>
+        <img src="imgs/header_front_2022.png" alt="logo" usemap="#Map"/>
         <iframe src="./partials/_now_playing.php" name="iradiophillyplaylist" scrolling="no" noresize="" frameborder="No" marginwidth="0" marginheight="0" width="445" height="125"></iframe>
         <map name="Map">
           <area shape="rect" coords="20,5,310,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
-          <area shape="rect" coords="340,10,452,85" href="http://www.iradiophilly.com/index.php?idStation=42" alt="Listen Live" target="_blank"/>
-          <area shape="rect" coords="337,93,447,102" href=" http://www.iradiophilly.com/pls/ynot.pls" target="_blank" alt="iTunes">
+          <area shape="rect" coords="340,10,452,85" href="https://player.live365.com/ynotradio" alt="Listen Live" target="_blank"/>
+          <area shape="rect" coords="337,93,447,102" href=" https://api.live365.com/play/a54553.m3u" target="_blank" alt="iTunes">
           <area shape="rect" coords="328,115,372,149" href="https://www.facebook.com/ynotradio" alt="facebook" target="_blank"/>
           <area shape="rect" coords="382,115,410,149" href="http://twitter.com/ynotradio" alt="twitter" target="_blank"/>
           <area shape="rect" coords="414,115,447,149" href="mobile.php" alt="mobile"/>
