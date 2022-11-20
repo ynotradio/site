@@ -1,16 +1,52 @@
 <?php
+
+require ("../functions/main_fns.php");
+
+$now = time()-70;
+
+$query = "SELECT title, artist, playtime, album FROM now_playing where playtime <= $now ORDER BY playtime DESC LIMIT 0,6";
+$result = mysqli_query(open_db(), $query);
+
+if (!$result) {
+  echo "error: ". $query;
+  die('Invalid');
+}
+
 $url_to_refresh = $_SERVER['REQUEST_URI'];
 header("Refresh: 30; URL=$url_to_refresh");
 
 $url_to_proxy = 'http://www.iradiophilly.com/nowplayingupdate.php?station=42&composer=0&flag=4';
 
-// make the HTTP request to the requested URL
-$content = file_get_contents($url_to_proxy);
+if($result->num_rows == 0) {
+	// make the HTTP request to the requested URL
+	$content = file_get_contents($url_to_proxy);
+} else {
+	$content = null;
+}
 
 ?>
 
 <body>
     <?php echo $content; ?>
+
+	<div class="last10">
+		<table width="443" height="125" cellspacing="1" cellpadding="0">
+		<?php
+				for ($count = 0; $count<=mysqli_num_rows($result); $count++)
+				{
+
+					$play = mysqli_fetch_assoc($result);
+					if ($count==0) {$b = "<b>"; $be = "</b>";} else { $b = ""; $be=""; }
+					echo "<tr class=\"bodyTextWhite\" bgcolor=\"666666\">";
+					echo "<td align=\"left\">". $b . $play["artist"] . $be . "</td>";
+					echo "<td align=\"left\">". $b . $play["title"] . $be . "</td>";
+					echo "<td align=\"left\">". $b . $play["album"] . $be . "</td>";
+					echo "</tr>";
+				}
+		?> 
+		</table>
+	</div>
+
 </body>
 
 <style>
