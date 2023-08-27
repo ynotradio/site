@@ -1,49 +1,37 @@
 $(document).ready(function() {
-  Madness.timer = true
-  Madness.startTimer($('#hr').text(), $('#min').text(), $('#sec').text(), Madness.timer);
+  Madness.starttime = new Date();
+  Madness.endtime = new Date(Madness.starttime.getTime() + (1000*(($('#hr').text()*60*60)+($('#min').text()*60)+($('#sec').text()*1))));
+  Madness.timer = (Madness.endtime > Madness.starttime);
+  Madness.startTimer(Madness.endtime, Madness.timer);
   Madness.updateScoreboard();
 });
 
 Madness = {
-  startTimer: function(hr, min, sec, timer) {
-    if (sec > 0) {
-      sec = sec - 1;
-    } else {
-      sec = 59;
-      if (min > 0) {
-        min = min - 1;
-      } else {
-        min = 59;
-        if (hr > 0) {
-          hr = hr - 1;
-        } else {
-          hr = 0;
-          min = 0;
-          sec = 0;
-          Madness.timer = false;
-        }
-      }
-    }
-
+  startTimer: function(endtime, timer) {
+    currenttime = new Date();
     if ($('#mrm_timer').size() > 0) {
+      Madness.timer = (Madness.endtime > currenttime);
       if (Madness.timer) {
-        $('#mrm_timer').text(Madness.displayFormat(hr, min, sec));
+        let tdiff = Madness.endtime - currenttime;
+        $('#mrm_timer').text(Madness.displayDiffFormat(tdiff));
         setTimeout(function(){
-          Madness.startTimer(hr, min, sec, Madness.timer);}, 1000);
+          Madness.startTimer(Madness.endtime, Madness.timer);}, 1000);
       } else {
         $('#mrm_timer').text("Match Over");
         setTimeout(function(){Madness.delayedRedirect();}, 4000);
       }
     }
   },
-   displayFormat: function(hr, min, sec) {
-    if (Madness.timeFormat(hr) === "00")
-      return Madness.timeFormat(min) + ":" + Madness.timeFormat(sec);
-    else
-      return Madness.timeFormat(hr) + ":" + Madness.timeFormat(min) + ":" + Madness.timeFormat(sec);
-  },
-  timeFormat: function(n) {
-    return n > 9 ? "" + n: "0" + n;
+  displayDiffFormat: function(diff) {
+    const SEC = 1000, MIN = 60 * SEC, HRS = 60 * MIN;
+    const hrs = Math.floor(diff/HRS).toLocaleString('en-US', {minimumIntegerDigits: 2});
+    const min = Math.floor((diff%HRS)/MIN).toLocaleString('en-US', {minimumIntegerDigits: 2});
+    const sec = Math.floor((diff%MIN)/SEC).toLocaleString('en-US', {minimumIntegerDigits: 2});
+    if (hrs > 0) {
+      return `${hrs}:${min}:${sec}`;
+    } else {
+      return `${min}:${sec}`;
+  	}
   },
   delayedRedirect: function() {
     window.location = window.location.href;
