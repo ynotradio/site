@@ -50,7 +50,7 @@ if ($_POST['action'])
         <?php } else {
             require ("partials/_sendmail.php");
         } ?>
-        <div class="center top-spacer_20"> To make a request contact us via <a href="http://www.facebook.com/ynotradio" target=_new>Facebook</a>, AIM at IMYNotRadio, or text to 267-293-YNOT (9668).</div>
+        <div class="center top-spacer_20">To make a request e-mail the <a href="/deejays">DJ</a> currently on air or text to 707-800-YNOT (9668).</div>
     </div>
     <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
