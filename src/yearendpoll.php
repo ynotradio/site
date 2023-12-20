@@ -6,7 +6,7 @@
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
-$poll_end_datetime = strtotime("12/20/23 5pm");
+$poll_end_datetime = strtotime("12/20/23 5:00pm EST");
 
 require "functions/main_fns.php";
 require "functions/year_end_poll_fns.php";
@@ -62,7 +62,7 @@ if ($_POST['contest_form']) {
 
     echo "<div class=\"row\">";
     if ($new_contestant == 1) {
-        echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2023 Year End Poll!<br>Find out all the results when we countdown The Top 223 Songs of 2023, <br>December 27<sup>th</sup> thru 30<sup>th</sup> .</div>";
+        echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2023 Year End Poll!<br>Find out all the results when we countdown The Top 223 Songs of 2023, <br>December 26<sup>th</sup> thru 29<sup>th</sup> .</div>";
     } elseif ($new_contestant == "missing_values") {
         echo "<div class=\"twelve columns top-spacer_20 center error\">Sorry! <br> Seems like you may be missing some value(s), please try again.</div>";
     } else {
@@ -89,7 +89,7 @@ if ($_POST['contest_form']) {
 
         <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2023! Cast your votes and you could win <b>an Apple TV 4K with 3 months of Apple TV+</b> and the chance to play your own top 20 songs of the year on Y-Not Radio!
         <br><br>
-        Vote now thru Dec. 20th. Then we'll count down <i>The Top 223 of 2023</i> from December 26th thru 29th!  <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.
+        Vote now thru Dec. 20th. Then we'll count down <i>The Top 223 of 2023</i> from December 26th thru 29th!  <!--<i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.-->
         <br><br>
         Need some ideas? Check out the Y-Not DJs best of lists <a href="yearendstaffpicks.php">here</a>.</p>
     </div>
