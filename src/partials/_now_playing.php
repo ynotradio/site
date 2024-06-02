@@ -5,322 +5,72 @@ header("Refresh: 30; URL=$url_to_refresh");
 // Query JSON data from live365 API
 $jsonData = file_get_contents('https://api.live365.com/station/a54553');
 $data = json_decode($jsonData, true);
+
+$currentTrack = $data['current-track'];
+$currentTrack['altText'] = "Album art for " . $currentTrack['artist'] . " - " . $currentTrack['title'];
+$lastPlayed = array_slice($data['last-played'], 0, 4);
+
 ?>
 
 <body>
-	<table>
-		<?php
-		// Print styled HTML table of song names and artists
-		$currentTrack = $data['current-track'];
-		echo '<tr class="bodyTextWhite" bgcolor="666666">';
-		echo '<td align="left"><b>' . $currentTrack['artist'] . '</b></td>';
-		echo '<td align="left"><b>' . $currentTrack['title'] . '</b></td>';
-		echo '<td align="left"><b>' . $currentTrack['album'] . '</b></td>';
-		echo '</tr>';
-
-		$lastPlayed = $data['last-played'];
-		foreach ($lastPlayed as $play) {
-			echo '<tr class="bodyTextWhite" bgcolor="666666">';
-			echo '<td align="left">' . $play['artist'] . '</td>';
-			echo '<td align="left">' . $play['title'] . '</td>';
-			echo '<td align="left">' . $play['album'] . '</td>';
-			echo '</tr>';
-		}
-
-
-		?>
-	</table>
+	<section class="ynot-np-container">
+		<div class="ynot-np-artwork">
+			<img class="ynot-np-artwork-img" src="<?php echo $currentTrack['art']; ?>" alt="<?php echo $currentTrack['altText'] ?>" />
+		</div>
+		<ol class="ynot-np-list">
+			<li class="ynot-np-track ynot-np-track--current">
+				<span class="ynot-np-track-artist"><?php echo $currentTrack['artist']; ?></span>
+				<span class="ynot-np-track-title"><?php echo $currentTrack['title']; ?></span>
+			</li>
+			<?php
+			foreach ($lastPlayed as $track) {
+				echo '<li class="ynot-np-track">';
+				echo '<span class="ynot-np-track-artist">' . $track['artist'] . '</span>';
+				echo '<span class="ynot-np-track-title">' . $track['title'] . '</span>';
+				echo '</li>';
+			}
+			?>
+		</ol>
+	</section>
 </body>
 
 <style>
-	@charset "utf-8";
-
 	html,
 	body {
-		background: #666666;
+		background: #666;
+		color: #fff;
+		font-family: Verdana, Geneva, Tahoma, sans-serif;
+		font-size: 12px;
 	}
 
-	.articleText {
-		font-family: 'Roboto', Verdana, sans-serif;
-		font-size: 16px !important;
-		font-weight: 100;
-		color: #000000;
+	.ynot-np-container {
+		display: flex;
+		padding: 1rem;
 	}
 
-	.articleHeader {
-		font-family: 'Roboto', Verdana, sans-serif;
-		font-size: 18px !important;
-		color: #000000;
-		font-weight: 500;
+	.ynot-np-artwork-img {
+		max-width: calc(123px - 2rem);
 	}
 
-	.bodyText {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #757575;
-	}
-
-	.bodyText {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #757575;
-	}
-
-	.bodyTextWhite {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #FFFFFF;
-	}
-
-	.cellbackright {
-		background: url(images/main_right_bck.gif) repeat-y;
-		width: 4px;
+	.ynot-np-list {
+		list-style-type: none;
 		padding: 0;
+		margin: 0;
+		margin-left: 1rem;
 	}
 
-	.cellbackleft {
-		background: url(images/main_left_bck.gif) repeat-y;
-		width: 4px;
-		padding: 0;
+	.ynot-np-track {
+		padding-bottom: 0.55rem;
 	}
 
-	.bodyHeader {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
+	.ynot-np-track--current {
 		font-weight: bold;
-		color: #858585;
 	}
+	.ynot-np-track-artist::after {		
+		content: " - ";
 
-	.postHeader {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 15px !important;
-		color: #000;
 	}
-
-	.mediaText {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 13px !important;
-		color: #000;
-	}
-
-	.header1 {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 16px !important;
-		font-weight: bold;
-		color: #000;
-	}
-
-	.header2 {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 16px !important;
-		color: #000;
-		font-weight: lighter;
-	}
-
-	.genre {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
+	.ynot-np-track-title {
 		font-style: italic;
-		color: #000;
-	}
-
-	.redPlaying {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 10px !important;
-		color: #E43535;
-	}
-
-	.largeGrey {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 14px !important;
-		color: #8F8F8F;
-	}
-
-	.smallGrey {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #B9B9B9;
-	}
-
-	.smallGreyB {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #8B8B8B;
-	}
-
-	.stationList1 {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 10px !important;
-		color: #000;
-	}
-
-	.stationList2 {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 10px !important;
-		color: #8F8F8F;
-	}
-
-	.footerText {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 8px !important;
-		color: #8A8A8A;
-	}
-
-	.byline {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 9px !important;
-		font-weight: bold;
-		color: #8f8f8f;
-	}
-
-	.redLarge {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 13px !important;
-		color: #E43535;
-	}
-
-	.greenLarge {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 13px !important;
-		color: #69a892;
-	}
-
-	.menuText {
-		font-family: Verdana, Geneva, sans-serif;
-		font-size: 11px !important;
-		color: #8A8A8A;
-	}
-
-	.articleHeader a {
-		color: #000000;
-		text-decoration: none;
-	}
-
-	.postHeader a {
-		color: #000000;
-		text-decoration: none;
-	}
-
-	.stationList2 a {
-		color: #8f8f8f;
-	}
-
-	.stationList1 a {
-		color: #000;
-	}
-
-	.byline a {
-		color: #8f8f8f;
-	}
-
-	.bodyText a {
-		color: #707070;
-	}
-
-	.menuText a {
-		color: #8f8f8f;
-		text-decoration: none;
-	}
-
-	.footerText a {
-		color: #8f8f8f;
-	}
-
-	.smallGrey a {
-		color: #B9B9B9;
-		text-decoration: none;
-	}
-
-	.smallGreyB a {
-		color: #8B8B8B;
-	}
-
-	.bodyHeader a {
-		color: #8f8f8f;
-	}
-
-	.articleText a {
-		color: #8f8f8f;
-	}
-
-	.redLarge a {
-		color: #E43535;
-	}
-
-	.redPlaying a {
-		color: #E43535;
-	}
-
-	.formField {
-		background-color: #f4f3e8;
-		border: 1px solid #bcbcbc;
-	}
-
-	td.normal {
-		background-color: #FFFFFF;
-		text-decoration: none;
-	}
-
-	.highlight {
-		background-color: #F3F3E8;
-		text-decoration: none;
-	}
-
-	.leftbar {
-		background-image: url("images/leftbar.jpg");
-		background-repeat: repeat-y;
-	}
-
-	.rightbar {
-		background-image: url("images/rightbar.jpg");
-		background-repeat: repeat-y;
-	}
-
-	td.highlight a {
-		text-decoration: none;
-	}
-
-	tr.highlight a {
-		text-decoration: none;
-	}
-
-	#blocks td a:hover {
-		background: #F3F3E8;
-		text-decoration: none;
-	}
-
-	#blocks table a:hover {
-		background: #F3F3E8;
-		text-decoration: none;
-	}
-
-	#blocks tr a:hover {
-		background: #F3F3E8;
-		text-decoration: none;
-	}
-
-	#blocks td a {
-		display: block;
-		border: 0;
-		text-decoration: none;
-		background: #FFFFFF;
-	}
-
-	#blocks tr a {
-		display: block;
-		border: 0;
-		text-decoration: none;
-		background: #FFFFFF;
-	}
-
-	#blocks table a {
-		display: block;
-		border: 0;
-		text-decoration: none;
-		background: #FFFFFF;
-	}
-
-	.st span {
-		text-shadow: 1px 1px 1px #FFF;
 	}
 </style>
