@@ -6,7 +6,7 @@
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
-$poll_end_datetime = strtotime("12/30/24 11:59pm EST");
+$poll_end_datetime = strtotime("12/24/24 11:59pm EST");
 
 require "functions/main_fns.php";
 require "functions/year_end_poll_fns.php";
