@@ -1,12 +1,12 @@
 <?php
 
 /*Redirect to be used after year end poll*/
-//  header("Location: pages.php?page=top223of2023");
+// header("Location: pages.php?page=top224of2024");
 //  die();
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
-$poll_end_datetime = strtotime("12/20/23 5:00pm EST");
+$poll_end_datetime = strtotime("12/30/24 11:59pm EST");
 
 require "functions/main_fns.php";
 require "functions/year_end_poll_fns.php";
@@ -62,7 +62,7 @@ if ($_POST['contest_form']) {
 
     echo "<div class=\"row\">";
     if ($new_contestant == 1) {
-        echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2023 Year End Poll!<br>Find out all the results when we countdown The Top 223 Songs of 2023, <br>December 26<sup>th</sup> thru 29<sup>th</sup> .</div>";
+        echo "<div class=\"twelve columns top-spacer_20 center success\">Good luck and thanks for voting in Y-Not's 2024 Year End Poll!<br>Find out all the results when we countdown The Top 224 Songs of 2024, <br>December 30<sup>th</sup> thru January 3<sup>rd</sup> .</div>";
     } elseif ($new_contestant == "missing_values") {
         echo "<div class=\"twelve columns top-spacer_20 center error\">Sorry! <br> Seems like you may be missing some value(s), please try again.</div>";
     } else {
@@ -78,7 +78,7 @@ if ($_POST['contest_form']) {
     <?php if (date("Y-m-d H:i:s", time()) <= date("Y-m-d H:i:s ", $poll_end_datetime)) { ?>
 
         <div class="twelve columns"><div class="center top-spacer_20 bottom-spacer_20" style="max-width: 100%">
-          <img src="https://i.imgur.com/53cjauE.gif" alt="YNot Year End Poll 2023"  style="max-width: 100%">
+          <img src="https://i.imgur.com/hIpIG5R.gif" alt="YNot Year End Poll 2024"  style="max-width: 100%">
         </div>
 
         </div>
@@ -87,9 +87,9 @@ if ($_POST['contest_form']) {
 
     <div class="column twelve">
 
-        <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2023! Cast your votes and you could win <b>an Apple TV 4K with 3 months of Apple TV+</b> and the chance to play your own top 20 songs of the year on Y-Not Radio!
+        <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2024! Cast your votes and you could win an Apple Watch and the chance to play your own top 20 songs of the year on Y-Not Radio!
         <br><br>
-        Vote now thru Dec. 20th. Then we'll count down <i>The Top 223 of 2023</i> from December 26th thru 29th!  <!--<i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.-->
+        Vote now thru Dec. 23rd. Then we'll count down <i>The Top 224 of 2024</i> from December 30th thru January 3rd!  <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.
         <br><br>
         Need some ideas? Check out the Y-Not DJs best of lists <a href="yearendstaffpicks.php">here</a>.</p>
     </div>
@@ -97,8 +97,8 @@ if ($_POST['contest_form']) {
     </div>
 
   <div class="center social">
-    	<a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out @YNotRadio's 2023 Year End Poll #YNotYearEndPoll" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
-        <div class="fb-like" data-href="http://www.ynotradio.net/yearendpoll.php?2023" data-send="true" data-width="450" data-show-faces="false"></div>
+    	<a href="https://twitter.com/share" class="twitter-share-button" data-text="Check out @YNotRadio's 2024 Year End Poll #YNotYearEndPoll" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
+        <div class="fb-like" data-href="http://www.ynotradio.net/yearendpoll.php?2024" data-send="true" data-width="450" data-show-faces="false"></div>
     </div>
     <?php
 require "partials/_year_end_poll_dashboard.php" ?>
@@ -121,7 +121,7 @@ if ($new_contestant == 1) {
 <div class="row">
   <div class="three columns"></div>
   <div class="six columns">
-    <h3 class="center">Enter To Win an Apple TV.</h3>
+    <h3 class="center">Enter To Win an Apple Watch.</h3>
     <form action="yearendpoll.php" method="post" class="form-default">
     <?php require "partials/_year_end_poll_form.php"; ?>
   </div>
@@ -134,9 +134,9 @@ if ($new_contestant == 1) {
 } //end of else
 } else {
     echo "<div class=\"center top-spacer_20 bottom-spacer_20\">
-        <img src=\"https://i.imgur.com/53cjauE.gif\" alt=\"YNot Year End Poll 2023\"  style=\"max-width: 100%\">
+        <img src=\"https://i.imgur.com/hIpIG5R.gif\" alt=\"YNot Year End Poll 2024\"  style=\"max-width: 100%\">
             </div>
-<p>Thanks to everyone who voted in Y-Not's 2023 Year End Poll!  Voting is now closed and we'll be tabulating over the holiday. Tune in from December 26th - 29th to hear all the results in Y-Not’s Top 223 of 2023 countdown, starting at 10am each day. In the meantime, check out the Y-Not DJs' <a href=\"yearendstaffpicks.php\">top albums and songs</a>!</p>
+<p>Thanks to everyone who voted in Y-Not's 2024 Year End Poll!  Voting is now closed and we'll be tabulating over the holiday. Tune in from December 30th - January 3rd to hear all the results in Y-Not’s Top 224 of 2024 countdown, starting at 10am each day. In the meantime, check out the Y-Not DJs' <a href=\"yearendstaffpicks.php\">top albums and songs</a>!</p>
           </div>
           <div class=\"center\">
           </div>";
