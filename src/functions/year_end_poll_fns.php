@@ -155,7 +155,17 @@ function get_values($table_name)
 {
     $columns = get_column_names($table_name);
 
-    $query = "SELECT * FROM year_end_" . $table_name . " ORDER BY " . $columns[1];
+    /* 
+    conditionally strip "The" from the column to be used for sorting, e.g.
+    SELECT *, \
+        CASE WHEN artist LIKE 'The %' 
+        THEN trim(substr(artist from 4)) 
+        ELSE artist END as sortable_artist 
+    FROM `year_end_artists` 
+    ORDER BY sortable_artist
+    */
+
+    $query = "SELECT *, CASE WHEN ". $columns[1] ." LIKE 'The %' THEN trim(substr(". $columns[1] ." from 4)) else ". $columns[1] ." end as sortable_". $columns[1] ." FROM year_end_" . $table_name . " ORDER BY sortable_" . $columns[1];
     $result = mysqli_query(open_db(), $query);
 
     if (!$result) {
