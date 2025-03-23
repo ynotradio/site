@@ -1,4 +1,3 @@
-id,region,band1_id,band1_votes,band2_id,band2_votes,last_updated,start_time,end_time,winner_id,show_score,sponsor,sponsor_msg
 1,1,1,0,2,0,2023-03-23 15:10:00,2025-03-24 10:00:00,2025-03-24 10:30:00,0,1,NULL,NULL
 2,1,3,0,4,0,2023-03-23 15:10:00,2025-03-24 10:30:00,2025-03-24 11:00:00,0,1,NULL,NULL
 3,1,5,0,6,0,2023-03-23 15:10:00,2025-03-24 11:00:00,2025-03-24 11:30:00,0,1,NULL,NULL
