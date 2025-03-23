@@ -659,8 +659,20 @@ function get_new_match($old_match)
     return $info['new'];
 }
 
-function show_match($match_id)
+/**
+ * Display the current match and tournament status
+ * 
+ * @param int $match_id The match ID to display
+ * @param string $tournament_date Optional tournament start date in Y-m-d format
+ * @return void
+ */
+function show_match($match_id, $tournament_date = null)
 {
+    // Global tournament date to make it accessible across all functions
+    global $madness_start_date;
+    if ($tournament_date === null && isset($madness_start_date)) {
+        $tournament_date = $madness_start_date;
+    }
 
     if ($match_id != 8888) {
         $match_status = get_match_status($match_id);
@@ -722,13 +734,12 @@ function show_match($match_id)
     }
 
     if (end_of_madness()) {
-        winner_banner();
+        winner_banner($tournament_date);
     } elseif (waiting_for_final()) {
         echo "<div class=\"top-spacer_20 center\"><strong>Hang in there, we are still counting up all of the votes...</strong></div>";
     } else {
-        next_match();
+        next_match($tournament_date);
     }
-
 }
 
 function waiting_for_final()
@@ -793,7 +804,13 @@ function scoreboard($match)
     }
 }
 
-function next_match()
+/**
+ * Display the next match information
+ * 
+ * @param string $tournament_date Optional tournament start date in Y-m-d format
+ * @return void
+ */
+function next_match($tournament_date = null)
 {
     $next_query = "SELECT id, band1_id, band2_id, start_time, DATE_FORMAT(start_time, '%h:%i') as fdate FROM mrm_matches WHERE now() < start_time ORDER BY start_time LIMIT 1";
     $next_result = mysqli_query(open_db(), $next_query);
@@ -1051,7 +1068,23 @@ function view_all_mrm_bands()
     echo '</ol>';
 }
 
-function winner_banner()
+/**
+ * Gets the Modern Rock Madness tournament year from the start date
+ * 
+ * @param string $start_date The tournament start date in Y-m-d format
+ * @return string The tournament year
+ */
+function get_tournament_year($start_date = null)
+{
+    if ($start_date === null) {
+        // Default to current year if no date is provided
+        return date('Y');
+    }
+    
+    return date('Y', strtotime($start_date));
+}
+
+function winner_banner($tournament_date = null)
 {
     $query = "SELECT * FROM mrm_matches WHERE id=63";
     $result = mysqli_query(open_db(), $query);
@@ -1061,7 +1094,10 @@ function winner_banner()
         die('Invalid');
     }
     $info = mysqli_fetch_assoc($result);
+    
+    // Get the tournament year
+    $year = get_tournament_year($tournament_date);
 
-    echo "<div class=\"center\"><h2>Congratulations to your " . date('Y') . " <br>Y-Not Modern Rock Madness Champions</h2><h1>" . band_name($info['winner_id']) . "!</h1>" .
+    echo "<div class=\"center\"><h2>Congratulations to your " . $year . " <br>Y-Not Modern Rock Madness Champions</h2><h1>" . band_name($info['winner_id']) . "!</h1>" .
     '<img src="' . get_band_pic_url($info['winner_id']) . '" height="200px"></div>';
 }
