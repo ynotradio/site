@@ -906,18 +906,17 @@ function vote_form($match_id, $band_id)
     $auth0 = $GLOBALS['auth0'];
 
     $userInfo = $auth0->getUser();
+    $voter_email = $userInfo['email'];
 
-    if ($userInfo) {
-        $voter_email = $userInfo['email'];
-
+    if ($voter_email == null || trim($voter_email) == '') {
+        echo '<a href="social_login.php" class="btn-success">Log in to vote</a>';
+    } else {
         echo '<form action="madness.php" method="post">
         <input type="submit" class="btn-success" value="Vote!">
         <input type="hidden" name="match_id" value ="' . $match_id . '">
         <input type="hidden" name="band_id" value ="' . $band_id . '">
         <input type="hidden" name="voter_email" value ="' . $voter_email . '">
         </form>';
-    } else {
-        echo '<a href="social_login.php" class="btn-success">Log in to vote</a>';
     }
 }
 

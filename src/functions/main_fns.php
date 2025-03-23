@@ -16,17 +16,14 @@ function open_db()
 }
 
 function format($text)
-{
-    $text = "<p>" . $text . "</p>";
-    $search = array("\r", "\n\n", "\n");
-    $replace = array("", "</p><p>", "<br/>");
-    $text = str_replace($search, $replace, $text);
-    return $text;
+function format($text) {
+  $text = "<p>" . $text . "</p>";
+  $search = array("\r", "\n\n", "\n");
+  $replace = array("","</p><p>", "<br/>");
+  $text = str_replace($search, $replace, $text);
+  return $text;
 }
 
-function validate_user($username, $password, $remember_me)
-{
-    $current_page = substr($_SERVER["SCRIPT_NAME"], strrpos($_SERVER["SCRIPT_NAME"], "/") + 1);
     $link = open_db();
 
     //Need to sanitize the input
