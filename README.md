@@ -58,7 +58,14 @@ In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typica
 
 ## Teardown
 
-- When you are finished development, run `docker-compose down` from your terminal to halt the containers.
+### Local Environment
+- When you are finished with local development, run `docker-compose down` from your terminal to halt the containers.
+
+### GitHub Codespaces
+- For Codespaces, you can either:
+  - Stop the Docker containers using `docker-compose down`
+  - Stop the Codespace by clicking on the "Codespaces" menu in the bottom left corner and selecting "Stop Current Codespace"
+  - Codespaces will automatically shut down after a period of inactivity
 
 ## Support
 
