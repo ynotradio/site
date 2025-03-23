@@ -3,6 +3,9 @@ date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 error_reporting(E_ALL & ~E_NOTICE);
 
+require 'vendor/autoload.php';
+require 'partials/__env_loader.php';
+
 /**
  * Connect to the database using environment variables
  * 
@@ -10,11 +13,12 @@ error_reporting(E_ALL & ~E_NOTICE);
  */
 function open_db()
 {
+
     // Use environment variables if available, otherwise fall back to defaults
-    $db_name = isset($_ENV['DB_NAME']) ? $_ENV['DB_NAME'] : "ynot_site";
-    $db_user = isset($_ENV['DB_USER']) ? $_ENV['DB_USER'] : "ynot_sql_user";
-    $db_pass = isset($_ENV['DB_PASSWORD']) ? $_ENV['DB_PASSWORD'] : "ynot_sql_pass";
-    $db_hostname = isset($_ENV['DB_HOST']) ? $_ENV['DB_HOST'] : "mysql";
+    $db_name = $_ENV['DB_NAME'];
+    $db_user = $_ENV['DB_USER'];
+    $db_pass = $_ENV['DB_PASSWORD'];
+    $db_hostname = $_ENV['DB_HOST'];
 
     // Establish connection
     $db = mysqli_connect($db_hostname, $db_user, $db_pass);

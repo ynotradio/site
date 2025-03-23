@@ -10,8 +10,6 @@ if (strtotime($madness_start_date) > strtotime('now')) {
 }
 
 require "functions/main_fns.php";
-require 'vendor/autoload.php';
-require 'partials/__env_loader.php';
 
 $uri = $_SERVER["HTTP_HOST"];
 $protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
