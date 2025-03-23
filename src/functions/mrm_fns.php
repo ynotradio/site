@@ -71,21 +71,115 @@ function countdown_values($match_id)
     <div class=\"hidden\" id=\"sec\">" . $countdown_values['sec'] . "</div>";
 }
 
-function display_first_row()
+/**
+ * Get the tournament dates based on a start date
+ * 
+ * @param string $start_date Start date of the tournament in Y-m-d format
+ * @return array Array of dates for each tournament round
+ */
+function get_tournament_dates($start_date)
 {
-    echo "<ul id='time_line'>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 19-20</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 25</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 27</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 28</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 28</li>\n
-          <li class=\"top-pad_3\"><strong>CHAMPION</strong>March 29</li>\n
-          <li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>March 28</li>\n
-          <li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>March 28</li>\n
-          <li class=\"top-pad_3\"><strong>SWELL 16</strong>March 27</li>\n
-          <li><strong>2<sup>nd</sup> ROUND</strong>March 26</li>\n
-          <li><strong>1<sup>st</sup> ROUND</strong>March 21-22</li>\n
-      </ul>\n";
+    // Parse the start date
+    $tournament_start = strtotime($start_date);
+    
+    // Ensure the start date is a Monday (1 = Monday, 7 = Sunday)
+    $day_of_week = date('N', $tournament_start);
+    if ($day_of_week != 1) {
+        // Adjust to next Monday if not already a Monday
+        $tournament_start = strtotime('next Monday', $tournament_start);
+    }
+    
+    // Calculate all tournament dates
+    $dates = [];
+    
+    // First Round - Left side (Monday-Tuesday of Week 1)
+    $first_round_left_start = $tournament_start;
+    $first_round_left_end = strtotime('+1 day', $first_round_left_start);
+    $dates['first_round_left'] = date('F j', $first_round_left_start) . '-' . date('j', $first_round_left_end);
+    
+    // First Round - Right side (Wednesday-Thursday of Week 1)
+    $first_round_right_start = strtotime('+2 days', $first_round_left_start);
+    $first_round_right_end = strtotime('+1 day', $first_round_right_start);
+    $dates['first_round_right'] = date('F j', $first_round_right_start) . '-' . date('j', $first_round_right_end);
+    
+    // Second Round - Left side (Monday of Week 2)
+    $second_round_left = strtotime('+7 days', $first_round_left_start);
+    $dates['second_round_left'] = date('F j', $second_round_left);
+    
+    // Second Round - Right side (Tuesday of Week 2)
+    $second_round_right = strtotime('+1 day', $second_round_left);
+    $dates['second_round_right'] = date('F j', $second_round_right);
+    
+    // Sweet 16 - Both sides (Wednesday of Week 2)
+    $sweet_16 = strtotime('+2 days', $second_round_left);
+    $dates['sweet_16'] = date('F j', $sweet_16);
+    
+    // Elusive 8 - Both sides (Thursday of Week 2)
+    $elusive_8 = strtotime('+3 days', $second_round_left);
+    $dates['elusive_8'] = date('F j', $elusive_8);
+    
+    // Final 4 - Both sides (Thursday of Week 2, same day as Elusive 8)
+    $dates['final_4'] = date('F j', $elusive_8);
+    
+    // Championship (Friday of Week 2)
+    $championship = strtotime('+4 days', $second_round_left);
+    $dates['championship'] = date('F j', $championship);
+    
+    return $dates;
+}
+
+/**
+ * Format a timeline item for the tournament schedule
+ * 
+ * @param string $title The round title
+ * @param string $date The formatted date string
+ * @param bool $use_padding Whether to add top padding class
+ * @return string HTML for the timeline item
+ */
+function format_timeline_item($title, $date, $use_padding = false)
+{
+    $padding_class = $use_padding ? ' class="top-pad_3"' : '';
+    return "<li{$padding_class}><strong>{$title}</strong>{$date}</li>\n";
+}
+
+/**
+ * Displays the timeline for the tournament rounds
+ * 
+ * @param string $start_date Start date of the tournament in Y-m-d format (e.g. '2025-03-17')
+ * @return void
+ */
+function display_first_row($start_date = null)
+{
+    // Default to current year March 17th if no date provided
+    if ($start_date === null) {
+        $start_date = date('Y') . '-03-17';
+    }
+    
+    // Get all tournament dates
+    $dates = get_tournament_dates($start_date);
+    
+    // Start the timeline
+    echo "<ul id='time_line'>\n";
+    
+    // Left side of the bracket (first to championship)
+    echo format_timeline_item("1<sup>st</sup> ROUND", $dates['first_round_left']);
+    echo format_timeline_item("2<sup>nd</sup> ROUND", $dates['second_round_left']);
+    echo format_timeline_item("SWELL 16", $dates['sweet_16'], true);
+    echo format_timeline_item("ELUSIVE 8", $dates['elusive_8'], true);
+    echo format_timeline_item("FANTASTIC 4", $dates['final_4'], true);
+    
+    // Championship (center)
+    echo format_timeline_item("CHAMPION", $dates['championship'], true);
+    
+    // Right side of the bracket (championship to first)
+    echo format_timeline_item("FANTASTIC 4", $dates['final_4'], true);
+    echo format_timeline_item("ELUSIVE 8", $dates['elusive_8'], true);
+    echo format_timeline_item("SWELL 16", $dates['sweet_16'], true);
+    echo format_timeline_item("2<sup>nd</sup> ROUND", $dates['second_round_right']);
+    echo format_timeline_item("1<sup>st</sup> ROUND", $dates['first_round_right']);
+    
+    // Close the timeline
+    echo "</ul>\n";
 }
 
 function display_mrm_band($mrm_band)

@@ -35,7 +35,9 @@ if ($band_id && $match_id)
   vote($match_id, $band_id, false);
 
 show_match($current_match['id']);
-display_first_row();
+// Use the same start date as defined in madness.php
+$madness_start_date = '2025-03-24'; // This should match the date in madness.php
+display_first_row($madness_start_date);
 display_bracket();
 }
 ?>

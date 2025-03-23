@@ -56,7 +56,7 @@ if ($band_id && $match_id) {
 }
 
 show_match($current_match['id']);
-display_first_row();
+display_first_row($madness_start_date);
 display_bracket();
 ?>
 
