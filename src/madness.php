@@ -3,7 +3,7 @@
 $page_file = "madness.php";
 $page_title = "Modern Rock Madness";
 
-$madness_start_date = '2024-03-19';
+$madness_start_date = '2025-03-24';
 if (strtotime($madness_start_date) > strtotime('now')) {
     header('Location: /pages.php?page=modern-rock-madness');
 }

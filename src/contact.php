@@ -55,3 +55,4 @@ if ($_POST['action'])
     <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
 <?php require ("partials/_footer.php"); ?>
+
