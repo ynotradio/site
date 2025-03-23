@@ -13,7 +13,7 @@ require "partials/_header.php";
   <div class="twelve columns content" style="white-space:nowrap;">
 
     <div class="twelve" style="display:inline-block;">
-    		<div class="twelve columns" style="max-width: 100%"><div class="center top-spacer_20 bottom-spacer_20" ><img src="https://i.imgur.com/53cjauE.gif" alt="YNot Year End Poll 2023" style="max-width: 100%" ></div>
+    		<div class="twelve columns" style="max-width: 100%"><div class="center top-spacer_20 bottom-spacer_20" ><img src="https://i.imgur.com/hIpIG5R.gif" alt="YNot Year End Poll 2024" style="max-width: 100%" ></div>
 
         <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div> -->
         </div>
@@ -31,7 +31,7 @@ require "partials/_header.php";
   <div class="twelve columns top-spacer_20">
 <table width="100%" border="0" cellspacing="5">
   <tr>
-    <td bgcolor="#666666"><div align="center"><strong><a href="yearendpoll.php">Go back to 2023 YEAR END POLL</a></strong></div></td>
+    <td bgcolor="#666666"><div align="center"><strong><a href="yearendpoll.php">Go back to 2024 YEAR END POLL</a></strong></div></td>
     <!-- <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2019">YEAR END POLL RESULTS</a></strong></div></td> -->
     <!-- <td bgcolor="#CCCCCC"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td> -->
   </tr>
