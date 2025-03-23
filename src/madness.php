@@ -5,7 +5,12 @@ $page_title = "Modern Rock Madness";
 
 // Load configuration settings
 require "partials/_mrm_config.php";
-if (strtotime($madness_start_date) > strtotime('now')) {
+
+// Check for preview parameter to bypass time-based redirect
+$preview_mode = isset($_GET['preview']) && $_GET['preview'] === 'true';
+
+// Only redirect if tournament hasn't started and we're not in preview mode
+if (strtotime($madness_start_date) > strtotime('now') && !$preview_mode) {
     header('Location: /pages.php?page=modern-rock-madness');
 }
 
@@ -36,6 +41,11 @@ $band_id = $_POST['band_id'];
 ?>
 
 <!-- <?php echo date('Y-m-d H:i:s'); ?> -->
+<?php if ($preview_mode): ?>
+<div style="background-color: #FFEB3B; color: #000; padding: 10px; text-align: center; margin-bottom: 10px; border-radius: 4px;">
+  <strong>Preview Mode:</strong> Viewing tournament before the official start date (<?php echo date('F j, Y', strtotime($madness_start_date)); ?>)
+</div>
+<?php endif; ?>
 
 <div class="row">
   <div class="twelve columns">
