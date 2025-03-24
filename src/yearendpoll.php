@@ -1,12 +1,12 @@
 <?php
 
 /*Redirect to be used after year end poll*/
-// header("Location: pages.php?page=top224of2024");
-//  die();
+header("Location: pages.php?page=top224of2024");
+die();
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
-$poll_end_datetime = strtotime("12/24/24 11:59pm EST");
+$poll_end_datetime = strtotime("12/23/24 11:59pm EST");
 
 require "functions/main_fns.php";
 require "functions/year_end_poll_fns.php";
