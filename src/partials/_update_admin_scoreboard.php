@@ -1,6 +1,8 @@
 <?php
-  require ("../functions/main_fns.php");
-  require ("../functions/mrm_fns.php");
+  // Use absolute paths since this can be called directly from AJAX
+  $path = $_SERVER['DOCUMENT_ROOT'];
+  require_once($path . "/functions/main_fns.php");
+  require_once($path . "/functions/mrm_fns.php");
   open_db();
 
   if ($_SESSION["logged_in"]) {
@@ -15,6 +17,6 @@
       admin_scoreboard($current_match);
     }
   } else {
-    header('Location: ../madness.php');
+    echo "<!-- Not logged in -->";
   }
 ?>
