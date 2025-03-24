@@ -3,8 +3,13 @@ date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 error_reporting(E_ALL & ~E_NOTICE);
 
-require 'vendor/autoload.php';
-require 'partials/__env_loader.php';
+// Use absolute paths for including vendor and env loader
+$root_path = $_SERVER['DOCUMENT_ROOT'];
+$vendor_path = $root_path . '/vendor/autoload.php';
+$env_loader_path = $root_path . '/partials/__env_loader.php';
+
+require $vendor_path;
+require $env_loader_path;
 
 /**
  * Connect to the database using environment variables
