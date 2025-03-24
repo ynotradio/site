@@ -22,7 +22,7 @@ if (!$_SESSION["logged_in"]) {
 /*----- CONTENT ------*/
 ?>
 <script type='text/javascript'>
-  AdminMadness.updateAdminScoreboard();
+  // Initialize AdminMadness automatically when document is ready
 </script>
 
 <div class="row">

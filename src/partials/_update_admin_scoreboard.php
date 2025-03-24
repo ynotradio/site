@@ -4,8 +4,16 @@
   open_db();
 
   if ($_SESSION["logged_in"]) {
-    $current_match = now_match();
-    admin_scoreboard($current_match); 
+    // If specific match_id is provided, use that match
+    if (isset($_POST['match_id']) && is_numeric($_POST['match_id'])) {
+      $match_id = $_POST['match_id'];
+      $match = get_match($match_id);
+      admin_scoreboard($match);
+    } else {
+      // Otherwise use current match
+      $current_match = now_match();
+      admin_scoreboard($current_match);
+    }
   } else {
     header('Location: ../madness.php');
   }
