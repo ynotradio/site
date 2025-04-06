@@ -94,8 +94,6 @@ function display_all_deejays($deejays){
     echo "<div class=\"deejay\">".
       "<img src=\"". $info['pic']. "\" width='150px';>\n".
       "<h2>" . $info['name']. "</h2>\n";
-    if ($info['name'] == "Josh T. Landow")
-      echo "Josh has been with the Y for many years now dating back to his days as an intern at Y100 in 1997. Josh went on to be a weekend/fill-in DJ at Y100 as well as the Promotions Director until the station went off the air in February 2005. He then carried the brand on with Jim McGuinn as Y100 Rocks before partnering with another radio station until July 2010. Now Josh has gone indie again with Y-Not Radio - Philadelphia's Real Alternative!";
     if ($info['show'])
       echo "<div class=\"show_title\">" . $info['show']. "</div>\n";
     echo "<div><a href=\"mailto:".$info['email']."\">E-Mail</a></div>\n";

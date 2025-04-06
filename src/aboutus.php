@@ -19,7 +19,8 @@ require ("partials/_header.php");
       <a href="deejays.php"><h3>Y-Not Radio Staff</h3></a>
       <a href="donate.php"><h3>Support Y-Not Radio</h3></a>
       <a href="mobile.php"><h3>Get The Y-Not Radio Mobile App</h3></a>
-      <a href="ymail.php"><h3>Subscribe To Y-Not's Newsletter</h3></a>
+      
+<a href="ymail.php"><h3>Subscribe To Y-Not's Newsletter</h3></a>
     </div>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
