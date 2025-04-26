@@ -144,10 +144,14 @@ function on_air(){
 
   $info = mysqli_fetch_assoc($result);
 
-  $display_name = str_replace("<br>", " ", $info['host']);
-  $display_name = str_replace("<i>", "", $display_name);
-  $display_name = str_replace("</i>", "", $display_name);
- 
-  return substr($display_name, 0, 35);
+  // Check if host exists before using it
+  if ($info && isset($info['host'])) {
+    $display_name = str_replace("<br>", " ", $info['host']);
+    $display_name = str_replace("<i>", "", $display_name);
+    $display_name = str_replace("</i>", "", $display_name);
+    return substr($display_name, 0, 35);
+  }
+  
+  return "";
 }
 ?>
