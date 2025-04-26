@@ -1,6 +1,12 @@
 {
     "require": {
-        "auth0/auth0-php": "~7.0",
-        "vlucas/phpdotenv": "^5.3"
+        "auth0/auth0-php": "^8.9",
+        "vlucas/phpdotenv": "^5.3",
+        "nyholm/psr7": "^1.6"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
     }
 }
