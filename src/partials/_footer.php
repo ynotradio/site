@@ -27,13 +27,19 @@ if (class_exists('Auth0\SDK\Auth0') &&
     !empty($_ENV['AUTH0_CLIENT_ID']) && 
     !empty($_ENV['AUTH0_CLIENT_SECRET'])) {
     try {
-        $auth0 = new Auth0\SDK\Auth0([
+        $configuration = new Auth0\SDK\Configuration\SdkConfiguration([
+            'strategy' => 'webapp',
             'domain' => $_ENV['AUTH0_DOMAIN'],
-            'client_id' => $_ENV['AUTH0_CLIENT_ID'],
-            'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
-            'redirect_uri' => $protocol . "://" . $uri,
-            'scope' => 'openid email profile',
+            'clientId' => $_ENV['AUTH0_CLIENT_ID'],
+            'clientSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
+            'redirectUri' => $protocol . "://" . $uri,
+            'scope' => ['openid', 'profile', 'email'],
+            'cookieSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
+            'cookieSecure' => false,
+            'cookieDomain' => $uri
         ]);
+        
+        $auth0 = new Auth0\SDK\Auth0($configuration);
         $userInfo = $auth0->getUser();
     } catch (\Exception $e) {
         error_log('Auth0 initialization error: ' . $e->getMessage());
