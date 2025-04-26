@@ -15,24 +15,9 @@ if (strtotime($madness_start_date) > strtotime('now') && !$preview_mode) {
 }
 
 require "functions/main_fns.php";
+require_once $_SERVER['DOCUMENT_ROOT'] . '/functions/Auth0Service.php';
 
-$uri = $_SERVER["HTTP_HOST"];
-$protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
-
-$configuration = new Auth0\SDK\Configuration\SdkConfiguration([
-    'strategy' => 'webapp',
-    'domain' => $_ENV['AUTH0_DOMAIN'],
-    'clientId' => $_ENV['AUTH0_CLIENT_ID'],
-    'clientSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
-    'redirectUri' => $protocol . "://" . $uri . "/madness",
-    'scope' => ['openid', 'profile', 'email'],
-    'cookieSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
-    'cookieSecure' => false,
-    'cookieDomain' => $uri
-]);
-
-$auth0 = new Auth0\SDK\Auth0($configuration);
-
+$auth0 = Auth0Service::getInstance()->getAuth0();
 require "functions/mrm_fns.php";
 require "partials/_header.php";
 

@@ -17,35 +17,16 @@ if (file_exists($env_loader)) {
     error_log("Unable to load __env_loader.php");
 }
 
-$uri = $_SERVER["HTTP_HOST"];
-$protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
+require_once $root_path . '/functions/Auth0Service.php';
 
-// Only initialize Auth0 if autoload was successful and required env vars are present
 $userInfo = null;
-if (class_exists('Auth0\SDK\Auth0') && 
-    !empty($_ENV['AUTH0_DOMAIN']) && 
-    !empty($_ENV['AUTH0_CLIENT_ID']) && 
-    !empty($_ENV['AUTH0_CLIENT_SECRET'])) {
+if (class_exists('Auth0\SDK\Auth0')) {
     try {
-        $configuration = new Auth0\SDK\Configuration\SdkConfiguration([
-            'strategy' => 'webapp',
-            'domain' => $_ENV['AUTH0_DOMAIN'],
-            'clientId' => $_ENV['AUTH0_CLIENT_ID'],
-            'clientSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
-            'redirectUri' => $protocol . "://" . $uri,
-            'scope' => ['openid', 'profile', 'email'],
-            'cookieSecret' => $_ENV['AUTH0_CLIENT_SECRET'],
-            'cookieSecure' => false,
-            'cookieDomain' => $uri
-        ]);
-        
-        $auth0 = new Auth0\SDK\Auth0($configuration);
-        $userInfo = $auth0->getUser();
+        $userInfo = Auth0Service::getInstance()->getUser();
     } catch (\Exception $e) {
         error_log('Auth0 initialization error: ' . $e->getMessage());
     }
 }
-
 ?>
   </div>
     <footer>
