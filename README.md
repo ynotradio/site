@@ -60,6 +60,32 @@ Access PHPMyAdmin in local development by visiting [http://localhost:8181](http:
 #### GitHub Codespaces
 In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typically port 8181). Click on the "Ports" tab in your Codespaces environment and look for the PHPMyAdmin link.
 
+#### Environment Variables
+
+The site now supports environment variables for database configuration:
+
+1. Copy `.env.example` to `.env` in the project root
+2. Modify the database credentials as needed:
+   ```
+   DB_HOST=mysql
+   DB_USER=ynot_sql_user
+   DB_PASS=ynot_sql_pass
+   DB_NAME=ynot_site
+   ```
+
+#### Using the Database Class
+
+The site includes a database connection singleton class to improve database connectivity:
+
+```php
+// Get a database connection
+$db = Database::getInstance();
+
+// Using the database utility functions
+$user = db_get_row("SELECT * FROM users WHERE id = ?", [1]);
+$stories = db_get_results("SELECT * FROM stories WHERE deleted = ? ORDER BY id DESC", ['n']);
+```
+
 ## Teardown
 
 ### Local Environment

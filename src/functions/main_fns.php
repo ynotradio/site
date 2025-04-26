@@ -3,35 +3,21 @@ date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 error_reporting(E_ALL & ~E_NOTICE);
 
-// Use absolute paths for including vendor and env loader
-$root_path = $_SERVER['DOCUMENT_ROOT'];
-$vendor_path = $root_path . '/vendor/autoload.php';
-$env_loader_path = $root_path . '/partials/__env_loader.php';
-
-require $vendor_path;
-require $env_loader_path;
+// Include Database class if it hasn't been included yet
+if (!class_exists('Database')) {
+    require_once __DIR__ . '/Database.php';
+}
 
 /**
- * Connect to the database using environment variables
+ * Open a database connection
  * 
- * @return mysqli Database connection
+ * @return mysqli The database connection
+ * @deprecated Use Database::getInstance() instead
  */
 function open_db()
 {
-
-    // Use environment variables if available, otherwise fall back to defaults
-    $db_name = $_ENV['DB_NAME'];
-    $db_user = $_ENV['DB_USER'];
-    $db_pass = $_ENV['DB_PASSWORD'];
-    $db_hostname = $_ENV['DB_HOST'];
-
-    // Establish connection
-    $db = mysqli_connect($db_hostname, $db_user, $db_pass);
-    
-    // Select database
-    mysqli_select_db($db, $db_name);
-    
-    return $db;
+    // For backward compatibility, use the Database singleton
+    return Database::getInstance();
 }
 
 function format($text) {
