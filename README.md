@@ -2,6 +2,13 @@
 
 ----------------
 
+## Documentation
+
+For detailed information about the project, please see:
+
+- [Development Guide](docs/DEVELOPMENT.md) - Project structure, architecture, and development conventions
+- [Modern Rock Madness Update Guide](docs/MRM_ANNUAL_UPDATE.md) - Steps for the annual MRM tournament update
+
 ## Development Options
 
 There are two ways to set up a development environment for this site:
