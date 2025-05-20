@@ -1,6 +1,12 @@
 {
     "require": {
+        "php": "^7.4.7",
         "auth0/auth0-php": "~7.0",
         "vlucas/phpdotenv": "^5.3"
+    },
+    "config": {
+        "platform": {
+            "php": "7.4.7"
+        }
     }
 }

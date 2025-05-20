@@ -31,7 +31,7 @@ services:
     networks:
       - app-tier
   phpfpm:
-    image: docker.io/bitnami/php-fpm:latest
+    image: docker.io/bitnami/php-fpm:7.4
     restart: unless-stopped
     ports:
       - 9000:9000
