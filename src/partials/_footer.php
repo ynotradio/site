@@ -32,5 +32,6 @@ if ($userInfo) {
 ?>
   </footer>
   <?php mysqli_close(open_db()); ?>
+  <!--- 🔔🔔🔔🔔 From Philadelphia, to the WORLD. 🌎🌎🌎🌎 -->
   </body>
 </html>
