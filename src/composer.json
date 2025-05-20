@@ -8,5 +8,9 @@
         "platform": {
             "php": "7.4.7"
         }
+    },
+    "scripts": {
+        "deploy": "cd .. && ./bin/deploy.sh",
+        "rollback": "cd .. && ./bin/rollback.sh"
     }
 }

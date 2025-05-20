@@ -86,3 +86,20 @@ Branch names should follow the following formats:
 - Releases: `release/release-2.0.0`
 
 If you solve a tricky bug, the next person who works on this codebase will appreciate you including a Stack Overflow or Github Issue link to help understand why the change was made!
+
+## Deployment to Lightsail
+
+- **Deploy:**
+  ```sh
+  composer deploy
+  ```
+  This runs the deployment script (`bin/deploy.sh`).
+
+- **Rollback:**
+  ```sh
+  composer rollback
+  ```
+  This runs the rollback script (`bin/rollback.sh`).
+
+
+The script definitions are in the `scripts` section of `src/composer.json`.
