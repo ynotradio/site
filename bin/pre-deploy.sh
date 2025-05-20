@@ -40,6 +40,14 @@ if [ ! -f "src/composer.json" ]; then
     exit 1
 fi
 
+# Create backup of htdocs on server
+echo "📦 Creating backup of htdocs..."
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="htdocs_backup_${TIMESTAMP}.tar.gz"
+ssh ynotradio "cd /opt/bitnami/apache2 && \
+    tar -czf ~/${BACKUP_FILE} --transform 's,^htdocs/,,' htdocs/ && \
+    echo 'Backup created: ${BACKUP_FILE}'"
+
 # Change to the src directory
 cd "$(dirname "$0")/../src"
 
