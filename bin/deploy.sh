@@ -23,14 +23,21 @@ rsync -avz --delete \
     --exclude 'vendor' \
     --exclude '.git' \
     --exclude '.env' \
+    --exclude 'images' \
+    --exclude 'imgs' \
+    --chmod=D755,F644 \
+    --rsync-path="sudo rsync" \
     src/ ynotradio:~/htdocs/
 
 # Copy the .env file
 echo "🔑 Copying .env file..."
-rsync -avz src/partials/.env ynotradio:~/htdocs/partials/.env
+rsync -avz \
+    --chmod=F644 \
+    --rsync-path="sudo rsync" \
+    src/partials/.env ynotradio:~/htdocs/partials/.env
 
-# Run composer install on the server
+# Run composer install on the server with correct permissions
 echo "📦 Running composer install on server..."
-ssh ynotradio "cd ~/htdocs && composer install --no-dev --optimize-autoloader --no-interaction"
+ssh ynotradio "sudo chown -R bitnami:daemon ~/htdocs/vendor && cd ~/htdocs && composer install --no-dev --optimize-autoloader --no-interaction"
 
 echo "✅ Deployment complete!"

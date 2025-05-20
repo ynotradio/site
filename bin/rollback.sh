@@ -62,6 +62,10 @@ ssh ynotradio "set -x && \
     sudo cp -rv ~/temp_restore/* /opt/bitnami/apache2/htdocs/ && \
     echo 'Cleaning up...' && \
     rm -rf ~/temp_restore && \
+    echo 'Fixing permissions...' && \
+    sudo chown -R daemon:daemon /opt/bitnami/apache2/htdocs/ && \
+    sudo find /opt/bitnami/apache2/htdocs/ -type d -exec chmod 775 {} \; && \
+    sudo find /opt/bitnami/apache2/htdocs/ -type f -exec chmod 664 {} \; && \
     echo 'Verifying htdocs contents...' && \
     ls -la /opt/bitnami/apache2/htdocs/"
 
