@@ -10,6 +10,9 @@ require_once ("models/CdOfTheWeekFactory.php");
 $id = $_GET['id'] ?? null;
 $action = $_POST['action'] ?? 'update';
 
+// log action check
+error_log("Action: " . $action);
+
 if (!$_SESSION["logged_in"]) {
     login_prompt($_POST['username'], $_POST['remember_me'], $_SESSION["error"]);
 } else {
@@ -20,15 +23,16 @@ if (!$_SESSION["logged_in"]) {
             <h1>Update a CD of the Week</h1>
             <?php
             try {
-                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($GLOBALS['db']);
+                $db = open_db(); // Get database connection
+                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
                 
                 if (!$id) {
                     echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
-                } elseif ($action === 'update') {
+                } elseif (!isset($_POST['artist'])) { // If form hasn't been submitted
                     // Display the form with existing data
                     $cdotw = $cdOfTheWeek->getById($id);
                     if ($cdotw) {
-                        require ("partials/_cdotw_form.php");
+                        require ("partials/_cdotw_form_new.php");
                     } else {
                         echo '<div class="top-spacer_20 center error">CD of the Week not found</div>';
                     }
@@ -40,13 +44,17 @@ if (!$_SESSION["logged_in"]) {
                         'label' => $_POST['label'],
                         'review' => $_POST['review'],
                         'cd_pic_url' => $_POST['cd_pic_url'],
-                        'band' => $_POST['band_url'],
+                        'band' => $_POST['band'],
                         'reviewer' => $_POST['reviewer'],
                         'date' => $_POST['date']
                     ];
+                    error_log("Data: " . print_r($data, true));
                     
                     try {
+                        error_log("Attempting to update CD of the Week with ID: " . $id);
+                        error_log("Update data: " . print_r($data, true));
                         $success = $cdOfTheWeek->update($id, $data);
+                        error_log("Update result: " . ($success ? 'success' : 'failed'));
                         if ($success) {
                             echo '<div class="top-spacer_20 center success">CD of the Week has been updated successfully!</div>';
                             echo '<div class="top-spacer_20">';

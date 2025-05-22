@@ -17,7 +17,8 @@ if (!$_SESSION["logged_in"]) {
             <h1>View All CDs of the Week</h1>
             <?php
             try {
-                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($GLOBALS['db']);
+                $db = open_db(); // Get database connection
+                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
                 $allCds = $cdOfTheWeek->getAll();
                 
                 if (empty($allCds)) {

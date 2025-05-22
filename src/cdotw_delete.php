@@ -19,7 +19,8 @@ if (!$_SESSION["logged_in"]) {
             <h1>Delete a CD of the Week</h1>
             <?php
             try {
-                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($GLOBALS['db']);
+                $db = open_db(); // Get database connection
+                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
                 
                 if (!$id) {
                     echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';

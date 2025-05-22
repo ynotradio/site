@@ -81,10 +81,12 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
     }
 
     public function update(int $id, array $data): bool {
+        error_log("Updating CD of the Week with data: " . print_r($data, true));
+        
         $requiredFields = ['artist', 'title', 'label', 'review', 'cd_pic_url', 'band', 'reviewer', 'date'];
         foreach ($requiredFields as $field) {
-            if (!isset($data[$field])) {
-                throw new \InvalidArgumentException("Missing required field: $field");
+            if (!isset($data[$field]) || trim($data[$field]) === '') {
+                throw new \InvalidArgumentException("Missing or empty required field: $field");
             }
         }
 
@@ -107,9 +109,17 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
                  band = '$band',
                  reviewer = '$reviewer',
                  date = '$date'
-                 WHERE id = $id";
+                 WHERE id = $id AND deleted = 'no'";
 
-        return mysqli_query($this->db, $query);
+        error_log("Running query: " . $query);
+        $result = mysqli_query($this->db, $query);
+        
+        if (!$result) {
+            error_log("MySQL error: " . mysqli_error($this->db));
+            throw new \RuntimeException("Failed to update CD of the week: " . mysqli_error($this->db));
+        }
+        
+        return mysqli_affected_rows($this->db) > 0;
     }
 
     public function delete(int $id): bool {
@@ -117,4 +127,4 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
         $query = "UPDATE cdotw SET deleted = 'yes' WHERE id = $id";
         return mysqli_query($this->db, $query);
     }
-} 
+}

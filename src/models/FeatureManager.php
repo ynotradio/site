@@ -12,12 +12,4 @@ class FeatureManager {
         
         return self::$features[$feature] ?? false;
     }
-    
-    public static function getDataSource(): string {
-        if (self::$features === null) {
-            self::$features = require __DIR__ . '/../config/features.php';
-        }
-        
-        return self::$features['default_data_source'] ?? 'sql';
-    }
 } 

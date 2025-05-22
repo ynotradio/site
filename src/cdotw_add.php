@@ -19,9 +19,10 @@ if (!$_SESSION["logged_in"]) {
             <h1>Add a CD of the Week</h1>
             <?php
             try {
-                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($GLOBALS['db']);
+                $db = open_db(); // Get database connection
+                $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
                 
-                if ($action === 'add') {
+                if ($action !== 'insert') {
                     // Display the form
                     $cdotw = [
                         'artist' => '',
@@ -33,18 +34,18 @@ if (!$_SESSION["logged_in"]) {
                         'reviewer' => '',
                         'date' => date('Y-m-d')
                     ];
-                    require ("partials/_cdotw_form.php");
+                    require ("partials/_cdotw_form_new.php");
                 } else {
                     // Process the form submission
                     $data = [
-                        'artist' => $_POST['artist'],
-                        'title' => $_POST['title'],
-                        'label' => $_POST['label'],
-                        'review' => $_POST['review'],
-                        'cd_pic_url' => $_POST['cd_pic_url'],
-                        'band' => $_POST['band_url'],
-                        'reviewer' => $_POST['reviewer'],
-                        'date' => $_POST['date']
+                        'artist' => $_POST['artist'] ?? '',
+                        'title' => $_POST['title'] ?? '',
+                        'label' => $_POST['label'] ?? '',
+                        'review' => $_POST['review'] ?? '',
+                        'cd_pic_url' => $_POST['cd_pic_url'] ?? '',
+                        'band' => $_POST['band'] ?? '',
+                        'reviewer' => $_POST['reviewer'] ?? '',
+                        'date' => $_POST['date'] ?? date('Y-m-d')
                     ];
                     
                     try {

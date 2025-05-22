@@ -17,9 +17,10 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
 <div class="row">
   <div class="nine columns">
     <h1>CD of The Week</h1>
-    <?php
+    <?php 
     try {
-        $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($GLOBALS['db']);
+        $db = open_db(); // Get database connection
+        $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
         
         if ($cd_id) {
             $cd = $cdOfTheWeek->getById($cd_id);
