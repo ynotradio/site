@@ -37,7 +37,7 @@ $formAction = $currentFile . ($id ? "?id=" . $id : "");
     <div class="control-group">
         <label class="required">Band Url</label>
         <div class="control">
-            <input type="text" name="band_url" class="input-xl" value="<?php echo htmlspecialchars($cdotw["band"]); ?>">
+            <input type="text" name="band" class="input-xl" value="<?php echo htmlspecialchars($cdotw["band"]); ?>">
         </div>
     </div>
     <div class="control-group">
@@ -53,13 +53,13 @@ $formAction = $currentFile . ($id ? "?id=" . $id : "");
         </div>
     </div>
     <div class="form-actions">
-      if ($cdotw['artist'] == ''){
-        echo "<input type=\"hidden\" name=\"action\" value=\"insert\">
-        <input type=\"submit\" class=\"btn-success\" value=\"Add CD of the Week\">";
-      } else {
-        echo "<input type=\"hidden\" name=\"action\" value=\"update\">
-          <input type=\"submit\" class=\"btn-info\" value=\"Update CD of the Week\">";
-      }
-    echo "</div>
-  </fieldset>";
-?>
+        <?php if ($cdotw['artist'] == ''): ?>
+            <input type="hidden" name="action" value="insert">
+            <input type="submit" class="btn-success" value="Add CD of the Week">
+        <?php else: ?>
+            <input type="hidden" name="action" value="update">
+            <input type="submit" class="btn-info" value="Update CD of the Week">
+        <?php endif; ?>
+    </div>
+</fieldset>
+</form>
