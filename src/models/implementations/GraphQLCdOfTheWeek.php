@@ -1,6 +1,6 @@
 <?php
 
-namespace YNotRadio\Models\implementations;
+namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\CdOfTheWeek;
 
@@ -13,32 +13,32 @@ class GraphQLCdOfTheWeek implements CdOfTheWeek {
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function getCurrent() {
+    public function getCurrent(): ?array {
         // TODO: Implement GraphQL query for current CD
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function getById(int $id) {
+    public function getById(int $id): ?array {
         // TODO: Implement GraphQL query for CD by ID
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function getAll(int $limit = 64) {
+    public function getAll(int $limit = 64): array {
         // TODO: Implement GraphQL query for all CDs
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function add(array $data) {
+    public function add(array $data): int {
         // TODO: Implement GraphQL mutation for adding CD
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function update(int $id, array $data) {
+    public function update(int $id, array $data): bool {
         // TODO: Implement GraphQL mutation for updating CD
         throw new \Exception('GraphQL implementation not yet available');
     }
     
-    public function delete(int $id) {
+    public function delete(int $id): bool {
         // TODO: Implement GraphQL mutation for deleting CD
         throw new \Exception('GraphQL implementation not yet available');
     }

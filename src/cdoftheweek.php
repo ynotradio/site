@@ -7,6 +7,9 @@ require ("functions/main_fns.php");
 require ("partials/_header.php");
 require_once ("models/CdOfTheWeekFactory.php");
 
+// Initialize database connection
+$GLOBALS['db'] = open_db();
+
 $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
 
 /*----- CONTENT ------*/
