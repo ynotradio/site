@@ -29,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
                     // Display the form with existing data
                     $cdotw = $cdOfTheWeek->getById($id);
                     if ($cdotw) {
-                        require ("partials/_cdotw_form_new.php");
+                        require ("partials/_cdotw_form.php");
                     } else {
                         echo '<div class="top-spacer_20 center error">CD of the Week not found</div>';
                     }

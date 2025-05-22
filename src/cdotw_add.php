@@ -34,7 +34,7 @@ if (!$_SESSION["logged_in"]) {
                         'reviewer' => '',
                         'date' => date('Y-m-d')
                     ];
-                    require ("partials/_cdotw_form_new.php");
+                    require ("partials/_cdotw_form.php");
                 } else {
                     // Process the form submission
                     $data = [
