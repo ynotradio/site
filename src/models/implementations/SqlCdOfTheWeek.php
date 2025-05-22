@@ -81,8 +81,6 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
     }
 
     public function update(int $id, array $data): bool {
-        error_log("Updating CD of the Week with data: " . print_r($data, true));
-        
         $requiredFields = ['artist', 'title', 'label', 'review', 'cd_pic_url', 'band', 'reviewer', 'date'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
@@ -111,11 +109,9 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
                  date = '$date'
                  WHERE id = $id AND deleted = 'no'";
 
-        error_log("Running query: " . $query);
         $result = mysqli_query($this->db, $query);
         
         if (!$result) {
-            error_log("MySQL error: " . mysqli_error($this->db));
             throw new \RuntimeException("Failed to update CD of the week: " . mysqli_error($this->db));
         }
         

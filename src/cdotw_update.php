@@ -10,9 +10,6 @@ require_once ("models/CdOfTheWeekFactory.php");
 $id = $_GET['id'] ?? null;
 $action = $_POST['action'] ?? 'update';
 
-// log action check
-error_log("Action: " . $action);
-
 if (!$_SESSION["logged_in"]) {
     login_prompt($_POST['username'], $_POST['remember_me'], $_SESSION["error"]);
 } else {
@@ -48,13 +45,8 @@ if (!$_SESSION["logged_in"]) {
                         'reviewer' => $_POST['reviewer'],
                         'date' => $_POST['date']
                     ];
-                    error_log("Data: " . print_r($data, true));
-                    
                     try {
-                        error_log("Attempting to update CD of the Week with ID: " . $id);
-                        error_log("Update data: " . print_r($data, true));
                         $success = $cdOfTheWeek->update($id, $data);
-                        error_log("Update result: " . ($success ? 'success' : 'failed'));
                         if ($success) {
                             echo '<div class="top-spacer_20 center success">CD of the Week has been updated successfully!</div>';
                             echo '<div class="top-spacer_20">';
