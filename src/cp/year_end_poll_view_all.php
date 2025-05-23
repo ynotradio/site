@@ -16,7 +16,7 @@ if ($_GET['poll'] != ''){
 }
 
 if (!$_SESSION["logged_in"]) {
-  login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
+  login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
 
 /*----- CONTENT ------*/
