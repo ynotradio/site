@@ -5,7 +5,7 @@ $page_title = "Update CD of the Week";
 
 require ("../functions/main_fns.php");
 require ("../partials/_header.php");
-require_once ("models/CdOfTheWeekFactory.php");
+require_once ("../models/CdOfTheWeekFactory.php");
 
 $id = $_GET['id'] ?? null;
 $action = $_POST['action'] ?? 'update';

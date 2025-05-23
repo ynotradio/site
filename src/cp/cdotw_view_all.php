@@ -5,7 +5,7 @@ $page_title = "View All CDs of the Week";
 
 require ("../functions/main_fns.php");
 require ("../partials/_header.php");
-require_once ("models/CdOfTheWeekFactory.php");
+require_once ("../models/CdOfTheWeekFactory.php");
 
 if (!$_SESSION["logged_in"]) {
     login_prompt($_POST['username'], $_POST['remember_me'], $_SESSION["error"]);
