@@ -20,7 +20,7 @@ if (!$_SESSION["logged_in"]) {
           <td width="275px">
             <dt>Ads</dt>
               <dd><a href="ad_add.php">Add an Ad</a></dd>
-              <dd><a href="../ad_image_uploader.php">Upload an Ad Image</a></dd>
+              <dd><a href="ad_image_uploader.php">Upload an Ad Image</a></dd>
               <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
               <dd><a href="ads_order.php">Order Ads</a></dd>
             <dt>CD of The Week</dt>
