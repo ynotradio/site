@@ -35,24 +35,28 @@ if ($page_file != "logout.php") {
     <!--[if lte IE 8]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-      <link href="style/base.css" rel="stylesheet" type="text/css" media="all">
+      <?php
+      // Determine if we're in the /cp directory to adjust paths
+      $base_path = (strpos($page_file, 'cp/') !== false || dirname($_SERVER['PHP_SELF']) == '/cp') ? "../" : "";
+      ?>
+      <link href="<?php echo $base_path; ?>style/base.css" rel="stylesheet" type="text/css" media="all">
 
       <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
       <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
       <!--http://code.jquery.com/jquery-1.7.1.min.js -->
 
-      <script src="js/picker.js"></script>
-      <script src="js/picker.date.js"></script>
-      <script src="js/picker.time.js"></script>
-      <script src="js/legacy.js"></script>
-      <script src="js/init.js"></script>
+      <script src="<?php echo $base_path; ?>js/picker.js"></script>
+      <script src="<?php echo $base_path; ?>js/picker.date.js"></script>
+      <script src="<?php echo $base_path; ?>js/picker.time.js"></script>
+      <script src="<?php echo $base_path; ?>js/legacy.js"></script>
+      <script src="<?php echo $base_path; ?>js/init.js"></script>
       <?php if ($page_file == "madness.php" || $page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"js/countdown.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js\"></script>";
 }
 
 ?>
       <?php if ($page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"js/admin_madness.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin_madness.js\"></script>";
 }
 
 ?>
@@ -61,7 +65,7 @@ if ($page_file != "logout.php") {
 }
 
 ?>
-      <?php require "js/common_functions.js"; ?>
+      <script type="text/javascript" src="<?php echo $base_path; ?>js/common_functions.js"></script>
 
     </head>
     <?php
@@ -82,8 +86,8 @@ if ($page_file == "yearendpoll.php") {
       }(document, 'script', 'facebook-jssdk'));</script>
       <div id="container">
       <header>
-        <img src="imgs/header_front_2022.png" alt="logo" usemap="#Map"/>
-        <iframe src="./partials/_now_playing.php" name="iradiophillyplaylist" scrolling="no" noresize="" frameborder="No" marginwidth="0" marginheight="0" width="445" height="125"></iframe>
+        <img src="<?php echo $base_path; ?>imgs/header_front_2022.png" alt="logo" usemap="#Map"/>
+        <iframe src="<?php echo $base_path; ?>partials/_now_playing.php" name="iradiophillyplaylist" scrolling="no" noresize="" frameborder="No" marginwidth="0" marginheight="0" width="445" height="125"></iframe>
         <map name="Map">
           <area shape="rect" coords="20,5,310,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
           <area shape="rect" coords="340,10,452,85" href="https://player.live365.com/ynotradio" alt="Listen Live" target="_blank"/>
@@ -111,9 +115,9 @@ foreach ($nav as $url => $title) {
     }
     //silly IE Hack for last
     if ($url == $page_file) {
-        echo "<li $last_class><a href=\"$url\" class=\"active\">$title</a></li>\n";
+        echo "<li $last_class><a href=\"" . $base_path . $url . "\" class=\"active\">$title</a></li>\n";
     } else {
-        echo "<li $last_class><a href=\"$url\">$title</a></li>\n";
+        echo "<li $last_class><a href=\"" . $base_path . $url . "\">$title</a></li>\n";
     }
 
 }

@@ -1,24 +1,24 @@
-<script type="text/javascript">
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-2140137-3']);
-  _gaq.push(['_trackPageview']);
+// Google Analytics
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-2140137-3']);
+_gaq.push(['_trackPageview']);
 
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
 
-</script>
-
-<?php
-  if ($page_file == "ymail.php") {
-?>
-<script type="text/javascript">
-  function setDays() {
-    var m = document.getElementById("send_date_month").value;
-    m = parseInt(m,10);
-    var y = document.getElementById("send_date_year").value;
+// ymail.php specific functions
+function setDays() {
+  if (typeof document.getElementById("send_date_month") === 'undefined' || 
+      document.getElementById("send_date_month") === null) {
+    return; // Not on ymail page, skip this function
+  }
+  
+  var m = document.getElementById("send_date_month").value;
+  m = parseInt(m,10);
+  var y = document.getElementById("send_date_year").value;
     var monthStartDate = new Date(y, m-1, 1);
     var monthEndDate = (new Date(y, m, 1).getTime()) - 86400; //(1000 * 60 * 60 *24);
     var d = new Date(monthEndDate);
