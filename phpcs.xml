@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<ruleset name="YNotRadio Standard">
+    <description>Custom coding standard for Y-Not Radio website</description>
+
+    <!-- Only scan PHP files -->
+    <arg name="extensions" value="php"/>
+    
+    <!-- Show progress of the run -->
+    <arg value="p"/>
+    
+    <!-- Show sniff codes in all reports -->
+    <arg value="s"/>
+
+    <!-- Scan these directories -->
+    <file>./src</file>
+    
+    <!-- Exclude vendor directory -->
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/PHP_CodeSniffer/*</exclude-pattern>
+    
+    <!-- Set installed paths for custom standards -->
+    <config name="installed_paths" value="src/PHP_CodeSniffer/Standards"/>
+    
+    <!-- Add some PSR-12 rules that are specifically relevant -->
+    <rule ref="PSR12.Files.FileHeader"/>
+    <rule ref="PSR12.Files.OpenTag"/>
+    
+    <!-- Check for PHP syntax errors -->
+    <rule ref="Generic.PHP.Syntax"/>
+    
+    <!-- Warn about deprecated functions -->
+    <rule ref="Generic.PHP.DeprecatedFunctions"/>
+    
+    <!-- Check line endings consistency -->
+    <rule ref="Generic.Files.LineEndings">
+        <properties>
+            <property name="eolChar" value="\n"/>
+        </properties>
+    </rule>
+    
+    <!-- Our custom rules -->
+    <rule ref="YNotRadio.Files.BrokenRequire"/>
+</ruleset>

@@ -17,9 +17,9 @@ if (!$_SESSION["logged_in"]) {
   <div class="tweleve columns content full-width">
     <h1>Upload an Ad Image</h1>
       <?php require ("../partials/_image_upload_form.php"); ?>
-      <a href="cp/">Control Panel</a>
+      <a href="./cp/">Control Panel</a>
     </div>
-  </div>s
+  </div>
 </div> <!-- end of row div -->
 <?php }
   require ("../partials/_footer.php");
