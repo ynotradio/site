@@ -16,11 +16,11 @@ if (!$_SESSION["logged_in"]) {
 <div class="row">
   <div class="tweleve columns content full-width">
     <h1>Upload an Ad Image</h1>
-      <?php require ("partials/_image_upload_form.php"); ?>
+      <?php require ("../partials/_image_upload_form.php"); ?>
       <a href="cp/">Control Panel</a>
     </div>
-  </div>
+  </div>s
 </div> <!-- end of row div -->
 <?php }
-  require ("partials/_footer.php");
+  require ("../partials/_footer.php");
 ?>

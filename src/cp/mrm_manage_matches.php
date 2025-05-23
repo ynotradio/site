@@ -3,9 +3,9 @@
 $page_file = "mrm_manage_matches.php";
 $page_title = "Modern Rock Madness Matches";
 
-require ("functions/main_fns.php");
-require ("functions/mrm_fns.php");
-require ("partials/_header.php");
+require ("../functions/main_fns.php");
+require ("../functions/mrm_fns.php");
+require ("../partials/_header.php");
 
 $action = (empty($_POST['action'])) ? 'view' : $_POST['action'];
 
@@ -64,5 +64,5 @@ if (!$_SESSION["logged_in"]) {
   </div>
 </div> <!-- end of row div -->
 <?php }
-  require ("partials/_footer.php");
+  require ("../partials/_footer.php");
 ?>

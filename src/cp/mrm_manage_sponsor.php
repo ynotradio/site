@@ -3,9 +3,9 @@
 $page_file = "mrm_band_update.php";
 $page_title = "Update Modern Rock Madness Sponsor";
 
-require ("functions/main_fns.php");
-require ("functions/mrm_fns.php");
-require ("partials/_header.php");
+require ("../functions/main_fns.php");
+require ("../functions/mrm_fns.php");
+require ("../partials/_header.php");
 
 $match = $_GET['match'];
 $action = $_POST['action'];
@@ -25,7 +25,7 @@ if (!$_SESSION["logged_in"]) {
       } elseif ($action != "update"){
         $mrm_sponsor = get_mrm_sponsor($match);
         echo "<form action=\"mrm_sponsor_update.php?id=".$match."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
-          require ("partials/_mrm_sponsor_form.php");
+          require ("../partials/_mrm_sponsor_form.php");
         echo "</form>";
       } else {
         $match = $_POST['match'];
@@ -49,5 +49,5 @@ if (!$_SESSION["logged_in"]) {
   </div>
 </div> <!-- end of row div -->
 <?php }
-  require ("partials/_footer.php");
+  require ("../partials/_footer.php");
 ?>
