@@ -13,9 +13,13 @@ NC='\033[0m' # No Color
 echo -e "${YELLOW}Y-Not Radio PHP Linter${NC}"
 echo "=============================="
 
+# Update paths to work from the /bin directory
+PROJECT_ROOT=$(dirname $(dirname $(realpath $0)))
+cd $PROJECT_ROOT || exit 1
+
 # Check if we're in the project root
-if [ ! -f "phpcs.xml" ]; then
-    echo -e "${RED}Error: Run this script from the project root directory.${NC}"
+if [ ! -f "$PROJECT_ROOT/phpcs.xml" ]; then
+    echo -e "${RED}Error: phpcs.xml not found in the project root directory.${NC}"
     exit 1
 fi
 
