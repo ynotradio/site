@@ -1,4 +1,5 @@
 <?php
+
   $poll_values = get_values($current_poll);
   $category = ucwords(str_replace("_", " ", $current_poll));
   $column_names = get_column_names($current_poll);

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Modern Rock Madness Configuration
  * 

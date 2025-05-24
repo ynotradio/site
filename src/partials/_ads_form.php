@@ -1,4 +1,5 @@
 <?php
+
   if ($ad['name'] == '')
     $pic_url = $target;
   else

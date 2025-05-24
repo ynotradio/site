@@ -1,4 +1,5 @@
 <?php
+
 $page_file = "social_login.php";
 $page_title = "Social Login";
 

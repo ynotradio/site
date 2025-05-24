@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Environment loader for Y-Not Radio
  * Loads environment variables from a .env file

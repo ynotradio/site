@@ -1,4 +1,5 @@
 <?php
+
 if ($year_end_staff_pick['html'] == '') {
     $order_id = get_year_end_staff_pick_count() + 1;
     $html = "<table class=\"year_end_staff_pick\">

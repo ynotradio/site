@@ -1,4 +1,5 @@
 <?php
+
 date_default_timezone_set('America/New_York');
 session_start(); #sessions to save login state
 error_reporting(E_ALL & ~E_NOTICE);

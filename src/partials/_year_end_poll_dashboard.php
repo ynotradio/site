@@ -1,4 +1,5 @@
 <?php
+
 echo "<div class=\"row top-spacer_20\">
     <div class=\"three columns center\">
       <a href=\"" . create_link($ip, $polls[0]) . "\" class=\"" . klass($ip, $polls[0]) . "\">" . format_poll_name($polls[0]) . "</a>

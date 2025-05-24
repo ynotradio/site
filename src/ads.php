@@ -1,4 +1,5 @@
 <?php
+
 require ("ext/ads_fns.php");
 echo "<div id='sponsor'>";
 show_ads();
