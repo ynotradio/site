@@ -9,7 +9,7 @@ We use PHP_CodeSniffer with custom rules to maintain code quality and consistenc
 From the project root, run:
 
 ```bash
-./lint.sh
+./bin/lint.sh
 ```
 
 This will check all PHP files in the `/src` directory for issues.
@@ -22,7 +22,7 @@ This will check all PHP files in the `/src` directory for issues.
 
 Example:
 ```bash
-./lint.sh --fix --dir=./src/cp
+./bin/lint.sh --fix --dir=./src/cp
 ```
 
 ### Custom Sniffs
@@ -127,7 +127,7 @@ jobs:
       - name: Install dependencies
         run: composer install
       - name: Run PHP_CodeSniffer
-        run: ./lint.sh
+        run: ./bin/lint.sh
 ```
 
 ### Git Pre-Commit Hook
@@ -141,7 +141,7 @@ cat > .git/hooks/pre-commit << 'EOF'
 
 # Run PHP linter on staged PHP files
 echo "Running PHP linter on staged files..."
-./lint.sh
+./bin/lint.sh
 if [ $? -ne 0 ]; then
   echo "Linting errors found. Please fix them before committing."
   exit 1
@@ -161,7 +161,7 @@ chmod +x .git/hooks/pre-commit
 The most common issue after our directory reorganization is incorrect paths in require/include statements. Use the linter to detect these automatically:
 
 ```bash
-./lint.sh --dir=./src/cp
+./bin/lint.sh --dir=./src/cp
 ```
 
 Fix by updating paths to use `../` for files moved to the `/cp` directory.

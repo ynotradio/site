@@ -39,20 +39,13 @@ function checkForm() {
 
   return true;
 }
-</script >
-<? php } ?>
 
-<? php
-  if ($page_file == "top11.php" || $page_file == "top11_vote_add.php") {
-?>
-<script type="text/javascript">
-  $('#top11_write_in').live('click', function(){
-    if ($('#top11_write_in:checked').length == 0) {
-      $('#write_in_value').attr('disabled', true);
-      $('#write_in_value').val('');
-    } else {
-      $('#write_in_value').attr('disabled', false);
-    }
-  });
-</script>
-<?php } ?>
+$('#top11_write_in').live('click', function () {
+  if ($('#top11_write_in:checked').length == 0) {
+    $('#write_in_value').attr('disabled', true);
+    $('#write_in_value').val('');
+  } else {
+    $('#write_in_value').attr('disabled', false);
+  }
+});
+
