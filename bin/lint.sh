@@ -18,8 +18,8 @@ PROJECT_ROOT=$(dirname $(dirname $(realpath $0)))
 cd $PROJECT_ROOT || exit 1
 
 # Check if we're in the project root
-if [ ! -f "$PROJECT_ROOT/phpcs.xml" ]; then
-    echo -e "${RED}Error: phpcs.xml not found in the project root directory.${NC}"
+if [ ! -f "$PROJECT_ROOT/src/phpcs.xml" ]; then
+    echo -e "${RED}Error: src/phpcs.xml not found in the project root directory.${NC}"
     exit 1
 fi
 
@@ -68,7 +68,7 @@ echo -e "${GREEN}Checking PHP files in ${TARGET_DIR}...${NC}"
 # Run the linter
 if [ $FIX_ISSUES -eq 1 ]; then
     echo "Running in FIX mode (will attempt to fix issues automatically)"
-    ./vendor/bin/phpcbf --standard=phpcs.xml "${TARGET_DIR}"
+    ./vendor/bin/phpcbf --standard=src/phpcs.xml "${TARGET_DIR}"
 fi
 
 # Register custom standard path before running
@@ -77,7 +77,7 @@ STANDARD_PATH=$(pwd)/src/PHP_CodeSniffer/Standards
 ./src/vendor/bin/phpcs --config-set installed_paths ${STANDARD_PATH}
 
 # Run PHPCS for reporting
-./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}"
+./src/vendor/bin/phpcs --standard=src/phpcs.xml "${TARGET_DIR}"
 PHPCS_EXIT_CODE=$?
 
 # Show a nice summary
@@ -87,8 +87,8 @@ if [ $SHOW_SUMMARY -eq 1 ]; then
     echo "---------------------"
     
     # Count issues
-    BROKEN_REQUIRES=$(./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "BrokenRequire")
-    TOTAL_ISSUES=$(./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "ERROR\|WARNING")
+    BROKEN_REQUIRES=$(./src/vendor/bin/phpcs --standard=src/phpcs.xml "${TARGET_DIR}" -n | grep -c "BrokenRequire")
+    TOTAL_ISSUES=$(./src/vendor/bin/phpcs --standard=src/phpcs.xml "${TARGET_DIR}" -n | grep -c "ERROR\|WARNING")
     
     echo -e "- Broken requires/includes: ${RED}${BROKEN_REQUIRES}${NC}"
     echo -e "- Total issues: ${RED}${TOTAL_ISSUES}${NC}"
