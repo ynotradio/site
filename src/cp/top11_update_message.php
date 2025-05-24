@@ -3,10 +3,10 @@
 $page_file = "top11_update_message.php";
 $page_title = "Update Top 11 @ 11 Message";
 
-require ("functions/main_fns.php");
-require ("functions/top11_fns.php");
-require ("functions/featured_concert_fns.php");
-require ("partials/_header.php");
+require ("../functions/main_fns.php");
+require ("../functions/top11_fns.php");
+require ("../functions/featured_concert_fns.php");
+require ("../partials/_header.php");
 
 $action = $_POST['action'];
 
@@ -45,10 +45,10 @@ if (!$_SESSION["logged_in"]) {
       <input type="submit" value="Update Top 11 Message" class="btn-info">
     </form>
     <?php } ?>
-    <a href="cp/">Control Panel</a>
+    <a href="index.php">Control Panel</a>
   </div>
 </div> <!-- end of row div -->
 <?php
   }
-  require ("partials/_footer.php");
+  require ("../partials/_footer.php");
 ?>

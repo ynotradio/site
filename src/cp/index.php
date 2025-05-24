@@ -41,9 +41,9 @@ if (!$_SESSION["logged_in"]) {
           </td>
           <td width="275px">
             <dt>Modern Rock Madness</dt>
-              <dd><a href="../mrm_add_band.php">Add A Band</a></dd>
+              <dd><a href="mrm_add_band.php">Add A Band</a></dd>
               <dd><a href="mrm_view_all.php">View all Bands</a></dd>
-              <dd><a href="../mrm_manage_matches.php">Manage Matches</a></dd>
+              <dd><a href="mrm_manage_matches.php">Manage Matches</a></dd>
             <dt>New Music</dt>
               <dd><a href="music_add.php">Add New Music</a></dd>
               <dd><a href="music_view_all.php">View all New Music</a></dd>
@@ -61,7 +61,7 @@ if (!$_SESSION["logged_in"]) {
           <td width="275px">
             <dt>Top 11 @ 11</dt>
               <dd><a href="top11_update.php">Update Top 11 @ 11</a></dd>
-              <dd><a href="../top11_update_message.php">Update Top 11 @ 11 Message</a></dd>
+              <dd><a href="top11_update_message.php">Update Top 11 @ 11 Message</a></dd>
               <dd><a href="top11_song_add.php">Add Top 11 @ 11 Songs</a></dd>
               <dd><a href="top11_song_view_all.php">View all Top 11 @ 11 Songs</a></dd>
               <dd><a href="top11_operations.php">Top 11 @ 11 Operations</a></dd>
@@ -70,7 +70,7 @@ if (!$_SESSION["logged_in"]) {
               <dd><a href="year_end_staff_picks_add.php">Add Year End Staff Pick</a></dd>
               <dd><a href="year_end_staff_picks_view_all.php">View all Year End Staff Picks</a></dd>
               <dd><a href="year_end_poll_view_all.php">View all Year End Polls</a></dd>
-              <dd><a href="../year_end_poll_contestants.php">View all Year End Contestants</a></dd>
+              <dd><a href="year_end_poll_contestants.php">View all Year End Contestants</a></dd>
          </td>
       </tr>
     </table>
