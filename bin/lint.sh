@@ -28,6 +28,9 @@ SHOW_SUMMARY=1
 FIX_ISSUES=0
 TARGET_DIR="./src"
 
+# Ensure Composer uses the correct composer.json in the /src directory
+COMPOSER="composer --working-dir=$PROJECT_ROOT/src"
+
 # Process command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -54,10 +57,10 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Check if PHP_CodeSniffer is installed
-if ! command -v ./vendor/bin/phpcs &> /dev/null; then
+if ! $COMPOSER show squizlabs/php_codesniffer &> /dev/null; then
     echo -e "${RED}PHP_CodeSniffer not found.${NC}"
     echo "Installing PHP_CodeSniffer..."
-    composer require --dev squizlabs/php_codesniffer
+    $COMPOSER require --dev squizlabs/php_codesniffer
 fi
 
 echo -e "${GREEN}Checking PHP files in ${TARGET_DIR}...${NC}"
@@ -71,10 +74,10 @@ fi
 # Register custom standard path before running
 echo "Setting up custom standards..."
 STANDARD_PATH=$(pwd)/src/PHP_CodeSniffer/Standards
-./vendor/bin/phpcs --config-set installed_paths ${STANDARD_PATH}
+./src/vendor/bin/phpcs --config-set installed_paths ${STANDARD_PATH}
 
 # Run PHPCS for reporting
-./vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}"
+./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}"
 PHPCS_EXIT_CODE=$?
 
 # Show a nice summary
@@ -84,8 +87,8 @@ if [ $SHOW_SUMMARY -eq 1 ]; then
     echo "---------------------"
     
     # Count issues
-    BROKEN_REQUIRES=$(./vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "BrokenRequire")
-    TOTAL_ISSUES=$(./vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "ERROR\|WARNING")
+    BROKEN_REQUIRES=$(./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "BrokenRequire")
+    TOTAL_ISSUES=$(./src/vendor/bin/phpcs --standard=phpcs.xml "${TARGET_DIR}" -n | grep -c "ERROR\|WARNING")
     
     echo -e "- Broken requires/includes: ${RED}${BROKEN_REQUIRES}${NC}"
     echo -e "- Total issues: ${RED}${TOTAL_ISSUES}${NC}"
