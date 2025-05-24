@@ -10,7 +10,7 @@ require ("partials/_header.php");
 $contestant_id = $_GET['contestant_id'];
 
 if (!$_SESSION["logged_in"]) {
-  login_prompt($_POST[username],$_POST[remember_me],$_SESSION["error"]);
+  login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
 
 /*----- CONTENT ------*/
@@ -23,7 +23,7 @@ if (!$_SESSION["logged_in"]) {
     <div class="top-spacer_20">
       <a href="year_end_poll_contestants.php">View all Year End Poll Contestants</a>
       <p>
-      <a href="cp.php">Control Panel</a>
+      <a href="cp/">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

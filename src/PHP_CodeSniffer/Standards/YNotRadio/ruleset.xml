@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<ruleset name="YNotRadio">
+    <description>Y-Not Radio Coding Standard</description>
+    
+    <!-- Include all sniffs in the YNotRadio directory -->
+    <rule ref="YNotRadio.Files.BrokenRequire"/>
+</ruleset>
