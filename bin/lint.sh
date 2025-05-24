@@ -68,7 +68,7 @@ echo -e "${GREEN}Checking PHP files in ${TARGET_DIR}...${NC}"
 # Run the linter
 if [ $FIX_ISSUES -eq 1 ]; then
     echo "Running in FIX mode (will attempt to fix issues automatically)"
-    ./vendor/bin/phpcbf --standard=src/phpcs.xml "${TARGET_DIR}"
+    ./src/vendor/bin/phpcbf --standard=src/phpcs.xml "${TARGET_DIR}"
 fi
 
 # Register custom standard path before running
