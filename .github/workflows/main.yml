@@ -8,23 +8,4 @@ on:
       - '.github/**'
 
 jobs:
-  deploy-via-ftp:
-    name: deploy-via-ftp
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy initiated
-        run: echo Deploy initiated by ${GITHUB_ACTOR}
-
-      - uses: actions/checkout@master
-        with:
-          fetch-depth: 2
-
-      - name: deploy-via-ftp
-        uses: SamKirkland/FTP-Deploy-Action@3.0.0
-        with:
-          ftp-server: ${{ secrets.FTP_HOST }}
-          ftp-username: ${{ secrets.FTP_USER }}
-          ftp-password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: src
-          git-ftp-args: --insecure
+  # deploy-via-ftp job removed as it doesn't work
