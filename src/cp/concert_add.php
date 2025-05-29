@@ -4,8 +4,10 @@ $page_file = "concert_add.php";
 $page_title = "Add a Concert";
 
 require ("../functions/main_fns.php");
-require ("../functions/concert_fns.php");
+require ("../models/ConcertFactory.php");
 require ("../partials/_header.php");
+
+use YNotRadio\Models\ConcertFactory;
 
 $action = $_POST['action'];
 
@@ -34,10 +36,47 @@ if (!$_SESSION["logged_in"]) {
         $ticketurl = $_POST['ticketurl'];
         $featured = $_POST['featured'];
 
-        if (!$date || !$artist || !$venue || !$ticketinfo || !$ticketurl)
+        if (!$date || !$artist || !$venue || !$ticketinfo || !$ticketurl) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_concert($date, $artist, $band_pic_url, $band_url, $venue, $ticketinfo, $ticketurl, $featured);
+        } else {
+          try {
+            $concertModel = ConcertFactory::create(open_db());
+            $concertData = [
+              'date' => $date,
+              'artist' => $artist,
+              'band_pic_url' => $band_pic_url,
+              'band_url' => $band_url,
+              'venue' => $venue,
+              'ticketinfo' => $ticketinfo,
+              'ticketurl' => $ticketurl,
+              'featured' => $featured
+            ];
+            
+            $newId = $concertModel->add($concertData);
+            $concert = $concertModel->getById($newId);
+            
+            echo "<div class=\"center\"><h1>Success!</h1>".
+                 "<h3>New Concert with ". $concert['artist']. " at ". $concert['venue'] ." has been saved</h3>".
+                 "<hr width=75%>";
+            
+            // Display concert details
+            echo
+              "<br><b>Date: </b>". $concert['date'].
+              "<br><b>Artist: </b>". $concert['artist'];
+            if ($concert['band_pic_url'] != "")
+              echo "<br><b>Band Picture: </b><br> <img src=\"". $concert['band_pic_url']. "\" height='100px';>";
+            else
+              echo "<br><b>Band Picture: </b><br> <img src=\"../imgs/na.jpg\" height='100px';>";
+            echo "<br><b>Band's Site: </b>". $concert['band_url'].
+              "<br><b>Venue: </b>". $concert['venue'].
+              "<br><b>Ticket Info: </b>". $concert['ticketinfo'].
+              "<br><b>Ticket URL: </b>". $concert['ticketurl'].
+              "<br><b>Feature this concert on the right: </b>". $concert['featured'];
+            echo "</div>";
+          } catch (Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+          }
+        }
       }
     ?>
     <div class="top-spacer_20">
