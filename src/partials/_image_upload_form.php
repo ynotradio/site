@@ -4,8 +4,8 @@
   </div>
   <div class="center">
     <input type="hidden" name="MAX_FILE_SIZE" value="250000">
-    <?php if ($upload_type == 'ads')
-      echo "<input type=\"hidden\" value=\"ads\" name=\"directory\">";
+    <?php 
+    // 'ads' upload type has been deprecated
     ?>
     <input type="submit" value="Upload Image" class="btn-success">
   </div>
