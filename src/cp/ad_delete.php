@@ -4,7 +4,7 @@ $page_file = "ad_delete.php";
 $page_title = "Delete Ad";
 
 require ("../functions/main_fns.php");
-require ("../functions/ads_fns.php");
+require_once ("../models/AdFactory.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
@@ -13,6 +13,8 @@ if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
 
+$db = open_db();
+$adModel = \YNotRadio\Models\AdFactory::create($db);
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -22,7 +24,12 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } else {
-        delete_ad($id);
+        try {
+          $adModel->delete($id);
+          echo '<div class="center"><h1>Success!</h1><h3>The ad has been deleted.</h3></div>';
+        } catch (Exception $e) {
+          echo '<div class="top-spacer_20 center error">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        }
       }
     ?>
     <div class="top-spacer_20">

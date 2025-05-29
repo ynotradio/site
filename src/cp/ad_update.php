@@ -4,7 +4,7 @@ $page_file = "ad_update.php";
 $page_title = "Update Ad";
 
 require ("../functions/main_fns.php");
-require ("../functions/ads_fns.php");
+require_once ("../models/AdFactory.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
@@ -16,6 +16,9 @@ if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
 
+$db = open_db();
+$adModel = \YNotRadio\Models\AdFactory::create($db);
+$ad = [];
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -25,7 +28,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $ad = get_ad($id);
+        $ad = $adModel->getById($id);
         echo "<form action=\"ad_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_ads_form.php");
         echo "</form>
@@ -41,11 +44,28 @@ if (!$_SESSION["logged_in"]) {
         if (!$name || !$start_date || !$end_date || !$pic_url || !$web_url || !$priority) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_ad($id, $name, $start_date, $end_date, $pic_url, $web_url, $priority);
-          if ($result) {
-            echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-            display_ad(get_ad($id));
-            echo "</div>";
+          $data = [
+            'name' => $name,
+            'start_date' => $start_date,
+            'end_date' => $end_date,
+            'pic_url' => $pic_url,
+            'web_url' => $web_url,
+            'priority' => $priority
+          ];
+          try {
+            $result = $adModel->update($id, $data);
+            if ($result) {
+              echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
+              $ad = $adModel->getById($id);
+              if ($ad) {
+                echo "<pre>";
+                print_r($ad);
+                echo "</pre>";
+              }
+              echo "</div>";
+            }
+          } catch (Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
           }
         }
       }
