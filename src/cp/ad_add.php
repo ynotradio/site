@@ -4,7 +4,7 @@ $page_file = "ad_add.php";
 $page_title = "Add an Ad";
 
 require ("../functions/main_fns.php");
-require ("../functions/ads_fns.php");
+require_once ("../models/AdFactory.php");
 require ("../partials/_header.php");
 
 $action = $_POST['action'];
@@ -15,6 +15,9 @@ if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
 
+$db = open_db();
+$adModel = \YNotRadio\Models\AdFactory::create($db);
+$ad = [];
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -37,7 +40,29 @@ if (!$_SESSION["logged_in"]) {
       if (!$start_date || !$end_date || !$name || !$pic_url || !$web_url || !$priority) {
         echo '<div class="top-spacer_20 center error">Error - missing requried value(s)</div>';
       } else {
-        add_ad($name, $start_date, $end_date, $pic_url, $web_url, $priority);
+        $data = [
+          'name' => $name,
+          'start_date' => $start_date,
+          'end_date' => $end_date,
+          'pic_url' => $pic_url,
+          'web_url' => $web_url,
+          'priority' => $priority
+        ];
+        try {
+          $newId = $adModel->add($data);
+          echo "<div class=\"center\"><h1>Success!</h1>".
+               "<h3>New Ad for ". htmlspecialchars($name). " has been saved</h3>".
+               "<hr width=75%>";
+          $ad = $adModel->getById($newId);
+          if ($ad) {
+            echo "<pre>";
+            print_r($ad);
+            echo "</pre>";
+          }
+          echo "</div>";
+        } catch (Exception $e) {
+          echo '<div class="top-spacer_20 center error">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
+        }
       }
     }
 ?>
