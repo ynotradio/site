@@ -41,7 +41,7 @@ class SqlConcert implements Concert {
         return $data;
     }
 
-    public function getUpcoming(int $limit = 64): array {
+    public function getUpcoming(int $limit = 500): array {
         $limit = mysqli_real_escape_string($this->db, $limit);
         $query = "SELECT * FROM concerts WHERE deleted = 'n' AND date >= date(now()) ORDER BY date LIMIT $limit";
         $result = mysqli_query($this->db, $query);
