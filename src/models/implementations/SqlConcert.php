@@ -59,7 +59,7 @@ class SqlConcert implements Concert {
 
     public function getFeatured(int $limit = 5): array {
         $limit = mysqli_real_escape_string($this->db, $limit);
-        $query = "SELECT * FROM concerts WHERE deleted = 'n' AND featured = 'Yes' AND date >= date(now()) ORDER BY date LIMIT $limit";
+        $query = "SELECT * FROM concerts WHERE deleted = 'n' AND date >= date(now()) AND band_pic_url like 'http%' AND featured = 'Yes' AND ticketinfo != 'SOLD OUT' ORDER BY date LIMIT $limit";
         $result = mysqli_query($this->db, $query);
 
         if (!$result) {
@@ -74,7 +74,7 @@ class SqlConcert implements Concert {
     }
 
     public function add(array $data): int {
-        $requiredFields = ['date', 'artist', 'venue', 'ticketinfo'];
+        $requiredFields = ['date', 'artist', 'venue', 'ticketinfo', 'ticketurl'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
                 throw new \InvalidArgumentException("Missing required field: $field");
@@ -87,7 +87,7 @@ class SqlConcert implements Concert {
         $band_url = isset($data['band_url']) ? mysqli_real_escape_string($this->db, $data['band_url']) : '';
         $venue = mysqli_real_escape_string($this->db, $data['venue']);
         $ticketinfo = mysqli_real_escape_string($this->db, $data['ticketinfo']);
-        $ticketurl = isset($data['ticketurl']) ? mysqli_real_escape_string($this->db, $data['ticketurl']) : '';
+        $ticketurl = mysqli_real_escape_string($this->db, $data['ticketurl']);
         $featured = isset($data['featured']) && $data['featured'] === 'Yes' ? 'Yes' : 'No';
 
         $query = "INSERT INTO concerts (date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl, featured, deleted) 
@@ -101,7 +101,7 @@ class SqlConcert implements Concert {
     }
 
     public function update(int $id, array $data): bool {
-        $requiredFields = ['date', 'artist', 'venue', 'ticketinfo'];
+        $requiredFields = ['date', 'artist', 'venue', 'ticketinfo', 'ticketurl'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
                 throw new \InvalidArgumentException("Missing or empty required field: $field");
@@ -115,7 +115,7 @@ class SqlConcert implements Concert {
         $band_url = isset($data['band_url']) ? mysqli_real_escape_string($this->db, $data['band_url']) : '';
         $venue = mysqli_real_escape_string($this->db, $data['venue']);
         $ticketinfo = mysqli_real_escape_string($this->db, $data['ticketinfo']);
-        $ticketurl = isset($data['ticketurl']) ? mysqli_real_escape_string($this->db, $data['ticketurl']) : '';
+        $ticketurl = mysqli_real_escape_string($this->db, $data['ticketurl']);
         $featured = isset($data['featured']) && $data['featured'] === 'Yes' ? 'Yes' : 'No';
 
         $query = "UPDATE concerts SET 
