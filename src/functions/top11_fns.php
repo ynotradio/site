@@ -21,18 +21,6 @@ function add_contestant($firstname, $lastname, $email, $phone, $contest, $newsle
   }
 }
 
-function add_ip($ip) {
-  $ip = mysqli_real_escape_string(open_db(), $ip);
-  $insert = "INSERT INTO ip_address VALUES (id, '".$ip ."', 'n')";
-  $link = open_db();
-  $result = mysqli_query($link, $insert);;
-
-  if (!$result) {
-    echo $insert ."<br>";
-    die('Error Inserting into Database.');
-  }
-}
-
 function add_top11_plus1($id){
   $id = mysqli_real_escape_string(open_db(), $id);
   $update = "UPDATE top11songs SET value = value + 1  WHERE id=".$id;
@@ -61,28 +49,6 @@ function add_top11_song($artist, $song) {
     "<hr width=75%>";
   display_top11_song(get_top11_song(mysqli_insert_id($link)));
   echo "</div>";
-}
-
-function check_ip($ip) {
-  $ip = mysqli_real_escape_string(open_db(), $ip);
-  $select = "SELECT * FROM ip_address WHERE address = '$ip' AND deleted = 'n'";
-  $result = mysqli_query(open_db(), $select);
-  $info = mysqli_fetch_assoc($result);
-  if ($info['address']) {
-    return false;
-  } else {
-    add_ip($ip);	
-    return true;
-  }
-}
-
-function close_top11() {
-  $update = 'UPDATE top11 SET artist ="closed" WHERE placement=98';
-  $result = mysqli_query(open_db(), $update);
-
-  if (!$result) {
-    die('Error Opening Top11.');
-  }		
 }
 
 function contestant_count() {
