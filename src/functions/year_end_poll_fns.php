@@ -252,8 +252,7 @@ function view_all_contestants()
     }
     echo "<table class=\"table table-striped table-bordered-horizontal table-condensed table-center\">\n<thead>\n
     <th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Contest</th><th>Newsletter</th></thead>";
-    for ($i = 1; $i <= mysqli_num_rows($result); $i++) {
-        $info = mysqli_fetch_assoc($result);
+    for ($i = 1; $i <= mysqli_num_rows($result); $i++) {        $info = mysqli_fetch_assoc($result);
         echo "<tr>";
         if ($info['contest'] == 'yes') {
             echo "<td><a href=\"year_end_poll_song_picks.php?contestant_id=" . $info['id'] . "\">" . ucwords($info['name']) . "</a></td>";

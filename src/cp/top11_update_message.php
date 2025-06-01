@@ -5,7 +5,6 @@ $page_title = "Update Top 11 @ 11 Message";
 
 require ("../functions/main_fns.php");
 require ("../functions/top11_fns.php");
-require ("../functions/featured_concert_fns.php");
 require ("../partials/_header.php");
 
 $action = $_POST['action'];
@@ -30,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
             display_top11_message();
             echo "</div>
             <div class=\"three columns\">";
-              display_featured_concerts(1);
+              require_once "../partials/_featured_concerts_and_ads.php";
             echo "</div>
             </div>
             <a href=\"top11_update_message.php\">Update Top 11 @ 11 Message</a>
