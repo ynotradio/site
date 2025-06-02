@@ -12,10 +12,10 @@ We are gradually migrating functionality from the legacy `/functions` directory 
 - Concert (concert_fns.php → models/Concert.php)
 - Deejay (deejay_fns.php → models/Deejay.php) - **FULLY MIGRATED**: All code now uses the Deejay model directly and deejay_fns.php has been removed. Redundant files were also eliminated.
 - Custom Text (custom_text_fns.php → models/CustomText.php) - **FULLY MIGRATED**: All code now uses the CustomText model directly and custom_text_fns.php has been removed.
+- Story (story_fns.php → models/Story.php) - **FULLY MIGRATED**: All code now uses the Story model directly and story_fns.php has been removed.
 
 ### Planned Migrations:
 #### Next in Queue:
-- Story (story_fns.php → models/Story.php) - Simpler model with manageable scope
 - New Music (music_fns.php → models/Music.php) - Frequently used feature
 - On Demand (on_demand_fns.php → models/OnDemand.php) - Important site content
 - Schedule (schedule_fns.php → models/Schedule.php) - Core site functionality

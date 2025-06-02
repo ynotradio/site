@@ -4,8 +4,12 @@ $page_file = "story_delete.php";
 $page_title = "Delete a Story";
 
 require ("../functions/main_fns.php");
-require ("../functions/story_fns.php");
+require ("../models/StoryFactory.php");
+require ("../partials/_story_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$storyModel = \YNotRadio\Models\StoryFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -22,7 +26,14 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } else {
-        delete_story($id);
+        $story = $storyModel->getById($id);
+        $result = $storyModel->delete($id);
+        if ($result) {
+          echo "<div class=\"center\"><h1>Success!</h1>".
+          "<h3>The story <span class=\"success\">". $story['headline'] ."</span> has been deleted.</h3></div>";
+        } else {
+          echo '<div class="top-spacer_20 center error">Error deleting the story</div>';
+        }
       }
     ?>
     <div class="top-spacer_20">

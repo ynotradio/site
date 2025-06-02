@@ -4,8 +4,12 @@ $page_file = "story_update.php";
 $page_title = "Update Story";
 
 require ("../functions/main_fns.php");
-require ("../functions/story_fns.php");
+require ("../models/StoryFactory.php");
+require ("../partials/_story_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$storyModel = \YNotRadio\Models\StoryFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -25,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $story = get_story($id);
+        $story = $storyModel->getById($id);
         echo "<form action=\"story_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_story_form.php");
         echo "</form>
@@ -42,10 +46,19 @@ if (!$_SESSION["logged_in"]) {
         if (!$start_date || !$end_date || !$headline || !$story || !$pic || !$pic_url || !$priority) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_story($id, $headline, $story, $start_date, $end_date, $pic, $pic_url, $priority);
+          $data = [
+            'headline' => $headline, 
+            'story' => $story, 
+            'start_date' => $start_date, 
+            'end_date' => $end_date, 
+            'pic' => $pic, 
+            'pic_url' => $pic_url, 
+            'priority' => $priority
+          ];
+          $result = $storyModel->update($id, $data);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-            display_story(get_story($id));
+            display_story($storyModel->getById($id));
             echo "</div>";
           }
         }
