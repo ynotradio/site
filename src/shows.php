@@ -4,15 +4,16 @@ $page_file = "contests.php";
 $page_title = "Contests";
 
 require ("functions/main_fns.php");
-require ("functions/custom_text_fns.php");
+require_once ("models/CustomTextFactory.php");
 require ("partials/_header.php");
 
 /*----- CONTENT ------*/
 ?>
-<div class="row">
-  <div class="nine columns content">
+<div class="row">  <div class="nine columns content">
     <?php
-      $custom_text = find_custom_text_by_permalink('shows');
+      $db = open_db();
+      $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+      $custom_text = $customTextModel->findByPermalink('shows');
       echo "<h1>".$custom_text['title']."</h1>" .
       $custom_text['html'];
     ?>

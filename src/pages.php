@@ -3,11 +3,13 @@
 $page_file = "pages.php";
 
 require ("functions/main_fns.php");
-require ("functions/custom_text_fns.php");
+require_once ("models/CustomTextFactory.php");
 require ("partials/_header.php");
 
 $page = $_GET['page'];
-$custom_text = find_custom_text_by_permalink($page);
+$db = open_db();
+$customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+$custom_text = $customTextModel->findByPermalink($page);
 
 /*----- CONTENT ------*/
 ?>

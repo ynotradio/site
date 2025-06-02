@@ -4,7 +4,7 @@ $page_file = "custom_text_delete.php";
 $page_title = "Delete a Custom Text";
 
 require ("../functions/main_fns.php");
-require ("../functions/custom_text_fns.php");
+require_once ("../models/CustomTextFactory.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
@@ -22,7 +22,24 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } else {
-        delete_custom_text($id);
+        $db = open_db();
+        $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+        
+        try {
+          // Get the custom text before deletion for the success message
+          $customText = $customTextModel->getById($id);
+          
+          $result = $customTextModel->delete($id);
+          
+          if ($result) {
+            echo "<div class=\"center\"><h1>Success!</h1>".
+                 "<h3>The custom text <span class=\"success\">". $customText['title'] ."</span> has been deleted.</h3></div>";
+          } else {
+            echo '<div class="top-spacer_20 center error">Error deleting the custom text</div>';
+          }
+        } catch (\Exception $e) {
+          echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+        }
       }
     ?>
     <div class="top-spacer_20">

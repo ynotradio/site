@@ -4,7 +4,7 @@ $page_file = "donate.php";
 $page_title = "Donate";
 
 require ("functions/main_fns.php");
-require ("functions/custom_text_fns.php");
+require_once ("models/CustomTextFactory.php");
 require ("partials/_header.php");
 
 /*----- CONTENT ------*/
@@ -12,7 +12,9 @@ require ("partials/_header.php");
 <div class="row">
   <div class="nine columns content">
     <?php
-      $custom_text = find_custom_text_by_permalink('donate');
+      $db = open_db();
+      $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+      $custom_text = $customTextModel->findByPermalink('donate');
       echo "<h1>".$custom_text['title']."</h1>" .
       $custom_text['html'];
     ?>
