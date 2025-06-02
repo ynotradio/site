@@ -4,7 +4,7 @@ $page_file = "custom_text_update.php";
 $page_title = "Update Custom Text";
 
 require ("../functions/main_fns.php");
-require ("../functions/custom_text_fns.php");
+require_once ("../models/CustomTextFactory.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
@@ -25,7 +25,10 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $custom_text= get_custom_text ($id);
+        $db = open_db();
+        $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+        $custom_text = $customTextModel->getById($id);
+        
         echo "<form action=\"custom_text_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_custom_text_form.php");
         echo "</form>";
@@ -36,11 +39,27 @@ if (!$_SESSION["logged_in"]) {
         if (!$title || !$html) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_custom_text($id, $title, $html);
-          if ($result) {
-            echo '<div class="top-spacer_20"><h1 class="center">Update was successful!</h1>';
-            display_custom_text(get_custom_text($id));
-            echo "</div>";
+          $db = open_db();
+          $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+          
+          try {
+            $data = [
+              'title' => $title,
+              'html' => $html
+            ];
+            $result = $customTextModel->update($id, $data);
+            
+            if ($result) {
+              echo '<div class="top-spacer_20"><h1 class="center">Update was successful!</h1>';
+              $customText = $customTextModel->getById($id);
+              echo "<b>Title:</b> ". $customText['title'].
+                   "<br><b>Permalink:</b> ". $customText['permalink'].
+                   "<br><b>Url:</b> <a href=\"../pages.php?page=".$customText['permalink']."\" target=\"_new\">http://www.ynotradio.net/pages.php?page=".$customText['permalink']."</a>".
+                   "<br><b>Copy:</b><br>". $customText['html'];
+              echo "</div>";
+            }
+          } catch (\Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
           }
         }
       }

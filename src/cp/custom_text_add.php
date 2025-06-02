@@ -4,7 +4,7 @@ $page_file = "custom_text_add.php";
 $page_title = "Add a Custom Text";
 
 require ("../functions/main_fns.php");
-require ("../functions/custom_text_fns.php");
+require_once ("../models/CustomTextFactory.php");
 require ("../partials/_header.php");
 
 $action = $_POST['action'];
@@ -29,8 +29,31 @@ if (!$_SESSION["logged_in"]) {
 
         if (!$title || !$html)
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_custom_text($title, $html);
+        else {
+          $db = open_db();
+          $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+          
+          try {
+            $data = [
+              'title' => $title,
+              'html' => $html
+            ];
+            $newId = $customTextModel->add($data);
+            
+            echo "<div class=\"center\"><h1>Success!</h1>".
+                 "<h3>New Custom Text has been saved</h3>".
+                 "<hr width=75%>";
+            
+            $customText = $customTextModel->getById($newId);
+            echo "<b>Title:</b> ". $customText['title'].
+                 "<br><b>Permalink:</b> ". $customText['permalink'].
+                 "<br><b>Url:</b> <a href=\"../pages.php?page=".$customText['permalink']."\" target=\"_new\">http://www.ynotradio.net/pages.php?page=".$customText['permalink']."</a>".
+                 "<br><b>Copy:</b><br>". $customText['html'];
+            echo "</div>";
+          } catch (\Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+          }
+        }
       }
     ?>
     <div class="top-spacer_20">
