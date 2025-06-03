@@ -4,11 +4,13 @@ $page_file = "";
 $page_title = "";
 
 require ("functions/main_fns.php");
-require ("functions/story_fns.php");
+require ("models/StoryFactory.php");
+require ("partials/_story_display_helpers.php");
 require ("partials/_header.php");
 
-$amount_of_stories = "all";
-$story_groups= get_stories($amount_of_stories);
+$db = open_db();
+$storyModel = \YNotRadio\Models\StoryFactory::create($db);
+$story_groups = $storyModel->getAll();
 
 
 /*----- CONTENT ------*/
