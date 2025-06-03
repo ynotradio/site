@@ -4,8 +4,12 @@ $page_file = "music_add.php";
 $page_title = "Add a New Music";
 
 require ("../functions/main_fns.php");
-require ("../functions/music_fns.php");
+require ("../models/MusicFactory.php");
+require ("../partials/_music_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$musicModel = \YNotRadio\Models\MusicFactory::create($db);
 
 $action = $_POST['action'];
 
@@ -32,8 +36,22 @@ if (!$_SESSION["logged_in"]) {
 
         if (!$date || !$artist || !$song)
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_music($date, $artist, $song, $url);
+        else {
+          $data = [
+            'date' => $date,
+            'artist' => $artist,
+            'song' => $song,
+            'url' => $url
+          ];
+          
+          $newId = $musicModel->add($data);
+          
+          echo "<div class=\"center\"><h1>Success!</h1>".
+               "<h3>New Music, ". $artist. " - ". $song. ", has been saved</h3>".
+               "<hr width=75%>";
+          display_music($musicModel->getById($newId));
+          echo "</div>";
+        }
       }
     ?>
     <div class="top-spacer_20">

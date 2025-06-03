@@ -4,8 +4,12 @@ $page_file = "music_update.php";
 $page_title = "Update Music";
 
 require ("../functions/main_fns.php");
-require ("../functions/music_fns.php");
+require ("../models/MusicFactory.php");
+require ("../partials/_music_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$musicModel = \YNotRadio\Models\MusicFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -25,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $music = get_music ($id);
+        $music = $musicModel->getById($id);
         echo "<form action=\"music_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_music_form.php");
         echo "</form>
@@ -39,10 +43,17 @@ if (!$_SESSION["logged_in"]) {
         if (!$date || !$artist || !$song) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_music($id, $date, $artist, $song, $url);
+          $data = [
+            'date' => $date,
+            'artist' => $artist,
+            'song' => $song,
+            'url' => $url
+          ];
+          
+          $result = $musicModel->update($id, $data);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-            display_music(get_music($id));
+            display_music($musicModel->getById($id));
             echo "</div>";
           }
         }
