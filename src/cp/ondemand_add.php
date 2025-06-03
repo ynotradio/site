@@ -4,8 +4,12 @@ $page_file = "ondemand_add.php";
 $page_title = "Add an On Demand";
 
 require ("../functions/main_fns.php");
-require ("../functions/on_demand_fns.php");
+require ("../models/OnDemandFactory.php");
+require ("../partials/_ondemand_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$onDemandModel = \YNotRadio\Models\OnDemandFactory::create($db);
 
 $action = $_POST['action'];
 
@@ -34,8 +38,24 @@ if (!$_SESSION["logged_in"]) {
 
         if (!$date || !$image || !$headline || !$note || !$songs || !$audio_id)
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_on_demand($date, $image, $headline, $note, $songs, $audio_id);
+        else {
+          $data = [
+            'date' => $date,
+            'image' => $image,
+            'headline' => $headline,
+            'note' => $note,
+            'songs' => $songs,
+            'audio_id' => $audio_id
+          ];
+          
+          $newId = $onDemandModel->add($data);
+          
+          echo "<div class=\"center\"><h1>Success!</h1>".
+               "<h3>New On Demand, ". $headline. ", has been saved</h3>".
+               "<hr width=75%>";
+          display_on_demand($onDemandModel->getById($newId));
+          echo "</div>";
+        }
       }
     ?>
     <div class="top-spacer_20">

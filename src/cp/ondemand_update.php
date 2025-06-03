@@ -4,8 +4,12 @@ $page_file = "ondemand_update.php";
 $page_title = "Update On Demand";
 
 require ("../functions/main_fns.php");
-require ("../functions/on_demand_fns.php");
+require ("../models/OnDemandFactory.php");
+require ("../partials/_ondemand_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$onDemandModel = \YNotRadio\Models\OnDemandFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -25,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $ondemand = get_on_demand($id);
+        $ondemand = $onDemandModel->getById($id);
         echo "<form action=\"ondemand_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_ondemand_form.php");
         echo "</form>
@@ -41,10 +45,19 @@ if (!$_SESSION["logged_in"]) {
         if (!$date || !$image || !$headline || !$note || !$songs || !$audio_id) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_on_demand($id, $date, $image, $headline, $note, $songs, $audio_id);
+          $data = [
+            'date' => $date,
+            'image' => $image,
+            'headline' => $headline,
+            'note' => $note,
+            'songs' => $songs,
+            'audio_id' => $audio_id
+          ];
+          
+          $result = $onDemandModel->update($id, $data);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-            display_on_demand(get_on_demand($id));
+            display_on_demand($onDemandModel->getById($id));
             echo "</div>";
           }
         }

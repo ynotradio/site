@@ -4,8 +4,12 @@ $page_file = "ondemand_delete.php";
 $page_title = "Delete an On Demand";
 
 require ("../functions/main_fns.php");
-require ("../functions/on_demand_fns.php");
+require ("../models/OnDemandFactory.php");
+require ("../partials/_ondemand_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$onDemandModel = \YNotRadio\Models\OnDemandFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -22,7 +26,18 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } else {
-        delete_on_demand($id);
+        $ondemand = $onDemandModel->getById($id);
+        if ($ondemand) {
+          $result = $onDemandModel->delete($id);
+          if ($result) {
+            echo "<div class=\"center\"><h1>Success!</h1>".
+            "<h3>The on demand entry <span class=\"success\">". $ondemand['headline'] ."</span>, has been deleted.</h3></div>";
+          } else {
+            echo '<div class="top-spacer_20 center error">Error deleting the on demand entry</div>';
+          }
+        } else {
+          echo '<div class="top-spacer_20 center error">Error - on demand entry not found</div>';
+        }
       }
     ?>
     <div class="top-spacer_20">
