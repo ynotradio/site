@@ -14,10 +14,10 @@ We are gradually migrating functionality from the legacy `/functions` directory 
 - Custom Text (custom_text_fns.php → models/CustomText.php) - **FULLY MIGRATED**: All code now uses the CustomText model directly and custom_text_fns.php has been removed.
 - Story (story_fns.php → models/Story.php) - **FULLY MIGRATED**: All code now uses the Story model directly and story_fns.php has been removed.
 - New Music (music_fns.php → models/Music.php) - **FULLY MIGRATED**: All code now uses the Music model directly and music_fns.php has been removed.
+- On Demand (on_demand_fns.php → models/OnDemand.php) - **FULLY MIGRATED**: All code now uses the OnDemand model directly and on_demand_fns.php has been removed.
 
 ### Planned Migrations:
 #### Next in Queue:
-- On Demand (on_demand_fns.php → models/OnDemand.php) - Important site content
 - Schedule (schedule_fns.php → models/Schedule.php) - Core site functionality
 
 #### Final Migrations (Complex):
