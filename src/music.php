@@ -4,8 +4,12 @@ $page_file = "music.php";
 $page_title = "New Music";
 
 require ("functions/main_fns.php");
-require ("functions/music_fns.php");
+require ("models/MusicFactory.php");
+require ("partials/_music_display_helpers.php");
 require ("partials/_header.php");
+
+$db = open_db();
+$musicModel = \YNotRadio\Models\MusicFactory::create($db);
 
 /*----- CONTENT ------*/
 ?>
