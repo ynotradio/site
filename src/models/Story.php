@@ -12,10 +12,10 @@ interface Story {
 
     /**
      * Get all active stories, optionally limited to a specific number
-     * @param string|int $amount 'all' for all stories, or a number to limit
+     * @param mixed $amount 'all' for all stories, or a number to limit
      * @return array Array of arrays, with odd and even stories separated
      */
-    public function getAll(string|int $amount = 'all'): array;
+    public function getAll($amount = 'all'): array;
 
     /**
      * Add a new story

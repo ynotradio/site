@@ -25,7 +25,7 @@ class SqlStory implements Story {
         return $data ?: null;
     }
 
-    public function getAll(string|int $amount = 'all'): array {
+    public function getAll($amount = 'all'): array {
         $query = "SELECT * FROM stories WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
 
         $limit = ($amount === 'all') ? "" : " LIMIT " . intval($amount);
