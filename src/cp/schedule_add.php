@@ -4,12 +4,13 @@ $page_file = "schedule_add.php";
 $page_title = "Add a Schedule";
 
 require ("../functions/main_fns.php");
-require ("../functions/schedule_fns.php");
+require ("../models/ScheduleFactory.php");
 require ("../partials/_header.php");
 
 $action = $_POST['action'];
-
 $id = $_GET['id'];
+$db = open_db();
+$scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
@@ -29,24 +30,41 @@ if (!$_SESSION["logged_in"]) {
       } else {
         $host = $_POST['host'];
         $date = $_POST['date'];
-        $start_time_submit = $_POST['start_time_submit'];
-        $end_time_submit = $_POST['end_time_submit'];
-        $start_time = $_POST['end_time'];
+        $start_time = $_POST['start_time'];
         $end_time = $_POST['end_time'];
         $note = $_POST['note'];
 
-        if ($id != '') {
-          $start_time = validate_time($start_time_submit, $id, "start_time");
-          $end_time = validate_time($end_time_submit, $id, "end_time");
-        } else {
-          $start_time = $start_time_submit;
-          $end_time = $end_time_submit;
-        }
-
-        if (!$host || !$date || !$start_time || !$end_time)
+        if (!$host || !$date || !$start_time || !$end_time) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_schedule($host, $date, $start_time, $end_time, $note);
+        } else {
+          try {
+            $scheduleData = [
+              'host' => $host,
+              'date' => $date,
+              'start_time' => $start_time,
+              'end_time' => $end_time,
+              'note' => $note
+            ];
+            
+            $newId = $scheduleModel->add($scheduleData);
+            $newSchedule = $scheduleModel->getById($newId);
+            
+            echo "<div class=\"center\"><h1>Success!</h1>".
+               "<h3>New Schedule for ". $host ." on " .$date . " has been saved</h3>".
+               "<hr width=75%>";
+            
+            echo "<br><b>Host:</b> ". $newSchedule['host'].
+                 "<br><b>Date:</b> ". date('F jS', strtotime($newSchedule['date'])).
+                 "<br><b>Day:</b> " . $newSchedule['day'].
+                 "<br><b>Start Time:</b> ". date('g:i a', strtotime($newSchedule['start_time'])).
+                 "<br><b>End Time:</b> ". date('g:i a', strtotime($newSchedule['end_time'])).
+                 "<br><b>Note:</b> ". $newSchedule['note'];
+            
+            echo "</div>";
+          } catch (\Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+          }
+        }
       }
     ?>
     <div class="top-spacer_20">

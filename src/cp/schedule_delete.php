@@ -4,10 +4,12 @@ $page_file = "schedule_delete.php";
 $page_title = "Delete a Schedule";
 
 require ("../functions/main_fns.php");
-require ("../functions/schedule_fns.php");
+require ("../models/ScheduleFactory.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
+$db = open_db();
+$scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
@@ -22,7 +24,15 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } else {
-        delete_schedule($id);
+        try {
+          $schedule = $scheduleModel->getById($id);
+          if ($scheduleModel->delete($id)) {
+            echo "<div class=\"center\"><h1>Success!</h1>".
+              "<h3><span class=\"success\">". $schedule['host'] ." on ".  $schedule['date'] ."</span> has been deleted.</h3></div>";
+          }
+        } catch (\Exception $e) {
+          echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+        }
       }
     ?>
     <div class="top-spacer_20">
