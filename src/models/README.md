@@ -19,10 +19,10 @@ We are gradually migrating functionality from the legacy `/functions` directory 
 
 ### Completed Migrations (continued):
 - Year End Staff Picks (year_end_staff_pick_fns.php → models/YearEndStaffPick.php) - **FULLY MIGRATED**: All code now uses the YearEndStaffPick model directly and year_end_staff_pick_fns.php has been removed.
+- Top 11 @ 11 (top11_fns.php → models/Top11.php) - **FULLY MIGRATED**: All code now uses the Top11 model directly and top11_fns.php has been removed. Includes voting system.
 
 ### Planned Migrations:
 #### Final Migrations (Complex):
-- Top 11 @ 11 (top11_fns.php → models/Top11.php) - Involves voting system
 - Modern Rock Madness (mrm_fns.php → models/ModernRockMadness.php) - Complex tournament system
 - Year End Poll (year_end_poll_fns.php → models/YearEndPoll.php) - Complex voting system
 

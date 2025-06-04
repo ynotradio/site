@@ -1,11 +1,15 @@
 <?php
 
 $page_file = "top11_song_update.php";
-$page_title = "Update a Top 11 SongDeejay";
+$page_title = "Update a Top 11 Song";
 
 require ("../functions/main_fns.php");
-require ("../functions/top11_fns.php");
+require_once ("../models/Top11Factory.php");
 require ("../partials/_header.php");
+
+// Get the Top11 model
+$db = open_db();
+$top11Model = \YNotRadio\Models\Top11Factory::create($db);
 
 $id = $_GET['id'];
 
@@ -25,7 +29,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action == "update"){
-        $top11_song = get_top11_song($id);
+        $top11_song = $top11Model->getSong($id);
         echo "<form action=\"top11_song_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
         require ("../partials/_top11_song_form.php");
         echo "</form>";
@@ -36,11 +40,20 @@ if (!$_SESSION["logged_in"]) {
         if (!$artist || !$song) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_top11_song($id, $artist, $song);
-          if ($result) {
-            echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-            display_top11_song(get_top11_song($id));
-            echo "</div>";
+          try {
+            $result = $top11Model->updateSong($id, $artist, $song);
+            if ($result) {
+              $updatedSong = $top11Model->getSong($id);
+              
+              echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
+              echo "<br><b>Artist:</b> ". $updatedSong['artist'].
+                   "<br><b>Song:</b> ". $updatedSong['song'];
+              echo "</div>";
+            } else {
+              echo '<div class="top-spacer_20 center error">Error updating the Top 11 song</div>';
+            }
+          } catch (\Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
           }
         }
       }
