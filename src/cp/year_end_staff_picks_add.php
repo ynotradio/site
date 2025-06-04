@@ -1,14 +1,16 @@
 <?php
 
 $page_file = "year_end_staff_picks_add.php";
-$page_title = "Add a Year End Staff Picks";
+$page_title = "Add a Year End Staff Pick";
 
 require ("../functions/main_fns.php");
-require ("../functions/year_end_staff_pick_fns.php");
+require ("../models/YearEndStaffPickFactory.php");
 require ("../partials/_header.php");
 
 $action = $_POST['action'];
 $target = $_GET['target'];
+$db = open_db();
+$staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create($db);
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
@@ -19,9 +21,16 @@ if (!$_SESSION["logged_in"]) {
 <div class="row">
   <div class="tweleve columns content full-width">
     <?php if ($action != "insert") { ?>
-    <h1>Add a Year End Staff Picks</h1>
+    <h1>Add a Year End Staff Pick</h1>
     <form action="year_end_staff_picks_add.php" method="post" class="form-internal inline input-seperation" id="admin">
-    <?php require ("../partials/_year_end_staff_picks_form.php"); ?>
+    <?php 
+    // Initialize empty year_end_staff_pick for the form
+    $year_end_staff_pick = [
+      'html' => '',
+      'order_id' => $staffPickModel->getCount() + 1
+    ];
+    require ("../partials/_year_end_staff_picks_form.php"); 
+    ?>
     </form>
   <?php
     } else {
@@ -31,7 +40,26 @@ if (!$_SESSION["logged_in"]) {
       if (!$order || !$html) {
         echo '<div class="top-spacer_20 center error">Error - missing requried value(s)</div>';
       } else {
-        add_year_end_staff_pick($order, $html);
+        try {
+          $staffPickData = [
+            'order_id' => $order,
+            'html' => $html
+          ];
+          
+          $newId = $staffPickModel->add($staffPickData);
+          $newStaffPick = $staffPickModel->getById($newId);
+          
+          echo "<div class=\"center\"><h1>Success!</h1>".
+               "<h3>New Year End Staff Pick has been saved</h3>".
+               "<hr width=75%>";
+          
+          echo "<b>Order:</b> ". $newStaffPick['order_id'] .
+               "<br><b>HTML:</b> ". $newStaffPick['html'];
+          
+          echo "</div>";
+        } catch (\Exception $e) {
+          echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+        }
       }
     }
 ?>

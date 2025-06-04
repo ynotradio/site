@@ -4,8 +4,12 @@ $page_file = "top11_song_add.php";
 $page_title = "Add a Top 11 Song";
 
 require ("../functions/main_fns.php");
-require ("../functions/top11_fns.php");
+require_once ("../models/Top11Factory.php");
 require ("../partials/_header.php");
+
+// Get the Top11 model
+$db = open_db();
+$top11Model = \YNotRadio\Models\Top11Factory::create($db);
 
 $action = $_POST['action'];
 
@@ -27,10 +31,23 @@ if (!$_SESSION["logged_in"]) {
         $artist = $_POST['artist'];
         $song = $_POST['song'];
 
-        if (!$artist || !$song)
+        if (!$artist || !$song) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
-        else
-          add_top11_song($artist, $song);
+        } else {
+          try {
+            $newId = $top11Model->addSong($artist, $song);
+            $newSong = $top11Model->getSong($newId);
+            
+            echo "<div class=\"center\"><h1>Success!</h1>".
+                 "<h3>The new Top 11 song has been saved</h3>".
+                 "<hr width=75%>";
+            echo "<br><b>Artist:</b> ". $newSong['artist'].
+                 "<br><b>Song:</b> ". $newSong['song'];
+            echo "</div>";
+          } catch (\Exception $e) {
+            echo '<div class="top-spacer_20 center error">Error: ' . $e->getMessage() . '</div>';
+          }
+        }
       }
     ?>
     <div class="top-spacer_20">

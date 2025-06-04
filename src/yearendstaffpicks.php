@@ -4,8 +4,11 @@ $page_file = "yearendstaffpicks.php";
 $page_title = "Year End Staff Picks";
 
 require "functions/main_fns.php";
-require "functions/year_end_staff_pick_fns.php";
+require "models/YearEndStaffPickFactory.php";
 require "partials/_header.php";
+
+$db = open_db();
+$staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create($db);
 
 /*----- CONTENT ------*/
 ?>
@@ -51,11 +54,19 @@ require "partials/_header.php";
 
 
 
-		<!-- <center><h3>Vote now for your favorite songs, albums, and more in <a href="yearendpoll.php">Y-Not's 2014 Year End Poll</a>!</h3></center>
-	-->
+		<!-- <center><h3>Vote now for your favorite songs, albums, and more in <a href="yearendpoll.php">Y-Not's 2014 Year End Poll</a>!</h3></center>	-->
 
 
-    <?php show_year_end_staff_picks(); ?>
+    <?php 
+    try {
+        $staffPicks = $staffPickModel->getAll();
+        foreach ($staffPicks as $pick) {
+            echo $pick['html'] . "<br>";
+        }
+    } catch (\Exception $e) {
+        echo "<p>Error loading staff picks: " . $e->getMessage() . "</p>";
+    }
+    ?>
 	<div><a href="yearendpoll.php" >Go Back To Year End Poll</a></div>
   </div>
 </div> <!-- end of row div -->

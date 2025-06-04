@@ -8,8 +8,7 @@
     </tr>
   </thead>
   <?php
-    for ($i=1; $i <= mysqli_num_rows($top11); $i++) {
-      $info = mysqli_fetch_assoc($top11);
+    foreach ($top11 as $info) {
       if ($info['placement'] == 98) {
         echo "<tr>
           <td><b>Status:</b></td>
@@ -25,9 +24,9 @@
       }	else {
         echo "<tr>
             <td>" . $info['placement'] . "</td>
-            <td> <input type=\"text\" value=\"" .$info['artist']. "\" name=\"artist_".$i."\" class=\"input-m\"></td>
-            <td> <input type=\"text\" value=\"" .$info['song']. "\" name=\"song_".$i."\" class=\"input-m\"></td>
-            <td> <input type=\"text\" value=\"" .$info['note']. "\" name=\"note_".$i."\" class=\"input-m\"></td>
+            <td> <input type=\"text\" value=\"" .$info['artist']. "\" name=\"artist_".$info['placement']."\" class=\"input-m\"></td>
+            <td> <input type=\"text\" value=\"" .$info['song']. "\" name=\"song_".$info['placement']."\" class=\"input-m\"></td>
+            <td> <input type=\"text\" value=\"" .$info['note']. "\" name=\"note_".$info['placement']."\" class=\"input-m\"></td>
         </tr>\n";
       }
     }
