@@ -4,8 +4,11 @@ $page_file = "mrm_band_update.php";
 $page_title = "Update Modern Rock Madness Band";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../models/ModernRockMadnessFactory.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
 
 $id = $_GET['id'];
 $action = $_POST['action'];
@@ -22,8 +25,8 @@ if (!$_SESSION["logged_in"]) {
     <?php
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
-      } elseif ($action != "update"){
-        $mrm_band = get_mrm_band($id);
+      }      elseif ($action != "update"){
+        $mrm_band = $mrmModel->getBandById($id);
         echo "<form action=\"mrm_band_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
           require ("../partials/_mrm_band_form.php");
         echo "</form>
@@ -40,10 +43,27 @@ if (!$_SESSION["logged_in"]) {
         if (!$name || !$url || !$pic_url || !$placement || !$seed || !$abbr || !$sponsor) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor);
+          $data = [
+            'name' => $name,
+            'url' => $url,
+            'pic_url' => $pic_url,
+            'placement' => $placement,
+            'seed' => $seed,
+            'abbr' => $abbr,
+            'sponsor' => $sponsor
+          ];
+          
+          $result = $mrmModel->updateBand($id, $data);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-              display_mrm_band(get_mrm_band($id));
+              $mrm_band = $mrmModel->getBandById($id);
+              echo '<br><b>Name:</b> ' . $mrm_band['name'] .
+                   '<br><b>Name Abbr:</b> ' . $mrm_band['abbr'] .
+                   '<br><b>Url:</b> ' . $mrm_band['url'] .
+                   '<br><b>Seed:</b> ' . $mrm_band['seed'] .
+                   '<br><b>Picture:</b><br> <img src="' . $mrm_band['pic_url'] . '" width="250px"/>' .
+                   '<br><b>Placement:</b> ' . $mrm_band['placement'] .
+                   '<br><b>Sponsor:</b> ' . $mrm_band['sponsor'];
             echo "</div>";
           }
         }

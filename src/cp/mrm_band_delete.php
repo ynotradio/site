@@ -4,8 +4,11 @@ $page_file = "mrm_band_delete.php";
 $page_title = "Delete a Modern Rock Madness Band";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../models/ModernRockMadnessFactory.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
 
 $id = $_GET['id'];
 
@@ -21,8 +24,17 @@ if (!$_SESSION["logged_in"]) {
     <?php
       if (!$id)
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
-      else
-        delete_mrm_band($id);
+      else {
+        $mrm_band = $mrmModel->getBandById($id);
+        $result = $mrmModel->deleteBand($id);
+        
+        if ($result) {
+          echo "<div class=\"center\"><h1>Success!</h1>" .
+            "<h3>The band <span class=\"success\">" . $mrm_band['name'] . "</span> has been deleted.</h3></div>";
+        } else {
+          echo '<div class="top-spacer_20 center error">Error deleting the band</div>';
+        }
+      }
     ?>
     <div class="top-spacer_20">
       <a href="mrm_view_all.php">View all Modern Rock Madness Bands</a>

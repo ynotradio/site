@@ -4,8 +4,12 @@ $page_file = "mrm_manage_matches.php";
 $page_title = "Modern Rock Madness Matches";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../models/ModernRockMadnessFactory.php");
+require ("../partials/_mrm_admin_display_helpers.php");
 require ("../partials/_header.php");
+
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
 
 $action = (empty($_POST['action'])) ? 'view' : $_POST['action'];
 
@@ -30,9 +34,10 @@ if (!$_SESSION["logged_in"]) {
     <h1>Modern Rock Madness Matches</h1>
 		<form action="mrm_manage_matches.php" method="get">
     <?php
-      $current_match = now_match();
-      if ($current_match)
-        countdown_values($current_match['id']);
+      $current_match = $mrmModel->getCurrentMatch();
+      if ($current_match) {
+        countdownValues($current_match);
+      }
     ?>
 		<center>Select a round:
 			<select name="round" onchange="javascript:this.form.submit();">
@@ -53,12 +58,15 @@ if (!$_SESSION["logged_in"]) {
 <?php 			
         echo "<div class=\"center\"><strong>Round " . $round . "</strong></div>";
 
-	if ($action == "view")
-		view_matches($round);
-	elseif ($action == "write")
-		vote($match, $band, true, $round);
-	elseif ($action == "close")
-		close_match($match, $round);
+	if ($action == "view") {
+		viewMatches($mrmModel, $round);
+	} elseif ($action == "write") {
+		$mrmModel->vote($match, $band, 'admin@example.com', true);
+		viewMatches($mrmModel, $round);
+	} elseif ($action == "close") {
+		$mrmModel->closeMatch($match, $round);
+		viewMatches($mrmModel, $round);
+	}
 
 ?>
   </div>
