@@ -17,10 +17,12 @@ We are gradually migrating functionality from the legacy `/functions` directory 
 - On Demand (on_demand_fns.php → models/OnDemand.php) - **FULLY MIGRATED**: All code now uses the OnDemand model directly and on_demand_fns.php has been removed.
 - Schedule (schedule_fns.php → models/Schedule.php) - **FULLY MIGRATED**: All code now uses the Schedule model directly and schedule_fns.php has been removed.
 
+### Completed Migrations (continued):
+- Year End Staff Picks (year_end_staff_pick_fns.php → models/YearEndStaffPick.php) - **FULLY MIGRATED**: All code now uses the YearEndStaffPick model directly and year_end_staff_pick_fns.php has been removed.
+
 ### Planned Migrations:
 #### Final Migrations (Complex):
 - Top 11 @ 11 (top11_fns.php → models/Top11.php) - Involves voting system
-- Year End Staff Picks (year_end_staff_pick_fns.php → models/YearEndStaffPick.php) - Annual content
 - Modern Rock Madness (mrm_fns.php → models/ModernRockMadness.php) - Complex tournament system
 - Year End Poll (year_end_poll_fns.php → models/YearEndPoll.php) - Complex voting system
 
