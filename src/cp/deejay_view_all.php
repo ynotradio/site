@@ -7,6 +7,10 @@ require ("../functions/main_fns.php");
 require_once ("../models/DeejayFactory.php");
 require ("../partials/_header.php");
 
+// Add CSS for sortable items
+echo '<link href="../style/forms.css" rel="stylesheet" type="text/css" media="all">';
+echo '<link href="../style/sortable.css" rel="stylesheet" type="text/css" media="all">';
+
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
 } else {
@@ -42,11 +46,9 @@ function display_deejay($deejay) {
         $deejayModel = \YNotRadio\Models\DeejayFactory::create($db);
         $deejays = $deejayModel->getAllFlat();
         
-        echo '<ol>';
         foreach ($deejays as $deejay) {
           display_deejay($deejay);
         }
-        echo '</ol>';
       } catch (\Exception $e) {
         echo '<div class="top-spacer_20 center error">Error: ' . htmlspecialchars($e->getMessage()) . '</div>';
       }
@@ -60,12 +62,16 @@ function display_deejay($deejay) {
 
 
 <script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+<script
   src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
   integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
   crossorigin="anonymous"></script>
 
 
-  <script src="js/deejay-sort.js"></script>
+  <script src="../js/deejay-sort.js"></script>
   
 <?php }
   require ("../partials/_footer.php");
