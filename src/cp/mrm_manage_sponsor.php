@@ -4,11 +4,14 @@ $page_file = "mrm_band_update.php";
 $page_title = "Update Modern Rock Madness Sponsor";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../models/ModernRockMadnessFactory.php");
 require ("../partials/_header.php");
 
-$match = $_GET['match'];
-$action = $_POST['action'];
+$match = $_GET['match'] ?? null;
+$action = $_POST['action'] ?? null;
+
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
@@ -23,7 +26,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$match) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action != "update"){
-        $mrm_sponsor = get_mrm_sponsor($match);
+        $mrm_sponsor = $mrmModel->getSponsorById($match);
         echo "<form action=\"mrm_sponsor_update.php?id=".$match."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
           require ("../partials/_mrm_sponsor_form.php");
         echo "</form>";
@@ -35,7 +38,7 @@ if (!$_SESSION["logged_in"]) {
         if (!$match || !$sponsor) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_mrm_sponsor($match, $sponsor, $sponsor_msg);
+          $result = $mrmModel->updateSponsor($match, $sponsor, $sponsor_msg);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
             echo "</div>";
@@ -44,7 +47,8 @@ if (!$_SESSION["logged_in"]) {
       }
     ?> 
     <div class="top-spacer_20">
-      <a href="cp/">Control Panel</a>
+      <a href="mrm_manage_matches.php">Manage Matches</a> | 
+      <a href="index.php">Control Panel</a>
     </div>
   </div>
 </div> <!-- end of row div -->

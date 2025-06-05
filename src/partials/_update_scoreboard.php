@@ -1,9 +1,11 @@
 <?php
   require ("../functions/main_fns.php");
-  require ("../functions/mrm_fns.php");
-  open_db();
+  require ("../models/ModernRockMadnessFactory.php");
+  
+  $db = open_db();
+  $mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
 
-  $current_match = now_match();
+  $current_match = $mrmModel->getCurrentMatch();
 
-  scoreboard($current_match); 
+  echo $mrmModel->scoreboard($current_match); 
 ?>

@@ -4,7 +4,7 @@ $page_file = "callback.php";
 $page_title = "Callback";
 
 require "functions/main_fns.php";
-require "functions/mrm_fns.php";
+require "models/ModernRockMadnessFactory.php";
 require "partials/_header.php";
 
 ?>

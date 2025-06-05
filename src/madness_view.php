@@ -7,10 +7,14 @@ $page_title = "Modern Rock Madness";
 require "partials/_mrm_config.php";
 
 require ("functions/main_fns.php");
-require ("functions/mrm_fns.php");
+require ("models/ModernRockMadnessFactory.php");
 require ("partials/_header.php");
 
-$current_match = now_match();
+// Get ModernRockMadness model instance
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
+
+$current_match = $mrmModel->getCurrentMatch();
 
 $match_id = $_POST['match_id'];
 $band_id = $_POST['band_id'];
@@ -34,12 +38,13 @@ if (!$_SESSION["logged_in"]) {
     </div>
 <?php
 
-if ($band_id && $match_id)
-  vote($match_id, $band_id, false);
+if ($band_id && $match_id) {
+  $mrmModel->vote($match_id, $band_id, false);
+}
 
-show_match($current_match['id'], $madness_start_date);
-display_first_row($madness_start_date);
-display_bracket();
+echo $mrmModel->showMatch($current_match['id'], $madness_start_date);
+echo $mrmModel->displayFirstRow($madness_start_date);
+echo $mrmModel->displayBracket();
 }
 ?>
 

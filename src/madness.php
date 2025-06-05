@@ -29,10 +29,17 @@ $auth0 = new Auth0\SDK\Auth0([
     'scope' => 'openid email profile',
 ]);
 
-require "functions/mrm_fns.php";
+// Include model files
+require_once "models/ModernRockMadness.php";
+require_once "models/implementations/SqlModernRockMadness.php";
+require_once "models/ModernRockMadnessFactory.php";
 require "partials/_header.php";
 
-$current_match = now_match();
+// Get ModernRockMadness model instance
+$db = open_db();
+$mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
+
+$current_match = $mrmModel->getCurrentMatch();
 
 $match_id = $_POST['match_id'];
 $band_id = $_POST['band_id'];
@@ -61,12 +68,12 @@ $band_id = $_POST['band_id'];
 <?php
 
 if ($band_id && $match_id) {
-    vote($match_id, $band_id, false);
+    $mrmModel->vote($match_id, $band_id, false);
 }
 
-show_match($current_match['id'], $madness_start_date);
-display_first_row($madness_start_date);
-display_bracket();
+echo $mrmModel->showMatch($current_match['id'], $madness_start_date);
+echo $mrmModel->displayFirstRow($madness_start_date);
+echo $mrmModel->displayBracket();
 ?>
 
   </div>
