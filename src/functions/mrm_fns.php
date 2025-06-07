@@ -734,7 +734,9 @@ function show_match($match_id, $tournament_date = null)
     }
 
     if (end_of_madness()) {
-        winner_banner($tournament_date);
+        // This should now be handled by the model-based approach in madness.php
+        // Leaving this comment as a placeholder
+        echo "<div class=\"center\"><strong>Tournament Complete - Check main page for champion announcement</strong></div>";
     } elseif (waiting_for_final()) {
         echo "<div class=\"top-spacer_20 center\"><strong>Hang in there, we are still counting up all of the votes...</strong></div>";
     } else {
@@ -1084,20 +1086,4 @@ function get_tournament_year($start_date = null)
     return date('Y', strtotime($start_date));
 }
 
-function winner_banner($tournament_date = null)
-{
-    $query = "SELECT * FROM mrm_matches WHERE id=63";
-    $result = mysqli_query(open_db(), $query);
 
-    if (!$result) {
-        echo "error: " . $query;
-        die('Invalid');
-    }
-    $info = mysqli_fetch_assoc($result);
-    
-    // Get the tournament year
-    $year = get_tournament_year($tournament_date);
-
-    echo "<div class=\"center\"><h2>Congratulations to your " . $year . " <br>Y-Not Modern Rock Madness Champions</h2><h1>" . band_name($info['winner_id']) . "!</h1>" .
-    '<img src="' . get_band_pic_url($info['winner_id']) . '" height="200px"></div>';
-}
