@@ -31,52 +31,54 @@ $auth0 = new Auth0\SDK\Auth0([
 
 require "functions/mrm_fns.php";
 require "models/ModernRockMadnessFactory.php";
+require "controllers/MadnessController.php";
 require "partials/_header.php";
 
-// Initialize the Modern Rock Madness model (required)
+// Initialize the Modern Rock Madness model and controller (required)
 $db = open_db();
 try {
     $mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
+    $madnessController = new \YNotRadio\Controllers\MadnessController($mrmModel);
 } catch (Exception $e) {
-    error_log("MRM Model Error: " . $e->getMessage());
-    die("Modern Rock Madness model initialization failed. Please contact support.");
+    error_log("MRM Model/Controller Error: " . $e->getMessage());
+    die("Modern Rock Madness initialization failed. Please contact support.");
 }
 
 /**
- * Model-based winner_banner function
- * Uses the new getChampion() method exclusively
+ * Controller-based winner banner function
+ * Uses MadnessController to get champion data and renders via partial
  */
 function winner_banner_with_model($tournament_date = null) {
-    global $mrmModel;
+    global $madnessController;
     
-    if (!$mrmModel) {
-        throw new Exception('MRM Model not available');
+    try {
+        $championData = $madnessController->getChampionData($tournament_date);
+        
+        // If no champion yet, don't display anything (tournament not finished)
+        if ($championData === null) {
+            return;
+        }
+        
+        include __DIR__ . '/partials/_mrm_champion_banner.php';
+    } catch (Exception $e) {
+        error_log("Champion display error: " . $e->getMessage());
+        throw $e;
     }
-    
-    $champion = $mrmModel->getChampion();
-    if ($champion === null) {
-        throw new Exception('No champion found');
-    }
-    
-    // Use model data to display champion
-    $year = get_tournament_year($tournament_date);
-    echo "<div class=\"center\"><h2>Congratulations to your " . $year . " <br>Y-Not Modern Rock Madness Champions</h2><h1>" . htmlspecialchars($champion['name']) . "!</h1>" .
-    '<img src="' . htmlspecialchars($champion['pic_url']) . '" height="200px"></div>';
 }
 
-// Model-based display_first_row function
+// Controller-based display_first_row function
 function display_first_row_with_model($tournament_date = null) {
-    global $mrmModel;
+    global $madnessController;
     
-    if (!$mrmModel) {
-        throw new Exception('MRM Model not available');
+    if (!$madnessController) {
+        throw new Exception('Madness Controller not available');
     }
     
-    $tournamentOver = $mrmModel->isTournamentOver();
+    $tournamentOver = $madnessController->isTournamentOver();
     
     if ($tournamentOver) {
         winner_banner_with_model($tournament_date);
-    } elseif ($mrmModel->isWaitingForFinal()) {
+    } elseif ($madnessController->isWaitingForFinal()) {
         echo "<div class=\"top-spacer_20 center\"><strong>Hang in there, we are still counting up all of the votes...</strong></div>";
     } else {
         next_match($tournament_date);
@@ -109,9 +111,9 @@ $band_id = $_POST['band_id'];
         <div class="fb-like" data-href="http://www.ynotradio.net/madness.php?<?php echo get_tournament_year($madness_start_date); ?>" data-send="true" data-width="450" data-show-faces="false"></div>
       </div>
       
-      <?php if ($mrmModel && isset($_GET['debug'])): ?>
+      <?php if ($madnessController && isset($_GET['debug'])): ?>
       <div style="background: #e8f4fd; border: 1px solid #2196F3; padding: 8px; margin: 10px 0; border-radius: 4px; font-size: 0.9em;">
-        <strong>🔧 Development Mode:</strong> Using new Model-based architecture for enhanced tournament data display
+        <strong>🔧 Development Mode:</strong> Using new Controller-based architecture for enhanced tournament data display
       </div>
       <?php endif; ?>
     </div>
