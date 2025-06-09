@@ -1,9 +1,13 @@
 <?php
   require ("../functions/main_fns.php");
-  require ("../functions/mrm_admin_fns.php");
-  open_db();
+  require ("../controllers/MadnessController.php");
+  require ("../controllers/MadnessAdminController.php");
+  
+  $db = open_db();
+  $controller = new \YNotRadio\Controllers\MadnessController($db);
+  $adminController = new \YNotRadio\Controllers\MadnessAdminController($db);
 
-  $current_match = now_match();
+  $current_match = $adminController->getCurrentMatch();
 
-  scoreboard($current_match); 
+  $controller->renderScoreboard($current_match); 
 ?>

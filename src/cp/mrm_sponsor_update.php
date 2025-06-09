@@ -3,7 +3,8 @@ $page_file = "mrm_sponsor_update.php";
 $page_title = "Update Modern Rock Madness Sponsor";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_admin_fns.php");
+require ("../controllers/MadnessController.php");
+require ("../controllers/MadnessAdminController.php");
 require ("../partials/_header.php");
 
 if(isset($_POST['match'])) {
@@ -19,6 +20,8 @@ if (!$_SESSION["logged_in"]) {
 } else {
 
 /*----- CONTENT ------*/
+  $db = open_db();
+  $adminController = new \YNotRadio\Controllers\MadnessAdminController($db);
 ?>
 <div class="row">
   <div class="tweleve columns content full-width">
@@ -27,7 +30,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$match) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action != "update"){
-        $mrm_sponsor = get_mrm_sponsor($match);
+        $mrm_sponsor = $adminController->getMatch($match);
         echo "<form action=\"mrm_sponsor_update.php?match=".$match."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
           require ("../partials/_mrm_sponsor_form.php");
         echo "</form>";
@@ -39,7 +42,7 @@ if (!$_SESSION["logged_in"]) {
         if (!$match || !$sponsor) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_mrm_sponsor($match, $sponsor, $sponsor_msg);
+          $result = $adminController->updateSponsor($match, $sponsor, $sponsor_msg);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
             echo "</div>";
