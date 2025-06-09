@@ -37,8 +37,8 @@ interface ModernRockMadness
     /**
      * Get band information by placement ID
      *
-     * @param int $placement The band's placement ID (1-64)
-     * @return array|null The band data or null if not found
+     * @param int $placement The band's placement ID (0-64, where 0 means TBD)
+     * @return array The band data (returns a placeholder for TBD or not found)
      */
     public function getBandByPlacement(int $placement): ?array;
 

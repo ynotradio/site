@@ -88,6 +88,20 @@ class SqlModernRockMadness implements ModernRockMadness
      */
     public function getBandByPlacement(int $placement): ?array
     {
+        // If placement is 0, return a TBD band
+        if ($placement === 0) {
+            return [
+                'id' => 0,
+                'name' => 'TBD',
+                'url' => '',
+                'pic_url' => '',
+                'placement' => 0,
+                'seed' => '',
+                'abbr' => 'TBD',
+                'sponsor' => ''
+            ];
+        }
+        
         $placement = mysqli_real_escape_string($this->db, (string)$placement);
         $query = "SELECT * FROM mrm_bands WHERE placement = " . $placement;
         $result = mysqli_query($this->db, $query);
@@ -97,7 +111,22 @@ class SqlModernRockMadness implements ModernRockMadness
         }
 
         $band = mysqli_fetch_assoc($result);
-        return $band ?: null;
+        
+        // If no band found, return a placeholder
+        if (!$band) {
+            return [
+                'id' => $placement,
+                'name' => 'Band #' . $placement,
+                'url' => '',
+                'pic_url' => '',
+                'placement' => $placement,
+                'seed' => $placement,
+                'abbr' => 'B' . $placement,
+                'sponsor' => ''
+            ];
+        }
+        
+        return $band;
     }
 
     /**
@@ -108,7 +137,7 @@ class SqlModernRockMadness implements ModernRockMadness
         $match = $this->getMatch($matchId);
         
         if (!$match) {
-            throw new \Exception('Match not found');
+            return "early"; // Default to early if match not found
         }
 
         $now = date("Y-m-d H:i:s");
@@ -290,7 +319,7 @@ class SqlModernRockMadness implements ModernRockMadness
         
         for ($region = 1; $region <= 5; $region++) {
             $region = mysqli_real_escape_string($this->db, (string)$region);
-            $query = "SELECT * FROM mrm_matches WHERE region = " . $region;
+            $query = "SELECT * FROM mrm_matches WHERE region = " . $region . " ORDER BY id ASC";
             $result = mysqli_query($this->db, $query);
 
             if (!$result) {
