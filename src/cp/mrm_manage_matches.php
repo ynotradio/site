@@ -1,10 +1,9 @@
 <?php
-
 $page_file = "mrm_manage_matches.php";
 $page_title = "Modern Rock Madness Matches";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../functions/mrm_admin_fns.php");
 require ("../partials/_header.php");
 
 $action = (empty($_POST['action'])) ? 'view' : $_POST['action'];

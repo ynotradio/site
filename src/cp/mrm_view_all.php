@@ -4,7 +4,7 @@ $page_file = "mrm_view_all.php";
 $page_title = "View All Modern Rock Madness Bands";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../functions/mrm_admin_fns.php");
 require ("../partials/_header.php");
 
 if (!$_SESSION["logged_in"]) {

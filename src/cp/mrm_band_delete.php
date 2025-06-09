@@ -1,10 +1,9 @@
 <?php
-
 $page_file = "mrm_band_delete.php";
 $page_title = "Delete a Modern Rock Madness Band";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../functions/mrm_admin_fns.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];

@@ -1,10 +1,9 @@
 <?php
-
-$page_file = "mrm_band_update.php";
+$page_file = "mrm_sponsor_update.php";
 $page_title = "Update Modern Rock Madness Sponsor";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../functions/mrm_admin_fns.php");
 require ("../partials/_header.php");
 
 if(isset($_POST['match'])) {

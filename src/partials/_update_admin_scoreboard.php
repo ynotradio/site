@@ -2,7 +2,7 @@
   // Use absolute paths
   $root_path = $_SERVER['DOCUMENT_ROOT'];
   require_once($root_path . "/functions/main_fns.php");
-  require_once($root_path . "/functions/mrm_fns.php");
+  require_once($root_path . "/functions/mrm_admin_fns.php");
   
   // Open database connection
   @open_db();
