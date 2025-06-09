@@ -34,61 +34,56 @@ require "models/ModernRockMadnessFactory.php";
 require "controllers/MadnessController.php";
 require "partials/_header.php";
 
-// Initialize the Modern Rock Madness model and controller (required)
+// Initialize the Modern Rock Madness controller with database connection
 $db = open_db();
 try {
-    $mrmModel = \YNotRadio\Models\ModernRockMadnessFactory::create($db);
-    $madnessController = new \YNotRadio\Controllers\MadnessController($mrmModel);
+    $madnessController = new \YNotRadio\Controllers\MadnessController($db);
 } catch (Exception $e) {
-    error_log("MRM Model/Controller Error: " . $e->getMessage());
+    error_log("MRM Controller Error: " . $e->getMessage());
     die("Modern Rock Madness initialization failed. Please contact support.");
 }
 
 /**
- * Controller-based winner banner function
- * Uses MadnessController to get champion data and renders via partial
+ * Render champion banner using controller data and partial
  */
-function winner_banner_with_model($tournament_date = null) {
+function render_champion_banner($tournament_date = null) {
     global $madnessController;
     
-    try {
-        $championData = $madnessController->getChampionData($tournament_date);
-        
-        // If no champion yet, don't display anything (tournament not finished)
-        if ($championData === null) {
-            return;
-        }
-        
-        include __DIR__ . '/partials/_mrm_champion_banner.php';
-    } catch (Exception $e) {
-        error_log("Champion display error: " . $e->getMessage());
-        throw $e;
+    if (!$madnessController->shouldDisplayChampion($tournament_date)) {
+        return;
+    }
+    
+    $championData = $madnessController->getChampionData($tournament_date);
+    include __DIR__ . '/partials/_mrm_champion_banner.php';
+}
+
+/**
+ * Render first row content based on controller logic
+ */
+function render_first_row($tournament_date = null) {
+    global $madnessController;
+    
+    $content = $madnessController->getFirstRowContent($tournament_date);
+    
+    switch ($content['type']) {
+        case 'champion':
+            render_champion_banner($tournament_date);
+            break;
+            
+        case 'waiting':
+            echo "<div class=\"top-spacer_20 center\"><strong>Hang in there, we are still counting up all of the votes...</strong></div>";
+            break;
+            
+        case 'next_match':
+            next_match($content['data']);
+            break;
     }
 }
 
-// Controller-based display_first_row function
-function display_first_row_with_model($tournament_date = null) {
-    global $madnessController;
-    
-    if (!$madnessController) {
-        throw new Exception('Madness Controller not available');
-    }
-    
-    $tournamentOver = $madnessController->isTournamentOver();
-    
-    if ($tournamentOver) {
-        winner_banner_with_model($tournament_date);
-    } elseif ($madnessController->isWaitingForFinal()) {
-        echo "<div class=\"top-spacer_20 center\"><strong>Hang in there, we are still counting up all of the votes...</strong></div>";
-    } else {
-        next_match($tournament_date);
-    }
-}
-
-$current_match = now_match();
-
-$match_id = $_POST['match_id'];
-$band_id = $_POST['band_id'];
+// Get data from controller
+$current_match = $madnessController->getCurrentMatch();
+$match_id = $_POST['match_id'] ?? null;
+$band_id = $_POST['band_id'] ?? null;
 
 /*----- CONTENT ------*/
 ?>
@@ -110,21 +105,16 @@ $band_id = $_POST['band_id'];
         <a href="https://twitter.com/share" class="twitter-share-button" data-text="Tune in now to @YNotRadio's Modern Rock Madness - 64 bands go head to head! #modernrockmadness" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>
         <div class="fb-like" data-href="http://www.ynotradio.net/madness.php?<?php echo get_tournament_year($madness_start_date); ?>" data-send="true" data-width="450" data-show-faces="false"></div>
       </div>
-      
-      <?php if ($madnessController && isset($_GET['debug'])): ?>
-      <div style="background: #e8f4fd; border: 1px solid #2196F3; padding: 8px; margin: 10px 0; border-radius: 4px; font-size: 0.9em;">
-        <strong>🔧 Development Mode:</strong> Using new Controller-based architecture for enhanced tournament data display
-      </div>
-      <?php endif; ?>
     </div>
 <?php
 
-if ($band_id && $match_id) {
-    vote($match_id, $band_id, false);
+// Process vote through controller
+if ($match_id && $band_id) {
+    $madnessController->processVote($match_id, $band_id);
 }
 
 show_match($current_match['id'], $madness_start_date);
-display_first_row_with_model($madness_start_date);
+render_first_row($madness_start_date);
 display_bracket();
 ?>
 
