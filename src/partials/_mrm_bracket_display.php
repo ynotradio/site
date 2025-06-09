@@ -52,17 +52,8 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 $band2 = $controller->mrmModel->getBandByPlacement($match['band2_id']);
                 
                 // Get winner classes
-                $winner1_class = '';
-                $winner2_class = '';
-                if ($match['winner_id'] > 0) {
-                    if ($match['winner_id'] == $match['band1_id']) {
-                        $winner1_class = ' mrm_winner';
-                        $winner2_class = ' mrm_loser';
-                    } else {
-                        $winner1_class = ' mrm_loser';
-                        $winner2_class = ' mrm_winner';
-                    }
-                }
+                $winner1_class = $controller->getWinnerClass($match['band1_id'], $match['id']);
+                $winner2_class = $controller->getWinnerClass($match['band2_id'], $match['id']);
             ?>
             <div class="match<?php echo $side . $is_live; ?>" id="match<?php echo $match['id']; ?>">
                 <dl>
@@ -97,21 +88,21 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
     
     <?php
     // Display sponsor information if available
-    $current_match = $controller->getCurrentMatch();
-    if (isset($current_match['sponsor'])):
+    $sponsorInfo = $controller->getSponsorInfo();
+    if ($sponsorInfo):
     ?>
         <div class="sponsor" id="sponsor_top">
             Match sponsored by<br>
-            <?php echo htmlspecialchars($current_match['sponsor']); ?>
-            <?php if (isset($current_match['sponsor_msg'])): ?>
-                <br><?php echo htmlspecialchars($current_match['sponsor_msg']); ?>
+            <?php echo htmlspecialchars($sponsorInfo['name']); ?>
+            <?php if (!empty($sponsorInfo['message'])): ?>
+                <br><?php echo htmlspecialchars($sponsorInfo['message']); ?>
             <?php endif; ?>
         </div>
         <div class="sponsor" id="sponsor_bottom">
             Match sponsored by<br>
-            <?php echo htmlspecialchars($current_match['sponsor']); ?>
-            <?php if (isset($current_match['sponsor_msg'])): ?>
-                <br><?php echo htmlspecialchars($current_match['sponsor_msg']); ?>
+            <?php echo htmlspecialchars($sponsorInfo['name']); ?>
+            <?php if (!empty($sponsorInfo['message'])): ?>
+                <br><?php echo htmlspecialchars($sponsorInfo['message']); ?>
             <?php endif; ?>
         </div>
     <?php endif; ?>

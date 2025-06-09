@@ -246,6 +246,63 @@ class MadnessController
     }
     
     /**
+     * Render the match scoreboard
+     * 
+     * @param array $match The match data
+     * @return void
+     */
+    public function renderScoreboard(array $match): void
+    {
+        $controller = $this; // For use in the partial
+        include __DIR__ . '/../partials/_mrm_scoreboard.php';
+    }
+    
+    /**
+     * Render countdown values for a match
+     * 
+     * @param array $match The match data
+     * @return void
+     */
+    public function renderCountdownValues(array $match): void
+    {
+        include __DIR__ . '/../partials/_mrm_countdown_values.php';
+    }
+    
+    /**
+     * Render tournament timeline
+     * 
+     * @param string|null $tournament_date The tournament start date
+     * @return void
+     */
+    public function renderTournamentTimeline(?string $tournament_date = null): void
+    {
+        $timeline = $this->mrmModel->getTimelineData($tournament_date ?? date('Y-m-d'));
+        
+        // Display tournament timeline
+        echo "<ul id='time_line'>\n";
+
+        // Left side of the bracket (first to championship)
+        echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_left']}</li>\n";
+        echo "<li><strong>2<sup>nd</sup> ROUND</strong>{$timeline['second_round_left']}</li>\n";
+        echo "<li class=\"top-pad_3\"><strong>SWELL 16</strong>{$timeline['sweet_16']}</li>\n";
+        echo "<li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>{$timeline['elusive_8']}</li>\n";
+        echo "<li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>{$timeline['final_4']}</li>\n";
+
+        // Championship (center)
+        echo "<li class=\"top-pad_3\"><strong>CHAMPION</strong>{$timeline['championship']}</li>\n";
+
+        // Right side of the bracket (championship to first)
+        echo "<li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>{$timeline['final_4']}</li>\n";
+        echo "<li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>{$timeline['elusive_8']}</li>\n";
+        echo "<li class=\"top-pad_3\"><strong>SWELL 16</strong>{$timeline['sweet_16']}</li>\n";
+        echo "<li><strong>2<sup>nd</sup> ROUND</strong>{$timeline['second_round_right']}</li>\n";
+        echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_right']}</li>\n";
+
+        // Close the timeline
+        echo "</ul>\n";
+    }
+    
+    /**
      * Get the tournament year
      * 
      * @param string|null $tournament_date Tournament start date
@@ -254,5 +311,72 @@ class MadnessController
     public function getTournamentYear($tournament_date = null)
     {
         return $this->mrmModel->getTournamentYear($tournament_date);
+    }
+    
+    /**
+     * Get winner class for band in match
+     * 
+     * @param int $bandId The band ID to check
+     * @param int $matchId The match ID to check
+     * @return string CSS class for the band
+     */
+    public function getWinnerClass(int $bandId, int $matchId): string
+    {
+        return $this->mrmModel->getWinnerClass($bandId, $matchId);
+    }
+    
+    /**
+     * Check if match is tied
+     * 
+     * @param array $match The match data
+     * @return bool True if tied
+     */
+    public function isMatchTied(array $match): bool
+    {
+        return $this->mrmModel->isMatchTied($match);
+    }
+    
+    /**
+     * Get sponsor info for a match
+     * 
+     * @param int|null $matchId Optional match ID
+     * @return array|null Sponsor info
+     */
+    public function getSponsorInfo(?int $matchId = null): ?array
+    {
+        return $this->mrmModel->getSponsorInfo($matchId);
+    }
+    
+    /**
+     * Render sponsor information if available
+     * 
+     * @param int|null $matchId Optional match ID
+     * @return void
+     */
+    public function renderSponsorInfo(?int $matchId = null): void
+    {
+        $sponsorInfo = $this->getSponsorInfo($matchId);
+        
+        if (!$sponsorInfo) {
+            return;
+        }
+        
+        include __DIR__ . '/../partials/_mrm_sponsor_info.php';
+    }
+    
+    /**
+     * Render champion banner
+     * 
+     * @param string|null $tournament_date Tournament start date
+     * @return void
+     */
+    public function renderChampionBanner(?string $tournament_date = null): void
+    {
+        if (!$this->shouldDisplayChampion($tournament_date)) {
+            return;
+        }
+        
+        $championData = $this->getChampionData($tournament_date);
+        include __DIR__ . '/../partials/_mrm_champion_banner.php';
     }
 }

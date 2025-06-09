@@ -29,7 +29,7 @@ $auth0 = new Auth0\SDK\Auth0([
     'scope' => 'openid email profile',
 ]);
 
-require "functions/mrm_fns.php";
+// Only require necessary dependencies
 require "models/ModernRockMadnessFactory.php";
 require "controllers/MadnessController.php";
 require "partials/_header.php";
@@ -44,20 +44,6 @@ try {
 }
 
 /**
- * Render champion banner using controller data and partial
- */
-function render_champion_banner($tournament_date = null) {
-    global $madnessController;
-    
-    if (!$madnessController->shouldDisplayChampion($tournament_date)) {
-        return;
-    }
-    
-    $championData = $madnessController->getChampionData($tournament_date);
-    include __DIR__ . '/partials/_mrm_champion_banner.php';
-}
-
-/**
  * Render first row content based on controller logic
  */
 function render_first_row($tournament_date = null) {
@@ -67,7 +53,7 @@ function render_first_row($tournament_date = null) {
     
     switch ($content['type']) {
         case 'champion':
-            render_champion_banner($tournament_date);
+            $madnessController->renderChampionBanner($tournament_date);
             break;
             
         case 'waiting':
@@ -122,6 +108,7 @@ if ($match_id && $band_id) {
 $madnessController->renderMatchDisplay($current_match['id'], $madness_start_date);
 render_first_row($madness_start_date);
 $madnessController->renderBracketDisplay($madness_start_date);
+$madnessController->renderSponsorInfo($current_match['id']);
 ?>
 
   </div>

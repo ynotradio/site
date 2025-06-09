@@ -111,6 +111,8 @@ $has_voted = $controller->hasVoted($match_id);
                     <?php 
                     if ($match_status === 'early') {
                         echo 'Voting has not started yet';
+                    } elseif ($match_status === 'over' && $controller->isMatchTied($match)) {
+                        echo 'Match is over and tied - vote for the winner';
                     } elseif ($match_status === 'over') {
                         echo 'Voting is now over';
                     }

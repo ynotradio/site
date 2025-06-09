@@ -124,4 +124,37 @@ interface ModernRockMadness
      * @return array Timeline data with dates for each round
      */
     public function getTimelineData(string $startDate): array;
+    
+    /**
+     * Get detailed tournament dates based on a start date
+     * 
+     * @param string $startDate Tournament start date
+     * @return array Detailed dates for each tournament round
+     */
+    public function getTournamentDates(string $startDate): array;
+    
+    /**
+     * Get CSS class for winner/loser band
+     * 
+     * @param int $bandId The band ID to check
+     * @param int $matchId The match ID to check against
+     * @return string CSS class for winner/loser or empty string
+     */
+    public function getWinnerClass(int $bandId, int $matchId): string;
+    
+    /**
+     * Check if a match is tied (equal votes)
+     * 
+     * @param array $match The match data
+     * @return bool True if match is tied
+     */
+    public function isMatchTied(array $match): bool;
+    
+    /**
+     * Get details about the match sponsor
+     * 
+     * @param int|null $matchId Optional match ID, uses current match if null
+     * @return array|null Sponsor data with name and message
+     */
+    public function getSponsorInfo(?int $matchId = null): ?array;
 }

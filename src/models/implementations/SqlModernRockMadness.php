@@ -342,19 +342,142 @@ class SqlModernRockMadness implements ModernRockMadness
      */
     public function getTimelineData(string $startDate): array
     {
-        // This is a placeholder implementation - the actual timeline calculation
-        // logic can be extracted from mrm_fns.php later
-        $startTimestamp = strtotime($startDate);
+        $dates = $this->getTournamentDates($startDate);
+        
+        // Return simplified timeline data for display
+        return [
+            'first_round_left' => explode('-', $dates['first_round_left'])[0],
+            'second_round_left' => $dates['second_round_left'],
+            'sweet_16' => $dates['sweet_16'],
+            'elusive_8' => $dates['elusive_8'],
+            'final_4' => $dates['final_4'],
+            'championship' => $dates['championship'],
+            'second_round_right' => $dates['second_round_right'],
+            'first_round_right' => explode('-', $dates['first_round_right'])[0],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getTournamentDates(string $startDate): array
+    {
+        // Parse the start date
+        $tournament_start = strtotime($startDate);
+        
+        // Ensure the start date is a Monday (1 = Monday, 7 = Sunday)
+        $day_of_week = date('N', $tournament_start);
+        if ($day_of_week != 1) {
+            // Adjust to next Monday if not already a Monday
+            $tournament_start = strtotime('next Monday', $tournament_start);
+        }
+        
+        // Calculate all tournament dates
+        $dates = [];
+        
+        // First Round - Left side (Monday-Tuesday of Week 1)
+        $first_round_left_start = $tournament_start;
+        $first_round_left_end = strtotime('+1 day', $first_round_left_start);
+        $dates['first_round_left'] = date('F j', $first_round_left_start) . '-' . date('j', $first_round_left_end);
+        
+        // First Round - Right side (Wednesday-Thursday of Week 1)
+        $first_round_right_start = strtotime('+2 days', $first_round_left_start);
+        $first_round_right_end = strtotime('+1 day', $first_round_right_start);
+        $dates['first_round_right'] = date('F j', $first_round_right_start) . '-' . date('j', $first_round_right_end);
+        
+        // Second Round - Left side (Monday of Week 2)
+        $second_round_left = strtotime('+7 days', $first_round_left_start);
+        $dates['second_round_left'] = date('F j', $second_round_left);
+        
+        // Second Round - Right side (Tuesday of Week 2)
+        $second_round_right = strtotime('+1 day', $second_round_left);
+        $dates['second_round_right'] = date('F j', $second_round_right);
+        
+        // Sweet 16 - Both sides (Wednesday of Week 2)
+        $sweet_16 = strtotime('+2 days', $second_round_left);
+        $dates['sweet_16'] = date('F j', $sweet_16);
+        
+        // Elusive 8 - Both sides (Thursday of Week 2)
+        $elusive_8 = strtotime('+3 days', $second_round_left);
+        $dates['elusive_8'] = date('F j', $elusive_8);
+        
+        // Final 4 - Both sides (Thursday of Week 2, same day as Elusive 8)
+        $dates['final_4'] = date('F j', $elusive_8);
+        
+        // Championship (Friday of Week 2)
+        $championship = strtotime('+4 days', $second_round_left);
+        $dates['championship'] = date('F j', $championship);
+        
+        return $dates;
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getWinnerClass(int $bandId, int $matchId): string
+    {
+        $matchId = mysqli_real_escape_string($this->db, (string)$matchId);
+        $bandId = mysqli_real_escape_string($this->db, (string)$bandId);
+        
+        $query = "SELECT winner_id FROM mrm_matches WHERE id = " . $matchId;
+        $result = mysqli_query($this->db, $query);
+        
+        if (!$result) {
+            throw new \Exception('Error checking winner: ' . mysqli_error($this->db));
+        }
+        
+        $match = mysqli_fetch_assoc($result);
+        
+        if (!$match || $match['winner_id'] == 0) {
+            return '';
+        }
+        
+        if ($match['winner_id'] == $bandId) {
+            return ' mrm_winner';
+        } else {
+            return ' mrm_loser';
+        }
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function isMatchTied(array $match): bool
+    {
+        return $match['band1_votes'] == $match['band2_votes'];
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function getSponsorInfo(?int $matchId = null): ?array
+    {
+        if ($matchId === null) {
+            // Use current match if match ID not provided
+            $match = $this->getCurrentMatch();
+            if (!$match || $match['id'] == 8888) {
+                return null;
+            }
+            $matchId = $match['id'];
+        }
+        
+        $matchId = mysqli_real_escape_string($this->db, (string)$matchId);
+        $query = "SELECT sponsor, sponsor_msg FROM mrm_matches WHERE id = " . $matchId;
+        $result = mysqli_query($this->db, $query);
+        
+        if (!$result) {
+            throw new \Exception('Error getting sponsor info: ' . mysqli_error($this->db));
+        }
+        
+        $sponsorInfo = mysqli_fetch_assoc($result);
+        
+        if (!$sponsorInfo || empty($sponsorInfo['sponsor'])) {
+            return null;
+        }
         
         return [
-            'first_round_left' => date('M j', $startTimestamp),
-            'second_round_left' => date('M j', strtotime('+2 days', $startTimestamp)),
-            'sweet_16' => date('M j', strtotime('+4 days', $startTimestamp)),
-            'elusive_8' => date('M j', strtotime('+6 days', $startTimestamp)),
-            'final_4' => date('M j', strtotime('+8 days', $startTimestamp)),
-            'championship' => date('M j', strtotime('+10 days', $startTimestamp)),
-            'second_round_right' => date('M j', strtotime('+2 days', $startTimestamp)),
-            'first_round_right' => date('M j', strtotime('+1 day', $startTimestamp)),
+            'name' => $sponsorInfo['sponsor'],
+            'message' => $sponsorInfo['sponsor_msg'] ?? ''
         ];
     }
 }
