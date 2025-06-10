@@ -4,6 +4,8 @@ namespace YNotRadio\Controllers;
 
 use YNotRadio\Models\ModernRockMadnessFactory;
 
+require_once(__DIR__ . "/../models/ModernRockMadnessFactory.php");
+
 /**
  * Controller for Modern Rock Madness functionality
  * Handles business logic and coordinates between models and views
