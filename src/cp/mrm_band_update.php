@@ -4,11 +4,16 @@ $page_file = "mrm_band_update.php";
 $page_title = "Update Modern Rock Madness Band";
 
 require ("../functions/main_fns.php");
-require ("../functions/mrm_fns.php");
+require ("../controllers/MadnessController.php");
+require ("../controllers/MadnessAdminController.php");
 require ("../partials/_header.php");
 
 $id = $_GET['id'];
 $action = $_POST['action'];
+
+// Initialize the admin controller
+$db = open_db();
+$adminController = new \YNotRadio\Controllers\MadnessAdminController($db);
 
 if (!$_SESSION["logged_in"]) {
   login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
@@ -23,7 +28,7 @@ if (!$_SESSION["logged_in"]) {
       if (!$id) {
         echo '<div class="top-spacer_20 center error">Error - missing ID value</div>';
       } elseif ($action != "update"){
-        $mrm_band = get_mrm_band($id);
+        $mrm_band = $adminController->getBand($id);
         echo "<form action=\"mrm_band_update.php?id=".$id."\" method=\"post\" class=\"form-internal inline input-seperation\" id=\"admin\">";
           require ("../partials/_mrm_band_form.php");
         echo "</form>
@@ -40,10 +45,17 @@ if (!$_SESSION["logged_in"]) {
         if (!$name || !$url || !$pic_url || !$placement || !$seed || !$abbr || !$sponsor) {
           echo '<div class="top-spacer_20 center error">Error - missing required value(s)</div>';
         } else {
-          $result = update_mrm_band($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor);
+          $result = $adminController->updateBand($id, $name, $url, $pic_url, $placement, $seed, $abbr, $sponsor);
           if ($result) {
             echo '<div class="top-spacer_20 center"><h1>Update was successful!</h1>';
-              display_mrm_band(get_mrm_band($id));
+            $band = $adminController->getBand($id);
+            echo "\n<br><b>Name:</b> " . $band['name'] .
+                 "\n<br><b>Name Abbr:</b> " . $band['abbr'] .
+                 "\n<br><b>Url:</b> " . $band['url'] .
+                 "\n<br><b>Seed:</b> " . $band['seed'] .
+                 "\n<br><b>Picture:</b><br> <img src=\"" . $band['pic_url'] . "\" width=\"250px\"/>" .
+                 "\n<br><b>Placement:</b> " . $band['placement'] .
+                 "\n<br><b>Sponsor:</b> " . $band['sponsor'];
             echo "</div>";
           }
         }
