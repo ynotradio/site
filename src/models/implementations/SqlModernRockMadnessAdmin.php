@@ -17,7 +17,7 @@ class SqlModernRockMadnessAdmin implements ModernRockMadnessAdmin
     /**
      * @var \mysqli Database connection
      */
-    private \mysqli $db;
+    private $db;
 
     /**
      * Constructor
