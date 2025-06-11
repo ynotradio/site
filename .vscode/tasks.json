@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker: Start Services",
+            "type": "shell",
+            "command": "docker-compose up -d",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Docker: Stop Services",
+            "type": "shell",
+            "command": "docker-compose down",
+            "problemMatcher": []
+        },
+        {
+            "label": "PHP Lint",
+            "type": "shell",
+            "command": "docker run --rm --volume ${workspaceFolder}:/app vfac/php7compatibility 7.4 ./src -d memory_limit=1G --extensions=php",
+            "problemMatcher": []
+        },
+        {
+            "label": "Composer: Install Dependencies",
+            "type": "shell",
+            "command": "cd src && composer install",
+            "problemMatcher": []
+        },
+        {
+            "label": "Composer: Update Dependencies",
+            "type": "shell",
+            "command": "cd src && composer update",
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy to Production",
+            "type": "shell",
+            "command": "cd src && composer deploy",
+            "problemMatcher": []
+        },
+        {
+            "label": "Rollback Deployment",
+            "type": "shell",
+            "command": "cd src && composer rollback",
+            "problemMatcher": []
+        }
+    ]
+}
