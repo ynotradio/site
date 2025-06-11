@@ -38,7 +38,8 @@
 			"mrmlnc.vscode-apache",
 			"mtxr.sqltools",
 			"mtxr.sqltools-driver-mysql",
-			"ms-azuretools.vscode-docker"
+			"ms-azuretools.vscode-docker",
+			"automatalabs.copilot-mcp"
 		]
 	},
 	"launch": {
@@ -78,5 +79,5 @@
 				"problemMatcher": []
 			}
 		]
-	}
+	},
 }

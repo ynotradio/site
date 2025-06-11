@@ -4,6 +4,7 @@ sponsors
 *.log
 src/vendor
 src/partials/.env
+node_modules
 
 db/docker/*.sql
 vendor/autoload.php
