@@ -16,15 +16,13 @@ We are gradually migrating functionality from the legacy `/functions` directory 
 - New Music (music_fns.php → models/Music.php) - **FULLY MIGRATED**: All code now uses the Music model directly and music_fns.php has been removed.
 - On Demand (on_demand_fns.php → models/OnDemand.php) - **FULLY MIGRATED**: All code now uses the OnDemand model directly and on_demand_fns.php has been removed.
 - Schedule (schedule_fns.php → models/Schedule.php) - **FULLY MIGRATED**: All code now uses the Schedule model directly and schedule_fns.php has been removed.
-
-### Completed Migrations (continued):
 - Year End Staff Picks (year_end_staff_pick_fns.php → models/YearEndStaffPick.php) - **FULLY MIGRATED**: All code now uses the YearEndStaffPick model directly and year_end_staff_pick_fns.php has been removed.
 - Top 11 @ 11 (top11_fns.php → models/Top11.php) - **FULLY MIGRATED**: All code now uses the Top11 model directly and top11_fns.php has been removed. Includes voting system.
+- Modern Rock Madness (mrm_fns.php → models/ModernRockMadness.php) - Complex tournament system
+- Year End Poll (year_end_poll_fns.php → models/YearEndPoll.php) - **FULLY MIGRATED**: All voter-facing and admin functionality has been migrated to the Model/Controller/partial architecture. Ready for year_end_poll_fns.php removal.
 
 ### Planned Migrations:
-#### Final Migrations (Complex):
-- Modern Rock Madness (mrm_fns.php → models/ModernRockMadness.php) - Complex tournament system
-- Year End Poll (year_end_poll_fns.php → models/YearEndPoll.php) - Complex voting system
+- None at this time (all identified functionalities have been migrated)
 
 ### Will Not Be Migrated:
 - Images (image_fns.php) - Decision made on June 2, 2025
