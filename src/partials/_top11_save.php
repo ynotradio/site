@@ -20,15 +20,7 @@ $write_in = isset($_POST['write_in_value']) ? $_POST['write_in_value'] : '';
 
 // Validate the form
 $errors = [];
-if (empty($firstname)) {
-    $errors[] = "First name is required";
-}
-if (empty($lastname)) {
-    $errors[] = "Last name is required";
-}
-if (empty($email)) {
-    $errors[] = "Email is required";
-}
+// Only require song selection, make personal info optional
 if (empty($top11_votes) && empty($write_in)) {
     $errors[] = "Please select at least one song or write in your own";
 }
@@ -48,7 +40,10 @@ if (!empty($errors)) {
 
 // Save the contestant
 try {
-    $top11Model->addContestant($firstname, $lastname, $email, $phone, $contest, $newsletter);
+    // Only save contestant info if they provided at least a name and email
+    if (!empty($firstname) && !empty($email)) {
+        $top11Model->addContestant($firstname, $lastname, $email, $phone, $contest, $newsletter);
+    }
     
     // Process votes
     if (!empty($top11_votes)) {
