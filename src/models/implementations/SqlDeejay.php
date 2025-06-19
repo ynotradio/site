@@ -26,21 +26,14 @@ class SqlDeejay implements Deejay {
     }
 
     public function getAll(int $limit = 64): array {
-        $josh_query = "SELECT * FROM deejays WHERE deleted = 'no' AND name = 'Josh T. Landow' ORDER BY name";
-        $josh_result = mysqli_query($this->db, $josh_query);
-      
-        if (!$josh_result) {
-            throw new \RuntimeException("Error fetching Josh: " . mysqli_error($this->db));
-        }
-      
-        $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort";
+        $query = "SELECT * FROM deejays WHERE deleted = 'no' ORDER BY sort";
         $result = mysqli_query($this->db, $query);
       
         if (!$result) {
             throw new \RuntimeException("Error fetching all deejays: " . mysqli_error($this->db));
         }
       
-        $josh = array(mysqli_fetch_assoc($josh_result));
+        $empty_row = array(); // Empty first row
         $odd_results = array();
         $even_results = array();
       
@@ -53,7 +46,7 @@ class SqlDeejay implements Deejay {
             }
         }
       
-        return array($josh, $odd_results, $even_results);
+        return array($empty_row, $odd_results, $even_results);
     }
 
     public function getAllFlat(): array {
