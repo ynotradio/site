@@ -72,7 +72,7 @@ class SqlDeejay implements Deejay {
     }
 
     public function add(array $data): int {
-        $requiredFields = ['name', 'show', 'email', 'external_connect_text', 'external_connect_url', 'pic'];
+        $requiredFields = ['name', 'email'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
                 throw new \InvalidArgumentException("Missing required field: $field");
@@ -80,11 +80,11 @@ class SqlDeejay implements Deejay {
         }
 
         $name = mysqli_real_escape_string($this->db, $data['name']);
-        $show = mysqli_real_escape_string($this->db, $data['show']);
+        $show = mysqli_real_escape_string($this->db, $data['show'] ?? '');
         $email = mysqli_real_escape_string($this->db, $data['email']);
-        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text']);
-        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url']);
-        $pic = mysqli_real_escape_string($this->db, $data['pic']);
+        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text'] ?? '');
+        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url'] ?? '');
+        $pic = mysqli_real_escape_string($this->db, $data['pic'] ?? '');
 
         $query = "INSERT INTO deejays (name, `show`, email, external_connect_text, external_connect_url, pic, sort, deleted) 
                  VALUES ('$name', '$show', '$email', '$external_connect_text', '$external_connect_url', '$pic', 1, 'no')";
@@ -97,7 +97,7 @@ class SqlDeejay implements Deejay {
     }
 
     public function update(int $id, array $data): bool {
-        $requiredFields = ['name', 'show', 'email', 'external_connect_text', 'external_connect_url', 'pic'];
+        $requiredFields = ['name', 'email'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
                 throw new \InvalidArgumentException("Missing or empty required field: $field");
@@ -106,11 +106,11 @@ class SqlDeejay implements Deejay {
 
         $id = mysqli_real_escape_string($this->db, $id);
         $name = mysqli_real_escape_string($this->db, $data['name']);
-        $show = mysqli_real_escape_string($this->db, $data['show']);
+        $show = mysqli_real_escape_string($this->db, $data['show'] ?? '');
         $email = mysqli_real_escape_string($this->db, $data['email']);
-        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text']);
-        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url']);
-        $pic = mysqli_real_escape_string($this->db, $data['pic']);
+        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text'] ?? '');
+        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url'] ?? '');
+        $pic = mysqli_real_escape_string($this->db, $data['pic'] ?? '');
 
         $query = "UPDATE deejays SET 
                  name = '$name',
