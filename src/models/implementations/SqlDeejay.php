@@ -33,20 +33,19 @@ class SqlDeejay implements Deejay {
             throw new \RuntimeException("Error fetching all deejays: " . mysqli_error($this->db));
         }
       
-        $empty_row = array(); // Empty first row
-        $odd_results = array();
-        $even_results = array();
+        $left_column = array();
+        $right_column = array();
       
         for ($i=1; $i <= mysqli_num_rows($result); $i++){
             $info = mysqli_fetch_assoc($result);
             if (fmod($i,2) == 0) {
-                array_push($even_results, $info);
+                array_push($right_column, $info);
             } else {
-                array_push($odd_results, $info);
+                array_push($left_column, $info);
             }
         }
       
-        return array($empty_row, $odd_results, $even_results);
+        return array($left_column, $right_column);
     }
 
     public function getAllFlat(): array {

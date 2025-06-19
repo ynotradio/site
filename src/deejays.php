@@ -36,10 +36,10 @@ function display_all_deejays($deejays) {
     <h1>DeeJays</h1>
     <div class="row">
       <div class="six columns">
-        <?php display_all_deejays($deejays[1]); ?>
+        <?php display_all_deejays($deejays[0]); ?>
       </div>
       <div class="six columns">
-        <?php display_all_deejays($deejays[2]); ?>
+        <?php display_all_deejays($deejays[1]); ?>
       </div>
     </div>
   </div>
