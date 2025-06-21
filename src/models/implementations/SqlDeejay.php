@@ -26,34 +26,26 @@ class SqlDeejay implements Deejay {
     }
 
     public function getAll(int $limit = 64): array {
-        $josh_query = "SELECT * FROM deejays WHERE deleted = 'no' AND name = 'Josh T. Landow' ORDER BY name";
-        $josh_result = mysqli_query($this->db, $josh_query);
-      
-        if (!$josh_result) {
-            throw new \RuntimeException("Error fetching Josh: " . mysqli_error($this->db));
-        }
-      
-        $query = "SELECT * FROM deejays WHERE deleted = 'no' AND name != 'Josh T. Landow' ORDER BY sort";
+        $query = "SELECT * FROM deejays WHERE deleted = 'no' ORDER BY sort";
         $result = mysqli_query($this->db, $query);
       
         if (!$result) {
             throw new \RuntimeException("Error fetching all deejays: " . mysqli_error($this->db));
         }
       
-        $josh = array(mysqli_fetch_assoc($josh_result));
-        $odd_results = array();
-        $even_results = array();
+        $left_column = array();
+        $right_column = array();
       
         for ($i=1; $i <= mysqli_num_rows($result); $i++){
             $info = mysqli_fetch_assoc($result);
             if (fmod($i,2) == 0) {
-                array_push($even_results, $info);
+                array_push($right_column, $info);
             } else {
-                array_push($odd_results, $info);
+                array_push($left_column, $info);
             }
         }
       
-        return array($josh, $odd_results, $even_results);
+        return array($left_column, $right_column);
     }
 
     public function getAllFlat(): array {
@@ -72,7 +64,7 @@ class SqlDeejay implements Deejay {
     }
 
     public function add(array $data): int {
-        $requiredFields = ['name', 'show', 'email', 'external_connect_text', 'external_connect_url', 'pic'];
+        $requiredFields = ['name', 'email'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field])) {
                 throw new \InvalidArgumentException("Missing required field: $field");
@@ -80,11 +72,11 @@ class SqlDeejay implements Deejay {
         }
 
         $name = mysqli_real_escape_string($this->db, $data['name']);
-        $show = mysqli_real_escape_string($this->db, $data['show']);
+        $show = mysqli_real_escape_string($this->db, $data['show'] ?? '');
         $email = mysqli_real_escape_string($this->db, $data['email']);
-        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text']);
-        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url']);
-        $pic = mysqli_real_escape_string($this->db, $data['pic']);
+        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text'] ?? '');
+        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url'] ?? '');
+        $pic = mysqli_real_escape_string($this->db, $data['pic'] ?? '');
 
         $query = "INSERT INTO deejays (name, `show`, email, external_connect_text, external_connect_url, pic, sort, deleted) 
                  VALUES ('$name', '$show', '$email', '$external_connect_text', '$external_connect_url', '$pic', 1, 'no')";
@@ -97,7 +89,7 @@ class SqlDeejay implements Deejay {
     }
 
     public function update(int $id, array $data): bool {
-        $requiredFields = ['name', 'show', 'email', 'external_connect_text', 'external_connect_url', 'pic'];
+        $requiredFields = ['name', 'email'];
         foreach ($requiredFields as $field) {
             if (!isset($data[$field]) || trim($data[$field]) === '') {
                 throw new \InvalidArgumentException("Missing or empty required field: $field");
@@ -106,11 +98,11 @@ class SqlDeejay implements Deejay {
 
         $id = mysqli_real_escape_string($this->db, $id);
         $name = mysqli_real_escape_string($this->db, $data['name']);
-        $show = mysqli_real_escape_string($this->db, $data['show']);
+        $show = mysqli_real_escape_string($this->db, $data['show'] ?? '');
         $email = mysqli_real_escape_string($this->db, $data['email']);
-        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text']);
-        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url']);
-        $pic = mysqli_real_escape_string($this->db, $data['pic']);
+        $external_connect_text = mysqli_real_escape_string($this->db, $data['external_connect_text'] ?? '');
+        $external_connect_url = mysqli_real_escape_string($this->db, $data['external_connect_url'] ?? '');
+        $pic = mysqli_real_escape_string($this->db, $data['pic'] ?? '');
 
         $query = "UPDATE deejays SET 
                  name = '$name',

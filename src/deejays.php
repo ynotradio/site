@@ -35,14 +35,11 @@ function display_all_deejays($deejays) {
   <div class="nine columns content">
     <h1>DeeJays</h1>
     <div class="row">
-      <div class="twelve columns">
+      <div class="six columns">
         <?php display_all_deejays($deejays[0]); ?>
       </div>
       <div class="six columns">
         <?php display_all_deejays($deejays[1]); ?>
-      </div>
-      <div class="six columns">
-        <?php display_all_deejays($deejays[2]); ?>
       </div>
     </div>
   </div>
