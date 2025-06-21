@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@benborla29/mcp-server-mysql": "^2.0.2"
+    "@benborla29/mcp-server-mysql": "^2.0.2",
+    "@sanity/client": "^7.6.0",
+    "@sanity/mcp-server": "latest"
   }
 }
