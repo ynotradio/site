@@ -1,0 +1,106 @@
+---
+# Phase 4 Migration - Modern Rock Madness
+# Created: June 23, 2025
+#
+# This phase focuses on the Modern Rock Madness feature, which is a complex interactive feature
+
+models:
+  ModernRockMadness:
+    table: mrm_bands
+    related_tables:
+      - mrm_matches
+      - mrm_votes
+      - mrm_matches_flow
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      name:
+        type: varchar(64)
+        nullable: false
+      url:
+        type: varchar(256)
+        nullable: false
+      pic_url:
+        type: varchar(256)
+        nullable: false
+      placement:
+        type: int
+        nullable: false
+        unique: true
+      seed:
+        type: int
+        nullable: false
+      abbr:
+        type: varchar(7)
+        nullable: false
+      sponsor:
+        type: varchar(128)
+        nullable: false
+
+    related_schema:
+      mrm_matches:
+        id:
+          type: int
+          nullable: false
+          primary_key: true
+          auto_increment: true
+        region:
+          type: int
+          nullable: false
+        band1_id:
+          type: int
+          nullable: false
+          foreign_key: true
+        band1_votes:
+          type: int
+          nullable: false
+          default: 0
+        band2_id:
+          type: int
+          nullable: false
+          foreign_key: true
+        band2_votes:
+          type: int
+          nullable: false
+          default: 0
+        last_updated:
+          type: timestamp
+          nullable: false
+          default: CURRENT_TIMESTAMP
+          on_update: CURRENT_TIMESTAMP
+        start_time:
+          type: timestamp
+          nullable: false
+        end_time:
+          type: timestamp
+          nullable: false
+        winner_id:
+          type: int
+          nullable: false
+          default: 0
+        show_score:
+          type: tinyint(1)
+          nullable: false
+        sponsor:
+          type: text
+          nullable: true
+        sponsor_msg:
+          type: varchar(3000)
+          nullable: true
+
+      mrm_votes:
+        # Schema to be analyzed
+
+      mrm_matches_flow:
+        # Schema to be analyzed
+
+# Migration Challenges:
+# 1. This is a complex tournament/bracket system with multiple related tables
+# 2. Voting history and tournament progression need to be preserved
+# 3. Time-sensitive data (start/end times) needs proper handling across time zones
+# 4. Complex business logic in ModernRockMadnessFactory.php and ModernRockMadnessAdminFactory.php
+# 5. User interaction history should be maintained
+# 6. Sponsor relationships need to be preserved

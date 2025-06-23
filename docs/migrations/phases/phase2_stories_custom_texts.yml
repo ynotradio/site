@@ -1,0 +1,64 @@
+---
+# Phase 2 Migration - Stories and Custom Texts
+# Created: June 23, 2025
+#
+# This phase focuses on Stories and Custom Texts which present unique challenges
+
+models:
+  Story:
+    table: stories
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      start_date:
+        type: date
+        nullable: false
+      end_date:
+        type: date
+        nullable: false
+      headline:
+        type: varchar(80)
+        nullable: false
+      story:
+        type: text
+        nullable: false
+      pic:
+        type: varchar(128)
+        nullable: false
+      pic_url:
+        type: varchar(128)
+        nullable: false
+      priority:
+        type: int
+        nullable: false
+      deleted:
+        type: varchar(1)
+        nullable: false
+
+  CustomText:
+    table: custom_texts
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      name:
+        type: varchar(64)
+        nullable: false
+      content:
+        type: text
+        nullable: false
+      deleted:
+        type: varchar(3)
+        nullable: false
+
+# Migration Challenges:
+# 1. Stories contain rich text content that may need special handling for encoding/decoding
+# 2. There's a legacy table (custom_text_old) that may need to be reviewed for historical data
+# 3. Content fields may contain HTML that needs to be sanitized or transformed
+# 4. Image references in stories need to be maintained during migration
+# 5. Content fields may need to be migrated to a more structured format
