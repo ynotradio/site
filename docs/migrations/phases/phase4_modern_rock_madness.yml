@@ -17,28 +17,36 @@ models:
         nullable: false
         primary_key: true
         auto_increment: true
+        example: 1
       name:
         type: varchar(64)
         nullable: false
+        example: "Japanese Breakfast"
       url:
         type: varchar(256)
         nullable: false
+        example: "http://japanesebreakfast.rocks/"
       pic_url:
         type: varchar(256)
         nullable: false
+        example: "https://i.imgur.com/YRxbZcx.jpeg"
       placement:
         type: int
         nullable: false
         unique: true
+        example: 1
       seed:
         type: int
         nullable: false
+        example: 1
       abbr:
         type: varchar(7)
         nullable: false
+        example: "JBrekie"
       sponsor:
         type: varchar(128)
         nullable: false
+        example: "Dave Mooney"
 
     related_schema:
       mrm_matches:
@@ -47,49 +55,62 @@ models:
           nullable: false
           primary_key: true
           auto_increment: true
+          example: 1
         region:
           type: int
           nullable: false
+          example: 1
         band1_id:
           type: int
           nullable: false
           foreign_key: true
+          example: 1
         band1_votes:
           type: int
           nullable: false
           default: 0
+          example: 20
         band2_id:
           type: int
           nullable: false
           foreign_key: true
+          example: 2
         band2_votes:
           type: int
           nullable: false
           default: 0
+          example: 6
         last_updated:
           type: timestamp
           nullable: false
           default: CURRENT_TIMESTAMP
           on_update: CURRENT_TIMESTAMP
+          example: "2025-03-24T14:32:17.000Z"
         start_time:
           type: timestamp
           nullable: false
+          example: "2025-03-24T14:00:00.000Z"
         end_time:
           type: timestamp
           nullable: false
+          example: "2025-03-24T14:30:00.000Z"
         winner_id:
           type: int
           nullable: false
           default: 0
+          example: 1
         show_score:
           type: tinyint(1)
           nullable: false
+          example: 1
         sponsor:
           type: text
           nullable: true
+          example: null
         sponsor_msg:
           type: varchar(3000)
           nullable: true
+          example: null
 
       mrm_votes:
         # Schema to be analyzed

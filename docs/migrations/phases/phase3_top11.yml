@@ -15,15 +15,19 @@ models:
       placement:
         type: int
         nullable: false
+        example: 1
       artist:
         type: varchar(64)
         nullable: false
+        example: "Wet Leg1"
       song:
         type: varchar(64)
         nullable: false
+        example: "Catch These Fists"
       note:
         type: varchar(24)
         nullable: false
+        example: "(-)"
 
     # Additional table schemas
     related_schema:

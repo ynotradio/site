@@ -33,27 +33,35 @@ models:
         nullable: false
         primary_key: true
         auto_increment: true
+        example: 1
       name:
         type: varchar(64)
         nullable: false
+        example: "Steve"
       email:
         type: varchar(64)
         nullable: false
+        example: "squirk@mac.com"
       phone:
         type: varchar(20)
         nullable: false
+        example: "973-202-6663"
       hometown:
         type: varchar(64)
         nullable: false
+        example: "millburn, nj"
       contest:
         type: varchar(3)
         nullable: false
+        example: "no"
       newsletter:
         type: varchar(10)
         nullable: false
+        example: "already"
       ip_address:
         type: varchar(20)
         nullable: false
+        example: "17.43.58.153"
 
     related_schema:
       year_end_songs:
@@ -62,15 +70,19 @@ models:
           nullable: false
           primary_key: true
           auto_increment: true
+          example: 2
         artist:
           type: varchar(64)
           nullable: false
+          example: "2nd Grade"
         title:
           type: varchar(64)
           nullable: false
+          example: "Made Up My Own Mind"
         votes:
           type: int
           nullable: false
+          example: 3
 
       # Additional related tables schema to be completed
       year_end_albums:
