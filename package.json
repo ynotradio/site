@@ -42,9 +42,10 @@
     "styled-components": "^6.1.18"
   },
   "prettier": {
-    "semi": false,
+    "semi": true,
     "printWidth": 100,
-    "bracketSpacing": false,
-    "singleQuote": true
+    "bracketSpacing": true,
+    "singleQuote": true,
+    "tabWidth": 2
   }
 }

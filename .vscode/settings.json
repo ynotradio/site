@@ -1,9 +1,16 @@
 {
     "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.validate": ["typescript"],
+    "typescript.tsdk": "node_modules/typescript/lib",
+    
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
+    
     "php.validate.enable": true,
     "php.suggest.basic": true,
     "intelephense.environment.includePaths": [
@@ -28,6 +35,18 @@
     ],
     "docker.enableCliExtensionFeatures": true,
     "docker-compose.showOrphanedContainers": false,
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features",
+        "editor.tabSize": 2
+    },
+    "[json]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.tabSize": 2
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "vscode.json-language-features",
+        "editor.tabSize": 2
+    },
     "copilot.mcp.servers": {
         "sanity": {
             "command": "npx",
