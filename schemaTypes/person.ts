@@ -7,7 +7,7 @@ export default {
       name: 'name',
       title: 'Name',
       type: 'string',
-      validation: Rule => Rule.required()
+      validation: (Rule) => Rule.required(),
     },
     {
       name: 'slug',
@@ -15,29 +15,29 @@ export default {
       type: 'slug',
       options: {
         source: 'name',
-        maxLength: 96
+        maxLength: 96,
       },
-      validation: Rule => Rule.required()
+      validation: (Rule) => Rule.required(),
     },
     {
       name: 'photo',
       title: 'Photo',
       type: 'image',
       options: {
-        hotspot: true
-      }
+        hotspot: true,
+      },
     },
     {
       name: 'bio',
       title: 'Bio',
       type: 'array',
-      of: [{type: 'block'}]
-    }
+      of: [{ type: 'block' }],
+    },
   ],
   preview: {
     select: {
       title: 'name',
-      media: 'photo'
-    }
-  }
-}
+      media: 'photo',
+    },
+  },
+};

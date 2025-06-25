@@ -1,5 +1,7 @@
-import person from './person'
+import person from './person';
 
-export const schemaTypes = [
-  person
-]
+const schemaTypes = [
+  person,
+];
+
+export default schemaTypes;

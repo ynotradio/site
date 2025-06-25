@@ -12,7 +12,9 @@
     "sanity:start": "sanity start",
     "sanity:build": "sanity build",
     "sanity:deploy": "sanity deploy",
-    "sanity:deploy-graphql": "sanity graphql deploy"
+    "sanity:deploy-graphql": "sanity graphql deploy",
+    "lint": "eslint schemaTypes --ext .ts",
+    "lint:fix": "eslint schemaTypes --ext .ts --fix"
   },
   "author": "",
   "license": "ISC",
@@ -22,7 +24,12 @@
     "@sanity/eslint-config-studio": "^5.0.2",
     "@sanity/mcp-server": "latest",
     "@types/react": "^19.1",
-    "eslint": "^9.28",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-plugin-import": "^2.31.0",
     "prettier": "^3.5",
     "typescript": "^5.8"
   },
