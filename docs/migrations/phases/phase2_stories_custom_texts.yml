@@ -1,0 +1,77 @@
+---
+# Phase 2 Migration - Stories and Custom Texts
+# Created: June 23, 2025
+#
+# This phase focuses on Stories and Custom Texts which present unique challenges
+
+models:
+  Story:
+    table: stories
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      start_date:
+        type: date
+        nullable: false
+        example: "2011-03-01"
+      end_date:
+        type: date
+        nullable: false
+        example: "2011-04-11"
+      headline:
+        type: varchar(80)
+        nullable: false
+        example: "Modern Rock Madness"
+      story:
+        type: text
+        nullable: false
+        example: "64 Bands. 5 Days of Fierce Competition. There can be only 1 champion! Y-Not Radio presents Modern Rock Madness 2011..."
+      pic:
+        type: varchar(128)
+        nullable: false
+        example: ""
+      pic_url:
+        type: varchar(128)
+        nullable: false
+        example: ""
+      priority:
+        type: int
+        nullable: false
+        example: 1
+      deleted:
+        type: varchar(1)
+        nullable: false
+        example: "y"
+
+  CustomText:
+    table: custom_texts
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      name:
+        type: varchar(64)
+        nullable: false
+        example: "Support Y-Not Radio"
+      content:
+        type: text
+        nullable: false
+        example: "<p><img src=\"https://i.imgur.com/rCFyefV.jpeg\" alt=\"Y-Not Staff\" height=\"150\" border=\"0\" align=\"left\" style=\"margin: 0px 10px 0px 0px;\" title=\"\"><font size=\"2\">If you love Y-Not Radio, please consider making a donation...</p>"
+      deleted:
+        type: varchar(3)
+        nullable: false
+        example: "no"
+
+# Migration Challenges:
+# 1. Stories contain rich text content that may need special handling for encoding/decoding
+# 2. There's a legacy table (custom_text_old) that may need to be reviewed for historical data
+# 3. Content fields may contain HTML that needs to be sanitized or transformed
+# 4. Image references in stories need to be maintained during migration
+# 5. Content fields may need to be migrated to a more structured format

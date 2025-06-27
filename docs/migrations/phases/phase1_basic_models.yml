@@ -1,0 +1,281 @@
+---
+# Phase 1 Migration - Basic Models
+# Created: June 23, 2025
+#
+# This phase includes the simpler models that can be migrated first
+
+models:
+  Ad:
+    table: ads
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      name:
+        type: char(55)
+        nullable: false
+        example: "Philly Roller Girls"
+      start_date:
+        type: date
+        nullable: false
+        example: "2012-06-03"
+      end_date:
+        type: date
+        nullable: false
+        example: "2012-06-10"
+      pic_url:
+        type: char(180)
+        nullable: false
+        example: "sponsors/philly_roller_girls.jpg"
+      web_url:
+        type: char(180)
+        nullable: false
+        example: "http://www.phillyrollerderby.com/events/ticket-info"
+      priority:
+        type: int
+        nullable: false
+        example: 0
+      deleted:
+        type: char(1)
+        nullable: false
+        example: "n"
+
+  CdOfTheWeek:
+    table: cdotw
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      artist:
+        type: varchar(64)
+        nullable: false
+        example: "Foo Fighters"
+      title:
+        type: varchar(64)
+        nullable: false
+        example: "Wasting Light"
+      label:
+        type: varchar(64)
+        nullable: false
+        example: "RCA"
+      review:
+        type: longtext
+        nullable: false
+        example: "In the excellent new <b>Foo Fighters</b> documentary Back And Forth..."
+      cd_pic_url:
+        type: varchar(255)
+        nullable: false
+        example: "http://upload.wikimedia.org/wikipedia/en/0/05/Foo_Fighters_Wasting_Light_Album_Cover.jpg"
+      band:
+        type: varchar(128)
+        nullable: false
+        example: ""
+      reviewer:
+        type: varchar(48)
+        nullable: false
+        example: "Joey O."
+      date:
+        type: date
+        nullable: false
+        example: "2011-04-11"
+      deleted:
+        type: varchar(3)
+        nullable: false
+        example: "no"
+
+  Concert:
+    table: concerts
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      date:
+        type: date
+        nullable: false
+        example: "2011-03-15"
+      artist:
+        type: varchar(256)
+        nullable: false
+        example: ""
+      band_pic_url:
+        type: varchar(255)
+        nullable: false
+        example: ""
+      band_url:
+        type: text
+        nullable: false
+        example: ""
+      venue:
+        type: varchar(64)
+        nullable: false
+        example: "TLA"
+      ticketinfo:
+        type: varchar(64)
+        nullable: false
+        example: "SOLD OUT"
+      ticketurl:
+        type: varchar(255)
+        nullable: false
+        example: "http://www.livenation.com/event/0200454FC5676391?brand=&tm_link=tm_homeA_h4"
+      featured:
+        type: varchar(3)
+        nullable: false
+        example: "no"
+      deleted:
+        type: varchar(1)
+        nullable: false
+        example: "y"
+
+  Deejay:
+    table: deejays
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      name:
+        type: varchar(64)
+        nullable: false
+      show:
+        type: varchar(64)
+        nullable: false
+      email:
+        type: varchar(64)
+        nullable: false
+      external_connect_text:
+        type: varchar(64)
+        nullable: false
+      external_connect_url:
+        type: varchar(128)
+        nullable: false
+      pic:
+        type: varchar(128)
+        nullable: false
+      sort:
+        type: int
+        nullable: false
+      deleted:
+        type: varchar(3)
+        nullable: false
+
+  Music:
+    table: music
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      artist:
+        type: varchar(64)
+        nullable: false
+      song:
+        type: varchar(128)
+        nullable: false
+      url:
+        type: varchar(128)
+        nullable: false
+      date:
+        type: date
+        nullable: false
+      deleted:
+        type: varchar(3)
+        nullable: false
+
+  OnDemand:
+    table: ondemand
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      date:
+        type: date
+        nullable: false
+      image:
+        type: varchar(255)
+        nullable: false
+      headline:
+        type: varchar(255)
+        nullable: false
+      note:
+        type: varchar(255)
+        nullable: false
+      songs:
+        type: varchar(255)
+        nullable: false
+      audio_url:
+        type: varchar(255)
+        nullable: false
+      source:
+        type: varchar(10)
+        nullable: false
+      deleted:
+        type: varchar(3)
+        nullable: false
+
+  Schedule:
+    table: schedule
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      date:
+        type: date
+        nullable: false
+      day:
+        type: varchar(10)
+        nullable: false
+      start_time:
+        type: time
+        nullable: false
+      end_time:
+        type: time
+        nullable: false
+      host:
+        type: varchar(48)
+        nullable: false
+      note:
+        type: text
+        nullable: false
+      deleted:
+        type: varchar(3)
+        nullable: false
+
+  YearEndStaffPick:
+    table: year_end_staff_picks
+    related_tables:
+      - yearendstaff
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+      order_id:
+        type: int
+        nullable: false
+      html:
+        type: longtext
+        nullable: false
+      deleted:
+        type: char(1)
+        nullable: false
+
+# Migration Notes:
+# 1. These models are relatively simple with straightforward data structures
+# 2. Most models have a 'deleted' field to support soft deletion
+# 3. All models have a corresponding Factory class for creation and retrieval operations

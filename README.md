@@ -103,3 +103,56 @@ If you solve a tricky bug, the next person who works on this codebase will appre
 
 
 The script definitions are in the `scripts` section of `src/composer.json`.
+
+## Sanity CMS Migration
+
+This project is being migrated from the legacy PHP/MySQL site to Sanity CMS.
+
+### Sanity Setup
+
+1. Install dependencies:
+   ```
+   npm install
+   ```
+
+2. Run the Sanity development server:
+   ```
+   npm run sanity:dev
+   ```
+   
+   This will start the Sanity Studio at http://localhost:3333
+
+### MCP Server Setup
+
+To use the Sanity MCP server in VS Code:
+
+1. Create a management token at:
+   ```
+   https://www.sanity.io/manage/project/otcmx0q6/api
+   ```
+   
+   - Go to the "API" tab
+   - Click "Add API token"
+   - Give it a name like "MCP Server"
+   - Set the permissions to "Editor" or higher
+   - Copy the token
+
+2. Update `.vscode/settings.json` with your token:
+   - Find the `copilot.mcp.servers.sanity.env.SANITY_API_TOKEN` property
+   - Replace `YOUR_SANITY_TOKEN_HERE` with the actual token
+
+3. Restart VS Code to load the MCP server configuration.
+
+4. Now you can use GitHub Copilot to interact with your Sanity content using natural language.
+
+### Content Models
+
+#### Person
+
+A simple model representing a person, with fields:
+- name (string, required)
+- slug (slug, required, generated from name)
+- photo (image with hotspot)
+- bio (rich text)
+
+More models will be added in future phases of the migration.

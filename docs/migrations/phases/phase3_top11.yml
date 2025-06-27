@@ -1,0 +1,45 @@
+---
+# Phase 3 Migration - Top 11
+# Created: June 23, 2025
+#
+# This phase focuses on the Top 11 feature and its related tables
+
+models:
+  Top11:
+    table: top11
+    related_tables:
+      - top11songs
+      - top11contest
+      - top11message
+    fields:
+      placement:
+        type: int
+        nullable: false
+        example: 1
+      artist:
+        type: varchar(64)
+        nullable: false
+        example: "Wet Leg1"
+      song:
+        type: varchar(64)
+        nullable: false
+        example: "Catch These Fists"
+      note:
+        type: varchar(24)
+        nullable: false
+        example: "(-)"
+
+    # Additional table schemas
+    related_schema:
+      top11songs:
+        # Schema to be analyzed
+      top11contest:
+        # Schema to be analyzed
+      top11message:
+        # Schema to be analyzed
+
+# Migration Challenges:
+# 1. This feature involves multiple related tables that need to maintain referential integrity
+# 2. The placement field acts as a sort of primary key in the main table
+# 3. User-submitted content may need validation or sanitization
+# 4. Coordination needed between multiple tables for complete feature functionality

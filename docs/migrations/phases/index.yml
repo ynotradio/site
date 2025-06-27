@@ -1,0 +1,99 @@
+---
+# Migration Phases Index
+# Created: June 23, 2025
+#
+# This file provides an overview of the migration phases and their priorities
+
+phases:
+  - phase: 1
+    name: "Basic Models"
+    file: "phase1_basic_models.yml"
+    description: "Migration of simpler models with straightforward data structures"
+    models:
+      - Ad
+      - CdOfTheWeek
+      - Concert
+      - Deejay
+      - Music
+      - OnDemand
+      - Schedule
+      - YearEndStaffPick
+    priority: High
+    estimated_effort: Low to Medium
+
+  - phase: 2
+    name: "Stories and Custom Texts"
+    file: "phase2_stories_custom_texts.yml"
+    description: "Migration of content-heavy models with potential encoding challenges"
+    models:
+      - Story
+      - CustomText
+    priority: High
+    estimated_effort: Medium
+
+  - phase: 3
+    name: "Top 11"
+    file: "phase3_top11.yml"
+    description: "Migration of the Top 11 feature with its related tables"
+    models:
+      - Top11
+    related_tables:
+      - top11songs
+      - top11contest
+      - top11message
+    priority: Medium
+    estimated_effort: Medium to High
+
+  - phase: 4
+    name: "Modern Rock Madness"
+    file: "phase4_modern_rock_madness.yml"
+    description: "Migration of the complex tournament/bracket system"
+    models:
+      - ModernRockMadness
+    related_tables:
+      - mrm_matches
+      - mrm_votes
+      - mrm_matches_flow
+    priority: Medium
+    estimated_effort: High
+
+  - phase: 5
+    name: "Year End Poll"
+    file: "phase5_year_end_poll.yml"
+    description: "Migration of the most complex feature with numerous related tables"
+    models:
+      - YearEndPoll
+    related_tables:
+      - year_end_albums
+      - year_end_artists
+      - year_end_songs
+      - year_end_song_votes
+      - year_end_write_ins
+      - year_end_ips
+      - year_end_best_movies
+      - year_end_worst_movies
+      - year_end_concerts
+      - year_end_new_artists
+      - year_end_philly_artists
+      - year_end_music_videos
+      - year_end_celebrity_deaths
+      - year_end_biggest_comebacks
+      - year_end_late_night_tv
+      - year_end_tv_comedies
+      - year_end_tv_dramas
+      - year_end_unnecessary_sequels
+      - year_end_most_anticipated_albums
+    priority: Low
+    estimated_effort: Very High
+
+# Migration Strategy:
+# 1. Begin with Phase 1 to establish the migration process and patterns
+# 2. Progress to Phase 2 to handle content-specific challenges
+# 3. Tackle Phase 3 as a medium-complexity feature
+# 4. Address Phase 4 once the team is comfortable with the migration approach
+# 5. Complete Phase 5 last due to its complexity and extensive related tables
+#
+# Dependencies:
+# - Each phase should be completed sequentially
+# - Testing should be completed for each phase before progressing
+# - Data validation should occur before and after each migration phase

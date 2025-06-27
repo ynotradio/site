@@ -1,0 +1,103 @@
+---
+# Phase 5 Migration - Year End Poll
+# Created: June 23, 2025
+#
+# This phase focuses on the Year End Poll feature, which is the most complex with many related tables
+
+models:
+  YearEndPoll:
+    table: year_end_contestants
+    related_tables:
+      - year_end_albums
+      - year_end_artists
+      - year_end_songs
+      - year_end_song_votes
+      - year_end_write_ins
+      - year_end_ips
+      - year_end_best_movies
+      - year_end_worst_movies
+      - year_end_concerts
+      - year_end_new_artists
+      - year_end_philly_artists
+      - year_end_music_videos
+      - year_end_celebrity_deaths
+      - year_end_biggest_comebacks
+      - year_end_late_night_tv
+      - year_end_tv_comedies
+      - year_end_tv_dramas
+      - year_end_unnecessary_sequels
+      - year_end_most_anticipated_albums
+    fields:
+      id:
+        type: int
+        nullable: false
+        primary_key: true
+        auto_increment: true
+        example: 1
+      name:
+        type: varchar(64)
+        nullable: false
+        example: "Steve"
+      email:
+        type: varchar(64)
+        nullable: false
+        example: "squirk@mac.com"
+      phone:
+        type: varchar(20)
+        nullable: false
+        example: "973-202-6663"
+      hometown:
+        type: varchar(64)
+        nullable: false
+        example: "millburn, nj"
+      contest:
+        type: varchar(3)
+        nullable: false
+        example: "no"
+      newsletter:
+        type: varchar(10)
+        nullable: false
+        example: "already"
+      ip_address:
+        type: varchar(20)
+        nullable: false
+        example: "17.43.58.153"
+
+    related_schema:
+      year_end_songs:
+        id:
+          type: int
+          nullable: false
+          primary_key: true
+          auto_increment: true
+          example: 2
+        artist:
+          type: varchar(64)
+          nullable: false
+          example: "2nd Grade"
+        title:
+          type: varchar(64)
+          nullable: false
+          example: "Made Up My Own Mind"
+        votes:
+          type: int
+          nullable: false
+          example: 3
+
+      # Additional related tables schema to be completed
+      year_end_albums:
+        # Schema to be analyzed
+
+      year_end_artists:
+        # Schema to be analyzed
+
+      # More related tables...
+
+# Migration Challenges:
+# 1. Most complex feature with the largest number of related tables (19+ tables)
+# 2. Annual data that spans multiple years needs to be preserved
+# 3. User voting history and contest entries need to be maintained
+# 4. Personal information (emails, phone numbers) require privacy considerations
+# 5. Complex business logic in YearEndPollController.php and YearEndPollAdminController.php
+# 6. Various voting categories have different structures but related functionality
+# 7. Historical data is important for year-to-year comparisons

@@ -1,0 +1,22 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.eslint.json"
+  },
+  "extends": [
+    "airbnb-base",
+    "airbnb-typescript/base"
+  ],
+  "plugins": ["@typescript-eslint"],
+  "env": {
+    "node": true
+  },
+  "ignorePatterns": ["build/", "node_modules/"],
+  "rules": {
+    "@typescript-eslint/semi": ["error", "always"],
+    "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
+    "@typescript-eslint/indent": ["error", 2],
+    "@typescript-eslint/object-curly-spacing": ["error", "always"]
+  }
+}
