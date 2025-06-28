@@ -48,6 +48,76 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ## Development
 
+### Data Migration Tools
+
+This project includes TypeScript-based migration tools to help move data from the legacy MySQL database to Sanity CMS.
+
+#### Deejay Migration
+
+The `import:deejays` script migrates deejay data from the MySQL database to Sanity CMS as "person" documents:
+
+1. Make sure you have Node.js and npm installed
+2. Install dependencies at the project root:
+   ```
+   npm install
+   ```
+3. Configure environment variables in one of the following locations:
+   - Create `bin/migrations/.env` with database and Sanity credentials
+   - Update credentials in `src/partials/.env`
+   - The script will use default values from settings.json if no .env file is found
+4. Run the migration script:
+   ```
+   npm run import:deejays
+   ```
+
+The script runs TypeScript directly using tsx, with no build step required.
+
+The script will:
+- Connect to the MySQL database
+- Query all active deejays
+- Transform data to the Sanity format
+- Upload images to Sanity as assets
+- Create person documents in Sanity with proper image references
+- Handle special formatting for slugs, bios, and social links
+
+#### Migration Script Configuration
+
+Database connection details:
+```
+DB_NAME=ynot_site
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=localhost
+```
+
+Sanity configuration:
+```
+SANITY_PROJECT_ID=your_project_id
+SANITY_DATASET=production
+SANITY_API_TOKEN=your_sanity_token
+```
+
+#### Sanity API Token Permissions
+
+The Sanity API token used for migration **must** have the following permissions:
+
+- **create** permission for documents
+- **create** permission for assets
+
+To create a new token with these permissions:
+
+1. Go to [manage.sanity.io](https://manage.sanity.io)
+2. Select your project
+3. Go to API > Tokens
+4. Click "Add API token"
+5. Give it a name (e.g., "Import Token")
+6. Set permissions to include:
+   - Editor (gives read/write access to documents)
+   - Asset write (allows uploading images)
+7. Copy the token and add it to your `.env` file
+
+Without these permissions, you'll see "403 Forbidden" errors during the import process.
+
 ### PHP Linting
 
 - From the root of the project, use `docker run --rm --volume $(pwd):/app vfac/php7compatibility 7.4 ./src -d memory_limit=1G --extensions=php` to see errors in the PHP code.
