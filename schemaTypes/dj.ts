@@ -2,6 +2,17 @@ export default {
   name: 'dj',
   title: 'DJ',
   type: 'document',
+  // Add support for list ordering with the _ordering field
+  fieldsets: [
+    {
+      name: 'ordering',
+      title: 'Ordering',
+      options: {
+        collapsible: true,
+        collapsed: false,
+      },
+    },
+  ],
   fields: [
     {
       name: 'person',
@@ -16,6 +27,8 @@ export default {
       type: 'number',
       description: 'Used to determine the display order of DJs (lower numbers appear first)',
       validation: (Rule) => Rule.required(),
+      // Make this field hidden as it will be managed by drag-and-drop
+      hidden: true,
     },
     {
       name: 'isActive',
