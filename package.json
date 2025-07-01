@@ -8,20 +8,19 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "sanity:dev": "sanity dev",
-    "sanity:start": "sanity start",
-    "sanity:build": "sanity build",
-    "sanity:deploy": "sanity deploy",
-    "sanity:deploy-graphql": "sanity graphql deploy",
-    "lint": "eslint schemaTypes --ext .ts",
-    "lint:fix": "eslint schemaTypes --ext .ts --fix",
-    "import:deejays": "tsx bin/migrations/src/importDeejays.ts"
+    "sanity:dev": "sanity dev --cwd studio",
+    "sanity:start": "sanity start --cwd studio",
+    "sanity:build": "sanity build --cwd studio",
+    "sanity:deploy": "sanity deploy --cwd studio",
+    "sanity:deploy-graphql": "sanity graphql deploy --cwd studio",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings=0",
+    "import:deejays": "tsx bin/migrations/importDeejays.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "^2.0.2",
-    "@sanity/client": "^7.6.0",
     "@sanity/eslint-config-studio": "^5.0.2",
     "@sanity/mcp-server": "latest",
     "@types/node": "^20.10.5",
@@ -37,6 +36,7 @@
     "typescript": "^5.8"
   },
   "dependencies": {
+    "@sanity/client": "^7.6.0",
     "@sanity/vision": "^3.95.0",
     "dotenv": "^16.3.1",
     "mysql2": "^3.6.5",

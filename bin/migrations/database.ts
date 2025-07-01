@@ -33,7 +33,7 @@ export async function connectToDatabase() {
 export async function getActiveDeejays(connection: mysql.Connection): Promise<Deejay[]> {
   try {
     const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM deejays WHERE deleted = 'No' ORDER BY sort"
+      "SELECT * FROM deejays WHERE deleted = 'No' ORDER BY sort",
     );
     console.log(`Retrieved ${rows.length} deejays from the database.`);
     return rows as Deejay[];

@@ -6,7 +6,7 @@ This directory contains TypeScript scripts for migrating data from the legacy My
 
 ### Deejay Migration
 
-The script in `src/importDeejays.ts` migrates deejay data from the MySQL database to Sanity CMS as "person" documents.
+The script in `importDeejays.ts` migrates deejay data from the MySQL database to Sanity CMS as "person" documents.
 
 ## Usage
 

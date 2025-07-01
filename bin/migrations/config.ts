@@ -4,9 +4,9 @@ import * as path from 'path';
 
 // Try to load environment variables from different possible .env locations
 const envPaths = [
-  path.resolve(__dirname, '..', '.env'),                // /migrations/.env
-  path.resolve(process.cwd(), '.env'),                  // Current directory
-  path.resolve(process.cwd(), '..', 'src', 'partials', '.env') // Project source
+  path.resolve(__dirname, '..', '.env'), // /migrations/.env
+  path.resolve(process.cwd(), '.env'), // Current directory
+  path.resolve(process.cwd(), '..', 'src', 'partials', '.env'), // Project source
 ];
 
 // Use the first .env file that exists

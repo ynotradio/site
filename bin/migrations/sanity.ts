@@ -1,9 +1,9 @@
 import { createClient } from '@sanity/client';
-import { sanityConfig } from './config';
-import { SanityImportData } from './transform';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as fs from 'fs/promises';
+import { SanityImportData } from './transform';
+import { sanityConfig } from './config';
 
 const execAsync = promisify(exec);
 
@@ -21,12 +21,12 @@ export async function checkForExistingDocuments(): Promise<number> {
   try {
     const query = "*[_type == 'person']";
     const result = await sanityClient.fetch(query);
-    
+
     if (Array.isArray(result) && result.length > 0) {
       console.log(`Found ${result.length} existing person documents in Sanity.`);
       return result.length;
     }
-    
+
     console.log('No existing person documents found in Sanity.');
     return 0;
   } catch (error) {
@@ -39,12 +39,12 @@ export async function checkForExistingDocuments(): Promise<number> {
 export async function saveToJsonFile(data: SanityImportData, outputPath: string): Promise<void> {
   try {
     // Convert to NDJSON format (one JSON object per line)
-    const ndjsonContent = data.imports.map(doc => JSON.stringify(doc)).join('\n');
-    
+    const ndjsonContent = data.imports.map((doc) => JSON.stringify(doc)).join('\n');
+
     await fs.writeFile(
-      outputPath, 
+      outputPath,
       ndjsonContent,
-      'utf8'
+      'utf8',
     );
     console.log(`Successfully wrote person.ndjson file to ${outputPath}`);
   } catch (error) {
@@ -57,15 +57,15 @@ export async function saveToJsonFile(data: SanityImportData, outputPath: string)
 export async function deleteExistingPersonDocuments(dataset: string): Promise<boolean> {
   try {
     const cleanFilePath = 'clean.ndjson';
-    
+
     // Export all documents except persons
     console.log('Exporting non-person documents...');
     await execAsync(`npx sanity dataset export "*[_type != 'person']" ${cleanFilePath} --dataset ${dataset}`);
-    
+
     // Import back only the non-person documents
     console.log('Importing non-person documents...');
     await execAsync(`npx sanity dataset import ${cleanFilePath} ${dataset} --replace`);
-    
+
     // Clean up
     await fs.unlink(cleanFilePath);
     console.log('Deleted existing person documents successfully.');
@@ -82,14 +82,14 @@ export async function importToSanity(jsonFilePath: string, dataset: string): Pro
     console.log(`Importing data into Sanity from ${jsonFilePath}...`);
     const command = `npx sanity dataset import ${jsonFilePath} ${dataset}`;
     console.log(`Running: ${command}`);
-    
+
     const { stdout, stderr } = await execAsync(command);
-    
+
     if (stderr && !stderr.includes('Completed')) {
       console.error('Import stderr:', stderr);
       return false;
     }
-    
+
     console.log('Import stdout:', stdout);
     console.log('Import completed successfully!');
     return true;

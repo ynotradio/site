@@ -2,7 +2,7 @@
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.eslint.json"
+    "project": "./tsconfig.json"
   },
   "extends": [
     "airbnb-base",
@@ -12,11 +12,49 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": ["build/", "node_modules/"],
+  "ignorePatterns": ["build/", "node_modules/", "src/**/*.js", "src/**/*.php"],
   "rules": {
     "@typescript-eslint/semi": ["error", "always"],
     "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
     "@typescript-eslint/indent": ["error", 2],
-    "@typescript-eslint/object-curly-spacing": ["error", "always"]
-  }
+    "@typescript-eslint/object-curly-spacing": ["error", "always"],
+    "import/extensions": ["error", "never", {
+      "json": "always",
+      "css": "always",
+      "scss": "always",
+      "less": "always"
+    }],
+    "no-underscore-dangle": ["error", { 
+      "allow": ["_id", "_key", "_type"] 
+    }],
+    "import/prefer-default-export": "off",
+    "import/no-extraneous-dependencies": ["error", {
+      "devDependencies": true
+    }]
+  },
+  "overrides": [
+    {
+      "files": ["bin/migrations/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "no-await-in-loop": "off",
+        "no-restricted-syntax": "off",
+        "no-plusplus": "off"
+      }
+    },
+    {
+      "files": ["studio/plugins/**/*.tsx"],
+      "rules": {
+        "no-console": "off",
+        "no-alert": "off",
+        "max-len": ["error", { "code": 120 }]
+      }
+    },
+    {
+      "files": ["studio/schemaTypes/**/*.ts"],
+      "rules": {
+        "import/no-extraneous-dependencies": "off"
+      }
+    }
+  ]
 }
