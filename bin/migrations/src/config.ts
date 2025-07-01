@@ -28,9 +28,9 @@ export const dbConfig = {
 
 // Sanity configuration - from VS Code settings.json if available
 export const sanityConfig = {
-  projectId: process.env.SANITY_PROJECT_ID || '22jug3aq', // Default from settings.json
-  dataset: process.env.SANITY_DATASET || 'production',
-  token: process.env.SANITY_API_TOKEN || 'skeFklyVcw9QJfwSEZYwfiT3usjyKZtmA8Ie3qn84tm7MlXMWpQgk7i28yeMQKZDtDnbA6dCmhXm041akjNmn6m5rFBWnwCkZ4qoYP2TGwpziOV2OraTLS8pWbkGNkNZpcDDaTaHA1qpm1NHgkJrVAQ4NV1DEhMzf00tgoJ9otxhWbBUdOqr', // Default from settings.json
+  projectId: process.env.SANITY_PROJECT_ID,
+  dataset: process.env.SANITY_DATASET,
+  token: process.env.SANITY_API_TOKEN,
   apiVersion: '2023-03-01', // Use current date or a fixed recent version
 };
 
