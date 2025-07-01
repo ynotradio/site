@@ -29,6 +29,13 @@ export default {
       validation: (Rule) => Rule.required(),
       // Make this field hidden as it will be managed by drag-and-drop
       hidden: true,
+      // Add a default value to handle new DJ creation
+      initialValue: async (_, context) => {
+        // Query for the highest current sortOrder and add 1
+        const client = context.getClient({ apiVersion: '2023-01-01' })
+        const docs = await client.fetch(`*[_type == "dj"] | order(sortOrder desc)[0...1] {sortOrder}`)
+        return docs.length > 0 ? (docs[0].sortOrder + 1) : 0
+      },
     },
     {
       name: 'isActive',

@@ -1,18 +1,19 @@
 // deskStructure.ts
 import { StructureBuilder } from 'sanity/structure'
+import DJOrderTool from './plugins/dj-order';
 
 export default (S: StructureBuilder) => {
   return S.list()
     .title('Content')
     .items([
-      // DJ management with nested items
+      // DJ management section
       S.listItem()
         .title('DJs')
         .child(
           S.list()
             .title('DJ Management')
             .items([
-              // Regular DJ list
+              // Regular list of DJs
               S.listItem()
                 .title('All DJs')
                 .child(
@@ -22,27 +23,19 @@ export default (S: StructureBuilder) => {
                     .defaultOrdering([{ field: 'sortOrder', direction: 'asc' }])
                 ),
 
-              // Link to our custom DJ Order tool
+              // Link to our reordering tool using the redirect function
               S.listItem()
                 .title('Reorder DJs')
                 .icon(() => '🎧')
                 .child(
                   S.component()
                     .title('DJ Order Tool')
-                    .component(
-                      () => {
-                        // Redirect to our tool
-                        if (typeof window !== 'undefined') {
-                          window.location.pathname = '/sanity/tool/dj-order-tool'
-                        }
-                        return null
-                      }
-                    )
+                    .component(DJOrderTool)
                 )
             ])
         ),
 
-      // Add other document types except for dj, which we handle separately
+      // All other document types
       ...S.documentTypeListItems().filter(
         (listItem) => {
           const id = listItem.getId();
@@ -51,4 +44,3 @@ export default (S: StructureBuilder) => {
       )
     ])
 }
-

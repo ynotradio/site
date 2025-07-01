@@ -48,17 +48,24 @@ const SortableItem = ({ id, name, isActive }: SortableItemProps) => {
     transform: CSS.Transform.toString(transform),
     transition,
     cursor: 'grab',
-    padding: '10px',
-    margin: '5px 0',
+    padding: '12px',
+    margin: '8px 0',
     border: '1px solid #ccc',
     borderRadius: '4px',
-    background: isActive ? '#f0f9ff' : '#f5f5f5'
+    background: isActive ? '#e6f7ff' : '#f0f0f0',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
   }
   
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Text size={2} weight={isActive ? 'semibold' : 'regular'}>
-        {name} {!isActive && <span style={{ color: '#777' }}>(Inactive)</span>}
+      <div style={{ color: '#2276fc', marginRight: '5px' }}>
+        ⋮⋮
+      </div>
+      <Text size={2} weight={isActive ? 'semibold' : 'regular'} style={{ color: isActive ? '#000' : '#666' }}>
+        {name} {!isActive && <span style={{ color: '#777', marginLeft: '5px' }}>(Inactive)</span>}
       </Text>
     </div>
   )
@@ -152,12 +159,14 @@ export function DJOrderTool() {
   }
   
   return (
-    <Card padding={4}>
+    <Card padding={4} tone="primary" radius={2}>
       <Stack space={4}>
-        <Text size={3} weight="semibold">Arrange DJs</Text>
-        <Text size={2}>Drag and drop DJs to change their display order</Text>
+        <Flex direction="column" gap={2}>
+          <Text size={4} weight="bold">Arrange DJs</Text>
+          <Text size={2}>Drag and drop DJs using the grip handles to change their display order. Changes won't be saved until you click the "Save Order" button.</Text>
+        </Flex>
         
-        <Box padding={2}>
+        <Card padding={3} radius={2} shadow={1} tone="default">
           <DndContext 
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -167,17 +176,21 @@ export function DJOrderTool() {
               items={djs.map(dj => dj._id)}
               strategy={verticalListSortingStrategy}
             >
-              {djs.map((dj) => (
-                <SortableItem 
-                  key={dj._id} 
-                  id={dj._id} 
-                  name={dj.name} 
-                  isActive={dj.isActive} 
-                />
-              ))}
+              {djs.length === 0 ? (
+                <Text align="center" size={2} style={{padding: '20px'}}>No DJs found. Create some DJs first.</Text>
+              ) : (
+                djs.map((dj) => (
+                  <SortableItem 
+                    key={dj._id} 
+                    id={dj._id} 
+                    name={dj.name} 
+                    isActive={dj.isActive} 
+                  />
+                ))
+              )}
             </SortableContext>
           </DndContext>
-        </Box>
+        </Card>
         
         <Flex justify="flex-end">
           <Button 
