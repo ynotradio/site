@@ -1,7 +1,10 @@
-import {defineConfig} from 'sanity'
-import {structureTool} from 'sanity/structure'
-import {visionTool} from '@sanity/vision'
-import schemaTypes from './schemaTypes'
+import { defineConfig } from 'sanity';
+import { structureTool } from 'sanity/structure';
+import { visionTool } from '@sanity/vision';
+import schemaTypes from './studio/schemaTypes';
+import deskStructure from './studio/deskStructure';
+import DJOrderTool from './studio/plugins/dj-order';
+import { DJ_ORDER_TOOL_NAME } from './studio/constants';
 
 export default defineConfig({
   name: 'default',
@@ -11,9 +14,23 @@ export default defineConfig({
   dataset: 'production',
   basePath: '/sanity',
 
-  plugins: [structureTool(), visionTool()],
+  plugins: [
+    structureTool({
+      structure: deskStructure, // Use our custom desk structure
+    }),
+    visionTool(),
+  ],
+
+  tools: [
+    {
+      name: DJ_ORDER_TOOL_NAME,
+      title: 'DJ Order',
+      icon: () => '🎧',
+      component: DJOrderTool,
+    },
+  ],
 
   schema: {
     types: schemaTypes,
   },
-})
+});

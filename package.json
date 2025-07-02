@@ -13,16 +13,17 @@
     "sanity:build": "sanity build",
     "sanity:deploy": "sanity deploy",
     "sanity:deploy-graphql": "sanity graphql deploy",
-    "lint": "eslint schemaTypes --ext .ts",
-    "lint:fix": "eslint schemaTypes --ext .ts --fix"
+    "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings=0",
+    "import:deejays": "tsx bin/migrations/importDeejays.ts"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "^2.0.2",
-    "@sanity/client": "^7.6.0",
     "@sanity/eslint-config-studio": "^5.0.2",
     "@sanity/mcp-server": "latest",
+    "@types/node": "^20.10.5",
     "@types/react": "^19.1",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -31,10 +32,19 @@
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-plugin-import": "^2.31.0",
     "prettier": "^3.5",
-    "typescript": "^5.8"
+    "tsx": "^4.20.3",
+    "typescript": "5.5.2"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@dnd-kit/utilities": "^3.2.1",
+    "@sanity/client": "^7.6.0",
+    "@sanity/structure": "^2.36.2",
+    "@sanity/ui": "^2.0.0",
     "@sanity/vision": "^3.95.0",
+    "dotenv": "^16.3.1",
+    "mysql2": "^3.6.5",
     "react": "^19.1",
     "react-dom": "^19.1",
     "react-is": "^19.1.0",

@@ -1,3 +1,5 @@
+import { Rule as ValidationRule } from 'sanity';
+
 export default {
   name: 'person',
   title: 'Person',
@@ -7,7 +9,7 @@ export default {
       name: 'name',
       title: 'Name',
       type: 'string',
-      validation: (Rule) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'slug',
@@ -17,7 +19,7 @@ export default {
         source: 'name',
         maxLength: 96,
       },
-      validation: (Rule) => Rule.required(),
+      validation: (Rule: ValidationRule) => Rule.required(),
     },
     {
       name: 'photo',
