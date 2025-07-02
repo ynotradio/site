@@ -1,11 +1,10 @@
 import { defineConfig } from 'sanity';
 import { structureTool } from 'sanity/structure';
 import { visionTool } from '@sanity/vision';
-import schemaTypes from './schemaTypes';
-import deskStructure from './deskStructure';
-// Import directly from the directory (index is used by default)
-import DJOrderTool from './plugins/dj-order';
-import { DJ_ORDER_TOOL_NAME } from './constants';
+import schemaTypes from './studio/schemaTypes';
+import deskStructure from './studio/deskStructure';
+import DJOrderTool from './studio/plugins/dj-order';
+import { DJ_ORDER_TOOL_NAME } from './studio/constants';
 
 export default defineConfig({
   name: 'default',

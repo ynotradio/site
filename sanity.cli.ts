@@ -1,6 +1,8 @@
 import { defineCliConfig } from 'sanity/cli';
 
 export default defineCliConfig({
+  studioHost: 'ynotradio',
+
   api: {
     projectId: 'otcmx0q6',
     dataset: 'production',

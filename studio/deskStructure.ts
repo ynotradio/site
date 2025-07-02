@@ -1,6 +1,4 @@
-// deskStructure.ts
 import { StructureBuilder } from 'sanity/structure';
-// Import directly from the directory (index is used by default)
 import DJOrderTool from './plugins/dj-order';
 
 export default (S: StructureBuilder) => S.list()
