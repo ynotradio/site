@@ -27,7 +27,7 @@ export default (S: StructureBuilder) => S.list()
               .icon(() => '🎧')
               .child(
                 S.component()
-                  .title('DJ Order Tool')
+                  .title('Reorder DJs')
                   .component(DJOrderTool),
               ),
           ]),
