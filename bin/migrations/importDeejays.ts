@@ -8,16 +8,6 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-// Commented out as it's not currently used but may be needed in the future
-// Promisify readline question
-// function question(query: string): Promise<string> {
-//   return new Promise((resolve) => {
-//     rl.question(query, (answer) => {
-//       resolve(answer);
-//     });
-//   });
-// }
-
 async function importDeejays() {
   let connection;
 
