@@ -182,21 +182,6 @@ export async function importDeejaysDirectly(deejays: Deejay[]): Promise<boolean>
   try {
     console.log(`Processing ${deejays.length} deejays for direct import to Sanity...`);
 
-    // First check if we need to delete existing person documents
-    const query = "*[_type == 'person']";
-    const existingDocs = await client.fetch(query);
-
-    if (existingDocs.length > 0) {
-      console.log(`Found ${existingDocs.length} existing person documents. Deleting...`);
-
-      // Delete existing documents one by one
-      for (const doc of existingDocs) {
-        await client.delete(doc._id);
-      }
-
-      console.log('Deleted existing documents.');
-    }
-
     // Process and create each deejay document
     let successCount = 0;
     for (const deejay of deejays) {
