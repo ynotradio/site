@@ -8,6 +8,18 @@ if (!isset($top11Model)) {
     $top11Model = \YNotRadio\Models\Top11Factory::create($db);
 }
 
+// Get the user's IP address
+$ip = $_SERVER['REMOTE_ADDR'];
+
+// Check if this IP has already voted
+if ($top11Model->hasVoted($ip)) {
+    echo "<div class=\"alert alert-error\">";
+    echo "<h3>You've already voted</h3>";
+    echo "<p>It looks like you've already voted in this week's Top 11 @ 11. Each person can only vote once per week.</p>";
+    echo "</div>";
+    return;
+}
+
 // Process the form submission
 $firstname = isset($_POST['firstname']) ? $_POST['firstname'] : '';
 $lastname = isset($_POST['lastname']) ? $_POST['lastname'] : '';
@@ -56,6 +68,9 @@ try {
     if (!empty($write_in)) {
         $top11Model->addWriteIn($write_in);
     }
+    
+    // Record the IP address to prevent double voting
+    $top11Model->recordVoterIp($ip);
     
     // Display success message
     echo "<div class=\"alert alert-success\">";

@@ -184,4 +184,20 @@ interface Top11
      * @return bool Whether the operation was successful
      */
     public function reset(): bool;
+
+    /**
+     * Check if an IP address has already voted
+     *
+     * @param string $ip The IP address to check
+     * @return bool Whether the IP has already voted
+     */
+    public function hasVoted(string $ip): bool;
+
+    /**
+     * Record an IP address as having voted
+     * 
+     * @param string $ip The IP address to record
+     * @return bool Whether the operation was successful
+     */
+    public function recordVoterIp(string $ip): bool;
 }

@@ -364,4 +364,47 @@ class SqlTop11 implements Top11
 
         return $success;
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasVoted(string $ip): bool
+    {
+        $query = "SELECT * FROM ip_address WHERE address = ? AND deleted = 'no'";
+        $stmt = $this->db->prepare($query);
+        
+        if (!$stmt) {
+            // If prepare fails (likely because table doesn't exist), return false
+            return false;
+        }
+        
+        $stmt->bind_param('s', $ip);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        return ($result && $result->num_rows > 0);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function recordVoterIp(string $ip): bool
+    {
+        $query = "INSERT INTO ip_address (address, deleted) VALUES (?, 'no')";
+        $stmt = $this->db->prepare($query);
+        
+        if (!$stmt) {
+            // If prepare fails (likely because table doesn't exist), return false
+            return false;
+        }
+        $stmt->bind_param('s', $ip);
+        $result = $stmt->execute();
+
+        if (!$result) {
+            // If execute fails, just return false instead of throwing an exception
+            return false;
+        }
+
+        return true;
+    }
 }
