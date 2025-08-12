@@ -372,16 +372,16 @@ class SqlTop11 implements Top11
     {
         $query = "SELECT * FROM ip_address WHERE address = ? AND deleted = 'no'";
         $stmt = $this->db->prepare($query);
-        
+
         if (!$stmt) {
             // If prepare fails (likely because table doesn't exist), return false
             return false;
         }
-        
+
         $stmt->bind_param('s', $ip);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         return ($result && $result->num_rows > 0);
     }
 
@@ -392,7 +392,7 @@ class SqlTop11 implements Top11
     {
         $query = "INSERT INTO ip_address (address, deleted) VALUES (?, 'no')";
         $stmt = $this->db->prepare($query);
-        
+
         if (!$stmt) {
             // If prepare fails (likely because table doesn't exist), return false
             return false;

@@ -3,7 +3,7 @@
 
 // Get the Top11 model if not already available
 if (!isset($top11Model)) {
-    require_once ("models/Top11Factory.php");
+    require_once("models/Top11Factory.php");
     $db = open_db();
     $top11Model = \YNotRadio\Models\Top11Factory::create($db);
 }
@@ -11,8 +11,9 @@ if (!isset($top11Model)) {
 // Get the user's IP address
 $ip = $_SERVER['REMOTE_ADDR'];
 
-// Check if this IP has already voted
-if ($top11Model->hasVoted($ip)) {
+// Check if this IP has already voted, but bypass for admin votes
+// $by_pass_ip_check is set in cp/top11_vote_add.php
+if (!isset($by_pass_ip_check) && $top11Model->hasVoted($ip)) {
     echo "<div class=\"alert alert-error\">";
     echo "<h3>You've already voted</h3>";
     echo "<p>It looks like you've already voted in this week's Top 11 @ 11. Each person can only vote once per week.</p>";
@@ -56,22 +57,24 @@ try {
     if (!empty($firstname) && !empty($email)) {
         $top11Model->addContestant($firstname, $lastname, $email, $phone, $contest, $newsletter);
     }
-    
+
     // Process votes
     if (!empty($top11_votes)) {
         foreach ($top11_votes as $songId) {
             $top11Model->addVote($songId);
         }
     }
-    
+
     // Process write-in
     if (!empty($write_in)) {
         $top11Model->addWriteIn($write_in);
     }
-    
-    // Record the IP address to prevent double voting
-    $top11Model->recordVoterIp($ip);
-    
+
+    // Record the IP address to prevent double voting (only for non-admin votes)
+    if (!isset($by_pass_ip_check)) {
+        $top11Model->recordVoterIp($ip);
+    }
+
     // Display success message
     echo "<div class=\"alert alert-success\">";
     echo "<h3>Thank you for your vote!</h3>";
