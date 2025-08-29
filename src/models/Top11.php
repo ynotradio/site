@@ -184,4 +184,29 @@ interface Top11
      * @return bool Whether the operation was successful
      */
     public function reset(): bool;
+
+    /**
+     * Check if a user has already voted this week
+     *
+     * @param string $userEmail The user's email address
+     * @param string|null $auth0Id Optional Auth0 user ID for additional security
+     * @return bool Whether the user has already voted this week
+     */
+    public function hasUserVotedThisWeek(string $userEmail, ?string $auth0Id = null): bool;
+
+    /**
+     * Record that a user has voted this week
+     *
+     * @param string $userEmail The user's email address
+     * @param string|null $auth0Id Optional Auth0 user ID for additional security
+     * @return bool Whether the operation was successful
+     */
+    public function recordUserVote(string $userEmail, ?string $auth0Id = null): bool;
+
+    /**
+     * Get the current voting week (Monday of the current week)
+     *
+     * @return string The Monday date of the current week (Y-m-d format)
+     */
+    public function getCurrentVotingWeek(): string;
 }

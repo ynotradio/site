@@ -9,10 +9,8 @@ if (!isset($top11Model)) {
 }
 
 // Process the form submission
-$firstname = isset($_POST['firstname']) ? $_POST['firstname'] : '';
-$lastname = isset($_POST['lastname']) ? $_POST['lastname'] : '';
-$email = isset($_POST['email']) ? $_POST['email'] : '';
-$phone = isset($_POST['phone']) ? $_POST['phone'] : '';
+$voter_email = isset($_POST['voter_email']) ? $_POST['voter_email'] : '';
+$auth0_id = isset($_POST['auth0_id']) ? $_POST['auth0_id'] : null;
 $contest = isset($_POST['contest']) ? $_POST['contest'] : 'no';
 $newsletter = isset($_POST['newsletter']) ? $_POST['newsletter'] : 'no';
 $top11_votes = isset($_POST['top11']) ? $_POST['top11'] : [];
@@ -20,6 +18,17 @@ $write_in = isset($_POST['write_in_value']) ? $_POST['write_in_value'] : '';
 
 // Validate the form
 $errors = [];
+
+// Check if user is authenticated
+if (empty($voter_email)) {
+    $errors[] = "You must be logged in to vote";
+}
+
+// Check if user has already voted this week
+if (!empty($voter_email) && $top11Model->hasUserVotedThisWeek($voter_email, $auth0_id)) {
+    $errors[] = "You have already voted this week. Each user can only vote once per week.";
+}
+
 // Only require song selection, make personal info optional
 if (empty($top11_votes) && empty($write_in)) {
     $errors[] = "Please select at least one song or write in your own";
@@ -38,11 +47,18 @@ if (!empty($errors)) {
     return;
 }
 
-// Save the contestant
+// Save the vote
 try {
-    // Only save contestant info if they provided at least a name and email
-    if (!empty($firstname) && !empty($email)) {
-        $top11Model->addContestant($firstname, $lastname, $email, $phone, $contest, $newsletter);
+    // Record that this user has voted this week (prevent duplicates)
+    $top11Model->recordUserVote($voter_email, $auth0_id);
+    
+    // Extract user information from email for contestant entry
+    $emailParts = explode('@', $voter_email);
+    $username = $emailParts[0];
+    
+    // Save contestant info using the authenticated email
+    if ($contest === 'yes' || $newsletter === 'yes') {
+        $top11Model->addContestant($username, '', $voter_email, '', $contest, $newsletter);
     }
     
     // Process votes
@@ -61,16 +77,19 @@ try {
     echo "<div class=\"alert alert-success\">";
     echo "<h3>Thank you for your vote!</h3>";
     echo "<p>Your Top 11 @ 11 vote has been received.</p>";
+    echo "<p>You are logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong></p>";
     if ($contest === 'yes') {
         echo "<p>You have been entered into this week's contest.</p>";
     }
     if ($newsletter === 'yes') {
         echo "<p>You have been added to our newsletter list.</p>";
     }
+    echo "<p><a href=\"top11_social_logout.php\">Log out</a></p>";
     echo "</div>";
 } catch (\Exception $e) {
     echo "<div class=\"alert alert-error\">";
     echo "<h3>Error</h3>";
     echo "<p>There was an error processing your vote. Please try again later.</p>";
+    echo "<p>Error details: " . htmlspecialchars($e->getMessage()) . "</p>";
     echo "</div>";
 }

@@ -362,6 +362,79 @@ class SqlTop11 implements Top11
         // Reset IP addresses
         $success = $success && $this->db->query("UPDATE ip_address SET deleted = 'yes'");
 
+        // Reset user votes for the current week
+        $currentWeek = $this->getCurrentVotingWeek();
+        $stmt = $this->db->prepare("DELETE FROM top11_user_votes WHERE vote_week = ?");
+        $stmt->bind_param("s", $currentWeek);
+        $success = $success && $stmt->execute();
+
         return $success;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasUserVotedThisWeek(string $userEmail, ?string $auth0Id = null): bool
+    {
+        try {
+            $currentWeek = $this->getCurrentVotingWeek();
+            
+            $query = "SELECT COUNT(*) as count FROM top11_user_votes WHERE user_email = ? AND vote_week = ?";
+            $stmt = $this->db->prepare($query);
+            
+            if (!$stmt) {
+                // Table likely doesn't exist yet, return false (user hasn't voted)
+                return false;
+            }
+            
+            $stmt->bind_param("ss", $userEmail, $currentWeek);
+            $stmt->execute();
+            
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            
+            return $row['count'] > 0;
+        } catch (\Exception $e) {
+            // If table doesn't exist or other error, assume user hasn't voted
+            error_log("Error checking user vote: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function recordUserVote(string $userEmail, ?string $auth0Id = null): bool
+    {
+        try {
+            $currentWeek = $this->getCurrentVotingWeek();
+            
+            $query = "INSERT INTO top11_user_votes (user_email, vote_week, user_auth0_id) VALUES (?, ?, ?)";
+            $stmt = $this->db->prepare($query);
+            
+            if (!$stmt) {
+                // Table likely doesn't exist yet, return false
+                error_log("Error preparing user vote record: " . $this->db->error);
+                return false;
+            }
+            
+            $stmt->bind_param("sss", $userEmail, $currentWeek, $auth0Id);
+            
+            return $stmt->execute();
+        } catch (\Exception $e) {
+            error_log("Error recording user vote: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getCurrentVotingWeek(): string
+    {
+        // Get the Monday of the current week
+        $currentDate = new \DateTime();
+        $currentDate->modify('this week');
+        return $currentDate->format('Y-m-d');
     }
 }
