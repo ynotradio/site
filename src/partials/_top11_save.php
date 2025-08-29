@@ -87,9 +87,10 @@ try {
     echo "<p><a href=\"top11_social_logout.php\">Log out</a></p>";
     echo "</div>";
 } catch (\Exception $e) {
+    // Log the error details server-side
+    error_log("Top11 vote processing error: " . $e->getMessage());
     echo "<div class=\"alert alert-error\">";
     echo "<h3>Error</h3>";
     echo "<p>There was an error processing your vote. Please try again later.</p>";
-    echo "<p>Error details: " . htmlspecialchars($e->getMessage()) . "</p>";
     echo "</div>";
 }
