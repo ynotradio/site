@@ -4,6 +4,7 @@ sponsors
 *.log
 src/vendor
 src/partials/.env
+src/partials/.env.local
 node_modules
 .DS_Store
 .sanity
