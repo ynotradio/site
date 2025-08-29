@@ -22,7 +22,7 @@ echo "📤 Syncing files to server..."
 rsync -avz --delete \
     --exclude 'vendor' \
     --exclude '.git' \
-    --exclude '.env' \
+    --exclude '.env*' \
     --exclude 'images' \
     --exclude 'imgs' \
     --chmod=D755,F644 \
