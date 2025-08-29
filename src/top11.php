@@ -81,12 +81,12 @@ $top11Model = \YNotRadio\Models\Top11Factory::create($db);
           echo "<a href=\"top11_social_login.php\" class=\"btn-success\">Log in to Vote</a>";
           echo "</div>";
         } else if ($top11Model->hasUserVotedThisWeek($voter_email, $userInfo['sub'] ?? null)) {
-          // User has already voted this week
+          // User has already voted this voting period
           echo "<h2 class=\"center\">Vote for Your Top 3 Y-Not Songs of the Week</h2>\n";
           echo "<div class=\"information center top-spacer_20\">";
           echo "<p><strong>Thank you for voting!</strong></p>";
-          echo "<p>You have already voted in this week's Top 11 @ 11. Each user can only vote once per week.</p>";
-          echo "<p>Check back next week to vote again!</p>";
+          echo "<p>You have already voted in the current Top 11 @ 11 voting period. Each user can only vote once per voting period.</p>";
+          echo "<p>Voting will reopen when the next Top 11 @ 11 begins!</p>";
           echo "<a href=\"top11_social_logout.php\" class=\"btn-info\">Log out</a>";
           echo "</div>";
         } else {

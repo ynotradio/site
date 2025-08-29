@@ -362,11 +362,8 @@ class SqlTop11 implements Top11
         // Reset IP addresses
         $success = $success && $this->db->query("UPDATE ip_address SET deleted = 'yes'");
 
-        // Reset user votes for the current week
-        $currentWeek = $this->getCurrentVotingWeek();
-        $stmt = $this->db->prepare("DELETE FROM top11_user_votes WHERE vote_week = ?");
-        $stmt->bind_param("s", $currentWeek);
-        $success = $success && $stmt->execute();
+        // Reset all user votes (admin controlled reset)
+        $success = $success && $this->db->query("DELETE FROM top11_user_votes");
 
         return $success;
     }
@@ -377,9 +374,9 @@ class SqlTop11 implements Top11
     public function hasUserVotedThisWeek(string $userEmail, ?string $auth0Id = null): bool
     {
         try {
-            $currentWeek = $this->getCurrentVotingWeek();
+            $currentPeriod = $this->getCurrentVotingWeek();
             
-            $query = "SELECT COUNT(*) as count FROM top11_user_votes WHERE user_email = ? AND vote_week = ?";
+            $query = "SELECT COUNT(*) as count FROM top11_user_votes WHERE user_email = ? AND voting_period = ?";
             $stmt = $this->db->prepare($query);
             
             if (!$stmt) {
@@ -387,7 +384,7 @@ class SqlTop11 implements Top11
                 return false;
             }
             
-            $stmt->bind_param("ss", $userEmail, $currentWeek);
+            $stmt->bind_param("ss", $userEmail, $currentPeriod);
             $stmt->execute();
             
             $result = $stmt->get_result();
@@ -407,9 +404,9 @@ class SqlTop11 implements Top11
     public function recordUserVote(string $userEmail, ?string $auth0Id = null): bool
     {
         try {
-            $currentWeek = $this->getCurrentVotingWeek();
+            $currentPeriod = $this->getCurrentVotingWeek();
             
-            $query = "INSERT INTO top11_user_votes (user_email, vote_week, user_auth0_id) VALUES (?, ?, ?)";
+            $query = "INSERT INTO top11_user_votes (user_email, voting_period, user_auth0_id) VALUES (?, ?, ?)";
             $stmt = $this->db->prepare($query);
             
             if (!$stmt) {
@@ -418,7 +415,7 @@ class SqlTop11 implements Top11
                 return false;
             }
             
-            $stmt->bind_param("sss", $userEmail, $currentWeek, $auth0Id);
+            $stmt->bind_param("sss", $userEmail, $currentPeriod, $auth0Id);
             
             return $stmt->execute();
         } catch (\Exception $e) {
@@ -432,9 +429,8 @@ class SqlTop11 implements Top11
      */
     public function getCurrentVotingWeek(): string
     {
-        // Get the Monday of the current week
-        $currentDate = new \DateTime();
-        $currentDate->modify('monday this week');
-        return $currentDate->format('Y-m-d');
+        // Return a consistent identifier for the current voting period
+        // This will remain the same until manually reset by admin
+        return 'current';
     }
 }
