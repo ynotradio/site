@@ -434,7 +434,7 @@ class SqlTop11 implements Top11
     {
         // Get the Monday of the current week
         $currentDate = new \DateTime();
-        $currentDate->modify('this week');
+        $currentDate->modify('monday this week');
         return $currentDate->format('Y-m-d');
     }
 }
