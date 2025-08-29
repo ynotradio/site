@@ -109,6 +109,7 @@ if (!$_SESSION["logged_in"]) {
                 echo "<div class=\"center\">Top 11 Write-ins - <b>NUKED</b></div>";
                 echo "<div class=\"center\">Top 11 Contestants - <b>NUKED</b></div>";
                 echo "<div class=\"center\">IP Addresses - <b>NUKED</b></div>";
+                echo "<div class=\"center\">User Votes - <b>NUKED</b></div>";
             } else {
                 echo "<div class=\"alert alert-error\">Error resetting Top11 data</div>";
             }
