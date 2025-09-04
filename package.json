@@ -15,7 +15,8 @@
     "sanity:deploy-graphql": "sanity graphql deploy",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings=0",
-    "import:deejays": "tsx bin/migrations/importDeejays.ts"
+    "import:deejays": "tsx bin/migrations/importDeejays.ts",
+    "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
   "license": "ISC",
