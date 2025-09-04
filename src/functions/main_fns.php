@@ -4,7 +4,7 @@ session_start(); #sessions to save login state
 error_reporting(E_ALL & ~E_NOTICE);
 
 // Use absolute paths for including vendor and env loader
-$root_path = $_SERVER['DOCUMENT_ROOT'];
+$root_path = $_SERVER['DOCUMENT_ROOT'] ?: realpath(__DIR__ . '/../..');
 $vendor_path = $root_path . '/vendor/autoload.php';
 $env_loader_path = $root_path . '/partials/__env_loader.php';
 

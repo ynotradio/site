@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose exec:*)",
+      "Bash(docker-compose:*)",
+      "Bash(./bin/pull_db.sh:*)",
+      "Bash(curl:*)",
+      "Bash(docker:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

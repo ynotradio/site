@@ -29,7 +29,7 @@ mkdir -p "$(dirname "$LOCAL_PATH")"
 echo "🔍 Exporting database on remote server..."
 echo "Running: ssh -v $REMOTE_HOST 'mysqldump -u $DB_USER -p'$DB_PASSWORD' $DB_NAME > $REMOTE_SQL_PATH'"
 
-ssh -v $REMOTE_HOST "mysqldump -u $DB_USER -p'$DB_PASSWORD' $DB_NAME > $REMOTE_SQL_PATH"
+ssh -v $REMOTE_HOST "mysqldump -u $DB_USER -p'$DB_PASSWORD' --single-transaction --routines --triggers --no-tablespaces $DB_NAME > $REMOTE_SQL_PATH"
 
 if ssh $REMOTE_HOST "test -s $REMOTE_SQL_PATH"; then
     echo "📥 Copying database dump to local machine..."
@@ -37,6 +37,18 @@ if ssh $REMOTE_HOST "test -s $REMOTE_SQL_PATH"; then
     scp $REMOTE_HOST:$REMOTE_SQL_PATH "$LOCAL_PATH"
     ssh $REMOTE_HOST "rm $REMOTE_SQL_PATH"
     echo "✅ Database successfully exported to $LOCAL_PATH"
+    
+    # Check if Docker containers are running and import database
+    if docker-compose ps mysql | grep -q "Up"; then
+        echo "🔄 Importing database into local MySQL container..."
+        docker-compose exec mysql mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+        docker-compose exec -T mysql mysql -u root -proot ynot_site < "$LOCAL_PATH"
+        echo "✅ Database imported successfully"
+    else
+        echo "ℹ️  MySQL container not running. Import database manually after starting containers:"
+        echo "   docker-compose exec mysql mysql -u root -proot -e \"CREATE DATABASE IF NOT EXISTS ynot_site;\""
+        echo "   docker-compose exec -T mysql mysql -u root -proot ynot_site < $LOCAL_PATH"
+    fi
 else
     echo "❌ Remote dump failed or file is empty."
     exit 1
