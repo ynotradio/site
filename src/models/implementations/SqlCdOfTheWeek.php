@@ -13,7 +13,22 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
     }
 
     public function getCurrent(): ?array {
-        $query = "SELECT * FROM cdotw WHERE deleted = 'no' ORDER BY date DESC LIMIT 1";
+        // First, get the most recent date
+        $dateQuery = "SELECT MAX(date) as latest_date FROM cdotw WHERE deleted = 'no'";
+        $dateResult = mysqli_query($this->db, $dateQuery);
+        
+        if (!$dateResult) {
+            throw new \RuntimeException("Error fetching latest CD of the week date: " . mysqli_error($this->db));
+        }
+        
+        $dateRow = mysqli_fetch_assoc($dateResult);
+        if (!$dateRow || !$dateRow['latest_date']) {
+            return null;
+        }
+        
+        // Then get the most recent CD with that date
+        $latestDate = mysqli_real_escape_string($this->db, $dateRow['latest_date']);
+        $query = "SELECT * FROM cdotw WHERE date = '{$latestDate}' AND deleted = 'no' ORDER BY id DESC LIMIT 1";
         $result = mysqli_query($this->db, $query);
 
         if (!$result) {
@@ -39,7 +54,7 @@ class SqlCdOfTheWeek implements CdOfTheWeek {
 
     public function getAll(int $limit = 64): array {
         $limit = mysqli_real_escape_string($this->db, $limit);
-        $query = "SELECT * FROM cdotw WHERE deleted = 'no' ORDER BY date DESC LIMIT $limit";
+        $query = "SELECT * FROM cdotw WHERE deleted = 'no' ORDER BY date DESC, id DESC LIMIT $limit";
         $result = mysqli_query($this->db, $query);
 
         if (!$result) {

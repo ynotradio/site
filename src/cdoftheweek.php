@@ -31,13 +31,35 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                      "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
             }
         } else {
+            // Get the most recent date
             $current = $cdOfTheWeek->getCurrent();
             if ($current) {
-                echo "Week of " . date('n/j/y', strtotime($current['date']));
-                echo "<h3>" . $current['artist'] . " - <em>" . $current['title'] . "</em> (" . $current['label'] . ")</h3>\n" .
-                     "<div class='review'> <a href=\"" . $current['band'] . "\" target=_new><img src=\"" . $current['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
-                     $current['review'] . "</div>\n" .
-                     "<div class=\"footnote\">Review by " . $current['reviewer'] . "</div>\n";
+                $latestDate = $current['date'];
+                
+                // Get all CDs with the latest date
+                $latestCds = [];
+                $allCds = $cdOfTheWeek->getAll();
+                foreach ($allCds as $cd) {
+                    if ($cd['date'] == $latestDate) {
+                        $latestCds[] = $cd;
+                    }
+                }
+                
+                // Display the date once
+                echo "Week of " . date('n/j/y', strtotime($latestDate));
+                
+                // Display each CD of the week for the latest date
+                foreach ($latestCds as $cd) {
+                    echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
+                         "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $cd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
+                         $cd['review'] . "</div>\n" .
+                         "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
+                    
+                    // Add some spacing between multiple reviews
+                    if (end($latestCds) !== $cd) {
+                        echo "<hr class=\"review-separator\">\n";
+                    }
+                }
             }
         }
     } catch (Exception $e) {
