@@ -82,15 +82,15 @@ $isPollActive = (time() <= $poll_end_datetime);
     <?php if ($isPollActive): ?>
         <div class="twelve columns">
             <div class="center top-spacer_20 bottom-spacer_20" style="max-width: 100%">
-                <img src="https://i.imgur.com/hIpIG5R.gif" alt="YNot Year End Poll 2025" style="max-width: 100%">
+                <img src="https://i.imgur.com/wKQaEW0.gif" alt="YNot Year End Poll 2025" style="max-width: 100%">
             </div>
         </div>
 
         <div class="row">
             <div class="column twelve">
-                <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2025! Cast your votes and you could win an Apple Watch and the chance to play your own top 20 songs of the year on Y-Not Radio!
+                <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2025! Cast your votes and you could win [PRIZE TBD] and the chance to play your own top 20 songs of the year on Y-Not Radio!
                 <br><br>
-                Vote now thru Dec. 23rd. Then we'll count down <i>The Top 224 of 2025</i> from December 30th thru January 3rd! <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a></i>.
+                Vote now thru Dec. 23rd. Then we'll count down <i>The Top 225 of 2025</i> from December 29th thru January 2nd! <i>You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a>.
                 <br><br>
                 Need some ideas? Check out the Y-Not DJs best of lists <a href="yearendstaffpicks.php">here</a>.</p>
             </div>
@@ -121,8 +121,8 @@ $isPollActive = (time() <= $poll_end_datetime);
             <div class="row">
                 <div class="twelve columns top-spacer_20 center success">
                     Good luck and thanks for voting in Y-Not's 2025 Year End Poll!<br>
-                    Find out all the results when we countdown The Top 224 Songs of 2025, <br>
-                    December 30<sup>th</sup> thru January 3<sup>rd</sup>.
+                    Find out all the results when we countdown The Top 225 Songs of 2025, <br>
+                    December 29<sup>th</sup> thru January 2<sup>nd</sup>.
                 </div>
             </div>
         <?php elseif ($contestError === "missing_values"): ?>
@@ -179,9 +179,9 @@ $isPollActive = (time() <= $poll_end_datetime);
         // Poll has ended
         ?>
         <div class="center top-spacer_20 bottom-spacer_20">
-            <img src="https://i.imgur.com/hIpIG5R.gif" alt="YNot Year End Poll 2025" style="max-width: 100%">
+            <img src="https://i.imgur.com/wKQaEW0.gif" alt="YNot Year End Poll 2025" style="max-width: 100%">
         </div>
-        <p>Thanks to everyone who voted in Y-Not's 2025 Year End Poll! Voting is now closed and we'll be tabulating over the holiday. Tune in from December 30th - January 3rd to hear all the results in Y-Not's Top 224 of 2025 countdown, starting at 10am each day. In the meantime, check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a>!</p>
+        <p>Thanks to everyone who voted in Y-Not's 2025 Year End Poll! Voting is now closed and we'll be tabulating over the holiday. Tune in from December 29th - January 2nd to hear all the results in Y-Not's Top 225 of 2025 countdown, starting at 10am each day. In the meantime, check out the Y-Not DJs' <a href="yearendstaffpicks.php">top albums and songs</a>!</p>
         </div>
         <div class="center">
         </div>
