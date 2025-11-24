@@ -17,3 +17,5 @@ node_modules
 .react-router
 db/docker/*.sql
 dist
+tmp
+.claude/settings.local.json
