@@ -28,11 +28,19 @@ export interface MarkDef {
   href: string;
 }
 
+// Counter for generating unique keys (fallback if crypto is not available)
+let keyCounter = 0;
+
 /**
  * Generate a unique key for Portable Text elements
+ * Uses crypto.randomUUID when available, falls back to counter-based approach
  */
 function generateKey(): string {
-  return Math.random().toString(36).substring(2, 11);
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID().substring(0, 9);
+  }
+  keyCounter += 1;
+  return `key-${Date.now()}-${keyCounter}`;
 }
 
 /**

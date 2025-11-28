@@ -3,7 +3,7 @@
  * Handles fetching images from external URLs (including Imgur) and uploading to Sanity
  */
 
-import { createClient, SanityClient } from '@sanity/client';
+import { SanityClient } from '@sanity/client';
 import * as fsPromises from 'fs/promises';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -214,6 +214,3 @@ export function fixImagePath(imagePath: string | null | undefined, baseUrl: stri
 export function isImgurUrl(url: string): boolean {
   return url.includes('imgur.com') || url.includes('i.imgur.com');
 }
-
-// Export client creation for convenience
-export { createClient };

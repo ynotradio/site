@@ -17,3 +17,4 @@ node_modules
 .react-router
 db/docker/*.sql
 dist
+tsconfig.tsbuildinfo
