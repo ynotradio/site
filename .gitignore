@@ -19,3 +19,5 @@ db/docker/*.sql
 dist
 tsconfig.tsbuildinfo
 coverage
+tmp
+.claude/settings.local.json
