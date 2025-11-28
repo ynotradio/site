@@ -1,6 +1,6 @@
 # Sanity CMS Migration Plan
 
-**Last Updated:** November 28, 2025  
+**Last Updated:** November 28, 2025 (Revision 2)  
 **Project Goal:** Replace the homemade PHP content management dashboard with Sanity CMS, then build a modern responsive site redesign.
 
 ---
@@ -118,18 +118,19 @@ All migrated documents should include:
 | 1 | Person | ✅ Done | Schema exists at `studio/schemaTypes/person.ts` |
 | 2 | DJ | ✅ Done | Schema exists at `studio/schemaTypes/dj.ts` |
 | 3 | Artist | 🔲 Todo | New generic content type for bands |
-| 4 | Ad | 🔲 Todo | Simple model |
-| 5 | Concert | 🔲 Todo | References Artist |
-| 6 | Music | 🔲 Todo | References Artist |
-| 7 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
-| 8 | OnDemand | 🔲 Todo | Audio content |
-| 9 | Schedule | 🔲 Todo | References DJ |
-| 10 | Content Block | 🔲 Todo | Unified Story + CustomText model |
-| 11 | Top11 | 🔲 Todo | Weekly chart, references Artist |
-| 12 | MRM Config | 🔲 Todo | Singleton for tournament settings |
-| 13 | MRM Match | 🔲 Todo | Tournament brackets, references Artist |
-| 14 | YearEndStaffPick | 🔲 Todo | Staff picks content |
-| 15 | YearEndPoll | 🔲 Todo | Most complex, many related tables |
+| 4 | Venue | 🔲 Todo | Concert venues (dropdown/create on the fly) |
+| 5 | Ad | 🔲 Todo | Simple model |
+| 6 | Concert | 🔲 Todo | References Artist and Venue |
+| 7 | Music | 🔲 Todo | References Artist |
+| 8 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
+| 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |
+| 10 | Schedule | 🔲 Todo | References DJ |
+| 11 | Content Block | 🔲 Todo | Unified Story + CustomText model |
+| 12 | Top11 | 🔲 Todo | Weekly chart, references Artist |
+| 13 | MRM Config | 🔲 Todo | Singleton for tournament settings |
+| 14 | MRM Match | 🔲 Todo | Tournament brackets, references Artist |
+| 15 | YearEndStaffPick | 🔲 Todo | Staff picks content |
+| 16 | YearEndPoll | 🔲 Todo | Most complex, many related tables |
 
 ---
 
@@ -249,14 +250,46 @@ ads: id, name, start_date, end_date, pic_url, web_url, priority, deleted
 
 ---
 
-### Task 4: Create Concert Schema and Migration
+### Task 4: Create Venue Schema
 
 **Status:** 🔲 Not Started  
-**Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities)  
+**Depends On:** None  
+**Estimated Effort:** Small
+
+**Context:**
+Venues are locations where concerts take place. Editors can select from a dropdown or create a new venue on the fly.
+
+**Requirements:**
+1. Create `studio/schemaTypes/venue.ts` with fields:
+   - `name` (string, required)
+   - `slug` (slug from name, required)
+   - `address` (string)
+   - `city` (string)
+   - `website` (url)
+   - `_legacyId` (number, readOnly)
+   - `_migratedAt` (datetime, readOnly)
+2. Add to `studio/schemaTypes/index.ts`
+3. Test in Sanity Studio
+
+**Files to Modify:**
+- `studio/schemaTypes/venue.ts` (create)
+- `studio/schemaTypes/index.ts` (update)
+
+**Acceptance Criteria:**
+- [ ] Schema compiles without errors
+- [ ] Can create/edit Venue in Sanity Studio
+- [ ] Can be selected in dropdown from Concert form
+
+---
+
+### Task 5: Create Concert Schema and Migration
+
+**Status:** 🔲 Not Started  
+**Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities), Task 4 (Venue Schema)  
 **Estimated Effort:** Medium
 
 **Context:**
-Concerts reference artists and include venue/ticket information.
+Concerts reference artists and venues. Artist image and website come from the Artist record—no duplicate fields needed.
 
 **MySQL Schema:**
 ```
@@ -266,17 +299,15 @@ concerts: id, date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl
 **Requirements:**
 1. Create `studio/schemaTypes/concert.ts`:
    - `date` (date, required)
-   - `artist` (reference to `artist`)
-   - `artistName` (string - for display if no artist ref)
-   - `image` (image)
-   - `artistUrl` (url)
-   - `venue` (string)
+   - `artist` (reference to `artist`, required) - image/url come from artist
+   - `venue` (reference to `venue`, required)
    - `ticketInfo` (string)
    - `ticketUrl` (url)
    - `featured` (boolean)
    - `_legacyId`, `_migratedAt`
 2. Create `bin/migrations/importConcerts.ts`
-3. Migration should attempt to match artist by name
+3. Migration must create Artist record if not found (or fail with report)
+4. Migration must create Venue record if not found
 
 **Files to Modify:**
 - `studio/schemaTypes/concert.ts` (create)
@@ -286,20 +317,21 @@ concerts: id, date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
-- [ ] Migration links to existing Artist when name matches
-- [ ] Falls back to artistName string when no match
+- [ ] Artist reference is required (no fallback string)
+- [ ] Venue reference is required (create on the fly if needed)
+- [ ] Migration creates missing Artist/Venue records or fails with report
 - [ ] Validation errors reported for manual review
 
 ---
 
-### Task 5: Create Music Schema and Migration
+### Task 6: Create Music Schema and Migration
 
 **Status:** 🔲 Not Started  
 **Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities)  
 **Estimated Effort:** Small
 
 **Context:**
-Music entries are new song additions with artist and streaming URL.
+Music entries are new song additions with artist and streaming URL. Artist is always required—create one if it doesn't exist.
 
 **MySQL Schema:**
 ```
@@ -308,22 +340,23 @@ music: id, artist, song, url, date, deleted
 
 **Requirements:**
 1. Create `studio/schemaTypes/music.ts`:
-   - `artist` (reference to `artist`)
-   - `artistName` (string - fallback)
+   - `artist` (reference to `artist`, required)
    - `song` (string, required)
    - `url` (url)
    - `date` (date)
    - `_legacyId`, `_migratedAt`
 2. Create `bin/migrations/importMusic.ts`
+3. Migration must create Artist record if not found (or fail with report)
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
-- [ ] Migration links to Artist when possible
+- [ ] Artist reference is required (no fallback string)
+- [ ] Migration creates missing Artist records or fails with report
 - [ ] Validation errors reported
 
 ---
 
-### Task 6: Create Content Block Schema (Unified Story + CustomText)
+### Task 7: Create Content Block Schema (Unified Story + CustomText)
 
 **Status:** 🔲 Not Started  
 **Depends On:** Task 2 (Shared Utilities)  
@@ -360,14 +393,14 @@ custom_texts: id, name, content, deleted
 
 ---
 
-### Task 7: Create Schedule Schema and Migration
+### Task 8: Create Schedule Schema and Migration
 
 **Status:** 🔲 Not Started  
 **Depends On:** Task 2 (Shared Utilities)  
 **Estimated Effort:** Small
 
 **Context:**
-Schedule entries link to DJs and define show times.
+Schedule entries link to DJs and define show times. The `day` field is redundant since it can be derived from the `date` field.
 
 **MySQL Schema:**
 ```
@@ -376,32 +409,31 @@ schedule: id, date, day, start_time, end_time, host, note, deleted
 
 **Requirements:**
 1. Create `studio/schemaTypes/schedule.ts`:
-   - `date` (date)
-   - `day` (string)
+   - `date` (date, required) - day of week derived from this
    - `startTime` (string - time format)
    - `endTime` (string - time format)
-   - `host` (reference to `dj`)
-   - `hostName` (string - fallback)
+   - `host` (reference to `dj`, required)
    - `note` (text)
    - `_legacyId`, `_migratedAt`
 2. Create `bin/migrations/importSchedule.ts`
-3. Match host to DJ by name
+3. Migration must match host to DJ by name (or fail with report)
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
-- [ ] DJ references linked when name matches
+- [ ] DJ reference is required (no fallback string)
+- [ ] Migration matches DJ by name or fails with report
 - [ ] Validation errors reported
 
 ---
 
-### Task 8: Create CdOfTheWeek Schema and Migration
+### Task 9: Create CdOfTheWeek Schema and Migration
 
 **Status:** 🔲 Not Started  
 **Depends On:** Task 1 (Artist), Task 2 (Utilities)  
 **Estimated Effort:** Medium
 
 **Context:**
-Album reviews with rich text content.
+Album reviews with rich text content. Artist is always required—create one if it doesn't exist.
 
 **MySQL Schema:**
 ```
@@ -410,8 +442,7 @@ cdotw: id, artist, title, label, review, cd_pic_url, band, reviewer, date, delet
 
 **Requirements:**
 1. Create `studio/schemaTypes/cdOfTheWeek.ts`:
-   - `artist` (reference to `artist`)
-   - `artistName` (string - fallback)
+   - `artist` (reference to `artist`, required)
    - `title` (string, required)
    - `label` (string)
    - `review` (Portable Text)
@@ -420,23 +451,25 @@ cdotw: id, artist, title, label, review, cd_pic_url, band, reviewer, date, delet
    - `date` (date)
    - `_legacyId`, `_migratedAt`
 2. Create `bin/migrations/importCdOfTheWeek.ts`
-3. Convert HTML review to Portable Text
+3. Migration must create Artist record if not found (or fail with report)
+4. Convert HTML review to Portable Text
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
+- [ ] Artist reference is required (no fallback string)
 - [ ] Review HTML converted to Portable Text
 - [ ] Cover images migrated to Sanity assets
 
 ---
 
-### Task 9: Create OnDemand Schema and Migration
+### Task 10: Create OnDemand Schema and Migration
 
 **Status:** 🔲 Not Started  
-**Depends On:** Task 2 (Shared Utilities)  
+**Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities)  
 **Estimated Effort:** Small
 
 **Context:**
-On-demand audio content entries.
+On-demand audio content entries. Can reference artists or DJs depending on the content type.
 
 **MySQL Schema:**
 ```
@@ -452,17 +485,21 @@ ondemand: id, date, image, headline, note, songs, audio_url, source, deleted
    - `songs` (text)
    - `audioUrl` (url)
    - `source` (string)
+   - `artist` (reference to `artist`) - optional, for artist-related content
+   - `dj` (reference to `dj`) - optional, for DJ-related content
    - `_legacyId`, `_migratedAt`
 2. Create `bin/migrations/importOnDemand.ts`
+3. Migration should attempt to match artist/dj by name if possible
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
 - [ ] Images migrated to Sanity assets
+- [ ] Can link to Artist or DJ as appropriate
 - [ ] Validation errors reported
 
 ---
 
-### Task 10: Create MRM Configuration Singleton
+### Task 11: Create MRM Configuration Singleton
 
 **Status:** 🔲 Not Started  
 **Depends On:** None  
@@ -492,14 +529,14 @@ Modern Rock Madness needs a configuration singleton for tournament settings (cur
 
 ---
 
-### Task 11: Create Top11 Schema and Migration
+### Task 12: Create Top11 Schema and Migration
 
 **Status:** 🔲 Not Started  
 **Depends On:** Task 1 (Artist), Task 2 (Utilities)  
 **Estimated Effort:** Medium
 
 **Context:**
-Weekly top 11 chart with ranked songs.
+Weekly top 11 chart with ranked songs. Artist is always required for each song entry—create one if it doesn't exist.
 
 **MySQL Schema:**
 ```
@@ -512,23 +549,24 @@ top11songs, top11contest, top11message (related)
    - `weekOf` (date, required)
    - `songs` (array of objects):
      - `placement` (number)
-     - `artist` (reference to `artist`)
-     - `artistName` (string - fallback)
+     - `artist` (reference to `artist`, required)
      - `song` (string)
      - `note` (string)
 2. Create `bin/migrations/importTop11.ts`
+3. Migration must create Artist records if not found (or fail with report)
 
 **Acceptance Criteria:**
 - [ ] Schema works in Sanity Studio
 - [ ] Songs array maintains order
-- [ ] Artist references linked when possible
+- [ ] Artist references are required (no fallback string)
+- [ ] Migration creates missing Artist records or fails with report
 
 ---
 
-### Task 12: Create MRM Match Schema
+### Task 13: Create MRM Match Schema
 
 **Status:** 🔲 Not Started  
-**Depends On:** Task 1 (Artist), Task 10 (MRM Config)  
+**Depends On:** Task 1 (Artist), Task 11 (MRM Config)  
 **Estimated Effort:** High
 
 **Context:**
@@ -556,7 +594,7 @@ Tournament bracket system with matches between artists. Don't migrate historical
 
 ---
 
-### Task 13: Add Feature Flag for Sanity Reading
+### Task 14: Add Feature Flag for Sanity Reading
 
 **Status:** 🔲 Not Started  
 **Depends On:** Multiple schemas completed  
