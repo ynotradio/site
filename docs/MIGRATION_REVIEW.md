@@ -143,8 +143,18 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
    Consider adding consistent metadata fields across all document types:
    ```typescript
    {
-     _legacyId: 'number',  // Original MySQL ID for reference
-     _migratedAt: 'datetime',  // When the record was migrated
+     name: '_legacyId',
+     title: 'Legacy ID',
+     type: 'number',
+     description: 'Original MySQL ID for reference',
+     readOnly: true,
+   },
+   {
+     name: '_migratedAt',
+     title: 'Migrated At',
+     type: 'datetime',
+     description: 'When the record was migrated',
+     readOnly: true,
    }
    ```
 
