@@ -18,3 +18,4 @@ node_modules
 db/docker/*.sql
 dist
 tsconfig.tsbuildinfo
+coverage
