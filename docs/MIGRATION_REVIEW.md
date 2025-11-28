@@ -163,9 +163,22 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
    ```typescript
    // MRM Match document
    {
-     band1: { type: 'reference', to: [{ type: 'band' }] },
-     band2: { type: 'reference', to: [{ type: 'band' }] },
-     winner: { type: 'reference', to: [{ type: 'band' }] },
+     name: 'band1',
+     title: 'Band 1',
+     type: 'reference',
+     to: [{ type: 'band' }],
+   },
+   {
+     name: 'band2',
+     title: 'Band 2',
+     type: 'reference',
+     to: [{ type: 'band' }],
+   },
+   {
+     name: 'winner',
+     title: 'Winner',
+     type: 'reference',
+     to: [{ type: 'band' }],
    }
    ```
 
