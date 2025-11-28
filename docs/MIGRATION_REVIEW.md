@@ -27,16 +27,19 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
 ### Data Integrity & Validation
 
 4. **Soft Delete Strategy**  
-   Most MySQL tables have a `deleted` field. How will soft-deleted records be handled in Sanity? Options include:
-   - Not migrating deleted records at all
-   - Migrating them with an `isDeleted` boolean field
-   - Using Sanity's draft/published state
+   Most MySQL tables have a `deleted` field. **Decision:** Use Sanity's draft/published state to handle soft-deleted records.
 
 5. **Foreign Key Relationships**  
-   Phase 4 (MRM) has foreign keys between `mrm_matches` and `mrm_bands`. How will these relationships be modeled in Sanity? Will they use Sanity references, and if so, what happens if bands are deleted?
+   Phase 4 (MRM) has foreign keys between `mrm_matches` and `mrm_bands`. **Decision:** Use Sanity references for relationships. Artists (bands) should not be deleted or unpublished once they're associated with published entities such as posts, music entries, top 11 polls, or MRM matches.
+   
+   **Artist Data Model:**
+   - Use "artist" as the generic content type (replacing "band")
+   - In Modern Rock Madness, multiple artists can be "teamed up" (e.g., Jack White/White Stripes, Blur/Gorillaz)
+   - Artists have a many-to-many "people" relationship (e.g., Damon Albarn could be associated with his solo career, Gorillaz, and Blur)
+   - People can also have Deejay records (e.g., if Damon Albarn does a guest DJ spot)
 
 6. **Data Validation Pre-Migration**  
-   Is there a plan to validate and clean the MySQL data before migration? For example, checking for:
+   **Decision:** Fail migration on validation issues and generate a report for manual import. No automatic data cleaning—issues should be reviewed and fixed manually. Validation should check for:
    - Orphaned records
    - Invalid URLs
    - Duplicate entries
@@ -45,40 +48,26 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
 ### Content Migration
 
 7. **Rich Text/HTML Content**  
-   Phase 2 mentions HTML content in `CustomText` and `Story` tables. Will this be:
-   - Converted to Sanity's Portable Text format?
-   - Stored as raw HTML in a text field?
-   - Sanitized for security (XSS prevention)?
+   Phase 2 mentions HTML content in `CustomText` and `Story` tables. **Decision:** Use Sanity's Portable Text format. Consider combining `CustomText` and `Story` into a unified content model since they serve similar purposes (rich content with optional images and dates).
 
 8. **Image Migration Strategy**  
-   The current `importDeejays.ts` uploads images as Sanity assets. For models with `pic_url` fields pointing to external URLs (e.g., Imgur), should these be:
-   - Migrated to Sanity's asset pipeline?
-   - Left as external URL references?
-   - A hybrid approach based on domain?
+   **Decision:** Migrate images to Sanity's asset pipeline whenever possible. For models with `pic_url` fields pointing to external URLs (e.g., Imgur), migrate them to Sanity assets rather than keeping external references.
 
 ### Historical & Time-Sensitive Data
 
 9. **Tournament History (Phase 4)**  
-   Should historical MRM tournament data be migrated, or only the current/upcoming tournament structure? Historical data could be valuable for archives but adds complexity.
+   **Decision:** Keep historical tournament data going forward in Sanity, but old/past tournament data from MySQL does not need to be migrated. The tournament runs once a year, so only current/future tournament structure needs migration.
 
 10. **Year End Poll Historical Data (Phase 5)**  
     The Year End Poll spans multiple years. Should each year be modeled separately, or should there be a year-scoped structure in Sanity?
 
 ### Technical Implementation
 
-11. **Migration Rollback Strategy**  
-    Is there a rollback plan if a migration phase fails or corrupts data? This could involve:
-    - Sanity dataset snapshots before each phase
-    - MySQL backup verification
-    - Dry-run capability in migration scripts
-
-12. **Incremental vs. Full Migration**  
-    Will migrations be one-time full imports, or do you need support for incremental/delta migrations for ongoing updates during the transition period?
-
-13. **Environment Strategy**  
-    What's the plan for staging/testing migrations? Will there be:
-    - A separate Sanity dataset for testing (e.g., `staging` vs `production`)?
-    - Test migrations against a copy of production data?
+11. **Incremental/Upsert Migration**  
+    **Decision:** Use "upsert" style migrations where:
+    - If a record has already been migrated, check if it needs updating
+    - Otherwise, add a new record
+    - Run migrations incrementally until full parity is achieved, then cut over to Sanity
 
 ---
 
@@ -117,29 +106,22 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
    - `validation.ts` - Data validation utilities
    - `logger.ts` - Consistent logging across all migrations
 
-4. **Dry Run Mode**  
-   Add a `--dry-run` flag to migration scripts that:
-   - Validates source data
-   - Shows what would be migrated
-   - Doesn't write to Sanity
-   - Generates a preview report
-
-5. **Migration Reports**  
+4. **Migration Reports**  
    Generate post-migration reports similar to `DEEJAY_MIGRATION_REPORT.md` for each model, documenting:
    - Records processed
    - Records skipped (with reasons)
    - Validation errors encountered
    - Image assets uploaded
 
-6. **Consider a Phased Frontend Approach**  
-   Instead of a big-bang frontend migration, consider:
-   - Phase A: Read from Sanity, fall back to MySQL
-   - Phase B: Write to both Sanity and MySQL (dual-write)
-   - Phase C: Read/write only Sanity, MySQL becomes archive
+5. **Phased Frontend Cutover**  
+   Instead of a big-bang frontend migration:
+   - Phase A: Read from Sanity behind a feature flag (for testing)
+   - Phase B: Keep running incremental migrations until full parity
+   - Phase C: Cut over to Sanity once parity is achieved; MySQL becomes archive
 
 ### Schema Design Suggestions
 
-7. **Add Base Document Fields**  
+6. **Add Base Document Fields**  
    Consider adding consistent metadata fields across all document types:
    ```typescript
    {
@@ -158,40 +140,48 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
    }
    ```
 
-8. **Use Document References Consistently**  
+7. **Use Document References Consistently**  
    For Phase 4 & 5, complex relationships could benefit from Sanity's reference system:
    ```typescript
    // MRM Match document
    {
-     name: 'band1',
-     title: 'Band 1',
+     name: 'artist1',
+     title: 'Artist 1',
      type: 'reference',
-     to: [{ type: 'band' }],
+     to: [{ type: 'artist' }],
    },
    {
-     name: 'band2',
-     title: 'Band 2',
+     name: 'artist2',
+     title: 'Artist 2',
      type: 'reference',
-     to: [{ type: 'band' }],
+     to: [{ type: 'artist' }],
    },
    {
      name: 'winner',
      title: 'Winner',
      type: 'reference',
-     to: [{ type: 'band' }],
+     to: [{ type: 'artist' }],
    }
    ```
 
-9. **Consider Singleton Documents**  
-   For configuration data like `_mrm_config.php`, use Sanity singleton documents:
+8. **Singleton Documents via Structure Builder**  
+   For configuration data like `_mrm_config.php`, use Sanity singleton documents implemented via the Structure Builder (customize `studio/deskStructure.ts`):
    ```typescript
    {
      name: 'mrmConfig',
+     title: 'MRM Configuration',
      type: 'document',
-     __experimental_singleton: true,
      fields: [
-       { name: 'startDate', type: 'date' },
-       { name: 'bracketPdfUrl', type: 'url' },
+       { 
+         name: 'startDate', 
+         title: 'Start Date',
+         type: 'date' 
+       },
+       { 
+         name: 'bracketPdfUrl', 
+         title: 'Bracket PDF URL',
+         type: 'url' 
+       },
        // ...
      ]
    }
@@ -199,27 +189,13 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
 
 ### Risk Mitigation
 
-10. **Identify Critical Path**  
-    Consider which features are most important to migrate first based on:
-    - User traffic/engagement
-    - Content update frequency
-    - Admin pain points
-    
-    This might reorder priorities within phases.
-
-11. **Plan for Dual-System Period**  
-    During migration, you'll likely need to support both MySQL and Sanity. Document:
-    - How long this period will last per phase
-    - Which system is the source of truth
-    - How conflicts will be resolved
-
-12. **Define Success Criteria**  
-    For each phase, define clear acceptance criteria:
-    - All X records migrated successfully
-    - No data loss (verified by record count comparison)
-    - All images accessible
-    - Frontend renders correctly from Sanity data
-    - Admin can create/edit content in Sanity Studio
+9. **Define Success Criteria**  
+   For each phase, define clear acceptance criteria:
+   - All X records migrated successfully
+   - No data loss (verified by record count comparison)
+   - All images accessible
+   - Frontend renders correctly from Sanity data
+   - Admin can create/edit content in Sanity Studio
 
 ---
 
@@ -244,11 +220,17 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
 
 ## Summary
 
-The migration plan is well-structured with clear phases and good documentation of database schemas. The phased approach with increasing complexity is appropriate. The main areas to clarify are:
+The migration plan is well-structured with clear phases and good documentation of database schemas. The phased approach with increasing complexity is appropriate.
 
-- **Status tracking** for in-progress work
-- **Data handling strategies** for soft deletes, rich text, and external images  
-- **Rollback and testing procedures**
-- **Timeline and success criteria**
+### Key Decisions Made
+
+- **Soft deletes**: Use Sanity's draft/published state
+- **Artists**: Use as generic content type with many-to-many people relationships; prevent deletion when associated with published content
+- **Data validation**: Fail on issues and generate reports for manual review
+- **Rich text**: Use Sanity's Portable Text format
+- **Images**: Migrate to Sanity assets whenever possible
+- **Historical data**: Keep going forward, don't migrate old tournament data
+- **Migration strategy**: Upsert-style incremental migrations until parity, then cut over
+- **Frontend approach**: Read from Sanity behind feature flag, then cut over once ready
 
 Would be happy to help implement any of these suggestions or dive deeper into specific questions!
