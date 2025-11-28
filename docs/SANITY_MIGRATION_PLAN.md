@@ -604,7 +604,7 @@ bin/migrations/
 
 ```typescript
 // bin/migrations/shared/upsert.ts
-import { SanityClient } from '@sanity/client';
+import type { SanityClient } from '@sanity/client';
 
 export async function upsertDocument(
   client: SanityClient,
@@ -614,8 +614,8 @@ export async function upsertDocument(
 ): Promise<{ created: boolean; updated: boolean; id: string }> {
   // 1. Query for existing document by _legacyId
   const existing = await client.fetch(
-    `*[_type == $type && _legacyId == $legacyId][0]`,
-    { type: documentType, legacyId }
+    `*[_type == $documentType && _legacyId == $legacyId][0]`,
+    { documentType, legacyId }
   );
 
   if (existing) {
@@ -757,6 +757,9 @@ npm run sanity:deploy
 // Find documents missing _legacyId
 *[_type == "artist" && !defined(_legacyId)]
 
-// Find documents by legacy ID
+// Find documents by legacy ID (hardcoded example)
 *[_type == "artist" && _legacyId == 123][0]
+
+// Parameterized version (for use in code)
+// client.fetch('*[_type == $docType && _legacyId == $id][0]', { docType: 'artist', id: 123 })
 ```
