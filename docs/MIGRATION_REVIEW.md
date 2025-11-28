@@ -165,8 +165,9 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
    ```
 
 8. **Singleton Documents via Structure Builder**  
-   For configuration data like `_mrm_config.php`, use Sanity singleton documents implemented via the Structure Builder (customize `studio/deskStructure.ts`):
+   For configuration data like `_mrm_config.php`, use Sanity singleton documents implemented via the Structure Builder. First, create the schema:
    ```typescript
+   // studio/schemaTypes/mrmConfig.ts
    {
      name: 'mrmConfig',
      title: 'MRM Configuration',
@@ -185,6 +186,29 @@ After reviewing the migration plan documentation in `docs/migrations/phases/`, I
        // ...
      ]
    }
+   ```
+   
+   Then configure it as a singleton in `studio/deskStructure.ts`:
+   ```typescript
+   import { StructureBuilder } from 'sanity/structure';
+   
+   export default (S: StructureBuilder) =>
+     S.list()
+       .title('Content')
+       .items([
+         // Singleton for MRM Config
+         S.listItem()
+           .title('MRM Configuration')
+           .child(
+             S.document()
+               .schemaType('mrmConfig')
+               .documentId('mrmConfig')
+           ),
+         // Other document types...
+         ...S.documentTypeListItems().filter(
+           (listItem) => !['mrmConfig'].includes(listItem.getId() ?? '')
+         ),
+       ]);
    ```
 
 ### Risk Mitigation
