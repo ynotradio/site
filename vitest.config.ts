@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       include: ['bin/migrations/shared/**/*.ts'],
-      exclude: ['**/*.test.ts', '**/index.ts'],
+      exclude: ['**/*.test.ts'],
       thresholds: {
         // Set realistic thresholds - some functions require SanityClient mocking
         statements: 60,
