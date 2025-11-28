@@ -12,7 +12,7 @@
 | [01 - Project Overview](./01-project-overview.md) | Two-phase project goals, current state, migration strategy |
 | [02 - Architecture Decisions](./02-architecture-decisions.md) | Data handling, content models, base document fields |
 | [03 - Core Data Models](./03-core-data-models.md) | Priority-ordered list of all models with status |
-| [04 - Migration Tasks](./04-migration-tasks.md) | 14 self-contained tasks for cold-start agent conversations |
+| [04 - Migration Tasks](./04-migration-tasks.md) | 11 self-contained tasks for cold-start agent conversations |
 | [05 - Shared Utilities](./05-shared-utilities.md) | File structure and upsert pattern |
 | [06 - Frontend Cutover Strategy](./06-frontend-cutover.md) | Feature flag testing, incremental migration, full cutover |
 | [07 - Success Criteria](./07-success-criteria.md) | Per-model checklist and project completion criteria |

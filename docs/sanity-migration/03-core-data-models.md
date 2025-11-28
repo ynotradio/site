@@ -18,12 +18,12 @@
 | 8 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
 | 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |
 | 10 | Schedule | 🔲 Todo | References DJ |
-| 11 | Content Block | 🔲 Todo | Unified Story + CustomText model |
-| 12 | Top11 | 🔲 Todo | Weekly chart, references Artist |
-| 13 | MRM Config | 🔲 Todo | Singleton for tournament settings |
-| 14 | MRM Match | 🔲 Todo | Tournament brackets, references Artist |
-| 15 | YearEndStaffPick | 🔲 Todo | Staff picks content |
-| 16 | YearEndPoll | 🔲 Todo | Most complex, many related tables |
+| — | Content Block | ⏸️ Later | Unified Story + CustomText model (deferred) |
+| — | Top11 | ⏸️ Later | Weekly chart, references Artist (deferred) |
+| — | MRM Config | ⏸️ Later | Singleton for tournament settings (deferred) |
+| — | MRM Match | ⏸️ Later | Tournament brackets, references Artist (deferred) |
+| — | YearEndStaffPick | ⏸️ Later | Staff picks content (deferred) |
+| — | YearEndPoll | ⏸️ Later | Most complex, many related tables (deferred) |
 
 ---
 
@@ -37,13 +37,9 @@ Person ────────────────────────�
 Artist ←─┬── Concert (+ Venue)          │         │
          ├── Music                      │         │
          ├── CdOfTheWeek               │         │
-         ├── OnDemand ─────────────────┤         │
-         ├── Top11                      │         │
-         └── MRM Match (+ MRM Config)   │         │
+         └── OnDemand ─────────────────┤         │
                                         │         │
 Schedule ───────────────────────────────┘         │
-                                                  │
-Content Block ────────────────────────────────────┘
 ```
 
 ---
@@ -56,3 +52,4 @@ Content Block ──────────────────────
 | 🔲 Todo | Not started |
 | 🚧 In Progress | Work has begun |
 | ⚠️ Blocked | Waiting on dependency |
+| ⏸️ Later | Deferred to future PR |
