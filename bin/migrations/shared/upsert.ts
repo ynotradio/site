@@ -58,7 +58,7 @@ export function createUpsertHandler(client: SanityClient) {
   ): Promise<UpsertResult> {
     const { forceUpdate = false, skipIfExists = false } = options;
     const docType = document._type;
-    const legacyId = document.legacyId;
+    const { legacyId } = document;
 
     try {
       // Check if document exists by legacyId
