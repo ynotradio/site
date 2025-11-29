@@ -44,7 +44,7 @@ The `artist` type replaces "band" as the generic content type for musicians. It 
 
 ## Task 2: Create Shared Migration Utilities
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete  
 **Depends On:** None  
 **Estimated Effort:** Medium
 
@@ -69,16 +69,16 @@ All migration scripts need common functionality for image uploads, HTML conversi
 - `bin/migrations/shared/index.ts` (barrel export)
 
 **Acceptance Criteria:**
-- [ ] All utilities compile without TypeScript errors
-- [ ] Image uploader handles external URLs (e.g., Imgur)
-- [ ] Rich text converter produces valid Portable Text
-- [ ] Upsert finds existing records by `_legacyId`
+- [x] All utilities compile without TypeScript errors
+- [x] Image uploader handles external URLs (e.g., Imgur)
+- [x] Rich text converter produces valid Portable Text
+- [x] Upsert finds existing records by `_legacyId`
 
 ---
 
 ## Task 3: Create Ad Schema and Migration
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete  
 **Depends On:** Task 2 (Shared Utilities)  
 **Estimated Effort:** Small
 
@@ -110,11 +110,11 @@ ads: id, name, start_date, end_date, pic_url, web_url, priority, deleted
 - `package.json` (add script)
 
 **Acceptance Criteria:**
-- [ ] Schema works in Sanity Studio
-- [ ] Migration script runs without errors
-- [ ] Images migrated to Sanity assets
-- [ ] Soft-deleted records (deleted='y') not migrated
-- [ ] Migration report generated
+- [x] Schema works in Sanity Studio
+- [x] Migration script runs without errors
+- [x] Images migrated to Sanity assets
+- [x] Soft-deleted records (deleted='y') not migrated
+- [x] Migration report generated
 
 ---
 
