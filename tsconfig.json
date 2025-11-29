@@ -23,6 +23,7 @@
     "studio/**/*.ts",
     "studio/**/*.tsx",
     "bin/**/*.ts",
+    "test/**/*.ts",
     "sanity.cli.ts",
     "sanity.config.ts",
     "vitest.config.ts"

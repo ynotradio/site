@@ -1,7 +1,7 @@
 // /plugins/dj-order/index.tsx
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Stack, Card, Button, Text, Flex, Spinner,
+  Stack, Card, Button, Text, Flex,
 } from '@sanity/ui';
 import { useClient } from 'sanity';
 import {
@@ -17,61 +17,12 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-
-// Define TypeScript interfaces
-interface DJ {
-  _id: string
-  name: string
-  sortOrder: number
-  isActive: boolean
-}
-
-interface SortableItemProps {
-  id: string
-  name: string
-  isActive: boolean
-}
-
-// Component for a single sortable DJ item
-const SortableItem = ({ id, name, isActive }: SortableItemProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    cursor: 'grab',
-    padding: '12px',
-    margin: '8px 0',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    background: '#fff',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <div style={{ color: '#2276fc', marginRight: '5px' }}>
-                ⋮⋮
-      </div>
-      <Text size={2} weight={isActive ? 'semibold' : 'regular'} style={{ color: isActive ? '#000' : '#666' }}>
-        {name} {!isActive && <span style={{ color: '#777', marginLeft: '5px' }}>(Inactive)</span>}
-      </Text>
-    </div>
-  );
-};
+import { SortableItem } from './components/SortableItem';
+import { LoadingSpinner } from './components/LoadingSpinner';
+import { EmptyState } from './components/EmptyState';
+import { DJ } from './types';
 
 // Main component for DJ ordering
 export function DJOrderTool() {
@@ -153,11 +104,7 @@ export function DJOrderTool() {
   };
 
   if (loading) {
-    return (
-      <Flex align="center" justify="center" padding={5} height="fill">
-        <Spinner />
-      </Flex>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
@@ -165,8 +112,8 @@ export function DJOrderTool() {
       <Stack space={4}>
         <Flex direction="column" gap={2}>
           <Text size={2}>
-                        Drag and drop DJs to change their display order on the Deejays page.
-                        Changes won't be saved until you click the "Save Order" button.
+            Drag and drop DJs to change their display order on the Deejays page.
+            Changes won&apos;t be saved until you click the &quot;Save Order&quot; button.
           </Text>
         </Flex>
 
@@ -181,7 +128,7 @@ export function DJOrderTool() {
               strategy={verticalListSortingStrategy}
             >
               {djs.length === 0 ? (
-                <Text align="center" size={2} style={{ padding: '20px' }}>No DJs found. Create some DJs first.</Text>
+                <EmptyState />
               ) : (
                 djs.map((dj) => (
                   <SortableItem
