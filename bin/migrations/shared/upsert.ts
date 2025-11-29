@@ -1,6 +1,6 @@
 /**
  * Upsert utilities for Sanity migrations
- * Find existing records by _legacyId and create or update accordingly
+ * Find existing records by legacyId and create or update accordingly
  */
 
 import { SanityClient } from '@sanity/client';
@@ -18,8 +18,8 @@ export interface UpsertResult {
 export interface DocumentWithLegacyId {
   _id: string;
   _type: string;
-  _legacyId?: number;
-  _migratedAt?: string;
+  legacyId?: number;
+  migratedAt?: string;
   [key: string]: unknown;
 }
 
@@ -28,13 +28,13 @@ export interface DocumentWithLegacyId {
  */
 export function createUpsertHandler(client: SanityClient) {
   /**
-   * Find an existing document by _legacyId
+   * Find an existing document by legacyId
    */
   async function findByLegacyId(
     documentType: string,
     legacyId: number,
   ): Promise<DocumentWithLegacyId | null> {
-    const query = '*[_type == $type && _legacyId == $legacyId][0]';
+    const query = '*[_type == $type && legacyId == $legacyId][0]';
     const params = { type: documentType, legacyId };
 
     try {
@@ -58,11 +58,10 @@ export function createUpsertHandler(client: SanityClient) {
   ): Promise<UpsertResult> {
     const { forceUpdate = false, skipIfExists = false } = options;
     const docType = document._type;
-    // eslint-disable-next-line no-underscore-dangle
-    const legacyId = document._legacyId;
+    const { legacyId } = document;
 
     try {
-      // Check if document exists by _legacyId
+      // Check if document exists by legacyId
       let existingDoc: DocumentWithLegacyId | null = null;
 
       if (legacyId !== undefined) {
@@ -81,9 +80,8 @@ export function createUpsertHandler(client: SanityClient) {
         }
 
         if (!forceUpdate) {
-          // Check if already migrated (has _migratedAt)
-          // eslint-disable-next-line no-underscore-dangle
-          if (existingDoc._migratedAt) {
+          // Check if already migrated (has migratedAt)
+          if (existingDoc.migratedAt) {
             logger.debug(`Document already migrated: ${docType} with legacyId ${legacyId}`);
             return {
               success: true,
@@ -97,7 +95,7 @@ export function createUpsertHandler(client: SanityClient) {
         const updatedDoc = {
           ...document,
           _id: existingDoc._id, // Preserve existing _id
-          _migratedAt: new Date().toISOString(),
+          migratedAt: new Date().toISOString(),
         };
 
         const result = await client.createOrReplace(updatedDoc);
@@ -113,7 +111,7 @@ export function createUpsertHandler(client: SanityClient) {
       // Create new document
       const newDoc = {
         ...document,
-        _migratedAt: new Date().toISOString(),
+        migratedAt: new Date().toISOString(),
       };
 
       const result = await client.createOrReplace(newDoc);

@@ -1,11 +1,11 @@
-import { Rule as ValidationRule } from 'sanity';
+import { defineType, defineField } from 'sanity';
 import { SanityClient } from '@sanity/client';
 
 interface SanityContext {
   getClient: (options: { apiVersion: string }) => SanityClient
 }
 
-export default {
+export default defineType({
   name: 'dj',
   title: 'DJ',
   type: 'document',
@@ -21,19 +21,19 @@ export default {
     },
   ],
   fields: [
-    {
+    defineField({
       name: 'person',
       title: 'Person',
       type: 'reference',
       to: [{ type: 'person' }],
-      validation: (Rule: ValidationRule) => Rule.required(),
-    },
-    {
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'sortOrder',
       title: 'Sort Order',
       type: 'number',
       description: 'Used to determine the display order of DJs (lower numbers appear first)',
-      validation: (Rule: ValidationRule) => Rule.required(),
+      validation: (Rule) => Rule.required(),
       // Make this field hidden as it will be managed by drag-and-drop
       hidden: true,
       // Add a default value to handle new DJ creation
@@ -43,14 +43,14 @@ export default {
         const docs = await client.fetch('*[_type == "dj"] | order(sortOrder desc)[0...1] {sortOrder}');
         return docs.length > 0 ? (docs[0].sortOrder + 1) : 0;
       },
-    },
-    {
+    }),
+    defineField({
       name: 'isActive',
       title: 'Active',
       type: 'boolean',
       description: 'Whether this DJ is currently active',
       initialValue: true,
-    },
+    }),
   ],
   preview: {
     select: {
@@ -67,12 +67,5 @@ export default {
         { field: 'sortOrder', direction: 'asc' },
       ],
     },
-    {
-      title: 'Name',
-      name: 'nameAsc',
-      by: [
-        { field: 'person.name', direction: 'asc' },
-      ],
-    },
   ],
-};
+});

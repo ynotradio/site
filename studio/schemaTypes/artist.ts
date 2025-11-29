@@ -1,8 +1,8 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 
 export default defineType({
-  name: 'person',
-  title: 'Person',
+  name: 'artist',
+  title: 'Artist',
   type: 'document',
   fields: [
     defineField({
@@ -34,6 +34,37 @@ export default defineType({
       title: 'Bio',
       type: 'array',
       of: [defineArrayMember({ type: 'block' })],
+    }),
+    defineField({
+      name: 'website',
+      title: 'Website',
+      type: 'url',
+    }),
+    defineField({
+      name: 'members',
+      title: 'Members',
+      description: 'Band members (if applicable)',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'person' }],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'legacyId',
+      title: 'Legacy ID',
+      type: 'number',
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
+      name: 'migratedAt',
+      title: 'Migrated At',
+      type: 'datetime',
+      readOnly: true,
+      hidden: true,
     }),
   ],
   preview: {
