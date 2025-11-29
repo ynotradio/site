@@ -157,6 +157,17 @@ Branch names should follow the following formats:
 
 If you solve a tricky bug, the next person who works on this codebase will appreciate you including a Stack Overflow or Github Issue link to help understand why the change was made!
 
+### Continuous Integration
+
+The repository uses GitHub Actions for CI. The following checks run on every pull request:
+
+- **Lint**: Runs ESLint on TypeScript/JavaScript code
+- **Test**: Runs the Vitest test suite with coverage
+- **Sanity Schema Validation**: Validates the Sanity CMS schema definitions
+- **PHP Lint**: Runs PHP_CodeSniffer to check PHP code style
+
+All CI checks must pass before a pull request can be merged.
+
 ## Deployment to Lightsail
 
 - **Deploy:**
