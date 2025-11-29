@@ -168,22 +168,6 @@ The repository uses GitHub Actions for CI. The following checks run on every pul
 
 All CI checks must pass before a pull request can be merged.
 
-### Branch Protection
-
-To prevent merging when CI fails, enable branch protection rules in GitHub:
-
-1. Go to **Settings** → **Branches** in your repository
-2. Click **Add branch protection rule**
-3. Set **Branch name pattern** to `master` (and/or `main`)
-4. Enable **Require status checks to pass before merging**
-5. Select the required status checks:
-   - `Lint`
-   - `Test`
-   - `Sanity Schema Validation`
-   - `PHP Lint`
-6. Optionally enable **Require branches to be up to date before merging**
-7. Click **Create** or **Save changes**
-
 ## Deployment to Lightsail
 
 - **Deploy:**
