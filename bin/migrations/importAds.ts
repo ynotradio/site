@@ -7,7 +7,6 @@
  * Usage: npm run import:ads
  */
 
-import * as readline from 'readline';
 import { createClient } from '@sanity/client';
 import * as mysql from 'mysql2/promise';
 import { dbConfig, sanityConfig, migrationConfig } from './config';
@@ -73,7 +72,7 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 async function getActiveAds(connection: mysql.Connection): Promise<Ad[]> {
   try {
     const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM ads WHERE deleted != 'y' AND deleted != 'Y' ORDER BY priority DESC",
+      "SELECT * FROM ads WHERE deleted NOT IN ('y', 'Y') ORDER BY priority DESC",
     );
     logger.info(`Retrieved ${rows.length} ads from the database.`);
     return rows as Ad[];
@@ -327,16 +326,8 @@ async function importAds(): Promise<void> {
   }
 }
 
-// Create readline interface for interactive prompts (if needed)
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
 // Run the import process
-importAds().finally(() => {
-  rl.close();
-});
+importAds();
 
 // Handle process exit
 process.on('exit', () => {
