@@ -37,7 +37,6 @@ describe('SortableItem', () => {
       <SortableItem id="dj-1" name="Test DJ" isActive />,
       { wrapper },
     );
-    expect(screen.getByTestId('sortable-item-dj-1')).toBeInTheDocument();
     expect(screen.getByText('Test DJ')).toBeInTheDocument();
     expect(screen.queryByText('(Inactive)')).not.toBeInTheDocument();
   });
@@ -47,7 +46,6 @@ describe('SortableItem', () => {
       <SortableItem id="dj-2" name="Inactive DJ" isActive={false} />,
       { wrapper },
     );
-    expect(screen.getByTestId('sortable-item-dj-2')).toBeInTheDocument();
     expect(screen.getByText('Inactive DJ')).toBeInTheDocument();
     expect(screen.getByText('(Inactive)')).toBeInTheDocument();
   });

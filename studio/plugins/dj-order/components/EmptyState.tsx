@@ -3,7 +3,7 @@ import React from 'react';
 import { Text } from '@sanity/ui';
 
 export const EmptyState = () => (
-  <Text align="center" size={2} style={{ padding: '20px' }} data-testid="empty-state">
+  <Text align="center" size={2} style={{ padding: '20px' }}>
     No DJs found. Create some DJs first.
   </Text>
 );
