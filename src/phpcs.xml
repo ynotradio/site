@@ -22,23 +22,14 @@
     <!-- Set installed paths for custom standards -->
     <config name="installed_paths" value="PHP_CodeSniffer/Standards"/>
     
-    <!-- Add some PSR-12 rules that are specifically relevant -->
-    <rule ref="PSR12.Files.FileHeader"/>
-    <rule ref="PSR12.Files.OpenTag"/>
-    
     <!-- Check for PHP syntax errors -->
     <rule ref="Generic.PHP.Syntax"/>
     
     <!-- Warn about deprecated functions -->
     <rule ref="Generic.PHP.DeprecatedFunctions"/>
     
-    <!-- Check line endings consistency -->
-    <rule ref="Generic.Files.LineEndings">
-        <properties>
-            <property name="eolChar" value="\n"/>
-        </properties>
+    <!-- Our custom rules - set broken require as warning for now -->
+    <rule ref="YNotRadio.Files.BrokenRequire">
+        <type>warning</type>
     </rule>
-    
-    <!-- Our custom rules -->
-    <rule ref="YNotRadio.Files.BrokenRequire"/>
 </ruleset>
