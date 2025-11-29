@@ -12,7 +12,6 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 describe('EmptyState', () => {
   it('renders the empty state message', () => {
     render(<EmptyState />, { wrapper });
-    expect(screen.getByTestId('empty-state')).toBeInTheDocument();
     expect(screen.getByText('No DJs found. Create some DJs first.')).toBeInTheDocument();
   });
 });

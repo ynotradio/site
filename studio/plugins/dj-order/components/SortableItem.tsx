@@ -30,7 +30,7 @@ export const SortableItem = ({ id, name, isActive }: SortableItemProps) => {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} data-testid={`sortable-item-${id}`}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <div style={{ color: '#2276fc', marginRight: '5px' }}>
         ⋮⋮
       </div>

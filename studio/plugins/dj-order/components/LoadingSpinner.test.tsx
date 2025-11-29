@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { ThemeProvider, studioTheme } from '@sanity/ui';
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -11,7 +11,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 describe('LoadingSpinner', () => {
   it('renders the loading spinner', () => {
-    render(<LoadingSpinner />, { wrapper });
-    expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+    const { container } = render(<LoadingSpinner />, { wrapper });
+    expect(container.querySelector('[data-sanity-icon="spinner"]')).toBeInTheDocument();
   });
 });

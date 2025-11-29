@@ -12,12 +12,16 @@
   "env": {
     "node": true
   },
-  "ignorePatterns": ["build/", "node_modules/", "src/**/*.js", "src/**/*.php", "coverage/", "**/*.test.ts"],
+  "ignorePatterns": ["build/", "node_modules/", "src/**/*.js", "src/**/*.php", "coverage/"],
   "rules": {
     "@typescript-eslint/semi": ["error", "always"],
     "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
     "@typescript-eslint/indent": ["error", 2],
     "@typescript-eslint/object-curly-spacing": ["error", "always"],
+    "@typescript-eslint/consistent-type-assertions": ["error", {
+      "assertionStyle": "as",
+      "objectLiteralTypeAssertions": "never"
+    }],
     "import/extensions": ["error", "never", {
       "json": "always",
       "css": "always",
@@ -33,6 +37,19 @@
     }]
   },
   "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "plugins": ["testing-library"],
+      "rules": {
+        "testing-library/no-test-id-queries": "error",
+        "@typescript-eslint/consistent-type-assertions": "off",
+        "object-curly-newline": "off",
+        "import/order": "off",
+        "@typescript-eslint/no-shadow": "off",
+        "max-len": "off",
+        "prefer-template": "off"
+      }
+    },
     {
       "files": ["bin/migrations/**/*.ts"],
       "excludedFiles": ["**/*.test.ts"],
