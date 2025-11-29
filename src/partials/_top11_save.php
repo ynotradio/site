@@ -24,11 +24,6 @@ if (empty($voter_email)) {
     $errors[] = "You must be logged in to vote";
 }
 
-// Check if user has already voted this week
-if (!empty($voter_email) && $top11Model->hasUserVotedThisWeek($voter_email, $auth0_id)) {
-    $errors[] = "You have already voted this week. Each user can only vote once per week.";
-}
-
 // Only require song selection, make personal info optional
 if (empty($top11_votes) && empty($write_in)) {
     $errors[] = "Please select at least one song or write in your own";
@@ -54,7 +49,7 @@ try {
     
     // Extract user information from email for contestant entry
     $emailParts = explode('@', $voter_email);
-    $username = $emailParts[0];
+    $username = (count($emailParts) === 2) ? $emailParts[0] : $voter_email;
     
     // Save contestant info using the authenticated email
     if ($contest === 'yes' || $newsletter === 'yes') {

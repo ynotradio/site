@@ -80,17 +80,8 @@ $top11Model = \YNotRadio\Models\Top11Factory::create($db);
           echo "<p><strong>Please log in to vote in the Top 11 @ 11.</strong></p>";
           echo "<a href=\"top11_social_login.php\" class=\"btn-success\">Log in to Vote</a>";
           echo "</div>";
-        } else if ($top11Model->hasUserVotedThisWeek($voter_email, $userInfo['sub'] ?? null)) {
-          // User has already voted this voting period
-          echo "<h2 class=\"center\">Vote for Your Top 3 Y-Not Songs of the Week</h2>\n";
-          echo "<div class=\"information center top-spacer_20\">";
-          echo "<p><strong>Thank you for voting!</strong></p>";
-          echo "<p>You have already voted in the current Top 11 @ 11 voting period. Each user can only vote once per voting period.</p>";
-          echo "<p>Voting will reopen when the next Top 11 @ 11 begins!</p>";
-          echo "<a href=\"top11_social_logout.php\" class=\"btn-info\">Log out</a>";
-          echo "</div>";
         } else {
-          // User is logged in and hasn't voted - show voting form
+          // User is logged in - show voting form
           $songs = $top11Model->getAllSongs();
           echo "<h2 class=\"center\">Vote for Your Top 3 Y-Not Songs of the Week</h2>\n";
           echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"top11_social_logout.php\">Log out</a></div>";
