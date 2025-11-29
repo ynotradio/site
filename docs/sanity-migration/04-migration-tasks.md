@@ -10,7 +10,7 @@ Each task below is designed to be **self-contained** for cold-start agent conver
 
 ## Task 1: Create Artist Schema
 
-**Status:** 🔲 Not Started  
+**Status:** 🚧 Schema Complete (Testing Required)  
 **Depends On:** None  
 **Estimated Effort:** Small
 
@@ -35,10 +35,10 @@ The `artist` type replaces "band" as the generic content type for musicians. It 
 - `studio/schemaTypes/index.ts` (update)
 
 **Acceptance Criteria:**
-- [ ] Schema compiles without errors
-- [ ] Can create/edit Artist in Sanity Studio
-- [ ] Can link Person references to Artist
-- [ ] Photo upload works with hotspot
+- [x] Schema compiles without errors
+- [ ] Can create/edit Artist in Sanity Studio (requires manual testing)
+- [ ] Can link Person references to Artist (requires manual testing)
+- [ ] Photo upload works with hotspot (requires manual testing)
 
 ---
 
