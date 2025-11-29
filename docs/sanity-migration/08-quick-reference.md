@@ -30,6 +30,12 @@ npm run sanity:build
 
 # Deploy
 npm run sanity:deploy
+
+# Validate schema configuration
+npm run sanity:schema-validate
+
+# Validate documents against schema rules
+npm run sanity:validate
 ```
 
 ---
@@ -40,14 +46,14 @@ npm run sanity:deploy
 // Count documents by type
 *[_type == "artist"] | length
 
-// Find documents missing _legacyId
-*[_type == "artist" && !defined(_legacyId)]
+// Find documents missing legacyId
+*[_type == "artist" && !defined(legacyId)]
 
 // Find documents by legacy ID (hardcoded example)
-*[_type == "artist" && _legacyId == 123][0]
+*[_type == "artist" && legacyId == 123][0]
 
 // Parameterized version (for use in code)
-// client.fetch('*[_type == $docType && _legacyId == $id][0]', { docType: 'artist', id: 123 })
+// client.fetch('*[_type == $docType && legacyId == $id][0]', { docType: 'artist', id: 123 })
 
 // Find all artists with no members
 *[_type == "artist" && length(members) == 0]
@@ -107,8 +113,9 @@ SANITY_API_TOKEN=your-token-here
 
 | Issue | Solution |
 |-------|----------|
+| SchemaError with no details | Check for: (1) field names starting with `_`, (2) orderings referencing fields from referenced documents, (3) array items not wrapped with `defineArrayMember()` |
 | Image upload fails | Check URL accessibility, may need to download first |
 | Reference not found | Run dependency migration first (e.g., Artist before Concert) |
-| Duplicate records | Check `_legacyId` uniqueness |
+| Duplicate records | Check `legacyId` uniqueness |
 | HTML encoding issues | Use `richTextConverter` utility |
 | Timeout on large batch | Reduce batch size, add delays |

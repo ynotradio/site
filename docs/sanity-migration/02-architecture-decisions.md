@@ -28,7 +28,8 @@ Artist
 ├── bio: portableText
 ├── website: url
 ├── members: reference[] → Person (many-to-many)
-└── _legacyId: number (read-only)
+├── legacyId: number (read-only)
+└── migratedAt: datetime (read-only)
 ```
 
 **Rules:**
@@ -49,7 +50,8 @@ Person
 ├── photo: image
 ├── bio: portableText
 ├── djRecord: reference → DJ (if they've been a guest DJ)
-└── _legacyId: number (read-only)
+├── legacyId: number (read-only)
+└── migratedAt: datetime (read-only)
 ```
 
 ---
@@ -59,21 +61,25 @@ Person
 All migrated documents should include:
 
 ```typescript
-{
-  name: '_legacyId',
+defineField({
+  name: 'legacyId',
   title: 'Legacy ID',
   type: 'number',
   description: 'Original MySQL ID for reference',
   readOnly: true,
-},
-{
-  name: '_migratedAt',
+  hidden: true,
+}),
+defineField({
+  name: 'migratedAt',
   title: 'Migrated At',
   type: 'datetime',
   description: 'When the record was migrated',
   readOnly: true,
-}
+  hidden: true,
+})
 ```
+
+**⚠️ IMPORTANT**: Do NOT prefix field names with underscores (`_`). In Sanity, field names starting with underscores are reserved for system fields (like `_id`, `_type`, `_rev`, etc.). Use `legacyId` instead of `_legacyId`.
 
 ---
 
@@ -82,3 +88,94 @@ All migrated documents should include:
 1. **No fallback strings** - All references (Artist, DJ, Venue) are required. Migrations must create records or fail with a report.
 2. **Use references** - Don't duplicate data. Concert gets artist image/URL from the Artist record.
 3. **Fail fast** - Validation errors create reports for manual review rather than auto-cleaning.
+
+---
+
+## Schema Best Practices (Sanity v3+)
+
+### Use Modern Schema Helpers
+
+Always use `defineType`, `defineField`, and `defineArrayMember` from the `sanity` package:
+
+```typescript
+import { defineType, defineField, defineArrayMember } from 'sanity';
+
+export default defineType({
+  name: 'artist',
+  title: 'Artist',
+  type: 'document',
+  fields: [
+    defineField({
+      name: 'name',
+      title: 'Name',
+      type: 'string',
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'bio',
+      title: 'Bio',
+      type: 'array',
+      of: [defineArrayMember({ type: 'block' })],
+    }),
+    defineField({
+      name: 'members',
+      title: 'Members',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'person' }],
+        }),
+      ],
+    }),
+  ],
+});
+```
+
+### Reserved Field Names
+
+- **Never** use field names starting with underscore (`_`) - these are reserved for Sanity system fields
+- ❌ Bad: `_legacyId`, `_migratedAt`, `_customField`
+- ✅ Good: `legacyId`, `migratedAt`, `customField`
+
+### Ordering Limitations
+
+- You **cannot** order by fields from referenced documents in schema `orderings` configuration
+- ❌ Bad: `{ field: 'person.name', direction: 'asc' }` (where `person` is a reference)
+- ✅ Good: `{ field: 'sortOrder', direction: 'asc' }` (direct field)
+- If you need to order by referenced fields, do it in your GROQ queries instead
+
+### Array Fields
+
+Always wrap array items with `defineArrayMember()`:
+
+```typescript
+// For portable text
+defineField({
+  name: 'bio',
+  type: 'array',
+  of: [defineArrayMember({ type: 'block' })],
+})
+
+// For references
+defineField({
+  name: 'members',
+  type: 'array',
+  of: [
+    defineArrayMember({
+      type: 'reference',
+      to: [{ type: 'person' }],
+    }),
+  ],
+})
+```
+
+### Validation Commands
+
+```bash
+# Validate schema configuration
+npm run sanity:schema-validate
+
+# Validate documents against schema rules
+npm run sanity:validate
+```

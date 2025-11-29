@@ -10,7 +10,7 @@
 |----------|-------|--------|-------|
 | 1 | Person | ✅ Done | Schema exists at `studio/schemaTypes/person.ts` |
 | 2 | DJ | ✅ Done | Schema exists at `studio/schemaTypes/dj.ts` |
-| 3 | Artist | 🚧 Schema Complete | Schema exists at `studio/schemaTypes/artist.ts`, needs Studio testing |
+| 3 | Artist | ✅ Done | Schema exists at `studio/schemaTypes/artist.ts`, validated and working |
 | 4 | Venue | 🔲 Todo | Concert venues (dropdown/create on the fly) |
 | 5 | Ad | 🔲 Todo | Simple model |
 | 6 | Concert | 🔲 Todo | References Artist and Venue |
