@@ -103,4 +103,5 @@ jobs:
         working-directory: src
       
       - name: Run PHP_CodeSniffer
-        run: src/vendor/bin/phpcs --standard=src/phpcs.xml
+        run: vendor/bin/phpcs --standard=phpcs.xml
+        working-directory: src
