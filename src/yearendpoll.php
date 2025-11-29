@@ -158,14 +158,14 @@ $isPollActive = (time() <= $poll_end_datetime);
                 if ($contestSuccess) {
                     // Already shown success message
                 } elseif ($controller->hasEnteredContest($ip)) {
-                    echo "<div class=\"center top-spacer_20\">Our records indicate that you have already entered to win the <b>Apple Watch</b>.<br>Good Luck!</div>";
+                    echo "<div class=\"center top-spacer_20\">Our records indicate that you have already entered to win the <b>Apple AirPods Max</b>.<br>Good Luck!</div>";
                 } elseif ($controller->canEnterContest($ip)) {
                     // Show contest entry form
             ?>
                     <div class="row">
                         <div class="three columns"></div>
                         <div class="six columns">
-                            <h3 class="center">Enter To Win an Apple Watch.</h3>
+                            <h3 class="center">Enter To Win an Apple AirPods Max.</h3>
                             <form action="yearendpoll.php" method="post" class="form-default">
                                 <?php $controller->renderContestEntryForm(); ?>
                             </form>
@@ -174,7 +174,7 @@ $isPollActive = (time() <= $poll_end_datetime);
                     </div>
             <?php
                 } else {
-                    echo "<div class=\"center top-spacer_20\">After you fill out the first two rows of polls, you may enter to win the <b>Apple Watch</b>.</div>";
+                    echo "<div class=\"center top-spacer_20\">After you fill out the first two rows of polls, you may enter to win the <b>Apple AirPods Max</b>.</div>";
                 }
             }
         else:
