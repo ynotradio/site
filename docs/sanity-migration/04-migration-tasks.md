@@ -120,7 +120,7 @@ ads: id, name, start_date, end_date, pic_url, web_url, priority, deleted
 
 ## Task 4: Create Venue Schema
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete  
 **Depends On:** None  
 **Estimated Effort:** Small
 
@@ -144,9 +144,9 @@ Venues are locations where concerts take place. Editors can select from a dropdo
 - `studio/schemaTypes/index.ts` (update)
 
 **Acceptance Criteria:**
-- [ ] Schema compiles without errors
-- [ ] Can create/edit Venue in Sanity Studio
-- [ ] Can be selected in dropdown from Concert form
+- [x] Schema compiles without errors
+- [ ] Can create/edit Venue in Sanity Studio (requires manual testing)
+- [ ] Can be selected in dropdown from Concert form (requires Concert schema)
 
 ---
 
