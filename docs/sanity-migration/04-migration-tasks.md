@@ -152,7 +152,7 @@ Venues are locations where concerts take place. Editors can select from a dropdo
 
 ## Task 5: Create Concert Schema and Migration
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete  
 **Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities), Task 4 (Venue Schema)  
 **Estimated Effort:** Medium
 
@@ -184,11 +184,11 @@ concerts: id, date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl
 - `package.json` (add script)
 
 **Acceptance Criteria:**
-- [ ] Schema works in Sanity Studio
-- [ ] Artist reference is required (no fallback string)
-- [ ] Venue reference is required (create on the fly if needed)
-- [ ] Migration creates missing Artist/Venue records or fails with report
-- [ ] Validation errors reported for manual review
+- [x] Schema works in Sanity Studio
+- [x] Artist reference is required (no fallback string)
+- [x] Venue reference is required (create on the fly if needed)
+- [x] Migration creates missing Artist/Venue records or fails with report
+- [x] Validation errors reported for manual review
 
 ---
 

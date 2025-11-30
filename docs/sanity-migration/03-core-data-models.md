@@ -13,7 +13,7 @@
 | 3 | Artist | ✅ Done | Schema exists at `studio/schemaTypes/artist.ts`, validated and working |
 | 4 | Venue | ✅ Done | Schema exists at `studio/schemaTypes/venue.ts` |
 | 5 | Ad | ✅ Done | Schema exists at `studio/schemaTypes/ad.ts` |
-| 6 | Concert | 🔲 Todo | References Artist and Venue |
+| 6 | Concert | ✅ Done | Schema exists at `studio/schemaTypes/concert.ts` |
 | 7 | Music | 🔲 Todo | References Artist |
 | 8 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
 | 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |

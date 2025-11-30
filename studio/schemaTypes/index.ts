@@ -3,6 +3,7 @@ import dj from './dj';
 import artist from './artist';
 import venue from './venue';
 import ad from './ad';
+import concert from './concert';
 
 const schemaTypes = [
   person,
@@ -10,6 +11,7 @@ const schemaTypes = [
   artist,
   venue,
   ad,
+  concert,
 ];
 
 export default schemaTypes;
