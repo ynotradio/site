@@ -167,7 +167,7 @@ async function findOrCreateArtist(
 
     // Create a new artist
     const artistDoc: DocumentWithLegacyId = {
-      _id: `artist-concert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      _id: `artist-concert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       _type: 'artist',
       name: artistName.trim(),
       slug: createSlug(artistName),
@@ -257,7 +257,7 @@ async function findOrCreateVenue(
 
     // Create a new venue
     const venueDoc: DocumentWithLegacyId = {
-      _id: `venue-concert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      _id: `venue-concert-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
       _type: 'venue',
       name: venueName.trim(),
       slug: createSlug(venueName),
