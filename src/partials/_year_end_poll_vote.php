@@ -105,13 +105,17 @@ $maxPicks = $controller->getMaxPicks($pollName);
     if (writeInCheckbox && writeInField) {
       writeInCheckbox.addEventListener('change', function() {
         writeInField.disabled = !this.checked;
-        
+
         if (this.checked) {
-          selectedCount++;
-          if (selectedCount >= maxPicks) {
-            checkboxes.forEach(cb => {
-              if (!cb.checked) cb.disabled = true;
-            });
+          // Only count write-in if it has text
+          const hasText = writeInField.value.trim() !== '';
+          if (hasText) {
+            selectedCount++;
+            if (selectedCount >= maxPicks) {
+              checkboxes.forEach(cb => {
+                if (!cb.checked) cb.disabled = true;
+              });
+            }
           }
         } else {
           selectedCount--;
@@ -119,8 +123,32 @@ $maxPicks = $controller->getMaxPicks($pollName);
             cb.disabled = false;
           });
         }
-        
+
         updateButtonState();
+      });
+
+      // Also check when text is entered/removed
+      writeInField.addEventListener('input', function() {
+        const wasChecked = writeInCheckbox.checked;
+        const hasText = this.value.trim() !== '';
+
+        if (wasChecked) {
+          // Recalculate count based on whether there's text
+          const checkedBoxes = document.querySelectorAll('input[type="checkbox"][name="year_end_votes[]"]:checked').length;
+          selectedCount = checkedBoxes + (hasText ? 1 : 0);
+
+          if (selectedCount >= maxPicks) {
+            checkboxes.forEach(cb => {
+              if (!cb.checked) cb.disabled = true;
+            });
+          } else {
+            checkboxes.forEach(cb => {
+              cb.disabled = false;
+            });
+          }
+
+          updateButtonState();
+        }
       });
     }
     
