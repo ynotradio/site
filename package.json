@@ -21,6 +21,7 @@
     "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings=0",
     "import:deejays": "tsx bin/migrations/importDeejays.ts",
     "import:ads": "tsx bin/migrations/importAds.ts",
+    "import:concerts": "tsx bin/migrations/importConcerts.ts",
     "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
