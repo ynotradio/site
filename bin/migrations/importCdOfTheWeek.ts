@@ -12,6 +12,7 @@
  * Usage: npm run import:cdotw
  */
 
+import * as crypto from 'crypto';
 import { createClient, SanityClient } from '@sanity/client';
 import * as mysql from 'mysql2/promise';
 import { dbConfig, sanityConfig, migrationConfig } from './config';
@@ -41,6 +42,16 @@ import {
 import { htmlToPortableText } from './shared/richTextConverter';
 
 const logger = createLogger('ImportCdOfTheWeek');
+
+/**
+ * Generate a deterministic ID for an artist based on their name
+ * This prevents duplicates and ensures consistency across runs
+ */
+function generateArtistId(artistName: string): string {
+  const normalized = artistName.trim().toLowerCase();
+  const hash = crypto.createHash('sha256').update(normalized).digest('hex').slice(0, 12);
+  return `artist-${hash}`;
+}
 
 // CD of the Week interface matching the MySQL table structure
 interface CdOfTheWeekRow {
@@ -83,21 +94,32 @@ async function findOrCreateArtist(
   }
 
   try {
-    // Try to find existing artist by name (case-insensitive)
-    const query = '*[_type == "artist" && lower(name) == $name][0]';
-    const existingArtist = await client.fetch<{ _id: string } | null>(
-      query,
+    // Try to find existing artist by ID first (most efficient)
+    const artistId = generateArtistId(artistName);
+    const existingById = await client.fetch<{ _id: string } | null>(
+      '*[_type == "artist" && _id == $id][0]',
+      { id: artistId },
+    );
+
+    if (existingById) {
+      artistCache.set(normalizedName, existingById._id);
+      return { artistId: existingById._id, created: false };
+    }
+
+    // Fallback: Try to find by name (case-insensitive) for legacy artists
+    const existingByName = await client.fetch<{ _id: string } | null>(
+      '*[_type == "artist" && lower(name) == $name][0]',
       { name: normalizedName },
     );
 
-    if (existingArtist) {
-      artistCache.set(normalizedName, existingArtist._id);
-      return { artistId: existingArtist._id, created: false };
+    if (existingByName) {
+      artistCache.set(normalizedName, existingByName._id);
+      return { artistId: existingByName._id, created: false };
     }
 
-    // Create new artist
+    // Create new artist with deterministic ID
     const artistDoc: DocumentWithLegacyId = {
-      _id: `artist-cdotw-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      _id: artistId,
       _type: 'artist',
       name: artistName.trim(),
       slug: createSlug(artistName),

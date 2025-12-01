@@ -55,12 +55,14 @@ export default defineType({
       title: 'Track Number',
       type: 'number',
       description: 'Position on the album',
+      validation: (Rule) => Rule.positive().integer(),
     }),
     defineField({
       name: 'duration',
       title: 'Duration (seconds)',
       type: 'number',
       description: 'Length of the song in seconds',
+      validation: (Rule) => Rule.positive(),
     }),
     defineField({
       name: 'streamUrl',
