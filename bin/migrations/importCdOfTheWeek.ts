@@ -93,6 +93,7 @@ function validateCdOfTheWeek(cd: CdOfTheWeek): ValidationResult {
   return mergeResults(
     validateRequired(cd.artist, 'artist'),
     validateRequired(cd.title, 'title'),
+    validateRequired(cd.date, 'date'),
     validateUrl(cd.band, 'band (artistUrl)'),
     validateUrl(cd.cd_pic_url, 'cd_pic_url'),
     validateDate(cd.date, 'date'),
