@@ -17,7 +17,7 @@ $staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create($db);
 
     <div class="twelve" style="display:inline-block;">
       <div class="twelve columns" style="max-width: 100%">
-        <div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/wKQaEW0.gif" alt="YNot Year End Poll 2025" style="max-width: 100%"></div>
+        <div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/U7gvgiH.gif" alt="YNot Year End Poll 2025" style="max-width: 100%"></div>
 
         <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div> -->
       </div>
