@@ -149,12 +149,12 @@ class SqlYearEndPoll implements YearEndPoll
 
         $query = "INSERT INTO year_end_song_votes VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ssssssssssssssssssss', 
-            $ip, 
-            $votes[0], $votes[1], $votes[2], $votes[3], $votes[4], 
-            $votes[5], $votes[6], $votes[7], $votes[8], $votes[9], 
-            $votes[10], $votes[11], $votes[12], $votes[13], $votes[14], 
-            $votes[15], $votes[16], $votes[17], $votes[18], 
+        $stmt->bind_param('sssssssssssssssssssss',
+            $ip,
+            $votes[0], $votes[1], $votes[2], $votes[3], $votes[4],
+            $votes[5], $votes[6], $votes[7], $votes[8], $votes[9],
+            $votes[10], $votes[11], $votes[12], $votes[13], $votes[14],
+            $votes[15], $votes[16], $votes[17], $votes[18],
             $lastValue
         );
         
