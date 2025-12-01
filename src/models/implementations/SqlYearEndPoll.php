@@ -242,6 +242,20 @@ class SqlYearEndPoll implements YearEndPoll
      */
     public function canEnterContest(string $ip): bool
     {
+        // Exception list: IPs that completed 5/6 required polls (missing only philly_artists)
+        // These users completed songs, albums, artists, new_artists, and most_anticipated_albums
+        $exceptionIps = array(
+            '104.28.55.254',
+            '17.243.232.156',
+            '173.49.2.37',
+            '174.56.173.43',
+            '70.15.42.59'
+        );
+
+        if (in_array($ip, $exceptionIps)) {
+            return true;
+        }
+
         $answer = true;
         $neededPolls = array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
             'most_anticipated_albums');
@@ -249,7 +263,7 @@ class SqlYearEndPoll implements YearEndPoll
         foreach ($neededPolls as $poll) {
             $answer = $answer && $this->hasVoted($ip, $poll);
         }
-        
+
         return $answer;
     }
 
