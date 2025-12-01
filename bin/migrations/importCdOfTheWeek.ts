@@ -4,10 +4,15 @@
  * MySQL Schema:
  *   cdotw: id, artist, title, label, review, cd_pic_url, band (artist URL), reviewer, date, deleted
  *
+ * New Sanity Schema (relational):
+ *   - Creates/finds Artist documents
+ *   - Creates Record documents with artist references
+ *   - Creates cdOfTheWeek documents that reference Records
+ *
  * Usage: npm run import:cdotw
  */
 
-import { createClient } from '@sanity/client';
+import { createClient, SanityClient } from '@sanity/client';
 import * as mysql from 'mysql2/promise';
 import { dbConfig, sanityConfig, migrationConfig } from './config';
 import {
@@ -38,7 +43,7 @@ import { htmlToPortableText } from './shared/richTextConverter';
 const logger = createLogger('ImportCdOfTheWeek');
 
 // CD of the Week interface matching the MySQL table structure
-interface CdOfTheWeek {
+interface CdOfTheWeekRow {
   id: number;
   artist: string;
   title: string;
@@ -49,6 +54,71 @@ interface CdOfTheWeek {
   reviewer: string | null;
   date: string | null;
   deleted: string;
+}
+
+// Cache for created artists to avoid duplicates
+const artistCache = new Map<string, string>(); // normalized name -> document ID
+
+/**
+ * Normalize artist name for consistent matching
+ */
+function normalizeArtistName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+/**
+ * Find or create an artist document
+ */
+async function findOrCreateArtist(
+  client: SanityClient,
+  upsertHandler: ReturnType<typeof createUpsertHandler>,
+  artistName: string,
+  website: string | null,
+): Promise<{ artistId: string; created: boolean }> {
+  const normalizedName = normalizeArtistName(artistName);
+
+  // Check cache first
+  if (artistCache.has(normalizedName)) {
+    return { artistId: artistCache.get(normalizedName)!, created: false };
+  }
+
+  try {
+    // Try to find existing artist by name (case-insensitive)
+    const query = '*[_type == "artist" && lower(name) == $name][0]';
+    const existingArtist = await client.fetch<{ _id: string } | null>(
+      query,
+      { name: normalizedName },
+    );
+
+    if (existingArtist) {
+      artistCache.set(normalizedName, existingArtist._id);
+      return { artistId: existingArtist._id, created: false };
+    }
+
+    // Create new artist
+    const artistDoc: DocumentWithLegacyId = {
+      _id: `artist-cdotw-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      _type: 'artist',
+      name: artistName.trim(),
+      slug: createSlug(artistName),
+    };
+
+    if (website) {
+      artistDoc.website = website;
+    }
+
+    const result = await upsertHandler.upsert(artistDoc);
+    if (result.success && result.documentId) {
+      artistCache.set(normalizedName, result.documentId);
+      logger.info(`Created artist: ${artistName} (${result.documentId})`);
+      return { artistId: result.documentId, created: true };
+    }
+
+    throw new Error(`Failed to create artist: ${artistName}`);
+  } catch (error) {
+    logger.error(`Error finding/creating artist "${artistName}":`, error as Error);
+    throw error;
+  }
 }
 
 /**
@@ -73,13 +143,13 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active CD of the Week records from the database (excluding soft-deleted records)
  */
-async function getActiveCdOfTheWeek(connection: mysql.Connection): Promise<CdOfTheWeek[]> {
+async function getActiveCdOfTheWeek(connection: mysql.Connection): Promise<CdOfTheWeekRow[]> {
   try {
     const [rows] = await connection.query<mysql.RowDataPacket[]>(
       "SELECT * FROM cdotw WHERE deleted NOT IN ('yes', 'Yes', 'YES', 'y', 'Y') ORDER BY date DESC",
     );
     logger.info(`Retrieved ${rows.length} CD of the Week records from the database.`);
-    return rows as CdOfTheWeek[];
+    return rows as CdOfTheWeekRow[];
   } catch (error) {
     logger.error('Query failed:', error as Error);
     throw error;
@@ -89,7 +159,7 @@ async function getActiveCdOfTheWeek(connection: mysql.Connection): Promise<CdOfT
 /**
  * Validate a CD of the Week record
  */
-function validateCdOfTheWeek(cd: CdOfTheWeek): ValidationResult {
+function validateCdOfTheWeek(cd: CdOfTheWeekRow): ValidationResult {
   return mergeResults(
     validateRequired(cd.artist, 'artist'),
     validateRequired(cd.title, 'title'),
@@ -113,65 +183,89 @@ function formatDate(dateStr: string | null): string | null {
 }
 
 /**
- * Transform a CD of the Week record to a Sanity document
+ * Transform a CD of the Week record to Sanity documents (Artist, Record, cdOfTheWeek)
  */
-async function transformCdOfTheWeekToDocument(
-  cd: CdOfTheWeek,
+async function transformCdOfTheWeekToDocuments(
+  cd: CdOfTheWeekRow,
+  client: SanityClient,
+  upsertHandler: ReturnType<typeof createUpsertHandler>,
   imageUploader: ReturnType<typeof createImageUploader>,
-): Promise<DocumentWithLegacyId> {
+): Promise<{
+    recordDoc: DocumentWithLegacyId;
+    cdOfTheWeekDoc: DocumentWithLegacyId;
+    artistCreated: boolean;
+  }> {
   const {
     id, artist, title, label, review, reviewer,
   } = cd;
 
-  // Create the base document
-  const doc: DocumentWithLegacyId = {
-    _id: generateDocumentId('cdOfTheWeek', id),
-    _type: 'cdOfTheWeek',
+  // Step 1: Find or create the artist
+  const { artistId, created: artistCreated } = await findOrCreateArtist(
+    client,
+    upsertHandler,
     artist,
+    cd.band,
+  );
+
+  // Step 2: Create the Record document
+  const recordId = generateDocumentId('record', id);
+  const recordDoc: DocumentWithLegacyId = {
+    _id: recordId,
+    _type: 'record',
     title,
     slug: createSlug(`${artist}-${title}`),
+    artists: [{ _type: 'reference', _ref: artistId }],
     legacyId: id,
   };
 
-  // Add optional fields
   if (label) {
-    doc.label = label;
-  }
-
-  if (review) {
-    doc.review = htmlToPortableText(review);
-  }
-
-  if (reviewer) {
-    doc.reviewer = reviewer;
+    recordDoc.label = label;
   }
 
   if (cd.date) {
     const formattedDate = formatDate(cd.date);
     if (formattedDate) {
-      doc.date = formattedDate;
+      recordDoc.releaseDate = formattedDate;
     }
   }
 
-  // Add artist URL (band field in MySQL)
-  if (cd.band) {
-    doc.artistUrl = cd.band;
-  }
-
-  // Handle image upload
+  // Handle image upload for the record
   if (cd.cd_pic_url) {
     const imageUrl = fixImagePath(cd.cd_pic_url, migrationConfig.baseUrl);
     if (imageUrl) {
-      const result = await imageUploader.uploadFromUrl(imageUrl, `cdotw-${id}.jpg`);
+      const result = await imageUploader.uploadFromUrl(imageUrl, `record-${id}.jpg`);
       if (result.success && result.imageValue) {
-        doc.image = result.imageValue;
+        recordDoc.coverImage = result.imageValue;
       } else {
-        logger.warn(`Failed to upload image for CD ${id}: ${result.error}`);
+        logger.warn(`Failed to upload image for Record ${id}: ${result.error}`);
       }
     }
   }
 
-  return doc;
+  // Step 3: Create the cdOfTheWeek document
+  const cdOfTheWeekDoc: DocumentWithLegacyId = {
+    _id: generateDocumentId('cdOfTheWeek', id),
+    _type: 'cdOfTheWeek',
+    record: { _type: 'reference', _ref: recordId },
+    legacyId: id,
+  };
+
+  if (review) {
+    cdOfTheWeekDoc.review = htmlToPortableText(review);
+  }
+
+  if (reviewer) {
+    cdOfTheWeekDoc.reviewer = reviewer;
+  }
+
+  if (cd.date) {
+    const formattedDate = formatDate(cd.date);
+    if (formattedDate) {
+      cdOfTheWeekDoc.date = formattedDate;
+    }
+  }
+
+  return { recordDoc, cdOfTheWeekDoc, artistCreated };
 }
 
 /**
@@ -179,8 +273,11 @@ async function transformCdOfTheWeekToDocument(
  */
 function generateReport(stats: {
   total: number;
-  created: number;
-  updated: number;
+  recordsCreated: number;
+  recordsUpdated: number;
+  featuresCreated: number;
+  featuresUpdated: number;
+  artistsCreated: number;
   skipped: number;
   errors: number;
   validationErrors: Array<{ id: number; artist: string; title: string; errors: string[] }>;
@@ -192,8 +289,11 @@ function generateReport(stats: {
   report += '| Metric | Count |\n';
   report += '|--------|-------|\n';
   report += `| Total Records | ${stats.total} |\n`;
-  report += `| Created | ${stats.created} |\n`;
-  report += `| Updated | ${stats.updated} |\n`;
+  report += `| Artists Created | ${stats.artistsCreated} |\n`;
+  report += `| Records Created | ${stats.recordsCreated} |\n`;
+  report += `| Records Updated | ${stats.recordsUpdated} |\n`;
+  report += `| Features Created | ${stats.featuresCreated} |\n`;
+  report += `| Features Updated | ${stats.featuresUpdated} |\n`;
   report += `| Skipped | ${stats.skipped} |\n`;
   report += `| Errors | ${stats.errors} |\n`;
   report += `| Validation Errors | ${stats.validationErrors.length} |\n\n`;
@@ -220,10 +320,11 @@ async function importCdOfTheWeek(): Promise<void> {
 
   try {
     logger.info('Starting CD of the Week import process...');
+    logger.info('Using relational schema: Artist -> Record -> cdOfTheWeek');
 
     // Check if Sanity token is provided
     if (!sanityConfig.token) {
-      logger.error('No Sanity API token provided. Please set the SANITY_API_TOKEN environment variable.');
+      logger.error('No Sanity API token provided. Set SANITY_API_TOKEN environment variable.');
       return;
     }
 
@@ -256,8 +357,11 @@ async function importCdOfTheWeek(): Promise<void> {
     // Track stats
     const stats = {
       total: cdRecords.length,
-      created: 0,
-      updated: 0,
+      recordsCreated: 0,
+      recordsUpdated: 0,
+      featuresCreated: 0,
+      featuresUpdated: 0,
+      artistsCreated: 0,
       skipped: 0,
       errors: 0,
       validationErrors: [] as Array<{
@@ -288,25 +392,47 @@ async function importCdOfTheWeek(): Promise<void> {
       }
 
       try {
-        // Transform to Sanity document
+        // Transform to Sanity documents
         // eslint-disable-next-line no-await-in-loop
-        const doc = await transformCdOfTheWeekToDocument(cd, imageUploader);
+        const { recordDoc, cdOfTheWeekDoc, artistCreated } = await transformCdOfTheWeekToDocuments(
+          cd,
+          client,
+          upsertHandler,
+          imageUploader,
+        );
 
-        // Upsert to Sanity
+        if (artistCreated) {
+          stats.artistsCreated += 1;
+        }
+
+        // Upsert Record document
         // eslint-disable-next-line no-await-in-loop
-        const result = await upsertHandler.upsert(doc);
-
-        if (result.success) {
-          if (result.action === 'created') {
-            stats.created += 1;
-          } else if (result.action === 'updated') {
-            stats.updated += 1;
-          } else {
-            stats.skipped += 1;
+        const recordResult = await upsertHandler.upsert(recordDoc);
+        if (recordResult.success) {
+          if (recordResult.action === 'created') {
+            stats.recordsCreated += 1;
+          } else if (recordResult.action === 'updated') {
+            stats.recordsUpdated += 1;
           }
         } else {
           stats.errors += 1;
-          logger.error(`Failed to upsert CD ${cd.id}: ${result.error}`);
+          logger.error(`Failed to upsert Record ${cd.id}: ${recordResult.error}`);
+          // eslint-disable-next-line no-continue
+          continue;
+        }
+
+        // Upsert cdOfTheWeek document
+        // eslint-disable-next-line no-await-in-loop
+        const featureResult = await upsertHandler.upsert(cdOfTheWeekDoc);
+        if (featureResult.success) {
+          if (featureResult.action === 'created') {
+            stats.featuresCreated += 1;
+          } else if (featureResult.action === 'updated') {
+            stats.featuresUpdated += 1;
+          }
+        } else {
+          stats.errors += 1;
+          logger.error(`Failed to upsert cdOfTheWeek ${cd.id}: ${featureResult.error}`);
         }
       } catch (error) {
         stats.errors += 1;
@@ -320,9 +446,11 @@ async function importCdOfTheWeek(): Promise<void> {
     }
 
     // Log summary
+    const totalSuccess = stats.recordsCreated + stats.recordsUpdated
+      + stats.featuresCreated + stats.featuresUpdated;
     logSummary({
       total: stats.total,
-      success: stats.created + stats.updated,
+      success: totalSuccess,
       skipped: stats.skipped,
       errors: stats.errors,
     });

@@ -1,36 +1,29 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
 
+/**
+ * CD of the Week Schema
+ *
+ * Features a record (album) as the CD of the Week with a review.
+ * Links to a Record document instead of storing artist/title as strings.
+ */
 export default defineType({
   name: 'cdOfTheWeek',
   title: 'CD of the Week',
   type: 'document',
   fields: [
     defineField({
-      name: 'artist',
-      title: 'Artist',
-      type: 'string',
+      name: 'record',
+      title: 'Record',
+      description: 'The album being featured',
+      type: 'reference',
+      to: [{ type: 'record' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'title',
-      title: 'Album Title',
-      type: 'string',
+      name: 'date',
+      title: 'Feature Date',
+      type: 'date',
       validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: (doc) => `${doc.artist}-${doc.title}`,
-        maxLength: 96,
-      },
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
-      name: 'label',
-      title: 'Record Label',
-      type: 'string',
     }),
     defineField({
       name: 'review',
@@ -39,30 +32,10 @@ export default defineType({
       of: [defineArrayMember({ type: 'block' })],
     }),
     defineField({
-      name: 'image',
-      title: 'Album Cover',
-      type: 'image',
-      options: {
-        hotspot: true,
-      },
-    }),
-    defineField({
-      name: 'artistUrl',
-      title: 'Artist Website',
-      type: 'url',
-      description: 'Link to the artist or band website',
-    }),
-    defineField({
       name: 'reviewer',
       title: 'Reviewer',
       type: 'string',
       description: 'Name of the person who wrote this review',
-    }),
-    defineField({
-      name: 'date',
-      title: 'Feature Date',
-      type: 'date',
-      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'legacyId',
@@ -81,14 +54,14 @@ export default defineType({
   ],
   preview: {
     select: {
-      artist: 'artist',
-      title: 'title',
+      recordTitle: 'record.title',
+      artist0: 'record.artists.0.name',
       date: 'date',
-      media: 'image',
+      media: 'record.coverImage',
     },
     prepare(selection) {
       const {
-        artist, title, date, media,
+        recordTitle, artist0, date, media,
       } = selection;
       const formattedDate = date ? new Date(date).toLocaleDateString('en-US', {
         month: 'short',
@@ -96,7 +69,7 @@ export default defineType({
         year: 'numeric',
       }) : '';
       return {
-        title: `${artist} - ${title}`,
+        title: `${artist0 || 'Unknown Artist'} - ${recordTitle || 'Unknown Album'}`,
         subtitle: formattedDate,
         media,
       };
@@ -106,23 +79,12 @@ export default defineType({
     {
       title: 'Date (Newest)',
       name: 'dateDesc',
-      by: [
-        { field: 'date', direction: 'desc' },
-      ],
+      by: [{ field: 'date', direction: 'desc' }],
     },
     {
       title: 'Date (Oldest)',
       name: 'dateAsc',
-      by: [
-        { field: 'date', direction: 'asc' },
-      ],
-    },
-    {
-      title: 'Artist A-Z',
-      name: 'artistAsc',
-      by: [
-        { field: 'artist', direction: 'asc' },
-      ],
+      by: [{ field: 'date', direction: 'asc' }],
     },
   ],
 });
