@@ -80,6 +80,22 @@ The script will:
 - Create person documents in Sanity with proper image references
 - Handle special formatting for slugs, bios, and social links
 
+#### CD of the Week Migration
+
+The `import:cdotw` script migrates CD of the Week album reviews from the MySQL database to Sanity CMS:
+
+```
+npm run import:cdotw
+```
+
+The script will:
+- Connect to the MySQL database
+- Query all non-deleted CD of the Week records
+- Transform data to the Sanity format (including rich text conversion for reviews)
+- Upload album cover images to Sanity as assets
+- Create cdOfTheWeek documents in Sanity with proper image references
+- Handle validation and generate a migration report
+
 #### Migration Script Configuration
 
 Database connection details:
