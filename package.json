@@ -23,6 +23,7 @@
     "import:ads": "tsx bin/migrations/importAds.ts",
     "import:concerts": "tsx bin/migrations/importConcerts.ts",
     "import:cdotw": "tsx bin/migrations/importCdOfTheWeek.ts",
+    "import:ondemand": "tsx bin/migrations/importOnDemand.ts",
     "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
