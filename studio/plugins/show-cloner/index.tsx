@@ -26,6 +26,26 @@ const getDayName = (dateStr: string): string => {
   return date.toLocaleDateString('en-US', { weekday: 'long' });
 };
 
+// Helper function to group shows by date
+const groupShowsByDate = (shows: Show[]): DateGroup[] => {
+  const groups: { [key: string]: Show[] } = {};
+  shows.forEach((show) => {
+    if (!groups[show.date]) {
+      groups[show.date] = [];
+    }
+    groups[show.date].push(show);
+  });
+
+  return Object.keys(groups)
+    .sort()
+    .map((date) => ({
+      date,
+      formattedDate: formatDate(date),
+      dayName: getDayName(date),
+      shows: groups[date],
+    }));
+};
+
 // Main component for Show cloning
 export function ShowClonerTool() {
   const [shows, setShows] = useState<Show[]>([]);
@@ -36,55 +56,40 @@ export function ShowClonerTool() {
   const [targetDate, setTargetDate] = useState<string>('');
   const client = useClient({ apiVersion: '2023-01-01' });
 
-  // Load shows from Sanity
-  useEffect(() => {
-    async function fetchShows() {
-      try {
-        const result = await client.fetch<Show[]>(`
-          *[_type == "show"] | order(date asc, startTime asc) {
-            _id,
-            date,
-            startTime,
-            endTime,
-            host,
-            note
-          }
-        `);
-        setShows(result);
-
-        // Group shows by date
-        const groups: { [key: string]: Show[] } = {};
-        result.forEach((show) => {
-          if (!groups[show.date]) {
-            groups[show.date] = [];
-          }
-          groups[show.date].push(show);
-        });
-
-        const groupedDates: DateGroup[] = Object.keys(groups)
-          .sort()
-          .map((date) => ({
-            date,
-            formattedDate: formatDate(date),
-            dayName: getDayName(date),
-            shows: groups[date],
-          }));
-
-        setDateGroups(groupedDates);
-
-        // Set default source date to first available date
-        if (groupedDates.length > 0) {
-          setSourceDate(groupedDates[0].date);
-        }
-      } catch (error) {
-        console.error('Error fetching shows:', error);
-      } finally {
-        setLoading(false);
-      }
+  // Fetch shows query
+  const fetchShowsQuery = `
+    *[_type == "show"] | order(date asc, startTime asc) {
+      _id,
+      date,
+      startTime,
+      endTime,
+      host,
+      note
     }
+  `;
 
-    fetchShows();
-  }, [client]);
+  // Load shows from Sanity
+  const loadShows = useCallback(async () => {
+    try {
+      const result = await client.fetch<Show[]>(fetchShowsQuery);
+      setShows(result);
+      const groupedDates = groupShowsByDate(result);
+      setDateGroups(groupedDates);
+
+      // Set default source date to first available date
+      if (groupedDates.length > 0 && !sourceDate) {
+        setSourceDate(groupedDates[0].date);
+      }
+    } catch (error) {
+      console.error('Error fetching shows:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [client, fetchShowsQuery, sourceDate]);
+
+  useEffect(() => {
+    loadShows();
+  }, [loadShows]);
 
   // Handle cloning shows from source date to target date
   const handleClone = useCallback(async () => {
@@ -131,37 +136,7 @@ export function ShowClonerTool() {
 
       // Reload shows
       setLoading(true);
-      const result = await client.fetch<Show[]>(`
-        *[_type == "show"] | order(date asc, startTime asc) {
-          _id,
-          date,
-          startTime,
-          endTime,
-          host,
-          note
-        }
-      `);
-      setShows(result);
-
-      // Re-group shows by date
-      const groups: { [key: string]: Show[] } = {};
-      result.forEach((show) => {
-        if (!groups[show.date]) {
-          groups[show.date] = [];
-        }
-        groups[show.date].push(show);
-      });
-
-      const groupedDates: DateGroup[] = Object.keys(groups)
-        .sort()
-        .map((date) => ({
-          date,
-          formattedDate: formatDate(date),
-          dayName: getDayName(date),
-          shows: groups[date],
-        }));
-
-      setDateGroups(groupedDates);
+      await loadShows();
     } catch (error) {
       console.error('Error cloning shows:', error);
       alert('Error cloning shows');
@@ -169,7 +144,7 @@ export function ShowClonerTool() {
       setCloning(false);
       setLoading(false);
     }
-  }, [client, shows, sourceDate, targetDate]);
+  }, [client, loadShows, shows, sourceDate, targetDate]);
 
   // Get shows for selected source date
   const selectedDateShows = sourceDate
