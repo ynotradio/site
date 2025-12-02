@@ -204,9 +204,20 @@ function extractVideoUrl(note: string | null): string | null {
   const hrefMatch = note.match(/href="([^"]+)"/);
   if (hrefMatch && hrefMatch[1]) {
     const url = hrefMatch[1];
-    // Check if it's a video URL (YouTube, etc.)
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      return url;
+    // Check if it's a valid YouTube video URL by parsing the URL
+    try {
+      const parsedUrl = new URL(url);
+      const validHosts = [
+        'youtube.com',
+        'www.youtube.com',
+        'youtu.be',
+        'www.youtu.be',
+      ];
+      if (validHosts.includes(parsedUrl.hostname)) {
+        return url;
+      }
+    } catch {
+      // Invalid URL, skip
     }
   }
 
