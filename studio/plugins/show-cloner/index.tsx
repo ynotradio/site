@@ -9,8 +9,8 @@ import { EmptyState } from './components/EmptyState';
 import { ShowRow } from './components/ShowRow';
 import { Show, DateGroup } from './types';
 
-// Helper function to format date for display
-const formatDate = (dateStr: string): string => {
+// Helper function to format date for display - exported for testing
+export const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
@@ -20,14 +20,14 @@ const formatDate = (dateStr: string): string => {
   });
 };
 
-// Helper function to get day name
-const getDayName = (dateStr: string): string => {
+// Helper function to get day name - exported for testing
+export const getDayName = (dateStr: string): string => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', { weekday: 'long' });
 };
 
-// Helper function to group shows by date
-const groupShowsByDate = (shows: Show[]): DateGroup[] => {
+// Helper function to group shows by date - exported for testing
+export const groupShowsByDate = (shows: Show[]): DateGroup[] => {
   const groups: { [key: string]: Show[] } = {};
   shows.forEach((show) => {
     if (!groups[show.date]) {
