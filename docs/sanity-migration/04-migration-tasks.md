@@ -194,12 +194,12 @@ concerts: id, date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl
 
 ## Task 6: Create Music Schema and Migration
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Schema Complete (via Song schema)  
 **Depends On:** Task 1 (Artist Schema), Task 2 (Shared Utilities)  
 **Estimated Effort:** Small
 
 **Context:**
-Music entries are new song additions with artist and streaming URL. Artist is always required—create one if it doesn't exist.
+Music entries are new song additions with artist and streaming URL. Instead of creating a separate `music` schema, the existing **Song** schema (`studio/schemaTypes/song.ts`) handles this use case with a `featureOnNewMusic` toggle. See [03-core-data-models.md](./03-core-data-models.md#music--song-model) for details.
 
 **MySQL Schema:**
 ```
@@ -207,17 +207,22 @@ music: id, artist, song, url, date, deleted
 ```
 
 **Requirements:**
-1. Create `studio/schemaTypes/music.ts`:
-   - `artist` (reference to `artist`, required)
-   - `song` (string, required)
-   - `url` (url)
-   - `date` (date)
-   - `_legacyId`, `_migratedAt`
-2. Create `bin/migrations/importMusic.ts`
-3. Migration must create Artist record if not found (or fail with report)
+1. ✅ Song schema already exists at `studio/schemaTypes/song.ts` with:
+   - `artists` (array of references to `artist`, required)
+   - `title` (string, required) — maps to legacy `song`
+   - `streamUrl` (url) — maps to legacy `url`
+   - `releaseDate` (date) — maps to legacy `date`
+   - `featureOnNewMusic` (boolean) — toggle to show on New Music page
+   - `legacyId`, `migratedAt` — for migration tracking
+2. Create `bin/migrations/importMusic.ts` to migrate legacy `music` table into Song documents
+3. Migration must:
+   - Set `featureOnNewMusic: true` for all imported records
+   - Create Artist record if not found (or fail with report)
 
 **Acceptance Criteria:**
-- [ ] Schema works in Sanity Studio
+- [x] Song schema works in Sanity Studio
+- [x] `featureOnNewMusic` toggle added to Song schema
+- [ ] Migration script `importMusic.ts` created
 - [ ] Artist reference is required (no fallback string)
 - [ ] Migration creates missing Artist records or fails with report
 - [ ] Validation errors reported
