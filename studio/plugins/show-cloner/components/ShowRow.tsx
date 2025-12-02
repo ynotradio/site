@@ -3,6 +3,20 @@ import React from 'react';
 import { Text, Flex } from '@sanity/ui';
 import { ShowRowProps } from '../types';
 
+// Helper to get display name for a show
+const getShowDisplayName = (show: Pick<Show, 'name' | 'djName'>): string => {
+  if (show.name && show.djName) {
+    return `${show.name} w/ ${show.djName}`;
+  }
+  if (show.djName) {
+    return show.djName;
+  }
+  if (show.name) {
+    return show.name;
+  }
+  return 'Untitled Show';
+};
+
 export const ShowRow = ({ show }: ShowRowProps) => {
   const style = {
     padding: '8px 12px',
@@ -12,10 +26,12 @@ export const ShowRow = ({ show }: ShowRowProps) => {
     background: '#fff',
   };
 
+  const displayName = getShowDisplayName(show);
+
   return (
     <Flex style={style} align="center" justify="space-between">
       <Text size={1} weight="semibold">
-        {show.host}
+        {displayName}
         {show.note && <span style={{ fontWeight: 'normal', marginLeft: '8px' }}>- {show.note}</span>}
       </Text>
       <Text size={1} muted>

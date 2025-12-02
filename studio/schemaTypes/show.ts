@@ -32,17 +32,37 @@ export default defineType({
       }).error('Please enter a valid time in HH:MM format (e.g., 09:00 or 14:30)'),
     }),
     defineField({
-      name: 'host',
-      title: 'Host',
+      name: 'name',
+      title: 'Show Name',
       type: 'string',
-      description: 'Name of the show host or DJ',
-      validation: (Rule) => Rule.required(),
+      description: 'Name of the show (e.g., "The Nooner"). Required if no DJ is selected.',
+      validation: (Rule) => Rule.custom((value, context) => {
+        const dj = (context.document as { dj?: { _ref?: string } })?.dj;
+        if (!value && !dj?._ref) {
+          return 'Either a show name or a DJ must be provided';
+        }
+        return true;
+      }),
+    }),
+    defineField({
+      name: 'dj',
+      title: 'DJ',
+      type: 'reference',
+      to: [{ type: 'dj' }],
+      description: 'Reference to a DJ. Required if no show name is provided.',
+      validation: (Rule) => Rule.custom((value, context) => {
+        const name = (context.document as { name?: string })?.name;
+        if (!value?._ref && !name) {
+          return 'Either a show name or a DJ must be provided';
+        }
+        return true;
+      }),
     }),
     defineField({
       name: 'note',
       title: 'Note',
       type: 'string',
-      description: 'Additional notes about the show (e.g., show name or special info)',
+      description: 'Additional notes about the show',
     }),
     defineField({
       name: 'legacyId',
@@ -64,14 +84,14 @@ export default defineType({
   preview: {
     select: {
       date: 'date',
-      host: 'host',
+      name: 'name',
+      djName: 'dj.person.name',
       startTime: 'startTime',
       endTime: 'endTime',
-      note: 'note',
     },
     prepare(selection) {
       const {
-        date, host, startTime, endTime, note,
+        date, name, djName, startTime, endTime,
       } = selection;
       const formattedDate = date ? new Date(date).toLocaleDateString('en-US', {
         weekday: 'short',
@@ -81,8 +101,21 @@ export default defineType({
       }) : 'No date';
       const timeRange = startTime && endTime ? `${startTime} - ${endTime}` : '';
       const subtitle = [formattedDate, timeRange].filter(Boolean).join(' | ');
+
+      // Build title based on available fields
+      let title: string;
+      if (name && djName) {
+        title = `${name} w/ ${djName}`;
+      } else if (djName) {
+        title = djName;
+      } else if (name) {
+        title = name;
+      } else {
+        title = 'Untitled Show';
+      }
+
       return {
-        title: note ? `${host} - ${note}` : host || 'Unknown Host',
+        title,
         subtitle,
       };
     },
@@ -105,10 +138,10 @@ export default defineType({
       ],
     },
     {
-      title: 'Host (A-Z)',
-      name: 'hostAsc',
+      title: 'Show Name (A-Z)',
+      name: 'nameAsc',
       by: [
-        { field: 'host', direction: 'asc' },
+        { field: 'name', direction: 'asc' },
       ],
     },
   ],

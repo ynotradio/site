@@ -63,7 +63,9 @@ export function ShowClonerTool() {
       date,
       startTime,
       endTime,
-      host,
+      name,
+      "djName": dj->person->name,
+      dj,
       note
     }
   `;
@@ -120,14 +122,35 @@ export function ShowClonerTool() {
 
       // Create new shows for target date
       sourceShows.forEach((show) => {
-        transaction.create({
+        const newShow: {
+          _type: string;
+          date: string;
+          startTime: string;
+          endTime: string;
+          name?: string;
+          dj?: { _type: string; _ref: string };
+          note?: string;
+        } = {
           _type: 'show',
           date: targetDate,
           startTime: show.startTime,
           endTime: show.endTime,
-          host: show.host,
-          note: show.note,
-        });
+        };
+
+        if (show.name) {
+          newShow.name = show.name;
+        }
+        if (show.dj?._ref) {
+          newShow.dj = {
+            _type: 'reference',
+            _ref: show.dj._ref,
+          };
+        }
+        if (show.note) {
+          newShow.note = show.note;
+        }
+
+        transaction.create(newShow);
       });
 
       // Commit all creates

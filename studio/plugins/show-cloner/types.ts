@@ -5,7 +5,11 @@ export interface Show {
   date: string;
   startTime: string;
   endTime: string;
-  host: string;
+  name?: string;
+  djName?: string;
+  dj?: {
+    _ref: string;
+  };
   note?: string;
 }
 
