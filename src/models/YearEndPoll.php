@@ -120,12 +120,28 @@ interface YearEndPoll
     public function canEnterContest(string $ip): bool;
 
     /**
-     * Check if a user has already entered the contest
-     * 
+     * Check if a user has already entered the contest by IP address
+     *
      * @param string $ip The voter's IP address
      * @return bool True if user has already entered
      */
     public function hasEnteredContest(string $ip): bool;
+
+    /**
+     * Check if an email address has already been used to enter the contest
+     *
+     * @param string $email The email address to check (case insensitive)
+     * @return bool True if email has already been used
+     */
+    public function hasEnteredContestByEmail(string $email): bool;
+
+    /**
+     * Check if a phone number has already been used to enter the contest
+     *
+     * @param string $phone The phone number to check
+     * @return bool True if phone number has already been used
+     */
+    public function hasEnteredContestByPhone(string $phone): bool;
 
     /**
      * Add a contestant to the contest

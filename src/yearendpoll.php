@@ -62,7 +62,14 @@ if (isset($_POST['contest_form'])) {
         !empty($contestantData['newsletter']);
 
     if ($allFieldsPresent) {
-        $contestSuccess = $controller->processContestEntry($contestantData, $ip);
+        // Check for duplicate entries by IP, email, and phone
+        if ($controller->hasEnteredContest($ip) ||
+            $controller->hasEnteredContestByEmail($contestantData['email']) ||
+            $controller->hasEnteredContestByPhone($contestantData['phone'])) {
+            $contestError = "duplicate_entry";
+        } else {
+            $contestSuccess = $controller->processContestEntry($contestantData, $ip);
+        }
     } else {
         $contestError = "missing_values";
     }
@@ -131,6 +138,12 @@ $isPollActive = (time() <= $poll_end_datetime);
                 <div class="row">
                     <div class="twelve columns top-spacer_20 center error">
                         Sorry! <br> Seems like you may be missing some value(s), please try again.
+                    </div>
+                </div>
+            <?php elseif ($contestError === "duplicate_entry"): ?>
+                <div class="row">
+                    <div class="twelve columns top-spacer_20 center error">
+                        Sorry! <br> Our records indicate that you have already entered the contest.
                     </div>
                 </div>
             <?php elseif ($contestError): ?>
