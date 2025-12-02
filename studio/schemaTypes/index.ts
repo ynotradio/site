@@ -9,6 +9,7 @@ import song from './song';
 import cdOfTheWeek from './cdOfTheWeek';
 import onDemand from './onDemand';
 import show from './show';
+import post from './post';
 
 const schemaTypes = [
   person,
@@ -22,6 +23,7 @@ const schemaTypes = [
   cdOfTheWeek,
   onDemand,
   show,
+  post,
 ];
 
 export default schemaTypes;

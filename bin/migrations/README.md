@@ -8,6 +8,19 @@ This directory contains TypeScript scripts for migrating data from the legacy My
 
 The script in `importDeejays.ts` migrates deejay data from the MySQL database to Sanity CMS as "person" documents.
 
+### Post Migration
+
+The script in `importPosts.ts` migrates content from two legacy tables into unified "post" documents:
+- **stories** - Front page content with headlines, story text, images, date ranges, and priority ordering
+- **custom_texts** - Custom pages with permalink-based URLs (e.g., `/donate`) and HTML content
+
+Posts support:
+- Slugs for standalone URLs
+- Publication date ranges (start/end dates)
+- Rich text content or HTML embeds
+- Images
+- Priority-based ordering
+
 ## Usage
 
 From the project root:
@@ -15,6 +28,9 @@ From the project root:
 ```bash
 # Run the deejay import (uses tsx to run TypeScript directly)
 npm run import:deejays
+
+# Run the post import (stories and custom texts)
+npm run import:posts
 ```
 
 No build step is required as we're using tsx to run TypeScript files directly.
