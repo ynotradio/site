@@ -11,21 +11,19 @@ if (!isset($top11Model)) {
 // Check if we're using auth voting mode (from hidden form field)
 $useAuthVoting = isset($_POST['use_auth_voting']) && $_POST['use_auth_voting'] === '1';
 
-// Process the form submission based on voting mode
+// Process the form submission - personal info is collected in both modes
+$firstname = isset($_POST['firstname']) ? $_POST['firstname'] : '';
+$lastname = isset($_POST['lastname']) ? $_POST['lastname'] : '';
+$phone = isset($_POST['phone']) ? $_POST['phone'] : '';
+
 if ($useAuthVoting) {
-    // Auth voting mode
+    // Auth voting mode - email comes from Auth0
     $voter_email = isset($_POST['voter_email']) ? $_POST['voter_email'] : '';
     $auth0_id = isset($_POST['auth0_id']) ? $_POST['auth0_id'] : null;
-    $firstname = '';
-    $lastname = '';
     $email = $voter_email;
-    $phone = '';
 } else {
-    // Anonymous voting mode (original behavior)
-    $firstname = isset($_POST['firstname']) ? $_POST['firstname'] : '';
-    $lastname = isset($_POST['lastname']) ? $_POST['lastname'] : '';
+    // Anonymous voting mode - email comes from form
     $email = isset($_POST['email']) ? $_POST['email'] : '';
-    $phone = isset($_POST['phone']) ? $_POST['phone'] : '';
     $voter_email = '';
     $auth0_id = null;
 }
@@ -78,20 +76,16 @@ try {
     if ($useAuthVoting) {
         // Auth voting mode: record user vote to prevent duplicates
         $top11Model->recordUserVote($voter_email, $auth0_id);
-        
-        // Extract user information from email for contestant entry
-        $emailParts = explode('@', $voter_email);
-        $username = (count($emailParts) === 2) ? $emailParts[0] : $voter_email;
-        
-        // Save contestant info using the authenticated email
-        if ($contest === 'yes' || $newsletter === 'yes') {
-            $top11Model->addContestant($username, '', $voter_email, '', $contest, $newsletter);
-        }
-    } else {
-        // Anonymous voting mode: save contestant info if provided
-        if (!empty($firstname) && !empty($email)) {
-            $top11Model->addContestant($firstname, $lastname, $email, $phone, $contest, $newsletter);
-        }
+    }
+    
+    // Save contestant info if provided (both modes use the same logic now)
+    // For auth mode: use firstname from form, email from Auth0
+    // For anonymous mode: use firstname and email from form
+    $contestantFirstname = !empty($firstname) ? $firstname : '';
+    $contestantEmail = $email;
+    
+    if (!empty($contestantFirstname) || $contest === 'yes' || $newsletter === 'yes') {
+        $top11Model->addContestant($contestantFirstname, $lastname, $contestantEmail, $phone, $contest, $newsletter);
     }
     
     // Process votes
