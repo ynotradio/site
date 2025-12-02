@@ -115,43 +115,44 @@ The following import scripts exist in `bin/migrations/` and can be run via npm:
 
 | Model | Schema Status | Import Status | Notes |
 |-------|--------------|---------------|-------|
-| Artist | ✅ Schema exists | ❌ No import script | May be created on-the-fly by Concert import |
-| Venue | ✅ Schema exists | ❌ No import script | May be created on-the-fly by Concert import |
+| Artist | ✅ Schema exists | ✅ Created on-the-fly | No standalone import needed—created by Concert, Record (CdOfTheWeek), or Song imports |
+| Venue | ✅ Schema exists | ✅ Created on-the-fly | No standalone import needed—created by Concert import |
 | Song (Music) | ✅ Schema exists | ❌ No import script | Needs `importMusic.ts` to migrate legacy `music` table with `featureOnNewMusic: true` |
-| Record | ✅ Schema exists | ❌ No import script | May need import if legacy records exist |
+| Record | ✅ Schema exists | ✅ Via CdOfTheWeek | CD of the Week posts ARE records—`importCdOfTheWeek.ts` creates Record documents |
 | OnDemand | ❌ Schema needed | ❌ No import script | Full implementation needed |
 | Show | ❌ Schema needed | ❌ No import script | Full implementation needed |
 
-### Open Questions About Imports
+### Import Decisions (Resolved)
 
 #### Artist Import
-1. **Do we need a standalone Artist import?** The Concert import creates Artists on-the-fly when they don't exist. Is there a separate legacy `artists` or `bands` table that should be migrated first?
-2. **Artist deduplication**: How do we handle variations in artist names (e.g., "The National" vs "National")?
-3. **Artist photos/bios**: Where do artist photos and bios come from in the legacy data? Concert records have `band_pic_url` but this is concert-specific.
+- **No standalone import needed.** Artists are created on-the-fly when importing Concerts, Records (CD of the Week), or Songs.
+- **Minimum required data**: Artist name is sufficient to create a record. Other fields (photo, bio, website) can be empty.
+- **Photos**: Use `band_pic_url` from concert data when available. Empty photos are acceptable.
+- **Deduplication**: A normalization report or dry-run mode is needed to identify and handle artist name variations (e.g., "The National" vs "National").
 
 #### Venue Import
-1. **Do we need a standalone Venue import?** Similar to Artist, the Concert import creates Venues on-the-fly. Is there a separate legacy `venues` table?
-2. **Venue normalization**: How do we handle venue name variations (e.g., "9:30 Club" vs "930 Club")?
+- **No standalone import needed.** Venues are created on-the-fly when importing Concerts.
+- **Normalization**: A normalization report or dry-run mode is needed to identify venue name variations (e.g., "9:30 Club" vs "930 Club").
 
 #### Song/Music Import
-1. **Artist matching**: The legacy `music` table stores artist as a string. How should we match to existing Artist documents?
-2. **Duplicate handling**: If a song already exists (imported from another source), should we skip or update?
-3. **Feature flag**: Should all imported music records have `featureOnNewMusic: true`?
+- **Artist matching**: Create or find Artist by name. The artist string in the `music` table is sufficient to create an Artist record.
+- **Duplicate handling**: If a song already exists with more information available, update the existing record.
+- **Feature flag**: YES—all imported music records should have `featureOnNewMusic: true`.
 
 #### Record Import
-1. **Do legacy records exist?** Is there a `records` or `albums` table in the legacy database that needs migration?
-2. **Relationship to CdOfTheWeek**: The CdOfTheWeek schema references Record. Review `importCdOfTheWeek.ts` to determine if Records are being created during that import process.
+- **No separate legacy `records` table exists.** CD of the Week posts ARE the records.
+- **Source**: `importCdOfTheWeek.ts` handles Record creation as part of the CD of the Week import process.
 
 #### OnDemand Import
-1. **Source identification**: The `source` field in legacy data—what values does it contain and how should they map?
-2. **Artist/DJ linking**: How do we determine if an OnDemand entry should reference an Artist vs a DJ?
-3. **Audio file handling**: Are audio files stored locally or externally? Should we migrate URLs or actual files?
+- **Source field values**: Many entries are OpenDrive embeds; some also have YouTube links.
+- **Artist/DJ linking**: Search for existing Artist or DJ documents by name. **Do NOT create Artists or DJs on-the-fly** for OnDemand content—only link to existing records.
+- **Audio file handling**: Files are located externally and will continue to be. Migrate URLs only, not actual files.
 
 #### Show (Schedule) Import
-1. **Host matching**: The legacy `host` field is a string. How do we match to existing DJ documents?
-2. **Historical data**: Should we import all historical schedule data or only future/recent shows?
-3. **Time format**: The legacy `start_time` and `end_time` fields—what format are they in? Do they need conversion?
-4. **Day derivation**: The legacy `day` field is redundant with `date`. Should we validate consistency during import?
+- **DJ matching**: The Show model references DJ documents directly via `dj` field (see Show Schema below). Match by DJ name to find existing DJ documents.
+- **Historical data**: Import schedule data going back to **July 2025**.
+- **Time format**: Legacy `start_time` and `end_time` fields are MySQL `time` type (see `src/db/migrations/schedule.sql`). Store as HH:MM strings in Sanity.
+- **Day validation**: YES—validate that the `day` field is consistent with the `date` field during import.
 
 ---
 
