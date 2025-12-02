@@ -21,16 +21,6 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'slug',
-      title: 'Slug',
-      type: 'slug',
-      options: {
-        source: 'title',
-        maxLength: 96,
-      },
-      validation: (Rule) => Rule.required(),
-    }),
-    defineField({
       name: 'artists',
       title: 'Artists',
       description: 'Artist(s) who performed this song',
@@ -49,20 +39,6 @@ export default defineType({
       description: 'The album this song appears on',
       type: 'reference',
       to: [{ type: 'record' }],
-    }),
-    defineField({
-      name: 'trackNumber',
-      title: 'Track Number',
-      type: 'number',
-      description: 'Position on the album',
-      validation: (Rule) => Rule.positive().integer(),
-    }),
-    defineField({
-      name: 'duration',
-      title: 'Duration (seconds)',
-      type: 'number',
-      description: 'Length of the song in seconds',
-      validation: (Rule) => Rule.positive(),
     }),
     defineField({
       name: 'streamUrl',
