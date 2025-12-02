@@ -6,6 +6,21 @@ import { defineType, defineField } from 'sanity';
  * Audio content featuring artists in sessions, interviews, or takeovers.
  * References Artist documents rather than storing artist names as strings.
  */
+
+/**
+ * Extract content type label from note field for display purposes.
+ * Note: The migration script (bin/migrations/importOnDemand.ts) has a similar
+ * function `determineContentType` that extracts the enum value for the contentType field.
+ */
+function extractContentTypeLabel(note: string | null | undefined): string {
+  if (!note) return '';
+  if (note.includes('Session')) return 'Session';
+  if (note.includes('Interview')) return 'Interview';
+  if (note.includes('Takeover')) return 'Takeover';
+  // Fallback: use text before any HTML
+  return note.split('<')[0].trim();
+}
+
 export default defineType({
   name: 'onDemand',
   title: 'On Demand',
@@ -125,14 +140,8 @@ export default defineType({
         year: 'numeric',
       }) : '';
 
-      // Extract content type from note for subtitle
-      let contentType = '';
-      if (note) {
-        if (note.includes('Session')) contentType = 'Session';
-        else if (note.includes('Interview')) contentType = 'Interview';
-        else if (note.includes('Takeover')) contentType = 'Takeover';
-        else contentType = note.split('<')[0].trim();
-      }
+      // Extract content type from note for subtitle using helper function
+      const contentType = extractContentTypeLabel(note);
 
       return {
         title: headline || artistName || 'Untitled',

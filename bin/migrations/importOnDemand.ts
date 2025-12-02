@@ -160,7 +160,7 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 async function getActiveOnDemand(connection: mysql.Connection): Promise<OnDemandRow[]> {
   try {
     const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM ondemand WHERE deleted NOT IN ('yes', 'Yes', 'YES', 'y', 'Y') ORDER BY date DESC",
+      "SELECT * FROM ondemand WHERE LOWER(deleted) NOT IN ('yes', 'y') ORDER BY date DESC",
     );
     logger.info(`Retrieved ${rows.length} OnDemand records from the database.`);
     return rows as OnDemandRow[];
@@ -214,7 +214,10 @@ function extractVideoUrl(note: string | null): string | null {
 }
 
 /**
- * Determine content type from note
+ * Determine content type from note field.
+ * Returns the enum value for the contentType field.
+ * Note: The schema (studio/schemaTypes/onDemand.ts) has a similar helper
+ * function `extractContentTypeLabel` for display purposes in the preview.
  */
 function determineContentType(note: string | null): string | null {
   if (!note) return null;
