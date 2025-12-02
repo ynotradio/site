@@ -158,8 +158,8 @@ class YearEndPollController
     }
     
     /**
-     * Check if user has already entered the contest
-     * 
+     * Check if user has already entered the contest by IP
+     *
      * @param string $ip The user's IP address
      * @return bool True if already entered
      */
@@ -167,7 +167,29 @@ class YearEndPollController
     {
         return $this->pollModel->hasEnteredContest($ip);
     }
-    
+
+    /**
+     * Check if email has already been used to enter the contest
+     *
+     * @param string $email The email address to check
+     * @return bool True if email already used
+     */
+    public function hasEnteredContestByEmail(string $email): bool
+    {
+        return $this->pollModel->hasEnteredContestByEmail($email);
+    }
+
+    /**
+     * Check if phone number has already been used to enter the contest
+     *
+     * @param string $phone The phone number to check
+     * @return bool True if phone already used
+     */
+    public function hasEnteredContestByPhone(string $phone): bool
+    {
+        return $this->pollModel->hasEnteredContestByPhone($phone);
+    }
+
     /**
      * Process a contest entry
      * 
