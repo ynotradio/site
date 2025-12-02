@@ -17,8 +17,7 @@
 | 7 | Music | 🔲 Todo | References Artist |
 | 8 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
 | 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |
-| 10 | ScheduleSlot | 🔲 Todo | Default weekly template slot, references DJ |
-| 11 | ScheduleOverride | 🔲 Todo | One-off schedule changes, references DJ |
+| 10 | Schedule | 🔲 Todo | References DJ |
 | — | Content Block | ⏸️ Later | Unified Story + CustomText model (deferred) |
 | — | Top11 | ⏸️ Later | Weekly chart, references Artist (deferred) |
 | — | MRM Config | ⏸️ Later | Singleton for tournament settings (deferred) |
@@ -40,8 +39,7 @@ Artist ←─┬── Concert (+ Venue)          │         │
          ├── CdOfTheWeek               │         │
          └── OnDemand ─────────────────┤         │
                                         │         │
-ScheduleSlot ───────────────────────────┘         │
-ScheduleOverride ───────────────────────┘         │
+Schedule ───────────────────────────────┘         │
 ```
 
 ---
@@ -62,211 +60,151 @@ ScheduleOverride ─────────────────────
 
 ### Overview
 
-The Schedule system uses a **template + override** pattern to handle recurring weekly schedules with occasional changes:
+The Schedule model stores individual schedule entries for specific dates. Content managers maintain the schedule by:
 
-1. **ScheduleSlot** - Defines the default weekly template (Monday–Sunday time slots)
-2. **ScheduleOverride** - One-off changes for specific dates (DJ substitutions, guest appearances, etc.)
+1. Editing individual entries directly when changes occur
+2. Using a Studio tool to clone a date range when generating new weeks
 
-This approach allows content managers to:
-- Set up a recurring default schedule once
-- Override specific slots on specific dates when needed
-- Keep historical records of past schedule changes
+This approach keeps the data model simple while providing a convenient workflow for schedule management.
 
-### ScheduleSlot (Default Weekly Template)
+### Schedule Schema
 
 ```typescript
-// studio/schemaTypes/scheduleSlot.ts
-{
-  name: 'scheduleSlot',
-  title: 'Schedule Slot',
+// studio/schemaTypes/schedule.ts
+import { defineType, defineField } from 'sanity';
+
+export default defineType({
+  name: 'schedule',
+  title: 'Schedule',
   type: 'document',
   fields: [
-    {
-      name: 'dayOfWeek',
-      title: 'Day of Week',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Monday', value: 'monday' },
-          { title: 'Tuesday', value: 'tuesday' },
-          { title: 'Wednesday', value: 'wednesday' },
-          { title: 'Thursday', value: 'thursday' },
-          { title: 'Friday', value: 'friday' },
-          { title: 'Saturday', value: 'saturday' },
-          { title: 'Sunday', value: 'sunday' },
-        ],
-      },
-      validation: (Rule) => Rule.required(),
-    },
-    {
-      name: 'startTime',
-      title: 'Start Time',
-      type: 'string',
-      description: 'Format: HH:MM (24-hour)',
-      validation: (Rule) => Rule.required().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-    },
-    {
-      name: 'endTime',
-      title: 'End Time',
-      type: 'string',
-      description: 'Format: HH:MM (24-hour)',
-      validation: (Rule) => Rule.required().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-    },
-    {
-      name: 'dj',
-      title: 'DJ',
-      type: 'reference',
-      to: [{ type: 'dj' }],
-      validation: (Rule) => Rule.required(),
-    },
-    {
-      name: 'showName',
-      title: 'Show Name',
-      type: 'string',
-      description: 'Optional name for the show (e.g., "Morning Drive")',
-    },
-    {
-      name: 'isActive',
-      title: 'Active',
-      type: 'boolean',
-      description: 'Whether this slot is currently active in the schedule',
-      initialValue: true,
-    },
-  ],
-}
-```
-
-### ScheduleOverride (One-off Changes)
-
-```typescript
-// studio/schemaTypes/scheduleOverride.ts
-{
-  name: 'scheduleOverride',
-  title: 'Schedule Override',
-  type: 'document',
-  fields: [
-    {
+    defineField({
       name: 'date',
       title: 'Date',
       type: 'date',
-      description: 'The specific date this override applies to',
       validation: (Rule) => Rule.required(),
-    },
-    {
+    }),
+    defineField({
       name: 'startTime',
       title: 'Start Time',
       type: 'string',
       description: 'Format: HH:MM (24-hour)',
-      validation: (Rule) => Rule.required().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-    },
-    {
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'endTime',
       title: 'End Time',
       type: 'string',
       description: 'Format: HH:MM (24-hour)',
-      validation: (Rule) => Rule.required().regex(/^([01]\d|2[0-3]):([0-5]\d)$/),
-    },
-    {
-      name: 'replacesSlot',
-      title: 'Replaces Slot',
-      type: 'reference',
-      to: [{ type: 'scheduleSlot' }],
-      description: 'The default slot this override replaces (optional)',
-    },
-    {
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'dj',
       title: 'DJ',
       type: 'reference',
       to: [{ type: 'dj' }],
-      description: 'The DJ for this override (leave empty if slot is cancelled)',
-    },
-    {
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
       name: 'note',
       title: 'Note',
       type: 'string',
-      description: 'Reason for the change (e.g., "Guest DJ: John Smith", "Holiday Schedule")',
+      description: 'Optional note (e.g., "Guest DJ", "Holiday Schedule")',
+    }),
+    defineField({
+      name: 'legacyId',
+      title: 'Legacy ID',
+      type: 'number',
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
+      name: 'migratedAt',
+      title: 'Migrated At',
+      type: 'datetime',
+      readOnly: true,
+      hidden: true,
+    }),
+  ],
+  preview: {
+    select: {
+      date: 'date',
+      startTime: 'startTime',
+      endTime: 'endTime',
+      djName: 'dj.person.name',
+      note: 'note',
     },
+    prepare(selection) {
+      const { date, startTime, endTime, djName, note } = selection;
+      const formattedDate = date
+        ? new Date(date).toLocaleDateString('en-US', {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+          })
+        : 'No date';
+      return {
+        title: `${formattedDate} ${startTime}–${endTime}`,
+        subtitle: note ? `${djName} (${note})` : djName,
+      };
+    },
+  },
+  orderings: [
     {
-      name: 'overrideType',
-      title: 'Override Type',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Substitute DJ', value: 'substitute' },
-          { title: 'Guest DJ', value: 'guest' },
-          { title: 'Cancelled', value: 'cancelled' },
-          { title: 'Special Event', value: 'special' },
-        ],
-      },
-      initialValue: 'substitute',
+      title: 'Date & Time',
+      name: 'dateTimeAsc',
+      by: [
+        { field: 'date', direction: 'asc' },
+        { field: 'startTime', direction: 'asc' },
+      ],
     },
   ],
-}
+});
 ```
 
 ### Query Pattern
 
-To get the schedule for a specific date:
-
 ```groq
-// 1. Get the day of week from the date
-// 2. Fetch default slots for that day
-// 3. Check for overrides on that specific date
-// 4. Merge results (overrides take precedence)
-
-// Fetch default slots for a specific day
-*[_type == "scheduleSlot" && dayOfWeek == $dayOfWeek && isActive] {
+// Fetch schedule for a specific date
+*[_type == "schedule" && date == $date] {
   _id,
-  startTime,
-  endTime,
-  showName,
-  dj-> { _id, person-> { name, slug, photo } }
-} | order(startTime asc)
-
-// Fetch overrides for a specific date
-*[_type == "scheduleOverride" && date == $date] {
-  _id,
+  date,
   startTime,
   endTime,
   note,
-  overrideType,
-  replacesSlot-> { _id },
   dj-> { _id, person-> { name, slug, photo } }
 } | order(startTime asc)
+
+// Fetch schedule for a date range (e.g., upcoming week)
+*[_type == "schedule" && date >= $startDate && date <= $endDate] {
+  _id,
+  date,
+  startTime,
+  endTime,
+  note,
+  dj-> { _id, person-> { name, slug, photo } }
+} | order(date asc, startTime asc)
 ```
 
-### Content Manager Workflow
+### Studio Tool: Schedule Cloner
 
-1. **Initial Setup**: Create `scheduleSlot` documents for each regular time slot (e.g., 7 slots per day × 7 days = 49 slots for a full week)
+A custom Studio tool allows content managers to quickly generate new schedule weeks by cloning an existing date range.
 
-2. **Handling Changes**:
-   - When a DJ is out sick: Create a `scheduleOverride` with `overrideType: 'substitute'` and reference the replacement DJ
-   - For guest appearances: Create a `scheduleOverride` with `overrideType: 'guest'` and add a note
-   - To cancel a slot: Create a `scheduleOverride` with `overrideType: 'cancelled'` and leave DJ empty
+**Location**: `studio/plugins/schedule-cloner/`
 
-3. **Viewing the Schedule**: The frontend queries both documents and merges them, with overrides taking precedence over defaults for matching time slots
+**Features**:
+- Select a source date range (e.g., "last week")
+- Select a target date range (e.g., "next week")
+- Preview the entries to be created
+- Clone all entries, adjusting dates accordingly
+- Option to skip entries that already exist in the target range
 
-### Alternative Approach: Single Document with Date Range
+**UI Workflow**:
+1. Content manager opens the "Schedule Cloner" tool
+2. Selects source week (e.g., Mon Dec 2 – Sun Dec 8)
+3. Selects target week (e.g., Mon Dec 9 – Sun Dec 15)
+4. Reviews the preview of cloned entries
+5. Clicks "Clone Schedule" to create the new entries
+6. Makes individual edits as needed for DJ changes
 
-For simpler needs, an alternative is to use a single `scheduleEntry` document type with optional date fields:
-
-```typescript
-{
-  name: 'scheduleEntry',
-  fields: [
-    { name: 'dj', type: 'reference', to: [{ type: 'dj' }] },
-    { name: 'startTime', type: 'string' },
-    { name: 'endTime', type: 'string' },
-    { name: 'dayOfWeek', type: 'string' },  // For recurring
-    { name: 'specificDate', type: 'date' }, // For one-off
-    { name: 'isRecurring', type: 'boolean' },
-    { name: 'note', type: 'string' },
-  ],
-}
-```
-
-However, the two-document approach (ScheduleSlot + ScheduleOverride) is recommended because:
-- Clearer separation of concerns
-- Easier to audit/review schedule changes
-- Better support for the "what's different this week?" use case
-- Prevents accidental modification of the master schedule
+This approach keeps the data model simple (one document type) while providing a convenient workflow for the common task of generating next week's schedule.
