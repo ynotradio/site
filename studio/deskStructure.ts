@@ -1,5 +1,6 @@
 import { StructureBuilder } from 'sanity/structure';
 import DJOrderTool from './plugins/dj-order';
+import ShowClonerTool from './plugins/show-cloner';
 
 export default (S: StructureBuilder) => S.list()
   .title('Content')
@@ -33,11 +34,40 @@ export default (S: StructureBuilder) => S.list()
           ]),
       ),
 
+    // Schedule management section
+    S.listItem()
+      .title('Schedule')
+      .child(
+        S.list()
+          .title('Schedule Management')
+          .items([
+            // Regular list of shows
+            S.listItem()
+              .title('All Shows')
+              .child(
+                S.documentList()
+                  .title('All Shows')
+                  .filter('_type == "show"')
+                  .defaultOrdering([{ field: 'date', direction: 'desc' }, { field: 'startTime', direction: 'asc' }]),
+              ),
+
+            // Link to our cloner tool
+            S.listItem()
+              .title('Clone Schedule')
+              .icon(() => '📋')
+              .child(
+                S.component()
+                  .title('Clone Schedule')
+                  .component(ShowClonerTool),
+              ),
+          ]),
+      ),
+
     // All other document types
     ...S.documentTypeListItems().filter(
       (listItem) => {
         const id = listItem.getId();
-        return id ? !['dj'].includes(id) : true;
+        return id ? !['dj', 'show'].includes(id) : true;
       },
     ),
   ]);

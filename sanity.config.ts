@@ -4,7 +4,8 @@ import { visionTool } from '@sanity/vision';
 import schemaTypes from './studio/schemaTypes';
 import deskStructure from './studio/deskStructure';
 import DJOrderTool from './studio/plugins/dj-order';
-import { DJ_ORDER_TOOL_NAME } from './studio/constants';
+import ShowClonerTool from './studio/plugins/show-cloner';
+import { DJ_ORDER_TOOL_NAME, SHOW_CLONER_TOOL_NAME } from './studio/constants';
 
 export default defineConfig({
   name: 'default',
@@ -27,6 +28,12 @@ export default defineConfig({
       title: 'DJ Order',
       icon: () => '🎧',
       component: DJOrderTool,
+    },
+    {
+      name: SHOW_CLONER_TOOL_NAME,
+      title: 'Show Cloner',
+      icon: () => '📋',
+      component: ShowClonerTool,
     },
   ],
 
