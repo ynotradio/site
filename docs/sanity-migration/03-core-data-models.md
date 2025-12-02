@@ -16,7 +16,7 @@
 | 6 | Concert | ✅ Done | Schema exists at `studio/schemaTypes/concert.ts` |
 | 7 | Song | ✅ Done | Schema exists at `studio/schemaTypes/song.ts`. See [Music / Song Model](#music--song-model) section below |
 | 8 | CdOfTheWeek | ✅ Done | Schema exists at `studio/schemaTypes/cdOfTheWeek.ts`, references Record |
-| 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |
+| 9 | OnDemand | ✅ Done | Schema exists at `studio/schemaTypes/onDemand.ts`, references Artist |
 | 10 | Show | 🔲 Todo | References DJ, forms the schedule |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
 | — | Content Block | ⏸️ Later | Unified Story + CustomText model (deferred) |

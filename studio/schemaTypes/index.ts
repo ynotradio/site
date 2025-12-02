@@ -7,6 +7,7 @@ import concert from './concert';
 import record from './record';
 import song from './song';
 import cdOfTheWeek from './cdOfTheWeek';
+import onDemand from './onDemand';
 import show from './show';
 
 const schemaTypes = [
@@ -19,6 +20,7 @@ const schemaTypes = [
   record,
   song,
   cdOfTheWeek,
+  onDemand,
   show,
 ];
 
