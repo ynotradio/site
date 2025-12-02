@@ -17,7 +17,7 @@
 | 7 | Music | 🔲 Todo | References Artist |
 | 8 | CdOfTheWeek | 🔲 Todo | References Artist, has review text |
 | 9 | OnDemand | 🔲 Todo | Audio content, references Artist or DJ |
-| 10 | Schedule | 🔲 Todo | References DJ |
+| 10 | Show | 🔲 Todo | References DJ, forms the schedule |
 | — | Content Block | ⏸️ Later | Unified Story + CustomText model (deferred) |
 | — | Top11 | ⏸️ Later | Weekly chart, references Artist (deferred) |
 | — | MRM Config | ⏸️ Later | Singleton for tournament settings (deferred) |
@@ -39,7 +39,7 @@ Artist ←─┬── Concert (+ Venue)          │         │
          ├── CdOfTheWeek               │         │
          └── OnDemand ─────────────────┤         │
                                         │         │
-Schedule ───────────────────────────────┘         │
+Show ───────────────────────────────────┘         │
 ```
 
 ---
@@ -56,26 +56,26 @@ Schedule ───────────────────────�
 
 ---
 
-## Schedule Model Design
+## Show Model Design
 
 ### Overview
 
-The Schedule model stores individual schedule entries for specific dates. Content managers maintain the schedule by:
+The Show model stores individual show entries for specific dates. Together, these shows comprise the station's schedule. Content managers maintain the schedule by:
 
-1. Editing individual entries directly when changes occur
+1. Editing individual shows directly when changes occur
 2. Using a Studio tool to clone a date range when generating new weeks
 
 This approach keeps the data model simple while providing a convenient workflow for schedule management.
 
-### Schedule Schema
+### Show Schema
 
 ```typescript
-// studio/schemaTypes/schedule.ts
+// studio/schemaTypes/show.ts
 import { defineType, defineField } from 'sanity';
 
 export default defineType({
-  name: 'schedule',
-  title: 'Schedule',
+  name: 'show',
+  title: 'Show',
   type: 'document',
   fields: [
     defineField({
@@ -165,8 +165,8 @@ export default defineType({
 ### Query Pattern
 
 ```groq
-// Fetch schedule for a specific date
-*[_type == "schedule" && date == $date] {
+// Fetch shows for a specific date (the day's schedule)
+*[_type == "show" && date == $date] {
   _id,
   date,
   startTime,
@@ -175,8 +175,8 @@ export default defineType({
   dj-> { _id, person-> { name, slug, photo } }
 } | order(startTime asc)
 
-// Fetch schedule for a date range (e.g., upcoming week)
-*[_type == "schedule" && date >= $startDate && date <= $endDate] {
+// Fetch shows for a date range (e.g., upcoming week's schedule)
+*[_type == "show" && date >= $startDate && date <= $endDate] {
   _id,
   date,
   startTime,
@@ -188,23 +188,23 @@ export default defineType({
 
 ### Studio Tool: Schedule Cloner
 
-A custom Studio tool allows content managers to quickly generate new schedule weeks by cloning an existing date range.
+A custom Studio tool allows content managers to quickly generate new schedule weeks by cloning an existing date range of shows.
 
 **Location**: `studio/plugins/schedule-cloner/`
 
 **Features**:
 - Select a source date range (e.g., "last week")
 - Select a target date range (e.g., "next week")
-- Preview the entries to be created
-- Clone all entries, adjusting dates accordingly
-- Option to skip entries that already exist in the target range
+- Preview the shows to be created
+- Clone all shows, adjusting dates accordingly
+- Option to skip shows that already exist in the target range
 
 **UI Workflow**:
 1. Content manager opens the "Schedule Cloner" tool
 2. Selects source week (e.g., Mon Dec 2 – Sun Dec 8)
 3. Selects target week (e.g., Mon Dec 9 – Sun Dec 15)
-4. Reviews the preview of cloned entries
-5. Clicks "Clone Schedule" to create the new entries
+4. Reviews the preview of cloned shows
+5. Clicks "Clone Schedule" to create the new show entries
 6. Makes individual edits as needed for DJ changes
 
 This approach keeps the data model simple (one document type) while providing a convenient workflow for the common task of generating next week's schedule.
