@@ -128,7 +128,7 @@ class SqlYearEndPoll implements YearEndPoll
      */
     public function recordVoterIp(string $ip, string $pollName): bool
     {
-        $query = "INSERT INTO year_end_ips VALUES (id, ?, ?)";
+        $query = "INSERT INTO year_end_ips (ip_address, poll) VALUES (?, ?)";
         $stmt = $this->db->prepare($query);
         $stmt->bind_param('ss', $ip, $pollName);
         $result = $stmt->execute();
@@ -149,12 +149,12 @@ class SqlYearEndPoll implements YearEndPoll
 
         $query = "INSERT INTO year_end_song_votes VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($query);
-        $stmt->bind_param('ssssssssssssssssssss', 
-            $ip, 
-            $votes[0], $votes[1], $votes[2], $votes[3], $votes[4], 
-            $votes[5], $votes[6], $votes[7], $votes[8], $votes[9], 
-            $votes[10], $votes[11], $votes[12], $votes[13], $votes[14], 
-            $votes[15], $votes[16], $votes[17], $votes[18], 
+        $stmt->bind_param('sssssssssssssssssssss',
+            $ip,
+            $votes[0], $votes[1], $votes[2], $votes[3], $votes[4],
+            $votes[5], $votes[6], $votes[7], $votes[8], $votes[9],
+            $votes[10], $votes[11], $votes[12], $votes[13], $votes[14],
+            $votes[15], $votes[16], $votes[17], $votes[18],
             $lastValue
         );
         
@@ -242,6 +242,20 @@ class SqlYearEndPoll implements YearEndPoll
      */
     public function canEnterContest(string $ip): bool
     {
+        // Exception list: IPs that completed 5/6 required polls (missing only philly_artists)
+        // These users completed songs, albums, artists, new_artists, and most_anticipated_albums
+        $exceptionIps = array(
+            '104.28.55.254',
+            '17.243.232.156',
+            '173.49.2.37',
+            '174.56.173.43',
+            '70.15.42.59'
+        );
+
+        if (in_array($ip, $exceptionIps)) {
+            return true;
+        }
+
         $answer = true;
         $neededPolls = array('songs', 'albums', 'artists', 'new_artists', 'philly_artists',
             'most_anticipated_albums');
@@ -249,7 +263,7 @@ class SqlYearEndPoll implements YearEndPoll
         foreach ($neededPolls as $poll) {
             $answer = $answer && $this->hasVoted($ip, $poll);
         }
-        
+
         return $answer;
     }
 
@@ -273,18 +287,18 @@ class SqlYearEndPoll implements YearEndPoll
      */
     public function addContestant(array $contestantData, string $ip): bool
     {
-        $query = "INSERT INTO year_end_contestants VALUES (id, ?, ?, ?, ?, ?, ?, ?)";
+        $query = "INSERT INTO year_end_contestants (name, email, phone, hometown, contest, newsletter, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $this->db->prepare($query);
-        $stmt->bind_param('sssssss', 
-            $contestantData['name'], 
-            $contestantData['email'], 
-            $contestantData['phone'], 
-            $contestantData['hometown'], 
-            $contestantData['contest'], 
-            $contestantData['newsletter'], 
+        $stmt->bind_param('sssssss',
+            $contestantData['name'],
+            $contestantData['email'],
+            $contestantData['phone'],
+            $contestantData['hometown'],
+            $contestantData['contest'],
+            $contestantData['newsletter'],
             $ip
         );
-        
+
         $result = $stmt->execute();
 
         if (!$result) {
