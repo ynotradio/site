@@ -24,6 +24,7 @@
     "import:concerts": "tsx bin/migrations/importConcerts.ts",
     "import:cdotw": "tsx bin/migrations/importCdOfTheWeek.ts",
     "import:ondemand": "tsx bin/migrations/importOnDemand.ts",
+    "import:posts": "tsx bin/migrations/importPosts.ts",
     "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
