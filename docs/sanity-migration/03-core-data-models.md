@@ -17,9 +17,9 @@
 | 7 | Song | ✅ Done | Schema exists at `studio/schemaTypes/song.ts`. See [Music / Song Model](#music--song-model) section below |
 | 8 | CdOfTheWeek | ✅ Done | Schema exists at `studio/schemaTypes/cdOfTheWeek.ts`, references Record |
 | 9 | OnDemand | ✅ Done | Schema exists at `studio/schemaTypes/onDemand.ts`, references Artist |
-| 10 | Show | 🔲 Todo | References DJ, forms the schedule |
+| 10 | Show | ✅ Done | Schema exists at `studio/schemaTypes/show.ts`, references DJ |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
-| — | Content Block | ⏸️ Later | Unified Story + CustomText model (deferred) |
+| — | Post | ✅ Done | Schema exists at `studio/schemaTypes/post.ts`, unified Story + CustomText model |
 | — | Top11 | ⏸️ Later | Weekly chart, references Artist (deferred) |
 | — | MRM Config | ⏸️ Later | Singleton for tournament settings (deferred) |
 | — | MRM Match | ⏸️ Later | Tournament brackets, references Artist (deferred) |
