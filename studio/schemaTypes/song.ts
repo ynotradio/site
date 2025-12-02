@@ -53,6 +53,13 @@ export default defineType({
       description: 'Single release date (if different from album)',
     }),
     defineField({
+      name: 'featureOnNewMusic',
+      title: 'Feature on New Music',
+      type: 'boolean',
+      description: 'When enabled, this song will appear on the New Music page',
+      initialValue: false,
+    }),
+    defineField({
       name: 'legacyId',
       title: 'Legacy ID',
       type: 'number',
