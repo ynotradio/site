@@ -63,12 +63,10 @@ if (isset($_POST['contest_form'])) {
 
     if ($allFieldsPresent) {
         // Check for duplicate entries by IP, email, and phone
-        if ($controller->hasEnteredContest($ip)) {
-            $contestError = "duplicate_ip";
-        } elseif ($controller->hasEnteredContestByEmail($contestantData['email'])) {
-            $contestError = "duplicate_email";
-        } elseif ($controller->hasEnteredContestByPhone($contestantData['phone'])) {
-            $contestError = "duplicate_phone";
+        if ($controller->hasEnteredContest($ip) ||
+            $controller->hasEnteredContestByEmail($contestantData['email']) ||
+            $controller->hasEnteredContestByPhone($contestantData['phone'])) {
+            $contestError = "duplicate_entry";
         } else {
             $contestSuccess = $controller->processContestEntry($contestantData, $ip);
         }
@@ -142,22 +140,10 @@ $isPollActive = (time() <= $poll_end_datetime);
                         Sorry! <br> Seems like you may be missing some value(s), please try again.
                     </div>
                 </div>
-            <?php elseif ($contestError === "duplicate_ip"): ?>
+            <?php elseif ($contestError === "duplicate_entry"): ?>
                 <div class="row">
                     <div class="twelve columns top-spacer_20 center error">
-                        Sorry! <br> Our records indicate that you have already entered the contest from this location.
-                    </div>
-                </div>
-            <?php elseif ($contestError === "duplicate_email"): ?>
-                <div class="row">
-                    <div class="twelve columns top-spacer_20 center error">
-                        Sorry! <br> This email address has already been used to enter the contest.
-                    </div>
-                </div>
-            <?php elseif ($contestError === "duplicate_phone"): ?>
-                <div class="row">
-                    <div class="twelve columns top-spacer_20 center error">
-                        Sorry! <br> This phone number has already been used to enter the contest.
+                        Sorry! <br> Our records indicate that you have already entered the contest.
                     </div>
                 </div>
             <?php elseif ($contestError): ?>
