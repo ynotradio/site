@@ -29,7 +29,7 @@
       "less": "always"
     }],
     "no-underscore-dangle": ["error", { 
-      "allow": ["_id", "_key", "_type"] 
+      "allow": ["_id", "_key", "_type", "_ref"] 
     }],
     "import/prefer-default-export": "off",
     "import/no-extraneous-dependencies": ["error", {

@@ -278,8 +278,38 @@ class SqlYearEndPoll implements YearEndPoll
         $stmt->execute();
         $result = $stmt->get_result();
         $info = $result->fetch_assoc();
-        
+
         return ($info && $info['ip_address'] == $ip);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasEnteredContestByEmail(string $email): bool
+    {
+        $query = "SELECT email FROM year_end_contestants WHERE LOWER(email) = LOWER(?)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $info = $result->fetch_assoc();
+
+        return ($info && isset($info['email']));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasEnteredContestByPhone(string $phone): bool
+    {
+        $query = "SELECT phone FROM year_end_contestants WHERE phone = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('s', $phone);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $info = $result->fetch_assoc();
+
+        return ($info && isset($info['phone']));
     }
 
     /**
