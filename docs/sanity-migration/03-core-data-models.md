@@ -215,7 +215,7 @@ To get the schedule for a specific date:
 // 4. Merge results (overrides take precedence)
 
 // Fetch default slots for a specific day
-*[_type == "scheduleSlot" && dayOfWeek == $dayOfWeek && isActive == true] {
+*[_type == "scheduleSlot" && dayOfWeek == $dayOfWeek && isActive] {
   _id,
   startTime,
   endTime,
