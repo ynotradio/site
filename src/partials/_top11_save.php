@@ -75,7 +75,10 @@ if (!empty($errors)) {
 try {
     if ($useAuthVoting) {
         // Auth voting mode: record user vote to prevent duplicates
-        $top11Model->recordUserVote($voter_email, $auth0_id);
+        $voteRecorded = $top11Model->recordUserVote($voter_email, $auth0_id);
+        if (!$voteRecorded) {
+            throw new \Exception("Failed to record user vote - please try again");
+        }
     }
     
     // Save contestant info if provided (both modes use the same logic now)

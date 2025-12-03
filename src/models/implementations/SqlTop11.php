@@ -405,19 +405,27 @@ class SqlTop11 implements Top11
     {
         try {
             $currentPeriod = $this->getCurrentVotingWeek();
-            
+
             $query = "INSERT INTO top11_user_votes (user_email, voting_period, user_auth0_id) VALUES (?, ?, ?)";
             $stmt = $this->db->prepare($query);
-            
+
             if (!$stmt) {
                 // Table likely doesn't exist yet, return false
                 error_log("Error preparing user vote record: " . $this->db->error);
                 return false;
             }
-            
+
             $stmt->bind_param("sss", $userEmail, $currentPeriod, $auth0Id);
-            
-            return $stmt->execute();
+
+            $result = $stmt->execute();
+
+            // Check for duplicate entry error (MySQL error code 1062)
+            if (!$result && $stmt->errno === 1062) {
+                error_log("Duplicate vote attempt detected for user: " . $userEmail . " in period: " . $currentPeriod);
+                return false;
+            }
+
+            return $result;
         } catch (\Exception $e) {
             error_log("Error recording user vote: " . $e->getMessage());
             return false;
@@ -429,8 +437,18 @@ class SqlTop11 implements Top11
      */
     public function getCurrentVotingWeek(): string
     {
-        // Return a consistent identifier for the current voting period
-        // This will remain the same until manually reset by admin
-        return 'current';
+        // Use the Top 11 date (placement = 99) as the voting period identifier
+        // When admins update this date for a new week, it creates a new voting period
+        $query = "SELECT artist FROM top11 WHERE placement = 99";
+        $result = $this->db->query($query);
+
+        if (!$result) {
+            // Fallback to 'current' if we can't get the date
+            error_log("Error retrieving voting period date: " . $this->db->error);
+            return 'current';
+        }
+
+        $row = $result->fetch_assoc();
+        return $row['artist'] ?? 'current';
     }
 }
