@@ -14,7 +14,7 @@ use YNotRadio\Models\ConcertFactory;
 <div class="row">
   <div class="nine columns content">
     <h1>Concerts</h1>
-    <?php 
+    <?php
     $concertModel = ConcertFactory::create(open_db());
     $upcomingConcerts = $concertModel->getUpcoming();
     
