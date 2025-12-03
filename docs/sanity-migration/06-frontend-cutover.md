@@ -62,12 +62,67 @@ Phase C (Cutover)
 
 ## Feature Flag Implementation
 
-```php
-// src/partials/.env
-SANITY_READ_ENABLED=false
+The feature flag system uses the `FeatureFlags` utility class introduced in PR #63. This utility supports multiple detection methods (cookies, URL parameters, IP addresses) and enables granular control over feature rollouts.
 
-// src/functions/sanity_fns.php
-function is_sanity_enabled(): bool {
-    return getenv('SANITY_READ_ENABLED') === 'true';
+### Basic Setup
+
+```php
+// Include the feature flags utility
+require_once 'lib/feature-flags.php';
+
+// Initialize with detection options
+$featureFlags = new FeatureFlags([
+    'cookie' => 'FF',      // Cookie name to check
+    'uriParam' => 'ff'     // URL parameter to check (e.g., ?ff=sanity)
+]);
+```
+
+### Checking Flags
+
+```php
+// Check if the 'sanity' flag is enabled
+if ($featureFlags->hasFlag('sanity')) {
+    // Read from Sanity
+    $data = fetch_from_sanity($query);
+} else {
+    // Read from MySQL (legacy)
+    $data = fetch_from_mysql($query);
 }
 ```
+
+### Enabling Flags
+
+Flags can be enabled via:
+
+1. **URL Parameter**: Add `?ff=sanity` to any page URL
+2. **Cookie**: Set a cookie named `FF` with value `sanity`
+3. **Multiple Flags**: Use comma-separated values: `?ff=sanity,auth_voting`
+
+### Example: Migrating a Page
+
+```php
+// deejays.php
+require_once 'lib/feature-flags.php';
+require_once 'functions/sanity_fns.php';
+
+$featureFlags = new FeatureFlags([
+    'cookie' => 'FF',
+    'uriParam' => 'ff'
+]);
+
+if ($featureFlags->hasFlag('sanity')) {
+    // Fetch DJs from Sanity
+    $deejays = sanity_fetch_deejays();
+} else {
+    // Fetch DJs from MySQL
+    $deejays = mysql_fetch_deejays();
+}
+
+// Render page using $deejays data
+```
+
+### Testing Strategy
+
+1. **Developer Testing**: Use `?ff=sanity` URL parameter during development
+2. **Staging**: Set FF cookie for all testers
+3. **Gradual Rollout**: Enable for specific users or IP addresses before full cutover
