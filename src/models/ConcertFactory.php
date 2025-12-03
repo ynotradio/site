@@ -15,7 +15,7 @@ use YNotRadio\Models\Implementations\SanityConcert;
 class ConcertFactory {
     public static function create($db) {
         if (FeatureManager::isEnabled('sanity')) {
-            return new SanityConcert($db);
+            return new SanityConcert();
         }
         return new SqlConcert($db);
     }
