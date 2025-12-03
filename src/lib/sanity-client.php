@@ -14,20 +14,27 @@ class SanityClient {
     /**
      * Initialize Sanity client
      *
-     * @param string $projectId Sanity project ID (default: 'otcmx0q6')
+     * @param string $projectId Sanity project ID (default: getenv('SANITY_PROJECT_ID') or 'otcmx0q6')
      * @param string $dataset Dataset name (default: 'production')
-     * @param string $apiVersion API version (default: '2024-01-01')
+     * @param string $apiVersion API version (default: getenv('SANITY_API_VERSION') or '2024-01-01')
      * @param bool $useCdn Whether to use CDN (default: true)
+     *
+     * The default API version '2024-01-01' was chosen based on the date this integration was developed.
+     * To use a different version, set the SANITY_API_VERSION environment variable or pass the desired version to the constructor.
      */
     public function __construct(
-        $projectId = 'otcmx0q6',
+        $projectId = null,
         $dataset = 'production',
-        $apiVersion = '2024-01-01',
+        $apiVersion = null,
         $useCdn = true
     ) {
+        // Load projectId from environment variable if not provided
+        if ($projectId === null) {
+            $projectId = getenv('SANITY_PROJECT_ID') ?: 'otcmx0q6';
+        }
         $this->projectId = $projectId;
         $this->dataset = $dataset;
-        $this->apiVersion = $apiVersion;
+        $this->apiVersion = $apiVersion ?? getenv('SANITY_API_VERSION') ?: '2024-01-01';
         $this->useCdn = $useCdn;
     }
 
@@ -58,6 +65,8 @@ class SanityClient {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

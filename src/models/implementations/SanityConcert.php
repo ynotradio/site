@@ -3,16 +3,13 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Concert;
-use mysqli;
 
 require_once __DIR__ . '/../../lib/sanity-client.php';
 
 class SanityConcert implements Concert {
-    private mysqli $db;
     private \SanityClient $sanityClient;
 
-    public function __construct(mysqli $db) {
-        $this->db = $db;
+    public function __construct() {
         $this->sanityClient = new \SanityClient();
     }
 
@@ -175,7 +172,7 @@ class SanityConcert implements Concert {
             'date' => $concert['date'],
             'artist' => $concert['artist'] ?? '',
             'band_url' => $concert['artist_url'] ?? '',
-            'band_pic_url' => $bandPicUrl ?: 'imgs/na.jpg',
+            'band_pic_url' => $bandPicUrl,
             'venue' => $concert['venue'] ?? '',
             'venue_url' => $concert['venue_url'] ?? '',
             'ticketinfo' => $concert['ticketInfo'] ?? '',
