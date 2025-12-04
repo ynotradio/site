@@ -42,10 +42,13 @@ CREATE INDEX idx_votes_ip ON votes(ip_address);
 CREATE INDEX idx_votes_user ON votes(user_id);
 
 -- Unique constraints for duplicate prevention
+-- MRM: One vote per user per matchup
 CREATE UNIQUE INDEX idx_votes_mrm_unique 
     ON votes(user_id, sanity_matchup_id) 
     WHERE sanity_matchup_id IS NOT NULL;
 
+-- Year End Poll: One vote per user per category per option (including write-ins)
+-- COALESCE allows both option_id votes and write-in votes to be uniquely constrained
 CREATE UNIQUE INDEX idx_votes_yep_unique 
     ON votes(user_id, sanity_contest_id, sanity_category_id, COALESCE(sanity_option_id, write_in_value)) 
     WHERE sanity_category_id IS NOT NULL;
@@ -92,6 +95,9 @@ BEGIN
         v.sanity_option_id,
         v.sanity_category_id,
         COUNT(*) as total_votes,
+        -- Weighted scoring for ranked votes: #1 = 11 points, #2 = 10 points, ... #11 = 1 point
+        -- The value 12 assumes maxSelections=11 (default for Top 11). For contests with 
+        -- different maxSelections, calculate as (maxSelections + 1 - rank)
         SUM(CASE WHEN v.rank IS NOT NULL THEN (12 - v.rank) ELSE 1 END) as weighted_score
     FROM votes v
     WHERE v.sanity_contest_id = p_contest_id AND v.is_write_in = FALSE
