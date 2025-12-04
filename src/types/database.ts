@@ -20,19 +20,19 @@ export interface User {
 /**
  * Vote record for any contest type
  * The specific foreign key fields used depend on the contest type:
- * - Top 11: sanity_contest_id + sanity_option_id + rank
- * - Year End Poll: sanity_contest_id + sanity_category_id + sanity_option_id + rank
- * - MRM: sanity_matchup_id
+ * - Top 11: contest_sanity_id + sanity_option_id + top_11_rank
+ * - Year End Poll: contest_sanity_id + year_end_poll_category_sanity_id + sanity_option_id
+ * - MRM: modern_rock_madness_matchup_sanity_id
  */
 export interface Vote {
   id: string;
   user_id?: string;
-  ip_address: string;
-  sanity_contest_id: string;
+  contest_type: 'top11' | 'year_end_poll' | 'mrm';
+  contest_sanity_id: string;
   sanity_option_id?: string;
-  sanity_category_id?: string;
-  sanity_matchup_id?: string;
-  rank?: number;
+  year_end_poll_category_sanity_id?: string;
+  modern_rock_madness_matchup_sanity_id?: string;
+  top_11_rank?: number;
   is_write_in: boolean;
   write_in_value?: string;
   submitted_at: Date;
@@ -45,7 +45,7 @@ export interface Vote {
 export interface ContestEntry {
   id: string;
   user_id?: string;
-  sanity_contest_id: string;
+  contest_sanity_id: string;
   first_name: string;
   last_name: string;
   email: string;
@@ -53,14 +53,13 @@ export interface ContestEntry {
   hometown?: string;
   newsletter_opt_in: boolean;
   display: boolean;
-  ip_address?: string;
   submitted_at: Date;
 }
 
 /**
  * Contest type discriminator
  */
-export type ContestType = 'top11' | 'yearEndPoll' | 'mrm';
+export type ContestType = 'top11' | 'year_end_poll' | 'mrm';
 
 /**
  * Contest status values (matches Sanity schema enums)
@@ -72,7 +71,7 @@ export type ContestStatus = 'draft' | 'open' | 'closed' | 'archived' | 'active' 
  */
 export interface VoteCount {
   sanity_option_id?: string;
-  sanity_category_id?: string;
+  year_end_poll_category_sanity_id?: string;
   total_votes: number;
   weighted_score: number;
 }

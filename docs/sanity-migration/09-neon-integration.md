@@ -108,12 +108,12 @@ Individual votes for all contest types.
 |--------|------|-------------|
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Foreign key to users (nullable) |
-| `ip_address` | VARCHAR(45) | Voter IP address |
-| `sanity_contest_id` | VARCHAR(255) | Sanity contest document ID |
-| `sanity_option_id` | VARCHAR(255) | Sanity option document ID |
-| `sanity_category_id` | VARCHAR(255) | Year End Poll category ID |
-| `sanity_matchup_id` | VARCHAR(255) | MRM match ID |
-| `rank` | INTEGER | Ranked choice position (Top 11, YEP) |
+| `contest_type` | VARCHAR(50) | Contest type enum ('top11', 'year_end_poll', 'mrm') |
+| `contest_sanity_id` | VARCHAR(255) | Sanity contest document ID |
+| `sanity_option_id` | VARCHAR(255) | Sanity option document ID (song/record/artist) |
+| `year_end_poll_category_sanity_id` | VARCHAR(255) | Year End Poll category ID |
+| `modern_rock_madness_matchup_sanity_id` | VARCHAR(255) | MRM match ID |
+| `top_11_rank` | INTEGER | Ranked choice position (Top 11) |
 | `is_write_in` | BOOLEAN | Is this a write-in vote? |
 | `write_in_value` | TEXT | Write-in text (if applicable) |
 | `submitted_at` | TIMESTAMP | Vote submission time |
@@ -129,7 +129,7 @@ Contest entries for prize drawings.
 |--------|------|-------------|
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Foreign key to users (nullable) |
-| `sanity_contest_id` | VARCHAR(255) | Sanity contest document ID |
+| `contest_sanity_id` | VARCHAR(255) | Sanity contest document ID |
 | `first_name` | VARCHAR(64) | Entry first name |
 | `last_name` | VARCHAR(64) | Entry last name |
 | `email` | VARCHAR(255) | Entry email |
@@ -137,7 +137,6 @@ Contest entries for prize drawings.
 | `hometown` | VARCHAR(64) | Entry hometown |
 | `newsletter_opt_in` | BOOLEAN | Newsletter opt-in |
 | `display` | BOOLEAN | Include in winner pool |
-| `ip_address` | VARCHAR(45) | Entry IP address |
 | `submitted_at` | TIMESTAMP | Entry submission time |
 
 **Unique constraint:** One entry per email per contest.
@@ -151,19 +150,19 @@ Randomly selects a winner from eligible contest entries.
 
 **Usage:**
 ```sql
-SELECT * FROM pick_winner('top11-2025-week-23');
+SELECT * FROM pick_winner('top11-2025-11-20');
 ```
 
 #### `get_vote_counts(p_contest_id VARCHAR)`
 Aggregates vote counts and weighted scores for a contest.
 
-**Returns:** `sanity_option_id`, `sanity_category_id`, `total_votes`, `weighted_score`
+**Returns:** `sanity_option_id`, `year_end_poll_category_sanity_id`, `total_votes`, `weighted_score`
 
-**Weighted scoring:** For ranked votes, score = (12 - rank). #1 choice = 11 points, #11 choice = 1 point.
+**Weighted scoring:** For ranked votes, score = (12 - top_11_rank). #1 choice = 11 points, #11 choice = 1 point.
 
 **Usage:**
 ```sql
-SELECT * FROM get_vote_counts('top11-2025-week-23') ORDER BY weighted_score DESC;
+SELECT * FROM get_vote_counts('top11-2025-11-20') ORDER BY weighted_score DESC;
 ```
 
 #### `get_write_ins(p_contest_id VARCHAR)`
@@ -337,7 +336,6 @@ async function submitVote(
   sql: postgres.Sql,
   contestId: string,
   userId: string,
-  ipAddress: string,
   votes: Array<{ optionId: string; rank?: number }>
 ) {
   // 1. Fetch contest configuration from Sanity
@@ -364,10 +362,15 @@ async function submitVote(
     throw new Error(`Maximum ${MAX_SELECTIONS} votes allowed`);
   }
 
-  // 4. Insert votes into Neon
+  // 4. Determine contest type from ID prefix
+  const contestType = contestId.startsWith('top11') ? 'top11' 
+    : contestId.startsWith('yearendpoll') ? 'year_end_poll'
+    : 'mrm';
+
+  // 5. Insert votes into Neon
   await sql`
-    INSERT INTO votes (user_id, ip_address, sanity_contest_id, sanity_option_id, rank)
-    SELECT ${userId}, ${ipAddress}, ${contestId}, optionId, rank
+    INSERT INTO votes (user_id, contest_type, contest_sanity_id, sanity_option_id, top_11_rank)
+    SELECT ${userId}, ${contestType}, ${contestId}, optionId, rank
     FROM json_populate_recordset(null::record, ${JSON.stringify(votes)})
   `;
 }
@@ -408,24 +411,24 @@ async function pickContestWinner(sql: postgres.Sql, contestId: string) {
 The schema includes indexes for common query patterns:
 - Vote lookups by contest, option, category, matchup
 - User vote history
-- IP address tracking for duplicate prevention
+- Contest type filtering
 - Winner pool filtering (`display = TRUE`)
 
 ### Query Optimization
 
 For large result sets:
 ```sql
--- Efficient Top 11 results (uses index on sanity_contest_id + sanity_option_id)
+-- Efficient Top 11 results (uses index on contest_sanity_id + sanity_option_id)
 SELECT sanity_option_id, COUNT(*) as votes
 FROM votes
-WHERE sanity_contest_id = 'top11-2025-week-23'
+WHERE contest_sanity_id = 'top11-2025-11-20'
   AND is_write_in = false
 GROUP BY sanity_option_id;
 
--- Efficient MRM matchup results (uses index on sanity_matchup_id)
+-- Efficient MRM matchup results (uses index on modern_rock_madness_matchup_sanity_id)
 SELECT sanity_option_id as band_id, COUNT(*) as votes
 FROM votes
-WHERE sanity_matchup_id = 'mrm-2025-match-42'
+WHERE modern_rock_madness_matchup_sanity_id = 'mrm-2025-match-42'
 GROUP BY sanity_option_id;
 ```
 
@@ -445,12 +448,12 @@ const sql = postgres(process.env.NEON_DATABASE_URL!, {
 
 ## Security Considerations
 
-### IP Address Storage
+### User Authentication
 
-IP addresses are stored for duplicate vote prevention. Consider:
-- Data retention policies (GDPR compliance)
-- Anonymization after contest closes
-- Rate limiting based on IP address
+Duplicate vote prevention relies on authenticated user accounts:
+- Require user login for voting
+- User ID (not IP address) is the primary duplicate prevention mechanism
+- Unique constraints in database enforce one vote per user per contest/matchup/category
 
 ### PII Protection
 
@@ -463,9 +466,8 @@ Contest entry data contains PII:
 ### Vote Integrity
 
 Prevent duplicate votes:
-- Unique constraints in database
-- IP address tracking
-- User account verification (optional)
+- Unique constraints in database based on user_id
+- User account verification required
 - Rate limiting on submission endpoints
 
 ---
