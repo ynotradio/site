@@ -17,6 +17,7 @@
 | [06 - Frontend Cutover Strategy](./06-frontend-cutover.md) | Feature flag testing, incremental migration, full cutover |
 | [07 - Success Criteria](./07-success-criteria.md) | Per-model checklist and project completion criteria |
 | [08 - Quick Reference](./08-quick-reference.md) | Commands, GROQ queries, migration report template |
+| [09 - Neon Integration](./09-neon-integration.md) | Hybrid Sanity + Neon architecture for contests |
 
 ---
 

@@ -391,3 +391,119 @@ Before cutting over, the PHP site needs to read from Sanity behind a feature fla
 - [ ] Feature flag can be toggled via config
 - [ ] Page renders correctly from both sources
 - [ ] No visual difference between MySQL and Sanity data
+
+---
+
+## Task 12: Create Top 11 Contest Schemas
+
+**Status:** 🔲 Not Started  
+**Depends On:** Task 1 (Artist Schema), Song Schema  
+**Estimated Effort:** Medium
+
+**Context:**
+The Top 11 is a weekly countdown contest where users vote for their favorite songs. This uses a hybrid architecture: Sanity stores contest configuration (songs, dates, rules) while Neon PostgreSQL stores high-volume voting data.
+
+**Sanity Schemas:**
+1. Create `studio/schemaTypes/top11Contest.ts`:
+   - `title`, `slug`, `weekNumber`, `year`
+   - `votingOpensAt`, `votingClosesAt` (datetime)
+   - `maxSelections` (number, default: 11)
+   - `allowWriteIns` (boolean, default: true)
+   - `songs` (array of references to Song documents)
+   - `contestPrize` (string)
+   - `status` ('draft' | 'open' | 'closed' | 'archived')
+   - Document ID format: `top11-{year}-week-{weekNumber}`
+
+2. Create `studio/schemaTypes/top11Result.ts`:
+   - `contest` (reference to top11Contest)
+   - `placements` (array of objects with rank, song reference, artist reference, note)
+   - `publishedAt` (datetime)
+
+**Files to Modify:**
+- `studio/schemaTypes/top11Contest.ts` (create)
+- `studio/schemaTypes/top11Result.ts` (create)
+- `studio/schemaTypes/index.ts` (update)
+
+**Acceptance Criteria:**
+- [ ] Schemas compile without errors
+- [ ] Can create/edit contests in Sanity Studio
+- [ ] Song references work correctly
+- [ ] Published results display correctly
+
+---
+
+## Task 13: Create Year End Poll Schemas
+
+**Status:** 🔲 Not Started  
+**Depends On:** Task 1 (Artist Schema), Song Schema, Record Schema, Concert Schema  
+**Estimated Effort:** Large
+
+**Context:**
+The Year End Poll is an annual poll with multiple categories (Best Album, Best Song, etc.). Each category can reference different types of content (songs, albums, artists, concerts) or allow freeform write-ins.
+
+**Sanity Schemas:**
+1. Create `studio/schemaTypes/yearEndPoll.ts`:
+   - `title`, `year`
+   - `votingOpensAt`, `votingClosesAt`
+   - `contestPrize`, `status`
+   - Document ID format: `yep-{year}`
+
+2. Create `studio/schemaTypes/yearEndPollCategory.ts`:
+   - `poll` (reference to yearEndPoll)
+   - `name`, `slug`
+   - `categoryType` ('songs' | 'records' | 'artists' | 'concerts' | 'freeform')
+   - `displayOrder`, `maxSelections`, `allowWriteIns`
+   - `options` (array - structure varies by categoryType)
+   - Document ID format: `yep-{year}-{categorySlug}`
+
+**Files to Modify:**
+- `studio/schemaTypes/yearEndPoll.ts` (create)
+- `studio/schemaTypes/yearEndPollCategory.ts` (create)
+- `studio/schemaTypes/index.ts` (update)
+
+**Acceptance Criteria:**
+- [ ] Schemas compile without errors
+- [ ] Can create polls with multiple categories
+- [ ] Different category types work correctly
+- [ ] Options reference correct document types
+
+---
+
+## Task 14: Create Modern Rock Madness Schemas
+
+**Status:** 🔲 Not Started  
+**Depends On:** Task 1 (Artist Schema)  
+**Estimated Effort:** Medium
+
+**Context:**
+Modern Rock Madness is an annual tournament-style bracket competition where bands compete in head-to-head matchups. The tournament configuration and bracket structure live in Sanity, while votes are stored in Neon.
+
+**Sanity Schemas:**
+1. Create `studio/schemaTypes/mrmTournament.ts`:
+   - `title`, `year`, `status`
+   - `rounds` (array with roundNumber, name, startsAt, endsAt)
+   - Document ID format: `mrm-{year}`
+
+2. Create `studio/schemaTypes/mrmBand.ts`:
+   - `tournament` (reference to mrmTournament)
+   - `artist` (reference to Artist)
+   - `seed`, `region`, `placement`, `sponsor`, `abbreviation`
+
+3. Create `studio/schemaTypes/mrmMatch.ts`:
+   - `tournament`, `matchNumber`, `round`, `region`
+   - `band1`, `band2`, `winner` (references to mrmBand)
+   - `startsAt`, `endsAt`, `showScore`
+   - `sponsor`, `sponsorMessage`
+   - Document ID format: `mrm-{year}-match-{matchNumber}`
+
+**Files to Modify:**
+- `studio/schemaTypes/mrmTournament.ts` (create)
+- `studio/schemaTypes/mrmBand.ts` (create)
+- `studio/schemaTypes/mrmMatch.ts` (create)
+- `studio/schemaTypes/index.ts` (update)
+
+**Acceptance Criteria:**
+- [ ] Schemas compile without errors
+- [ ] Can create tournament brackets
+- [ ] Band references work correctly
+- [ ] Match relationships display properly

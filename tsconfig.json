@@ -24,6 +24,7 @@
     "studio/**/*.tsx",
     "bin/**/*.ts",
     "test/**/*.ts",
+    "src/types/**/*.ts",
     "sanity.cli.ts",
     "sanity.config.ts",
     "vitest.config.ts"
