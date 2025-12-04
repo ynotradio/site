@@ -185,13 +185,18 @@ SELECT * FROM get_write_ins('yep-2025') WHERE count >= 5;
 #### Top 11 Contest
 Weekly song countdown contest.
 
-**Document ID format:** `top11-{year}-week-{weekNumber}`
+**Document ID format:** `top11-{year}-{month}-{date}` (e.g., `top11-2025-11-20`)
 
 **Key fields:**
+- `date` - Contest date
 - `songs` - Array of Song references
 - `votingOpensAt`, `votingClosesAt` - Voting window
-- `maxSelections` - Default: 11
-- `allowWriteIns` - Boolean
+- `summary` - Portable text for description, links, and embeds
+- `status` - Contest status
+
+**Fixed values:**
+- Max selections: Always 11 (enforced in application)
+- Write-ins: Always allowed
 
 #### Top 11 Result
 Published weekly results.
@@ -338,7 +343,7 @@ async function submitVote(
   // 1. Fetch contest configuration from Sanity
   const contest = await sanity.fetch(
     `*[_id == $contestId][0]{ 
-      _type, status, votingOpensAt, votingClosesAt, maxSelections 
+      _type, status, votingOpensAt, votingClosesAt
     }`,
     { contestId }
   );
@@ -353,9 +358,10 @@ async function submitVote(
     throw new Error('Outside voting window');
   }
 
-  // 3. Validate vote count
-  if (votes.length > contest.maxSelections) {
-    throw new Error(`Maximum ${contest.maxSelections} votes allowed`);
+  // 3. Validate vote count (Top 11 always allows 11 selections)
+  const MAX_SELECTIONS = 11;
+  if (votes.length > MAX_SELECTIONS) {
+    throw new Error(`Maximum ${MAX_SELECTIONS} votes allowed`);
   }
 
   // 4. Insert votes into Neon

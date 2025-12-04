@@ -5,6 +5,10 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  *
  * Weekly Top 11 contest configuration managed by staff.
  * Votes and entries are stored in Neon PostgreSQL.
+ *
+ * Document ID format: top11-{year}-{month}-{date} (e.g., top11-2025-11-20)
+ * Max selections: Always 11 (hard-coded)
+ * Write-ins: Always allowed
  */
 export default defineType({
   name: 'top11Contest',
@@ -29,17 +33,11 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'weekNumber',
-      title: 'Week Number',
-      type: 'number',
-      description: 'Week number of the year (1-52)',
-      validation: (Rule) => Rule.required().min(1).max(52),
-    }),
-    defineField({
-      name: 'year',
-      title: 'Year',
-      type: 'number',
-      validation: (Rule) => Rule.required().min(2000).max(2100),
+      name: 'date',
+      title: 'Contest Date',
+      type: 'date',
+      description: 'Date of the contest (used in document ID: top11-YYYY-MM-DD)',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'votingOpensAt',
@@ -53,21 +51,7 @@ export default defineType({
       type: 'datetime',
       validation: (Rule) => Rule.required(),
     }),
-    defineField({
-      name: 'maxSelections',
-      title: 'Max Selections',
-      type: 'number',
-      description: 'Maximum number of songs a user can vote for',
-      initialValue: 11,
-      validation: (Rule) => Rule.required().min(1),
-    }),
-    defineField({
-      name: 'allowWriteIns',
-      title: 'Allow Write-Ins',
-      type: 'boolean',
-      description: 'Allow users to submit write-in votes',
-      initialValue: true,
-    }),
+
     defineField({
       name: 'songs',
       title: 'Songs',
@@ -82,10 +66,11 @@ export default defineType({
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
-      name: 'contestPrize',
-      title: 'Contest Prize',
-      type: 'string',
-      description: 'Description of the prize for contest entries',
+      name: 'summary',
+      title: 'Summary',
+      type: 'array',
+      description: 'Summary text with links and embeds (e.g., Mixcloud player)',
+      of: [defineArrayMember({ type: 'block' })],
     }),
     defineField({
       name: 'status',
@@ -121,13 +106,12 @@ export default defineType({
   preview: {
     select: {
       title: 'title',
-      weekNumber: 'weekNumber',
-      year: 'year',
+      date: 'date',
       status: 'status',
     },
     prepare(selection) {
       const {
-        title, weekNumber, year, status,
+        title, date, status,
       } = selection;
       const statusEmoji: Record<string, string> = {
         draft: '📝',
@@ -136,9 +120,16 @@ export default defineType({
         archived: '📦',
       };
       const emoji = statusEmoji[status] || '❓';
+      const formattedDate = date
+        ? new Date(date).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })
+        : 'No date';
       return {
         title,
-        subtitle: `Week ${weekNumber}, ${year} • ${emoji} ${status}`,
+        subtitle: `${formattedDate} • ${emoji} ${status}`,
       };
     },
   },
@@ -147,8 +138,7 @@ export default defineType({
       title: 'Most Recent',
       name: 'mostRecent',
       by: [
-        { field: 'year', direction: 'desc' },
-        { field: 'weekNumber', direction: 'desc' },
+        { field: 'date', direction: 'desc' },
       ],
     },
   ],

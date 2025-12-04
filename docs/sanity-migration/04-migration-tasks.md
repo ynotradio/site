@@ -405,14 +405,14 @@ The Top 11 is a weekly countdown contest where users vote for their favorite son
 
 **Sanity Schemas:**
 1. Create `studio/schemaTypes/top11Contest.ts`:
-   - `title`, `slug`, `weekNumber`, `year`
+   - `title`, `slug`, `date` (contest date)
    - `votingOpensAt`, `votingClosesAt` (datetime)
-   - `maxSelections` (number, default: 11)
-   - `allowWriteIns` (boolean, default: true)
    - `songs` (array of references to Song documents)
-   - `contestPrize` (string)
+   - `summary` (portable text array for text, links, and Mixcloud embeds)
    - `status` ('draft' | 'open' | 'closed' | 'archived')
-   - Document ID format: `top11-{year}-week-{weekNumber}`
+   - Document ID format: `top11-{year}-{month}-{date}` (e.g., `top11-2025-11-20`)
+   - Max selections: Always 11 (hard-coded in application logic)
+   - Write-ins: Always allowed (no schema field needed)
 
 2. Create `studio/schemaTypes/top11Result.ts`:
    - `contest` (reference to top11Contest)
