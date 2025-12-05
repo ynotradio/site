@@ -391,3 +391,44 @@ Before cutting over, the PHP site needs to read from Sanity behind a feature fla
 - [ ] Feature flag can be toggled via config
 - [ ] Page renders correctly from both sources
 - [ ] No visual difference between MySQL and Sanity data
+
+---
+
+## Task 12: Create Top 11 Contest Schemas
+
+**Status:** 🔲 Not Started  
+**Depends On:** Task 1 (Artist Schema), Song Schema  
+**Estimated Effort:** Medium
+
+**Context:**
+The Top 11 is a weekly countdown contest where users vote for their favorite songs. This uses a hybrid architecture: Sanity stores contest configuration (songs, dates, rules) while Neon PostgreSQL stores high-volume voting data.
+
+**Sanity Schemas:**
+1. Create `studio/schemaTypes/top11Contest.ts`:
+   - `title`, `slug`, `date` (contest date)
+   - `votingOpensAt`, `votingClosesAt` (datetime)
+   - `songs` (array of references to Song documents)
+   - `summary` (portable text array for text, links, and Mixcloud embeds)
+   - `status` ('draft' | 'open' | 'closed' | 'archived')
+   - Document ID format: `top11-{year}-{month}-{date}` (e.g., `top11-2025-11-20`)
+   - Max selections: Always 11 (hard-coded in application logic)
+   - Write-ins: Always allowed (no schema field needed)
+
+2. Create `studio/schemaTypes/top11Result.ts`:
+   - `contest` (reference to top11Contest)
+   - `placements` (array of objects with rank, song reference, artist reference, note)
+   - `publishedAt` (datetime)
+
+**Files to Modify:**
+- `studio/schemaTypes/top11Contest.ts` (create)
+- `studio/schemaTypes/top11Result.ts` (create)
+- `studio/schemaTypes/index.ts` (update)
+
+**Acceptance Criteria:**
+- [ ] Schemas compile without errors
+- [ ] Can create/edit contests in Sanity Studio
+- [ ] Song references work correctly
+- [ ] Published results display correctly
+
+---
+

@@ -18,13 +18,10 @@
 | 8 | CdOfTheWeek | ✅ Done | Schema exists at `studio/schemaTypes/cdOfTheWeek.ts`, references Record |
 | 9 | OnDemand | ✅ Done | Schema exists at `studio/schemaTypes/onDemand.ts`, references Artist |
 | 10 | Show | ✅ Done | Schema exists at `studio/schemaTypes/show.ts`, references DJ |
+| 11 | Top11Contest | 🔲 Not Started | Weekly contest config; votes/entries → Neon |
+| 12 | Top11Result | 🔲 Not Started | Published weekly results |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
 | — | Post | ✅ Done | Schema exists at `studio/schemaTypes/post.ts`, unified Story + CustomText model |
-| — | Top11 | ⏸️ Later | Weekly chart, references Artist (deferred) |
-| — | MRM Config | ⏸️ Later | Singleton for tournament settings (deferred) |
-| — | MRM Match | ⏸️ Later | Tournament brackets, references Artist (deferred) |
-| — | YearEndStaffPick | ⏸️ Later | Staff picks content (deferred) |
-| — | YearEndPoll | ⏸️ Later | Most complex, many related tables (deferred) |
 
 ---
 

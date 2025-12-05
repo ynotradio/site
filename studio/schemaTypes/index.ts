@@ -10,6 +10,8 @@ import cdOfTheWeek from './cdOfTheWeek';
 import onDemand from './onDemand';
 import show from './show';
 import post from './post';
+import top11Contest from './top11Contest';
+import top11Result from './top11Result';
 
 const schemaTypes = [
   person,
@@ -24,6 +26,8 @@ const schemaTypes = [
   onDemand,
   show,
   post,
+  top11Contest,
+  top11Result,
 ];
 
 export default schemaTypes;
