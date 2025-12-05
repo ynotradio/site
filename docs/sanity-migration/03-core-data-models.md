@@ -20,11 +20,6 @@
 | 10 | Show | ✅ Done | Schema exists at `studio/schemaTypes/show.ts`, references DJ |
 | 11 | Top11Contest | 🔲 Not Started | Weekly contest config; votes/entries → Neon |
 | 12 | Top11Result | 🔲 Not Started | Published weekly results |
-| 13 | YearEndPoll | 🔲 Not Started | Annual poll config; votes/entries → Neon |
-| 14 | YearEndPollCategory | 🔲 Not Started | Poll categories with options |
-| 15 | MRMTournament | 🔲 Not Started | Tournament config |
-| 16 | MRMBand | 🔲 Not Started | Tournament participants |
-| 17 | MRMMatch | 🔲 Not Started | Bracket matchups; votes → Neon |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
 | — | Post | ✅ Done | Schema exists at `studio/schemaTypes/post.ts`, unified Story + CustomText model |
 
