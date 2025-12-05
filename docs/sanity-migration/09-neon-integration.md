@@ -108,9 +108,9 @@ Individual votes for all contest types.
 |--------|------|-------------|
 | `id` | UUID | Primary key |
 | `user_id` | UUID | Foreign key to users (nullable) |
-| `contest_type` | VARCHAR(50) | Contest type enum ('top11', 'year_end_poll', 'mrm') |
+| `contest_type` | VARCHAR(50) | Contest type enum ('TOP_11', 'YEAR_END_POLL', 'MODERN_ROCK_MADNESS') |
 | `contest_sanity_id` | VARCHAR(255) | Sanity contest document ID |
-| `sanity_option_id` | VARCHAR(255) | Sanity option document ID (song/record/artist) |
+| `option_sanity_id` | VARCHAR(255) | Sanity option document ID (song/record/artist) |
 | `year_end_poll_category_sanity_id` | VARCHAR(255) | Year End Poll category ID |
 | `modern_rock_madness_matchup_sanity_id` | VARCHAR(255) | MRM match ID |
 | `top_11_rank` | INTEGER | Ranked choice position (Top 11) |
@@ -156,7 +156,7 @@ SELECT * FROM pick_winner('top11-2025-11-20');
 #### `get_vote_counts(p_contest_id VARCHAR)`
 Aggregates vote counts and weighted scores for a contest.
 
-**Returns:** `sanity_option_id`, `year_end_poll_category_sanity_id`, `total_votes`, `weighted_score`
+**Returns:** `option_sanity_id`, `year_end_poll_category_sanity_id`, `total_votes`, `weighted_score`
 
 **Weighted scoring:** For ranked votes, score = (12 - top_11_rank). #1 choice = 11 points, #11 choice = 1 point.
 
@@ -208,7 +208,7 @@ Published weekly results.
 #### Year End Poll
 Annual poll configuration.
 
-**Document ID format:** `yep-{year}`
+**Document ID format:** `year-end-poll-{year}`
 
 **Key fields:**
 - `year` - Poll year
@@ -218,11 +218,11 @@ Annual poll configuration.
 #### Year End Poll Category
 Individual poll category (e.g., "Best Album").
 
-**Document ID format:** `yep-{year}-{categorySlug}`
+**Document ID format:** `year-end-poll-{year}-{categorySlug}`
 
 **Key fields:**
 - `poll` - Reference to yearEndPoll
-- `categoryType` - 'songs' | 'records' | 'artists' | 'concerts' | 'freeform'
+- `categoryType` - 'SONGS' | 'ALBUMS' | 'ARTISTS' | 'NEW_ARTISTS' | 'PHILLY_ARTISTS' | 'CONCERTS' | 'MUSIC_VIDEOS' | 'MOST_ANTICIPATED_ALBUMS' | 'BIGGEST_COMEBACKS' | 'TV_COMEDIES' | 'TV_DRAMAS' | 'LATE_NIGHT_TV' | 'BEST_MOVIES' | 'CELEBRITY_DEATHS' | 'UNNECESSARY_SEQUELS'
 - `options` - Array (structure varies by categoryType)
 - `maxSelections` - How many votes per user
 
@@ -363,13 +363,13 @@ async function submitVote(
   }
 
   // 4. Determine contest type from ID prefix
-  const contestType = contestId.startsWith('top11') ? 'top11' 
-    : contestId.startsWith('yearendpoll') ? 'year_end_poll'
-    : 'mrm';
+  const contestType = contestId.startsWith('top11') ? 'TOP_11' 
+    : contestId.startsWith('year-end-poll') ? 'YEAR_END_POLL'
+    : 'MODERN_ROCK_MADNESS';
 
   // 5. Insert votes into Neon
   await sql`
-    INSERT INTO votes (user_id, contest_type, contest_sanity_id, sanity_option_id, top_11_rank)
+    INSERT INTO votes (user_id, contest_type, contest_sanity_id, option_sanity_id, top_11_rank)
     SELECT ${userId}, ${contestType}, ${contestId}, optionId, rank
     FROM json_populate_recordset(null::record, ${JSON.stringify(votes)})
   `;
@@ -418,18 +418,18 @@ The schema includes indexes for common query patterns:
 
 For large result sets:
 ```sql
--- Efficient Top 11 results (uses index on contest_sanity_id + sanity_option_id)
-SELECT sanity_option_id, COUNT(*) as votes
+-- Efficient Top 11 results (uses index on contest_sanity_id + option_sanity_id)
+SELECT option_sanity_id, COUNT(*) as votes
 FROM votes
 WHERE contest_sanity_id = 'top11-2025-11-20'
   AND is_write_in = false
-GROUP BY sanity_option_id;
+GROUP BY option_sanity_id;
 
 -- Efficient MRM matchup results (uses index on modern_rock_madness_matchup_sanity_id)
-SELECT sanity_option_id as band_id, COUNT(*) as votes
+SELECT option_sanity_id as band_id, COUNT(*) as votes
 FROM votes
 WHERE modern_rock_madness_matchup_sanity_id = 'mrm-2025-match-42'
-GROUP BY sanity_option_id;
+GROUP BY option_sanity_id;
 ```
 
 ### Connection Pooling

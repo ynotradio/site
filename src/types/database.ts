@@ -20,16 +20,16 @@ export interface User {
 /**
  * Vote record for any contest type
  * The specific foreign key fields used depend on the contest type:
- * - Top 11: contest_sanity_id + sanity_option_id + top_11_rank
- * - Year End Poll: contest_sanity_id + year_end_poll_category_sanity_id + sanity_option_id
+ * - Top 11: contest_sanity_id + option_sanity_id + top_11_rank
+ * - Year End Poll: contest_sanity_id + year_end_poll_category_sanity_id + option_sanity_id
  * - MRM: modern_rock_madness_matchup_sanity_id
  */
 export interface Vote {
   id: string;
   user_id?: string;
-  contest_type: 'top11' | 'year_end_poll' | 'mrm';
+  contest_type: 'TOP_11' | 'YEAR_END_POLL' | 'MODERN_ROCK_MADNESS';
   contest_sanity_id: string;
-  sanity_option_id?: string;
+  option_sanity_id?: string;
   year_end_poll_category_sanity_id?: string;
   modern_rock_madness_matchup_sanity_id?: string;
   top_11_rank?: number;
@@ -59,7 +59,7 @@ export interface ContestEntry {
 /**
  * Contest type discriminator
  */
-export type ContestType = 'top11' | 'year_end_poll' | 'mrm';
+export type ContestType = 'TOP_11' | 'YEAR_END_POLL' | 'MODERN_ROCK_MADNESS';
 
 /**
  * Contest status values (matches Sanity schema enums)
@@ -70,7 +70,7 @@ export type ContestStatus = 'draft' | 'open' | 'closed' | 'archived' | 'active' 
  * Vote count aggregation result
  */
 export interface VoteCount {
-  sanity_option_id?: string;
+  option_sanity_id?: string;
   year_end_poll_category_sanity_id?: string;
   total_votes: number;
   weighted_score: number;

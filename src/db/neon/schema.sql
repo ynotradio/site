@@ -25,7 +25,7 @@ CREATE TABLE votes (
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     contest_type VARCHAR(50) NOT NULL,
     contest_sanity_id VARCHAR(255) NOT NULL,
-    sanity_option_id VARCHAR(255),
+    option_sanity_id VARCHAR(255),
     year_end_poll_category_sanity_id VARCHAR(255),
     modern_rock_madness_matchup_sanity_id VARCHAR(255),
     top_11_rank INTEGER,
@@ -35,7 +35,7 @@ CREATE TABLE votes (
 );
 
 CREATE INDEX idx_votes_contest ON votes(contest_sanity_id);
-CREATE INDEX idx_votes_option ON votes(contest_sanity_id, sanity_option_id);
+CREATE INDEX idx_votes_option ON votes(contest_sanity_id, option_sanity_id);
 CREATE INDEX idx_votes_category ON votes(contest_sanity_id, year_end_poll_category_sanity_id);
 CREATE INDEX idx_votes_matchup ON votes(modern_rock_madness_matchup_sanity_id);
 CREATE INDEX idx_votes_user ON votes(user_id);
@@ -50,7 +50,7 @@ CREATE UNIQUE INDEX idx_votes_mrm_unique
 -- Year End Poll: One vote per user per category per option (including write-ins)
 -- COALESCE allows both option_id votes and write-in votes to be uniquely constrained
 CREATE UNIQUE INDEX idx_votes_yep_unique 
-    ON votes(user_id, contest_sanity_id, year_end_poll_category_sanity_id, COALESCE(sanity_option_id, write_in_value)) 
+    ON votes(user_id, contest_sanity_id, year_end_poll_category_sanity_id, COALESCE(option_sanity_id, write_in_value)) 
     WHERE year_end_poll_category_sanity_id IS NOT NULL;
 
 -- Contest entries table
@@ -87,11 +87,11 @@ $$ LANGUAGE plpgsql;
 
 -- Helper function: Get vote counts for a contest
 CREATE OR REPLACE FUNCTION get_vote_counts(p_contest_id VARCHAR)
-RETURNS TABLE (sanity_option_id VARCHAR, year_end_poll_category_sanity_id VARCHAR, total_votes BIGINT, weighted_score BIGINT) AS $$
+RETURNS TABLE (option_sanity_id VARCHAR, year_end_poll_category_sanity_id VARCHAR, total_votes BIGINT, weighted_score BIGINT) AS $$
 BEGIN
     RETURN QUERY
     SELECT 
-        v.sanity_option_id,
+        v.option_sanity_id,
         v.year_end_poll_category_sanity_id,
         COUNT(*) as total_votes,
         -- Weighted scoring for ranked votes: #1 = 11 points, #2 = 10 points, ... #11 = 1 point
@@ -100,7 +100,7 @@ BEGIN
         SUM(CASE WHEN v.top_11_rank IS NOT NULL THEN (12 - v.top_11_rank) ELSE 1 END) as weighted_score
     FROM votes v
     WHERE v.contest_sanity_id = p_contest_id AND v.is_write_in = FALSE
-    GROUP BY v.sanity_option_id, v.year_end_poll_category_sanity_id;
+    GROUP BY v.option_sanity_id, v.year_end_poll_category_sanity_id;
 END;
 $$ LANGUAGE plpgsql;
 
