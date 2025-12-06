@@ -58,7 +58,7 @@ Individual category within the Year End Poll.
 - `name`: Category name (e.g., "Songs", "Albums", "Artists")
 - `categoryType`: `SONG` | `ALBUM` | `ARTIST` | `CONCERT` | `NEW_ARTIST` | `PHILLY_ARTIST` | `MOST_ANTICIPATED_ALBUM` | `TV_DRAMA` | `TV_COMEDY` | `BEST_MOVIE` | `WORST_MOVIE` | `UNNECESSARY_SEQUEL` | `OTHER`
 - `displayOrder`: Order in poll display
-- `maxSelections`: Exact number of items voters must select (20 for songs, 10 for albums, 5 for artists, etc.)
+- `numSelections`: Exact number of items voters must select (20 for songs, 10 for albums, 5 for artists, etc.)
 - `allowWriteIns`: Whether write-in votes are permitted
 - `songOptions` / `albumOptions` / `artistOptions`: Arrays of references based on category type
 - `stringOptions`: Array of string values for categories like movies and TV shows
@@ -146,7 +146,7 @@ GET /api/contests/year-end-poll/results?poll=yep-2025&category=yep-2025-songs
 Response:
 {
   "categoryId": "year-end-poll-2025-songs",
-  "categoryName": "Song of the Year",
+  "categoryName": "Songs",
   "results": [
     {
       "optionId": "song-123",

@@ -69,8 +69,8 @@ export default defineType({
       validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
-      name: 'maxSelections',
-      title: 'Max Selections',
+      name: 'numSelections',
+      title: 'Number of Selections',
       type: 'number',
       description: 'Exact number of items voters must select (e.g., 20 for songs, 10 for albums, 5 for artists)',
       initialValue: 20,
