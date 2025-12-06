@@ -396,7 +396,7 @@ Before cutting over, the PHP site needs to read from Sanity behind a feature fla
 
 ## Task 12: Create Top 11 Contest Schemas
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Done  
 **Depends On:** Task 1 (Artist Schema), Song Schema  
 **Estimated Effort:** Medium
 
@@ -404,7 +404,7 @@ Before cutting over, the PHP site needs to read from Sanity behind a feature fla
 The Top 11 is a weekly countdown contest where users vote for their favorite songs. This uses a hybrid architecture: Sanity stores contest configuration (songs, dates, rules) while Neon PostgreSQL stores high-volume voting data.
 
 **Sanity Schemas:**
-1. Create `studio/schemaTypes/top11Contest.ts`:
+1. Created `studio/schemaTypes/top11Contest.ts`:
    - `title`, `slug`, `date` (contest date)
    - `votingOpensAt`, `votingClosesAt` (datetime)
    - `songs` (array of references to Song documents)
@@ -414,21 +414,111 @@ The Top 11 is a weekly countdown contest where users vote for their favorite son
    - Max selections: Always 11 (hard-coded in application logic)
    - Write-ins: Always allowed (no schema field needed)
 
-2. Create `studio/schemaTypes/top11Result.ts`:
+2. Created `studio/schemaTypes/top11Result.ts`:
    - `contest` (reference to top11Contest)
    - `placements` (array of objects with rank, song reference, artist reference, note)
    - `publishedAt` (datetime)
 
-**Files to Modify:**
-- `studio/schemaTypes/top11Contest.ts` (create)
-- `studio/schemaTypes/top11Result.ts` (create)
-- `studio/schemaTypes/index.ts` (update)
+**Files Modified:**
+- `studio/schemaTypes/top11Contest.ts` (created)
+- `studio/schemaTypes/top11Result.ts` (created)
+- `studio/schemaTypes/index.ts` (updated)
+- `src/db/neon/schema.sql` (updated)
+- `src/types/database.ts` (updated)
+- `docs/sanity-migration/09-neon-integration-top11.md` (created)
 
 **Acceptance Criteria:**
-- [ ] Schemas compile without errors
-- [ ] Can create/edit contests in Sanity Studio
-- [ ] Song references work correctly
-- [ ] Published results display correctly
+- [x] Schemas compile without errors
+- [x] Can create/edit contests in Sanity Studio
+- [x] Song references work correctly
+- [x] Published results display correctly
+
+---
+
+## Task 13: Create Year End Poll Schemas
+
+**Status:** ✅ Done  
+**Depends On:** Task 1 (Artist Schema), Song Schema, Record Schema  
+**Estimated Effort:** Medium
+
+**Context:**
+The Year End Poll is an annual multi-category poll where users vote for their favorite songs, albums, and artists of the year. This uses a hybrid architecture: Sanity stores poll configuration (categories, options) while Neon PostgreSQL stores high-volume voting data.
+
+**Sanity Schemas:**
+1. Created `studio/schemaTypes/yearEndPoll.ts`:
+   - `title`, `year`
+   - `votingOpensAt`, `votingClosesAt` (datetime)
+   - `contestPrize` (prize description)
+   - `status` ('draft' | 'open' | 'closed' | 'archived')
+   - Document ID format: `yep-{year}` (e.g., `yep-2025`)
+
+2. Created `studio/schemaTypes/yearEndPollCategory.ts`:
+   - `poll` (reference to yearEndPoll)
+   - `name`, `slug`, `categoryType` ('song' | 'album' | 'artist' | 'band')
+   - `displayOrder`, `maxSelections`, `allowWriteIns`
+   - `songOptions` / `albumOptions` / `artistOptions` (arrays based on type)
+   - Document ID format: `yep-{year}-{categorySlug}` (e.g., `yep-2025-song-of-the-year`)
+
+**Files Modified:**
+- `studio/schemaTypes/yearEndPoll.ts` (created)
+- `studio/schemaTypes/yearEndPollCategory.ts` (created)
+- `studio/schemaTypes/index.ts` (updated)
+- `src/db/neon/schema.sql` (updated)
+- `src/types/database.ts` (updated)
+- `docs/sanity-migration/10-neon-integration-yep.md` (created)
+
+**Acceptance Criteria:**
+- [x] Schemas compile without errors
+- [x] Can create/edit polls and categories in Sanity Studio
+- [x] Multiple category types supported
+- [x] Options references work correctly based on category type
+
+---
+
+## Task 14: Create Modern Rock Madness Schemas
+
+**Status:** ✅ Done  
+**Depends On:** Task 1 (Artist Schema)  
+**Estimated Effort:** Medium
+
+**Context:**
+Modern Rock Madness is an annual bracket-style tournament where users vote in head-to-head matchups between bands. This uses a hybrid architecture: Sanity stores tournament configuration (bands, brackets, matches) while Neon PostgreSQL stores high-volume voting data.
+
+**Sanity Schemas:**
+1. Created `studio/schemaTypes/mrmTournament.ts`:
+   - `title`, `year`
+   - `status` ('draft' | 'active' | 'complete' | 'archived')
+   - `rounds` (array with roundNumber, name, startsAt, endsAt)
+   - Document ID format: `mrm-{year}` (e.g., `mrm-2025`)
+
+2. Created `studio/schemaTypes/mrmBand.ts`:
+   - `tournament` (reference to mrmTournament)
+   - `artist` (reference to Artist)
+   - `seed`, `region`, `placement`, `sponsor`, `abbreviation`
+
+3. Created `studio/schemaTypes/mrmMatch.ts`:
+   - `tournament` (reference to mrmTournament)
+   - `matchNumber`, `round`, `region`
+   - `band1`, `band2` (references to mrmBand)
+   - `winner` (reference to mrmBand, set after voting closes)
+   - `startsAt`, `endsAt` (datetime for voting window)
+   - `showScore`, `sponsor`, `sponsorMessage`
+   - Document ID format: `mrm-{year}-match-{matchNumber}` (e.g., `mrm-2025-match-1`)
+
+**Files Modified:**
+- `studio/schemaTypes/mrmTournament.ts` (created)
+- `studio/schemaTypes/mrmBand.ts` (created)
+- `studio/schemaTypes/mrmMatch.ts` (created)
+- `studio/schemaTypes/index.ts` (updated)
+- `src/db/neon/schema.sql` (updated)
+- `src/types/database.ts` (updated)
+- `docs/sanity-migration/11-neon-integration-mrm.md` (created)
+
+**Acceptance Criteria:**
+- [x] Schemas compile without errors
+- [x] Can create/edit tournaments, bands, and matches in Sanity Studio
+- [x] References between tournament, bands, and matches work correctly
+- [x] Match voting window and winner tracking supported
 
 ---
 

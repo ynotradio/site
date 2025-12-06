@@ -18,8 +18,13 @@
 | 8 | CdOfTheWeek | ✅ Done | Schema exists at `studio/schemaTypes/cdOfTheWeek.ts`, references Record |
 | 9 | OnDemand | ✅ Done | Schema exists at `studio/schemaTypes/onDemand.ts`, references Artist |
 | 10 | Show | ✅ Done | Schema exists at `studio/schemaTypes/show.ts`, references DJ |
-| 11 | Top11Contest | 🔲 Not Started | Weekly contest config; votes/entries → Neon |
-| 12 | Top11Result | 🔲 Not Started | Published weekly results |
+| 11 | Top11Contest | ✅ Done | Weekly contest config; votes/entries → Neon. Schema at `studio/schemaTypes/top11Contest.ts` |
+| 12 | Top11Result | ✅ Done | Published weekly results. Schema at `studio/schemaTypes/top11Result.ts` |
+| 13 | YearEndPoll | ✅ Done | Annual poll config; votes/entries → Neon. Schema at `studio/schemaTypes/yearEndPoll.ts` |
+| 14 | YearEndPollCategory | ✅ Done | Poll categories with options. Schema at `studio/schemaTypes/yearEndPollCategory.ts` |
+| 15 | MRMTournament | ✅ Done | Tournament config; votes → Neon. Schema at `studio/schemaTypes/mrmTournament.ts` |
+| 16 | MRMBand | ✅ Done | Tournament participants. Schema at `studio/schemaTypes/mrmBand.ts` |
+| 17 | MRMMatch | ✅ Done | Bracket matchups; votes → Neon. Schema at `studio/schemaTypes/mrmMatch.ts` |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
 | — | Post | ✅ Done | Schema exists at `studio/schemaTypes/post.ts`, unified Story + CustomText model |
 

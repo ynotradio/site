@@ -1,0 +1,167 @@
+import { defineType, defineField, defineArrayMember } from 'sanity';
+
+/**
+ * Year End Poll Category Schema
+ *
+ * Individual category within the Year End Poll.
+ * Each category can have different types of options (songs, albums, artists).
+ *
+ * Document ID format: yep-{year}-{categorySlug} (e.g., yep-2025-song-of-the-year)
+ */
+export default defineType({
+  name: 'yearEndPollCategory',
+  title: 'Year End Poll Category',
+  type: 'document',
+  fields: [
+    defineField({
+      name: 'poll',
+      title: 'Poll',
+      type: 'reference',
+      to: [{ type: 'yearEndPoll' }],
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'name',
+      title: 'Category Name',
+      type: 'string',
+      description: 'e.g., "Song of the Year", "Album of the Year"',
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'slug',
+      title: 'Slug',
+      type: 'slug',
+      options: {
+        source: 'name',
+        maxLength: 96,
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'categoryType',
+      title: 'Category Type',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'Song', value: 'song' },
+          { title: 'Album', value: 'album' },
+          { title: 'Artist', value: 'artist' },
+          { title: 'Band', value: 'band' },
+        ],
+        layout: 'radio',
+      },
+      validation: (Rule) => Rule.required(),
+    }),
+    defineField({
+      name: 'displayOrder',
+      title: 'Display Order',
+      type: 'number',
+      description: 'Order in which this category appears in the poll',
+      validation: (Rule) => Rule.required().min(1),
+    }),
+    defineField({
+      name: 'maxSelections',
+      title: 'Max Selections',
+      type: 'number',
+      description: 'Maximum number of items voters can select (e.g., 5 for top 5)',
+      initialValue: 1,
+      validation: (Rule) => Rule.required().min(1).max(20),
+    }),
+    defineField({
+      name: 'allowWriteIns',
+      title: 'Allow Write-ins',
+      type: 'boolean',
+      description: 'Allow voters to submit their own options',
+      initialValue: true,
+    }),
+    // Options for Song categories
+    defineField({
+      name: 'songOptions',
+      title: 'Song Options',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'song' }],
+        }),
+      ],
+      hidden: ({ document }) => document?.categoryType !== 'song',
+    }),
+    // Options for Album categories
+    defineField({
+      name: 'albumOptions',
+      title: 'Album Options',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'record' }],
+        }),
+      ],
+      hidden: ({ document }) => document?.categoryType !== 'album',
+    }),
+    // Options for Artist/Band categories
+    defineField({
+      name: 'artistOptions',
+      title: 'Artist Options',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'artist' }],
+        }),
+      ],
+      hidden: ({ document }) => {
+        const catType = document?.categoryType;
+        return catType !== 'artist' && catType !== 'band';
+      },
+    }),
+    defineField({
+      name: 'legacyId',
+      title: 'Legacy ID',
+      type: 'number',
+      readOnly: true,
+      hidden: true,
+    }),
+    defineField({
+      name: 'migratedAt',
+      title: 'Migrated At',
+      type: 'datetime',
+      readOnly: true,
+      hidden: true,
+    }),
+  ],
+  preview: {
+    select: {
+      name: 'name',
+      pollYear: 'poll.year',
+      displayOrder: 'displayOrder',
+      categoryType: 'categoryType',
+    },
+    prepare(selection) {
+      const {
+        name, pollYear, displayOrder, categoryType,
+      } = selection;
+      const typeEmoji: Record<string, string> = {
+        song: '🎵',
+        album: '💿',
+        artist: '🎤',
+        band: '🎸',
+      };
+      const emoji = typeEmoji[categoryType] || '📋';
+      return {
+        title: name,
+        subtitle: `${emoji} ${pollYear || 'Unknown Year'} • Order: ${displayOrder}`,
+      };
+    },
+  },
+  orderings: [
+    {
+      title: 'Display Order',
+      name: 'displayOrder',
+      by: [
+        { field: 'displayOrder', direction: 'asc' },
+      ],
+    },
+  ],
+});
