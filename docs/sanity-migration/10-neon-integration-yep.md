@@ -38,7 +38,7 @@ This separation provides:
 ### `yearEndPoll`
 Annual poll configuration.
 
-**Document ID format:** `yep-{year}` (e.g., `yep-2025`)
+**Document ID format:** `year-end-poll-{year}` (e.g., `year-end-poll-2025`)
 
 **Key fields:**
 - `title`: Display title (e.g., "2025 Year End Poll")
@@ -51,16 +51,17 @@ Annual poll configuration.
 ### `yearEndPollCategory`
 Individual category within the Year End Poll.
 
-**Document ID format:** `yep-{year}-{categorySlug}` (e.g., `yep-2025-song-of-the-year`)
+**Document ID format:** `year-end-poll-{year}-{categorySlug}` (e.g., `year-end-poll-2025-songs`)
 
 **Key fields:**
 - `poll`: Reference to `yearEndPoll` document
-- `name`: Category name (e.g., "Song of the Year")
-- `categoryType`: `song` | `album` | `artist` | `band`
+- `name`: Category name (e.g., "Songs", "Albums", "Artists")
+- `categoryType`: `SONG` | `ALBUM` | `ARTIST` | `CONCERT` | `NEW_ARTIST` | `PHILLY_ARTIST` | `MOST_ANTICIPATED_ALBUM` | `TV_DRAMA` | `TV_COMEDY` | `BEST_MOVIE` | `WORST_MOVIE` | `UNNECESSARY_SEQUEL` | `OTHER`
 - `displayOrder`: Order in poll display
-- `maxSelections`: How many options voters can select
+- `maxSelections`: Exact number of items voters must select (20 for songs, 10 for albums, 5 for artists, etc.)
 - `allowWriteIns`: Whether write-in votes are permitted
 - `songOptions` / `albumOptions` / `artistOptions`: Arrays of references based on category type
+- `stringOptions`: Array of string values for categories like movies and TV shows
 
 ---
 
@@ -74,32 +75,34 @@ The Year End Poll uses the same `votes` table as other contests, with these spec
 |--------|------|-------------|
 | `contest_sanity_id` | VARCHAR(255) | Reference to `yearEndPoll` document |
 | `category_sanity_id` | VARCHAR(255) | Reference to `yearEndPollCategory` document |
-| `option_sanity_id` | VARCHAR(255) | Reference to song/album/artist document |
+| `option_sanity_id` | VARCHAR(255) | Reference to song/album/artist document (or NULL for string options) |
 | `is_write_in` | BOOLEAN | Is this a write-in vote? |
-| `write_in_value` | TEXT | Write-in text (if applicable) |
+| `write_in_value` | TEXT | Write-in text or string option value |
 
 **Unique constraint:** One vote per user per option per category (enforced via unique index on `user_id`, `contest_sanity_id`, `category_sanity_id`, and `COALESCE(option_sanity_id, write_in_value)`)
 
+**Note:** For string-based categories (movies, TV shows), `option_sanity_id` will be NULL and the selected value is stored in `write_in_value`.
+
 ### Helper Functions
 
-#### `get_yep_vote_counts(p_contest_id VARCHAR, p_category_id VARCHAR)`
+#### `get_year_end_poll_vote_counts(p_contest_id VARCHAR, p_category_id VARCHAR)`
 Returns vote counts for a specific Year End Poll category.
 
 **Returns:** `option_sanity_id`, `total_votes`
 
 **Usage:**
 ```sql
-SELECT * FROM get_yep_vote_counts('yep-2025', 'yep-2025-song-of-the-year');
+SELECT * FROM get_year_end_poll_vote_counts('year-end-poll-2025', 'year-end-poll-2025-songs');
 ```
 
-#### `get_yep_write_ins(p_contest_id VARCHAR, p_category_id VARCHAR)`
+#### `get_year_end_poll_write_ins(p_contest_id VARCHAR, p_category_id VARCHAR)`
 Returns write-in submissions for a specific category.
 
 **Returns:** `write_in_value`, `count`
 
 **Usage:**
 ```sql
-SELECT * FROM get_yep_write_ins('yep-2025', 'yep-2025-song-of-the-year');
+SELECT * FROM get_year_end_poll_write_ins('year-end-poll-2025', 'year-end-poll-2025-songs');
 ```
 
 ---
@@ -113,14 +116,14 @@ SELECT * FROM get_yep_write_ins('yep-2025', 'yep-2025-song-of-the-year');
 POST /api/contests/year-end-poll/vote
 
 {
-  "pollId": "yep-2025",
+  "pollId": "year-end-poll-2025",
   "votes": [
     {
-      "categoryId": "yep-2025-song-of-the-year",
+      "categoryId": "year-end-poll-2025-songs",
       "selections": ["song-123", "song-456", "song-789"]
     },
     {
-      "categoryId": "yep-2025-album-of-the-year",
+      "categoryId": "year-end-poll-2025-album-of-the-year",
       "selections": ["record-abc"]
     }
   ],
@@ -138,11 +141,11 @@ POST /api/contests/year-end-poll/vote
 
 ```typescript
 // Example: Get results for a category
-GET /api/contests/year-end-poll/results?poll=yep-2025&category=yep-2025-song-of-the-year
+GET /api/contests/year-end-poll/results?poll=yep-2025&category=yep-2025-songs
 
 Response:
 {
-  "categoryId": "yep-2025-song-of-the-year",
+  "categoryId": "year-end-poll-2025-songs",
   "categoryName": "Song of the Year",
   "results": [
     {
@@ -161,17 +164,17 @@ Response:
 ## Migration from Legacy MySQL
 
 ### Legacy Tables
-- `year_end_*` - 19 category tables (one per category type)
+- `year_end_songs`, `year_end_albums`, `year_end_artists`, `year_end_concerts`, `year_end_new_artists`, `year_end_philly_artists`, `year_end_most_anticipated_albums`, `year_end_tv_dramas`, `year_end_tv_comedies`, `year_end_best_movies`, `year_end_worst_movies`, `year_end_unnecessary_sequels` - Category-specific tables
 - `year_end_contestants` - Contest entries
 - `year_end_write_ins` - Write-in submissions
 - `year_end_ips` - IP tracking
 
 ### Migration Strategy
-1. Create `yearEndPoll` document in Sanity for each year
-2. Create `yearEndPollCategory` document for each legacy category table
-3. Map song/album/artist options to corresponding Sanity documents
-4. Migrate votes from category tables to unified `votes` table
-5. Migrate contest entries to `contest_entries` table
+1. Create `yearEndPoll` document in Sanity for 2025
+2. Create `yearEndPollCategory` documents for each active category (songs, albums, artists, concerts, new_artists, philly_artists, most_anticipated_albums, tv_dramas, tv_comedies, best_movies, worst_movies, unnecessary_sequels)
+3. Map song/album/artist options to corresponding Sanity documents where applicable
+4. For string-based categories (movies, TV), migrate option values as `stringOptions`
+5. **Note:** Only configuration data from 2025 will be migrated. Historical votes and contest entries will NOT be migrated.
 6. **Note:** IP tracking is replaced with user authentication
 
 ---
@@ -193,7 +196,7 @@ Response:
 test('Year End Poll: Prevents duplicate votes per category', async () => {
   const userId = 'test-user-123';
   const pollId = 'yep-2025';
-  const categoryId = 'yep-2025-song-of-the-year';
+  const categoryId = 'yep-2025-songs';
   
   // First vote should succeed
   await submitVote(userId, pollId, categoryId, 'song-123');

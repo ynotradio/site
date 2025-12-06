@@ -126,7 +126,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Helper function: Get vote counts for a Year End Poll category
-CREATE OR REPLACE FUNCTION get_yep_vote_counts(p_contest_id VARCHAR, p_category_id VARCHAR)
+CREATE OR REPLACE FUNCTION get_year_end_poll_vote_counts(p_contest_id VARCHAR, p_category_id VARCHAR)
 RETURNS TABLE (option_sanity_id VARCHAR, total_votes BIGINT) AS $$
 BEGIN
     RETURN QUERY
@@ -143,7 +143,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Helper function: Get write-ins for a Year End Poll category
-CREATE OR REPLACE FUNCTION get_yep_write_ins(p_contest_id VARCHAR, p_category_id VARCHAR)
+CREATE OR REPLACE FUNCTION get_year_end_poll_write_ins(p_contest_id VARCHAR, p_category_id VARCHAR)
 RETURNS TABLE (write_in_value TEXT, count BIGINT) AS $$
 BEGIN
     RETURN QUERY

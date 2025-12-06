@@ -6,7 +6,7 @@ import { defineType, defineField } from 'sanity';
  * Annual poll configuration managed by staff.
  * Votes and entries are stored in Neon PostgreSQL.
  *
- * Document ID format: yep-{year} (e.g., yep-2025)
+ * Document ID format: year-end-poll-{year} (e.g., year-end-poll-2025)
  */
 export default defineType({
   name: 'yearEndPoll',
@@ -24,7 +24,7 @@ export default defineType({
       name: 'year',
       title: 'Year',
       type: 'number',
-      description: 'Year of the poll (used in document ID: yep-{year})',
+      description: 'Year of the poll (used in document ID: year-end-poll-{year})',
       validation: (Rule) => Rule.required().min(2000).max(2100),
     }),
     defineField({

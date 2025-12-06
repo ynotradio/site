@@ -104,7 +104,7 @@ export interface Winner {
 /**
  * Year End Poll specific vote count result
  */
-export interface YepVoteCount {
+export interface YearEndPollVoteCount {
   option_sanity_id: string;
   total_votes: number;
 }
@@ -112,7 +112,7 @@ export interface YepVoteCount {
 /**
  * Year End Poll write-in result
  */
-export interface YepWriteIn {
+export interface YearEndPollWriteIn {
   write_in_value: string;
   count: number;
 }

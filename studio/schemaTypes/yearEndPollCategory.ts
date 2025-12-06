@@ -6,7 +6,7 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  * Individual category within the Year End Poll.
  * Each category can have different types of options (songs, albums, artists).
  *
- * Document ID format: yep-{year}-{categorySlug} (e.g., yep-2025-song-of-the-year)
+ * Document ID format: year-end-poll-{year}-{categorySlug} (e.g., year-end-poll-2025-song-of-the-year)
  */
 export default defineType({
   name: 'yearEndPollCategory',
@@ -24,7 +24,7 @@ export default defineType({
       name: 'name',
       title: 'Category Name',
       type: 'string',
-      description: 'e.g., "Song of the Year", "Album of the Year"',
+      description: 'e.g., "Songs", "Albums", "Artists", "Concerts"',
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -43,12 +43,21 @@ export default defineType({
       type: 'string',
       options: {
         list: [
-          { title: 'Song', value: 'song' },
-          { title: 'Album', value: 'album' },
-          { title: 'Artist', value: 'artist' },
-          { title: 'Band', value: 'band' },
+          { title: 'Song', value: 'SONG' },
+          { title: 'Album', value: 'ALBUM' },
+          { title: 'Artist', value: 'ARTIST' },
+          { title: 'Concert', value: 'CONCERT' },
+          { title: 'New Artist', value: 'NEW_ARTIST' },
+          { title: 'Philly Artist', value: 'PHILLY_ARTIST' },
+          { title: 'Most Anticipated Album', value: 'MOST_ANTICIPATED_ALBUM' },
+          { title: 'TV Drama', value: 'TV_DRAMA' },
+          { title: 'TV Comedy', value: 'TV_COMEDY' },
+          { title: 'Best Movie', value: 'BEST_MOVIE' },
+          { title: 'Worst Movie', value: 'WORST_MOVIE' },
+          { title: 'Unnecessary Sequel', value: 'UNNECESSARY_SEQUEL' },
+          { title: 'Other (String)', value: 'OTHER' },
         ],
-        layout: 'radio',
+        layout: 'dropdown',
       },
       validation: (Rule) => Rule.required(),
     }),
@@ -63,8 +72,8 @@ export default defineType({
       name: 'maxSelections',
       title: 'Max Selections',
       type: 'number',
-      description: 'Maximum number of items voters can select (e.g., 5 for top 5)',
-      initialValue: 1,
+      description: 'Exact number of items voters must select (e.g., 20 for songs, 10 for albums, 5 for artists)',
+      initialValue: 20,
       validation: (Rule) => Rule.required().min(1).max(20),
     }),
     defineField({
@@ -85,7 +94,7 @@ export default defineType({
           to: [{ type: 'song' }],
         }),
       ],
-      hidden: ({ document }) => document?.categoryType !== 'song',
+      hidden: ({ document }) => document?.categoryType !== 'SONG',
     }),
     // Options for Album categories
     defineField({
@@ -98,9 +107,9 @@ export default defineType({
           to: [{ type: 'record' }],
         }),
       ],
-      hidden: ({ document }) => document?.categoryType !== 'album',
+      hidden: ({ document }) => document?.categoryType !== 'ALBUM' && document?.categoryType !== 'MOST_ANTICIPATED_ALBUM',
     }),
-    // Options for Artist/Band categories
+    // Options for Artist/Concert/New Artist/Philly Artist categories
     defineField({
       name: 'artistOptions',
       title: 'Artist Options',
@@ -113,7 +122,49 @@ export default defineType({
       ],
       hidden: ({ document }) => {
         const catType = document?.categoryType;
-        return !['artist', 'band'].includes(catType);
+        return !['ARTIST', 'CONCERT', 'NEW_ARTIST', 'PHILLY_ARTIST'].includes(catType);
+      },
+    }),
+    // Options for categories that use simple strings (movies, TV shows, etc.)
+    defineField({
+      name: 'stringOptions',
+      title: 'String Options',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'value',
+              title: 'Option Value',
+              type: 'string',
+              validation: (Rule) => Rule.required(),
+            }),
+            defineField({
+              name: 'displayOrder',
+              title: 'Display Order',
+              type: 'number',
+              validation: (Rule) => Rule.required().min(1),
+            }),
+          ],
+          preview: {
+            select: {
+              value: 'value',
+              order: 'displayOrder',
+            },
+            prepare(selection) {
+              const { value, order } = selection;
+              return {
+                title: value,
+                subtitle: `Order: ${order}`,
+              };
+            },
+          },
+        }),
+      ],
+      hidden: ({ document }) => {
+        const catType = document?.categoryType;
+        return !['TV_DRAMA', 'TV_COMEDY', 'BEST_MOVIE', 'WORST_MOVIE', 'UNNECESSARY_SEQUEL', 'OTHER'].includes(catType);
       },
     }),
     defineField({
@@ -143,10 +194,19 @@ export default defineType({
         name, pollYear, displayOrder, categoryType,
       } = selection;
       const typeEmoji: Record<string, string> = {
-        song: '🎵',
-        album: '💿',
-        artist: '🎤',
-        band: '🎸',
+        SONG: '🎵',
+        ALBUM: '💿',
+        ARTIST: '🎤',
+        CONCERT: '🎸',
+        NEW_ARTIST: '🌟',
+        PHILLY_ARTIST: '🔔',
+        MOST_ANTICIPATED_ALBUM: '⏳',
+        TV_DRAMA: '📺',
+        TV_COMEDY: '😂',
+        BEST_MOVIE: '🎬',
+        WORST_MOVIE: '👎',
+        UNNECESSARY_SEQUEL: '🔁',
+        OTHER: '📋',
       };
       const emoji = typeEmoji[categoryType] || '📋';
       return {
