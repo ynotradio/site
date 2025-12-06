@@ -113,7 +113,7 @@ export default defineType({
       ],
       hidden: ({ document }) => {
         const catType = document?.categoryType;
-        return catType !== 'artist' && catType !== 'band';
+        return !['artist', 'band'].includes(catType);
       },
     }),
     defineField({

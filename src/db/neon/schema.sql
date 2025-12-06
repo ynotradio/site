@@ -50,17 +50,17 @@ CREATE INDEX idx_votes_user ON votes(user_id);
 -- Top 11: One vote per user per option per contest
 CREATE UNIQUE INDEX idx_votes_top11_unique 
     ON votes(user_id, contest_sanity_id, COALESCE(option_sanity_id, write_in_value))
-    WHERE contest_sanity_id IS NOT NULL AND category_sanity_id IS NULL AND match_sanity_id IS NULL;
+    WHERE contest_sanity_id IS NOT NULL AND category_sanity_id IS NULL AND match_sanity_id IS NULL AND user_id IS NOT NULL;
 
 -- Year End Poll: One vote per user per option per category
 CREATE UNIQUE INDEX idx_votes_yep_unique 
     ON votes(user_id, contest_sanity_id, category_sanity_id, COALESCE(option_sanity_id, write_in_value))
-    WHERE category_sanity_id IS NOT NULL;
+    WHERE category_sanity_id IS NOT NULL AND user_id IS NOT NULL;
 
 -- Modern Rock Madness: One vote per user per match
 CREATE UNIQUE INDEX idx_votes_mrm_unique 
     ON votes(user_id, match_sanity_id)
-    WHERE match_sanity_id IS NOT NULL;
+    WHERE match_sanity_id IS NOT NULL AND user_id IS NOT NULL;
 
 -- Contest entries table
 CREATE TABLE contest_entries (
