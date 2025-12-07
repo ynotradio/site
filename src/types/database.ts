@@ -21,20 +21,20 @@ export interface User {
 /**
  * Vote record for all contest types
  * Fields used based on contest type:
- * 
+ *
  * Top 11:
  * - contest_sanity_id: Reference to top11Contest document
  * - option_sanity_id: Reference to song document
  * - top_11_rank: Ranked choice position (1-11)
  * - write_in_value: For write-in votes
- * 
+ *
  * Year End Poll:
  * - contest_sanity_id: Reference to yearEndPoll document
  * - year_end_poll_category_sanity_id: Reference to yearEndPollCategory document
  * - option_sanity_id: Reference to song/album/artist document (NULL for string options/write-ins)
  * - other_option_value: String option value for movie/TV categories (NULL for references/write-ins)
  * - write_in_value: For write-in votes (NULL for references/string options)
- * 
+ *
  * Modern Rock Madness:
  * - modern_rock_madness_match_sanity_id: Reference to modernRockMadnessMatch document
  * - option_sanity_id: Reference to modernRockMadnessGroup document (the group being voted for)

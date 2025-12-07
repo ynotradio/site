@@ -91,8 +91,8 @@ export default defineType({
         artists, seed, region, placement,
       } = selection;
       // Get first artist name for display
-      const artistName = artists && artists.length > 0 && artists[0].name 
-        ? artists[0].name 
+      const artistName = artists && artists.length > 0 && artists[0].name
+        ? artists[0].name
         : 'Unknown Artist';
       const multiArtist = artists && artists.length > 1 ? ' +' : '';
       const placementText = placement ? ` • ${placement}` : '';

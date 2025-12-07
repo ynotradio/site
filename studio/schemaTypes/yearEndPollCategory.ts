@@ -6,7 +6,8 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  * Individual category within the Year End Poll.
  * Each category can have different types of options (songs, albums, artists).
  *
- * Document ID format: year-end-poll-{year}-{categorySlug} (e.g., year-end-poll-2025-song-of-the-year)
+ * Document ID format: year-end-poll-{year}-{categorySlug}
+ * (e.g., year-end-poll-2025-song-of-the-year)
  */
 export default defineType({
   name: 'yearEndPollCategory',

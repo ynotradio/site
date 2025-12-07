@@ -6,7 +6,8 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  * Annual bracket-style tournament configuration.
  * Votes are stored in Neon PostgreSQL.
  *
- * Document ID format: modern-rock-madness-{year}-{month}-{date} (e.g., modern-rock-madness-2025-03-31)
+ * Document ID format: modern-rock-madness-{year}-{month}-{date}
+ * (e.g., modern-rock-madness-2025-03-31)
  */
 export default defineType({
   name: 'modernRockMadnessTournament',

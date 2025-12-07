@@ -6,7 +6,8 @@ import { defineType, defineField } from 'sanity';
  * Individual bracket matchup between two groups.
  * Votes are stored in Neon PostgreSQL.
  *
- * Document ID format: modern-rock-madness-{year}-match-{matchNumber} (e.g., modern-rock-madness-2025-match-1)
+ * Document ID format: modern-rock-madness-{year}-match-{matchNumber}
+ * (e.g., modern-rock-madness-2025-match-1)
  */
 export default defineType({
   name: 'modernRockMadnessMatch',
