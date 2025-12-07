@@ -116,8 +116,8 @@ SELECT * FROM get_modern_rock_madness_match_votes('modern-rock-madness-2025-matc
 ```
 option_sanity_id   | total_votes
 -------------------+------------
-mrmgroup-foo-2025  | 1523
-mrmgroup-bar-2025  | 1204
+modern-rock-madness-group-foo-2025  | 1523
+modern-rock-madness-group-bar-2025  | 1204
 ```
 
 ---
@@ -128,18 +128,18 @@ mrmgroup-bar-2025  | 1204
 
 ```typescript
 // Example: Vote in a match
-POST /api/contests/mrm/vote
+POST /api/contests/modern-rock-madness/vote
 
 {
   "matchId": "modern-rock-madness-2025-match-1",
-  "groupId": "mrmgroup-foo-2025"
+  "groupId": "modern-rock-madness-group-foo-2025"
 }
 
 Response:
 {
   "success": true,
   "matchId": "modern-rock-madness-2025-match-1",
-  "votedFor": "mrmgroup-foo-2025"
+  "votedFor": "modern-rock-madness-group-foo-2025"
 }
 ```
 
@@ -147,7 +147,7 @@ Response:
 
 ```typescript
 // Example: Get current vote counts for a match
-GET /api/contests/mrm/results?match=modern-rock-madness-2025-match-1
+GET /api/contests/modern-rock-madness/results?match=modern-rock-madness-2025-match-1
 
 Response:
 {
@@ -155,13 +155,13 @@ Response:
   "matchNumber": 1,
   "round": 1,
   "group1": {
-    "id": "mrmgroup-foo-2025",
+    "id": "modern-rock-madness-group-foo-2025",
     "artistName": "Foo Fighters",
     "seed": 1,
     "voteCount": 1523
   },
   "group2": {
-    "id": "mrmgroup-bar-2025",
+    "id": "modern-rock-madness-group-bar-2025",
     "artistName": "The Black Keys",
     "seed": 16,
     "voteCount": 1204
@@ -175,7 +175,7 @@ Response:
 
 ```typescript
 // Example: Get full tournament bracket
-GET /api/contests/mrm/bracket?tournament=modern-rock-madness-2025
+GET /api/contests/modern-rock-madness/bracket?tournament=modern-rock-madness-2025
 
 Response:
 {
@@ -254,7 +254,7 @@ Response:
 test('MRM: Prevents duplicate votes per match', async () => {
   const userId = 'test-user-123';
   const matchId = 'modern-rock-madness-2025-match-1';
-  const groupId = 'mrmgroup-foo-2025';
+  const groupId = 'modern-rock-madness-group-foo-2025';
   
   // First vote should succeed
   await submitVote(userId, matchId, groupId);
@@ -266,7 +266,7 @@ test('MRM: Prevents duplicate votes per match', async () => {
   
   // Changing vote to other group should also fail
   await expect(
-    submitVote(userId, matchId, 'mrmgroup-bar-2025')
+    submitVote(userId, matchId, 'modern-rock-madness-group-bar-2025')
   ).rejects.toThrow('Duplicate vote');
 });
 
