@@ -489,21 +489,21 @@ Modern Rock Madness is an annual bracket-style tournament where users vote in he
    - `title`, `year`
    - `status` ('draft' | 'active' | 'complete' | 'archived')
    - `rounds` (array with roundNumber, name, startsAt, endsAt)
-   - Document ID format: `mrm-{year}` (e.g., `mrm-2025`)
+   - Document ID format: `modern-rock-madness-{year}` (e.g., `modern-rock-madness-2025`)
 
 2. Created `studio/schemaTypes/modernRockMadnessGroup.ts`:
-   - `tournament` (reference to mrmTournament)
-   - `artist` (reference to Artist)
+   - `tournament` (reference to modernRockMadnessTournament)
+   - `artists` (array of references to Artist documents, supporting one or more artists)
    - `seed`, `region`, `placement`, `sponsor`, `abbreviation`
 
 3. Created `studio/schemaTypes/modernRockMadnessMatch.ts`:
-   - `tournament` (reference to mrmTournament)
+   - `tournament` (reference to modernRockMadnessTournament)
    - `matchNumber`, `round`, `region`
-   - `band1`, `band2` (references to mrmBand)
-   - `winner` (reference to mrmBand, set after voting closes)
+   - `group1`, `group2` (references to modernRockMadnessGroup)
+   - `winner` (reference to modernRockMadnessGroup, set after voting closes)
    - `startsAt`, `endsAt` (datetime for voting window)
    - `showScore`, `sponsor`, `sponsorMessage`
-   - Document ID format: `mrm-{year}-match-{matchNumber}` (e.g., `mrm-2025-match-1`)
+   - Document ID format: `modern-rock-madness-{year}-match-{matchNumber}` (e.g., `modern-rock-madness-2025-match-1`)
 
 **Files Modified:**
 - `studio/schemaTypes/modernRockMadnessTournament.ts` (created)
