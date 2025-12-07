@@ -39,7 +39,7 @@ This separation provides:
 ### `modernRockMadnessTournament`
 Annual tournament configuration.
 
-**Document ID format:** `modern-rock-madness-{year}-{month}-{date}` (e.g., `modern-rock-madness-2025`)
+**Document ID format:** `modern-rock-madness-{year}-{month}-{date}` (e.g., `modern-rock-madness-2025-03-31`)
 
 **Key fields:**
 - `title`: Display title (e.g., "Modern Rock Madness 2025")
@@ -66,7 +66,7 @@ Tournament participant (group/artist). A group can represent one or more artists
 ### `modernRockMadnessMatch`
 Individual bracket matchup between two groups.
 
-**Document ID format:** `modern-rock-madness-{year}-{month}-{date}-match-{matchNumber}` (e.g., `modern-rock-madness-2025-match-1`)
+**Document ID format:** `modern-rock-madness-{year}-{month}-{date}-match-{matchNumber}` (e.g., `modern-rock-madness-2025-03-31-match-1`)
 
 **Key fields:**
 - `tournament`: Reference to `modernRockMadnessTournament` document

@@ -177,7 +177,7 @@ Response:
 1. Create `yearEndPoll` document in Sanity for 2025
 2. Create `yearEndPollCategory` documents for each active category (songs, albums, artists, concerts, new_artists, philly_artists, most_anticipated_albums, tv_dramas, tv_comedies, best_movies, worst_movies, unnecessary_sequels)
 3. Map song/album/artist options to corresponding Sanity documents where applicable
-4. For string-based categories (movies, TV), migrate option values as `stringOptions`
+4. For string-based categories (movies, TV), migrate option values as `otherOptions`
 5. **Note:** Only configuration data from 2025 will be migrated. Historical votes and contest entries will NOT be migrated.
 6. **Note:** IP tracking is replaced with user authentication
 
