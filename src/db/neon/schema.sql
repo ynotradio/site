@@ -25,8 +25,8 @@ CREATE INDEX idx_users_email ON users(email);
 -- Votes table (all contest types)
 -- Supports:
 -- - Top 11: contest_sanity_id + option_sanity_id (song) + top_11_rank
--- - Year End Poll: contest_sanity_id + category_sanity_id + option_sanity_id
--- - Modern Rock Madness: match_sanity_id + option_sanity_id (band)
+-- - Year End Poll: contest_sanity_id + category_sanity_id + (option_sanity_id OR string_option_value OR write_in_value)
+-- - Modern Rock Madness: match_sanity_id + option_sanity_id (group)
 CREATE TABLE votes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -34,6 +34,7 @@ CREATE TABLE votes (
     category_sanity_id VARCHAR(255),
     match_sanity_id VARCHAR(255),
     option_sanity_id VARCHAR(255),
+    string_option_value VARCHAR(255),
     top_11_rank INTEGER,
     is_write_in BOOLEAN DEFAULT FALSE,
     write_in_value TEXT,
@@ -53,8 +54,9 @@ CREATE UNIQUE INDEX idx_votes_top11_unique
     WHERE contest_sanity_id IS NOT NULL AND category_sanity_id IS NULL AND match_sanity_id IS NULL AND user_id IS NOT NULL;
 
 -- Year End Poll: One vote per user per option per category
-CREATE UNIQUE INDEX idx_votes_yep_unique 
-    ON votes(user_id, contest_sanity_id, category_sanity_id, COALESCE(option_sanity_id, write_in_value))
+-- Supports three types of options: document references, string options, or write-ins
+CREATE UNIQUE INDEX idx_votes_year_end_poll_unique 
+    ON votes(user_id, contest_sanity_id, category_sanity_id, COALESCE(option_sanity_id, string_option_value, write_in_value))
     WHERE category_sanity_id IS NOT NULL AND user_id IS NOT NULL;
 
 -- Modern Rock Madness: One vote per user per match

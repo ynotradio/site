@@ -75,13 +75,17 @@ The Year End Poll uses the same `votes` table as other contests, with these spec
 |--------|------|-------------|
 | `contest_sanity_id` | VARCHAR(255) | Reference to `yearEndPoll` document |
 | `category_sanity_id` | VARCHAR(255) | Reference to `yearEndPollCategory` document |
-| `option_sanity_id` | VARCHAR(255) | Reference to song/album/artist document (or NULL for string options) |
-| `is_write_in` | BOOLEAN | Is this a write-in vote? |
-| `write_in_value` | TEXT | Write-in text or string option value |
+| `option_sanity_id` | VARCHAR(255) | Reference to song/album/artist document (NULL for string options/write-ins) |
+| `string_option_value` | VARCHAR(255) | String option value for movie/TV categories (NULL for document references/write-ins) |
+| `is_write_in` | BOOLEAN | Is this an actual write-in vote? |
+| `write_in_value` | TEXT | User-submitted write-in text (NULL for document references/string options) |
 
-**Unique constraint:** One vote per user per option per category (enforced via unique index on `user_id`, `contest_sanity_id`, `category_sanity_id`, and `COALESCE(option_sanity_id, write_in_value)`)
+**Unique constraint:** One vote per user per option per category (enforced via unique index on `user_id`, `contest_sanity_id`, `category_sanity_id`, and `COALESCE(option_sanity_id, string_option_value, write_in_value)`)
 
-**Note:** For string-based categories (movies, TV shows), `option_sanity_id` will be NULL and the selected value is stored in `write_in_value`.
+**Vote Type Handling:**
+- **Document references** (songs, albums, artists): `option_sanity_id` is set, other option fields are NULL
+- **String options** (movies, TV shows): `string_option_value` is set, other option fields are NULL
+- **Write-ins** (user-submitted): `write_in_value` is set, `is_write_in` is TRUE, other option fields are NULL
 
 ### Helper Functions
 

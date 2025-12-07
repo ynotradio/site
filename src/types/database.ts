@@ -31,12 +31,13 @@ export interface User {
  * Year End Poll:
  * - contest_sanity_id: Reference to yearEndPoll document
  * - category_sanity_id: Reference to yearEndPollCategory document
- * - option_sanity_id: Reference to song/album/artist document
- * - write_in_value: For write-in votes
+ * - option_sanity_id: Reference to song/album/artist document (NULL for string options/write-ins)
+ * - string_option_value: String option value for movie/TV categories (NULL for references/write-ins)
+ * - write_in_value: For write-in votes (NULL for references/string options)
  * 
  * Modern Rock Madness:
- * - match_sanity_id: Reference to mrmMatch document
- * - option_sanity_id: Reference to mrmBand document (the band being voted for)
+ * - match_sanity_id: Reference to modernRockMadnessMatch document
+ * - option_sanity_id: Reference to modernRockMadnessGroup document (the group being voted for)
  */
 export interface Vote {
   id: string;
@@ -45,6 +46,7 @@ export interface Vote {
   category_sanity_id?: string;
   match_sanity_id?: string;
   option_sanity_id?: string;
+  string_option_value?: string;
   top_11_rank?: number;
   is_write_in: boolean;
   write_in_value?: string;
