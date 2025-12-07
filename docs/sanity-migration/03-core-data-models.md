@@ -102,27 +102,42 @@ Show ─────────────────────────
 
 ## Import Scripts Status
 
-### Current Import Scripts
+**Last Updated:** December 7, 2025
+
+### ✅ Completed Import Scripts
 
 The following import scripts exist in `bin/migrations/` and can be run via npm:
 
-| Model | Import Script | npm Command |
-|-------|--------------|-------------|
-| Person/DJ | `importDeejays.ts` | `npm run import:deejays` |
-| Ad | `importAds.ts` | `npm run import:ads` |
-| Concert | `importConcerts.ts` | `npm run import:concerts` |
-| CdOfTheWeek | `importCdOfTheWeek.ts` | `npm run import:cdotw` |
+| Model | Import Script | npm Command | Status |
+|-------|--------------|-------------|--------|
+| Person/DJ | `importDeejays.ts` | `npm run import:deejays` | ✅ Complete |
+| Ad | `importAds.ts` | `npm run import:ads` | ✅ Complete |
+| Concert | `importConcerts.ts` | `npm run import:concerts` | ✅ Complete |
+| CdOfTheWeek | `importCdOfTheWeek.ts` | `npm run import:cdotw` | ✅ Complete |
+| OnDemand | `importOnDemand.ts` | `npm run import:ondemand` | ✅ Complete |
+| Post | `importPosts.ts` | `npm run import:posts` | ✅ Complete |
 
-### Models That Still Need Import Scripts
+### 🚧 Missing Import Scripts
+
+| Model | Schema Status | Import Status | Priority | Notes |
+|-------|--------------|---------------|----------|-------|
+| Song (Music) | ✅ Schema exists | ❌ No import script | Medium | Needs `importMusic.ts` to migrate legacy `music` table with `featureOnNewMusic: true` |
+| Show (Schedule) | ✅ Schema exists | ❌ No import script | Medium | Needs `importShows.ts` to migrate legacy `schedule` table |
+
+### ✅ Models Without Import Scripts (By Design)
 
 | Model | Schema Status | Import Status | Notes |
 |-------|--------------|---------------|-------|
 | Artist | ✅ Schema exists | ✅ Created on-the-fly | No standalone import needed—created by Concert, Record (CdOfTheWeek), or Song imports |
 | Venue | ✅ Schema exists | ✅ Created on-the-fly | No standalone import needed—created by Concert import |
-| Song (Music) | ✅ Schema exists | ❌ No import script | Needs `importMusic.ts` to migrate legacy `music` table with `featureOnNewMusic: true` |
 | Record | ✅ Schema exists | ✅ Via CdOfTheWeek | CD of the Week posts ARE records—`importCdOfTheWeek.ts` creates Record documents |
-| OnDemand | ❌ Schema needed | ❌ No import script | Full implementation needed |
-| Show | ❌ Schema needed | ❌ No import script | Full implementation needed |
+| Top 11 Contest | ✅ Schema exists | N/A | Hybrid Sanity + Neon; contests created manually in Studio |
+| Top 11 Result | ✅ Schema exists | N/A | Results published manually after contests close |
+| Year End Poll | ✅ Schema exists | N/A | Hybrid Sanity + Neon; polls created manually in Studio |
+| Year End Poll Category | ✅ Schema exists | N/A | Categories created manually in Studio |
+| Modern Rock Madness Tournament | ✅ Schema exists | N/A | Hybrid Sanity + Neon; tournaments created manually in Studio |
+| Modern Rock Madness Group | ✅ Schema exists | N/A | Tournament participants created manually in Studio |
+| Modern Rock Madness Match | ✅ Schema exists | N/A | Matches created manually in Studio |
 
 ### Import Decisions (Resolved)
 
