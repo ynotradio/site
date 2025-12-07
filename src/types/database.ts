@@ -1,6 +1,7 @@
 /**
- * TypeScript interfaces for Neon PostgreSQL database schema (Top 11 Contest)
+ * TypeScript interfaces for Neon PostgreSQL database schema
  * These types correspond to the tables defined in src/db/neon/schema.sql
+ * Supports: Top 11 Contest, Year End Poll, Modern Rock Madness
  */
 
 /**
@@ -18,18 +19,34 @@ export interface User {
 }
 
 /**
- * Vote record for Top 11 contest
- * Fields used:
+ * Vote record for all contest types
+ * Fields used based on contest type:
+ *
+ * Top 11:
  * - contest_sanity_id: Reference to top11Contest document
- * - option_sanity_id: Reference to song document (for pre-selected songs)
+ * - option_sanity_id: Reference to song document
  * - top_11_rank: Ranked choice position (1-11)
  * - write_in_value: For write-in votes
+ *
+ * Year End Poll:
+ * - contest_sanity_id: Reference to yearEndPoll document
+ * - year_end_poll_category_sanity_id: Reference to yearEndPollCategory document
+ * - option_sanity_id: Reference to song/album/artist document (NULL for string options/write-ins)
+ * - other_option_value: String option value for movie/TV categories (NULL for references/write-ins)
+ * - write_in_value: For write-in votes (NULL for references/string options)
+ *
+ * Modern Rock Madness:
+ * - modern_rock_madness_match_sanity_id: Reference to modernRockMadnessMatch document
+ * - option_sanity_id: Reference to modernRockMadnessGroup document (the group being voted for)
  */
 export interface Vote {
   id: string;
   user_id?: string;
-  contest_sanity_id: string;
+  contest_sanity_id?: string;
+  year_end_poll_category_sanity_id?: string;
+  modern_rock_madness_match_sanity_id?: string;
   option_sanity_id?: string;
+  other_option_value?: string;
   top_11_rank?: number;
   is_write_in: boolean;
   write_in_value?: string;
@@ -84,4 +101,28 @@ export interface Winner {
   last_name: string;
   email: string;
   phone: string;
+}
+
+/**
+ * Year End Poll specific vote count result
+ */
+export interface YearEndPollVoteCount {
+  option_sanity_id: string;
+  total_votes: number;
+}
+
+/**
+ * Year End Poll write-in result
+ */
+export interface YearEndPollWriteIn {
+  write_in_value: string;
+  count: number;
+}
+
+/**
+ * Modern Rock Madness match vote count result
+ */
+export interface ModernRockMadnessMatchVotes {
+  option_sanity_id: string;
+  total_votes: number;
 }
