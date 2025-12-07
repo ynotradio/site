@@ -6,7 +6,7 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  * Annual bracket-style tournament configuration.
  * Votes are stored in Neon PostgreSQL.
  *
- * Document ID format: modern-rock-madness-{year} (e.g., modern-rock-madness-2025)
+ * Document ID format: modern-rock-madness-{year}-{month}-{date} (e.g., modern-rock-madness-2025-03-31)
  */
 export default defineType({
   name: 'modernRockMadnessTournament',
@@ -21,11 +21,11 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'year',
-      title: 'Year',
-      type: 'number',
-      description: 'Year of the tournament (used in document ID: modern-rock-madness-{year})',
-      validation: (Rule) => Rule.required().min(2000).max(2100),
+      name: 'startDate',
+      title: 'Start Date',
+      type: 'date',
+      description: 'Tournament start date (used in document ID: modern-rock-madness-{year}-{month}-{date})',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'status',
@@ -119,12 +119,12 @@ export default defineType({
   preview: {
     select: {
       title: 'title',
-      year: 'year',
+      startDate: 'startDate',
       status: 'status',
     },
     prepare(selection) {
       const {
-        title, year, status,
+        title, startDate, status,
       } = selection;
       const statusEmoji: Record<string, string> = {
         draft: '📝',
@@ -133,6 +133,7 @@ export default defineType({
         archived: '📦',
       };
       const emoji = statusEmoji[status] || '❓';
+      const year = startDate ? new Date(startDate).getFullYear() : 'Unknown';
       return {
         title: title || `Modern Rock Madness ${year}`,
         subtitle: `${emoji} ${status}`,
@@ -144,7 +145,7 @@ export default defineType({
       title: 'Most Recent',
       name: 'mostRecent',
       by: [
-        { field: 'year', direction: 'desc' },
+        { field: 'startDate', direction: 'desc' },
       ],
     },
   ],

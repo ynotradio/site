@@ -61,7 +61,7 @@ Individual category within the Year End Poll.
 - `numSelections`: Exact number of items voters must select (20 for songs, 10 for albums, 5 for artists, etc.)
 - `allowWriteIns`: Whether write-in votes are permitted
 - `songOptions` / `albumOptions` / `artistOptions`: Arrays of references based on category type
-- `stringOptions`: Array of string values for categories like movies and TV shows
+- `otherOptions`: Array of string values for categories like movies and TV shows
 
 ---
 
@@ -74,17 +74,17 @@ The Year End Poll uses the same `votes` table as other contests, with these spec
 | Column | Type | Description |
 |--------|------|-------------|
 | `contest_sanity_id` | VARCHAR(255) | Reference to `yearEndPoll` document |
-| `category_sanity_id` | VARCHAR(255) | Reference to `yearEndPollCategory` document |
+| `year_end_poll_category_sanity_id` | VARCHAR(255) | Reference to `yearEndPollCategory` document |
 | `option_sanity_id` | VARCHAR(255) | Reference to song/album/artist document (NULL for string options/write-ins) |
-| `string_option_value` | VARCHAR(255) | String option value for movie/TV categories (NULL for document references/write-ins) |
+| `other_option_value` | VARCHAR(255) | String option value for movie/TV categories (NULL for document references/write-ins) |
 | `is_write_in` | BOOLEAN | Is this an actual write-in vote? |
 | `write_in_value` | TEXT | User-submitted write-in text (NULL for document references/string options) |
 
-**Unique constraint:** One vote per user per option per category (enforced via unique index on `user_id`, `contest_sanity_id`, `category_sanity_id`, and `COALESCE(option_sanity_id, string_option_value, write_in_value)`)
+**Unique constraint:** One vote per user per option per category (enforced via unique index on `user_id`, `contest_sanity_id`, `year_end_poll_year_end_poll_category_sanity_id`, and `COALESCE(option_sanity_id, other_option_value, write_in_value)`)
 
 **Vote Type Handling:**
 - **Document references** (songs, albums, artists): `option_sanity_id` is set, other option fields are NULL
-- **String options** (movies, TV shows): `string_option_value` is set, other option fields are NULL
+- **String options** (movies, TV shows): `other_option_value` is set, other option fields are NULL
 - **Write-ins** (user-submitted): `write_in_value` is set, `is_write_in` is TRUE, other option fields are NULL
 
 ### Helper Functions
