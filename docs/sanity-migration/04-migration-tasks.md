@@ -15,7 +15,7 @@ Each task below is designed to be **self-contained** for cold-start agent conver
 **Estimated Effort:** Small
 
 **Context:**
-The `artist` type replaces "band" as the generic content type for musicians. It will be referenced by Concert, Music, CdOfTheWeek, Top11, and MRM features.
+The `artist` type replaces "band" as the generic content type for musicians. It will be referenced by Concert, Music, CdOfTheWeek, Top11, and Modern Rock Madness features.
 
 **Requirements:**
 1. Create `studio/schemaTypes/artist.ts` with fields:
@@ -485,18 +485,18 @@ The Year End Poll is an annual multi-category poll where users vote for their fa
 Modern Rock Madness is an annual bracket-style tournament where users vote in head-to-head matchups between bands. This uses a hybrid architecture: Sanity stores tournament configuration (bands, brackets, matches) while Neon PostgreSQL stores high-volume voting data.
 
 **Sanity Schemas:**
-1. Created `studio/schemaTypes/mrmTournament.ts`:
+1. Created `studio/schemaTypes/modernRockMadnessTournament.ts`:
    - `title`, `year`
    - `status` ('draft' | 'active' | 'complete' | 'archived')
    - `rounds` (array with roundNumber, name, startsAt, endsAt)
    - Document ID format: `mrm-{year}` (e.g., `mrm-2025`)
 
-2. Created `studio/schemaTypes/mrmBand.ts`:
+2. Created `studio/schemaTypes/modernRockMadnessGroup.ts`:
    - `tournament` (reference to mrmTournament)
    - `artist` (reference to Artist)
    - `seed`, `region`, `placement`, `sponsor`, `abbreviation`
 
-3. Created `studio/schemaTypes/mrmMatch.ts`:
+3. Created `studio/schemaTypes/modernRockMadnessMatch.ts`:
    - `tournament` (reference to mrmTournament)
    - `matchNumber`, `round`, `region`
    - `band1`, `band2` (references to mrmBand)
@@ -506,9 +506,9 @@ Modern Rock Madness is an annual bracket-style tournament where users vote in he
    - Document ID format: `mrm-{year}-match-{matchNumber}` (e.g., `mrm-2025-match-1`)
 
 **Files Modified:**
-- `studio/schemaTypes/mrmTournament.ts` (created)
-- `studio/schemaTypes/mrmBand.ts` (created)
-- `studio/schemaTypes/mrmMatch.ts` (created)
+- `studio/schemaTypes/modernRockMadnessTournament.ts` (created)
+- `studio/schemaTypes/modernRockMadnessGroup.ts` (created)
+- `studio/schemaTypes/modernRockMadnessMatch.ts` (created)
 - `studio/schemaTypes/index.ts` (updated)
 - `src/db/neon/schema.sql` (updated)
 - `src/types/database.ts` (updated)

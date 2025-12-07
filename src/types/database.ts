@@ -120,7 +120,7 @@ export interface YearEndPollWriteIn {
 /**
  * Modern Rock Madness match vote count result
  */
-export interface MrmMatchVotes {
+export interface ModernRockMadnessMatchVotes {
   option_sanity_id: string;
   total_votes: number;
 }

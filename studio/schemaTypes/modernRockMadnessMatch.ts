@@ -3,21 +3,21 @@ import { defineType, defineField } from 'sanity';
 /**
  * Modern Rock Madness Match Schema
  *
- * Individual bracket matchup between two bands.
+ * Individual bracket matchup between two groups.
  * Votes are stored in Neon PostgreSQL.
  *
- * Document ID format: mrm-{year}-match-{matchNumber} (e.g., mrm-2025-match-1)
+ * Document ID format: modern-rock-madness-{year}-match-{matchNumber} (e.g., modern-rock-madness-2025-match-1)
  */
 export default defineType({
-  name: 'mrmMatch',
-  title: 'MRM Match',
+  name: 'modernRockMadnessMatch',
+  title: 'Modern Rock Madness Match',
   type: 'document',
   fields: [
     defineField({
       name: 'tournament',
       title: 'Tournament',
       type: 'reference',
-      to: [{ type: 'mrmTournament' }],
+      to: [{ type: 'modernRockMadnessTournament' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
@@ -42,25 +42,25 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'band1',
-      title: 'Band 1',
+      name: 'group1',
+      title: 'Group 1',
       type: 'reference',
-      to: [{ type: 'mrmBand' }],
+      to: [{ type: 'modernRockMadnessGroup' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'band2',
-      title: 'Band 2',
+      name: 'group2',
+      title: 'Group 2',
       type: 'reference',
-      to: [{ type: 'mrmBand' }],
+      to: [{ type: 'modernRockMadnessGroup' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'winner',
       title: 'Winner',
       type: 'reference',
-      to: [{ type: 'mrmBand' }],
-      description: 'Winning band (set after voting closes)',
+      to: [{ type: 'modernRockMadnessGroup' }],
+      description: 'Winning group (set after voting closes)',
     }),
     defineField({
       name: 'startsAt',
@@ -111,17 +111,26 @@ export default defineType({
   ],
   preview: {
     select: {
-      band1Name: 'band1.artist.name',
-      band2Name: 'band2.artist.name',
-      winnerName: 'winner.artist.name',
+      group1Artists: 'group1.artists',
+      group2Artists: 'group2.artists',
+      winnerArtists: 'winner.artists',
       matchNumber: 'matchNumber',
       round: 'round',
     },
     prepare(selection) {
       const {
-        band1Name, band2Name, winnerName, matchNumber, round,
+        group1Artists, group2Artists, winnerArtists, matchNumber, round,
       } = selection;
-      const vs = `${band1Name || 'TBD'} vs ${band2Name || 'TBD'}`;
+      const group1Name = group1Artists && group1Artists.length > 0 && group1Artists[0].name
+        ? group1Artists[0].name
+        : 'TBD';
+      const group2Name = group2Artists && group2Artists.length > 0 && group2Artists[0].name
+        ? group2Artists[0].name
+        : 'TBD';
+      const winnerName = winnerArtists && winnerArtists.length > 0 && winnerArtists[0].name
+        ? winnerArtists[0].name
+        : null;
+      const vs = `${group1Name} vs ${group2Name}`;
       const winnerText = winnerName ? ` • Winner: ${winnerName}` : '';
       return {
         title: `Match ${matchNumber}: ${vs}`,

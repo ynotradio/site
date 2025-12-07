@@ -6,11 +6,11 @@ import { defineType, defineField, defineArrayMember } from 'sanity';
  * Annual bracket-style tournament configuration.
  * Votes are stored in Neon PostgreSQL.
  *
- * Document ID format: mrm-{year} (e.g., mrm-2025)
+ * Document ID format: modern-rock-madness-{year} (e.g., modern-rock-madness-2025)
  */
 export default defineType({
-  name: 'mrmTournament',
-  title: 'MRM Tournament',
+  name: 'modernRockMadnessTournament',
+  title: 'Modern Rock Madness Tournament',
   type: 'document',
   fields: [
     defineField({
@@ -24,7 +24,7 @@ export default defineType({
       name: 'year',
       title: 'Year',
       type: 'number',
-      description: 'Year of the tournament (used in document ID: mrm-{year})',
+      description: 'Year of the tournament (used in document ID: modern-rock-madness-{year})',
       validation: (Rule) => Rule.required().min(2000).max(2100),
     }),
     defineField({
@@ -134,7 +134,7 @@ export default defineType({
       };
       const emoji = statusEmoji[status] || '❓';
       return {
-        title: title || `MRM ${year}`,
+        title: title || `Modern Rock Madness ${year}`,
         subtitle: `${emoji} ${status}`,
       };
     },

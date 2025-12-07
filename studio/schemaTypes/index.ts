@@ -14,9 +14,9 @@ import top11Contest from './top11Contest';
 import top11Result from './top11Result';
 import yearEndPoll from './yearEndPoll';
 import yearEndPollCategory from './yearEndPollCategory';
-import mrmTournament from './mrmTournament';
-import mrmBand from './mrmBand';
-import mrmMatch from './mrmMatch';
+import modernRockMadnessTournament from './modernRockMadnessTournament';
+import modernRockMadnessGroup from './modernRockMadnessGroup';
+import modernRockMadnessMatch from './modernRockMadnessMatch';
 
 const schemaTypes = [
   person,
@@ -35,9 +35,9 @@ const schemaTypes = [
   top11Result,
   yearEndPoll,
   yearEndPollCategory,
-  mrmTournament,
-  mrmBand,
-  mrmMatch,
+  modernRockMadnessTournament,
+  modernRockMadnessGroup,
+  modernRockMadnessMatch,
 ];
 
 export default schemaTypes;

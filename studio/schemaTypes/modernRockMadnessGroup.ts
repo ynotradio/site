@@ -1,28 +1,35 @@
-import { defineType, defineField } from 'sanity';
+import { defineType, defineField, defineArrayMember } from 'sanity';
 
 /**
- * Modern Rock Madness Band Schema
+ * Modern Rock Madness Group Schema
  *
- * Tournament participant (band/artist) with seeding and bracket information.
+ * Tournament participant (group/artist) with seeding and bracket information.
+ * A group can represent one or more artists (e.g., Jack White / White Stripes).
  */
 export default defineType({
-  name: 'mrmBand',
-  title: 'MRM Band',
+  name: 'modernRockMadnessGroup',
+  title: 'Modern Rock Madness Group',
   type: 'document',
   fields: [
     defineField({
       name: 'tournament',
       title: 'Tournament',
       type: 'reference',
-      to: [{ type: 'mrmTournament' }],
+      to: [{ type: 'modernRockMadnessTournament' }],
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'artist',
-      title: 'Artist',
-      type: 'reference',
-      to: [{ type: 'artist' }],
-      validation: (Rule) => Rule.required(),
+      name: 'artists',
+      title: 'Artists',
+      type: 'array',
+      description: 'One or more artists in this group (e.g., Jack White / White Stripes)',
+      of: [
+        defineArrayMember({
+          type: 'reference',
+          to: [{ type: 'artist' }],
+        }),
+      ],
+      validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
       name: 'seed',
@@ -48,7 +55,7 @@ export default defineType({
       name: 'sponsor',
       title: 'Sponsor',
       type: 'string',
-      description: 'Sponsor name for this band',
+      description: 'Sponsor name for this group',
     }),
     defineField({
       name: 'abbreviation',
@@ -74,18 +81,23 @@ export default defineType({
   ],
   preview: {
     select: {
-      artistName: 'artist.name',
+      artists: 'artists',
       seed: 'seed',
       region: 'region',
       placement: 'placement',
     },
     prepare(selection) {
       const {
-        artistName, seed, region, placement,
+        artists, seed, region, placement,
       } = selection;
+      // Get first artist name for display
+      const artistName = artists && artists.length > 0 && artists[0].name 
+        ? artists[0].name 
+        : 'Unknown Artist';
+      const multiArtist = artists && artists.length > 1 ? ' +' : '';
       const placementText = placement ? ` • ${placement}` : '';
       return {
-        title: `#${seed} ${artistName || 'Unknown Artist'}`,
+        title: `#${seed} ${artistName}${multiArtist}`,
         subtitle: `${region}${placementText}`,
       };
     },

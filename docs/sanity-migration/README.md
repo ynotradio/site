@@ -19,7 +19,7 @@
 | [08 - Quick Reference](./08-quick-reference.md) | Commands, GROQ queries, migration report template |
 | [09 - Neon Integration (Top 11)](./09-neon-integration-top11.md) | Hybrid Sanity + Neon architecture for Top 11 contest |
 | [10 - Neon Integration (Year End Poll)](./10-neon-integration-yep.md) | Hybrid Sanity + Neon architecture for Year End Poll |
-| [11 - Neon Integration (Modern Rock Madness)](./11-neon-integration-mrm.md) | Hybrid Sanity + Neon architecture for Modern Rock Madness |
+| [11 - Neon Integration (Modern Rock Madness)](./11-neon-integration-modern-rock-madness.md) | Hybrid Sanity + Neon architecture for Modern Rock Madness |
 
 ---
 

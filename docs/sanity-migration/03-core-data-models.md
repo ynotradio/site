@@ -22,9 +22,9 @@
 | 12 | Top11Result | ✅ Done | Published weekly results. Schema at `studio/schemaTypes/top11Result.ts` |
 | 13 | YearEndPoll | ✅ Done | Annual poll config; votes/entries → Neon. Schema at `studio/schemaTypes/yearEndPoll.ts` |
 | 14 | YearEndPollCategory | ✅ Done | Poll categories with options. Schema at `studio/schemaTypes/yearEndPollCategory.ts` |
-| 15 | MRMTournament | ✅ Done | Tournament config; votes → Neon. Schema at `studio/schemaTypes/mrmTournament.ts` |
-| 16 | MRMBand | ✅ Done | Tournament participants. Schema at `studio/schemaTypes/mrmBand.ts` |
-| 17 | MRMMatch | ✅ Done | Bracket matchups; votes → Neon. Schema at `studio/schemaTypes/mrmMatch.ts` |
+| 15 | Modern Rock MadnessTournament | ✅ Done | Tournament config; votes → Neon. Schema at `studio/schemaTypes/modernRockMadnessTournament.ts` |
+| 16 | Modern Rock MadnessBand | ✅ Done | Tournament participants. Schema at `studio/schemaTypes/modernRockMadnessGroup.ts` |
+| 17 | Modern Rock MadnessMatch | ✅ Done | Bracket matchups; votes → Neon. Schema at `studio/schemaTypes/modernRockMadnessMatch.ts` |
 | — | Record | ✅ Done | Schema exists at `studio/schemaTypes/record.ts`, references Artist and Song |
 | — | Post | ✅ Done | Schema exists at `studio/schemaTypes/post.ts`, unified Story + CustomText model |
 

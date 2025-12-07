@@ -58,7 +58,7 @@ CREATE UNIQUE INDEX idx_votes_yep_unique
     WHERE category_sanity_id IS NOT NULL AND user_id IS NOT NULL;
 
 -- Modern Rock Madness: One vote per user per match
-CREATE UNIQUE INDEX idx_votes_mrm_unique 
+CREATE UNIQUE INDEX idx_votes_modern_rock_madness_unique 
     ON votes(user_id, match_sanity_id)
     WHERE match_sanity_id IS NOT NULL AND user_id IS NOT NULL;
 
@@ -160,7 +160,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Helper function: Get vote counts for a Modern Rock Madness match
-CREATE OR REPLACE FUNCTION get_mrm_match_votes(p_match_id VARCHAR)
+CREATE OR REPLACE FUNCTION get_modern_rock_madness_match_votes(p_match_id VARCHAR)
 RETURNS TABLE (option_sanity_id VARCHAR, total_votes BIGINT) AS $$
 BEGIN
     RETURN QUERY
