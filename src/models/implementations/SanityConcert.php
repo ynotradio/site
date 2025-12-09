@@ -6,6 +6,13 @@ use YNotRadio\Models\Concert;
 
 require_once __DIR__ . '/../../lib/sanity-client.php';
 
+/**
+ * Read-only implementation of the Concert model for migration from MySQL to Sanity CMS.
+ *
+ * This class provides methods to fetch concert data from Sanity CMS.
+ * Write operations (create, update, delete) are not yet supported.
+ * Intended for use during the migration phase to ensure compatibility and data integrity.
+ */
 class SanityConcert implements Concert {
     private \SanityClient $sanityClient;
 
