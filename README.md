@@ -205,6 +205,8 @@ The script definitions are in the `scripts` section of `src/composer.json`.
 
 This project is being migrated from the legacy PHP/MySQL site to Sanity CMS.
 
+See [docs/sanity-migration/](docs/sanity-migration/) for the complete migration plan.
+
 ### Sanity Setup
 
 1. Install dependencies:
@@ -244,12 +246,4 @@ To use the Sanity MCP server in VS Code:
 
 ### Content Models
 
-#### Person
-
-A simple model representing a person, with fields:
-- name (string, required)
-- slug (slug, required, generated from name)
-- photo (image with hotspot)
-- bio (rich text)
-
-More models will be added in future phases of the migration.
+See [docs/sanity-migration/03-core-data-models.md](docs/sanity-migration/03-core-data-models.md) for all content models and migration status.
