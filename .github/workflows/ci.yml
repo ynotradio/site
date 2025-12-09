@@ -89,6 +89,8 @@ jobs:
         run: npm ci --legacy-peer-deps
       
       - name: Build Sanity Studio
+        env:
+          CI: true
         run: npm run sanity:build
 
   php-lint:
