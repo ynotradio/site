@@ -66,6 +66,8 @@ ESLint was kept at version 8.x because:
 
 We can migrate to ESLint 9 in the future when airbnb configs add support.
 
+**Update (December 2025)**: After the initial dependency update, `@sanity/eslint-config-studio` was downgraded from v5.0.0 to v4.0.0 because v5+ requires ESLint 9. Dependabot has been configured to ignore major version updates for packages that require ESLint 9 until we're ready to migrate the entire toolchain.
+
 ## Automated Dependency Management
 
 ### Dependabot Configuration
@@ -86,6 +88,16 @@ Updates are grouped to reduce PR noise:
 - **tooling**: TypeScript, ESLint, Prettier
 - **dnd-kit**: All `@dnd-kit/*` packages
 - **github-actions**: All GitHub Actions updates
+
+**Ignored Updates**:
+To prevent incompatible upgrades, Dependabot is configured to ignore major version updates for:
+- `@sanity/eslint-config-studio` (v5+ requires ESLint 9)
+- `eslint` (v9 requires flat config, incompatible with airbnb-typescript)
+- `@typescript-eslint/eslint-plugin` (v8+ requires ESLint 9)
+- `@typescript-eslint/parser` (v8+ requires ESLint 9)
+- `@types/node` (staying on v22 aligned with project's Node version)
+
+These will be updated together when the project is ready to migrate to ESLint 9.
 
 **PR Limits**:
 - npm: Max 10 open PRs

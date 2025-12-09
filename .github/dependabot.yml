@@ -7,6 +7,23 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+    # Ignore major versions that are incompatible with current ESLint version
+    # ESLint 8 is intentionally kept due to eslint-config-airbnb-typescript not supporting ESLint 9's flat config
+    ignore:
+      # @sanity/eslint-config-studio v5+ requires ESLint 9
+      - dependency-name: "@sanity/eslint-config-studio"
+        update-types: ["version-update:semver-major"]
+      # ESLint 9 uses flat config which is incompatible with current setup
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint v8 requires ESLint 9
+      - dependency-name: "@typescript-eslint/eslint-plugin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@typescript-eslint/parser"
+        update-types: ["version-update:semver-major"]
+      # @types/node should stay aligned with project's Node version (currently using v22 types)
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     # Group updates to reduce PR noise
     groups:
       # Group all Sanity-related packages together
