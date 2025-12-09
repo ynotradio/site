@@ -12,4 +12,11 @@ export default defineCliConfig({
     appId: 'rqvmfj3toaqe5zrka2vzt0jm',
     autoUpdates: true,
   },
+
+  vite: {
+    build: {
+      outDir: 'build/studio',
+      emptyOutDir: true,
+    },
+  },
 });
