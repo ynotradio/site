@@ -13,4 +13,11 @@ export default defineCliConfig({
     // Disable auto-updates in CI to allow offline builds
     autoUpdates: process.env.CI !== 'true',
   },
+
+  vite: {
+    build: {
+      outDir: 'build/studio',
+      emptyOutDir: true,
+    },
+  },
 });

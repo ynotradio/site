@@ -1,0 +1,87 @@
+version: 2
+updates:
+  # Keep npm dependencies up to date
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Group updates to reduce PR noise
+    groups:
+      # Group all Sanity-related packages together
+      sanity:
+        patterns:
+          - "sanity"
+          - "@sanity/*"
+      # Group React packages together
+      react:
+        patterns:
+          - "react"
+          - "react-*"
+          - "@types/react"
+      # Group testing libraries together
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "vitest"
+          - "@vitest/*"
+          - "jsdom"
+      # Group TypeScript and ESLint tooling together
+      tooling:
+        patterns:
+          - "typescript"
+          - "eslint"
+          - "eslint-*"
+          - "@typescript-eslint/*"
+          - "prettier"
+      # Group DnD-kit packages together
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      # Group MCP server packages together
+      mcp:
+        patterns:
+          - "@sanity/mcp-server"
+          - "@benborla29/mcp-server-mysql"
+          - "@modelcontextprotocol/*"
+          - "mcp-*"
+    # Automatically rebase PRs when they become out of date
+    rebase-strategy: "auto"
+    # Limit open PRs to avoid overwhelming the team
+    open-pull-requests-limit: 10
+    # Add labels for easier identification
+    labels:
+      - "dependencies"
+      - "automated"
+    # Assign reviewers (customize with your team members)
+    # reviewers:
+    #   - "username1"
+    #   - "username2"
+    # Prefix commit messages
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    # Group all GitHub Actions updates together
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    rebase-strategy: "auto"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "automated"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
