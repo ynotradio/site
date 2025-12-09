@@ -39,6 +39,13 @@ updates:
       dnd-kit:
         patterns:
           - "@dnd-kit/*"
+      # Group MCP server packages together
+      mcp:
+        patterns:
+          - "@sanity/mcp-server"
+          - "@benborla29/mcp-server-mysql"
+          - "@modelcontextprotocol/*"
+          - "mcp-*"
     # Automatically rebase PRs when they become out of date
     rebase-strategy: "auto"
     # Limit open PRs to avoid overwhelming the team
