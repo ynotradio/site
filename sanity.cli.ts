@@ -10,6 +10,7 @@ export default defineCliConfig({
 
   deployment: {
     appId: 'rqvmfj3toaqe5zrka2vzt0jm',
-    autoUpdates: true,
+    // Disable auto-updates in CI to allow offline builds
+    autoUpdates: process.env.CI !== 'true',
   },
 });
