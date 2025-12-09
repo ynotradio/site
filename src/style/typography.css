@@ -15,7 +15,7 @@ body {
 }
 
 img {
-  border:0;
+  border: 0;
 }
 
 a {
@@ -58,7 +58,7 @@ a:hover {
 
 .full_height {
   clear: both;
-  overflow:hidden;
+  overflow: hidden;
 }
 
 .required:after {
@@ -140,6 +140,7 @@ nav li:last-child a {
   border-right: 1px solid black;
   border-radius: 0 0 4px 0;
 }
+
 nav li:last-child {
   float: none;
 }
@@ -175,10 +176,11 @@ nav a:hover {
 }
 
 .last {
-  float:none
+  float: none
 }
 
-.active, .active:hover {
+.active,
+.active:hover {
   background: white;
   box-shadow: none;
   color: black;
@@ -192,12 +194,12 @@ nav a:hover {
   box-shadow: 0 0px 8px #B6B6B6;
 }
 
-.feature-box h3{
+.feature-box h3 {
   background-color: #CC3333;
   border-radius: 4px 4px 0 0;
-	color: white;
-	margin: 10px 0;
-	padding: 3px 6px;
+  color: white;
+  margin: 10px 0;
+  padding: 3px 6px;
   text-shadow: 0.1em 0.1em black
 }
 
@@ -207,7 +209,7 @@ nav a:hover {
   margin: 0 10px 0 5px;
 }
 
-.feature-box div{
+.feature-box div {
   padding: 0 5px;
 }
 
@@ -215,9 +217,17 @@ nav a:hover {
   padding-top: 10px;
 }
 
+.ads:first-child {
+  margin-top: 10px;
+}
+
 .ads img {
+  float: none;
   margin-bottom: 10px;
-  width: 100%; /* 218px */
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1/1;
+  margin: 0;
 }
 
 .ads a:last-child img {
@@ -228,7 +238,7 @@ nav a:hover {
   margin-bottom: 10px;
 }
 
-.featured_concert .artist{
+.featured_concert .artist {
   font-weight: bold;
 }
 
@@ -237,7 +247,7 @@ nav a:hover {
   float: none;
 }
 
-.top11-message img{
+.top11-message img {
   float: left;
   width: 100px;
   margin: 0 10px 0 5px;
@@ -301,17 +311,18 @@ nav a:hover {
   min-height: 12em;
 }
 
-.deejay + .deejay {
+.deejay+.deejay {
   margin-top: 1em;
 }
 
-.review img, .deejay img{
+.review img,
+.deejay img {
   float: left;
   padding: 3px 15px 0 0;
 }
 
 .past_review img {
-  filter:alpha(opacity=35);
+  filter: alpha(opacity=35);
   -moz-opacity: 0.35;
   opacity: 0.35;
   border: 1px solid black;
@@ -323,7 +334,7 @@ nav a:hover {
 }
 
 .past_review:hover img {
-  filter:alpha(opacity=100);
+  filter: alpha(opacity=100);
   -moz-opacity: 1.0;
   opacity: 1.0;
   cursor: pointer;
@@ -346,10 +357,13 @@ nav a:hover {
   padding: 2px 5px 2px 5px;
   text-decoration: none;
 }
-.pagination a:hover, .pagination a:active {
+
+.pagination a:hover,
+.pagination a:active {
   border: 1px solid #000099;
   color: #000;
 }
+
 .pagination .current {
   background-color: black;
   border: 1px solid black;
@@ -374,15 +388,17 @@ footer {
   text-align: center;
 }
 
-footer a, footer a:hover {
+footer a,
+footer a:hover {
   color: white;
 }
 
-#control_panel dt{
+#control_panel dt {
   font-weight: bold;
 }
 
-#control_panel dt:before, dt:after {
+#control_panel dt:before,
+dt:after {
   content: " -- ";
 }
 
