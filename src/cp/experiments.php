@@ -4,13 +4,8 @@ $page_file = "experiments.php";
 $page_title = "Experiments";
 
 require ("../functions/main_fns.php");
-require ("../partials/_header.php");
 
-if (!$_SESSION["logged_in"]) {
-  login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
-} else {
-
-// Handle POST actions
+// Handle POST actions BEFORE any output
 $message = '';
 $messageType = '';
 
@@ -71,6 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get current flags
 $currentFlags = isset($_COOKIE['FF']) ? explode(',', $_COOKIE['FF']) : [];
 
+require ("../partials/_header.php");
+
+if (!$_SESSION["logged_in"]) {
+  login_prompt($_POST['username'],$_POST['remember_me'],$_SESSION["error"]);
+} else {
+
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -127,6 +128,8 @@ $currentFlags = isset($_COOKIE['FF']) ? explode(',', $_COOKIE['FF']) : [];
       <dl>
         <dt><code>auth_voting</code></dt>
         <dd>Enables authenticated voting for Top 11 @ 11 (requires Auth0 login)</dd>
+        <dt><code>sanity</code></dt>
+        <dd>Enables Sanity CMS as the data source for concerts (instead of MySQL)</dd>
       </dl>
     </div>
 
