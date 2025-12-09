@@ -44,9 +44,14 @@ fi
 echo "📦 Creating backup of htdocs..."
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="htdocs_backup_${TIMESTAMP}.tar.gz"
-ssh ynotradio "cd /opt/bitnami/apache2 && \
-    tar -czf ~/${BACKUP_FILE} --transform 's,^htdocs/,,' htdocs/ && \
-    echo 'Backup created: ${BACKUP_FILE}'"
+BACKUP_DIR="~/backups/htdocs"
+ssh ynotradio "mkdir -p ${BACKUP_DIR} && \
+    cd /opt/bitnami/apache2 && \
+    tar -czf ${BACKUP_DIR}/${BACKUP_FILE} --transform 's,^htdocs/,,' htdocs/ && \
+    echo 'Backup created: ${BACKUP_DIR}/${BACKUP_FILE}' && \
+    cd ${BACKUP_DIR} && \
+    ls -t htdocs_backup_*.tar.gz | tail -n +16 | xargs -r rm -f && \
+    echo 'Cleaned up old backups, keeping latest 15'"
 
 # Change to the src directory
 cd "$(dirname "$0")/../src"
