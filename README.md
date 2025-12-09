@@ -203,36 +203,23 @@ The script definitions are in the `scripts` section of `src/composer.json`.
 
 ## Sanity CMS Migration
 
-This project is being migrated from the legacy PHP/MySQL site to Sanity CMS. **Phase 1 is approximately 80% complete.**
+This project is being migrated from the legacy PHP/MySQL site to Sanity CMS.
 
-### Migration Documentation
+See [docs/sanity-migration/](docs/sanity-migration/) for the complete migration plan.
 
-- **📊 [Current Status](docs/SANITY_MIGRATION_STATUS.md)** - Detailed progress report with completion metrics
-- **📖 [Migration Plan](docs/sanity-migration/)** - Complete migration guide organized by chapters
-- **📋 [Migration Reports](docs/migrations/reports/)** - Detailed reports from completed data migrations
-- **🗄️ [Archive](docs/archive/)** - Historical documentation and legacy process docs
+### Sanity Setup
 
-### Quick Start
-
-1. **Install dependencies:**
-   ```bash
+1. Install dependencies:
+   ```
    npm install
    ```
 
-2. **Run Sanity Studio:**
-   ```bash
+2. Run the Sanity development server:
+   ```
    npm run sanity:dev
    ```
    
-   This starts the Sanity Studio at http://localhost:3333
-
-3. **Run a migration script:**
-   ```bash
-   npm run import:deejays   # Migrate DJ data
-   npm run import:concerts  # Migrate concert data
-   npm run import:cdotw     # Migrate CD of the Week reviews
-   # See package.json for all available import scripts
-   ```
+   This will start the Sanity Studio at http://localhost:3333
 
 ### MCP Server Setup
 
@@ -257,12 +244,6 @@ To use the Sanity MCP server in VS Code:
 
 4. Now you can use GitHub Copilot to interact with your Sanity content using natural language.
 
-### Content Models (20 Schemas)
+### Content Models
 
-All core content models have been created. See [docs/sanity-migration/03-core-data-models.md](docs/sanity-migration/03-core-data-models.md) for the complete list.
-
-**Core Models:** Person, DJ, Artist, Venue, Ad, Concert, Song, Record, CD of the Week, OnDemand, Show, Post
-
-**Contest Models:** Top 11 Contest/Results, Year End Poll/Categories, Modern Rock Madness Tournament/Groups/Matches
-
-All schemas are located in `studio/schemaTypes/`.
+See [docs/sanity-migration/03-core-data-models.md](docs/sanity-migration/03-core-data-models.md) for all content models and migration status.
