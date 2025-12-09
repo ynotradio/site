@@ -71,6 +71,28 @@ jobs:
       - name: Validate Sanity schema
         run: npm run sanity:schema-validate
 
+  sanity-build:
+    name: Sanity Studio Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      
+      - name: Build Sanity Studio
+        env:
+          CI: true
+        run: npm run sanity:build
+
   php-lint:
     name: PHP Lint
     runs-on: ubuntu-latest
