@@ -6,7 +6,7 @@ echo "🔄 Starting rollback process..."
 
 # Get list of backups
 echo "📋 Available backups:"
-BACKUPS=$(ssh ynotradio "ls -1 ~/htdocs_backup_*.tar.gz 2>/dev/null | sort -r")
+BACKUPS=$(ssh ynotradio "ls -1 ~/backups/htdocs/htdocs_backup_*.tar.gz 2>/dev/null | sort -r")
 if [ -z "$BACKUPS" ]; then
     echo "❌ No backups found!"
     exit 1
@@ -55,7 +55,7 @@ ssh ynotradio "set -x && \
     echo 'Creating temporary directory...' && \
     mkdir -p ~/temp_restore && \
     echo 'Extracting backup...' && \
-    tar -xzf ~/$(basename "$BACKUP_FILE") -C ~/temp_restore && \
+    tar -xzf "$BACKUP_FILE" -C ~/temp_restore && \
     echo 'Checking extracted contents...' && \
     ls -la ~/temp_restore/ && \
     echo 'Copying files to htdocs...' && \
