@@ -34,6 +34,8 @@ if (!$_SESSION["logged_in"]) {
             <dt>Deejays</dt>
               <dd><a href="deejay_add.php">Add a Deejay</a></dd>
               <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
+            <dt>Experiments</dt>
+              <dd><a href="experiments.php">Manage Feature Flags</a></dd>
             <dt>Images</dt>
               <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
