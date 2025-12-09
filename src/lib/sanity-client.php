@@ -48,13 +48,13 @@ class SanityClient {
      */
     public function fetch($query, $params = []) {
         $host = $this->useCdn ? 'apicdn.sanity.io' : 'api.sanity.io';
-        $url = "https://{$host}/v{$this->apiVersion}/data/query/{$this->projectId}/{$this->dataset}";
+        $url = "https://{$this->projectId}.{$host}/v{$this->apiVersion}/data/query/{$this->dataset}";
 
         // Build query string
         $queryParams = ['query' => $query];
         if (!empty($params)) {
             foreach ($params as $key => $value) {
-                $queryParams['$' . $key] = is_string($value) ? $value : json_encode($value);
+                $queryParams['$' . $key] = json_encode($value);
             }
         }
 

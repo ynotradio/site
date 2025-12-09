@@ -9,7 +9,6 @@ import song from './song';
 import cdOfTheWeek from './cdOfTheWeek';
 import onDemand from './onDemand';
 import show from './show';
-import post from './post';
 import top11Contest from './top11Contest';
 import top11Result from './top11Result';
 import yearEndPoll from './yearEndPoll';
@@ -30,7 +29,6 @@ const schemaTypes = [
   cdOfTheWeek,
   onDemand,
   show,
-  post,
   top11Contest,
   top11Result,
   yearEndPoll,

@@ -13,6 +13,13 @@
                 "MYSQL_PASS": "ynot_sql_pass",
                 "MYSQL_DB": "ynot_site"
             }
+        },
+        "chrome-devtools": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-chrome-devtools"
+            ]
         }
     }
 }
