@@ -24,7 +24,7 @@ Detailed reports from completed Sanity CMS data migrations.
 
 ## Verification
 ```sql
-SELECT COUNT(*) FROM table WHERE deleted != 'y';
+SELECT COUNT(*) FROM table_name WHERE deleted != 'y';
 ```
 ```
 
