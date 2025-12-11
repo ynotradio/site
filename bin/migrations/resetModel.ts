@@ -43,7 +43,7 @@ async function getDocumentIds(
   modelType: string,
 ): Promise<string[]> {
   try {
-    const query = `*[_type == $type]._id`;
+    const query = '*[_type == $type]._id';
     const ids = await client.fetch<string[]>(query, { type: modelType });
     return ids;
   } catch (error) {
