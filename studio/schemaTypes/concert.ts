@@ -6,6 +6,12 @@ export default defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'title',
+      title: 'Title',
+      type: 'string',
+      description: 'Optional custom title. If not provided, artist names will be used.',
+    }),
+    defineField({
       name: 'date',
       title: 'Date',
       type: 'date',
@@ -66,6 +72,7 @@ export default defineType({
   ],
   preview: {
     select: {
+      title: 'title',
       date: 'date',
       artist0: 'artists.0.name',
       artist1: 'artists.1.name',
@@ -77,7 +84,7 @@ export default defineType({
     },
     prepare(selection) {
       const {
-        date, artist0, artist1, artist2, artist3, venueName, venueCity, artistPhoto,
+        title, date, artist0, artist1, artist2, artist3, venueName, venueCity, artistPhoto,
       } = selection;
       const formattedDate = date ? new Date(date).toLocaleDateString('en-US', {
         month: 'short',
@@ -86,14 +93,17 @@ export default defineType({
       }) : 'No date';
       const location = venueCity ? `${venueName}, ${venueCity}` : venueName;
 
-      // Build artist names from individual selections
-      const artists = [artist0, artist1, artist2, artist3].filter(Boolean);
-      const artistNames = artists.length > 0
-        ? artists.join(' & ')
-        : 'Unknown Artist';
+      // Use custom title if provided, otherwise build from artist names
+      let displayTitle = title;
+      if (!displayTitle) {
+        const artists = [artist0, artist1, artist2, artist3].filter(Boolean);
+        displayTitle = artists.length > 0
+          ? artists.join(' & ')
+          : 'Unknown Artist';
+      }
 
       return {
-        title: artistNames,
+        title: displayTitle,
         subtitle: `${formattedDate} @ ${location || 'Unknown Venue'}`,
         media: artistPhoto,
       };
