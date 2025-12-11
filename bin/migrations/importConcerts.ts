@@ -127,6 +127,69 @@ function normalizeName(name: string): string {
 }
 
 /**
+ * Parse artist string into individual artist names
+ * Handles patterns like:
+ * - "Artist A & Artist B" -> ["Artist A", "Artist B"]
+ * - "Artist A w/ Artist B" -> ["Artist A", "Artist B"]
+ * - "Artist A (of Band B)" -> ["Artist A", "Band B"]
+ * - "Florence + The Machine" -> ["Florence + The Machine"] (not split)
+ * - "Echo & The Bunnymen" -> ["Echo & The Bunnymen"] (not split - band name)
+ */
+function parseArtistNames(artistString: string): string[] {
+  if (!artistString) return [];
+
+  const artists: string[] = [];
+
+  // First, check for special patterns that indicate a single band name
+  // Pattern: "Word & The ..." (e.g., "Echo & The Bunnymen")
+  const singleBandPattern = /^[A-Z][a-z]+\s+&\s+The\s+/;
+  if (singleBandPattern.test(artistString)
+      && !artistString.includes(' w/')
+      && !artistString.includes(' with ')
+      && !artistString.includes('(of ')
+      && !artistString.includes('(from ')) {
+    return [artistString.trim()];
+  }
+
+  // Extract and store "(of ...)" and "(from ...)" patterns
+  let remaining = artistString;
+  const ofBands: string[] = [];
+  const ofPattern = /\((?:of|from)\s+([^)]+)\)/gi;
+  let match;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = ofPattern.exec(artistString)) !== null) {
+    const bandName = match[1].trim();
+    if (bandName) {
+      ofBands.push(bandName);
+    }
+  }
+  // Remove all "(of ...)" patterns
+  remaining = remaining.replace(ofPattern, '').trim();
+
+  // Split by " w/ " or " with " (case insensitive) first
+  const withParts = remaining.split(/\s+w\/\s+|\s+with\s+/i);
+
+  // For each part, split by " & "
+  withParts.forEach((part) => {
+    const trimmedPart = part.trim();
+    if (!trimmedPart) return;
+
+    const ampParts = trimmedPart.split(/\s+&\s+/);
+    ampParts.forEach((ampPart) => {
+      const finalPart = ampPart.trim();
+      if (finalPart) {
+        artists.push(finalPart);
+      }
+    });
+  });
+
+  // Add all "(of ...)" bands at the end
+  ofBands.forEach((band) => artists.push(band));
+
+  return artists;
+}
+
+/**
  * Find or create an artist by name
  */
 async function findOrCreateArtist(
@@ -300,29 +363,54 @@ async function transformConcertToDocument(
   imageUploader: ReturnType<typeof createImageUploader>,
 ): Promise<{
     doc: DocumentWithLegacyId | null;
-    artistCreated: boolean;
+    artistsCreated: number;
     venueCreated: boolean;
     error?: string;
   }> {
   const { id } = concert;
 
-  // Find or create artist
-  const artistResult = await findOrCreateArtist(
-    client,
-    upsertHandler,
-    imageUploader,
-    concert.artist!,
-    concert.band_pic_url,
-    concert.band_url,
-  );
+  // Parse artist names from the artist string
+  const artistNames = parseArtistNames(concert.artist!);
 
-  if (!artistResult.success || !artistResult.artistId) {
+  if (artistNames.length === 0) {
     return {
       doc: null,
-      artistCreated: false,
+      artistsCreated: 0,
       venueCreated: false,
-      error: `Failed to find or create artist: ${concert.artist}`,
+      error: `No valid artist names found in: ${concert.artist}`,
     };
+  }
+
+  // Find or create all artists
+  const artistResults = [];
+  let totalArtistsCreated = 0;
+
+  for (const artistName of artistNames) {
+    // Only use band_pic_url and band_url for the first artist (headliner)
+    const isHeadliner = artistResults.length === 0;
+    // eslint-disable-next-line no-await-in-loop
+    const artistResult = await findOrCreateArtist(
+      client,
+      upsertHandler,
+      imageUploader,
+      artistName,
+      isHeadliner ? concert.band_pic_url : null,
+      isHeadliner ? concert.band_url : null,
+    );
+
+    if (!artistResult.success || !artistResult.artistId) {
+      return {
+        doc: null,
+        artistsCreated: totalArtistsCreated,
+        venueCreated: false,
+        error: `Failed to find or create artist: ${artistName}`,
+      };
+    }
+
+    artistResults.push(artistResult);
+    if (artistResult.created) {
+      totalArtistsCreated += 1;
+    }
   }
 
   // Find or create venue
@@ -335,21 +423,22 @@ async function transformConcertToDocument(
   if (!venueResult.success || !venueResult.venueId) {
     return {
       doc: null,
-      artistCreated: artistResult.created,
+      artistsCreated: totalArtistsCreated,
       venueCreated: false,
       error: `Failed to find or create venue: ${concert.venue}`,
     };
   }
 
-  // Create the concert document
+  // Create the concert document with multiple artists
   const doc: DocumentWithLegacyId = {
     _id: generateDocumentId('concert', id),
     _type: 'concert',
     legacyId: id,
-    artist: {
+    artists: artistResults.map((result) => ({
       _type: 'reference',
-      _ref: artistResult.artistId,
-    },
+      _ref: result.artistId!,
+      _key: result.artistId!,
+    })),
     venue: {
       _type: 'reference',
       _ref: venueResult.venueId,
@@ -383,7 +472,7 @@ async function transformConcertToDocument(
 
   return {
     doc,
-    artistCreated: artistResult.created,
+    artistsCreated: totalArtistsCreated,
     venueCreated: venueResult.created,
   };
 }
@@ -521,9 +610,7 @@ async function importConcerts(): Promise<void> {
           imageUploader,
         );
 
-        if (transformResult.artistCreated) {
-          stats.artistsCreated += 1;
-        }
+        stats.artistsCreated += transformResult.artistsCreated;
         if (transformResult.venueCreated) {
           stats.venuesCreated += 1;
         }

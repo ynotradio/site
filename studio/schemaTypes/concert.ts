@@ -12,11 +12,16 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
-      name: 'artist',
-      title: 'Artist',
-      type: 'reference',
-      to: [{ type: 'artist' }],
-      validation: (Rule) => Rule.required(),
+      name: 'artists',
+      title: 'Artists',
+      type: 'array',
+      of: [
+        {
+          type: 'reference',
+          to: [{ type: 'artist' }],
+        },
+      ],
+      validation: (Rule) => Rule.required().min(1),
     }),
     defineField({
       name: 'venue',
@@ -62,14 +67,17 @@ export default defineType({
   preview: {
     select: {
       date: 'date',
-      artistName: 'artist.name',
+      artist0: 'artists.0.name',
+      artist1: 'artists.1.name',
+      artist2: 'artists.2.name',
+      artist3: 'artists.3.name',
       venueName: 'venue.name',
       venueCity: 'venue.city',
-      artistPhoto: 'artist.photo',
+      artistPhoto: 'artists.0.photo',
     },
     prepare(selection) {
       const {
-        date, artistName, venueName, venueCity, artistPhoto,
+        date, artist0, artist1, artist2, artist3, venueName, venueCity, artistPhoto,
       } = selection;
       const formattedDate = date ? new Date(date).toLocaleDateString('en-US', {
         month: 'short',
@@ -77,8 +85,15 @@ export default defineType({
         year: 'numeric',
       }) : 'No date';
       const location = venueCity ? `${venueName}, ${venueCity}` : venueName;
+
+      // Build artist names from individual selections
+      const artists = [artist0, artist1, artist2, artist3].filter(Boolean);
+      const artistNames = artists.length > 0
+        ? artists.join(' & ')
+        : 'Unknown Artist';
+
       return {
-        title: artistName || 'Unknown Artist',
+        title: artistNames,
         subtitle: `${formattedDate} @ ${location || 'Unknown Venue'}`,
         media: artistPhoto,
       };
