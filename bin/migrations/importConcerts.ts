@@ -127,6 +127,29 @@ function normalizeName(name: string): string {
 }
 
 /**
+ * Check if an artist string should be preserved as a custom title
+ * Returns true for special event formats that shouldn't be parsed
+ */
+function shouldUseCustomTitle(artistString: string): boolean {
+  if (!artistString) return false;
+
+  // Check for special event patterns
+  const titlePatterns = [
+    /\(performing\s+/i, // "Artist (performing Album)"
+    /\(playing\s+/i, // "Artist (playing Album)"
+    /\s+performs\s+/i, // "Artist performs Album"
+    /\s+plays\s+/i, // "Artist plays Album"
+    /\s+anniversary\)/i, // "Album Anniversary)"
+    /\(.*\s+night\s+\d+\)/i, // "(Night 1)", "(Night 2)"
+    /\(.*\s+show\)/i, // "(Special Show)", "(Album Release Show)"
+    /\(.*\s+to\s+remember\)/i, // "(A [Event] To Remember)"
+    /\([^)]*&[^)]*\)/i, // "(Something & Something)" - descriptive text with ampersand in parens
+  ];
+
+  return titlePatterns.some((pattern) => pattern.test(artistString));
+}
+
+/**
  * Parse artist string into individual artist names
  * Handles patterns like:
  * - "Artist A & Artist B" -> ["Artist A", "Artist B"]
@@ -187,6 +210,22 @@ function parseArtistNames(artistString: string): string[] {
   ofBands.forEach((band) => artists.push(band));
 
   return artists;
+}
+
+/**
+ * Extract main artist name(s) from a title string for creating references
+ * E.g., "Cat Power (The Greatest 20th Anniversary)" -> "Cat Power"
+ * E.g., "Michael Shannon & Jason Narducy (playing ...)" ->
+ *       ["Michael Shannon", "Jason Narducy"]
+ */
+function extractArtistsFromTitle(titleString: string): string[] {
+  if (!titleString) return [];
+
+  // Remove anything in parentheses to get the main artist name(s)
+  const mainArtists = titleString.replace(/\s*\([^)]*\)/g, '').trim();
+
+  // Now parse the remaining string for multiple artists
+  return parseArtistNames(mainArtists);
 }
 
 /**
@@ -369,8 +408,16 @@ async function transformConcertToDocument(
   }> {
   const { id } = concert;
 
+  // Check if this should use a custom title
+  const useCustomTitle = shouldUseCustomTitle(concert.artist!);
+  const customTitle = useCustomTitle ? concert.artist!.trim() : null;
+
   // Parse artist names from the artist string
-  const artistNames = parseArtistNames(concert.artist!);
+  // If using custom title, extract artists from title
+  // Otherwise, parse normally
+  const artistNames = useCustomTitle
+    ? extractArtistsFromTitle(concert.artist!)
+    : parseArtistNames(concert.artist!);
 
   if (artistNames.length === 0) {
     return {
@@ -444,6 +491,11 @@ async function transformConcertToDocument(
       _ref: venueResult.venueId,
     },
   };
+
+  // Add custom title if applicable
+  if (customTitle) {
+    doc.title = customTitle;
+  }
 
   // Add date
   if (concert.date) {
