@@ -38,8 +38,12 @@ if ($page_file != "logout.php") {
       <?php
       // Determine if we're in the /cp directory to adjust paths
       $base_path = (strpos($page_file, 'cp/') !== false || dirname($_SERVER['PHP_SELF']) == '/cp') ? "../" : "";
+
+      // Cache busting: append file modification time as query string
+      $css_file = __DIR__ . '/../style/base.css';
+      $css_version = file_exists($css_file) ? filemtime($css_file) : time();
       ?>
-      <link href="<?php echo $base_path; ?>style/base.css" rel="stylesheet" type="text/css" media="all">
+      <link href="<?php echo $base_path; ?>style/base.css?v=<?php echo $css_version; ?>" rel="stylesheet" type="text/css" media="all">
 
       <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
       <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
