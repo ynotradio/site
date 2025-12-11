@@ -23,10 +23,11 @@ class SanityConcert implements Concert {
     public function getById(int $id): ?array {
         $query = '*[_type == "concert" && legacyId == $id][0] {
             _id,
+            title,
             date,
-            "artist": artist->name,
-            "artist_url": artist->website,
-            "band_pic_url": artist->photo,
+            "artists": artists[]->name,
+            "artist_url": artists[0]->website,
+            "band_pic_url": artists[0]->photo,
             "venue": venue->name,
             "venue_url": venue->website,
             ticketInfo,
@@ -51,10 +52,11 @@ class SanityConcert implements Concert {
     public function getAll(int $limit = 64): array {
         $query = '*[_type == "concert"] | order(date desc) [0...$limit] {
             _id,
+            title,
             date,
-            "artist": artist->name,
-            "artist_url": artist->website,
-            "band_pic_url": artist->photo,
+            "artists": artists[]->name,
+            "artist_url": artists[0]->website,
+            "band_pic_url": artists[0]->photo,
             "venue": venue->name,
             "venue_url": venue->website,
             ticketInfo,
@@ -77,10 +79,11 @@ class SanityConcert implements Concert {
     public function getUpcoming(int $limit = 500): array {
         $query = '*[_type == "concert" && date >= $today] | order(date asc) [0...$limit] {
             _id,
+            title,
             date,
-            "artist": artist->name,
-            "artist_url": artist->website,
-            "band_pic_url": artist->photo,
+            "artists": artists[]->name,
+            "artist_url": artists[0]->website,
+            "band_pic_url": artists[0]->photo,
             "venue": venue->name,
             "venue_url": venue->website,
             ticketInfo,
@@ -107,14 +110,15 @@ class SanityConcert implements Concert {
             _type == "concert"
             && date >= $today
             && featured == true
-            && defined(artist->photo)
+            && defined(artists[0]->photo)
             && ticketInfo != "SOLD OUT"
         ] | order(date asc) [0...$limit] {
             _id,
+            title,
             date,
-            "artist": artist->name,
-            "artist_url": artist->website,
-            "band_pic_url": artist->photo,
+            "artists": artists[]->name,
+            "artist_url": artists[0]->website,
+            "band_pic_url": artists[0]->photo,
             "venue": venue->name,
             "venue_url": venue->website,
             ticketInfo,
@@ -174,10 +178,18 @@ class SanityConcert implements Concert {
             $bandPicUrl = $this->sanityClient->getImageUrl($concert['band_pic_url'], 200, 200);
         }
 
+        // Use custom title if provided, otherwise join multiple artists with " & "
+        $artistNames = '';
+        if (!empty($concert['title'])) {
+            $artistNames = $concert['title'];
+        } elseif (!empty($concert['artists']) && is_array($concert['artists'])) {
+            $artistNames = implode(' & ', $concert['artists']);
+        }
+
         return [
             'id' => $concert['legacyId'] ?? 0,
             'date' => $concert['date'],
-            'artist' => $concert['artist'] ?? '',
+            'artist' => $artistNames,
             'band_url' => $concert['artist_url'] ?? '',
             'band_pic_url' => $bandPicUrl,
             'venue' => $concert['venue'] ?? '',
