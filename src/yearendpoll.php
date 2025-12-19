@@ -63,9 +63,11 @@ if (isset($_POST['contest_form'])) {
 
     if ($allFieldsPresent) {
         // Check for duplicate entries by IP, email, and phone
-        if ($controller->hasEnteredContest($ip) ||
+        if (
+            $controller->hasEnteredContest($ip) ||
             $controller->hasEnteredContestByEmail($contestantData['email']) ||
-            $controller->hasEnteredContestByPhone($contestantData['phone'])) {
+            $controller->hasEnteredContestByPhone($contestantData['phone'])
+        ) {
             $contestError = "duplicate_entry";
         } else {
             $contestSuccess = $controller->processContestEntry($contestantData, $ip);
@@ -97,7 +99,9 @@ $isPollActive = (time() <= $poll_end_datetime);
                 <div class="column twelve">
                     <p>As the year winds down, it's time to pick all of your favorite music, movies, TV, and more from 2025! Cast your votes and you could win a pair of Apple AirPods Max headphones and the chance to play your own top 20 songs of the year on Y-Not Radio!
                         <br><br>
-                        Vote now thru Dec. 23rd. Then we'll count down <i>The Top 225 of 2025</i> from December 29th thru January 2nd! You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a>.
+                        <!-- Vote now thru Dec. 23rd. Then we'll count down <i>The Top 225 of 2025</i> from December 29th thru January 2nd! You can sponsor a 10 song block of the countdown by making a $25 donation <a href="https://www.paypal.com/paypalme/ynotradio/25" target=_blank>here</a>. -->
+                        Vote now thru Dec. 23rd. Then we'll count down <i>The Top 225 of 2025</i> from December 29th thru January 2nd!
+
                         <br><br>
                         <i>Need some ideas? Check out the Y-Not DJs best-of lists <a href="yearendstaffpicks.php">here</a>.</i>
                     </p>
