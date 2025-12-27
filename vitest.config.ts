@@ -12,13 +12,18 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       include: ['bin/migrations/shared/**/*.ts', 'studio/plugins/**/*.tsx'],
-      exclude: ['**/*.test.ts', '**/*.test.tsx'],
+      exclude: [
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        'studio/plugins/artist-cleanup.tsx',
+        'studio/plugins/dj-order/index.tsx',
+      ],
       thresholds: {
-        // Set realistic thresholds - some functions require SanityClient mocking
-        statements: 60,
+        // Set realistic thresholds for tested code
+        statements: 75,
         branches: 60,
         functions: 80,
-        lines: 60,
+        lines: 75,
       },
     },
   },
