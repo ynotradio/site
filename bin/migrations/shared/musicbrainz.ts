@@ -5,6 +5,9 @@
  * https://musicbrainz.org/doc/MusicBrainz_API
  */
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 interface MusicBrainzArtist {
   id: string;
   name: string;
@@ -16,12 +19,57 @@ interface MusicBrainzSearchResponse {
   artists: MusicBrainzArtist[];
 }
 
-// Simple in-memory cache to avoid repeated API calls
-const artistCache = new Map<string, boolean>();
+interface CacheData {
+  version: number;
+  artists: Record<string, boolean>;
+}
+
+// Persistent cache file location
+const CACHE_FILE = path.join(__dirname, '.musicbrainz-cache.json');
+const CACHE_VERSION = 1;
+
+// In-memory cache loaded from disk
+let artistCache = new Map<string, boolean>();
+let cacheLoaded = false;
 
 // Rate limiting: MusicBrainz requires max 1 request per second
 let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
+
+/**
+ * Load cache from disk
+ */
+function loadCache(): void {
+  if (cacheLoaded) return;
+
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const data: CacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+      if (data.version === CACHE_VERSION) {
+        artistCache = new Map(Object.entries(data.artists));
+      }
+    }
+  } catch (error) {
+    // Ignore cache load errors
+  }
+
+  cacheLoaded = true;
+}
+
+/**
+ * Save cache to disk
+ */
+function saveCache(): void {
+  try {
+    const data: CacheData = {
+      version: CACHE_VERSION,
+      artists: Object.fromEntries(artistCache),
+    };
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    // Ignore cache save errors
+  }
+}
 
 /**
  * Wait to respect rate limiting (1 request per second)
@@ -45,6 +93,9 @@ async function waitForRateLimit(): Promise<void> {
  * Returns true if the exact artist name exists as a single artist/band
  */
 export async function isKnownArtist(artistName: string): Promise<boolean> {
+  // Load cache from disk on first use
+  loadCache();
+
   // Check cache first
   const cacheKey = artistName.toLowerCase().trim();
   if (artistCache.has(cacheKey)) {
@@ -81,8 +132,9 @@ export async function isKnownArtist(artistName: string): Promise<boolean> {
 
     const result = !!exactMatch;
 
-    // Cache the result
+    // Cache the result (in memory and disk)
     artistCache.set(cacheKey, result);
+    saveCache();
 
     return result;
   } catch (error) {
@@ -92,10 +144,14 @@ export async function isKnownArtist(artistName: string): Promise<boolean> {
 }
 
 /**
- * Clear the cache (useful for testing or long-running processes)
+ * Clear the cache (useful for testing)
  */
 export function clearArtistCache(): void {
   artistCache.clear();
+  cacheLoaded = false;
+  if (fs.existsSync(CACHE_FILE)) {
+    fs.unlinkSync(CACHE_FILE);
+  }
 }
 
 /**

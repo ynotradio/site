@@ -21,3 +21,4 @@ tsconfig.tsbuildinfo
 coverage
 tmp
 .claude/settings.local.json
+bin/migrations/shared/.musicbrainz-cache.json

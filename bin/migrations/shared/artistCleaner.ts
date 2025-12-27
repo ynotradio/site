@@ -87,60 +87,45 @@ export function isEventName(artistString: string): boolean {
 
 /**
  * Check if an artist name contains "and", "&", or "+" but should NOT be split
- * (e.g., "Echo & The Bunnymen", "Florence + The Machine", "Ted Leo and the Pharmacists")
- *
- * This is a synchronous function for performance. Use isSingleArtistWithConjunctionAsync
- * for MusicBrainz lookup support.
+ * Uses simple heuristics only - for full detection use isSingleArtistWithConjunctionAsync
  */
 export function isSingleArtistWithConjunction(artistName: string): boolean {
   const trimmed = artistName.trim();
 
-  // Specific known single artists with conjunctions
-  const knownSingleArtists = [
-    /^Echo\s+&\s+[Tt]he\s+Bunnymen$/i,
-    /^Florence\s+\+\s+[Tt]he\s+Machine$/i,
-    /^Marina\s+\+\s+[Tt]he\s+Diamonds$/i,
-    /^Tegan\s+and\s+Sara$/i,
-    /^Ted\s+Leo\s+and\s+the\s+Pharmacists$/i,
-    /^Tom\s+Petty\s+and\s+the\s+Heartbreakers$/i,
-    /^Coheed\s+and\s+Cambria$/i,
+  // Strong heuristic: "Artist & The word" or "Artist + The word"
+  // where "The" is followed by a capitalized word (strong signal it's one band)
+  const strongPatterns = [
+    /^[^&]+\s+&\s+[Tt]he\s+[A-Z]/, // "Echo & The Bunnymen"
+    /^[^+]+\s+\+\s+[Tt]he\s+[A-Z]/, // "Florence + The Machine"
   ];
 
-  if (knownSingleArtists.some((pattern) => pattern.test(trimmed))) {
-    return true;
-  }
-
-  // Generic patterns: "Word & The word" or "Word + The word"
-  // where the word after "The" is lowercase (indicating it's part of the
-  // band name, not a separate band)
-  const genericSingleArtistPatterns = [
-    /^[^&]+\s+&\s+[Tt]he\s+[a-z]/, // "Artist & The something" (lowercase word after "The")
-    /^[^+]+\s+\+\s+[Tt]he\s+[a-z]/, // "Artist + The something" (lowercase word after "The")
-  ];
-
-  return genericSingleArtistPatterns.some((pattern) => pattern.test(trimmed));
+  return strongPatterns.some((pattern) => pattern.test(trimmed));
 }
 
 /**
- * Async version that checks MusicBrainz API when pattern matching is ambiguous
+ * Check if an artist name is a single artist, using MusicBrainz as primary source
+ * Falls back to heuristics only if API fails
  */
 export async function isSingleArtistWithConjunctionAsync(
   artistName: string,
 ): Promise<boolean> {
-  // First try the synchronous pattern matching
-  const patternResult = isSingleArtistWithConjunction(artistName);
-  if (patternResult) {
-    return true;
+  // If no conjunction, it's not ambiguous
+  if (!/\s+(?:and|&|\+)\s+/i.test(artistName)) {
+    return false;
   }
 
-  // If the string contains "and", "&", or "+", it's ambiguous
-  // Check MusicBrainz to see if it's a known single artist
-  if (/\s+(?:and|&|\+)\s+/i.test(artistName)) {
+  // Strategy: Check MusicBrainz FIRST (it's the source of truth)
+  try {
     const isKnown = await isKnownArtist(artistName);
-    return isKnown;
+    if (isKnown) {
+      return true; // MusicBrainz confirms it's a single artist
+    }
+  } catch (error) {
+    // API error - fall back to heuristics
   }
 
-  return false;
+  // Fallback: Use heuristic pattern matching
+  return isSingleArtistWithConjunction(artistName);
 }
 
 /**
@@ -281,21 +266,19 @@ export async function processArtistStringAsync(
 
   if (isEvent) {
     // Extract artist names from "Event ft. Artist1, Artist2, and Artist3"
+    // Don't re-parse, these are already individual artists
     return {
       customTitle: cleanedString,
-      artistNames: await parseArtistNamesAsync(
-        extractArtistsFromEventString(cleanedString).join(', '),
-      ),
+      artistNames: extractArtistsFromEventString(cleanedString),
     };
   }
 
   if (useCustomTitle) {
     // Extract artist names from the title part before parentheses
+    // Don't re-parse, these are already individual artists
     return {
       customTitle: cleanedString,
-      artistNames: await parseArtistNamesAsync(
-        extractArtistsFromTitle(cleanedString).join(', '),
-      ),
+      artistNames: extractArtistsFromTitle(cleanedString),
     };
   }
 
