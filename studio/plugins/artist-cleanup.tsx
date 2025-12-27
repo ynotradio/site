@@ -74,10 +74,6 @@ export default function ArtistCleanupTool() {
   const [mergeTargetId, setMergeTargetId] = useState<string | null>(null);
   const [merging, setMerging] = useState(false);
 
-  useEffect(() => {
-    loadSuspiciousArtists();
-  }, []);
-
   // Normalize artist name for duplicate detection
   function normalizeArtistName(name: string): string {
     return name
@@ -108,75 +104,6 @@ export default function ArtistCleanupTool() {
     }
 
     return null;
-  }
-
-  async function checkConcertDuplicates() {
-    setCheckingDuplicates(true);
-    try {
-      // Fetch all concerts with their artists
-      const query = `*[_type == "concert" && count(artists) > 1] {
-        _id,
-        date,
-        title,
-        artists[]->{_id, name}
-      } | order(date desc)`;
-
-      const concerts = await client.fetch(query);
-
-      const concertsWithDups: ConcertWithDuplicates[] = [];
-
-      for (const concert of concerts) {
-        const duplicatePairs: ConcertWithDuplicates['duplicatePairs'] = [];
-
-        // Check each pair of artists in this concert
-        for (let i = 0; i < concert.artists.length; i++) {
-          for (let j = i + 1; j < concert.artists.length; j++) {
-            const artist1 = concert.artists[i];
-            const artist2 = concert.artists[j];
-
-            if (!artist1 || !artist2) continue;
-
-            const similarity = areArtistsSimilar(artist1.name, artist2.name);
-            if (similarity) {
-              duplicatePairs.push({
-                artist1,
-                artist2,
-                similarity,
-              });
-            }
-          }
-        }
-
-        if (duplicatePairs.length > 0) {
-          concertsWithDups.push({
-            _id: concert._id,
-            date: concert.date,
-            title: concert.title,
-            artists: concert.artists,
-            duplicatePairs,
-          });
-        }
-      }
-
-      setConcertsWithDuplicates(concertsWithDups);
-
-      toast.push({
-        status: concertsWithDups.length > 0 ? 'warning' : 'success',
-        title: 'Duplicate check complete',
-        description: concertsWithDups.length > 0
-          ? `Found ${concertsWithDups.length} concerts with potential duplicate artists`
-          : 'No duplicate artists found in concerts',
-      });
-    } catch (error) {
-      console.error('Error checking duplicates:', error);
-      toast.push({
-        status: 'error',
-        title: 'Error checking duplicates',
-        description: (error as Error).message,
-      });
-    } finally {
-      setCheckingDuplicates(false);
-    }
   }
 
   async function loadSuspiciousArtists() {
@@ -260,32 +187,83 @@ export default function ArtistCleanupTool() {
     }
   }
 
+  useEffect(() => {
+    loadSuspiciousArtists().catch((error) => {
+      console.error('Failed to load suspicious artists:', error);
+    });
+  }, []);
+
+  async function checkConcertDuplicates() {
+    setCheckingDuplicates(true);
+    try {
+      // Fetch all concerts with their artists
+      const query = `*[_type == "concert" && count(artists) > 1] {
+        _id,
+        date,
+        title,
+        artists[]->{_id, name}
+      } | order(date desc)`;
+
+      const concerts = await client.fetch(query);
+
+      const concertsWithDups: ConcertWithDuplicates[] = concerts
+        .map((concert: any) => {
+          const duplicatePairs: ConcertWithDuplicates['duplicatePairs'] = [];
+
+          // Check each pair of artists in this concert
+          concert.artists.forEach((artist1: any, i: number) => {
+            concert.artists.slice(i + 1).forEach((artist2: any) => {
+              if (artist1 && artist2) {
+                const similarity = areArtistsSimilar(artist1.name, artist2.name);
+                if (similarity) {
+                  duplicatePairs.push({
+                    artist1,
+                    artist2,
+                    similarity,
+                  });
+                }
+              }
+            });
+          });
+
+          if (duplicatePairs.length > 0) {
+            return {
+              _id: concert._id,
+              date: concert.date,
+              title: concert.title,
+              artists: concert.artists,
+              duplicatePairs,
+            };
+          }
+          return null;
+        })
+        .filter((concert): concert is ConcertWithDuplicates => concert !== null);
+
+      setConcertsWithDuplicates(concertsWithDups);
+
+      toast.push({
+        status: concertsWithDups.length > 0 ? 'warning' : 'success',
+        title: 'Duplicate check complete',
+        description: concertsWithDups.length > 0
+          ? `Found ${concertsWithDups.length} concerts with potential duplicate artists`
+          : 'No duplicate artists found in concerts',
+      });
+    } catch (error) {
+      console.error('Error checking duplicates:', error);
+      toast.push({
+        status: 'error',
+        title: 'Error checking duplicates',
+        description: (error as Error).message,
+      });
+    } finally {
+      setCheckingDuplicates(false);
+    }
+  }
+
   function openArtist(artistId: string) {
     // Open the artist document in Sanity Studio
     // Format: /intent/edit/id=<documentId>
     window.open(`/sanity/intent/edit/id=${artistId}`, '_blank');
-  }
-
-  function openSplitDialog(artist: SuspiciousArtist) {
-    setSplitArtist(artist);
-
-    // Detect what split methods are available
-    let defaultMethod: typeof splitMethod = 'manual';
-    if (artist.name.includes(' w/')) {
-      defaultMethod = 'w/';
-    } else if (artist.name.includes(' with ')) {
-      defaultMethod = 'with';
-    } else if (artist.name.includes(' and ')) {
-      defaultMethod = 'and';
-    } else if (artist.name.includes(' & ')) {
-      defaultMethod = '&';
-    } else if (artist.name.includes('(') || artist.name.includes(')')) {
-      defaultMethod = 'parentheses';
-    }
-
-    setSplitMethod(defaultMethod);
-    applySplitMethod(artist.name, defaultMethod);
-    setSplitDialogOpen(true);
   }
 
   async function applySplitMethod(artistName: string, method: typeof splitMethod) {
@@ -309,6 +287,7 @@ export default function ArtistCleanupTool() {
         suggested = [artistName.replace(/\s*\([^)]*\)/g, '').trim()];
         break;
       case 'manual':
+      default:
         // Start with the original name
         suggested = [artistName];
         break;
@@ -318,16 +297,41 @@ export default function ArtistCleanupTool() {
     setSplitNames(filteredNames);
 
     // Find existing artists that match these names
-    const matches: SplitArtistMatch[] = [];
-    for (const name of filteredNames) {
-      const existingArtist = allArtists.find((a) => a.name.toLowerCase() === name.toLowerCase());
-      matches.push({
-        name,
-        existingArtistId: existingArtist?._id,
-        existingArtistConcertCount: existingArtist?.concertCount,
-      });
-    }
+    const matches: SplitArtistMatch[] = await Promise.all(
+      filteredNames.map(async (name) => {
+        const existingArtist = allArtists.find((a) => a.name.toLowerCase() === name.toLowerCase());
+        return {
+          name,
+          existingArtistId: existingArtist?._id,
+          existingArtistConcertCount: existingArtist?.concertCount,
+        };
+      }),
+    );
     setSplitMatches(matches);
+  }
+
+  function openSplitDialog(artist: SuspiciousArtist) {
+    setSplitArtist(artist);
+
+    // Detect what split methods are available
+    let defaultMethod: typeof splitMethod = 'manual';
+    if (artist.name.includes(' w/')) {
+      defaultMethod = 'w/';
+    } else if (artist.name.includes(' with ')) {
+      defaultMethod = 'with';
+    } else if (artist.name.includes(' and ')) {
+      defaultMethod = 'and';
+    } else if (artist.name.includes(' & ')) {
+      defaultMethod = '&';
+    } else if (artist.name.includes('(') || artist.name.includes(')')) {
+      defaultMethod = 'parentheses';
+    }
+
+    setSplitMethod(defaultMethod);
+    applySplitMethod(artist.name, defaultMethod).catch((error) => {
+      console.error('Failed to apply split method:', error);
+    });
+    setSplitDialogOpen(true);
   }
 
   async function handleSplit() {
@@ -344,7 +348,7 @@ export default function ArtistCleanupTool() {
 
       // Create new artist documents for each split name
       const newArtistIds: { [name: string]: string } = {};
-      for (const name of splitNames) {
+      const artistPromises = splitNames.map(async (name) => {
         // Check if artist already exists
         const existingQuery = '*[_type == "artist" && name == $name][0]._id';
         const existingId = await client.fetch(existingQuery, { name });
@@ -359,16 +363,20 @@ export default function ArtistCleanupTool() {
           });
           newArtistIds[name] = newArtist._id;
         }
-      }
+      });
+
+      await Promise.all(artistPromises);
 
       // Update all concerts to reference the new artists instead
-      for (const concert of concerts) {
+      const concertPromises = concerts.map(async (concert: any) => {
         const updatedArtists = concert.artists
           .filter((ref: any) => ref._ref !== splitArtist._id)
           .concat(splitNames.map((name) => ({ _type: 'reference', _ref: newArtistIds[name] })));
 
         await client.patch(concert._id).set({ artists: updatedArtists }).commit();
-      }
+      });
+
+      await Promise.all(concertPromises);
 
       // Delete the old artist
       await client.delete(splitArtist._id);
@@ -384,7 +392,9 @@ export default function ArtistCleanupTool() {
       setSplitNames([]);
 
       // Reload artists
-      loadSuspiciousArtists();
+      loadSuspiciousArtists().catch((error) => {
+        console.error('Failed to reload artists:', error);
+      });
     } catch (error) {
       console.error('Error splitting artist:', error);
       toast.push({
@@ -435,7 +445,7 @@ export default function ArtistCleanupTool() {
       const concerts = await client.fetch(concertsQuery, { sourceId: mergeSourceArtist._id });
 
       // Update all concerts to reference the target artist instead
-      for (const concert of concerts) {
+      const updatePromises = concerts.map(async (concert: any) => {
         // Remove source artist and add target artist if not already present
         const hasTarget = concert.artists.some((ref: any) => ref._ref === mergeTargetId);
         const updatedArtists = concert.artists
@@ -443,7 +453,9 @@ export default function ArtistCleanupTool() {
           .concat(hasTarget ? [] : [{ _type: 'reference', _ref: mergeTargetId }]);
 
         await client.patch(concert._id).set({ artists: updatedArtists }).commit();
-      }
+      });
+
+      await Promise.all(updatePromises);
 
       // Delete the source artist
       await client.delete(mergeSourceArtist._id);
@@ -460,7 +472,9 @@ export default function ArtistCleanupTool() {
       setMergeTargetId(null);
 
       // Reload artists
-      loadSuspiciousArtists();
+      loadSuspiciousArtists().catch((error) => {
+        console.error('Failed to reload artists:', error);
+      });
     } catch (error) {
       console.error('Error merging artists:', error);
       toast.push({
@@ -512,7 +526,9 @@ export default function ArtistCleanupTool() {
       });
 
       // Refresh the duplicate check
-      checkConcertDuplicates();
+      checkConcertDuplicates().catch((error) => {
+        console.error('Failed to check duplicates:', error);
+      });
     } catch (error) {
       console.error('Error removing duplicate:', error);
       toast.push({
@@ -533,19 +549,20 @@ export default function ArtistCleanupTool() {
     let errors = 0;
 
     try {
-      for (const artist of suspiciousArtists) {
-        try {
+      const results = await Promise.allSettled(
+        suspiciousArtists.map(async (artist) => {
           // Rule 1: Delete orphaned artists (0 concerts)
           if (artist.concertCount === 0) {
             await client.delete(artist._id);
-            fixed++;
-            continue;
+            return { type: 'fixed' };
           }
 
           // Rule 2: Remove parentheses if clean version exists
           if (artist.name.includes('(') || artist.name.includes(')')) {
             const cleanName = artist.name.replace(/\s*\([^)]*\)/g, '').trim();
-            const existingArtist = allArtists.find((a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id);
+            const existingArtist = allArtists.find(
+              (a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id,
+            );
 
             if (existingArtist) {
               // Merge into clean version
@@ -554,14 +571,18 @@ export default function ArtistCleanupTool() {
                 { artistId: artist._id },
               );
 
-              for (const concert of concerts) {
-                const hasTarget = concert.artists.some((ref: any) => ref._ref === existingArtist._id);
-                const updatedArtists = concert.artists
-                  .filter((ref: any) => ref._ref !== artist._id)
-                  .concat(hasTarget ? [] : [{ _type: 'reference', _ref: existingArtist._id }]);
+              await Promise.all(
+                concerts.map(async (concert: any) => {
+                  const hasTarget = concert.artists.some(
+                    (ref: any) => ref._ref === existingArtist._id,
+                  );
+                  const updatedArtists = concert.artists
+                    .filter((ref: any) => ref._ref !== artist._id)
+                    .concat(hasTarget ? [] : [{ _type: 'reference', _ref: existingArtist._id }]);
 
-                await client.patch(concert._id).set({ artists: updatedArtists }).commit();
-              }
+                  await client.patch(concert._id).set({ artists: updatedArtists }).commit();
+                }),
+              );
 
               // Verify no references remain before deleting
               const remainingRefs = await client.fetch(
@@ -571,23 +592,28 @@ export default function ArtistCleanupTool() {
 
               if (remainingRefs === 0) {
                 await client.delete(artist._id);
-                fixed++;
-              } else {
-                console.warn(`Skipping delete of ${artist.name} - still has ${remainingRefs} references`);
-                errors++;
+                return { type: 'fixed' };
               }
-              continue;
+              console.warn(
+                `Skipping delete of ${artist.name} - still has ${remainingRefs} refs`,
+              );
+              return { type: 'error' };
             }
           }
 
           // Rule 3: Auto-split if both parts exist separately
-          if (artist.concertCount === 1 && (artist.name.includes(' and ') || artist.name.includes(' & '))) {
+          if (
+            artist.concertCount === 1
+            && (artist.name.includes(' and ') || artist.name.includes(' & '))
+          ) {
             const parts = artist.name.includes(' and ')
               ? artist.name.split(' and ').map((n) => n.trim())
               : artist.name.split(' & ').map((n) => n.trim());
 
             // Check if all parts exist
-            const existingParts = parts.map((part) => allArtists.find((a) => a.name.toLowerCase() === part.toLowerCase())).filter(Boolean);
+            const existingParts = parts
+              .map((part) => allArtists.find((a) => a.name.toLowerCase() === part.toLowerCase()))
+              .filter(Boolean);
 
             if (existingParts.length === parts.length) {
               // All parts exist, auto-split
@@ -596,13 +622,15 @@ export default function ArtistCleanupTool() {
                 { artistId: artist._id },
               );
 
-              for (const concert of concerts) {
-                const updatedArtists = concert.artists
-                  .filter((ref: any) => ref._ref !== artist._id)
-                  .concat(existingParts.map((a) => ({ _type: 'reference', _ref: a!._id })));
+              await Promise.all(
+                concerts.map(async (concert: any) => {
+                  const updatedArtists = concert.artists
+                    .filter((ref: any) => ref._ref !== artist._id)
+                    .concat(existingParts.map((a) => ({ _type: 'reference', _ref: a!._id })));
 
-                await client.patch(concert._id).set({ artists: updatedArtists }).commit();
-              }
+                  await client.patch(concert._id).set({ artists: updatedArtists }).commit();
+                }),
+              );
 
               // Verify no references remain before deleting
               const remainingRefs = await client.fetch(
@@ -612,19 +640,30 @@ export default function ArtistCleanupTool() {
 
               if (remainingRefs === 0) {
                 await client.delete(artist._id);
-                fixed++;
-              } else {
-                console.warn(`Skipping delete of ${artist.name} - still has ${remainingRefs} references`);
-                errors++;
+                return { type: 'fixed' };
               }
-              continue;
+              console.warn(
+                `Skipping delete of ${artist.name} - still has ${remainingRefs} refs`,
+              );
+              return { type: 'error' };
             }
           }
-        } catch (error) {
-          console.error(`Error auto-fixing ${artist.name}:`, error);
-          errors++;
+
+          return { type: 'skipped' };
+        }),
+      );
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          if (result.value.type === 'fixed') {
+            fixed += 1;
+          } else if (result.value.type === 'error') {
+            errors += 1;
+          }
+        } else {
+          errors += 1;
         }
-      }
+      });
 
       toast.push({
         status: 'success',
@@ -633,7 +672,9 @@ export default function ArtistCleanupTool() {
       });
 
       // Reload the list
-      loadSuspiciousArtists();
+      loadSuspiciousArtists().catch((error) => {
+        console.error('Failed to reload artists:', error);
+      });
     } catch (error) {
       console.error('Error during auto-fix:', error);
       toast.push({
@@ -660,7 +701,9 @@ export default function ArtistCleanupTool() {
           suggestedAction = 'DELETE';
         } else if (artist.name.includes('(') || artist.name.includes(')')) {
           const cleanName = artist.name.replace(/\s*\([^)]*\)/g, '').trim();
-          const existing = allArtists.find((a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id);
+          const existing = allArtists.find(
+            (a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id,
+          );
           if (existing) {
             suggestedAction = 'MERGE';
             targetArtist = existing.name;
@@ -1017,7 +1060,8 @@ export default function ArtistCleanupTool() {
                         Artist {index + 1}
                         {hasExisting && (
                           <Text size={1} style={{ color: '#2e7d32', marginLeft: '8px' }}>
-                            ✓ Exists ({match.existingArtistConcertCount} concert{match.existingArtistConcertCount !== 1 ? 's' : ''})
+                            ✓ Exists ({match.existingArtistConcertCount} concert
+                            {match.existingArtistConcertCount !== 1 ? 's' : ''})
                           </Text>
                         )}
                       </Label>

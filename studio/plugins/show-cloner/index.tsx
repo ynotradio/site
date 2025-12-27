@@ -11,7 +11,7 @@ import { Show, DateGroup } from './types';
 
 // Helper function to format date for display - exported for testing
 export const formatDate = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T00:00:00`);
   return date.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
@@ -22,7 +22,7 @@ export const formatDate = (dateStr: string): string => {
 
 // Helper function to get day name - exported for testing
 export const getDayName = (dateStr: string): string => {
-  const date = new Date(dateStr);
+  const date = new Date(`${dateStr}T00:00:00`);
   return date.toLocaleDateString('en-US', { weekday: 'long' });
 };
 

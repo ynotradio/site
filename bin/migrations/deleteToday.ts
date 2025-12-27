@@ -67,7 +67,9 @@ async function deleteTodaysData(): Promise<void> {
     // Confirm deletion
     logger.info(`\nTotal: ${concerts.length} concerts and ${artists.length} artists will be deleted.`);
     logger.info('Starting deletion in 3 seconds... (Press Ctrl+C to cancel)');
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 3000);
+    });
 
     // Delete concerts first
     let concertsDeleted = 0;
@@ -93,12 +95,11 @@ async function deleteTodaysData(): Promise<void> {
 
         if (concertCount > 0) {
           logger.warn(`Skipping artist ${artist.name} - still referenced by ${concertCount} concerts`);
-          continue;
+        } else {
+          await client.delete(artist._id);
+          artistsDeleted += 1;
+          logger.info(`Deleted artist: ${artist._id} (${artist.name})`);
         }
-
-        await client.delete(artist._id);
-        artistsDeleted++;
-        logger.info(`Deleted artist: ${artist._id} (${artist.name})`);
       } catch (error) {
         logger.error(`Failed to delete artist ${artist._id}:`, error as Error);
       }
