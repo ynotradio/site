@@ -10,6 +10,7 @@
  *
  * Usage:
  *   npm run import:concerts                    # Import all concerts
+ *   npm run import:concerts -- --from-last     # Resume from last imported ID + 1
  *   npm run import:concerts -- --start-id=100  # Import concerts with ID >= 100
  *   npm run import:concerts -- --since=2025-12-27  # Import concerts created/updated since date
  *   npm run import:concerts -- --start-id=100 --end-id=200  # Import ID range
@@ -44,6 +45,7 @@ import {
   logValidationErrors,
   ValidationResult,
 } from './shared/validation';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportConcerts');
 
@@ -63,6 +65,7 @@ interface Concert {
 
 // Command-line options
 interface ImportOptions {
+  fromLast?: boolean;
   startId?: number;
   endId?: number;
   since?: string;
@@ -82,7 +85,9 @@ function parseArguments(): ImportOptions {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
 
-    if (arg === '--start-id' && i + 1 < args.length) {
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
       options.startId = parseInt(args[i + 1], 10);
       i++;
     } else if (arg === '--end-id' && i + 1 < args.length) {
@@ -555,14 +560,6 @@ async function importConcerts(): Promise<void> {
 
     logger.info('Starting concert import process...');
 
-    // Log filters if any
-    if (options.startId || options.endId || options.since) {
-      logger.info('Import filters:');
-      if (options.startId) logger.info(`  - Start ID: ${options.startId}`);
-      if (options.endId) logger.info(`  - End ID: ${options.endId}`);
-      if (options.since) logger.info(`  - Since date: ${options.since}`);
-    }
-
     // Check if Sanity token is provided
     if (!sanityConfig.token) {
       logger.error('No Sanity API token provided. Please set the SANITY_API_TOKEN environment variable.');
@@ -579,6 +576,26 @@ async function importConcerts(): Promise<void> {
       apiVersion: sanityConfig.apiVersion,
       useCdn: false,
     });
+
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported concert ID...');
+      const lastId = await getLastImportedId('concert', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No concerts found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId || options.endId || options.since) {
+      logger.info('Import filters:');
+      if (options.startId) logger.info(`  - Start ID: ${options.startId}`);
+      if (options.endId) logger.info(`  - End ID: ${options.endId}`);
+      if (options.since) logger.info(`  - Since date: ${options.since}`);
+    }
 
     // Create utilities
     const upsertHandler = createUpsertHandler(client);

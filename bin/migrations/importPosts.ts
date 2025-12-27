@@ -13,7 +13,10 @@
  * MySQL Schema (custom_texts):
  *   id, title, permalink, html, status
  *
- * Usage: npm run import:posts
+ * Usage:
+ *   npm run import:posts              # Import all
+ *   npm run import:posts -- --from-last  # Resume from last imported ID + 1
+ *   npm run import:posts -- --start-id=100  # Import with ID >= 100
  */
 
 import { createClient } from '@sanity/client';
@@ -43,6 +46,7 @@ import {
   ValidationResult,
 } from './shared/validation';
 import { htmlToPortableText } from './shared/richTextConverter';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportPosts');
 
@@ -68,6 +72,33 @@ interface CustomText {
   status: string;
 }
 
+// Command-line options
+interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+}
+
+/**
+ * Parse command-line arguments
+ */
+function parseArguments(): ImportOptions {
+  const options: ImportOptions = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
+      options.startId = parseInt(args[i + 1], 10);
+      i++;
+    }
+  }
+
+  return options;
+}
+
 /**
  * Connect to the MySQL database
  */
@@ -90,12 +121,30 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active stories from the database (excluding soft-deleted records)
  */
-async function getActiveStories(connection: mysql.Connection): Promise<Story[]> {
+async function getActiveStories(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<Story[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM stories WHERE deleted NOT IN ('y', 'Y', 'yes', 'Yes', 'YES') ORDER BY priority",
+    let query = "SELECT * FROM stories WHERE deleted NOT IN ('y', 'Y', 'yes', 'Yes', 'YES')";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    logger.info(
+      `Retrieved ${rows.length} stories from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    logger.info(`Retrieved ${rows.length} stories from the database.`);
     return rows as Story[];
   } catch (error) {
     logger.error('Query failed for stories:', error as Error);
@@ -106,12 +155,30 @@ async function getActiveStories(connection: mysql.Connection): Promise<Story[]> 
 /**
  * Get active custom texts from the database
  */
-async function getActiveCustomTexts(connection: mysql.Connection): Promise<CustomText[]> {
+async function getActiveCustomTexts(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<CustomText[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM custom_texts WHERE status = 'active' ORDER BY id",
+    let query = "SELECT * FROM custom_texts WHERE status = 'active'";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    logger.info(
+      `Retrieved ${rows.length} custom texts from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    logger.info(`Retrieved ${rows.length} custom texts from the database.`);
     return rows as CustomText[];
   } catch (error) {
     logger.error('Query failed for custom_texts:', error as Error);
@@ -350,6 +417,9 @@ async function importPosts(): Promise<void> {
   let connection: mysql.Connection | null = null;
 
   try {
+    // Parse command-line arguments
+    const options = parseArguments();
+
     logger.info('Starting post import process...');
     logger.info('Importing from both "stories" and "custom_texts" tables into unified "post" type');
 
@@ -370,6 +440,24 @@ async function importPosts(): Promise<void> {
       useCdn: false,
     });
 
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported post ID...');
+      const lastId = await getLastImportedId('post', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No post found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId) {
+      logger.info('Import filters:');
+      logger.info(`  - Start ID: ${options.startId}`);
+    }
+
     // Create utilities
     const upsertHandler = createUpsertHandler(client);
     const imageUploader = createImageUploader(client);
@@ -378,8 +466,8 @@ async function importPosts(): Promise<void> {
     connection = await connectToDatabase();
 
     // Get active records from both tables
-    const stories = await getActiveStories(connection);
-    const customTexts = await getActiveCustomTexts(connection);
+    const stories = await getActiveStories(connection, options);
+    const customTexts = await getActiveCustomTexts(connection, options);
 
     const totalRecords = stories.length + customTexts.length;
     if (totalRecords === 0) {

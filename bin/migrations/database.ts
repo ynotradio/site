@@ -14,6 +14,12 @@ export interface Deejay {
   deleted: string;
 }
 
+// Import options interface
+export interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+}
+
 export async function connectToDatabase() {
   try {
     const connection = await mysql.createConnection({
@@ -30,12 +36,30 @@ export async function connectToDatabase() {
   }
 }
 
-export async function getActiveDeejays(connection: mysql.Connection): Promise<Deejay[]> {
+export async function getActiveDeejays(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<Deejay[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM deejays WHERE deleted = 'No' ORDER BY sort",
+    let query = "SELECT * FROM deejays WHERE deleted = 'No'";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    console.log(
+      `Retrieved ${rows.length} deejays from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    console.log(`Retrieved ${rows.length} deejays from the database.`);
     return rows as Deejay[];
   } catch (error) {
     console.error('Query failed:', error);
