@@ -14,12 +14,19 @@ During concert import, artist names from the MySQL database are being imported d
    - Example: "Guster & The Mountain Goats" → should be 2 artists
    - Example: "Ted Leo and the Pharmacists" → should be 1 artist
    - Example: "Tegan and Sara → should be 1 artist
+   - Example: J. Mascis (of Dinosaur Jr.) → should be 2 artists
+   - Example: TOY SOLDIERS w/ Paper Masques → should be 2 artists
+   - Example: Coheed and Cambria → should be 1 artist
+   - Example: Cheers Elephant w/ Springs → should be 2 artists
 
 3. **Concert Information in Artist Names**: Artist names containing concert-specific details
    - Example: "Ron Gallo (Album Release)"
    - Example: "Tokyo Police Club (The Final Tour)"
    - Example: "Strand of Oaks (Full Band): Winter Classic Night 2"
    - Example: "Kurt Vile (solo) [early show]"
+   - Example: The Roots Picnic f/ The Roots
+
+
 
 ## Solution: Intelligent Artist Cleanup Module
 

@@ -34,7 +34,7 @@ import {
   fixImagePath,
 } from './shared/imageUploader';
 import {
-  processArtistString,
+  processArtistStringAsync,
 } from './shared/artistCleaner';
 import {
   validateRequired,
@@ -379,8 +379,8 @@ async function transformConcertToDocument(
   }> {
   const { id } = concert;
 
-  // Process artist string using the intelligent artist cleaner
-  const { customTitle, artistNames } = processArtistString(concert.artist || '');
+  // Process artist string using the intelligent artist cleaner (with MusicBrainz lookup)
+  const { customTitle, artistNames } = await processArtistStringAsync(concert.artist || '');
 
   if (artistNames.length === 0) {
     return {

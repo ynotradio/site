@@ -5,6 +5,8 @@
  * Handles HTML tags, multiple artists, concert-specific information, and event names.
  */
 
+import { isKnownArtist } from './musicbrainz';
+
 /**
  * Strip HTML tags and clean up formatting in artist strings
  */
@@ -72,6 +74,7 @@ export function isEventName(artistString: string): boolean {
     /^<em>.*?<\/em>.*?f(?:ea)?t\./i, // "<em>Event Name</em> ft. Artists"
     /benefit\s+f(?:ea)?t\./i, // "Benefit ft. Artists"
     /festival\s+f(?:ea)?t\./i, // "Festival ft. Artists"
+    /picnic\s+f\//i, // "The Roots Picnic f/ Artists"
     /philly\s+music\s+fest/i, // "Philly Music Fest"
     /^make\s+the\s+world\s+better\s+benefit/i, // "Make The World Better Benefit"
     /tribute\s+f(?:ea)?t\./i, // "Tribute ft. Artists"
@@ -85,6 +88,9 @@ export function isEventName(artistString: string): boolean {
 /**
  * Check if an artist name contains "and", "&", or "+" but should NOT be split
  * (e.g., "Echo & The Bunnymen", "Florence + The Machine", "Ted Leo and the Pharmacists")
+ *
+ * This is a synchronous function for performance. Use isSingleArtistWithConjunctionAsync
+ * for MusicBrainz lookup support.
  */
 export function isSingleArtistWithConjunction(artistName: string): boolean {
   const trimmed = artistName.trim();
@@ -97,6 +103,7 @@ export function isSingleArtistWithConjunction(artistName: string): boolean {
     /^Tegan\s+and\s+Sara$/i,
     /^Ted\s+Leo\s+and\s+the\s+Pharmacists$/i,
     /^Tom\s+Petty\s+and\s+the\s+Heartbreakers$/i,
+    /^Coheed\s+and\s+Cambria$/i,
   ];
 
   if (knownSingleArtists.some((pattern) => pattern.test(trimmed))) {
@@ -115,6 +122,28 @@ export function isSingleArtistWithConjunction(artistName: string): boolean {
 }
 
 /**
+ * Async version that checks MusicBrainz API when pattern matching is ambiguous
+ */
+export async function isSingleArtistWithConjunctionAsync(
+  artistName: string,
+): Promise<boolean> {
+  // First try the synchronous pattern matching
+  const patternResult = isSingleArtistWithConjunction(artistName);
+  if (patternResult) {
+    return true;
+  }
+
+  // If the string contains "and", "&", or "+", it's ambiguous
+  // Check MusicBrainz to see if it's a known single artist
+  if (/\s+(?:and|&|\+)\s+/i.test(artistName)) {
+    const isKnown = await isKnownArtist(artistName);
+    return isKnown;
+  }
+
+  return false;
+}
+
+/**
  * Parse a string into multiple artist names
  * Handles commas, "and", "&", "ft.", "feat.", etc.
  */
@@ -127,9 +156,27 @@ export function parseArtistNames(artistString: string): string[] {
   }
 
   let working = artistString;
+  const additionalArtists: string[] = [];
 
-  // Handle "ft." and "feat." - replace with comma for consistent splitting
+  // Extract "(of Band)" and "(from Band)" patterns and add as separate artists
+  const ofPattern = /\((?:of|from)\s+([^)]+)\)/gi;
+  let match;
+  // eslint-disable-next-line no-cond-assign
+  while ((match = ofPattern.exec(artistString)) !== null) {
+    const bandName = match[1].trim();
+    if (bandName) {
+      additionalArtists.push(bandName);
+    }
+  }
+  // Remove the "(of ...)" patterns from the working string
+  working = working.replace(ofPattern, '').trim();
+
+  // Handle "ft.", "feat.", and "f/" - replace with comma for consistent splitting
   working = working.replace(/\s+f(?:ea)?t\.\s+/gi, ', ');
+  working = working.replace(/\s+f\/\s+/gi, ', ');
+
+  // Handle "w/" (with) - replace with comma for consistent splitting
+  working = working.replace(/\s+w\/\s+/gi, ', ');
 
   // Split by common delimiters
   let artists = working.split(/\s*(?:,|;|\band\b|&|\+)\s*/);
@@ -140,6 +187,9 @@ export function parseArtistNames(artistString: string): string[] {
     .filter((a) => a.length > 0)
     // Remove "more" or "more..." entries
     .filter((a) => !/^more(\.\.\.)?$/i.test(a));
+
+  // Add the additional artists from "(of ...)" patterns
+  artists.push(...additionalArtists);
 
   return artists;
 }
@@ -166,11 +216,16 @@ export function extractArtistsFromTitle(customTitle: string): string[] {
  * ft. Yo La Tengo, Snail Mail..." -> ["Yo La Tengo", "Snail Mail"])
  */
 export function extractArtistsFromEventString(eventString: string): string[] {
-  // Find the "ft." part and extract everything after it
-  const ftMatch = eventString.match(/\s+f(?:ea)?t\.\s+(.+)$/i);
+  // Find the "ft.", "feat.", or "f/" part and extract everything after it
+  let ftMatch = eventString.match(/\s+f(?:ea)?t\.\s+(.+)$/i);
 
   if (!ftMatch) {
-    // No "ft." found, just parse the whole string
+    // Try "f/" pattern
+    ftMatch = eventString.match(/\s+f\/\s+(.+)$/i);
+  }
+
+  if (!ftMatch) {
+    // No "ft." or "f/" found, just parse the whole string
     return parseArtistNames(eventString);
   }
 
@@ -184,6 +239,73 @@ export function extractArtistsFromEventString(eventString: string): string[] {
 export interface ProcessedArtistResult {
   customTitle: string | null;
   artistNames: string[];
+}
+
+/**
+ * Async version of parseArtistNames that uses MusicBrainz for ambiguous cases
+ */
+export async function parseArtistNamesAsync(artistString: string): Promise<string[]> {
+  if (!artistString || !artistString.trim()) return [];
+
+  // Check if this is a single artist with a conjunction in the name (with MusicBrainz)
+  const isSingle = await isSingleArtistWithConjunctionAsync(artistString);
+  if (isSingle) {
+    return [artistString.trim()];
+  }
+
+  // Otherwise use the synchronous parsing logic
+  return parseArtistNames(artistString);
+}
+
+/**
+ * Async version of processArtistString that uses MusicBrainz for ambiguous cases
+ */
+export async function processArtistStringAsync(
+  rawArtistString: string,
+): Promise<ProcessedArtistResult> {
+  // Step 1: Clean HTML and formatting
+  const cleanedString = cleanArtistString(rawArtistString);
+
+  if (!cleanedString) {
+    return {
+      customTitle: null,
+      artistNames: [],
+    };
+  }
+
+  // Step 2: Check for custom title (before cleaning, to detect HTML patterns)
+  const useCustomTitle = shouldPreserveAsCustomTitle(rawArtistString);
+
+  // Step 3: Check for event name (before cleaning, to detect HTML patterns)
+  const isEvent = isEventName(rawArtistString);
+
+  if (isEvent) {
+    // Extract artist names from "Event ft. Artist1, Artist2, and Artist3"
+    return {
+      customTitle: cleanedString,
+      artistNames: await parseArtistNamesAsync(
+        extractArtistsFromEventString(cleanedString).join(', '),
+      ),
+    };
+  }
+
+  if (useCustomTitle) {
+    // Extract artist names from the title part before parentheses
+    return {
+      customTitle: cleanedString,
+      artistNames: await parseArtistNamesAsync(
+        extractArtistsFromTitle(cleanedString).join(', '),
+      ),
+    };
+  }
+
+  // Step 4: Parse normally into multiple artists (with MusicBrainz lookup)
+  const artistNames = await parseArtistNamesAsync(cleanedString);
+
+  return {
+    customTitle: null,
+    artistNames,
+  };
 }
 
 export function processArtistString(rawArtistString: string): ProcessedArtistResult {

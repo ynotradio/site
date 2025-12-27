@@ -111,6 +111,7 @@ describe('isEventName', () => {
   it('should detect other event patterns', () => {
     expect(isEventName('Philly Music Fest 2024')).toBe(true);
     expect(isEventName('Outdoor Music Festival ft. Headliners')).toBe(true);
+    expect(isEventName('The Roots Picnic f/ The Roots')).toBe(true);
   });
 
   it('should NOT match regular artist names', () => {
@@ -138,6 +139,7 @@ describe('isSingleArtistWithConjunction', () => {
   it('should detect specific known artists', () => {
     expect(isSingleArtistWithConjunction('Tegan and Sara')).toBe(true);
     expect(isSingleArtistWithConjunction('Ted Leo and the Pharmacists')).toBe(true);
+    expect(isSingleArtistWithConjunction('Coheed and Cambria')).toBe(true);
   });
 
   it('should NOT match multiple distinct artists', () => {
@@ -176,6 +178,25 @@ describe('parseArtistNames', () => {
     expect(parseArtistNames('Artist1 feat. Artist2')).toEqual(['Artist1', 'Artist2']);
   });
 
+  it('should handle "w/" (with) pattern', () => {
+    expect(parseArtistNames('TOY SOLDIERS w/ Paper Masques')).toEqual([
+      'TOY SOLDIERS',
+      'Paper Masques',
+    ]);
+    expect(parseArtistNames('Cheers Elephant w/ Springs')).toEqual([
+      'Cheers Elephant',
+      'Springs',
+    ]);
+  });
+
+  it('should handle "(of Band)" pattern', () => {
+    expect(parseArtistNames('J. Mascis (of Dinosaur Jr.)')).toEqual([
+      'J. Mascis',
+      'Dinosaur Jr.',
+    ]);
+    expect(parseArtistNames('Artist (from The Band)')).toEqual(['Artist', 'The Band']);
+  });
+
   it('should handle mixed delimiters', () => {
     expect(parseArtistNames('Artist1, Artist2 and Artist3')).toEqual([
       'Artist1',
@@ -191,6 +212,7 @@ describe('parseArtistNames', () => {
       'Ted Leo and the Pharmacists',
     ]);
     expect(parseArtistNames('Tegan and Sara')).toEqual(['Tegan and Sara']);
+    expect(parseArtistNames('Coheed and Cambria')).toEqual(['Coheed and Cambria']);
   });
 
   it('should filter out "more..." entries', () => {
@@ -246,6 +268,10 @@ describe('extractArtistsFromEventString', () => {
       'Artist1',
       'Artist2',
     ]);
+  });
+
+  it('should extract artists after "f/"', () => {
+    expect(extractArtistsFromEventString('The Roots Picnic f/ The Roots')).toEqual(['The Roots']);
   });
 
   it('should handle "and more..." in event strings', () => {
@@ -344,5 +370,29 @@ describe('processArtistString', () => {
     const result = processArtistString('The Tisburys and Twin Princess');
     expect(result.customTitle).toBe(null);
     expect(result.artistNames).toEqual(['The Tisburys', 'Twin Princess']);
+  });
+
+  it('should NOT split Coheed and Cambria', () => {
+    const result = processArtistString('Coheed and Cambria');
+    expect(result.customTitle).toBe(null);
+    expect(result.artistNames).toEqual(['Coheed and Cambria']);
+  });
+
+  it('should handle "w/" pattern', () => {
+    const result = processArtistString('TOY SOLDIERS w/ Paper Masques');
+    expect(result.customTitle).toBe(null);
+    expect(result.artistNames).toEqual(['TOY SOLDIERS', 'Paper Masques']);
+  });
+
+  it('should handle "(of Band)" pattern', () => {
+    const result = processArtistString('J. Mascis (of Dinosaur Jr.)');
+    expect(result.customTitle).toBe(null);
+    expect(result.artistNames).toEqual(['J. Mascis', 'Dinosaur Jr.']);
+  });
+
+  it('should handle event with "f/" pattern', () => {
+    const result = processArtistString('The Roots Picnic f/ The Roots');
+    expect(result.customTitle).toBe('The Roots Picnic f/ The Roots');
+    expect(result.artistNames).toEqual(['The Roots']);
   });
 });
