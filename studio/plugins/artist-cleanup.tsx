@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Stack, Text, Heading, Box, Spinner, Button, Dialog, TextInput, Label, Flex, Checkbox, Radio, useToast } from '@sanity/ui';
+import {
+  Card, Stack, Text, Heading, Box, Spinner, Button, Dialog, TextInput, Label, Flex, Checkbox, Radio, useToast,
+} from '@sanity/ui';
 import { useClient } from 'sanity';
 
 interface SuspiciousArtist {
@@ -202,8 +204,8 @@ export default function ArtistCleanupTool() {
 
         // Check for "and" or "&" with multiple words (might need splitting)
         if (
-          (artist.name.includes(' and ') || artist.name.includes(' & ')) &&
-          !artist.name.match(/^[A-Z][a-z]+\s+&\s+The\s+/) // Not "Echo & The Bunnymen" pattern
+          (artist.name.includes(' and ') || artist.name.includes(' & '))
+          && !artist.name.match(/^[A-Z][a-z]+\s+&\s+The\s+/) // Not "Echo & The Bunnymen" pattern
         ) {
           reasons.push('Contains "and" or "&" - might be multiple artists');
         }
@@ -291,16 +293,16 @@ export default function ArtistCleanupTool() {
 
     switch (method) {
       case 'w/':
-        suggested = artistName.split(' w/').map(n => n.trim());
+        suggested = artistName.split(' w/').map((n) => n.trim());
         break;
       case 'with':
-        suggested = artistName.split(' with ').map(n => n.trim());
+        suggested = artistName.split(' with ').map((n) => n.trim());
         break;
       case 'and':
-        suggested = artistName.split(' and ').map(n => n.trim());
+        suggested = artistName.split(' and ').map((n) => n.trim());
         break;
       case '&':
-        suggested = artistName.split(' & ').map(n => n.trim());
+        suggested = artistName.split(' & ').map((n) => n.trim());
         break;
       case 'parentheses':
         // Remove parentheses and their contents
@@ -312,15 +314,13 @@ export default function ArtistCleanupTool() {
         break;
     }
 
-    const filteredNames = suggested.filter(n => n.length > 0);
+    const filteredNames = suggested.filter((n) => n.length > 0);
     setSplitNames(filteredNames);
 
     // Find existing artists that match these names
     const matches: SplitArtistMatch[] = [];
     for (const name of filteredNames) {
-      const existingArtist = allArtists.find(a =>
-        a.name.toLowerCase() === name.toLowerCase()
-      );
+      const existingArtist = allArtists.find((a) => a.name.toLowerCase() === name.toLowerCase());
       matches.push({
         name,
         existingArtistId: existingArtist?._id,
@@ -346,7 +346,7 @@ export default function ArtistCleanupTool() {
       const newArtistIds: { [name: string]: string } = {};
       for (const name of splitNames) {
         // Check if artist already exists
-        const existingQuery = `*[_type == "artist" && name == $name][0]._id`;
+        const existingQuery = '*[_type == "artist" && name == $name][0]._id';
         const existingId = await client.fetch(existingQuery, { name });
 
         if (existingId) {
@@ -355,7 +355,7 @@ export default function ArtistCleanupTool() {
           // Create new artist
           const newArtist = await client.create({
             _type: 'artist',
-            name: name,
+            name,
           });
           newArtistIds[name] = newArtist._id;
         }
@@ -365,7 +365,7 @@ export default function ArtistCleanupTool() {
       for (const concert of concerts) {
         const updatedArtists = concert.artists
           .filter((ref: any) => ref._ref !== splitArtist._id)
-          .concat(splitNames.map(name => ({ _type: 'reference', _ref: newArtistIds[name] })));
+          .concat(splitNames.map((name) => ({ _type: 'reference', _ref: newArtistIds[name] })));
 
         await client.patch(concert._id).set({ artists: updatedArtists }).commit();
       }
@@ -477,23 +477,21 @@ export default function ArtistCleanupTool() {
     if (!mergeTargetSearch) return [];
     const search = mergeTargetSearch.toLowerCase();
     return allArtists
-      .filter(a =>
-        a._id !== mergeSourceArtist?._id &&
-        a.name.toLowerCase().includes(search)
-      )
+      .filter((a) => a._id !== mergeSourceArtist?._id
+        && a.name.toLowerCase().includes(search))
       .slice(0, 10); // Limit to 10 results
   }
 
   async function removeDuplicateFromConcert(
     concertId: string,
     keepArtistId: string,
-    removeArtistId: string
+    removeArtistId: string,
   ) {
     try {
       // Get the concert
       const concert = await client.fetch(
-        `*[_type == "concert" && _id == $concertId][0]{ _id, artists }`,
-        { concertId }
+        '*[_type == "concert" && _id == $concertId][0]{ _id, artists }',
+        { concertId },
       );
 
       if (!concert) {
@@ -502,7 +500,7 @@ export default function ArtistCleanupTool() {
 
       // Remove the duplicate artist
       const updatedArtists = concert.artists.filter(
-        (ref: any) => ref._ref !== removeArtistId
+        (ref: any) => ref._ref !== removeArtistId,
       );
 
       await client.patch(concertId).set({ artists: updatedArtists }).commit();
@@ -547,15 +545,13 @@ export default function ArtistCleanupTool() {
           // Rule 2: Remove parentheses if clean version exists
           if (artist.name.includes('(') || artist.name.includes(')')) {
             const cleanName = artist.name.replace(/\s*\([^)]*\)/g, '').trim();
-            const existingArtist = allArtists.find(a =>
-              a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id
-            );
+            const existingArtist = allArtists.find((a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id);
 
             if (existingArtist) {
               // Merge into clean version
               const concerts = await client.fetch(
-                `*[_type == "concert" && references($artistId)] { _id, artists }`,
-                { artistId: artist._id }
+                '*[_type == "concert" && references($artistId)] { _id, artists }',
+                { artistId: artist._id },
               );
 
               for (const concert of concerts) {
@@ -569,8 +565,8 @@ export default function ArtistCleanupTool() {
 
               // Verify no references remain before deleting
               const remainingRefs = await client.fetch(
-                `count(*[_type == "concert" && references($artistId)])`,
-                { artistId: artist._id }
+                'count(*[_type == "concert" && references($artistId)])',
+                { artistId: artist._id },
               );
 
               if (remainingRefs === 0) {
@@ -587,33 +583,31 @@ export default function ArtistCleanupTool() {
           // Rule 3: Auto-split if both parts exist separately
           if (artist.concertCount === 1 && (artist.name.includes(' and ') || artist.name.includes(' & '))) {
             const parts = artist.name.includes(' and ')
-              ? artist.name.split(' and ').map(n => n.trim())
-              : artist.name.split(' & ').map(n => n.trim());
+              ? artist.name.split(' and ').map((n) => n.trim())
+              : artist.name.split(' & ').map((n) => n.trim());
 
             // Check if all parts exist
-            const existingParts = parts.map(part =>
-              allArtists.find(a => a.name.toLowerCase() === part.toLowerCase())
-            ).filter(Boolean);
+            const existingParts = parts.map((part) => allArtists.find((a) => a.name.toLowerCase() === part.toLowerCase())).filter(Boolean);
 
             if (existingParts.length === parts.length) {
               // All parts exist, auto-split
               const concerts = await client.fetch(
-                `*[_type == "concert" && references($artistId)] { _id, artists }`,
-                { artistId: artist._id }
+                '*[_type == "concert" && references($artistId)] { _id, artists }',
+                { artistId: artist._id },
               );
 
               for (const concert of concerts) {
                 const updatedArtists = concert.artists
                   .filter((ref: any) => ref._ref !== artist._id)
-                  .concat(existingParts.map(a => ({ _type: 'reference', _ref: a!._id })));
+                  .concat(existingParts.map((a) => ({ _type: 'reference', _ref: a!._id })));
 
                 await client.patch(concert._id).set({ artists: updatedArtists }).commit();
               }
 
               // Verify no references remain before deleting
               const remainingRefs = await client.fetch(
-                `count(*[_type == "concert" && references($artistId)])`,
-                { artistId: artist._id }
+                'count(*[_type == "concert" && references($artistId)])',
+                { artistId: artist._id },
               );
 
               if (remainingRefs === 0) {
@@ -657,7 +651,7 @@ export default function ArtistCleanupTool() {
     try {
       // Create CSV with suspicious artists
       const headers = ['ID', 'Name', 'Concert Count', 'Issues', 'Suggested Action', 'Target Artist'];
-      const rows = suspiciousArtists.map(artist => {
+      const rows = suspiciousArtists.map((artist) => {
         let suggestedAction = '';
         let targetArtist = '';
 
@@ -666,9 +660,7 @@ export default function ArtistCleanupTool() {
           suggestedAction = 'DELETE';
         } else if (artist.name.includes('(') || artist.name.includes(')')) {
           const cleanName = artist.name.replace(/\s*\([^)]*\)/g, '').trim();
-          const existing = allArtists.find(a =>
-            a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id
-          );
+          const existing = allArtists.find((a) => a.name.toLowerCase() === cleanName.toLowerCase() && a._id !== artist._id);
           if (existing) {
             suggestedAction = 'MERGE';
             targetArtist = existing.name;
@@ -691,14 +683,14 @@ export default function ArtistCleanupTool() {
           artist.concertCount.toString(),
           artist.reason,
           suggestedAction,
-          targetArtist
+          targetArtist,
         ];
       });
 
       // Convert to CSV
       const csv = [
         headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(','))
+        ...rows.map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(',')),
       ].join('\n');
 
       // Download file
@@ -814,12 +806,11 @@ export default function ArtistCleanupTool() {
                             </Box>
                             <Button
                               text="Keep"
-                              onClick={() =>
-                                removeDuplicateFromConcert(
-                                  concert._id,
-                                  pair.artist1._id,
-                                  pair.artist2._id
-                                )
+                              onClick={() => removeDuplicateFromConcert(
+                                concert._id,
+                                pair.artist1._id,
+                                pair.artist2._id,
+                              )
                               }
                               mode="ghost"
                               tone="positive"
@@ -832,12 +823,11 @@ export default function ArtistCleanupTool() {
                             </Box>
                             <Button
                               text="Keep"
-                              onClick={() =>
-                                removeDuplicateFromConcert(
-                                  concert._id,
-                                  pair.artist2._id,
-                                  pair.artist1._id
-                                )
+                              onClick={() => removeDuplicateFromConcert(
+                                concert._id,
+                                pair.artist2._id,
+                                pair.artist1._id,
+                              )
                               }
                               mode="ghost"
                               tone="positive"
@@ -1080,7 +1070,7 @@ export default function ArtistCleanupTool() {
                   text={splitting ? 'Splitting...' : 'Split Artist'}
                   onClick={handleSplit}
                   tone="primary"
-                  disabled={splitting || splitNames.length === 0 || splitNames.some(n => !n.trim())}
+                  disabled={splitting || splitNames.length === 0 || splitNames.some((n) => !n.trim())}
                 />
               </Flex>
             </Stack>
