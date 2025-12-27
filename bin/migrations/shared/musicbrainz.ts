@@ -1,0 +1,165 @@
+/**
+ * MusicBrainz API Client
+ *
+ * Provides artist lookup functionality using the MusicBrainz API
+ * https://musicbrainz.org/doc/MusicBrainz_API
+ */
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface MusicBrainzArtist {
+  id: string;
+  name: string;
+  score: number;
+  type?: string;
+}
+
+interface MusicBrainzSearchResponse {
+  artists: MusicBrainzArtist[];
+}
+
+interface CacheData {
+  version: number;
+  artists: Record<string, boolean>;
+}
+
+// Persistent cache file location
+const CACHE_FILE = path.join(__dirname, '.musicbrainz-cache.json');
+const CACHE_VERSION = 1;
+
+// In-memory cache loaded from disk
+let artistCache = new Map<string, boolean>();
+let cacheLoaded = false;
+
+// Rate limiting: MusicBrainz requires max 1 request per second
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
+
+/**
+ * Load cache from disk
+ */
+function loadCache(): void {
+  if (cacheLoaded) return;
+
+  try {
+    if (fs.existsSync(CACHE_FILE)) {
+      const data: CacheData = JSON.parse(fs.readFileSync(CACHE_FILE, 'utf-8'));
+      if (data.version === CACHE_VERSION) {
+        artistCache = new Map(Object.entries(data.artists));
+      }
+    }
+  } catch (error) {
+    // Ignore cache load errors
+  }
+
+  cacheLoaded = true;
+}
+
+/**
+ * Save cache to disk
+ */
+function saveCache(): void {
+  try {
+    const data: CacheData = {
+      version: CACHE_VERSION,
+      artists: Object.fromEntries(artistCache),
+    };
+    fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (error) {
+    // Ignore cache save errors
+  }
+}
+
+/**
+ * Wait to respect rate limiting (1 request per second)
+ */
+async function waitForRateLimit(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    await new Promise((resolve) => {
+      setTimeout(resolve, waitTime);
+    });
+  }
+
+  lastRequestTime = Date.now();
+}
+
+/**
+ * Search MusicBrainz for an artist by name
+ * Returns true if the exact artist name exists as a single artist/band
+ */
+export async function isKnownArtist(artistName: string): Promise<boolean> {
+  // Load cache from disk on first use
+  loadCache();
+
+  // Check cache first
+  const cacheKey = artistName.toLowerCase().trim();
+  if (artistCache.has(cacheKey)) {
+    return artistCache.get(cacheKey)!;
+  }
+
+  try {
+    // Respect rate limiting
+    await waitForRateLimit();
+
+    // Build search query
+    const query = encodeURIComponent(artistName);
+    const url = `https://musicbrainz.org/ws/2/artist?query=artist:"${query}"&fmt=json&limit=5`;
+
+    // Make request with required User-Agent
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)',
+      },
+    });
+
+    if (!response.ok) {
+      // Don't throw on HTTP errors, just return false
+      return false;
+    }
+
+    const data: MusicBrainzSearchResponse = await response.json();
+
+    // Look for exact match (case-insensitive) with reasonably high score
+    // Score threshold of 85 allows for slight variations while still being confident
+    const exactMatch = data.artists.find(
+      (artist) => artist.name.toLowerCase() === artistName.toLowerCase() && artist.score >= 85,
+    );
+
+    const result = !!exactMatch;
+
+    // Cache the result (in memory and disk)
+    artistCache.set(cacheKey, result);
+    saveCache();
+
+    return result;
+  } catch (error) {
+    // On error, don't cache and return false (fail safe)
+    return false;
+  }
+}
+
+/**
+ * Clear the cache (useful for testing)
+ */
+export function clearArtistCache(): void {
+  artistCache.clear();
+  cacheLoaded = false;
+  if (fs.existsSync(CACHE_FILE)) {
+    fs.unlinkSync(CACHE_FILE);
+  }
+}
+
+/**
+ * Get cache statistics (for monitoring)
+ */
+export function getCacheStats(): { size: number; keys: string[] } {
+  return {
+    size: artistCache.size,
+    keys: Array.from(artistCache.keys()),
+  };
+}

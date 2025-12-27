@@ -8,7 +8,12 @@
  * Note: band_pic_url and band_url are legacy fields - the Artist schema now handles these.
  * This migration creates Artist and Venue records if they don't exist.
  *
- * Usage: npm run import:concerts
+ * Usage:
+ *   npm run import:concerts                    # Import all concerts
+ *   npm run import:concerts -- --from-last     # Resume from last imported ID + 1
+ *   npm run import:concerts -- --start-id=100  # Import concerts with ID >= 100
+ *   npm run import:concerts -- --since=2025-12-27  # Import concerts created/updated since date
+ *   npm run import:concerts -- --start-id=100 --end-id=200  # Import ID range
  */
 
 import { createClient } from '@sanity/client';
@@ -30,6 +35,9 @@ import {
   fixImagePath,
 } from './shared/imageUploader';
 import {
+  processArtistStringAsync,
+} from './shared/artistCleaner';
+import {
   validateRequired,
   validateUrl,
   validateDate,
@@ -37,6 +45,7 @@ import {
   logValidationErrors,
   ValidationResult,
 } from './shared/validation';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportConcerts');
 
@@ -54,9 +63,44 @@ interface Concert {
   deleted: string;
 }
 
+// Command-line options
+interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+  endId?: number;
+  since?: string;
+}
+
 // Track created artists and venues during migration
 const createdArtists = new Map<string, string>(); // name -> documentId
 const createdVenues = new Map<string, string>(); // name -> documentId
+
+/**
+ * Parse command-line arguments
+ */
+function parseArguments(): ImportOptions {
+  const options: ImportOptions = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
+      options.startId = parseInt(args[i + 1], 10);
+      i++;
+    } else if (arg === '--end-id' && i + 1 < args.length) {
+      options.endId = parseInt(args[i + 1], 10);
+      i++;
+    } else if (arg === '--since' && i + 1 < args.length) {
+      options.since = args[i + 1];
+      i++;
+    }
+  }
+
+  return options;
+}
 
 /**
  * Connect to the MySQL database
@@ -80,12 +124,43 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active concerts from the database (excluding soft-deleted records)
  */
-async function getActiveConcerts(connection: mysql.Connection): Promise<Concert[]> {
+async function getActiveConcerts(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<Concert[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM concerts WHERE deleted NOT IN ('y', 'Y') ORDER BY date DESC",
-    );
-    logger.info(`Retrieved ${rows.length} concerts from the database.`);
+    let query = "SELECT * FROM concerts WHERE deleted NOT IN ('y', 'Y')";
+    const params: any[] = [];
+
+    // Add ID range filters
+    if (options.startId !== undefined) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    if (options.endId !== undefined) {
+      query += ' AND id <= ?';
+      params.push(options.endId);
+    }
+
+    // Add date filter (assumes there's a created_at or updated_at column)
+    // Note: You may need to adjust the column name based on your MySQL schema
+    if (options.since) {
+      // Try to use updated_at if it exists, otherwise fall back to date
+      query += ' AND (updated_at >= ? OR date >= ?)';
+      params.push(options.since, options.since);
+    }
+
+    query += ' ORDER BY id ASC'; // Changed to ASC for incremental processing
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+    if (options.endId) filterMsg += ` endId=${options.endId}`;
+    if (options.since) filterMsg += ` since=${options.since}`;
+
+    logger.info(`Retrieved ${rows.length} concerts from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`);
     return rows as Concert[];
   } catch (error) {
     logger.error('Query failed:', error as Error);
@@ -126,107 +201,8 @@ function normalizeName(name: string): string {
   return name.trim().toLowerCase();
 }
 
-/**
- * Check if an artist string should be preserved as a custom title
- * Returns true for special event formats that shouldn't be parsed
- */
-function shouldUseCustomTitle(artistString: string): boolean {
-  if (!artistString) return false;
-
-  // Check for special event patterns
-  const titlePatterns = [
-    /\(performing\s+/i, // "Artist (performing Album)"
-    /\(playing\s+/i, // "Artist (playing Album)"
-    /\s+performs\s+/i, // "Artist performs Album"
-    /\s+plays\s+/i, // "Artist plays Album"
-    /\s+anniversary\)/i, // "Album Anniversary)"
-    /\(.*\s+night\s+\d+\)/i, // "(Night 1)", "(Night 2)"
-    /\(.*\s+show\)/i, // "(Special Show)", "(Album Release Show)"
-    /\(.*\s+to\s+remember\)/i, // "(A [Event] To Remember)"
-    /\([^)]*&[^)]*\)/i, // "(Something & Something)" - descriptive text with ampersand in parens
-  ];
-
-  return titlePatterns.some((pattern) => pattern.test(artistString));
-}
-
-/**
- * Parse artist string into individual artist names
- * Handles patterns like:
- * - "Artist A & Artist B" -> ["Artist A", "Artist B"]
- * - "Artist A w/ Artist B" -> ["Artist A", "Artist B"]
- * - "Artist A (of Band B)" -> ["Artist A", "Band B"]
- * - "Florence + The Machine" -> ["Florence + The Machine"] (not split)
- * - "Echo & The Bunnymen" -> ["Echo & The Bunnymen"] (not split - band name)
- */
-function parseArtistNames(artistString: string): string[] {
-  if (!artistString) return [];
-
-  const artists: string[] = [];
-
-  // First, check for special patterns that indicate a single band name
-  // Pattern: "Word & The ..." (e.g., "Echo & The Bunnymen")
-  const singleBandPattern = /^[A-Z][a-z]+\s+&\s+The\s+/;
-  if (singleBandPattern.test(artistString)
-      && !artistString.includes(' w/')
-      && !artistString.includes(' with ')
-      && !artistString.includes('(of ')
-      && !artistString.includes('(from ')) {
-    return [artistString.trim()];
-  }
-
-  // Extract and store "(of ...)" and "(from ...)" patterns
-  let remaining = artistString;
-  const ofBands: string[] = [];
-  const ofPattern = /\((?:of|from)\s+([^)]+)\)/gi;
-  let match;
-  // eslint-disable-next-line no-cond-assign
-  while ((match = ofPattern.exec(artistString)) !== null) {
-    const bandName = match[1].trim();
-    if (bandName) {
-      ofBands.push(bandName);
-    }
-  }
-  // Remove all "(of ...)" patterns
-  remaining = remaining.replace(ofPattern, '').trim();
-
-  // Split by " w/ " or " with " (case insensitive) first
-  const withParts = remaining.split(/\s+w\/\s+|\s+with\s+/i);
-
-  // For each part, split by " & "
-  withParts.forEach((part) => {
-    const trimmedPart = part.trim();
-    if (!trimmedPart) return;
-
-    const ampParts = trimmedPart.split(/\s+&\s+/);
-    ampParts.forEach((ampPart) => {
-      const finalPart = ampPart.trim();
-      if (finalPart) {
-        artists.push(finalPart);
-      }
-    });
-  });
-
-  // Add all "(of ...)" bands at the end
-  ofBands.forEach((band) => artists.push(band));
-
-  return artists;
-}
-
-/**
- * Extract main artist name(s) from a title string for creating references
- * E.g., "Cat Power (The Greatest 20th Anniversary)" -> "Cat Power"
- * E.g., "Michael Shannon & Jason Narducy (playing ...)" ->
- *       ["Michael Shannon", "Jason Narducy"]
- */
-function extractArtistsFromTitle(titleString: string): string[] {
-  if (!titleString) return [];
-
-  // Remove anything in parentheses to get the main artist name(s)
-  const mainArtists = titleString.replace(/\s*\([^)]*\)/g, '').trim();
-
-  // Now parse the remaining string for multiple artists
-  return parseArtistNames(mainArtists);
-}
+// Artist parsing functions have been replaced by the artistCleaner module
+// See: ./shared/artistCleaner.ts
 
 /**
  * Find or create an artist by name
@@ -408,16 +384,8 @@ async function transformConcertToDocument(
   }> {
   const { id } = concert;
 
-  // Check if this should use a custom title
-  const useCustomTitle = shouldUseCustomTitle(concert.artist!);
-  const customTitle = useCustomTitle ? concert.artist!.trim() : null;
-
-  // Parse artist names from the artist string
-  // If using custom title, extract artists from title
-  // Otherwise, parse normally
-  const artistNames = useCustomTitle
-    ? extractArtistsFromTitle(concert.artist!)
-    : parseArtistNames(concert.artist!);
+  // Process artist string using the intelligent artist cleaner (with MusicBrainz lookup)
+  const { customTitle, artistNames } = await processArtistStringAsync(concert.artist || '');
 
   if (artistNames.length === 0) {
     return {
@@ -587,6 +555,9 @@ async function importConcerts(): Promise<void> {
   let connection: mysql.Connection | null = null;
 
   try {
+    // Parse command-line arguments
+    const options = parseArguments();
+
     logger.info('Starting concert import process...');
 
     // Check if Sanity token is provided
@@ -606,6 +577,26 @@ async function importConcerts(): Promise<void> {
       useCdn: false,
     });
 
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported concert ID...');
+      const lastId = await getLastImportedId('concert', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No concerts found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId || options.endId || options.since) {
+      logger.info('Import filters:');
+      if (options.startId) logger.info(`  - Start ID: ${options.startId}`);
+      if (options.endId) logger.info(`  - End ID: ${options.endId}`);
+      if (options.since) logger.info(`  - Since date: ${options.since}`);
+    }
+
     // Create utilities
     const upsertHandler = createUpsertHandler(client);
     const imageUploader = createImageUploader(client);
@@ -613,8 +604,8 @@ async function importConcerts(): Promise<void> {
     // Connect to the database
     connection = await connectToDatabase();
 
-    // Get active concerts from the database
-    const concerts = await getActiveConcerts(connection);
+    // Get active concerts from the database with filters
+    const concerts = await getActiveConcerts(connection, options);
 
     if (concerts.length === 0) {
       logger.warn('No concerts found to import.');

@@ -9,7 +9,10 @@
  *   - Creates Record documents with artist references
  *   - Creates cdOfTheWeek documents that reference Records
  *
- * Usage: npm run import:cdotw
+ * Usage:
+ *   npm run import:cdotw              # Import all
+ *   npm run import:cdotw -- --from-last  # Resume from last imported ID + 1
+ *   npm run import:cdotw -- --start-id=100  # Import with ID >= 100
  */
 
 import * as crypto from 'crypto';
@@ -40,6 +43,7 @@ import {
   ValidationResult,
 } from './shared/validation';
 import { htmlToPortableText } from './shared/richTextConverter';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportCdOfTheWeek');
 
@@ -67,8 +71,35 @@ interface CdOfTheWeekRow {
   deleted: string;
 }
 
+// Command-line options
+interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+}
+
 // Cache for created artists to avoid duplicates
 const artistCache = new Map<string, string>(); // normalized name -> document ID
+
+/**
+ * Parse command-line arguments
+ */
+function parseArguments(): ImportOptions {
+  const options: ImportOptions = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
+      options.startId = parseInt(args[i + 1], 10);
+      i++;
+    }
+  }
+
+  return options;
+}
 
 /**
  * Normalize artist name for consistent matching
@@ -165,12 +196,30 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active CD of the Week records from the database (excluding soft-deleted records)
  */
-async function getActiveCdOfTheWeek(connection: mysql.Connection): Promise<CdOfTheWeekRow[]> {
+async function getActiveCdOfTheWeek(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<CdOfTheWeekRow[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM cdotw WHERE deleted NOT IN ('yes', 'Yes', 'YES', 'y', 'Y') ORDER BY date DESC",
+    let query = "SELECT * FROM cdotw WHERE deleted NOT IN ('yes', 'Yes', 'YES', 'y', 'Y')";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    logger.info(
+      `Retrieved ${rows.length} CD of the Week records from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    logger.info(`Retrieved ${rows.length} CD of the Week records from the database.`);
     return rows as CdOfTheWeekRow[];
   } catch (error) {
     logger.error('Query failed:', error as Error);
@@ -341,6 +390,9 @@ async function importCdOfTheWeek(): Promise<void> {
   let connection: mysql.Connection | null = null;
 
   try {
+    // Parse command-line arguments
+    const options = parseArguments();
+
     logger.info('Starting CD of the Week import process...');
     logger.info('Using relational schema: Artist -> Record -> cdOfTheWeek');
 
@@ -361,6 +413,24 @@ async function importCdOfTheWeek(): Promise<void> {
       useCdn: false,
     });
 
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported CD of the Week ID...');
+      const lastId = await getLastImportedId('cdOfTheWeek', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No CD of the Week found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId) {
+      logger.info('Import filters:');
+      logger.info(`  - Start ID: ${options.startId}`);
+    }
+
     // Create utilities
     const upsertHandler = createUpsertHandler(client);
     const imageUploader = createImageUploader(client);
@@ -369,7 +439,7 @@ async function importCdOfTheWeek(): Promise<void> {
     connection = await connectToDatabase();
 
     // Get active CD of the Week records from the database
-    const cdRecords = await getActiveCdOfTheWeek(connection);
+    const cdRecords = await getActiveCdOfTheWeek(connection, options);
 
     if (cdRecords.length === 0) {
       logger.warn('No CD of the Week records found to import.');

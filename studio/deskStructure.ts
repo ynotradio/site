@@ -1,19 +1,49 @@
 import { StructureBuilder } from 'sanity/structure';
 import DJOrderTool from './plugins/dj-order';
 import ShowClonerTool from './plugins/show-cloner';
+import ArtistCleanupTool from './plugins/artist-cleanup';
 
 export default (S: StructureBuilder) => {
   // Get all default document type list items
   const defaultListItems = S.documentTypeListItems();
 
-  // Filter out dj and show types since we're customizing them
+  // Filter out dj, show, and artist types since we're customizing them
   const filteredListItems = defaultListItems.filter(
-    (listItem) => !['dj', 'show'].includes(listItem.getId() || ''),
+    (listItem) => !['dj', 'show', 'artist'].includes(listItem.getId() || ''),
   );
 
   return S.list()
     .title('Content')
     .items([
+      // Artist management section
+      S.listItem()
+        .title('Artists')
+        .child(
+          S.list()
+            .title('Artist Management')
+            .items([
+              // Regular list of all artists
+              S.listItem()
+                .title('All Artists')
+                .child(
+                  S.documentList()
+                    .title('All Artists')
+                    .filter('_type == "artist"')
+                    .defaultOrdering([{ field: 'name', direction: 'asc' }]),
+                ),
+
+              // Artist cleanup tool
+              S.listItem()
+                .title('Cleanup Review')
+                .icon(() => '🧹')
+                .child(
+                  S.component()
+                    .title('Artist Cleanup')
+                    .component(ArtistCleanupTool),
+                ),
+            ]),
+        ),
+
       // DJ management section
       S.listItem()
         .title('DJs')

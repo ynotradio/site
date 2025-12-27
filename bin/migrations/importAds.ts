@@ -4,7 +4,10 @@
  * MySQL Schema:
  *   ads: id, name, start_date, end_date, pic_url, web_url, priority, deleted
  *
- * Usage: npm run import:ads
+ * Usage:
+ *   npm run import:ads              # Import all ads
+ *   npm run import:ads -- --from-last  # Resume from last imported ID + 1
+ *   npm run import:ads -- --start-id=100  # Import ads with ID >= 100
  */
 
 import { createClient } from '@sanity/client';
@@ -32,6 +35,7 @@ import {
   logValidationErrors,
   ValidationResult,
 } from './shared/validation';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportAds');
 
@@ -45,6 +49,33 @@ interface Ad {
   web_url: string | null;
   priority: number | null;
   deleted: string;
+}
+
+// Command-line options
+interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+}
+
+/**
+ * Parse command-line arguments
+ */
+function parseArguments(): ImportOptions {
+  const options: ImportOptions = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
+      options.startId = parseInt(args[i + 1], 10);
+      i++;
+    }
+  }
+
+  return options;
 }
 
 /**
@@ -69,12 +100,30 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active ads from the database (excluding soft-deleted records)
  */
-async function getActiveAds(connection: mysql.Connection): Promise<Ad[]> {
+async function getActiveAds(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<Ad[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM ads WHERE deleted NOT IN ('y', 'Y') ORDER BY priority DESC",
+    let query = "SELECT * FROM ads WHERE deleted NOT IN ('y', 'Y')";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    logger.info(
+      `Retrieved ${rows.length} ads from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    logger.info(`Retrieved ${rows.length} ads from the database.`);
     return rows as Ad[];
   } catch (error) {
     logger.error('Query failed:', error as Error);
@@ -208,6 +257,9 @@ async function importAds(): Promise<void> {
   let connection: mysql.Connection | null = null;
 
   try {
+    // Parse command-line arguments
+    const options = parseArguments();
+
     logger.info('Starting ad import process...');
 
     // Check if Sanity token is provided
@@ -227,6 +279,24 @@ async function importAds(): Promise<void> {
       useCdn: false,
     });
 
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported ad ID...');
+      const lastId = await getLastImportedId('ad', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No ads found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId) {
+      logger.info('Import filters:');
+      logger.info(`  - Start ID: ${options.startId}`);
+    }
+
     // Create utilities
     const upsertHandler = createUpsertHandler(client);
     const imageUploader = createImageUploader(client);
@@ -235,7 +305,7 @@ async function importAds(): Promise<void> {
     connection = await connectToDatabase();
 
     // Get active ads from the database
-    const ads = await getActiveAds(connection);
+    const ads = await getActiveAds(connection, options);
 
     if (ads.length === 0) {
       logger.warn('No ads found to import.');

@@ -8,7 +8,10 @@
  *   - Creates OnDemand documents
  *   - Optionally creates/finds Artist documents based on headline
  *
- * Usage: npm run import:ondemand
+ * Usage:
+ *   npm run import:ondemand              # Import all
+ *   npm run import:ondemand -- --from-last  # Resume from last imported ID + 1
+ *   npm run import:ondemand -- --start-id=100  # Import with ID >= 100
  */
 
 import * as crypto from 'crypto';
@@ -38,6 +41,7 @@ import {
   logValidationErrors,
   ValidationResult,
 } from './shared/validation';
+import { getLastImportedId } from './shared/getLastImportedId';
 
 const logger = createLogger('ImportOnDemand');
 
@@ -64,8 +68,35 @@ interface OnDemandRow {
   deleted: string;
 }
 
+// Command-line options
+interface ImportOptions {
+  fromLast?: boolean;
+  startId?: number;
+}
+
 // Cache for created artists to avoid duplicates
 const artistCache = new Map<string, string>(); // normalized name -> document ID
+
+/**
+ * Parse command-line arguments
+ */
+function parseArguments(): ImportOptions {
+  const options: ImportOptions = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--from-last') {
+      options.fromLast = true;
+    } else if (arg === '--start-id' && i + 1 < args.length) {
+      options.startId = parseInt(args[i + 1], 10);
+      i++;
+    }
+  }
+
+  return options;
+}
 
 /**
  * Normalize artist name for consistent matching
@@ -157,12 +188,30 @@ async function connectToDatabase(): Promise<mysql.Connection> {
 /**
  * Get active OnDemand records from the database (excluding soft-deleted records)
  */
-async function getActiveOnDemand(connection: mysql.Connection): Promise<OnDemandRow[]> {
+async function getActiveOnDemand(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<OnDemandRow[]> {
   try {
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      "SELECT * FROM ondemand WHERE LOWER(deleted) NOT IN ('yes', 'y') ORDER BY date DESC",
+    let query = "SELECT * FROM ondemand WHERE LOWER(deleted) NOT IN ('yes', 'y')";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    logger.info(
+      `Retrieved ${rows.length} OnDemand records from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    logger.info(`Retrieved ${rows.length} OnDemand records from the database.`);
     return rows as OnDemandRow[];
   } catch (error) {
     logger.error('Query failed:', error as Error);
@@ -390,6 +439,9 @@ async function importOnDemand(): Promise<void> {
   let connection: mysql.Connection | null = null;
 
   try {
+    // Parse command-line arguments
+    const options = parseArguments();
+
     logger.info('Starting OnDemand import process...');
 
     // Check if Sanity token is provided
@@ -409,6 +461,24 @@ async function importOnDemand(): Promise<void> {
       useCdn: false,
     });
 
+    // Handle --from-last flag
+    if (options.fromLast) {
+      logger.info('Fetching last imported OnDemand ID...');
+      const lastId = await getLastImportedId('onDemand', client);
+      if (lastId !== null) {
+        options.startId = lastId + 1;
+        logger.info(`Last imported ID: ${lastId}. Starting from ID: ${options.startId}`);
+      } else {
+        logger.info('No OnDemand found in Sanity. Starting from the beginning.');
+      }
+    }
+
+    // Log filters if any
+    if (options.startId) {
+      logger.info('Import filters:');
+      logger.info(`  - Start ID: ${options.startId}`);
+    }
+
     // Create utilities
     const upsertHandler = createUpsertHandler(client);
     const imageUploader = createImageUploader(client);
@@ -417,7 +487,7 @@ async function importOnDemand(): Promise<void> {
     connection = await connectToDatabase();
 
     // Get active OnDemand records from the database
-    const onDemandRecords = await getActiveOnDemand(connection);
+    const onDemandRecords = await getActiveOnDemand(connection, options);
 
     if (onDemandRecords.length === 0) {
       logger.warn('No OnDemand records found to import.');
