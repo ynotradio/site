@@ -23,6 +23,7 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
     id,
     name,
     show,
+    email,
     external_connect_text: externalConnectText,
     external_connect_url: externalConnectUrl,
     pic,
@@ -123,28 +124,14 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
     });
   }
 
-  // Add social link if available
+  // Build social links array
+  const socialLinks: any[] = [];
   if (externalConnectText && externalConnectUrl) {
     const socialText = externalConnectText.replace(/<br>/g, ' ');
-    bioBlocks.push({
-      _type: 'block',
-      _key: `bio-${id}-social`,
-      style: 'normal',
-      markDefs: [
-        {
-          _key: `link-${id}`,
-          _type: 'link',
-          href: externalConnectUrl,
-        },
-      ],
-      children: [
-        {
-          _type: 'span',
-          _key: `bio-${id}-social-span-1`,
-          text: socialText,
-          marks: [`link-${id}`],
-        },
-      ],
+    socialLinks.push({
+      _key: `social-${id}`,
+      text: socialText,
+      url: externalConnectUrl,
     });
   }
 
@@ -157,7 +144,10 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
       _type: 'slug',
       current: slug,
     },
+    email: email || '',
     bio: bioBlocks,
+    socialLinks,
+    legacyId: id,
     _createdAt: `${new Date().toISOString().split('T')[0]}T00:00:00Z`,
   };
 

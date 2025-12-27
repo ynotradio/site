@@ -22,6 +22,12 @@ export default defineType({
       validation: (Rule) => Rule.required(),
     }),
     defineField({
+      name: 'email',
+      title: 'Email',
+      type: 'string',
+      validation: (Rule) => Rule.email(),
+    }),
+    defineField({
       name: 'photo',
       title: 'Photo',
       type: 'image',
@@ -34,6 +40,36 @@ export default defineType({
       title: 'Bio',
       type: 'array',
       of: [defineArrayMember({ type: 'block' })],
+    }),
+    defineField({
+      name: 'socialLinks',
+      title: 'Social Links',
+      type: 'array',
+      of: [
+        defineArrayMember({
+          type: 'object',
+          fields: [
+            defineField({
+              name: 'text',
+              title: 'Link Text',
+              type: 'string',
+            }),
+            defineField({
+              name: 'url',
+              title: 'URL',
+              type: 'url',
+            }),
+          ],
+        }),
+      ],
+    }),
+    defineField({
+      name: 'legacyId',
+      title: 'Legacy ID',
+      type: 'number',
+      description: 'ID from the old MySQL database',
+      readOnly: true,
+      hidden: true,
     }),
   ],
   preview: {
