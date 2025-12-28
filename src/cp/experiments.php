@@ -130,6 +130,8 @@ if (!$_SESSION["logged_in"]) {
         <dd>Enables authenticated voting for Top 11 @ 11 (requires Auth0 login)</dd>
         <dt><code>sanity</code></dt>
         <dd>Enables Sanity CMS as the data source for concerts (instead of MySQL)</dd>
+        <dt><code>sanity_deejays</code></dt>
+        <dd>Enables Sanity CMS as the data source for deejays (instead of MySQL)</dd>
       </dl>
     </div>
 

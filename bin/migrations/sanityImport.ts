@@ -23,6 +23,7 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
     id,
     name,
     show,
+    email,
     external_connect_text: externalConnectText,
     external_connect_url: externalConnectUrl,
     pic,
@@ -123,28 +124,14 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
     });
   }
 
-  // Add social link if available
+  // Build social links array
+  const socialLinks: any[] = [];
   if (externalConnectText && externalConnectUrl) {
     const socialText = externalConnectText.replace(/<br>/g, ' ');
-    bioBlocks.push({
-      _type: 'block',
-      _key: `bio-${id}-social`,
-      style: 'normal',
-      markDefs: [
-        {
-          _key: `link-${id}`,
-          _type: 'link',
-          href: externalConnectUrl,
-        },
-      ],
-      children: [
-        {
-          _type: 'span',
-          _key: `bio-${id}-social-span-1`,
-          text: socialText,
-          marks: [`link-${id}`],
-        },
-      ],
+    socialLinks.push({
+      _key: `social-${id}`,
+      text: socialText,
+      url: externalConnectUrl,
     });
   }
 
@@ -157,7 +144,10 @@ export async function processSingleDeejay(deejay: Deejay): Promise<any> {
       _type: 'slug',
       current: slug,
     },
+    email: email || '',
     bio: bioBlocks,
+    socialLinks,
+    legacyId: id,
     _createdAt: `${new Date().toISOString().split('T')[0]}T00:00:00Z`,
   };
 
@@ -186,9 +176,26 @@ export async function importDeejaysDirectly(deejays: Deejay[]): Promise<boolean>
     let successCount = 0;
     for (const deejay of deejays) {
       try {
-        const doc = await processSingleDeejay(deejay);
-        await client.createOrReplace(doc);
-        console.log(`Imported deejay: ${deejay.name}`);
+        // Create the person document
+        const personDoc = await processSingleDeejay(deejay);
+        await client.createOrReplace(personDoc);
+        console.log(`Imported person: ${deejay.name}`);
+
+        // Create the DJ document that references the person
+        const djDoc = {
+          _id: `dj-${deejay.id}`,
+          _type: 'dj',
+          person: {
+            _type: 'reference',
+            _ref: `deejay-${deejay.id}`,
+          },
+          sortOrder: deejay.sort,
+          isActive: true,
+          _createdAt: `${new Date().toISOString().split('T')[0]}T00:00:00Z`,
+        };
+        await client.createOrReplace(djDoc);
+        console.log(`Imported DJ document for: ${deejay.name}`);
+
         successCount++;
       } catch (error) {
         console.error(`Failed to import deejay ${deejay.name}:`, error);
