@@ -36,8 +36,12 @@ export function MusicBrainzSongInput(props: StringInputProps) {
   const [error, setError] = useState<string | null>(null);
 
   const songTitle = useFormValue(['title']) as string | undefined;
-  const artists = useFormValue(['artists']) as Array<{ name?: string }> | undefined;
+  const artists = useFormValue(['artists']) as Array<{
+    _ref?: string;
+    name?: string;
+  }> | undefined;
 
+  // Artist references might not be dereferenced, so artist name may not be available
   const artistName = artists?.[0]?.name;
 
   const searchMusicBrainz = useCallback(async () => {
@@ -52,7 +56,7 @@ export function MusicBrainzSongInput(props: StringInputProps) {
 
     try {
       const queryParts = [songTitle];
-      if (artistName) {
+      if (artistName?.trim()) {
         queryParts.push(`artist:${artistName}`);
       }
       const query = queryParts.join(' AND ');
@@ -158,7 +162,14 @@ export function MusicBrainzSongInput(props: StringInputProps) {
             <Flex gap={2} align="center">
               <Box flex={1}>
                 <Text size={1} muted>
-                  {songTitle ? `Search for ${getSearchText()} on MusicBrainz` : 'Enter song title first'}
+                  {songTitle ? (
+                    <>
+                      Search for {getSearchText()} on MusicBrainz
+                      {!artistName && ' (artist name not available - searching by title only)'}
+                    </>
+                  ) : (
+                    'Enter song title first'
+                  )}
                 </Text>
               </Box>
               <Button
