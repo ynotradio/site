@@ -308,7 +308,11 @@ async function transformCdOfTheWeekToDocuments(
     _type: 'record',
     title,
     slug: createSlug(`${artist}-${title}`),
-    artists: [{ _type: 'reference', _ref: artistId }],
+    artists: [{
+      _type: 'reference',
+      _ref: artistId,
+      _key: artistId,
+    }],
     legacyId: id,
   };
 
