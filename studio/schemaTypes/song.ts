@@ -53,6 +53,16 @@ export default defineType({
       description: 'Single release date (if different from album)',
     }),
     defineField({
+      name: 'musicbrainzId',
+      title: 'MusicBrainz Recording ID',
+      type: 'string',
+      description: 'MusicBrainz Recording MBID (e.g., 5b11f4ce-a62d-471e-81fc-a69a8278c7da)',
+      validation: (Rule) => Rule.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
+        name: 'UUID',
+        invert: false,
+      }).error('Must be a valid MusicBrainz ID (UUID format)'),
+    }),
+    defineField({
       name: 'featureOnNewMusic',
       title: 'Feature on New Music',
       type: 'boolean',

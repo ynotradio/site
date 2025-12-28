@@ -41,6 +41,16 @@ export default defineType({
       type: 'url',
     }),
     defineField({
+      name: 'musicbrainzId',
+      title: 'MusicBrainz Artist ID',
+      type: 'string',
+      description: 'MusicBrainz Artist MBID (e.g., 5b11f4ce-a62d-471e-81fc-a69a8278c7da)',
+      validation: (Rule) => Rule.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
+        name: 'UUID',
+        invert: false,
+      }).error('Must be a valid MusicBrainz ID (UUID format)'),
+    }),
+    defineField({
       name: 'members',
       title: 'Members',
       description: 'Band members (if applicable)',
