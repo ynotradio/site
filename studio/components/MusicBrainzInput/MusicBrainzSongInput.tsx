@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
-  StringInputProps, set, unset, useFormValue,
+  StringInputProps, set, unset, useFormValue, useClient,
 } from 'sanity';
 import {
   TextInput, Stack, Card, Button, Flex, Box, Text, Spinner, Label,
@@ -34,15 +34,36 @@ export function MusicBrainzSongInput(props: StringInputProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [artistName, setArtistName] = useState<string | undefined>(undefined);
 
+  const client = useClient({ apiVersion: '2024-01-01' });
   const songTitle = useFormValue(['title']) as string | undefined;
   const artists = useFormValue(['artists']) as Array<{
     _ref?: string;
-    name?: string;
+    _type?: string;
   }> | undefined;
 
-  // Artist references might not be dereferenced, so artist name may not be available
-  const artistName = artists?.[0]?.name;
+  // Fetch the first artist's name when artist reference changes
+  useEffect(() => {
+    const fetchArtistName = async () => {
+      const artistRef = artists?.[0]?._ref;
+      if (artistRef) {
+        try {
+          const artist = await client.fetch<{ name: string }>(
+            '*[_id == $id][0]{name}',
+            { id: artistRef },
+          );
+          setArtistName(artist?.name);
+        } catch (err) {
+          setArtistName(undefined);
+        }
+      } else {
+        setArtistName(undefined);
+      }
+    };
+
+    fetchArtistName();
+  }, [artists, client]);
 
   const searchMusicBrainz = useCallback(async () => {
     if (!songTitle?.trim()) {
