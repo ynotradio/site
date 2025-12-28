@@ -28,6 +28,7 @@
     "get-last-concert-id": "tsx bin/migrations/getLastImportedId.ts",
     "delete-today": "tsx bin/migrations/deleteToday.ts",
     "reset:model": "tsx bin/migrations/resetModel.ts",
+    "fix:record-artist-keys": "tsx bin/migrations/fixRecordArtistKeys.ts",
     "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
