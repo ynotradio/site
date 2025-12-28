@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, studioTheme } from '@sanity/ui';
+import * as sanity from 'sanity';
 import { MusicBrainzSongInput } from './MusicBrainzSongInput';
 
 // Mock Sanity hooks
@@ -40,19 +41,18 @@ describe('MusicBrainzSongInput', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const { useFormValue, useClient } = require('sanity');
 
     // Mock different form values based on field path
-    useFormValue.mockImplementation((path: string[]) => {
+    vi.mocked(sanity.useFormValue).mockImplementation((path: string[]) => {
       if (path[0] === 'title') return 'Just Like Heaven';
       if (path[0] === 'artists') return [{ _ref: 'artist-123' }];
       return undefined;
     });
 
     // Mock client fetch for artist name
-    useClient.mockReturnValue({
+    vi.mocked(sanity.useClient).mockReturnValue({
       fetch: vi.fn().mockResolvedValue({ name: 'The Cure' }),
-    });
+    } as any);
   });
 
   it('renders search button when no value is set', () => {
@@ -69,8 +69,7 @@ describe('MusicBrainzSongInput', () => {
   });
 
   it('disables search when song title is not available', () => {
-    const { useFormValue } = require('sanity');
-    useFormValue.mockImplementation((path: string[]) => {
+    vi.mocked(sanity.useFormValue).mockImplementation((path: string[]) => {
       if (path[0] === 'title') return undefined;
       return undefined;
     });
@@ -181,10 +180,9 @@ describe('MusicBrainzSongInput', () => {
 
   it('searches by title only when artist name unavailable', async () => {
     const user = userEvent.setup();
-    const { useClient } = require('sanity');
-    useClient.mockReturnValue({
+    vi.mocked(sanity.useClient).mockReturnValue({
       fetch: vi.fn().mockResolvedValue(null), // No artist name
-    });
+    } as any);
 
     const mockFetch = global.fetch as any;
     mockFetch.mockResolvedValueOnce({

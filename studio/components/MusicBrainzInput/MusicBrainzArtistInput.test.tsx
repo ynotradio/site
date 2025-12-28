@@ -3,6 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeProvider, studioTheme } from '@sanity/ui';
+import * as sanity from 'sanity';
 import { MusicBrainzArtistInput } from './MusicBrainzArtistInput';
 
 // Mock Sanity hooks
@@ -40,8 +41,7 @@ describe('MusicBrainzArtistInput', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    const { useFormValue } = require('sanity');
-    useFormValue.mockReturnValue('The Cure'); // Mock artist name
+    vi.mocked(sanity.useFormValue).mockReturnValue('The Cure'); // Mock artist name
   });
 
   it('renders search button when no value is set', () => {
@@ -55,8 +55,7 @@ describe('MusicBrainzArtistInput', () => {
   });
 
   it('disables search button when artist name is not available', () => {
-    const { useFormValue } = require('sanity');
-    useFormValue.mockReturnValue(undefined);
+    vi.mocked(sanity.useFormValue).mockReturnValue(undefined);
 
     render(<MusicBrainzArtistInput {...mockProps} />, { wrapper });
     const button = screen.getByText('Search MusicBrainz').closest('button');
