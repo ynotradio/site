@@ -180,7 +180,7 @@ export async function importDeejaysDirectly(deejays: Deejay[]): Promise<boolean>
         const personDoc = await processSingleDeejay(deejay);
         await client.createOrReplace(personDoc);
         console.log(`Imported person: ${deejay.name}`);
-        
+
         // Create the DJ document that references the person
         const djDoc = {
           _id: `dj-${deejay.id}`,
@@ -195,7 +195,7 @@ export async function importDeejaysDirectly(deejays: Deejay[]): Promise<boolean>
         };
         await client.createOrReplace(djDoc);
         console.log(`Imported DJ document for: ${deejay.name}`);
-        
+
         successCount++;
       } catch (error) {
         console.error(`Failed to import deejay ${deejay.name}:`, error);
