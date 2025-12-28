@@ -1,4 +1,5 @@
 import { defineType, defineField, defineArrayMember } from 'sanity';
+import { MusicBrainzRecordInput } from '../components/MusicBrainzInput/MusicBrainzRecordInput';
 
 /**
  * Record (Album) Schema
@@ -58,6 +59,9 @@ export default defineType({
       title: 'MusicBrainz Release ID',
       type: 'string',
       description: 'MusicBrainz Release MBID (e.g., 5b11f4ce-a62d-471e-81fc-a69a8278c7da)',
+      components: {
+        input: MusicBrainzRecordInput,
+      },
       validation: (Rule) => Rule.regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, {
         name: 'UUID',
         invert: false,
