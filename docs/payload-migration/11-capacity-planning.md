@@ -148,7 +148,7 @@ Media stored separately (Cloudinary/S3), only references in database:
 |-----------|------------------|----------|-------|
 | Top11Votes | 50,000 | 100 bytes | 5 MB |
 | YearEndPollVotes | 20,000 | 100 bytes | 2 MB |
-| MRMVotes | 30,000 | 100 bytes | 3 MB |
+| ModernRockMadnessVotes | 30,000 | 100 bytes | 3 MB |
 
 **Total Voting Data:** ~10 MB
 
@@ -358,20 +358,6 @@ export const handler = async (event) => {
 ---
 
 ## Content Pruning Strategies
-
-### Archive Old Data
-
-```sql
--- Archive old concerts (>3 years)
-UPDATE concerts
-SET deleted_at = NOW()
-WHERE date < NOW() - INTERVAL '3 years';
-
--- Archive old votes (>2 years)
-UPDATE top11_votes
-SET deleted_at = NOW()
-WHERE voted_at < NOW() - INTERVAL '2 years';
-```
 
 ### Compression
 

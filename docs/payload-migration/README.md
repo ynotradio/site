@@ -31,7 +31,7 @@ This migration plan provides an alternative to the Sanity CMS approach, leveragi
 | [07 - Success Criteria](./07-success-criteria.md) | Per-collection checklist and project completion criteria |
 | [08 - Quick Reference](./08-quick-reference.md) | Commands, REST/GraphQL queries, migration report template |
 | [09 - Relational Advantages](./09-relational-advantages.md) | Benefits of MySQL→PostgreSQL vs MySQL→NoSQL migration |
-| [10 - CMS Switching Considerations](./10-cms-switching-considerations.md) | Critical differences and complexity areas when switching from Sanity to Payload |
+| [10 - CMS Comparison](./10-cms-switching-considerations.md) | Sanity vs Payload comparison for MySQL migration |
 | [11 - Capacity Planning](./11-capacity-planning.md) | PostgreSQL limits, Neon pricing, content inventory |
 
 ---

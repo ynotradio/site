@@ -27,10 +27,10 @@
 | 17 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
 | 18 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
 | 19 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
-| 20 | MRMTournaments | `mrm_tournaments` | 🔲 Todo | Modern Rock Madness tournaments |
-| 21 | MRMGroups | `mrm_groups` | 🔲 Todo | Tournament participants |
-| 22 | MRMMatches | `mrm_matches` | 🔲 Todo | Bracket matchups |
-| 23 | MRMVotes | `mrm_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| 20 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
+| 21 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
+| 22 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
+| 23 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
 
 ---
 
