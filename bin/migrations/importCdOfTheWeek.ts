@@ -44,6 +44,7 @@ import {
 } from './shared/validation';
 import { htmlToPortableText } from './shared/richTextConverter';
 import { getLastImportedId } from './shared/getLastImportedId';
+import { getArtistMbid, getReleaseMbid } from './shared/musicbrainz';
 
 const logger = createLogger('ImportCdOfTheWeek');
 
@@ -109,7 +110,7 @@ function normalizeArtistName(name: string): string {
 }
 
 /**
- * Find or create an artist document
+ * Find or create an artist document with MusicBrainz ID lookup
  */
 async function findOrCreateArtist(
   client: SanityClient,
@@ -148,6 +149,15 @@ async function findOrCreateArtist(
       return { artistId: existingByName._id, created: false };
     }
 
+    // Fetch MusicBrainz ID for the artist
+    logger.info(`Looking up MusicBrainz ID for artist: ${artistName}`);
+    const musicbrainzId = await getArtistMbid(artistName);
+    if (musicbrainzId) {
+      logger.info(`Found MusicBrainz ID for ${artistName}: ${musicbrainzId}`);
+    } else {
+      logger.warn(`No MusicBrainz ID found for artist: ${artistName}`);
+    }
+
     // Create new artist with deterministic ID
     const artistDoc: DocumentWithLegacyId = {
       _id: artistId,
@@ -158,6 +168,10 @@ async function findOrCreateArtist(
 
     if (website) {
       artistDoc.website = website;
+    }
+
+    if (musicbrainzId) {
+      artistDoc.musicbrainzId = musicbrainzId;
     }
 
     const result = await upsertHandler.upsert(artistDoc);
@@ -278,19 +292,36 @@ async function transformCdOfTheWeekToDocuments(
     cd.band,
   );
 
-  // Step 2: Create the Record document
+  // Step 2: Look up MusicBrainz ID for the release
+  logger.info(`Looking up MusicBrainz ID for release: ${title} by ${artist}`);
+  const releaseMbid = await getReleaseMbid(title, artist);
+  if (releaseMbid) {
+    logger.info(`Found MusicBrainz ID for ${title}: ${releaseMbid}`);
+  } else {
+    logger.warn(`No MusicBrainz ID found for release: ${title} by ${artist}`);
+  }
+
+  // Step 3: Create the Record document
   const recordId = generateDocumentId('record', id);
   const recordDoc: DocumentWithLegacyId = {
     _id: recordId,
     _type: 'record',
     title,
     slug: createSlug(`${artist}-${title}`),
-    artists: [{ _type: 'reference', _ref: artistId }],
+    artists: [{
+      _type: 'reference',
+      _ref: artistId,
+      _key: artistId,
+    }],
     legacyId: id,
   };
 
   if (label) {
     recordDoc.label = label;
+  }
+
+  if (releaseMbid) {
+    recordDoc.musicbrainzId = releaseMbid;
   }
 
   if (cd.date) {
@@ -313,7 +344,7 @@ async function transformCdOfTheWeekToDocuments(
     }
   }
 
-  // Step 3: Create the cdOfTheWeek document
+  // Step 4: Create the cdOfTheWeek document
   const cdOfTheWeekDoc: DocumentWithLegacyId = {
     _id: generateDocumentId('cdOfTheWeek', id),
     _type: 'cdOfTheWeek',

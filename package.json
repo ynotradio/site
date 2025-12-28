@@ -28,6 +28,7 @@
     "get-last-concert-id": "tsx bin/migrations/getLastImportedId.ts",
     "delete-today": "tsx bin/migrations/deleteToday.ts",
     "reset:model": "tsx bin/migrations/resetModel.ts",
+    "fix:record-artist-keys": "tsx bin/migrations/fixRecordArtistKeys.ts",
     "dev:refresh": "./bin/refresh_local.sh"
   },
   "author": "",
@@ -39,6 +40,7 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^22.19.3",
     "@types/react": "^19.2.7",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
@@ -61,6 +63,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@sanity/client": "^7.13.2",
+    "@sanity/icons": "^3.7.4",
     "@sanity/structure": "^2.36.2",
     "@sanity/ui": "^3.1.11",
     "@sanity/vision": "^5.0.1",
