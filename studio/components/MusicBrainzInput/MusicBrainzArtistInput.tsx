@@ -24,15 +24,23 @@ interface MusicBrainzSearchResponse {
 }
 
 export function MusicBrainzArtistInput(props: StringInputProps) {
-  const { value, onChange, elementProps } = props;
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    value, onChange, elementProps, document,
+  } = props;
   const [searchResults, setSearchResults] = useState<MusicBrainzArtist[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const searchMusicBrainz = useCallback(async (query: string) => {
-    if (!query.trim()) return;
+  const artistName = (document as {
+    name?: string;
+  })?.name;
+
+  const searchMusicBrainz = useCallback(async () => {
+    if (!artistName?.trim()) {
+      setError('Please enter an artist name first');
+      return;
+    }
 
     setIsSearching(true);
     setError(null);
@@ -40,7 +48,7 @@ export function MusicBrainzArtistInput(props: StringInputProps) {
 
     try {
       const response = await fetch(
-        `https://musicbrainz.org/ws/2/artist/?query=${encodeURIComponent(query)}&fmt=json&limit=10`,
+        `https://musicbrainz.org/ws/2/artist/?query=${encodeURIComponent(artistName)}&fmt=json&limit=10`,
         {
           headers: {
             'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)',
@@ -60,16 +68,11 @@ export function MusicBrainzArtistInput(props: StringInputProps) {
     } finally {
       setIsSearching(false);
     }
-  }, []);
-
-  const handleSearch = useCallback(() => {
-    searchMusicBrainz(searchQuery);
-  }, [searchQuery, searchMusicBrainz]);
+  }, [artistName]);
 
   const handleSelectArtist = useCallback((artist: MusicBrainzArtist) => {
     onChange(set(artist.id));
     setShowResults(false);
-    setSearchQuery('');
   }, [onChange]);
 
   const handleClear = useCallback(() => {
@@ -130,31 +133,20 @@ export function MusicBrainzArtistInput(props: StringInputProps) {
       ) : (
         <>
           <Card padding={3} radius={2} border>
-            <Stack space={3}>
-              <Label size={1}>Search MusicBrainz for Artist</Label>
-              <Flex gap={2}>
-                <Box flex={1}>
-                  <TextInput
-                    placeholder="Enter artist name..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.currentTarget.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSearch();
-                      }
-                    }}
-                  />
-                </Box>
-                <Button
-                  onClick={handleSearch}
-                  icon={SearchIcon}
-                  text="Search"
-                  tone="primary"
-                  disabled={!searchQuery.trim() || isSearching}
-                />
-              </Flex>
-            </Stack>
+            <Flex gap={2} align="center">
+              <Box flex={1}>
+                <Text size={1} muted>
+                  {artistName ? `Search for "${artistName}" on MusicBrainz` : 'Enter artist name first'}
+                </Text>
+              </Box>
+              <Button
+                onClick={searchMusicBrainz}
+                icon={SearchIcon}
+                text="Search MusicBrainz"
+                tone="primary"
+                disabled={!artistName?.trim() || isSearching}
+              />
+            </Flex>
           </Card>
 
           {showResults && (
