@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import { StringInputProps, set, unset } from 'sanity';
+import {
+  StringInputProps, set, unset, useFormValue,
+} from 'sanity';
 import {
   TextInput, Stack, Card, Button, Flex, Box, Text, Spinner, Label,
 } from '@sanity/ui';
@@ -25,16 +27,14 @@ interface MusicBrainzSearchResponse {
 
 export function MusicBrainzArtistInput(props: StringInputProps) {
   const {
-    value, onChange, elementProps, document,
+    value, onChange, elementProps,
   } = props;
   const [searchResults, setSearchResults] = useState<MusicBrainzArtist[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const artistName = (document as {
-    name?: string;
-  })?.name;
+  const artistName = useFormValue(['name']) as string | undefined;
 
   const searchMusicBrainz = useCallback(async () => {
     if (!artistName?.trim()) {
