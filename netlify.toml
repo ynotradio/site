@@ -1,0 +1,28 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+[dev]
+  command = "npm run dev"
+  port = 3000
+  autoLaunch = false
+
+# Netlify Next.js Runtime automatically handles:
+# - Server-side rendering
+# - API routes (/app/api/*)
+# - Image optimization
+# - Incremental static regeneration
+
+[context.production.environment]
+  PAYLOAD_PUBLIC_SERVER_URL = "https://admin.ynotradio.net"
+  DATABASE_SSL = "require"
+  # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
+
+[context.deploy-preview.environment]
+  PAYLOAD_PUBLIC_SERVER_URL = "https://preview-admin.ynotradio.net"
+  DATABASE_SSL = "require"
+  # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
+

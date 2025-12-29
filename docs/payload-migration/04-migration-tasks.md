@@ -10,7 +10,7 @@ Each task below is designed to be **self-contained** for cold-start agent conver
 
 ## Task 0: Setup Payload + PostgreSQL Environment
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete  
 **Depends On:** None  
 **Estimated Effort:** Medium
 
@@ -32,11 +32,16 @@ Before migrating content, we need to set up the Payload CMS application with Pos
 - `.env.local` (local development)
 
 **Acceptance Criteria:**
-- [ ] Payload Admin UI accessible at http://localhost:3000/admin
-- [ ] PostgreSQL connection successful
-- [ ] Can create/edit users
-- [ ] Media uploads work (local or cloud storage)
-- [ ] `npm run payload migrate` generates schema
+- [x] Payload Admin UI accessible at http://localhost:3000/admin
+- [x] PostgreSQL connection successful
+- [x] Can create/edit users
+- [x] Media uploads work (local or cloud storage)
+- [x] `npm run payload migrate` generates schema
+
+**Notes:**
+- Payload runs from `payload/src/payload.config.ts` with the Postgres adapter and media uploads stored under `payload/media`.
+- Local development uses `npm run payload:dev`; production deploys run through Netlify as configured in `netlify.toml`.
+- `.env.local` documents all required variables for Neon, Netlify, and Cloudinary.
 
 ---
 
