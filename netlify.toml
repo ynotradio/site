@@ -1,7 +1,6 @@
 [build]
   command = "npm run build"
   functions = "netlify/functions"
-  publish = "public"
 
 [dev]
   command = "npm run dev"
@@ -26,9 +25,9 @@
   force = true
 
 [context.production.environment]
-  PAYLOAD_PUBLIC_SERVER_URL = "https://api.ynotradio.net"
+  PAYLOAD_PUBLIC_SERVER_URL = "https://admin.ynotradio.net"
   DATABASE_SSL = "require"
 
 [context.deploy-preview.environment]
-  PAYLOAD_PUBLIC_SERVER_URL = "https://staging-api.ynotradio.net"
+  PAYLOAD_PUBLIC_SERVER_URL = "https://preview-admin.ynotradio.net"
   DATABASE_SSL = "require"
