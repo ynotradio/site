@@ -39,9 +39,7 @@
   "overrides": [
     {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
-      "plugins": ["testing-library"],
       "rules": {
-        "testing-library/no-test-id-queries": "error",
         "@typescript-eslint/consistent-type-assertions": "off",
         "object-curly-newline": "off",
         "import/order": "off",
@@ -58,20 +56,6 @@
         "no-await-in-loop": "off",
         "no-restricted-syntax": "off",
         "no-plusplus": "off"
-      }
-    },
-    {
-      "files": ["studio/plugins/**/*.tsx"],
-      "rules": {
-        "no-console": "off",
-        "no-alert": "off",
-        "max-len": ["error", { "code": 120 }]
-      }
-    },
-    {
-      "files": ["studio/schemaTypes/**/*.ts"],
-      "rules": {
-        "import/no-extraneous-dependencies": "off"
       }
     },
     {

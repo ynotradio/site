@@ -25,18 +25,7 @@ export const dbConfig = {
   password: process.env.DB_PASSWORD || '',
 };
 
-// Sanity configuration - from VS Code settings.json if available
-export const sanityConfig = {
-  projectId: process.env.SANITY_PROJECT_ID,
-  dataset: process.env.SANITY_DATASET,
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: '2023-03-01', // Use current date or a fixed recent version
-};
-
-console.log({ sanityConfig });
-
 // Migration settings
 export const migrationConfig = {
-  outputFile: path.resolve(__dirname, '..', 'person.ndjson'),
   baseUrl: 'https://www.ynotradio.net/',
 };
