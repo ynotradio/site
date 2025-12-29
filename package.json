@@ -21,7 +21,10 @@
     "payload:generate-importmap": "payload generate:importmap",
     "payload:migrate": "payload migrate --config payload.config.js",
     "payload:validate": "payload validate --config payload.config.js",
-    "payload:seed": "payload seed --config payload.config.js"
+    "payload:seed": "payload seed --config payload.config.js",
+    "netlify:logs": "netlify logs:function",
+    "netlify:logs:live": "netlify logs:function --live",
+    "netlify:status": "netlify status"
   },
   "author": "",
   "license": "ISC",
@@ -39,6 +42,7 @@
     "eslint-config-airbnb-typescript": "^18.0.0",
     "eslint-plugin-import": "^2.31.0",
     "jsdom": "^27.4.0",
+    "netlify-cli": "^17.37.4",
     "prettier": "^3.5",
     "ts-node": "^10.9.2",
     "tsx": "^4.20.3",

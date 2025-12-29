@@ -18,11 +18,11 @@
 
 [context.production.environment]
   PAYLOAD_PUBLIC_SERVER_URL = "https://admin.ynotradio.net"
-  DATABASE_SSL = "require"
   # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
 
 [context.deploy-preview.environment]
-  PAYLOAD_PUBLIC_SERVER_URL = "https://preview-admin.ynotradio.net"
-  DATABASE_SSL = "require"
+  # Use the actual deploy preview URL from Netlify
+  PAYLOAD_PUBLIC_SERVER_URL = ""
   # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
+
 

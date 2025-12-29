@@ -36,3 +36,6 @@ media/
 # Testing
 .playwright/
 test-results/
+
+# Local Netlify folder
+.netlify
