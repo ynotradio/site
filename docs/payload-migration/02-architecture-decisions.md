@@ -390,16 +390,16 @@ export const People: CollectionConfig = {
 
 ```bash
 # Validate Payload config
-npm run payload validate
+yarn payload validate
 
 # Type check collections
 npx tsc --noEmit
 
 # Database migration (Payload auto-generates based on collections)
-npm run payload migrate
+yarn payload migrate
 
 # Seed database
-npm run payload seed
+yarn payload seed
 ```
 
 ---

@@ -31,12 +31,12 @@ SELECT COUNT(*) FROM table_name WHERE deleted != 'y';
 ## Completed Migrations
 
 Scripts run successfully (formal reports pending):
-- Deejays (`npm run import:deejays`)
-- Ads (`npm run import:ads`)
-- Concerts (`npm run import:concerts`)
-- CD of the Week (`npm run import:cdotw`)
-- OnDemand (`npm run import:ondemand`)
-- Posts (`npm run import:posts`)
+- Deejays (`yarn import:deejays`)
+- Ads (`yarn import:ads`)
+- Concerts (`yarn import:concerts`)
+- CD of the Week (`yarn import:cdotw`)
+- OnDemand (`yarn import:ondemand`)
+- Posts (`yarn import:posts`)
 
 ## Pending
 

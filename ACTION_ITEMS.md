@@ -54,7 +54,7 @@ When you're ready to migrate to ESLint 9:
 
 3. **Upgrade everything together**
    ```bash
-   npm install --save-dev \
+   yarn add --dev \
      eslint@^9 \
      @typescript-eslint/eslint-plugin@^8 \
      @typescript-eslint/parser@^8 \
@@ -67,8 +67,8 @@ When you're ready to migrate to ESLint 9:
 
 5. **Test thoroughly**
    ```bash
-   npm run lint
-   npm test
+   yarn lint
+   yarn test
    ```
 
 ## Questions?
