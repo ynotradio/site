@@ -10,25 +10,25 @@
 
 ```bash
 # Start Payload in development mode
-npm run payload:dev
+yarn payload:dev
 
 # Build Payload for production
-npm run payload:build
+yarn payload:build
 
 # Start production server
-npm run payload:serve
+yarn payload:serve
 
 # Generate TypeScript types from collections
-npm run payload:generate-types
+yarn payload:generate-types
 
 # Run database migrations
-npm run payload:migrate
+yarn payload:migrate
 
 # Validate Payload configuration
-npm run payload:validate
+yarn payload:validate
 
 # Seed database with sample data
-npm run payload:seed
+yarn payload:seed
 ```
 
 ### Database Commands
@@ -57,45 +57,45 @@ psql -h neon.host -U user -d dbname -c "SELECT COUNT(*) FROM artists;"
 
 ```bash
 # Import all collections
-npm run import:all
+yarn import:all
 
 # Import specific collections
-npm run import:people
-npm run import:djs
-npm run import:artists
-npm run import:venues
-npm run import:concerts
-npm run import:songs
-npm run import:cdotw
+yarn import:people
+yarn import:djs
+yarn import:artists
+yarn import:venues
+yarn import:concerts
+yarn import:songs
+yarn import:cdotw
 
 # MySQL to PostgreSQL migration
-npm run migrate:mysql-to-postgres
+yarn migrate:mysql-to-postgres
 
 # Validate migrations
-npm run validate:migrations
+yarn validate:migrations
 ```
 
 ### Testing
 
 ```bash
 # Run all tests
-npm test
+yarn test
 
 # Run tests with coverage
-npm run test:coverage
+yarn test:coverage
 
 # Run specific test suite
-npm test -- artists.test.ts
+yarn test -- artists.test.ts
 
 # Run tests in watch mode
-npm run test:watch
+yarn test:watch
 ```
 
 ### Deployment (Netlify)
 
 ```bash
 # Install Netlify CLI
-npm install -g netlify-cli
+yarn global add netlify-cli
 
 # Login to Netlify
 netlify login
@@ -552,10 +552,10 @@ psql $DATABASE_URI -c "SELECT 1;"
 **Issue:** "Payload Admin not loading"
 ```bash
 # Check build
-npm run payload:build
+yarn payload:build
 
 # Check server logs
-npm run payload:serve --verbose
+yarn payload:serve --verbose
 ```
 
 **Issue:** "Migration script failing"
@@ -567,7 +567,7 @@ mysql -h localhost -u root -p ynot_site -e "SELECT 1;"
 psql $DATABASE_URI -c "SELECT 1;"
 
 # Run migration with verbose logging
-DEBUG=* npm run import:artists
+DEBUG=* yarn import:artists
 ```
 
 **Issue:** "Relationship not resolving"

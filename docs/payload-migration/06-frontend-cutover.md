@@ -300,7 +300,7 @@ $flags->flags['use_payload_concerts'] = false;
 
 ```toml
 [build]
-  command = "npm run build"
+  command = "yarn build"
   publish = "payload/build"
   functions = "netlify/functions"
 

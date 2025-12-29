@@ -6,6 +6,7 @@ src/vendor
 src/partials/.env
 src/partials/.env.local
 node_modules
+package-lock.json
 .DS_Store
 .sanity
 /.cache

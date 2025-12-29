@@ -77,7 +77,7 @@ Dependabot has been configured to automatically check for updates and create pul
 **Schedule**: Weekly on Mondays at 9:00 AM
 
 **Package Ecosystems Monitored**:
-1. npm (Node.js packages)
+1. npm (Node.js packages - Note: Dependabot uses npm for dependency checking, but the project uses Yarn for package management)
 2. GitHub Actions
 
 **Grouping Strategy**:
@@ -113,33 +113,33 @@ When updates are needed outside of the automated schedule:
 
 ### 1. Check for Updates
 ```bash
-npm outdated
+yarn outdated
 ```
 
 ### 2. Update Packages
 For minor/patch updates:
 ```bash
-npm update
+yarn upgrade
 ```
 
 For major updates or specific packages:
 ```bash
-npm install package-name@latest
+yarn upgrade package-name@latest
+```
+
+Or for interactive upgrades:
+```bash
+yarn upgrade-interactive
 ```
 
 ### 3. Check for Security Vulnerabilities
 ```bash
-npm audit
+yarn audit
 ```
 
 Fix automatically:
 ```bash
-npm audit fix
-```
-
-For breaking changes:
-```bash
-npm audit fix --force
+yarn audit fix
 ```
 
 ### 4. Test Changes
@@ -148,21 +148,21 @@ Always test after updating:
 
 ```bash
 # Run linter
-npm run lint
+yarn lint
 
 # Run tests
-npm test
+yarn test
 
 # Validate Sanity schema (requires network/API access)
-npm run sanity:schema-validate
+yarn sanity:schema-validate
 
 # Build Sanity Studio (requires network/API access)
-npm run sanity:build
+yarn sanity:build
 ```
 
 ### 5. Commit and Push
 ```bash
-git add package.json package-lock.json
+git add package.json yarn.lock
 git commit -m "chore(deps): update dependencies"
 git push
 ```
@@ -216,18 +216,19 @@ All Dependabot PRs will automatically:
 - Validate Sanity schema
 - Check PHP code (for PHP files)
 
-## Troubleshooting
+### Troubleshooting
 
 ### Common Issues
 
 **Peer dependency warnings**:
+Yarn handles peer dependencies automatically. If you encounter issues, try:
 ```bash
-npm install --legacy-peer-deps
+yarn install --force
 ```
 
 **Package conflicts**:
-1. Remove `node_modules` and `package-lock.json`
-2. Run `npm install` fresh
+1. Remove `node_modules` and `yarn.lock`
+2. Run `yarn install` fresh
 
 **ESLint configuration errors**:
 - Check that ESLint version matches the config requirements

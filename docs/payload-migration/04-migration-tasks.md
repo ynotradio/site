@@ -36,7 +36,7 @@ Before migrating content, we need to set up the Payload CMS application with Pos
 - [ ] PostgreSQL connection successful
 - [ ] Can create/edit users
 - [ ] Media uploads work (local or cloud storage)
-- [ ] `npm run payload migrate` generates schema
+- [ ] `yarn payload migrate` generates schema
 
 ---
 

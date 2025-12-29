@@ -170,7 +170,7 @@ export function convertHTMLToLexical(html: string): any {
 
 **Install dependencies:**
 ```bash
-npm install @tiptap/core @tiptap/html @tiptap/starter-kit @tiptap/extension-link
+yarn add @tiptap/core @tiptap/html @tiptap/starter-kit @tiptap/extension-link
 ```
 
 ---
@@ -510,7 +510,7 @@ importPeople();
     "import:djs": "tsx bin/migrations/importDJs.ts",
     "import:artists": "tsx bin/migrations/importArtists.ts",
     "import:concerts": "tsx bin/migrations/importConcerts.ts",
-    "import:all": "npm run import:people && npm run import:djs && npm run import:artists && npm run import:concerts"
+    "import:all": "yarn import:people && yarn import:djs && yarn import:artists && yarn import:concerts"
   }
 }
 ```
