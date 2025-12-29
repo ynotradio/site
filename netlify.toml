@@ -1,10 +1,10 @@
 [build]
-  command = "npm run payload:build"
+  command = "npm run build"
   functions = "netlify/functions"
   publish = "public"
 
 [dev]
-  command = "npm run payload:dev"
+  command = "npm run dev"
   port = 3000
   autoLaunch = false
 
@@ -27,10 +27,8 @@
 
 [context.production.environment]
   PAYLOAD_PUBLIC_SERVER_URL = "https://api.ynotradio.net"
-  # DATABASE_URI and PAYLOAD_SECRET are configured via the Netlify dashboard
   DATABASE_SSL = "require"
 
 [context.deploy-preview.environment]
   PAYLOAD_PUBLIC_SERVER_URL = "https://staging-api.ynotradio.net"
-  # DATABASE_URI and PAYLOAD_SECRET are configured via the Netlify dashboard
   DATABASE_SSL = "require"
