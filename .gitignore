@@ -22,3 +22,16 @@ coverage
 tmp
 .claude/settings.local.json
 bin/migrations/shared/.musicbrainz-cache.json
+
+# Next.js
+.next/
+out/
+
+# Payload
+.env.local
+payload-types.ts
+media/
+
+# Testing
+.playwright/
+test-results/

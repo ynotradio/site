@@ -12,12 +12,21 @@
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . --ext .ts,.tsx --max-warnings=0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix --max-warnings=0",
-    "dev:refresh": "./bin/refresh_local.sh"
+    "dev": "next dev",
+    "dev:refresh": "./bin/refresh_local.sh",
+    "payload:dev": "tsx payload/src/server.ts",
+    "payload:build": "payload build --config payload.config.js",
+    "payload:serve": "payload serve --config payload.config.js",
+    "payload:generate-types": "payload typegen --config payload.config.js",
+    "payload:migrate": "payload migrate --config payload.config.js",
+    "payload:validate": "payload validate --config payload.config.js",
+    "payload:seed": "payload seed --config payload.config.js"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "^2.0.7",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.19.3",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
@@ -28,13 +37,25 @@
     "eslint-plugin-import": "^2.31.0",
     "jsdom": "^27.4.0",
     "prettier": "^3.5",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15"
   },
   "dependencies": {
+    "@netlify/functions": "^5.1.2",
+    "@payloadcms/db-postgres": "^3.69.0",
+    "@payloadcms/next": "^3.69.0",
     "dotenv": "^17.2.3",
-    "mysql2": "^3.16.0"
+    "express": "^5.2.1",
+    "mysql2": "^3.16.0",
+    "next": "^15.5.9",
+    "payload": "^3.69.0",
+    "pg": "^8.16.3",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "serverless-http": "^4.0.0",
+    "sharp": "^0.34.5"
   },
   "prettier": {
     "semi": true,

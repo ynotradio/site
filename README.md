@@ -118,3 +118,11 @@ The script definitions are in the `scripts` section of `src/composer.json`.
 This project is being migrated from the legacy PHP/MySQL site to Payload CMS.
 
 See [docs/payload-migration/](docs/payload-migration/) for the migration planning documentation.
+
+### Working with Payload Locally
+
+1. Run `cp .env.example .env.local` and update the Neon `DATABASE_URI`, `PAYLOAD_SECRET`, and Cloudinary placeholders.
+2. Run `npm install` (once) and start the admin server with `npm run payload:dev`.
+3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `npm run payload:migrate`.
+
+For production, Netlify will execute `npm run payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.

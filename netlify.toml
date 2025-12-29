@@ -1,0 +1,37 @@
+[build]
+  command = "npm run payload:build"
+  functions = "netlify/functions"
+  publish = "public"
+
+[dev]
+  command = "npm run payload:dev"
+  port = 3000
+  autoLaunch = false
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["sharp"]
+  included_files = ["payload/media/**"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/payload"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/.netlify/functions/payload"
+  status = 200
+  force = true
+
+[context.production.environment]
+  PAYLOAD_PUBLIC_SERVER_URL = "https://api.ynotradio.net"
+  DATABASE_URI = "REPLACE_WITH_NEON_PROD_CONNECTION"
+  DATABASE_SSL = "require"
+  PAYLOAD_SECRET = "SET_IN_NETLIFY_DASHBOARD"
+
+[context.deploy-preview.environment]
+  PAYLOAD_PUBLIC_SERVER_URL = "https://staging-api.ynotradio.net"
+  DATABASE_URI = "REPLACE_WITH_NEON_DEV_CONNECTION"
+  DATABASE_SSL = "require"
