@@ -27,7 +27,7 @@ export const initPayloadApp = async (): Promise<Express> => {
     const payloadConfigModule = await import('./payload.config');
     const config = payloadConfigModule.default;
 
-    const payload = await getPayload({ config });
+    await getPayload({ config });
 
     // Payload 3 doesn't provide an Express middleware directly
     // Instead, we need to handle routes manually or use Next.js
@@ -45,11 +45,11 @@ export const initPayloadApp = async (): Promise<Express> => {
 export const startPayloadServer = async (): Promise<void> => {
   const port = Number(process.env.PORT ?? 3000);
   const app = await initPayloadApp();
-  
+
   const payloadConfigModule = await import('./payload.config');
   const config = payloadConfigModule.default;
   const payload = await getPayload({ config });
-  
+
   app.listen(port, () => {
     payload.logger.info(`Payload server listening on http://localhost:${port}`);
   });

@@ -10,8 +10,9 @@ type Args = {
   }>;
 };
 
-export const generateMetadata = ({ params, searchParams }: Args) =>
-  generatePageMetadata({ config, params, searchParams });
+export const generateMetadata = ({ params, searchParams }: Args) => (
+  generatePageMetadata({ config, params, searchParams })
+);
 
 const Page = ({ params, searchParams }: Args) => RootPage({ config, params, searchParams });
 

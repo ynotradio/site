@@ -4,8 +4,8 @@ import dotenv from 'dotenv';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 
-import { Media } from './collections/Media.ts';
-import { Users } from './collections/Users.ts';
+import { Media } from './collections/Media';
+import { Users } from './collections/Users';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 dotenv.config({

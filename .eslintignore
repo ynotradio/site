@@ -1,0 +1,9 @@
+node_modules
+dist
+build
+.next
+out
+coverage
+*.log
+next-env.d.ts
+.eslintrc.js
