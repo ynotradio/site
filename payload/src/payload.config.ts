@@ -21,21 +21,28 @@ const coerceList = (value: string): string[] => (
 );
 
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
-
-if (!databaseUri) {
-  throw new Error(
-    'DATABASE_URI (or NEON_DEV_DATABASE_URL) is not defined. Update your .env.local file.',
-  );
-}
-
 const disableSSL = process.env.DATABASE_SSL === 'disable';
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
-// Validate required secrets in production runtime (not during build)
-if (isProduction && !isBuild && !payloadSecret) {
-  throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
+// Skip validation during build - only validate in actual runtime
+if (!isBuild) {
+  if (!databaseUri) {
+    console.error('DATABASE_URI is missing. Checked:', {
+      DATABASE_URI: process.env.DATABASE_URI,
+      NEON_DEV_DATABASE_URL: process.env.NEON_DEV_DATABASE_URL,
+    });
+    throw new Error(
+      'DATABASE_URI (or NEON_DEV_DATABASE_URL) is not defined. Update your .env.local file.',
+    );
+  }
+  
+  // Validate required secrets in production runtime
+  if (isProduction && !payloadSecret) {
+    console.error('PAYLOAD_SECRET is missing:', process.env.PAYLOAD_SECRET);
+    throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
+  }
 }
 
 export default buildConfig({

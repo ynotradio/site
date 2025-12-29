@@ -23,12 +23,17 @@ const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
-// Validate required environment variables in production runtime (not during build)
-if (isProduction && !isBuild) {
+// Skip validation during build - only validate in actual runtime
+if (!isBuild && isProduction) {
   if (!payloadSecret) {
+    console.error('PAYLOAD_SECRET is missing:', process.env.PAYLOAD_SECRET);
     throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
   }
   if (!databaseUri) {
+    console.error('DATABASE_URI is missing. Checked:', {
+      DATABASE_URI: process.env.DATABASE_URI,
+      NEON_DEV_DATABASE_URL: process.env.NEON_DEV_DATABASE_URL,
+    });
     throw new Error('Database connection string is not set. Please define DATABASE_URI or NEON_DEV_DATABASE_URL.');
   }
 }
