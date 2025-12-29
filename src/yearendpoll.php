@@ -1,5 +1,8 @@
 <?php
 
+header("Location: pages.php?page=top225of2025");
+exit;
+
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
 $poll_end_datetime = strtotime("12/23/25 11:59pm EST");
