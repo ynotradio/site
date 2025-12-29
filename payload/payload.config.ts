@@ -17,12 +17,23 @@ const coerceList = (value: string): string[] => (
     .filter(Boolean)
 );
 
-// Next.js will populate these from .env.local
-const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL ?? '';
+const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
 const disableSSL = process.env.DATABASE_SSL === 'disable';
+const isProduction = process.env.NODE_ENV === 'production';
+const payloadSecret = process.env.PAYLOAD_SECRET;
+
+// Validate required environment variables in production
+if (isProduction) {
+  if (!payloadSecret) {
+    throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
+  }
+  if (!databaseUri) {
+    throw new Error('Database connection string is not set. Please define DATABASE_URI or NEON_DEV_DATABASE_URL.');
+  }
+}
 
 export default buildConfig({
-  secret: process.env.PAYLOAD_SECRET || 'development-secret',
+  secret: payloadSecret || 'development-secret',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   admin: {
     user: Users.slug,
@@ -42,15 +53,15 @@ export default buildConfig({
   csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000'),
   collections: [Users, Media],
   typescript: {
-    outputFile: path.resolve(dirname, 'payload/types/payload-types.ts'),
+    outputFile: path.resolve(dirname, 'types/payload-types.ts'),
   },
   graphQL: {
-    schemaOutputFile: path.resolve(dirname, 'payload/types/generated-schema.graphql'),
+    schemaOutputFile: path.resolve(dirname, 'types/generated-schema.graphql'),
   },
   db: postgresAdapter({
     pool: {
       connectionString: databaseUri,
-      ssl: disableSSL ? undefined : { rejectUnauthorized: false },
+      ssl: disableSSL ? undefined : { rejectUnauthorized: true },
     },
   }),
 });

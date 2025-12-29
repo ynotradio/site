@@ -3,8 +3,23 @@ import type { CollectionConfig } from 'payload/types';
 
 const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
+// Helper function to check if user has specific role(s)
+const hasRole = (user: any, roles: string | string[]): boolean => {
+  if (!user || !user.role) return false;
+  const userRoles = Array.isArray(user.role) ? user.role : [user.role];
+  const checkRoles = Array.isArray(roles) ? roles : [roles];
+  return userRoles.some((role) => checkRoles.includes(role));
+};
+
 export const Media: CollectionConfig = {
   slug: 'media',
+  access: {
+    // Only authenticated users can create/update/delete media
+    create: ({ req }) => Boolean(req.user),
+    read: () => true, // Public read access for media files
+    update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
+  },
   upload: {
     staticDir: mediaDir,
     adminThumbnail: 'thumbnail',

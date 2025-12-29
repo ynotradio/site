@@ -26,7 +26,24 @@ export const Users: CollectionConfig = {
     verify: true,
   },
   access: {
-    read: () => false,
+    read: ({ req, id }) => {
+      if (!req.user) {
+        return false;
+      }
+
+      // Allow admins to read all users
+      if (hasRole(req.user, 'admin')) {
+        return true;
+      }
+
+      // Allow a user to read their own profile
+      const currentUser = req.user as { id?: string };
+      if (id && currentUser.id && currentUser.id === id) {
+        return true;
+      }
+
+      return false;
+    },
     create: ({ req }) => hasRole(req.user, 'admin'),
     update: ({ req }) => !!req.user,
     delete: ({ req }) => hasRole(req.user, 'admin'),

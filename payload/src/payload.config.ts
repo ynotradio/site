@@ -29,9 +29,16 @@ if (!databaseUri) {
 }
 
 const disableSSL = process.env.DATABASE_SSL === 'disable';
+const isProduction = process.env.NODE_ENV === 'production';
+const payloadSecret = process.env.PAYLOAD_SECRET;
+
+// Validate required secrets in production
+if (isProduction && !payloadSecret) {
+  throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
+}
 
 export default buildConfig({
-  secret: process.env.PAYLOAD_SECRET || 'development-secret',
+  secret: payloadSecret || 'development-secret',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   admin: {
     user: Users.slug,
@@ -56,7 +63,7 @@ export default buildConfig({
   db: postgresAdapter({
     pool: {
       connectionString: databaseUri,
-      ssl: disableSSL ? undefined : { rejectUnauthorized: false },
+      ssl: disableSSL ? undefined : { rejectUnauthorized: true },
     },
   }),
 });

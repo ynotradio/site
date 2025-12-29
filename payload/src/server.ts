@@ -27,14 +27,11 @@ export const initPayloadApp = async (): Promise<Express> => {
     const payloadConfigModule = await import('./payload.config');
     const config = payloadConfigModule.default;
 
+    // Initialize Payload with the config
     await getPayload({ config });
 
-    // Payload 3 doesn't provide an Express middleware directly
-    // Instead, we need to handle routes manually or use Next.js
-    // For dev purposes, let's mount the admin panel
-    app.get('/admin*', (req, res) => {
-      res.send('<html><body><h1>Payload Admin</h1><p>Visit /api for API access</p></body></html>');
-    });
+    // In Payload 3, admin routes are handled by Next.js, not Express
+    // This Express server only handles API routes and media serving
 
     return app;
   })();
