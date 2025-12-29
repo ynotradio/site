@@ -20,10 +20,11 @@ const coerceList = (value: string): string[] => (
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
 const disableSSL = process.env.DATABASE_SSL === 'disable';
 const isProduction = process.env.NODE_ENV === 'production';
+const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
-// Validate required environment variables in production
-if (isProduction) {
+// Validate required environment variables in production runtime (not during build)
+if (isProduction && !isBuild) {
   if (!payloadSecret) {
     throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
   }

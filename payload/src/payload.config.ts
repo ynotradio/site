@@ -30,10 +30,11 @@ if (!databaseUri) {
 
 const disableSSL = process.env.DATABASE_SSL === 'disable';
 const isProduction = process.env.NODE_ENV === 'production';
+const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
-// Validate required secrets in production
-if (isProduction && !payloadSecret) {
+// Validate required secrets in production runtime (not during build)
+if (isProduction && !isBuild && !payloadSecret) {
   throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
 }
 
