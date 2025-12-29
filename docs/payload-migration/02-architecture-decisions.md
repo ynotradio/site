@@ -11,7 +11,7 @@
 | **Soft Deletes** | Use PostgreSQL `deleted_at` timestamp column (standard pattern) |
 | **Data Validation** | Fail on issues, generate report for manual review—no auto-cleaning |
 | **Rich Text** | Convert HTML to TipTap JSON format (Lexical also supported) |
-| **Images** | Use Payload's upload collections with cloud storage (Cloudinary recommended) |
+| **Images** | Use Payload's upload collections with cloud storage (Cloudinary recommended) - See [Chapter 12](./12-cloudinary-integration.md) |
 | **Historical Data** | Keep going forward; don't migrate old tournament data |
 | **Relationships** | Use PostgreSQL foreign keys + Payload relationship fields |
 
@@ -249,7 +249,8 @@ export const Media: CollectionConfig = {
     adminThumbnail: 'thumbnail',
     mimeTypes: ['image/*'],
     // For production, use cloud storage adapter
-    // adapter: cloudinaryAdapter({ ... })
+    // See Chapter 12 for detailed Cloudinary integration:
+    // https://github.com/ynotradio/site/docs/payload-migration/12-cloudinary-integration.md
   },
   fields: [
     {
@@ -263,6 +264,8 @@ export const Media: CollectionConfig = {
   ],
 };
 ```
+
+**Note:** For complete Cloudinary integration including setup, migration scripts, and best practices, see [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md).
 
 ---
 
@@ -405,4 +408,5 @@ yarn payload seed
 
 - Review [Core Data Models](./03-core-data-models.md) for collection priorities
 - Check [Migration Tasks](./04-migration-tasks.md) for implementation steps
+- See [Cloudinary Integration](./12-cloudinary-integration.md) for media storage setup
 - See [Relational Advantages](./09-relational-advantages.md) for PostgreSQL benefits

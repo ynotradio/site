@@ -475,6 +475,7 @@ query {
 
 ## Next Steps
 
+- Learn how to [query PostgreSQL from PHP](./03.5-php-postgresql-querying.md) directly
 - Review [Migration Tasks](./04-migration-tasks.md) for implementation steps
 - Check [Architecture Decisions](./02-architecture-decisions.md) for patterns
 - See [Relational Advantages](./09-relational-advantages.md) for SQL benefits
