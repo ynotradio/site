@@ -5,14 +5,10 @@ $page_title = "Top 11 @ 11";
 
 require 'vendor/autoload.php';
 require 'partials/__env_loader.php';
-require_once 'lib/feature-flags.php';
+require_once 'models/FeatureManager.php';
 
-// Initialize feature flags - check for 'auth_voting' flag via cookie or query param
-$featureFlags = new FeatureFlags([
-  'cookie' => 'FF',
-  'uriParam' => 'ff'
-]);
-$useAuthVoting = $featureFlags->hasFlag('auth_voting');
+// Determine whether to use Auth0 voting (default on, overridable via feature flags)
+$useAuthVoting = \YNotRadio\Models\FeatureManager::isEnabled('auth_voting');
 
 // Initialize Auth0 BEFORE any output (only if feature flag is enabled)
 $auth0 = null;
