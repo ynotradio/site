@@ -1,5 +1,5 @@
 import path from 'path';
-import type { CollectionConfig } from 'payload/types';
+import type { CollectionConfig } from 'payload';
 
 const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
@@ -8,7 +8,7 @@ const hasRole = (user: any, roles: string | string[]): boolean => {
   if (!user || !user.role) return false;
   const userRoles = Array.isArray(user.role) ? user.role : [user.role];
   const checkRoles = Array.isArray(roles) ? roles : [roles];
-  return userRoles.some((role) => checkRoles.includes(role));
+  return userRoles.some((role: string) => checkRoles.includes(role));
 };
 
 export const Media: CollectionConfig = {

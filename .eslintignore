@@ -7,3 +7,4 @@ coverage
 *.log
 next-env.d.ts
 .eslintrc.js
+app/(payload)/admin/importMap.js
