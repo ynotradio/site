@@ -48,92 +48,6 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ## Development
 
-### Data Migration Tools
-
-This project includes TypeScript-based migration tools to help move data from the legacy MySQL database to Sanity CMS.
-
-#### Deejay Migration
-
-The `import:deejays` script migrates deejay data from the MySQL database to Sanity CMS as "person" documents:
-
-1. Make sure you have Node.js and npm installed
-2. Install dependencies at the project root:
-   ```
-   npm install
-   ```
-3. Configure environment variables in one of the following locations:
-   - Create `bin/migrations/.env` with database and Sanity credentials
-   - Update credentials in `src/partials/.env`
-   - The script will use default values from settings.json if no .env file is found
-4. Run the migration script:
-   ```
-   npm run import:deejays
-   ```
-
-The script runs TypeScript directly using tsx, with no build step required.
-
-The script will:
-- Connect to the MySQL database
-- Query all active deejays
-- Transform data to the Sanity format
-- Upload images to Sanity as assets
-- Create person documents in Sanity with proper image references
-- Handle special formatting for slugs, bios, and social links
-
-#### CD of the Week Migration
-
-The `import:cdotw` script migrates CD of the Week album reviews from the MySQL database to Sanity CMS:
-
-```
-npm run import:cdotw
-```
-
-The script will:
-- Connect to the MySQL database
-- Query all non-deleted CD of the Week records
-- Transform data to the Sanity format (including rich text conversion for reviews)
-- Upload album cover images to Sanity as assets
-- Create cdOfTheWeek documents in Sanity with proper image references
-- Handle validation and generate a migration report
-
-#### Migration Script Configuration
-
-Database connection details:
-```
-DB_NAME=ynot_site
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
-DB_HOST=localhost
-```
-
-Sanity configuration:
-```
-SANITY_PROJECT_ID=your_project_id
-SANITY_DATASET=production
-SANITY_API_TOKEN=your_sanity_token
-```
-
-#### Sanity API Token Permissions
-
-The Sanity API token used for migration **must** have the following permissions:
-
-- **create** permission for documents
-- **create** permission for assets
-
-To create a new token with these permissions:
-
-1. Go to [manage.sanity.io](https://manage.sanity.io)
-2. Select your project
-3. Go to API > Tokens
-4. Click "Add API token"
-5. Give it a name (e.g., "Import Token")
-6. Set permissions to include:
-   - Editor (gives read/write access to documents)
-   - Asset write (allows uploading images)
-7. Copy the token and add it to your `.env` file
-
-Without these permissions, you'll see "403 Forbidden" errors during the import process.
-
 ### PHP Linting
 
 - From the root of the project, use `docker run --rm --volume $(pwd):/app vfac/php7compatibility 7.4 ./src -d memory_limit=1G --extensions=php` to see errors in the PHP code.
@@ -179,7 +93,6 @@ The repository uses GitHub Actions for CI. The following checks run on every pul
 
 - **Lint**: Runs ESLint on TypeScript/JavaScript code
 - **Test**: Runs the Vitest test suite with coverage
-- **Sanity Schema Validation**: Validates the Sanity CMS schema definitions
 - **PHP Lint**: Runs PHP_CodeSniffer to check PHP code style
 
 All CI checks must pass before a pull request can be merged.
@@ -198,52 +111,10 @@ All CI checks must pass before a pull request can be merged.
   ```
   This runs the rollback script (`bin/rollback.sh`).
 
-
 The script definitions are in the `scripts` section of `src/composer.json`.
 
-## Sanity CMS Migration
+## Payload CMS Migration
 
-This project is being migrated from the legacy PHP/MySQL site to Sanity CMS.
+This project is being migrated from the legacy PHP/MySQL site to Payload CMS.
 
-See [docs/sanity-migration/](docs/sanity-migration/) for the complete migration plan.
-
-### Sanity Setup
-
-1. Install dependencies:
-   ```
-   npm install
-   ```
-
-2. Run the Sanity development server:
-   ```
-   npm run sanity:dev
-   ```
-   
-   This will start the Sanity Studio at http://localhost:3333
-
-### MCP Server Setup
-
-To use the Sanity MCP server in VS Code:
-
-1. Create a management token at:
-   ```
-   https://www.sanity.io/manage/project/otcmx0q6/api
-   ```
-   
-   - Go to the "API" tab
-   - Click "Add API token"
-   - Give it a name like "MCP Server"
-   - Set the permissions to "Editor" or higher
-   - Copy the token
-
-2. Update `.vscode/settings.json` with your token:
-   - Find the `copilot.mcp.servers.sanity.env.SANITY_API_TOKEN` property
-   - Replace `YOUR_SANITY_TOKEN_HERE` with the actual token
-
-3. Restart VS Code to load the MCP server configuration.
-
-4. Now you can use GitHub Copilot to interact with your Sanity content using natural language.
-
-### Content Models
-
-See [docs/sanity-migration/03-core-data-models.md](docs/sanity-migration/03-core-data-models.md) for all content models and migration status.
+See [docs/payload-migration/](docs/payload-migration/) for the migration planning documentation.

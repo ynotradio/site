@@ -1,8 +1,6 @@
 import { defineConfig } from 'vitest/config';
-import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [react()],
   test: {
     globals: true,
     environment: 'jsdom',
@@ -11,12 +9,10 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: ['bin/migrations/shared/**/*.ts', 'studio/plugins/**/*.tsx', 'studio/components/**/*.tsx'],
+      include: ['bin/migrations/shared/**/*.ts'],
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',
-        'studio/plugins/artist-cleanup.tsx',
-        'studio/plugins/dj-order/index.tsx',
       ],
       thresholds: {
         // Set realistic thresholds for tested code
