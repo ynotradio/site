@@ -29,4 +29,3 @@ export const dbConfig = {
 export const migrationConfig = {
   baseUrl: 'https://www.ynotradio.net/',
 };
-
