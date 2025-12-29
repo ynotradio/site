@@ -33,6 +33,7 @@ This migration plan provides an alternative to the Sanity CMS approach, leveragi
 | [09 - Relational Advantages](./09-relational-advantages.md) | Benefits of MySQL→PostgreSQL vs MySQL→NoSQL migration |
 | [10 - CMS Comparison](./10-cms-switching-considerations.md) | Sanity vs Payload comparison for MySQL migration |
 | [11 - Capacity Planning](./11-capacity-planning.md) | PostgreSQL limits, Neon pricing, content inventory |
+| [12 - Cloudinary Integration](./12-cloudinary-integration.md) | Detailed guide for media storage with Cloudinary |
 
 ---
 
@@ -44,6 +45,7 @@ Each chapter is designed to be **self-contained** for cold-start agent conversat
 2. Review [02 - Architecture Decisions](./02-architecture-decisions.md) for context
 3. Check [05 - Shared Utilities](./05-shared-utilities.md) for common patterns
 4. Follow [07 - Success Criteria](./07-success-criteria.md) to verify completion
+5. For media/images, see [12 - Cloudinary Integration](./12-cloudinary-integration.md)
 
 ---
 
@@ -66,6 +68,7 @@ Each chapter is designed to be **self-contained** for cold-start agent conversat
 
 - **Start a new collection task:** [Migration Tasks](./04-migration-tasks.md)
 - **Check collection status:** [Core Data Models](./03-core-data-models.md)
+- **Set up media storage:** [Cloudinary Integration](./12-cloudinary-integration.md)
 - **Understand relational benefits:** [Relational Advantages](./09-relational-advantages.md)
 - **Review switching complexity:** [CMS Switching Considerations](./10-cms-switching-considerations.md)
 - **Understand the strategy:** [Project Overview](./01-project-overview.md)

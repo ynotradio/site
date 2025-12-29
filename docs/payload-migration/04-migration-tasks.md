@@ -21,7 +21,7 @@ Before migrating content, we need to set up the Payload CMS application with Pos
 1. Install Payload CLI: `npx create-payload-app@latest`
 2. Configure PostgreSQL connection (Neon)
 3. Set up Netlify deployment configuration
-4. Configure cloud storage for uploads (Cloudinary recommended)
+4. Configure cloud storage for uploads (Cloudinary recommended) - See [Chapter 12](./12-cloudinary-integration.md)
 5. Set up authentication and user roles
 
 **Files to Create:**
@@ -137,7 +137,7 @@ Set up the Media collection for image uploads. This is a prerequisite for other 
 **Requirements:**
 1. Create `payload/src/collections/Media.ts`
 2. Configure upload sizes (thumbnail, card, hero)
-3. Set up cloud storage adapter (Cloudinary or S3)
+3. Set up cloud storage adapter (Cloudinary or S3) - See [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md)
 4. Add alt text and caption fields
 5. Test upload workflow
 
@@ -160,6 +160,12 @@ export const Media: CollectionConfig = {
   ],
 };
 ```
+
+**Detailed Guide:** See [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md) for complete setup instructions, including:
+- Cloudinary account setup (dev + production)
+- Plugin installation and configuration
+- Environment variable setup
+- Code examples
 
 **Acceptance Criteria:**
 - [ ] Collection compiles without errors
@@ -322,12 +328,12 @@ Concerts reference Artists and Venues. Include date, ticket info, and featured f
 **Estimated Effort:** Large
 
 **Context:**
-Migrate images from MySQL URLs (Imgur, local filesystem) to Payload's Media collection with cloud storage.
+Migrate images from MySQL URLs (Imgur, Google Drive, local filesystem) to Payload's Media collection with Cloudinary storage.
 
 **Requirements:**
 1. Create `bin/migrations/importMedia.ts`
 2. Download images from legacy URLs
-3. Upload to Payload via API
+3. Upload to Cloudinary via Payload API
 4. Store mapping: legacy URL → Payload Media ID
 5. Update references in other collections
 
@@ -335,8 +341,19 @@ Migrate images from MySQL URLs (Imgur, local filesystem) to Payload's Media coll
 - `bin/migrations/importMedia.ts`
 - `bin/migrations/shared/mediaImporter.ts`
 
+**Detailed Guide:** See [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md) for:
+- Complete migration script with Cloudinary upload logic
+- URL fetcher utility for downloading images
+- Image validation and error handling
+- Progress logging and error reporting
+- Idempotent upsert pattern (safe to re-run)
+
 **Acceptance Criteria:**
 - [ ] All images uploaded to Payload Media collection
+- [ ] All images uploaded to Cloudinary
+- [ ] Thumbnails generated
+- [ ] Mapping file created (legacy ID → Payload ID)
+- [ ] Images accessible via CDN
 - [ ] Thumbnails generated
 - [ ] Mapping file created (legacy ID → Payload ID)
 - [ ] Images accessible via CDN
@@ -572,4 +589,5 @@ Complete the migration by switching all feature flags and archiving MySQL.
 
 - Start with [Task 0: Setup](./04-migration-tasks.md#task-0-setup-payload--postgresql-environment)
 - Review [Architecture Decisions](./02-architecture-decisions.md) for patterns
+- Set up media storage with [Cloudinary Integration](./12-cloudinary-integration.md)
 - Check [Shared Utilities](./05-shared-utilities.md) for helper functions
