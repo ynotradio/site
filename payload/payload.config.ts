@@ -4,8 +4,8 @@ import { fileURLToPath } from 'url';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 
-import { Media } from '../payload/src/collections/Media';
-import { Users } from '../payload/src/collections/Users';
+import { Media } from './src/collections/Media';
+import { Users } from './src/collections/Users';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
