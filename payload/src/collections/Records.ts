@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { slugField } from 'payload';
 import { hasRole } from '../utils/auth';
 
 export const Records: CollectionConfig = {
@@ -23,16 +24,7 @@ export const Records: CollectionConfig = {
         description: 'Album title',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        description: 'URL-friendly identifier',
-      },
-    },
+    slugField(),
     {
       name: 'artist',
       type: 'relationship',

@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
@@ -21,16 +22,7 @@ export const People: CollectionConfig = {
       required: true,
       index: true,
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        description: 'URL-friendly identifier',
-      },
-    },
+    slugField({ useAsSlug: 'name' }),
     {
       name: 'bio',
       type: 'richText',
