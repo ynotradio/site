@@ -6,6 +6,18 @@ import { postgresAdapter } from '@payloadcms/db-postgres';
 
 import { Media } from './collections/Media';
 import { Users } from './collections/Users';
+import { People } from './collections/People';
+import { DJs } from './collections/DJs';
+import { Artists } from './collections/Artists';
+import { Venues } from './collections/Venues';
+import { Ads } from './collections/Ads';
+import { Songs } from './collections/Songs';
+import { Records } from './collections/Records';
+import { Concerts } from './collections/Concerts';
+import { OnDemand } from './collections/OnDemand';
+import { Shows } from './collections/Shows';
+import { Posts } from './collections/Posts';
+import { CdOfTheWeek } from './collections/CdOfTheWeek';
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 dotenv.config({
@@ -54,7 +66,22 @@ export default buildConfig({
     process.env.PAYLOAD_CORS ?? 'http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173',
   ),
   csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000'),
-  collections: [Users, Media],
+  collections: [
+    Users,
+    Media,
+    People,
+    DJs,
+    Artists,
+    Venues,
+    Ads,
+    Songs,
+    Records,
+    Concerts,
+    OnDemand,
+    Shows,
+    Posts,
+    CdOfTheWeek,
+  ],
   typescript: {
     outputFile: path.resolve(__dirname, '../types/payload-types.ts'),
   },
