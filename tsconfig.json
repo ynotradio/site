@@ -38,6 +38,7 @@
     "netlify/**/*.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
+    "instrumentation.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [

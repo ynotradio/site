@@ -27,6 +27,7 @@ const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
 // Log environment info for debugging
+// eslint-disable-next-line no-console
 console.log('[Payload Config] Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PHASE: process.env.NEXT_PHASE,
@@ -40,18 +41,20 @@ console.log('[Payload Config] Environment:', {
 // Skip validation during build - only validate in actual runtime
 if (!isBuild) {
   if (!databaseUri) {
+    // eslint-disable-next-line no-console
     console.error('[Payload Config] DATABASE_URI is missing. Environment:', {
       DATABASE_URI: process.env.DATABASE_URI ? 'SET (hidden)' : 'NOT SET',
       NEON_DEV_DATABASE_URL: process.env.NEON_DEV_DATABASE_URL ? 'SET (hidden)' : 'NOT SET',
-      allEnvKeys: Object.keys(process.env).filter(k => k.includes('DATABASE')),
+      allEnvKeys: Object.keys(process.env).filter((k) => k.includes('DATABASE')),
     });
     throw new Error(
       'DATABASE_URI (or NEON_DEV_DATABASE_URL) is not defined. Check Netlify environment variables.',
     );
   }
-  
+
   // Validate required secrets in production runtime
   if (isProduction && !payloadSecret) {
+    // eslint-disable-next-line no-console
     console.error('[Payload Config] PAYLOAD_SECRET is missing');
     throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
   }

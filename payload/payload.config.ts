@@ -24,6 +24,7 @@ const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
 // Log environment info for debugging
+// eslint-disable-next-line no-console
 console.log('[Payload Config Root] Environment:', {
   NODE_ENV: process.env.NODE_ENV,
   NEXT_PHASE: process.env.NEXT_PHASE,
@@ -37,14 +38,16 @@ console.log('[Payload Config Root] Environment:', {
 // Skip validation during build - only validate in actual runtime
 if (!isBuild && isProduction) {
   if (!payloadSecret) {
+    // eslint-disable-next-line no-console
     console.error('[Payload Config Root] PAYLOAD_SECRET is missing');
     throw new Error('PAYLOAD_SECRET environment variable must be set in production.');
   }
   if (!databaseUri) {
+    // eslint-disable-next-line no-console
     console.error('[Payload Config Root] DATABASE_URI is missing. Environment:', {
       DATABASE_URI: process.env.DATABASE_URI ? 'SET (hidden)' : 'NOT SET',
       NEON_DEV_DATABASE_URL: process.env.NEON_DEV_DATABASE_URL ? 'SET (hidden)' : 'NOT SET',
-      allEnvKeys: Object.keys(process.env).filter(k => k.includes('DATABASE')),
+      allEnvKeys: Object.keys(process.env).filter((k) => k.includes('DATABASE')),
     });
     throw new Error('Database connection string is not set. Please define DATABASE_URI or NEON_DEV_DATABASE_URL.');
   }
