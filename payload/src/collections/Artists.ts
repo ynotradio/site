@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const Artists: CollectionConfig = {
@@ -33,6 +34,7 @@ export const Artists: CollectionConfig = {
     {
       name: 'bio',
       type: 'richText',
+      editor: lexicalEditor(),
       admin: {
         description: 'Artist biography or description',
       },

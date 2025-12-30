@@ -36,3 +36,4 @@ media/
 # Testing
 .playwright/
 test-results/
+payload/types/

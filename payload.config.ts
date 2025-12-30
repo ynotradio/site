@@ -1,23 +1,27 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 import dotenv from 'dotenv';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 
-import { Media } from './collections/Media';
-import { Users } from './collections/Users';
-import { People } from './collections/People';
-import { DJs } from './collections/DJs';
-import { Artists } from './collections/Artists';
-import { Venues } from './collections/Venues';
-import { Ads } from './collections/Ads';
-import { Songs } from './collections/Songs';
-import { Records } from './collections/Records';
-import { Concerts } from './collections/Concerts';
-import { OnDemand } from './collections/OnDemand';
-import { Shows } from './collections/Shows';
-import { Posts } from './collections/Posts';
-import { CdOfTheWeek } from './collections/CdOfTheWeek';
+import { Media } from './payload/src/collections/Media';
+import { Users } from './payload/src/collections/Users';
+import { People } from './payload/src/collections/People';
+import { DJs } from './payload/src/collections/DJs';
+import { Artists } from './payload/src/collections/Artists';
+import { Venues } from './payload/src/collections/Venues';
+import { Ads } from './payload/src/collections/Ads';
+import { Songs } from './payload/src/collections/Songs';
+import { Records } from './payload/src/collections/Records';
+import { Concerts } from './payload/src/collections/Concerts';
+import { OnDemand } from './payload/src/collections/OnDemand';
+import { Shows } from './payload/src/collections/Shows';
+import { Posts } from './payload/src/collections/Posts';
+import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
+
+const filename = fileURLToPath(import.meta.url);
+const dirname = path.dirname(filename);
 
 const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 dotenv.config({
@@ -58,6 +62,9 @@ export default buildConfig({
     components: {
       beforeDashboard: [],
     },
+    importMap: {
+      baseDir: path.resolve(dirname),
+    },
     meta: {
       titleSuffix: ' | Y-Not Radio',
     },
@@ -83,10 +90,10 @@ export default buildConfig({
     CdOfTheWeek,
   ],
   typescript: {
-    outputFile: path.resolve(__dirname, '../types/payload-types.ts'),
+    outputFile: path.resolve(dirname, 'payload/types/payload-types.ts'),
   },
   graphQL: {
-    schemaOutputFile: path.resolve(__dirname, '../types/generated-schema.graphql'),
+    schemaOutputFile: path.resolve(dirname, 'payload/types/generated-schema.graphql'),
   },
   db: postgresAdapter({
     pool: {

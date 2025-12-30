@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const Posts: CollectionConfig = {
@@ -48,6 +49,7 @@ export const Posts: CollectionConfig = {
     {
       name: 'content',
       type: 'richText',
+      editor: lexicalEditor(),
       required: true,
       admin: {
         description: 'Post content (unified Story + CustomText from legacy)',

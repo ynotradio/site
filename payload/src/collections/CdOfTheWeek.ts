@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const CdOfTheWeek: CollectionConfig = {
@@ -26,6 +27,7 @@ export const CdOfTheWeek: CollectionConfig = {
     {
       name: 'review',
       type: 'richText',
+      editor: lexicalEditor(),
       required: true,
       admin: {
         description: 'Album review content',
