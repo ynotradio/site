@@ -1,12 +1,5 @@
 import type { CollectionConfig } from 'payload';
-
-// Helper function to check if user has specific role(s)
-const hasRole = (user: any, roles: string | string[]): boolean => {
-  if (!user || !user.role) return false;
-  const userRoles = Array.isArray(user.role) ? user.role : [user.role];
-  const checkRoles = Array.isArray(roles) ? roles : [roles];
-  return userRoles.some((role: string) => checkRoles.includes(role));
-};
+import { hasRole } from '../utils/auth';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',

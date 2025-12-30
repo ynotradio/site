@@ -1,15 +1,8 @@
 import path from 'path';
 import type { CollectionConfig } from 'payload';
+import { hasRole } from '../utils/auth';
 
 const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
-
-// Helper function to check if user has specific role(s)
-const hasRole = (user: any, roles: string | string[]): boolean => {
-  if (!user || !user.role) return false;
-  const userRoles = Array.isArray(user.role) ? user.role : [user.role];
-  const checkRoles = Array.isArray(roles) ? roles : [roles];
-  return userRoles.some((role: string) => checkRoles.includes(role));
-};
 
 export const Media: CollectionConfig = {
   slug: 'media',
