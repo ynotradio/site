@@ -19,28 +19,33 @@ export const initPayloadApp = async (): Promise<Express> => {
   }
 
   appPromise = (async () => {
-    console.log('[Payload Server] Starting initialization...');
     const app = express();
 
     app.set('trust proxy', 1);
     app.use('/media', express.static(getUploadsDir()));
 
     try {
-      console.log('[Payload Server] Loading config...');
       const payloadConfigModule = await import('./payload.config');
       const config = payloadConfigModule.default;
 
-      console.log('[Payload Server] Initializing Payload...');
       // Initialize Payload with the config
       await getPayload({ config });
 
-      console.log('[Payload Server] Initialization complete');
       // In Payload 3, admin routes are handled by Next.js, not Express
       // This Express server only handles API routes and media serving
 
       return app;
     } catch (error) {
-      console.error('[Payload Server] Initialization failed:', error);
+      // Log error details for Netlify function logs
+      console.error('[Payload Server] Initialization failed:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        env: {
+          NODE_ENV: process.env.NODE_ENV,
+          hasDatabaseUri: !!(process.env.DATABASE_URI || process.env.NEON_DEV_DATABASE_URL),
+          hasPayloadSecret: !!process.env.PAYLOAD_SECRET,
+        },
+      });
       throw error;
     }
   })();
