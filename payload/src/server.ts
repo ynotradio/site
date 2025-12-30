@@ -37,6 +37,7 @@ export const initPayloadApp = async (): Promise<Express> => {
       return app;
     } catch (error) {
       // Log error details for Netlify function logs
+      // eslint-disable-next-line no-console
       console.error('[Payload Server] Initialization failed:', {
         message: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,

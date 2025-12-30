@@ -6,6 +6,7 @@ export function middleware(request: NextRequest) {
   
   // Log admin page requests
   if (url.pathname.startsWith('/admin')) {
+    // eslint-disable-next-line no-console
     console.log('[Middleware] Admin request:', {
       path: url.pathname,
       method: request.method,

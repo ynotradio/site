@@ -14,12 +14,13 @@ const serverFunction: ServerFunctionClient = async function serverFunc(args) {
   'use server';
 
   try {
-    return handleServerFunctions({
+    return await handleServerFunctions({
       ...args,
       config,
       importMap,
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Server Function] Error:', {
       message: error instanceof Error ? error.message : String(error),
       functionName: args.name,

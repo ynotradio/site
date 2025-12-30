@@ -3,6 +3,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     // Server-side instrumentation
+    // eslint-disable-next-line no-console
     console.log('[Instrumentation] Server starting...', {
       NODE_ENV: process.env.NODE_ENV,
       NEXT_RUNTIME: process.env.NEXT_RUNTIME,

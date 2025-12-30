@@ -22,6 +22,7 @@ const disableSSL = process.env.DATABASE_SSL === 'disable';
 const payloadSecret = process.env.PAYLOAD_SECRET || '';
 
 // Log when config is being loaded
+// eslint-disable-next-line no-console
 console.log('[Payload Config Root] Loading config...', {
   NODE_ENV: process.env.NODE_ENV,
   hasDatabaseUri: !!databaseUri,
