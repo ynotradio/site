@@ -28,13 +28,10 @@ const serverFunction: ServerFunctionClient = async function serverFunc(args) {
   }
 };
 
-const Layout = ({ children }: Args) => {
-  console.log('[Layout] Rendering Payload layout');
-  return (
-    <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-      {children}
-    </RootLayout>
-  );
-};
+const Layout = ({ children }: Args) => (
+  <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
+    {children}
+  </RootLayout>
+);
 
 export default Layout;

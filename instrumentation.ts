@@ -14,7 +14,7 @@ export async function register() {
     
     // Override console.error to ensure errors are visible
     const originalError = console.error;
-    console.error = function(...args: any[]) {
+    console.error = function(...args: unknown[]) {
       originalError('[ERROR]', ...args);
     };
   }
