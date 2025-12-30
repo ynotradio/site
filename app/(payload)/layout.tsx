@@ -13,17 +13,28 @@ type Args = {
 const serverFunction: ServerFunctionClient = async function serverFunc(args) {
   'use server';
 
-  return handleServerFunctions({
-    ...args,
-    config,
-    importMap,
-  });
+  try {
+    return handleServerFunctions({
+      ...args,
+      config,
+      importMap,
+    });
+  } catch (error) {
+    console.error('[Server Function] Error:', {
+      message: error instanceof Error ? error.message : String(error),
+      functionName: args.name,
+    });
+    throw error;
+  }
 };
 
-const Layout = ({ children }: Args) => (
-  <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
-    {children}
-  </RootLayout>
-);
+const Layout = ({ children }: Args) => {
+  console.log('[Layout] Rendering Payload layout');
+  return (
+    <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
+      {children}
+    </RootLayout>
+  );
+};
 
 export default Layout;

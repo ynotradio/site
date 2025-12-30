@@ -21,6 +21,15 @@ const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_UR
 const disableSSL = process.env.DATABASE_SSL === 'disable';
 const payloadSecret = process.env.PAYLOAD_SECRET || '';
 
+// Log when config is being loaded
+console.log('[Payload Config Root] Loading config...', {
+  NODE_ENV: process.env.NODE_ENV,
+  hasDatabaseUri: !!databaseUri,
+  hasPayloadSecret: !!payloadSecret,
+  databaseUriLength: databaseUri.length,
+  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+});
+
 export default buildConfig({
   secret: payloadSecret || 'development-secret',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',

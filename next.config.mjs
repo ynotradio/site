@@ -5,6 +5,13 @@ const nextConfig = {
   // Experimental features required by Payload
   experimental: {
     reactCompiler: false,
+    instrumentationHook: true,
+  },
+  // Ensure logs are visible in Netlify
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
   },
 };
 
