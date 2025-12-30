@@ -70,7 +70,10 @@ export const initPayloadApp = async (): Promise<Express> => {
         }
       }
 
-      // Clear the promise so it can be retried
+      // Clear the promise so it can be retried on the next request
+      // Note: In production, Netlify will restart the function for each request if
+      // initialization fails, so concurrent requests won't cause multiple initialization
+      // attempts within the same instance
       appPromise = null;
 
       throw error;

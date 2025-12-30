@@ -10,23 +10,19 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    /* eslint-disable no-console */
     // Log error to Netlify logs via console.error
-    // eslint-disable-next-line no-console
     const timestamp = new Date().toISOString();
-    // eslint-disable-next-line no-console
     console.error(`[Next.js Error Boundary] ${timestamp} Error caught:`, error);
-    // eslint-disable-next-line no-console
     console.error(`[Next.js Error Boundary] ${timestamp} Error name:`, error.name);
-    // eslint-disable-next-line no-console
     console.error(`[Next.js Error Boundary] ${timestamp} Error message:`, error.message);
     if (error.stack) {
-      // eslint-disable-next-line no-console
       console.error(`[Next.js Error Boundary] ${timestamp} Stack trace:`, error.stack);
     }
     if (error.digest) {
-      // eslint-disable-next-line no-console
       console.error(`[Next.js Error Boundary] ${timestamp} Error digest:`, error.digest);
     }
+    /* eslint-enable no-console */
   }, [error]);
 
   return (
