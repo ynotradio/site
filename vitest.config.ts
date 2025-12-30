@@ -13,6 +13,7 @@ export default defineConfig({
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',
+        '**/musicbrainz.ts', // Excluded because tests are skipped in CI (requires external API)
       ],
       thresholds: {
         // Adjusted to current coverage levels - improve incrementally
