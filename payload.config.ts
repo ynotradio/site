@@ -36,17 +36,18 @@ const coerceList = (value: string): string[] => (
     .filter(Boolean)
 );
 
+const isProduction = process.env.NODE_ENV === 'production';
+const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
 
-if (!databaseUri) {
+// Only require DATABASE_URI when not during build phase
+if (!databaseUri && !isBuild) {
   throw new Error(
     'DATABASE_URI (or NEON_DEV_DATABASE_URL) is not defined. Update your .env.local file.',
   );
 }
 
 const disableSSL = process.env.DATABASE_SSL === 'disable';
-const isProduction = process.env.NODE_ENV === 'production';
-const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const payloadSecret = process.env.PAYLOAD_SECRET;
 
 // Validate required secrets in production runtime (not during build)
@@ -97,7 +98,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: databaseUri,
+      connectionString: databaseUri || 'postgresql://localhost:5432/placeholder',
       ssl: disableSSL ? undefined : { rejectUnauthorized: true },
     },
   }),
