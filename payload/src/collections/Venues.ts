@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { hasRole } from '../utils/auth';
+import { slugify } from '../utils/slugify';
 
 export const Venues: CollectionConfig = {
   slug: 'venues',
@@ -14,6 +14,18 @@ export const Venues: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
+  hooks: {
+    beforeValidate: [
+      ({ data, operation }) => {
+        if (operation === 'create' || operation === 'update') {
+          if (data?.name && (!data?.slug || data.slug === '')) {
+            data.slug = slugify(data.name);
+          }
+        }
+        return data;
+      },
+    ],
+  },
   fields: [
     {
       name: 'name',
@@ -21,7 +33,24 @@ export const Venues: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField({ useAsSlug: 'name' }),
+    {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Auto-generated from name, but can be customized',
+      },
+      validate: (value) => {
+        if (!value) return true;
+        if (!/^[a-z0-9-]+$/.test(value)) {
+          return 'Slug must contain only lowercase letters, numbers, and hyphens';
+        }
+        return true;
+      },
+    },
     {
       name: 'address',
       type: 'text',
