@@ -1,5 +1,5 @@
 [build]
-  command = "yarn build"
+  command = "npm run payload:migrate && yarn build"
   publish = ".next"
 
 [functions]
