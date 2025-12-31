@@ -7,6 +7,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import type { Config, Payload } from 'payload';
 import { getPayload } from 'payload';
+import { postgresAdapter } from '@payloadcms/db-postgres';
 import { createLogger } from './logger';
 
 const logger = createLogger('PayloadClient');
@@ -20,10 +21,10 @@ export type DatabaseEnv = 'dev' | 'prod';
  * Get the Payload instance configured for the specified environment
  */
 export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payload> {
-  // Load environment variables from .env.local
+  // Load environment variables from .env.local with override
   dotenv.config({
     path: path.resolve(process.cwd(), '.env.local'),
-    override: false,
+    override: true,
   });
 
   // Select database URL based on environment
@@ -40,26 +41,14 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
 
   logger.info(`Connecting to ${env} database...`);
 
-  // Import the payload config
+  // Override DATABASE_URI before importing config
+  process.env.DATABASE_URI = databaseUri;
+
+  // Import the payload config (it will use the overridden DATABASE_URI)
   const payloadConfigModule = await import('../../../payload.config');
   const config = payloadConfigModule.default as Config;
 
-  // Override database connection for this import
-  const importConfig: Config = {
-    ...config,
-    db: {
-      ...config.db,
-      // Pool configuration for PostgreSQL adapter
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pool: {
-        connectionString: databaseUri,
-        ssl:
-          process.env.DATABASE_SSL === 'disable' ? undefined : { rejectUnauthorized: true },
-      } as any,
-    },
-  };
-
-  const payload = await getPayload({ config: importConfig });
+  const payload = await getPayload({ config });
   logger.info(`Connected to ${env} database successfully`);
 
   return payload;
