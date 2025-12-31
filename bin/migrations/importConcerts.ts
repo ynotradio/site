@@ -216,7 +216,6 @@ async function importConcerts(options: ImportOptions): Promise<void> {
 
 // Run the import
 if (require.main === module) {
-  parseArgs();
   const options = parseArgs();
   importConcerts(options).catch((error) => {
     console.error('Fatal error:', error);
