@@ -101,5 +101,6 @@ export default buildConfig({
       connectionString: databaseUri || 'postgresql://localhost:5432/placeholder',
       ssl: disableSSL ? undefined : { rejectUnauthorized: true },
     },
+    migrationDir: path.resolve(dirname, 'payload/migrations'),
   }),
 });
