@@ -1,5 +1,5 @@
 [build]
-  command = "bash bin/migrate-noninteractive.sh && yarn build"
+  command = "yarn build"
   publish = ".next"
 
 [functions]
