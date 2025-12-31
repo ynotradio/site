@@ -6,6 +6,10 @@ const nextConfig = {
   experimental: {
     reactCompiler: false,
   },
+  // Use build-specific tsconfig that excludes bin directory
+  typescript: {
+    tsconfigPath: './tsconfig.build.json',
+  },
   // Redirect root to admin dashboard
   async redirects() {
     return [

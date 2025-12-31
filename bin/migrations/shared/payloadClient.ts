@@ -5,7 +5,7 @@
 
 import path from 'path';
 import dotenv from 'dotenv';
-import type { Config, Payload } from 'payload';
+import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
