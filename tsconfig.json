@@ -30,7 +30,6 @@
     }
   },
   "include": [
-    "bin/**/*.ts",
     "test/**/*.ts",
     "src/types/**/*.ts",
     "vitest.config.ts",
@@ -42,6 +41,7 @@
   ],
   "exclude": [
     "node_modules",
-    "src/**/*.js"
+    "src/**/*.js",
+    "bin/**/*.ts"
   ]
 }
