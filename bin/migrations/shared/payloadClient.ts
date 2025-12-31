@@ -7,7 +7,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import type { Config, Payload } from 'payload';
 import { getPayload } from 'payload';
-import { postgresAdapter } from '@payloadcms/db-postgres';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
 
@@ -78,7 +77,7 @@ export async function findOrCreateArtist(
 
     if (existingByLegacyId.docs.length > 0) {
       const artist = existingByLegacyId.docs[0];
-      
+
       // If artist exists but doesn't have MusicBrainz ID, try to add it
       if (!artist.musicbrainzId) {
         try {
@@ -98,7 +97,7 @@ export async function findOrCreateArtist(
           logger.debug(`Failed to update MusicBrainz ID for ${name}`);
         }
       }
-      
+
       return artist.id;
     }
   }
@@ -116,7 +115,7 @@ export async function findOrCreateArtist(
 
   if (existing.docs.length > 0) {
     const artist = existing.docs[0];
-    
+
     // If artist exists but doesn't have MusicBrainz ID, try to add it
     if (!artist.musicbrainzId) {
       try {
@@ -136,7 +135,7 @@ export async function findOrCreateArtist(
         logger.debug(`Failed to update MusicBrainz ID for ${name}`);
       }
     }
-    
+
     return artist.id;
   }
 
@@ -187,14 +186,14 @@ export async function findOrCreateArtist(
       errorCount: error.data?.errors?.length,
       errors: error.data?.errors,
     }, null, 2));
-    
+
     // If slug validation fails, likely a duplicate with slight name variation
-    const isSlugError = error.status === 400 && 
-      error.data?.errors?.some((e: any) => e.path === 'slug');
-    
+    const isSlugError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'slug');
+
     if (isSlugError) {
       console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
-      
+
       // Generate the slug that would be created and search for it
       const slug = name
         .toLowerCase()
@@ -202,7 +201,7 @@ export async function findOrCreateArtist(
         .replace(/\s+/g, '-')
         .replace(/--+/g, '-')
         .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
-      
+
       const existingBySlug = await payload.find({
         collection: 'artists',
         where: {
@@ -216,9 +215,8 @@ export async function findOrCreateArtist(
       if (existingBySlug.docs.length > 0) {
         logger.debug(`Found existing artist by slug: "${name}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
         return existingBySlug.docs[0].id;
-      } else {
-        logger.debug(`No existing artist found with slug: "${slug}"`);
       }
+      logger.debug(`No existing artist found with slug: "${slug}"`);
     }
     // Re-throw if it's not a slug validation error or we couldn't find existing
     logger.debug(`Re-throwing error for artist: ${name}, isSlugError: ${isSlugError}`);
@@ -291,12 +289,12 @@ export async function findOrCreateVenue(
     return newVenue.id;
   } catch (error: any) {
     // If slug validation fails, likely a duplicate with slight name variation
-    const isSlugError = error.status === 400 && 
-      error.data?.errors?.some((e: any) => e.path === 'slug');
-    
+    const isSlugError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'slug');
+
     if (isSlugError) {
       logger.debug(`Slug validation failed for venue: ${name}, searching by slug...`);
-      
+
       // Generate the slug that would be created and search for it
       const slug = name
         .toLowerCase()
@@ -304,7 +302,7 @@ export async function findOrCreateVenue(
         .replace(/\s+/g, '-')
         .replace(/--+/g, '-')
         .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
-      
+
       const existingBySlug = await payload.find({
         collection: 'venues',
         where: {
@@ -318,9 +316,8 @@ export async function findOrCreateVenue(
       if (existingBySlug.docs.length > 0) {
         logger.debug(`Found existing venue by slug: "${name}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
         return existingBySlug.docs[0].id;
-      } else {
-        logger.debug(`No existing venue found with slug: "${slug}"`);
       }
+      logger.debug(`No existing venue found with slug: "${slug}"`);
     }
     // Re-throw if it's not a slug validation error or we couldn't find existing
     logger.debug(`Re-throwing error for venue: ${name}, isSlugError: ${isSlugError}`);
