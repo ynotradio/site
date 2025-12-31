@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "----------------",
   "main": "index.js",
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "directories": {
     "doc": "docs"
   },
@@ -17,11 +21,12 @@
     "start": "next start",
     "dev:refresh": "./bin/refresh_local.sh",
     "payload:dev": "tsx payload/src/server.ts",
-    "payload:generate-types": "payload generate:types",
-    "payload:generate-importmap": "payload generate:importmap",
-    "payload:migrate": "payload migrate --config payload.config.js",
-    "payload:validate": "payload validate --config payload.config.js",
-    "payload:seed": "payload seed --config payload.config.js"
+    "payload:generate-types": "tsx node_modules/.bin/payload generate:types",
+    "payload:generate-importmap": "tsx node_modules/.bin/payload generate:importmap",
+    "payload:migrate": "tsx node_modules/.bin/payload migrate",
+    "payload:migrate:create": "tsx node_modules/.bin/payload migrate:create",
+    "payload:migrate:status": "tsx node_modules/.bin/payload migrate:status",
+    "payload:seed": "tsx node_modules/.bin/payload seed"
   },
   "author": "",
   "license": "ISC",
@@ -49,6 +54,7 @@
     "@netlify/functions": "^5.1.2",
     "@payloadcms/db-postgres": "^3.69.0",
     "@payloadcms/next": "^3.69.0",
+    "@payloadcms/richtext-lexical": "^3.69.0",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "graphql": "^16.12.0",

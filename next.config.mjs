@@ -6,6 +6,16 @@ const nextConfig = {
   experimental: {
     reactCompiler: false,
   },
+  // Redirect root to admin dashboard
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/admin',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withPayload(nextConfig);

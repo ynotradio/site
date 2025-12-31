@@ -1,6 +1,41 @@
 [build]
-  command = "npm run build"
+  command = "yarn build"
   publish = ".next"
+
+[functions]
+  # Externalize lexical packages to prevent esbuild from bundling them as CJS
+  # These packages use top-level await and import.meta which require ESM
+  external_node_modules = [
+    "lexical",
+    "@lexical/clipboard",
+    "@lexical/code",
+    "@lexical/devtools-core",
+    "@lexical/dragon",
+    "@lexical/hashtag",
+    "@lexical/headless",
+    "@lexical/history",
+    "@lexical/html",
+    "@lexical/link",
+    "@lexical/list",
+    "@lexical/mark",
+    "@lexical/markdown",
+    "@lexical/offset",
+    "@lexical/overflow",
+    "@lexical/plain-text",
+    "@lexical/react",
+    "@lexical/rich-text",
+    "@lexical/selection",
+    "@lexical/table",
+    "@lexical/text",
+    "@lexical/utils",
+    "@lexical/yjs"
+  ]
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_VERSION = "11"
+  YARN_VERSION = "1.22.22"
+  NPM_FLAGS = "--legacy-peer-deps"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

@@ -24,7 +24,7 @@ export const initPayloadApp = async (): Promise<Express> => {
     app.set('trust proxy', 1);
     app.use('/media', express.static(getUploadsDir()));
 
-    const payloadConfigModule = await import('./payload.config');
+    const payloadConfigModule = await import('../../payload.config');
     const config = payloadConfigModule.default;
 
     // Initialize Payload with the config
@@ -43,7 +43,7 @@ export const startPayloadServer = async (): Promise<void> => {
   const port = Number(process.env.PORT ?? 3000);
   const app = await initPayloadApp();
 
-  const payloadConfigModule = await import('./payload.config');
+  const payloadConfigModule = await import('../../payload.config');
   const config = payloadConfigModule.default;
   const payload = await getPayload({ config });
 

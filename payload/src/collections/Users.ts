@@ -37,8 +37,8 @@ export const Users: CollectionConfig = {
       }
 
       // Allow a user to read their own profile
-      const currentUser = req.user as { id?: string };
-      if (id && currentUser.id && currentUser.id === id) {
+      const currentUser = req.user as { id?: string | number };
+      if (id && currentUser.id && String(currentUser.id) === String(id)) {
         return true;
       }
 
