@@ -95,18 +95,74 @@ export async function findOrCreateArtist(
     return existing.docs[0].id;
   }
 
-  // Create new artist
-  const newArtist = await payload.create({
-    collection: 'artists',
-    data: {
-      name,
-      legacyId,
-      migratedAt: new Date().toISOString(),
-    },
-  });
+  // Try to create new artist
+  try {
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/--+/g, '-')
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
 
-  logger.debug(`Created artist: ${name}`);
-  return newArtist.id;
+    const newArtist = await payload.create({
+      collection: 'artists',
+      data: {
+        name,
+        slug,
+        legacyId,
+        migratedAt: new Date().toISOString(),
+      },
+    });
+
+    logger.debug(`Created artist: ${name}`);
+    return newArtist.id;
+  } catch (error: any) {
+    // Log the full error structure for debugging
+    console.error(`[DEBUG] Error creating artist "${name}":`, JSON.stringify({
+      status: error.status,
+      hasData: !!error.data,
+      hasErrors: !!error.data?.errors,
+      errorCount: error.data?.errors?.length,
+      errors: error.data?.errors,
+    }, null, 2));
+    
+    // If slug validation fails, likely a duplicate with slight name variation
+    const isSlugError = error.status === 400 && 
+      error.data?.errors?.some((e: any) => e.path === 'slug');
+    
+    if (isSlugError) {
+      console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
+      
+      // Generate the slug that would be created and search for it
+      const slug = name
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      
+      const existingBySlug = await payload.find({
+        collection: 'artists',
+        where: {
+          slug: {
+            equals: slug,
+          },
+        },
+        limit: 1,
+      });
+
+      if (existingBySlug.docs.length > 0) {
+        logger.debug(`Found existing artist by slug: "${name}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
+        return existingBySlug.docs[0].id;
+      } else {
+        logger.debug(`No existing artist found with slug: "${slug}"`);
+      }
+    }
+    // Re-throw if it's not a slug validation error or we couldn't find existing
+    logger.debug(`Re-throwing error for artist: ${name}, isSlugError: ${isSlugError}`);
+    throw error;
+  }
 }
 
 /**
@@ -150,16 +206,63 @@ export async function findOrCreateVenue(
     return existing.docs[0].id;
   }
 
-  // Create new venue
-  const newVenue = await payload.create({
-    collection: 'venues',
-    data: {
-      name,
-      legacyId,
-      migratedAt: new Date().toISOString(),
-    },
-  });
+  // Try to create new venue
+  try {
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/--+/g, '-')
+      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
 
-  logger.debug(`Created venue: ${name}`);
-  return newVenue.id;
+    const newVenue = await payload.create({
+      collection: 'venues',
+      data: {
+        name,
+        slug,
+        legacyId,
+        migratedAt: new Date().toISOString(),
+      },
+    });
+
+    logger.debug(`Created venue: ${name}`);
+    return newVenue.id;
+  } catch (error: any) {
+    // If slug validation fails, likely a duplicate with slight name variation
+    const isSlugError = error.status === 400 && 
+      error.data?.errors?.some((e: any) => e.path === 'slug');
+    
+    if (isSlugError) {
+      logger.debug(`Slug validation failed for venue: ${name}, searching by slug...`);
+      
+      // Generate the slug that would be created and search for it
+      const slug = name
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/--+/g, '-')
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      
+      const existingBySlug = await payload.find({
+        collection: 'venues',
+        where: {
+          slug: {
+            equals: slug,
+          },
+        },
+        limit: 1,
+      });
+
+      if (existingBySlug.docs.length > 0) {
+        logger.debug(`Found existing venue by slug: "${name}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
+        return existingBySlug.docs[0].id;
+      } else {
+        logger.debug(`No existing venue found with slug: "${slug}"`);
+      }
+    }
+    // Re-throw if it's not a slug validation error or we couldn't find existing
+    logger.debug(`Re-throwing error for venue: ${name}, isSlugError: ${isSlugError}`);
+    throw error;
+  }
 }

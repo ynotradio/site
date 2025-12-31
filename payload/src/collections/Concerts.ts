@@ -4,8 +4,8 @@ import { hasRole } from '../utils/auth';
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
   admin: {
-    useAsTitle: 'date',
-    defaultColumns: ['date', 'artist', 'venue', 'featured', 'updatedAt'],
+    useAsTitle: 'title',
+    defaultColumns: ['title', 'date', 'venue', 'featured', 'updatedAt'],
   },
   access: {
     read: () => true, // Public read access
@@ -14,6 +14,13 @@ export const Concerts: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   fields: [
+    {
+      name: 'title',
+      type: 'text',
+      admin: {
+        description: 'Optional custom title for the concert (falls back to artist names)',
+      },
+    },
     {
       name: 'date',
       type: 'date',
@@ -27,12 +34,13 @@ export const Concerts: CollectionConfig = {
       },
     },
     {
-      name: 'artist',
+      name: 'artists',
       type: 'relationship',
       relationTo: 'artists',
+      hasMany: true,
       required: true,
       admin: {
-        description: 'Performing artist or band',
+        description: 'Performing artists or bands',
       },
     },
     {

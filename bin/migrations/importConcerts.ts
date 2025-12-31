@@ -105,28 +105,33 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
       return false;
     }
 
-    // Process artist string to extract artist names
-    const { artistNames } = processArtistString(concert.artist);
+    // Process artist string to extract artist names and custom title (if event/special show)
+    const { artistNames, customTitle } = processArtistString(concert.artist);
 
     if (artistNames.length === 0) {
       logger.warn(`Concert ${concert.id} has no valid artist names, skipping`);
       return false;
     }
 
-    // Use the first artist as the primary artist
-    // (Concerts collection has a single artist relationship)
-    const primaryArtistName = artistNames[0];
-    const artistId = await findOrCreateArtist(payload, primaryArtistName);
+    // Create or find all artists
+    const artistIds = await Promise.all(
+      artistNames.map((name) => findOrCreateArtist(payload, name)),
+    );
 
     // Find or create venue
     const venueId = await findOrCreateVenue(payload, concert.venue);
+
+    // Only use customTitle if it exists (for events/special shows)
+    // Otherwise leave title undefined/null so it can be generated from artist names
+    const title = customTitle || undefined;
 
     // Create concert record
     await payload.create({
       collection: 'concerts',
       data: {
+        title,
         date: concert.date,
-        artist: artistId,
+        artists: artistIds,
         venue: venueId,
         ticketInfo: concert.ticketinfo || undefined,
         ticketUrl: concert.ticketurl || undefined,
@@ -136,7 +141,8 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
       },
     });
 
-    logger.debug(`Imported concert ${concert.id}: ${primaryArtistName} at ${concert.venue}`);
+    const displayName = title || artistNames.join(', ');
+    logger.debug(`Imported concert ${concert.id}: ${displayName} at ${concert.venue}`);
     return true;
   } catch (error) {
     logger.error(`Failed to import concert ${concert.id}`, error as Error);
