@@ -14,6 +14,20 @@ export interface Deejay {
   deleted: string;
 }
 
+// Concert interface matching the MySQL table structure
+export interface Concert {
+  id: number;
+  date: string;
+  artist: string;
+  band_pic_url: string;
+  band_url: string;
+  venue: string;
+  ticketinfo: string;
+  ticketurl: string;
+  featured: string;
+  deleted: string;
+}
+
 // Import options interface
 export interface ImportOptions {
   fromLast?: boolean;
@@ -61,6 +75,37 @@ export async function getActiveDeejays(
       `Retrieved ${rows.length} deejays from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
     return rows as Deejay[];
+  } catch (error) {
+    console.error('Query failed:', error);
+    throw error;
+  }
+}
+
+export async function getActiveConcerts(
+  connection: mysql.Connection,
+  options: ImportOptions = {},
+): Promise<Concert[]> {
+  try {
+    let query = "SELECT * FROM concerts WHERE deleted != 'Y'";
+    const params: any[] = [];
+
+    // Add ID filter if provided
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    console.log(
+      `Retrieved ${rows.length} concerts from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
+    );
+    return rows as Concert[];
   } catch (error) {
     console.error('Query failed:', error);
     throw error;
