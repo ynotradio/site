@@ -9,6 +9,7 @@ import type { Config, Payload } from 'payload';
 import { getPayload } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { createLogger } from './logger';
+import { getArtistMbid } from './musicbrainz';
 
 const logger = createLogger('PayloadClient');
 
@@ -76,7 +77,29 @@ export async function findOrCreateArtist(
     });
 
     if (existingByLegacyId.docs.length > 0) {
-      return existingByLegacyId.docs[0].id;
+      const artist = existingByLegacyId.docs[0];
+      
+      // If artist exists but doesn't have MusicBrainz ID, try to add it
+      if (!artist.musicbrainzId) {
+        try {
+          const mbid = await getArtistMbid(name);
+          if (mbid) {
+            await payload.update({
+              collection: 'artists',
+              id: artist.id,
+              data: {
+                musicbrainzId: mbid,
+              },
+            });
+            logger.debug(`Added MusicBrainz ID to existing artist: ${name}`);
+          }
+        } catch (error) {
+          // Log but don't fail
+          logger.debug(`Failed to update MusicBrainz ID for ${name}`);
+        }
+      }
+      
+      return artist.id;
     }
   }
 
@@ -92,7 +115,29 @@ export async function findOrCreateArtist(
   });
 
   if (existing.docs.length > 0) {
-    return existing.docs[0].id;
+    const artist = existing.docs[0];
+    
+    // If artist exists but doesn't have MusicBrainz ID, try to add it
+    if (!artist.musicbrainzId) {
+      try {
+        const mbid = await getArtistMbid(name);
+        if (mbid) {
+          await payload.update({
+            collection: 'artists',
+            id: artist.id,
+            data: {
+              musicbrainzId: mbid,
+            },
+          });
+          logger.debug(`Added MusicBrainz ID to existing artist: ${name}`);
+        }
+      } catch (error) {
+        // Log but don't fail
+        logger.debug(`Failed to update MusicBrainz ID for ${name}`);
+      }
+    }
+    
+    return artist.id;
   }
 
   // Try to create new artist
@@ -105,11 +150,27 @@ export async function findOrCreateArtist(
       .replace(/--+/g, '-')
       .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
 
+    // Fetch MusicBrainz ID if not provided
+    let mbid = null;
+    if (!legacyId) {
+      // Only lookup for new artists (not during migration with legacyId)
+      try {
+        mbid = await getArtistMbid(name);
+        if (mbid) {
+          logger.debug(`Found MusicBrainz ID for ${name}: ${mbid}`);
+        }
+      } catch (error) {
+        // Log but don't fail if MusicBrainz lookup fails
+        logger.debug(`MusicBrainz lookup failed for ${name}`);
+      }
+    }
+
     const newArtist = await payload.create({
       collection: 'artists',
       data: {
         name,
         slug,
+        musicbrainzId: mbid || undefined,
         legacyId,
         migratedAt: new Date().toISOString(),
       },
