@@ -24,6 +24,7 @@
     "payload:generate-types": "tsx node_modules/.bin/payload generate:types",
     "payload:generate-importmap": "tsx node_modules/.bin/payload generate:importmap",
     "payload:migrate": "tsx node_modules/.bin/payload migrate",
+    "payload:migrate:create": "tsx node_modules/.bin/payload migrate:create",
     "payload:migrate:status": "tsx node_modules/.bin/payload migrate:status",
     "payload:seed": "tsx node_modules/.bin/payload seed"
   },
