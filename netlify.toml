@@ -1,5 +1,5 @@
 [build]
-  command = "npm run payload:migrate && yarn build"
+  command = "bash bin/migrate-noninteractive.sh && yarn build"
   publish = ".next"
 
 [functions]
