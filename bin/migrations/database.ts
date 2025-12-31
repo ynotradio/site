@@ -86,7 +86,12 @@ export async function getActiveConcerts(
   options: ImportOptions = {},
 ): Promise<Concert[]> {
   try {
-    let query = "SELECT * FROM concerts WHERE deleted != 'Y'";
+    // Select only the fields we need for import
+    let query = `
+      SELECT id, date, artist, venue, ticketinfo, ticketurl, featured, deleted
+      FROM concerts
+      WHERE deleted != 'Y'
+    `;
     const params: any[] = [];
 
     // Add ID filter if provided

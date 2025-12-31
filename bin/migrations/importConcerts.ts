@@ -182,6 +182,9 @@ async function importConcerts(options: ImportOptions): Promise<void> {
     logger.info(`Found ${stats.total} concerts to import`);
 
     // Import each concert
+    // Note: Sequential processing ensures data consistency and makes errors easier to debug.
+    // For better performance on large datasets, consider processing in batches with
+    // Promise.allSettled() while maintaining error isolation.
     for (let i = 0; i < concerts.length; i += 1) {
       const concert = concerts[i];
 
@@ -214,8 +217,22 @@ async function importConcerts(options: ImportOptions): Promise<void> {
   logger.info('Concert import completed');
 }
 
-// Run the import
-if (require.main === module) {
+/**
+ * Check if this file is being run directly
+ * Works with both CommonJS and ESM module systems
+ */
+function isMainModule(): boolean {
+  // ESM check
+  if (typeof import.meta !== 'undefined' && import.meta.url) {
+    // In ESM, compare the import.meta.url with the file URL
+    return import.meta.url === `file://${process.argv[1]}`;
+  }
+  // CommonJS fallback
+  return require.main === module;
+}
+
+// Run the import when executed directly
+if (isMainModule()) {
   const options = parseArgs();
   importConcerts(options).catch((error) => {
     console.error('Fatal error:', error);

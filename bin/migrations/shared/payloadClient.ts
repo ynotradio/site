@@ -49,12 +49,13 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
     ...config,
     db: {
       ...config.db,
-      // @ts-expect-error - pool is valid for postgres adapter
+      // Pool configuration for PostgreSQL adapter
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       pool: {
         connectionString: databaseUri,
         ssl:
           process.env.DATABASE_SSL === 'disable' ? undefined : { rejectUnauthorized: true },
-      },
+      } as any,
     },
   };
 
