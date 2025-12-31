@@ -181,7 +181,8 @@ describe('importConcerts', () => {
         collection: 'concerts',
         data: {
           date: '2024-01-15',
-          artist: 'artist-id-123',
+          artists: ['artist-id-123'],
+          title: undefined,
           venue: 'venue-id-456',
           ticketInfo: '$25',
           ticketUrl: 'https://example.com',
