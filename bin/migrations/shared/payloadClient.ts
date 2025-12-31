@@ -45,10 +45,10 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
   process.env.DATABASE_URI = databaseUri;
 
   // Import the payload config (it will use the overridden DATABASE_URI)
-  const payloadConfigModule = await import('../../../payload.config');
-  const config = payloadConfigModule.default as Config;
+  // Note: We import it but don't use it directly since getPayload will load it
+  await import('../../../payload.config');
 
-  const payload = await getPayload({ config });
+  const payload = await getPayload({ config: undefined as any });
   logger.info(`Connected to ${env} database successfully`);
 
   return payload;
@@ -62,7 +62,7 @@ export async function findOrCreateArtist(
   payload: Payload,
   name: string,
   legacyId?: number,
-): Promise<string> {
+): Promise<number> {
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -232,7 +232,7 @@ export async function findOrCreateVenue(
   payload: Payload,
   name: string,
   legacyId?: number,
-): Promise<string> {
+): Promise<number> {
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({

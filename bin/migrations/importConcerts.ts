@@ -131,8 +131,8 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
       data: {
         title,
         date: concert.date,
-        artists: artistIds,
-        venue: venueId,
+        artists: artistIds as any,
+        venue: venueId as any,
         ticketInfo: concert.ticketinfo || undefined,
         ticketUrl: concert.ticketurl || undefined,
         featured: concert.featured === 'Yes',
