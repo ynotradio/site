@@ -60,6 +60,8 @@ if (count($mysqlConcerts) > 0) {
     echo "  Sample concert: " . $sample['artist'] . " at " . $sample['venue'] . "\n";
     echo "  Date: " . $sample['date'] . "\n";
     echo "  Fields: " . implode(', ', array_keys($sample)) . "\n";
+} else {
+    echo "  Note: No upcoming concerts in MySQL database\n";
 }
 echo "\n";
 
@@ -77,15 +79,17 @@ if ($connected) {
             echo "  Date: " . $sample['date'] . "\n";
             echo "  Fields: " . implode(', ', array_keys($sample)) . "\n";
             
-            // Verify data format matches MySQL
-            $mysqlKeys = array_keys($mysqlConcerts[0]);
-            $pgKeys = array_keys($pgConcerts[0]);
-            
-            $missingKeys = array_diff($mysqlKeys, $pgKeys);
-            if (empty($missingKeys)) {
-                echo "✓ Data format matches MySQL schema\n";
-            } else {
-                echo "✗ Missing keys in PostgreSQL data: " . implode(', ', $missingKeys) . "\n";
+            // Verify data format matches MySQL (only if we have MySQL data)
+            if (count($mysqlConcerts) > 0) {
+                $mysqlKeys = array_keys($mysqlConcerts[0]);
+                $pgKeys = array_keys($pgConcerts[0]);
+                
+                $missingKeys = array_diff($mysqlKeys, $pgKeys);
+                if (empty($missingKeys)) {
+                    echo "✓ Data format matches MySQL schema\n";
+                } else {
+                    echo "✗ Missing keys in PostgreSQL data: " . implode(', ', $missingKeys) . "\n";
+                }
             }
         } else {
             echo "  Note: No concerts in PostgreSQL database (may need migration)\n";
@@ -126,20 +130,23 @@ if (class_exists('YNotRadio\Models\FeatureManager')) {
 $configPath = __DIR__ . '/../src/config/features.php';
 $originalConfig = file_get_contents($configPath);
 $testConfig = str_replace("'use_postgres_concerts' => false", "'use_postgres_concerts' => true", $originalConfig);
-file_put_contents($configPath, $testConfig);
 
-$model2 = ConcertFactory::create($mysqlDb);
-$className2 = get_class($model2);
-
-// Restore original config
-file_put_contents($configPath, $originalConfig);
-
-if ($connected && $className2 === 'YNotRadio\Models\Implementations\PostgresConcert') {
-    echo "✓ Factory returns PostgresConcert when feature flag enabled\n";
-} elseif (!$connected && $className2 === 'YNotRadio\Models\Implementations\SqlConcert') {
-    echo "✓ Factory falls back to SqlConcert when PostgreSQL unavailable\n";
-} else {
-    echo "✗ Factory returned: " . $className2 . "\n";
+try {
+    file_put_contents($configPath, $testConfig);
+    
+    $model2 = ConcertFactory::create($mysqlDb);
+    $className2 = get_class($model2);
+    
+    if ($connected && $className2 === 'YNotRadio\Models\Implementations\PostgresConcert') {
+        echo "✓ Factory returns PostgresConcert when feature flag enabled\n";
+    } elseif (!$connected && $className2 === 'YNotRadio\Models\Implementations\SqlConcert') {
+        echo "✓ Factory falls back to SqlConcert when PostgreSQL unavailable\n";
+    } else {
+        echo "✗ Factory returned: " . $className2 . "\n";
+    }
+} finally {
+    // Restore original config (always runs, even if exception occurs)
+    file_put_contents($configPath, $originalConfig);
 }
 echo "\n";
 
