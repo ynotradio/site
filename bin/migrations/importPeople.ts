@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActivePeople, type Person } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('PeopleImport');
@@ -105,12 +106,7 @@ async function importPerson(payload: Payload, person: Person): Promise<boolean> 
     }
 
     // Generate slug from name
-    const slug = person.name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = generateSlug(person.name);
 
     // Create person record
     await payload.create({

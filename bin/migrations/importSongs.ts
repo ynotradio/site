@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveSongs, type Song } from './database';
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('SongsImport');
@@ -111,12 +112,7 @@ async function importSong(payload: Payload, song: Song): Promise<boolean> {
     }
 
     // Generate slug from title
-    const slug = song.title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = generateSlug(song.title);
 
     // Create song record
     await payload.create({

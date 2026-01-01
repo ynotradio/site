@@ -9,6 +9,7 @@ import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
+import { generateSlug } from './importUtils';
 
 const logger = createLogger('PayloadClient');
 
@@ -142,12 +143,7 @@ export async function findOrCreateArtist(
   // Try to create new artist
   try {
     // Generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(name);
 
     // Fetch MusicBrainz ID if not provided
     let mbid = null;
@@ -195,12 +191,7 @@ export async function findOrCreateArtist(
       console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(name);
 
       const existingBySlug = await payload.find({
         collection: 'artists',
@@ -268,12 +259,7 @@ export async function findOrCreateVenue(
   // Try to create new venue
   try {
     // Generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(name);
 
     const newVenue = await payload.create({
       collection: 'venues',
@@ -296,12 +282,7 @@ export async function findOrCreateVenue(
       logger.debug(`Slug validation failed for venue: ${name}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(name);
 
       const existingBySlug = await payload.find({
         collection: 'venues',
@@ -369,12 +350,7 @@ export async function findOrCreatePerson(
   // Try to create new person
   try {
     // Generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(name);
 
     const newPerson = await payload.create({
       collection: 'people',
@@ -397,12 +373,7 @@ export async function findOrCreatePerson(
       logger.debug(`Slug validation failed for person: ${name}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(name);
 
       const existingBySlug = await payload.find({
         collection: 'people',
@@ -505,12 +476,7 @@ export async function findOrCreateRecord(
   // Try to create new record
   try {
     // Generate slug from title
-    const slug = title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(title);
 
     const newRecord = await payload.create({
       collection: 'records',
@@ -534,12 +500,7 @@ export async function findOrCreateRecord(
       logger.debug(`Slug validation failed for record: ${title}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = title
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(title);
 
       const existingBySlug = await payload.find({
         collection: 'records',

@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActivePosts, type Post } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { convertHtmlToLexical } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -91,54 +92,6 @@ async function postExists(payload: Payload, legacyId: number): Promise<boolean> 
   });
 
   return existing.docs.length > 0;
-}
-
-/**
- * Convert HTML content to Lexical JSON format
- * This is a simplified conversion - for production, consider using html-to-lexical
- */
-function convertHtmlToLexical(html: string): any {
-  if (!html) {
-    return {
-      root: {
-        type: 'root',
-        format: '',
-        indent: 0,
-        version: 1,
-        children: [],
-        direction: null,
-      },
-    };
-  }
-
-  // Simple conversion - wrap HTML in a paragraph node
-  // For production, consider using a proper HTML to Lexical converter
-  return {
-    root: {
-      type: 'root',
-      format: '',
-      indent: 0,
-      version: 1,
-      children: [
-        {
-          type: 'paragraph',
-          format: '',
-          indent: 0,
-          version: 1,
-          children: [
-            {
-              type: 'text',
-              format: 0,
-              text: html.replace(/<[^>]*>/g, ''), // Strip HTML tags for now
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-        },
-      ],
-      direction: 'ltr',
-    },
-  };
 }
 
 /**

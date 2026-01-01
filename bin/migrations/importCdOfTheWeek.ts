@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveCdOfTheWeek, type CdOfTheWeek } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { convertHtmlToLexical } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('CdOfTheWeekImport');
@@ -91,52 +92,6 @@ async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<bo
   });
 
   return existing.docs.length > 0;
-}
-
-/**
- * Convert HTML content to Lexical JSON format
- */
-function convertHtmlToLexical(html: string): any {
-  if (!html) {
-    return {
-      root: {
-        type: 'root',
-        format: '',
-        indent: 0,
-        version: 1,
-        children: [],
-        direction: null,
-      },
-    };
-  }
-
-  // Simple conversion - wrap HTML in a paragraph node
-  return {
-    root: {
-      type: 'root',
-      format: '',
-      indent: 0,
-      version: 1,
-      children: [
-        {
-          type: 'paragraph',
-          format: '',
-          indent: 0,
-          version: 1,
-          children: [
-            {
-              type: 'text',
-              format: 0,
-              text: html.replace(/<[^>]*>/g, ''), // Strip HTML tags for now
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-        },
-      ],
-      direction: 'ltr',
-    },
-  };
 }
 
 /**

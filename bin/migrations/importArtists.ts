@@ -15,6 +15,7 @@ import { connectToDatabase, getActiveArtists, type Artist } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { getArtistMbid } from './shared/musicbrainz';
+import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('ArtistsImport');
@@ -106,12 +107,7 @@ async function importArtist(payload: Payload, artist: Artist): Promise<boolean> 
     }
 
     // Generate slug from name
-    const slug = artist.name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = generateSlug(artist.name);
 
     // Try to fetch MusicBrainz ID
     let mbid = null;

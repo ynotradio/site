@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveVenues, type Venue } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('VenuesImport');
@@ -105,12 +106,7 @@ async function importVenue(payload: Payload, venue: Venue): Promise<boolean> {
     }
 
     // Generate slug from name
-    const slug = venue.name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = generateSlug(venue.name);
 
     // Create venue record
     await payload.create({

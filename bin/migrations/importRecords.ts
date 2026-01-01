@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveRecords, type Record } from './database';
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('RecordsImport');
@@ -114,12 +115,7 @@ async function importRecord(payload: Payload, record: Record): Promise<boolean> 
     const artistId = await findOrCreateArtist(payload, record.artist_name, record.artist_id);
 
     // Generate slug from title
-    const slug = record.title
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, '');
+    const slug = generateSlug(record.title);
 
     // Create record
     await payload.create({
