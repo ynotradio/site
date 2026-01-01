@@ -17,7 +17,11 @@ export function generateSlug(text: string): string {
 
 /**
  * Convert HTML content to Lexical JSON format
- * This is a simplified conversion - for production, consider using html-to-lexical
+ * This is a simplified conversion - for production, consider using @payloadcms/richtext-lexical
+ * or a proper html-to-lexical converter package
+ *
+ * TODO: Implement proper HTML-to-Lexical conversion using @payloadcms/richtext-lexical
+ * or similar package to preserve formatting, links, and other rich content
  *
  * @param html - HTML string to convert
  * @returns Lexical JSON structure
@@ -37,7 +41,7 @@ export function convertHtmlToLexical(html: string): any {
   }
 
   // Simple conversion - wrap HTML in a paragraph node
-  // For production, consider using a proper HTML to Lexical converter
+  // TODO: Replace with proper HTML parser that preserves formatting
   return {
     root: {
       type: 'root',
@@ -54,7 +58,7 @@ export function convertHtmlToLexical(html: string): any {
             {
               type: 'text',
               format: 0,
-              text: html.replace(/<[^>]*>/g, ''), // Strip HTML tags for now
+              text: html.replace(/<[^>]*>/g, ''), // TODO: Strip HTML tags - replace with proper HTML parser
               version: 1,
             },
           ],
