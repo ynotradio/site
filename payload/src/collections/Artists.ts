@@ -56,6 +56,16 @@ export const Artists: CollectionConfig = {
       },
     },
     {
+      name: 'musicbrainzId',
+      type: 'text',
+      unique: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'MusicBrainz artist ID (MBID)',
+      },
+    },
+    {
       name: 'legacyId',
       type: 'number',
       unique: true,

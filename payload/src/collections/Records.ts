@@ -60,6 +60,16 @@ export const Records: CollectionConfig = {
       },
     },
     {
+      name: 'musicbrainzId',
+      type: 'text',
+      unique: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'MusicBrainz release ID (MBID)',
+      },
+    },
+    {
       name: 'legacyId',
       type: 'number',
       unique: true,
