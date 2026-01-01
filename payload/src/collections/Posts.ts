@@ -7,6 +7,7 @@ export const Posts: CollectionConfig = {
   admin: {
     useAsTitle: 'headline',
     defaultColumns: ['headline', 'startDate', 'endDate', 'priority', 'updatedAt'],
+    group: 'Content',
   },
   access: {
     read: () => true, // Public read access

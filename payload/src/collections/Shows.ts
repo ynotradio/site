@@ -6,6 +6,7 @@ export const Shows: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'day', 'startTime', 'endTime', 'host', 'updatedAt'],
+    group: 'Radio',
   },
   access: {
     read: () => true, // Public read access

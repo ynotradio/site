@@ -6,6 +6,7 @@ export const DJs: CollectionConfig = {
   admin: {
     useAsTitle: 'showName',
     defaultColumns: ['showName', 'person', 'onAir', 'updatedAt'],
+    group: 'Radio',
   },
   access: {
     read: () => true, // Public read access

@@ -6,6 +6,7 @@ export const OnDemand: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'artist', 'updatedAt'],
+    group: 'Radio',
   },
   access: {
     read: () => true, // Public read access
