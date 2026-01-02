@@ -35,13 +35,20 @@ class Database {
 
             $port = getenv('POSTGRES_PORT') ?: '5432';
             $sslMode = getenv('POSTGRES_SSL_MODE') ?: 'require';
+            
+            // Extract endpoint ID from host for Neon compatibility
+            $endpoint = '';
+            if (preg_match('/^(ep-[^.]+)/', $host, $matches)) {
+                $endpoint = $matches[1];
+            }
 
             $dsn = sprintf(
-                "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s",
+                "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s%s",
                 $host,
                 $port,
                 $database,
-                $sslMode
+                $sslMode,
+                $endpoint ? ";options=endpoint=$endpoint" : ''
             );
             
             self::$postgresConnection = new PDO($dsn, $user, $password, [
