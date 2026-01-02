@@ -12,6 +12,12 @@ try {
     }
     
     $dotenv->load();
+    
+    // Copy all $_ENV variables to getenv() for compatibility
+    foreach ($_ENV as $key => $value) {
+        putenv("$key=$value");
+    }
+    
     $dotenv->required([
         'AUTH0_CLIENT_ID',
         'AUTH0_DOMAIN',

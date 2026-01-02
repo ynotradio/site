@@ -19,10 +19,10 @@ interface Concert {
 
     /**
      * Get upcoming concerts (not deleted, date >= current date)
-     * @param int $limit Optional limit on number of results
+     * @param int $limit Optional limit on number of results (default 500)
      * @return array Array of upcoming concert entries
      */
-    public function getUpcoming(int $limit = 64): array;
+    public function getUpcoming(int $limit = 500): array;
 
     /**
      * Get featured concerts

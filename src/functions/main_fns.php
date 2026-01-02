@@ -24,12 +24,15 @@ function open_db()
     $db_user = $_ENV['DB_USER'];
     $db_pass = $_ENV['DB_PASSWORD'];
     $db_hostname = $_ENV['DB_HOST'];
+    $db_port = $_ENV['DB_PORT'] ?? 3306;
 
-    // Establish connection
-    $db = mysqli_connect($db_hostname, $db_user, $db_pass);
+    // Establish connection with explicit port
+    $db = mysqli_connect($db_hostname, $db_user, $db_pass, $db_name, $db_port);
     
-    // Select database
-    mysqli_select_db($db, $db_name);
+    if (!$db) {
+        error_log("MySQL connection failed: " . mysqli_connect_error());
+        return false;
+    }
     
     return $db;
 }

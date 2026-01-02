@@ -31,12 +31,16 @@ services:
     networks:
       - app-tier
   phpfpm:
-    image: docker.io/bitnami/php-fpm:7.4
+    build:
+      context: ./
+      dockerfile: ./bin/docker/phpfpm/Dockerfile
     restart: unless-stopped
     ports:
       - 9000:9000
     networks:
       - app-tier
+    env_file:
+      - .env.local
     volumes:
       - ./src:/app
   apache:
