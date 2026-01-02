@@ -36,26 +36,33 @@ class Database {
             $port = getenv('POSTGRES_PORT') ?: '5432';
             $sslMode = getenv('POSTGRES_SSL_MODE') ?: 'require';
             
-            // Extract endpoint ID from host for Neon compatibility
+            // Extract full endpoint ID from host for Neon compatibility (required for old libpq versions)
             $endpoint = '';
-            if (preg_match('/^(ep-[^.]+)/', $host, $matches)) {
+            if (preg_match('/^(ep-[a-z0-9-]+)/', $host, $matches)) {
                 $endpoint = $matches[1];
             }
 
+            // Build DSN
             $dsn = sprintf(
-                "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s%s",
+                "pgsql:host=%s;port=%s;dbname=%s;sslmode=%s",
                 $host,
                 $port,
                 $database,
-                $sslMode,
-                $endpoint ? ";options=endpoint=$endpoint" : ''
+                $sslMode
             );
             
-            self::$postgresConnection = new PDO($dsn, $user, $password, [
+            // For old libpq versions without SNI support, add project parameter
+            if ($endpoint) {
+                $dsn .= ";options='project=$endpoint'";
+            }
+            
+            $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
-            ]);
+            ];
+            
+            self::$postgresConnection = new PDO($dsn, $user, $password, $options);
         }
         
         return self::$postgresConnection;
