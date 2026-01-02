@@ -8,6 +8,7 @@ export const People: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'slug', 'updatedAt'],
+    group: 'People',
   },
   access: {
     read: () => true, // Public read access

@@ -20,6 +20,7 @@ export const Users: CollectionConfig = {
   admin: {
     defaultColumns: ['email', 'role', 'lastLoggedIn', 'updatedAt'],
     useAsTitle: 'email',
+    group: 'People',
   },
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours

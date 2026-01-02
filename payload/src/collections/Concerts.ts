@@ -6,6 +6,7 @@ export const Concerts: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'date', 'venue', 'featured', 'updatedAt'],
+    group: 'Events',
   },
   access: {
     read: () => true, // Public read access

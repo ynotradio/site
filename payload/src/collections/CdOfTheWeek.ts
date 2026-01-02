@@ -7,6 +7,7 @@ export const CdOfTheWeek: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', 'updatedAt'],
+    group: 'Music',
   },
   access: {
     read: () => true, // Public read access

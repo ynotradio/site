@@ -7,6 +7,7 @@ export const Songs: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'artist', 'releaseDate', 'updatedAt'],
+    group: 'Music',
   },
   access: {
     read: () => true, // Public read access

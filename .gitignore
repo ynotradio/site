@@ -37,3 +37,6 @@ media/
 .playwright/
 test-results/
 payload/types/
+
+# Local Netlify folder
+.netlify

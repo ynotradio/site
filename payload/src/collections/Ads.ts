@@ -6,6 +6,7 @@ export const Ads: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'startDate', 'endDate', 'priority', 'updatedAt'],
+    group: 'Marketing',
   },
   access: {
     read: () => true, // Public read access
