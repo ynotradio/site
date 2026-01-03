@@ -4,8 +4,10 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { buildConfig } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
+import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage';
 
 import { Media } from './payload/src/collections/Media';
+import cloudinaryAdapter from './payload/src/cloudinary/adapter';
 import { Users } from './payload/src/collections/Users';
 import { People } from './payload/src/collections/People';
 import { DJs } from './payload/src/collections/DJs';
@@ -89,6 +91,23 @@ export default buildConfig({
     Shows,
     Posts,
     CdOfTheWeek,
+  ],
+  plugins: [
+    cloudStoragePlugin({
+      collections: {
+        media: {
+          adapter: cloudinaryAdapter,
+          disableLocalStorage: true,
+          disablePayloadAccessControl: true,
+          generateFileURL: ({ filename }) => {
+            // filename contains the Cloudinary public_id (e.g., "dev/uploads/my-image")
+            // Construct the full Cloudinary URL
+            const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+            return `https://res.cloudinary.com/${cloudName}/image/upload/${filename}`;
+          },
+        },
+      },
+    }),
   ],
   typescript: {
     outputFile: path.resolve(dirname, 'payload/types/payload-types.ts'),

@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'showName',
     defaultColumns: ['showName', 'person', 'onAir', 'updatedAt'],

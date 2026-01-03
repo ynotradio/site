@@ -15,6 +15,7 @@ import { connectToDatabase, getActiveConcerts, type Concert } from './database';
 import { getPayloadClient, findOrCreateArtist, findOrCreateVenue } from './shared/payloadClient';
 import { processArtistString } from './shared/artistCleaner';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('ConcertImport');
@@ -117,6 +118,10 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
     const artistIds = await Promise.all(
       artistNames.map((name) => findOrCreateArtist(payload, name)),
     );
+
+    // Note: band_pic_url is not imported here as it's specific to this concert
+    // and could conflict with artist photos from other sources.
+    // Artist photos should be imported separately or via a dedicated artist photo import.
 
     // Find or create venue
     const venueId = await findOrCreateVenue(payload, concert.venue);

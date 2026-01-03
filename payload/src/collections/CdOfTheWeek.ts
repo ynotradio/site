@@ -4,6 +4,9 @@ import { hasRole } from '../utils/auth';
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', 'updatedAt'],

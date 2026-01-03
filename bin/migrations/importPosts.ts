@@ -15,6 +15,7 @@ import { connectToDatabase, getActivePosts, type Post } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -108,6 +109,25 @@ async function importPost(payload: Payload, post: Post): Promise<boolean> {
     // Convert HTML content to Lexical format
     const content = convertHtmlToLexical(post.content);
 
+    // Import post image if available
+    let imageId: string | undefined;
+    if (post.image_url && post.image_url.trim() !== '') {
+      logger.debug(`Importing image for post ${post.id}: ${post.image_url}`);
+      const imageResult = await importImageFromUrl(payload, post.image_url, {
+        alt: `Image for post: ${post.headline}`,
+        caption: post.headline,
+        legacyUrl: post.image_url,
+        legacyId: post.id,
+      });
+
+      if (imageResult.success && imageResult.mediaId) {
+        imageId = imageResult.mediaId;
+        logger.debug(`Image imported: ${imageResult.cloudinaryUrl}`);
+      } else {
+        logger.warn(`Failed to import image for post ${post.id}: ${imageResult.error}`);
+      }
+    }
+
     // Create post record
     await payload.create({
       collection: 'posts',
@@ -116,7 +136,7 @@ async function importPost(payload: Payload, post: Post): Promise<boolean> {
         startDate: post.start_date,
         endDate: post.end_date,
         content,
-        imageUrl: post.image_url || undefined,
+        image: imageId,
         priority: post.priority || 0,
         legacyId: post.id,
         migratedAt: new Date().toISOString(),

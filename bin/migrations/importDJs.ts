@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveDeejays, type Deejay } from './database';
 import { getPayloadClient, findOrCreatePerson } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('DJsImport');
@@ -131,6 +132,25 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       names.map((name) => findOrCreatePerson(payload, name)),
     );
 
+    // Import DJ photo if available
+    let photoId: string | undefined;
+    if (dj.pic && dj.pic.trim() !== '') {
+      logger.debug(`Importing photo for DJ ${dj.id}: ${dj.pic}`);
+      const photoResult = await importImageFromUrl(payload, dj.pic, {
+        alt: `Photo of ${dj.name}`,
+        caption: `${dj.show} DJ photo`,
+        legacyUrl: dj.pic,
+        legacyId: dj.id,
+      });
+
+      if (photoResult.success && photoResult.mediaId) {
+        photoId = photoResult.mediaId;
+        logger.debug(`Photo imported: ${photoResult.cloudinaryUrl}`);
+      } else {
+        logger.warn(`Failed to import photo for DJ ${dj.id}: ${photoResult.error}`);
+      }
+    }
+
     // Create DJ record
     await payload.create({
       collection: 'djs',
@@ -140,6 +160,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
         email: dj.email || undefined,
         externalConnectText: dj.external_connect_text || undefined,
         externalConnectUrl: dj.external_connect_url || undefined,
+        photo: photoId,
         onAir: dj.deleted === 'No',
         sortOrder: dj.sort,
         legacyId: dj.id,

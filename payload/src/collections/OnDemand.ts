@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const OnDemand: CollectionConfig = {
   slug: 'ondemand',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'artist', 'updatedAt'],

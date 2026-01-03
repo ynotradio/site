@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'startDate', 'endDate', 'priority', 'updatedAt'],
