@@ -120,7 +120,7 @@ npm run payload:migrate    # Run database migrations
 npm run payload:generate-types  # Generate TypeScript types
 
 # Troubleshooting
-tail -f /tmp/payload-server.log           # View Payload logs
+tail -f .agent-tmp/payload-server.log           # View Payload logs
 docker-compose logs -f [service]          # View Docker logs
 docker-compose ps                         # Check container status
 ```
@@ -134,7 +134,7 @@ docker-compose ps                         # Check container status
 1. **Check error message** - Read it carefully
 2. **Review troubleshooting guide** - [Verification Guide - Troubleshooting](AGENT_VERIFICATION.md#troubleshooting)
 3. **Check logs**:
-   - Payload: `/tmp/payload-server.log`
+   - Payload: `.agent-tmp/payload-server.log`
    - Docker: `docker-compose logs [service]`
 4. **Try examples** - [Verification Examples](AGENT_VERIFICATION_EXAMPLES.md)
 5. **Document issue** - In your PR if unresolved

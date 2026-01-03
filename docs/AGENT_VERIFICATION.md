@@ -370,7 +370,7 @@ PORT=3001
 #### Server starts but health checks fail
 
 **Solution:**
-1. Check server logs: `/tmp/payload-server.log`
+1. Check server logs: `.agent-tmp/payload-server.log`
 2. Verify collections are properly configured
 3. Check database connectivity
 4. Ensure migrations have run successfully

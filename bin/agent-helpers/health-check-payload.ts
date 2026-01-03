@@ -27,16 +27,22 @@ function addResult(name: string, status: 'pass' | 'fail' | 'warn', message: stri
 }
 
 /**
+ * Common validate status function for API endpoints
+ */
+const validateApiStatus = (status: number): boolean =>
+  status === 200 || status === 401 || status === 403;
+
+/**
  * Check if API endpoint is accessible
  */
 async function checkApiEndpoint(): Promise<void> {
   try {
     const response = await axios.get(`${API_URL}/users`, {
       timeout: 5000,
-      validateStatus: (status) => status === 200 || status === 401 || status === 403,
+      validateStatus: validateApiStatus,
     });
 
-    if (response.status === 200 || response.status === 401 || response.status === 403) {
+    if (validateApiStatus(response.status)) {
       addResult('API Endpoint', 'pass', `API responding (HTTP ${response.status})`);
     } else {
       addResult('API Endpoint', 'warn', `Unexpected HTTP ${response.status}`);
@@ -101,10 +107,10 @@ async function checkCollections(): Promise<void> {
     try {
       const response = await axios.get(`${API_URL}/${collection}`, {
         timeout: 5000,
-        validateStatus: (status) => status === 200 || status === 401 || status === 403,
+        validateStatus: validateApiStatus,
       });
 
-      if (response.status === 200 || response.status === 401 || response.status === 403) {
+      if (validateApiStatus(response.status)) {
         addResult(
           `Collection: ${collection}`,
           'pass',

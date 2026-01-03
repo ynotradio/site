@@ -87,7 +87,7 @@ If something goes wrong:
 1. **Check the error message** - read it carefully
 2. **Review troubleshooting guide** - [docs/AGENT_VERIFICATION.md#troubleshooting](./AGENT_VERIFICATION.md#troubleshooting)
 3. **Check logs**:
-   - Payload: `/tmp/payload-server.log`
+   - Payload: `.agent-tmp/payload-server.log`
    - Docker: `docker-compose logs [service]`
 4. **Try the examples** - [docs/AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md)
 5. **Document the issue** in your PR if you can't resolve it

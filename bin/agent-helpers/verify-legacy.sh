@@ -42,6 +42,9 @@ fi
 # Stop any existing containers
 echo "🧹 Cleaning up any existing containers..."
 cd "$PROJECT_ROOT"
+echo "⚠️  Note: This will remove volumes and delete any data in the containers"
+echo "   If you have persistent data, use 'docker-compose down' instead"
+sleep 2
 docker-compose down -v > /dev/null 2>&1 || true
 echo "✅ Cleanup complete"
 echo ""

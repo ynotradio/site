@@ -94,7 +94,7 @@ If scripts fail, check:
 2. **Dependencies**: Run `npm install` to ensure all dependencies are installed
 3. **Docker**: Ensure Docker is running for legacy site verification
 4. **Ports**: Ensure ports 3000 (Payload) and 8080/8181 (Legacy) are available
-5. **Logs**: Check `/tmp/payload-server.log` for Payload errors
+5. **Logs**: Check `.agent-tmp/payload-server.log` for Payload errors
 
 ## Contributing
 

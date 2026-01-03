@@ -293,7 +293,7 @@ npm run payload:generate-types
 1. **Check the error messages carefully**
 2. **Review the troubleshooting guide**: [docs/AGENT_VERIFICATION.md](../docs/AGENT_VERIFICATION.md#troubleshooting)
 3. **Check logs**:
-   - Payload: `/tmp/payload-server.log`
+   - Payload: `.agent-tmp/payload-server.log`
    - Docker: `docker-compose logs [service]`
 4. **Document the issue in your PR** if you can't resolve it
 5. **Tag maintainers for help** if needed
@@ -345,7 +345,7 @@ docker-compose up -d
 docker-compose down
 
 # View Logs
-tail -f /tmp/payload-server.log           # Payload
+tail -f .agent-tmp/payload-server.log           # Payload
 docker-compose logs -f [service]          # Docker service
 
 # Run Migrations

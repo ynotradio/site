@@ -63,20 +63,22 @@ echo ""
 # Start Payload in background
 echo "🚀 Starting Payload server..."
 cd "$PROJECT_ROOT"
-npm run payload:dev > /tmp/payload-server.log 2>&1 &
+TMP_DIR="$PROJECT_ROOT/.agent-tmp"
+mkdir -p "$TMP_DIR"
+npm run payload:dev > "$TMP_DIR/payload-server.log" 2>&1 &
 PAYLOAD_PID=$!
 
 # Save PID to file for cleanup
-echo $PAYLOAD_PID > /tmp/payload-server.pid
+echo $PAYLOAD_PID > "$TMP_DIR/payload-server.pid"
 
 echo "   PID: $PAYLOAD_PID"
-echo "   Logs: /tmp/payload-server.log"
+echo "   Logs: $TMP_DIR/payload-server.log"
 echo ""
 
 # Function to cleanup
 cleanup() {
-    if [ -f /tmp/payload-server.pid ]; then
-        SAVED_PID=$(cat /tmp/payload-server.pid)
+    if [ -f "$TMP_DIR/payload-server.pid" ]; then
+        SAVED_PID=$(cat "$TMP_DIR/payload-server.pid")
         if kill -0 $SAVED_PID 2>/dev/null; then
             echo ""
             echo "🧹 Stopping Payload server (PID: $SAVED_PID)..."
@@ -84,7 +86,7 @@ cleanup() {
             sleep 2
             kill -9 $SAVED_PID 2>/dev/null || true
         fi
-        rm /tmp/payload-server.pid
+        rm "$TMP_DIR/payload-server.pid"
     fi
 }
 
@@ -104,8 +106,8 @@ while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
     
     # Check if process is still running
     if ! kill -0 $PAYLOAD_PID 2>/dev/null; then
-        echo "❌ Payload process died. Check logs at /tmp/payload-server.log"
-        tail -n 50 /tmp/payload-server.log
+        echo "❌ Payload process died. Check logs at $TMP_DIR/payload-server.log"
+        tail -n 50 "$TMP_DIR/payload-server.log"
         exit 1
     fi
     
@@ -117,8 +119,8 @@ done
 if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     echo ""
     echo "❌ Payload failed to start after 60 seconds"
-    echo "   Check logs at: /tmp/payload-server.log"
-    tail -n 50 /tmp/payload-server.log
+    echo "   Check logs at: $TMP_DIR/payload-server.log"
+    tail -n 50 "$TMP_DIR/payload-server.log"
     exit 1
 fi
 
@@ -161,7 +163,7 @@ echo "   - Admin UI: http://localhost:3000/admin"
 echo "   - API endpoint: http://localhost:3000/api"
 echo "   - GraphQL playground: http://localhost:3000/api/graphql"
 echo "   - Server PID: $PAYLOAD_PID"
-echo "   - Logs: /tmp/payload-server.log"
+echo "   - Logs: $TMP_DIR/payload-server.log"
 echo ""
 echo "🔧 To stop the server:"
 echo "   kill $PAYLOAD_PID"
@@ -183,7 +185,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     echo "Press Ctrl+C to exit this script (server will keep running)"
     # Wait indefinitely
-    tail -f /tmp/payload-server.log
+    tail -f "$TMP_DIR/payload-server.log"
 else
     echo "🛑 Stopping server..."
     # cleanup will run via trap
