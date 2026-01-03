@@ -143,7 +143,7 @@ describe('importAds', () => {
           name: 'Test Sponsor',
           startDate: '2024-01-01',
           endDate: '2024-12-31',
-          imageUrl: 'https://example.com/image.jpg',
+          image: undefined,
           webUrl: 'https://example.com',
           priority: 5,
           legacyId: 1,
@@ -175,7 +175,7 @@ describe('importAds', () => {
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'ads',
         data: expect.objectContaining({
-          imageUrl: undefined,
+          image: undefined,
           webUrl: undefined,
           priority: 0,
         }),

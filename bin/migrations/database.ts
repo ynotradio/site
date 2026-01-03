@@ -128,7 +128,7 @@ export async function getActiveDeejays(
 ): Promise<Deejay[]> {
   try {
     // Import all records - deleted status will be handled as draft/published in Payload
-    let query = "SELECT * FROM deejays WHERE 1=1";
+    let query = 'SELECT * FROM deejays WHERE 1=1';
     const params: any[] = [];
 
     // Add ID filter if provided
@@ -196,7 +196,7 @@ export async function getActiveAds(
 ): Promise<Ad[]> {
   try {
     // Import all records - deleted status will be handled as draft/published in Payload
-    let query = "SELECT * FROM ads WHERE 1=1";
+    let query = 'SELECT * FROM ads WHERE 1=1';
     const params: any[] = [];
 
     if (options.startId) {
@@ -233,7 +233,7 @@ export async function getActivePosts(
     const posts: Post[] = [];
 
     // Fetch stories - import all records
-    let storiesQuery = "SELECT * FROM stories WHERE 1=1";
+    let storiesQuery = 'SELECT * FROM stories WHERE 1=1';
     const storiesParams: any[] = [];
 
     if (options.startId) {
@@ -261,7 +261,7 @@ export async function getActivePosts(
     });
 
     // Fetch custom texts - import all records
-    let customTextsQuery = "SELECT * FROM custom_texts WHERE 1=1";
+    let customTextsQuery = 'SELECT * FROM custom_texts WHERE 1=1';
     const customTextsParams: any[] = [];
 
     if (options.startId) {
@@ -271,7 +271,10 @@ export async function getActivePosts(
 
     customTextsQuery += ' ORDER BY id ASC';
 
-    const [customTexts] = await connection.query<mysql.RowDataPacket[]>(customTextsQuery, customTextsParams);
+    const [customTexts] = await connection.query<mysql.RowDataPacket[]>(
+      customTextsQuery,
+      customTextsParams,
+    );
 
     // Convert custom texts to Post format
     (customTexts as CustomText[]).forEach((customText) => {
@@ -315,7 +318,7 @@ export async function getActiveOnDemand(
 ): Promise<OnDemand[]> {
   try {
     // Import all records - deleted status will be handled as draft/published in Payload
-    let query = "SELECT * FROM ondemand WHERE 1=1";
+    let query = 'SELECT * FROM ondemand WHERE 1=1';
     const params: any[] = [];
 
     if (options.startId) {
@@ -346,7 +349,7 @@ export async function getActiveCdOfTheWeek(
 ): Promise<CdOfTheWeek[]> {
   try {
     // Import all records - deleted status will be handled as draft/published in Payload
-    let query = "SELECT * FROM cdotw WHERE 1=1";
+    let query = 'SELECT * FROM cdotw WHERE 1=1';
     const params: any[] = [];
 
     if (options.startId) {

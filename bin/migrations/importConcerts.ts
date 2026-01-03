@@ -15,7 +15,6 @@ import { connectToDatabase, getActiveConcerts, type Concert } from './database';
 import { getPayloadClient, findOrCreateArtist, findOrCreateVenue } from './shared/payloadClient';
 import { processArtistString } from './shared/artistCleaner';
 import { createLogger, logProgress, logSummary } from './shared/logger';
-import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('ConcertImport');

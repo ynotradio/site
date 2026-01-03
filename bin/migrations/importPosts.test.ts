@@ -114,7 +114,7 @@ describe('importPosts', () => {
           startDate: '2024-01-01',
           endDate: '2024-12-31',
           content: expect.any(Object),
-          imageUrl: 'https://example.com/news.jpg',
+          image: undefined,
           priority: 10,
           legacyId: 1,
           migratedAt: expect.any(String),
@@ -168,7 +168,7 @@ describe('importPosts', () => {
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'posts',
         data: expect.objectContaining({
-          imageUrl: undefined,
+          image: undefined,
           priority: 0,
         }),
       });

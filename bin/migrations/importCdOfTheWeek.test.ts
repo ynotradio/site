@@ -32,6 +32,15 @@ vi.mock('./shared/logger', () => ({
   logSummary: vi.fn(),
 }));
 
+vi.mock('./shared/mediaImporter', () => ({
+  importImageFromUrl: vi.fn(() => Promise.resolve({ success: false, error: 'Mocked' })),
+}));
+
+vi.mock('./shared/musicbrainz', () => ({
+  getReleaseMbid: vi.fn(() => Promise.resolve(null)),
+  getAlbumCoverArt: vi.fn(() => Promise.resolve(null)),
+}));
+
 describe('importCdOfTheWeek', () => {
   let mockPayload: Partial<Payload>;
 
@@ -129,7 +138,8 @@ describe('importCdOfTheWeek', () => {
           title: 'High Violet',
           artist: 'artist-id-123',
           label: 'Beggars Banquet',
-          coverImage: 'https://example.com/cover.jpg',
+          coverImage: undefined,
+          musicbrainzId: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
         },
