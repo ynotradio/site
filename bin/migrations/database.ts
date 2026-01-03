@@ -40,7 +40,7 @@ export interface Ad {
   deleted: string;
 }
 
-// Post (Story/CustomText) interface
+// Post (Story/CustomText) interface - unified from stories and custom_texts tables
 export interface Post {
   id: number;
   headline: string;
@@ -49,6 +49,27 @@ export interface Post {
   content: string;
   image_url: string;
   priority: number;
+  deleted: string;
+  source: 'story' | 'custom_text'; // Track which table it came from
+}
+
+// Story interface (from stories table)
+export interface Story {
+  id: number;
+  headline: string;
+  start_date: string;
+  end_date: string;
+  story: string; // Note: field name is 'story', not 'content'
+  pic_url: string;
+  priority: number;
+  deleted: string;
+}
+
+// CustomText interface (from custom_texts table)
+export interface CustomText {
+  id: number;
+  name: string; // Note: field name is 'name', not 'headline'
+  content: string;
   deleted: string;
 }
 
@@ -201,31 +222,88 @@ export async function getActiveAds(
   }
 }
 
+/**
+ * Get active posts from both stories and custom_texts tables
+ * Combines data from both sources into unified Post interface
+ */
 export async function getActivePosts(
   connection: mysql.Connection,
   options: ImportOptions = {},
 ): Promise<Post[]> {
   try {
-    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
-    let query = "SELECT * FROM posts WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
-    const params: any[] = [];
+    const posts: Post[] = [];
+
+    // Fetch stories
+    let storiesQuery = "SELECT * FROM stories WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    const storiesParams: any[] = [];
 
     if (options.startId) {
-      query += ' AND id >= ?';
-      params.push(options.startId);
+      storiesQuery += ' AND id >= ?';
+      storiesParams.push(options.startId);
     }
 
-    query += ' ORDER BY id ASC';
+    storiesQuery += ' ORDER BY id ASC';
 
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+    const [stories] = await connection.query<mysql.RowDataPacket[]>(storiesQuery, storiesParams);
+
+    // Convert stories to Post format
+    (stories as Story[]).forEach((story) => {
+      posts.push({
+        id: story.id,
+        headline: story.headline,
+        start_date: story.start_date,
+        end_date: story.end_date,
+        content: story.story, // Map 'story' field to 'content'
+        image_url: story.pic_url, // Map 'pic_url' to 'image_url'
+        priority: story.priority,
+        deleted: story.deleted,
+        source: 'story',
+      });
+    });
+
+    // Fetch custom texts
+    let customTextsQuery = "SELECT * FROM custom_texts WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    const customTextsParams: any[] = [];
+
+    if (options.startId) {
+      customTextsQuery += ' AND id >= ?';
+      customTextsParams.push(options.startId);
+    }
+
+    customTextsQuery += ' ORDER BY id ASC';
+
+    const [customTexts] = await connection.query<mysql.RowDataPacket[]>(customTextsQuery, customTextsParams);
+
+    // Convert custom texts to Post format
+    (customTexts as CustomText[]).forEach((customText) => {
+      posts.push({
+        id: customText.id + 10000, // Offset IDs to avoid collisions
+        headline: customText.name, // Map 'name' field to 'headline'
+        start_date: '2000-01-01', // Default start date for custom texts (always visible)
+        end_date: '2099-12-31', // Default end date for custom texts (always visible)
+        content: customText.content,
+        image_url: '', // Custom texts don't have images
+        priority: 0, // Default priority
+        deleted: customText.deleted,
+        source: 'custom_text',
+      });
+    });
+
+    // Sort by priority (desc) then by start_date (desc)
+    posts.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority;
+      }
+      return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+    });
 
     let filterMsg = '';
     if (options.startId) filterMsg += ` startId=${options.startId}`;
 
     console.log(
-      `Retrieved ${rows.length} posts from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
+      `Retrieved ${stories.length} stories and ${customTexts.length} custom texts (${posts.length} total posts) from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
     );
-    return rows as Post[];
+    return posts;
   } catch (error) {
     console.error('Query failed:', error);
     throw error;
