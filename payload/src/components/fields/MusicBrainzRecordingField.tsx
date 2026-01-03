@@ -13,6 +13,10 @@ import { searchRecordings, formatDuration, type MusicBrainzRecording } from '../
 
 import './MusicBrainzField.css';
 
+// Constants for default display when MBID exists but no metadata
+const UNKNOWN_SONG_TITLE = 'Unknown Song';
+const DEFAULT_SCORE = 100;
+
 interface MusicBrainzRecordingFieldProps {
   path: string;
 }
@@ -38,8 +42,8 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     if (value && !initializedRef.current) {
       setSelectedRecording({
         id: value,
-        title: songTitle || 'Unknown Song',
-        score: 100,
+        title: songTitle || UNKNOWN_SONG_TITLE,
+        score: DEFAULT_SCORE,
       });
       initializedRef.current = true;
     }

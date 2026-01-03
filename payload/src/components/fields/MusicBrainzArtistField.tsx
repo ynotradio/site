@@ -13,6 +13,10 @@ import { searchArtists, type MusicBrainzArtist } from '../../utils/musicbrainz-a
 
 import './MusicBrainzField.css';
 
+// Constants for default display when MBID exists but no metadata
+const UNKNOWN_ARTIST_NAME = 'Unknown Artist';
+const DEFAULT_SCORE = 100;
+
 interface MusicBrainzArtistFieldProps {
   path: string;
 }
@@ -37,8 +41,8 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
       // So we'll just show the MBID
       setSelectedArtist({
         id: value,
-        name: 'Unknown Artist',
-        score: 100,
+        name: UNKNOWN_ARTIST_NAME,
+        score: DEFAULT_SCORE,
       });
       initializedRef.current = true;
     }

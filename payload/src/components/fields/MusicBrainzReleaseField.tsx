@@ -13,6 +13,10 @@ import { searchReleases, type MusicBrainzRelease } from '../../utils/musicbrainz
 
 import './MusicBrainzField.css';
 
+// Constants for default display when MBID exists but no metadata
+const UNKNOWN_ALBUM_TITLE = 'Unknown Album';
+const DEFAULT_SCORE = 100;
+
 interface MusicBrainzReleaseFieldProps {
   path: string;
 }
@@ -38,8 +42,8 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     if (value && !initializedRef.current) {
       setSelectedRelease({
         id: value,
-        title: albumTitle || 'Unknown Album',
-        score: 100,
+        title: albumTitle || UNKNOWN_ALBUM_TITLE,
+        score: DEFAULT_SCORE,
       });
       initializedRef.current = true;
     }

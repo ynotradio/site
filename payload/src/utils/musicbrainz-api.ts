@@ -69,6 +69,7 @@ const USER_AGENT = 'YNotRadio/1.0.0 (https://ynotradio.org)';
 let lastRequestTime = 0;
 let requestInProgress = false;
 const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
+const BUSY_WAIT_INTERVAL = 50; // milliseconds to wait between checks
 
 /**
  * Escape special characters for Lucene query syntax
@@ -91,7 +92,7 @@ async function waitForRateLimit(): Promise<void> {
   // Wait for any in-progress request to complete
   while (requestInProgress) {
     await new Promise((resolve) => {
-      setTimeout(resolve, 50);
+      setTimeout(resolve, BUSY_WAIT_INTERVAL);
     });
   }
 
@@ -106,6 +107,7 @@ async function waitForRateLimit(): Promise<void> {
     });
   }
 
+  // Update lastRequestTime before releasing the lock to prevent race conditions
   lastRequestTime = Date.now();
   requestInProgress = false;
 }
