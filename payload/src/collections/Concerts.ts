@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['title', 'date', 'venue', 'featured', 'updatedAt'],

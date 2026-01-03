@@ -69,3 +69,27 @@ export function convertHtmlToLexical(html: string): any {
     },
   };
 }
+
+/**
+ * Determine Payload draft status from legacy deleted field
+ * Payload uses _status: 'published' | 'draft'
+ * 
+ * @param deleted - Legacy deleted field value ('y', 'Y', 'yes', 'Yes', 'n', 'N', 'no', 'No', 'No' etc.)
+ * @returns 'published' if not deleted, 'draft' if deleted
+ */
+export function getStatusFromDeleted(deleted: string | null | undefined): 'published' | 'draft' {
+  if (!deleted) {
+    return 'published';
+  }
+
+  const normalizedDeleted = deleted.toLowerCase().trim();
+  
+  // Consider 'y', 'yes', or similar as deleted (draft status)
+  if (normalizedDeleted === 'y' || normalizedDeleted === 'yes') {
+    return 'draft';
+  }
+
+  // Everything else is published ('n', 'no', 'No', etc.)
+  return 'published';
+}
+

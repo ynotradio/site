@@ -4,6 +4,9 @@ import { hasRole } from '../utils/auth';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  versions: {
+    drafts: true,
+  },
   admin: {
     useAsTitle: 'headline',
     defaultColumns: ['headline', 'startDate', 'endDate', 'priority', 'updatedAt'],

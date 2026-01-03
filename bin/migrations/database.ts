@@ -127,8 +127,8 @@ export async function getActiveDeejays(
   options: ImportOptions = {},
 ): Promise<Deejay[]> {
   try {
-    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
-    let query = "SELECT * FROM deejays WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Import all records - deleted status will be handled as draft/published in Payload
+    let query = "SELECT * FROM deejays WHERE 1=1";
     const params: any[] = [];
 
     // Add ID filter if provided
@@ -195,9 +195,8 @@ export async function getActiveAds(
   options: ImportOptions = {},
 ): Promise<Ad[]> {
   try {
-    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
-    // This is more inclusive and will catch records where deleted is 'n', 'N', 'no', 'No', NULL, or empty
-    let query = "SELECT * FROM ads WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Import all records - deleted status will be handled as draft/published in Payload
+    let query = "SELECT * FROM ads WHERE 1=1";
     const params: any[] = [];
 
     if (options.startId) {
@@ -233,8 +232,8 @@ export async function getActivePosts(
   try {
     const posts: Post[] = [];
 
-    // Fetch stories
-    let storiesQuery = "SELECT * FROM stories WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Fetch stories - import all records
+    let storiesQuery = "SELECT * FROM stories WHERE 1=1";
     const storiesParams: any[] = [];
 
     if (options.startId) {
@@ -261,8 +260,8 @@ export async function getActivePosts(
       });
     });
 
-    // Fetch custom texts
-    let customTextsQuery = "SELECT * FROM custom_texts WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Fetch custom texts - import all records
+    let customTextsQuery = "SELECT * FROM custom_texts WHERE 1=1";
     const customTextsParams: any[] = [];
 
     if (options.startId) {
@@ -315,8 +314,8 @@ export async function getActiveOnDemand(
   options: ImportOptions = {},
 ): Promise<OnDemand[]> {
   try {
-    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
-    let query = "SELECT * FROM ondemand WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Import all records - deleted status will be handled as draft/published in Payload
+    let query = "SELECT * FROM ondemand WHERE 1=1";
     const params: any[] = [];
 
     if (options.startId) {
@@ -346,9 +345,8 @@ export async function getActiveCdOfTheWeek(
   options: ImportOptions = {},
 ): Promise<CdOfTheWeek[]> {
   try {
-    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
-    // This is more inclusive and will catch records where deleted is 'n', 'N', 'no', 'No', NULL, or empty
-    let query = "SELECT * FROM cdotw WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
+    // Import all records - deleted status will be handled as draft/published in Payload
+    let query = "SELECT * FROM cdotw WHERE 1=1";
     const params: any[] = [];
 
     if (options.startId) {
