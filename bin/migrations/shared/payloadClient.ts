@@ -9,6 +9,7 @@ import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
+import { generateSlug } from './importUtils';
 
 const logger = createLogger('PayloadClient');
 
@@ -45,10 +46,11 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
   process.env.DATABASE_URI = databaseUri;
 
   // Import the payload config (it will use the overridden DATABASE_URI)
-  // Note: We import it but don't use it directly since getPayload will load it
-  await import('../../../payload.config');
+  // Import and pass the config directly to getPayload to ensure it's available
+  const payloadConfigModule = await import('../../../payload.config');
+  const payloadConfig = payloadConfigModule.default ?? payloadConfigModule;
 
-  const payload = await getPayload({ config: undefined as any });
+  const payload = await getPayload({ config: payloadConfig as any });
   logger.info(`Connected to ${env} database successfully`);
 
   return payload;
@@ -142,12 +144,7 @@ export async function findOrCreateArtist(
   // Try to create new artist
   try {
     // Generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(name);
 
     // Fetch MusicBrainz ID if not provided
     let mbid = null;
@@ -195,12 +192,7 @@ export async function findOrCreateArtist(
       console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(name);
 
       const existingBySlug = await payload.find({
         collection: 'artists',
@@ -268,12 +260,7 @@ export async function findOrCreateVenue(
   // Try to create new venue
   try {
     // Generate slug from name
-    const slug = name
-      .toLowerCase()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/--+/g, '-')
-      .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+    const slug = generateSlug(name);
 
     const newVenue = await payload.create({
       collection: 'venues',
@@ -296,12 +283,7 @@ export async function findOrCreateVenue(
       logger.debug(`Slug validation failed for venue: ${name}, searching by slug...`);
 
       // Generate the slug that would be created and search for it
-      const slug = name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/--+/g, '-')
-        .replace(/^-+|-+$/g, ''); // Remove leading/trailing dashes
+      const slug = generateSlug(name);
 
       const existingBySlug = await payload.find({
         collection: 'venues',
@@ -321,6 +303,224 @@ export async function findOrCreateVenue(
     }
     // Re-throw if it's not a slug validation error or we couldn't find existing
     logger.debug(`Re-throwing error for venue: ${name}, isSlugError: ${isSlugError}`);
+    throw error;
+  }
+}
+
+/**
+ * Find or create a person by name
+ * Returns the person ID
+ */
+export async function findOrCreatePerson(
+  payload: Payload,
+  name: string,
+  legacyId?: number,
+): Promise<number> {
+  // First try to find by legacy ID if provided
+  if (legacyId !== undefined) {
+    const existingByLegacyId = await payload.find({
+      collection: 'people',
+      where: {
+        legacyId: {
+          equals: legacyId,
+        },
+      },
+      limit: 1,
+    });
+
+    if (existingByLegacyId.docs.length > 0) {
+      return existingByLegacyId.docs[0].id;
+    }
+  }
+
+  // Try to find by name
+  const existing = await payload.find({
+    collection: 'people',
+    where: {
+      name: {
+        equals: name,
+      },
+    },
+    limit: 1,
+  });
+
+  if (existing.docs.length > 0) {
+    return existing.docs[0].id;
+  }
+
+  // Try to create new person
+  try {
+    // Generate slug from name
+    const slug = generateSlug(name);
+
+    const newPerson = await payload.create({
+      collection: 'people',
+      data: {
+        name,
+        slug,
+        legacyId,
+        migratedAt: new Date().toISOString(),
+      },
+    });
+
+    logger.debug(`Created person: ${name}`);
+    return newPerson.id;
+  } catch (error: any) {
+    // If slug validation fails, likely a duplicate with slight name variation
+    const isSlugError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'slug');
+
+    if (isSlugError) {
+      logger.debug(`Slug validation failed for person: ${name}, searching by slug...`);
+
+      // Generate the slug that would be created and search for it
+      const slug = generateSlug(name);
+
+      const existingBySlug = await payload.find({
+        collection: 'people',
+        where: {
+          slug: {
+            equals: slug,
+          },
+        },
+        limit: 1,
+      });
+
+      if (existingBySlug.docs.length > 0) {
+        logger.debug(`Found existing person by slug: "${name}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
+        return existingBySlug.docs[0].id;
+      }
+      logger.debug(`No existing person found with slug: "${slug}"`);
+    }
+    // Re-throw if it's not a slug validation error or we couldn't find existing
+    logger.debug(`Re-throwing error for person: ${name}, isSlugError: ${isSlugError}`);
+    throw error;
+  }
+}
+
+/**
+ * Find a DJ by legacy ID
+ * Returns the DJ ID or null if not found
+ */
+export async function findDJByLegacyId(
+  payload: Payload,
+  legacyId: number,
+): Promise<number | null> {
+  const existing = await payload.find({
+    collection: 'djs',
+    where: {
+      legacyId: {
+        equals: legacyId,
+      },
+    },
+    limit: 1,
+  });
+
+  if (existing.docs.length > 0) {
+    return existing.docs[0].id;
+  }
+
+  return null;
+}
+
+/**
+ * Find or create a record by title and artist
+ * Returns the record ID
+ */
+export async function findOrCreateRecord(
+  payload: Payload,
+  title: string,
+  artistId: number,
+  legacyId?: number,
+): Promise<number> {
+  // First try to find by legacy ID if provided
+  if (legacyId !== undefined) {
+    const existingByLegacyId = await payload.find({
+      collection: 'records',
+      where: {
+        legacyId: {
+          equals: legacyId,
+        },
+      },
+      limit: 1,
+    });
+
+    if (existingByLegacyId.docs.length > 0) {
+      return existingByLegacyId.docs[0].id;
+    }
+  }
+
+  // Try to find by title and artist
+  const existing = await payload.find({
+    collection: 'records',
+    where: {
+      and: [
+        {
+          title: {
+            equals: title,
+          },
+        },
+        {
+          artist: {
+            equals: artistId,
+          },
+        },
+      ],
+    },
+    limit: 1,
+  });
+
+  if (existing.docs.length > 0) {
+    return existing.docs[0].id;
+  }
+
+  // Try to create new record
+  try {
+    // Generate slug from title
+    const slug = generateSlug(title);
+
+    const newRecord = await payload.create({
+      collection: 'records',
+      data: {
+        title,
+        slug,
+        artist: artistId as any,
+        legacyId,
+        migratedAt: new Date().toISOString(),
+      },
+    });
+
+    logger.debug(`Created record: ${title}`);
+    return newRecord.id;
+  } catch (error: any) {
+    // If slug validation fails, likely a duplicate with slight title variation
+    const isSlugError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'slug');
+
+    if (isSlugError) {
+      logger.debug(`Slug validation failed for record: ${title}, searching by slug...`);
+
+      // Generate the slug that would be created and search for it
+      const slug = generateSlug(title);
+
+      const existingBySlug = await payload.find({
+        collection: 'records',
+        where: {
+          slug: {
+            equals: slug,
+          },
+        },
+        limit: 1,
+      });
+
+      if (existingBySlug.docs.length > 0) {
+        logger.debug(`Found existing record by slug: "${title}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
+        return existingBySlug.docs[0].id;
+      }
+      logger.debug(`No existing record found with slug: "${slug}"`);
+    }
+    // Re-throw if it's not a slug validation error or we couldn't find existing
+    logger.debug(`Re-throwing error for record: ${title}, isSlugError: ${isSlugError}`);
     throw error;
   }
 }

@@ -1,5 +1,55 @@
 # Action Items for Repository Maintainers
 
+## Current Tasks
+
+### 🎯 DJ Photo Import with Cloudinary
+
+**Status**: Ready to implement (recommend new branch)
+
+**Context**: 
+- All 32 active DJs have photos that need to be migrated
+- Photo sources: imgur.com URLs, app.box.com URLs, and local `images/` paths
+- Multi-person DJ handling (e.g., "M.J. & Patria") is complete ✅
+
+**Next Steps**:
+1. Create new branch for Cloudinary integration: `feature/dj-photos-cloudinary`
+2. Verify Cloudinary credentials in `.env.local`
+3. Update `importDJs.ts` to:
+   - Download/fetch photos from URLs or local paths
+   - Upload to Cloudinary via Payload Media collection
+   - Link Media record to DJ.photo field
+4. Test with a few DJs before full import
+5. Document photo migration process
+
+**Files to Update**:
+- `bin/migrations/importDJs.ts` - Add photo import logic
+- `bin/migrations/shared/payloadClient.ts` - Add helper for media upload
+- Test with sample DJs before production import
+
+**Reference**:
+- Cloudinary docs: `docs/payload-migration/12-cloudinary-integration.md`
+- DJ inspection showed: 32 DJs with photos, 1 multi-person DJ ("M.J. & Patria" ✅)
+
+---
+
+## Completed Tasks
+
+### ✅ Multi-Person DJ Support (2026-01-03)
+
+**What Changed**:
+- Updated `DJs` collection schema: `person` field now supports `hasMany: true`
+- Modified `importDJs.ts` to parse names like "M.J. & Patria" into separate Person records
+- Added `parseDJNames()` function that splits on " & " or " and "
+- Updated tests to cover multi-person scenarios (14 tests passing)
+
+**Verification**:
+- DJ ID 34 ("M.J. & Patria") successfully created 2 Person records
+- Import tested with IDs 34-84: 21 new, 4 skipped, 0 errors
+
+---
+
+## Historical Items
+
 ## What Happened
 
 After merging PR #99 with dependency updates, Dependabot immediately opened 3 PRs trying to upgrade packages that were intentionally held back to maintain ESLint 8 compatibility.
