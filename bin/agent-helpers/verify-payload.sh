@@ -53,7 +53,9 @@ echo ""
 # Run database migrations
 echo "🔄 Running Payload migrations..."
 cd "$PROJECT_ROOT"
-npm run payload:migrate 2>&1 | tee /tmp/payload-migrate.log || {
+TMP_DIR="$PROJECT_ROOT/.agent-tmp"
+mkdir -p "$TMP_DIR"
+npm run payload:migrate 2>&1 | tee "$TMP_DIR/payload-migrate.log" || {
     echo "❌ Migration failed. Check the output above."
     exit 1
 }
