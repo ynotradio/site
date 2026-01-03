@@ -43,9 +43,9 @@ fi
 echo "🧹 Cleaning up any existing containers..."
 cd "$PROJECT_ROOT"
 echo "⚠️  Note: This will remove volumes and delete any data in the containers"
-echo "   If you have persistent data, use 'docker-compose down' instead"
+echo "   If you have persistent data, use 'docker compose down' instead"
 sleep 2
-docker-compose down -v > /dev/null 2>&1 || true
+docker compose down -v > /dev/null 2>&1 || true
 echo "✅ Cleanup complete"
 echo ""
 
@@ -54,7 +54,7 @@ echo "🚀 Starting Docker containers..."
 echo "   This may take a minute on first run (downloading images)..."
 echo ""
 
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo "✅ Containers started"
@@ -66,7 +66,7 @@ MAX_ATTEMPTS=30
 ATTEMPT=0
 
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
-    if docker-compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
+    if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
         echo "✅ MySQL is ready!"
         echo ""
         break
@@ -80,7 +80,7 @@ done
 if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     echo ""
     echo "❌ MySQL failed to start after 60 seconds"
-    echo "   Check logs: docker-compose logs mysql"
+    echo "   Check logs: docker compose logs mysql"
     exit 1
 fi
 
@@ -103,13 +103,13 @@ done
 if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     echo ""
     echo "❌ Apache/PHP failed to start after 60 seconds"
-    echo "   Check logs: docker-compose logs apache"
+    echo "   Check logs: docker compose logs apache"
     exit 1
 fi
 
 # Check if database has tables
 echo "📊 Checking database status..."
-TABLE_COUNT=$(docker-compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ynot_site'" 2>/dev/null || echo "0")
+TABLE_COUNT=$(docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ynot_site'" 2>/dev/null || echo "0")
 if [ "$TABLE_COUNT" -gt 0 ]; then
     echo "   ✅ Found $TABLE_COUNT tables in database"
 else
@@ -138,10 +138,10 @@ echo "   3. Use PHPMyAdmin at http://localhost:8181 to view/edit data"
 echo "   4. Import database if needed: ./bin/import_db.sh"
 echo ""
 echo "🛑 To stop the containers:"
-echo "   docker-compose down"
+echo "   docker compose down"
 echo ""
 echo "📋 Useful Commands:"
-echo "   - View logs: docker-compose logs -f [service]"
-echo "   - Restart: docker-compose restart"
-echo "   - Execute MySQL: docker-compose exec mysql mysql -u root -proot ynot_site"
+echo "   - View logs: docker compose logs -f [service]"
+echo "   - Restart: docker compose restart"
+echo "   - Execute MySQL: docker compose exec mysql mysql -u root -proot ynot_site"
 echo ""
