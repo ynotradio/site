@@ -66,8 +66,10 @@ export const Records: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        readOnly: true,
-        description: 'MusicBrainz release ID (MBID)',
+        description: 'MusicBrainz release ID (MBID) - Search and select from MusicBrainz',
+        components: {
+          Field: '/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField',
+        },
       },
     },
     {

@@ -65,8 +65,10 @@ export const Songs: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        readOnly: true,
-        description: 'MusicBrainz recording ID (MBID)',
+        description: 'MusicBrainz recording ID (MBID) - Search and select from MusicBrainz',
+        components: {
+          Field: '/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField',
+        },
       },
     },
     {
