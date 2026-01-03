@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveOnDemand, type OnDemand } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('OnDemandImport');
@@ -104,6 +105,25 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       return false;
     }
 
+    // Import on-demand image if available
+    let imageId: string | undefined;
+    if (item.image && item.image.trim() !== '') {
+      logger.debug(`Importing image for on-demand ${item.id}: ${item.image}`);
+      const imageResult = await importImageFromUrl(payload, item.image, {
+        alt: item.headline || 'On-demand show image',
+        caption: item.headline,
+        legacyUrl: item.image,
+        legacyId: item.id,
+      });
+
+      if (imageResult.success && imageResult.mediaId) {
+        imageId = imageResult.mediaId;
+        logger.debug(`Image imported: ${imageResult.cloudinaryUrl}`);
+      } else {
+        logger.warn(`Failed to import image for on-demand ${item.id}: ${imageResult.error}`);
+      }
+    }
+
     // Create on-demand record (no artist relationships in actual ondemand table)
     await payload.create({
       collection: 'ondemand',
@@ -112,7 +132,7 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
         note: item.note || undefined,
         songs: item.songs || undefined,
         audioUrl: item.audio_url || undefined,
-        imageUrl: item.image || undefined,
+        image: imageId,
         date: item.date,
         legacyId: item.id,
         migratedAt: new Date().toISOString(),

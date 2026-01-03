@@ -14,6 +14,7 @@ import type { Payload } from 'payload';
 import { connectToDatabase, getActiveAds, type Ad } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('AdsImport');
@@ -104,6 +105,25 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
       return false;
     }
 
+    // Import ad image if available
+    let imageId: string | undefined;
+    if (ad.image_url && ad.image_url.trim() !== '') {
+      logger.debug(`Importing image for ad ${ad.id}: ${ad.image_url}`);
+      const imageResult = await importImageFromUrl(payload, ad.image_url, {
+        alt: `Advertisement for ${ad.name}`,
+        caption: ad.name,
+        legacyUrl: ad.image_url,
+        legacyId: ad.id,
+      });
+
+      if (imageResult.success && imageResult.mediaId) {
+        imageId = imageResult.mediaId;
+        logger.debug(`Image imported: ${imageResult.cloudinaryUrl}`);
+      } else {
+        logger.warn(`Failed to import image for ad ${ad.id}: ${imageResult.error}`);
+      }
+    }
+
     // Create ad record
     await payload.create({
       collection: 'ads',
@@ -111,7 +131,7 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
         name: ad.name,
         startDate: ad.start_date,
         endDate: ad.end_date,
-        imageUrl: ad.image_url || undefined,
+        image: imageId,
         webUrl: ad.web_url || undefined,
         priority: ad.priority || 0,
         legacyId: ad.id,
