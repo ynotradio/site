@@ -22,7 +22,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
   
   // Try to get the album title from the form context to help with search
   const titleField = useFormFields(([fields]) => fields?.title);
-  const albumTitle = titleField?.value as string | undefined;
+  const albumTitle = (titleField?.value as string | undefined) || '';
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MusicBrainzRelease[]>([]);

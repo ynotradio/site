@@ -22,7 +22,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
   
   // Try to get the song title from the form context to help with search
   const titleField = useFormFields(([fields]) => fields?.title);
-  const songTitle = titleField?.value as string | undefined;
+  const songTitle = (titleField?.value as string | undefined) || '';
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>([]);

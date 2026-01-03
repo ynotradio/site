@@ -75,7 +75,11 @@ const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
  */
 function escapeLuceneSpecialChars(str: string): string {
   // Escape special Lucene characters
-  return str.replace(/([+\-!(){}[\]^"~*?:\\])/g, '\\$1');
+  // Note: && and || need to be escaped before individual & and |
+  return str
+    .replace(/&&/g, '\\&&')
+    .replace(/\|\|/g, '\\||')
+    .replace(/([+\-!(){}[\]^"~*?:\\&|])/g, '\\$1');
 }
 
 /**
@@ -106,7 +110,9 @@ export async function searchArtists(query: string, limit: number = 10): Promise<
   try {
     await waitForRateLimit();
 
-    const encodedQuery = encodeURIComponent(query);
+    // Escape Lucene special characters before encoding
+    const escapedQuery = escapeLuceneSpecialChars(query);
+    const encodedQuery = encodeURIComponent(escapedQuery);
     const url = `${API_BASE}/artist?query=${encodedQuery}&fmt=json&limit=${limit}`;
 
     const response = await fetch(url, {
