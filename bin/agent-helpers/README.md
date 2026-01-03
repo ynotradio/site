@@ -1,11 +1,11 @@
 # Agent Helper Scripts
 
-This directory contains verification scripts for GitHub Copilot agents working on the Y-Not Radio site.
+This directory contains scripts to help GitHub Copilot agents spin up working development environments for the Y-Not Radio site.
 
 ## Scripts
 
 ### `verify-payload.sh`
-Automated script to verify Payload CMS instance is working correctly.
+Spins up a working Payload CMS development environment.
 
 **Usage:**
 ```bash
@@ -17,12 +17,17 @@ Automated script to verify Payload CMS instance is working correctly.
 - Installs dependencies if needed
 - Runs database migrations
 - Starts Payload server
-- Waits for server to be ready
-- Runs comprehensive health checks
-- Provides access information and logs
+- Offers to seed the database with sample data
+- Provides URLs and login instructions
+
+**Use this to:**
+- Get Payload running quickly
+- Test your Payload changes
+- Use the Admin UI like an end user
+- Verify collections and API endpoints
 
 ### `verify-legacy.sh`
-Automated script to verify the legacy PHP/MySQL site is working correctly.
+Spins up the legacy PHP/MySQL site with Docker.
 
 **Usage:**
 ```bash
@@ -31,75 +36,56 @@ Automated script to verify the legacy PHP/MySQL site is working correctly.
 
 **What it does:**
 - Checks Docker is running
-- Cleans up any existing containers
 - Starts Docker containers (MySQL, PHP-FPM, Apache, PHPMyAdmin)
 - Waits for services to be ready
-- Runs health checks on all services
-- Provides access information
+- Provides URLs and database credentials
 
-### `health-check-payload.ts`
-TypeScript health check script for Payload CMS API.
-
-**Usage:**
-```bash
-npx tsx bin/agent-helpers/health-check-payload.ts
-```
-
-**What it checks:**
-- API endpoint accessibility
-- GraphQL endpoint functionality
-- Admin UI accessibility
-- Collection endpoints (users, media, people, djs, artists, venues, concerts, shows, posts)
+**Use this to:**
+- Get the legacy site running quickly
+- Test PHP code changes
+- Browse the site like an end user
+- Access the database via PHPMyAdmin
 
 ## NPM Scripts
 
-For convenience, these scripts are available as npm commands:
+For convenience:
 
 ```bash
-# Verify Payload CMS
+# Start Payload CMS
 npm run verify:payload
 
-# Verify Legacy Site
+# Start Legacy Site
 npm run verify:legacy
 
-# Verify both (runs sequentially)
+# Start both (runs sequentially)
 npm run verify:all
 ```
 
 ## Documentation
 
-See [docs/AGENT_VERIFICATION.md](../../docs/AGENT_VERIFICATION.md) for comprehensive agent verification guide including:
-- Setup instructions
+See [docs/AGENT_VERIFICATION.md](../../docs/AGENT_VERIFICATION.md) for:
+- Environment setup instructions
 - Manual verification steps
-- Troubleshooting
+- Troubleshooting guide
 - Migration strategy compliance
-- Best practices
 
 ## Requirements
 
-**For Payload verification:**
+**For Payload:**
 - Node.js 22+
-- `.env.local` configured with DATABASE_URI and PAYLOAD_SECRET
-- PostgreSQL database (local or Neon)
+- `.env.local` with DATABASE_URI and PAYLOAD_SECRET
+- PostgreSQL database (Neon recommended)
 
-**For Legacy site verification:**
+**For Legacy site:**
 - Docker Desktop or Docker Engine
 - docker-compose
 
 ## Troubleshooting
 
-If scripts fail, check:
+If scripts fail:
 
-1. **Environment setup**: `.env.local` exists and is properly configured
-2. **Dependencies**: Run `npm install` to ensure all dependencies are installed
-3. **Docker**: Ensure Docker is running for legacy site verification
+1. **Environment**: Check `.env.local` exists and is configured
+2. **Dependencies**: Run `npm install`
+3. **Docker**: Ensure Docker is running
 4. **Ports**: Ensure ports 3000 (Payload) and 8080/8181 (Legacy) are available
-5. **Logs**: Check `.agent-tmp/payload-server.log` for Payload errors
-
-## Contributing
-
-If you improve these scripts or add new verification helpers:
-1. Update this README
-2. Update [docs/AGENT_VERIFICATION.md](../../docs/AGENT_VERIFICATION.md)
-3. Test thoroughly before committing
-4. Document any new requirements or dependencies
+5. **Logs**: Check `.agent-tmp/payload-server.log` for errors

@@ -48,17 +48,24 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ## For GitHub Copilot Agents
 
-**👋 Welcome, Copilot Agents!** Start here:
+**👋 Welcome, Copilot Agents!** 
 
-1. **📚 [Complete Agent Index](docs/AGENT_INDEX.md)** - Your comprehensive resource guide
-2. **🚀 [Quick Start Checklist](docs/AGENT_QUICK_START.md)** - Follow this for every task
-3. **📖 [Verification Guide](docs/AGENT_VERIFICATION.md)** - Detailed verification procedures
-4. **💡 [Verification Examples](docs/AGENT_VERIFICATION_EXAMPLES.md)** - Practical scenarios
+**Spin up dev environments:**
+- **Payload CMS**: `npm run verify:payload` → http://localhost:3000/admin
+- **Legacy Site**: `npm run verify:legacy` → http://localhost:8080
 
-**Quick verification commands:**
-- **Verify Payload CMS**: `npm run verify:payload`
-- **Verify Legacy Site**: `npm run verify:legacy`
-- **Verify Both**: `npm run verify:all`
+These scripts will:
+- Start the application
+- Set up the database
+- Offer to seed sample data
+- Give you login instructions
+
+Then use the app like an end user to test your changes!
+
+**Documentation:**
+- **📚 [Complete Agent Index](docs/AGENT_INDEX.md)** - All resources
+- **🚀 [Quick Start](docs/AGENT_QUICK_START.md)** - Checklist for every task
+- **📖 [Verification Guide](docs/AGENT_VERIFICATION.md)** - Detailed instructions
 
 ## Development
 

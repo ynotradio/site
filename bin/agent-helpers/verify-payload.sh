@@ -126,54 +126,40 @@ if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     exit 1
 fi
 
-# Run health checks
-echo "🏥 Running health checks..."
+# Verify server is responding
+echo "✅ Payload server is ready!"
 echo ""
 
-# Check API endpoint
-echo "1. Checking API endpoint..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/api/users)
-if [ "$HTTP_STATUS" = "200" ]; then
-    echo "   ✅ API endpoint responding (HTTP $HTTP_STATUS)"
-else
-    echo "   ⚠️  API endpoint returned HTTP $HTTP_STATUS"
+# Optional: Ask if user wants to seed the database
+read -p "Would you like to seed the database with sample data? (y/N) " -n 1 -r
+echo ""
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "🌱 Seeding database..."
+    npm run payload:seed || echo "   ⚠️  Seeding failed or no seed configuration found"
+    echo ""
 fi
 
-# Check Admin UI
-echo "2. Checking Admin UI..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin)
-if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "302" ]; then
-    echo "   ✅ Admin UI accessible (HTTP $HTTP_STATUS)"
-else
-    echo "   ⚠️  Admin UI returned HTTP $HTTP_STATUS"
-fi
-
-# Run TypeScript health check if available
-echo "3. Running comprehensive health check..."
-if [ -f "$SCRIPT_DIR/health-check-payload.ts" ]; then
-    npx tsx "$SCRIPT_DIR/health-check-payload.ts" || echo "   ⚠️  Some health checks failed"
-else
-    echo "   ⚠️  health-check-payload.ts not found, skipping"
-fi
-
+echo "🎉 Setup Complete!"
 echo ""
-echo "🎉 Verification Complete!"
+echo "📊 Access Information:"
+echo "   🌐 Admin UI: http://localhost:3000/admin"
+echo "      (Create your first admin user here)"
 echo ""
-echo "📊 Summary:"
-echo "   - Payload server running at: http://localhost:3000"
-echo "   - Admin UI: http://localhost:3000/admin"
-echo "   - API endpoint: http://localhost:3000/api"
-echo "   - GraphQL playground: http://localhost:3000/api/graphql"
-echo "   - Server PID: $PAYLOAD_PID"
-echo "   - Logs: $TMP_DIR/payload-server.log"
+echo "   🔌 API endpoint: http://localhost:3000/api"
+echo "   📊 GraphQL playground: http://localhost:3000/api/graphql"
 echo ""
-echo "🔧 To stop the server:"
+echo "   📝 Server logs: $TMP_DIR/payload-server.log"
+echo "   🔧 Server PID: $PAYLOAD_PID"
+echo ""
+echo "💡 Next Steps:"
+echo "   1. Open http://localhost:3000/admin in your browser"
+echo "   2. Create an admin user account"
+echo "   3. Log in and explore the collections"
+echo "   4. Test your changes by using the app"
+echo ""
+echo "🛑 To stop the server:"
 echo "   kill $PAYLOAD_PID"
 echo "   or press Ctrl+C to exit this script"
-echo ""
-echo "📝 To keep server running:"
-echo "   Press Ctrl+C now (server will stop)"
-echo "   Or use: npm run payload:dev (in another terminal)"
 echo ""
 
 # Ask if user wants to keep server running

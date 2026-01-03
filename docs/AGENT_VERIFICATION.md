@@ -2,29 +2,36 @@
 
 **For GitHub Copilot Agents working on Y-Not Radio Site**
 
-This guide provides step-by-step instructions for Copilot agents to verify their changes work correctly with both the Payload CMS instance and the legacy PHP/MySQL site.
+This guide helps you spin up working development environments to test your changes like an end user.
 
-> **💡 New to agent verification?** Check out [AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md) for practical examples and common scenarios.
+> **💡 New to this?** Check out [AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md) for practical examples.
 
 ---
 
 ## 🎯 Quick Start
 
-### For Payload CMS Changes
+### Spin up Payload CMS
 
 ```bash
-./bin/agent-helpers/verify-payload.sh
-# or
 npm run verify:payload
 ```
 
-### For Legacy PHP/MySQL Site Changes
+This will:
+- Start Payload CMS at http://localhost:3000
+- Run migrations
+- Optionally seed sample data
+- Give you login instructions
+
+### Spin up Legacy PHP/MySQL Site
 
 ```bash
-./bin/agent-helpers/verify-legacy.sh
-# or
 npm run verify:legacy
 ```
+
+This will:
+- Start the legacy site at http://localhost:8080
+- Start PHPMyAdmin at http://localhost:8181
+- Give you database credentials
 
 ---
 
@@ -32,9 +39,9 @@ npm run verify:legacy
 
 1. [Overview](#overview)
 2. [Prerequisites](#prerequisites)
-3. [Payload CMS Verification](#payload-cms-verification)
-4. [Legacy Site Verification](#legacy-site-verification)
-5. [Common Verification Tasks](#common-verification-tasks)
+3. [Using Payload CMS](#using-payload-cms)
+4. [Using the Legacy Site](#using-the-legacy-site)
+5. [Testing Your Changes](#testing-your-changes)
 6. [Troubleshooting](#troubleshooting)
 7. [Migration Strategy Compliance](#migration-strategy-compliance)
 
@@ -42,12 +49,12 @@ npm run verify:legacy
 
 ## Overview
 
-The Y-Not Radio site is undergoing a migration from a legacy PHP/MySQL site to Payload CMS with PostgreSQL. As an agent, you should:
+The Y-Not Radio site is migrating from PHP/MySQL to Payload CMS with PostgreSQL. As an agent:
 
-1. **Understand the migration context**: Review [docs/payload-migration/README.md](./payload-migration/README.md)
-2. **Verify your changes don't break existing functionality**
-3. **Test that your changes align with the migration strategy**
-4. **Document any issues or concerns you encounter**
+1. **Spin up working environments** - Use the scripts to get things running
+2. **Test like an end user** - Log in, browse, create/edit content
+3. **Verify your changes** - Make sure everything works as expected
+4. **Document issues** - Note any problems you encounter
 
 ---
 
@@ -87,7 +94,7 @@ The legacy site uses Docker Compose and typically works with default configurati
 The quickest way to verify Payload is working:
 
 ```bash
-./bin/agent-helpers/verify-payload.sh
+npm run verify:payload
 ```
 
 This script will:
@@ -95,13 +102,17 @@ This script will:
 2. ✅ Install dependencies if needed
 3. ✅ Run database migrations
 4. ✅ Start Payload server
-5. ✅ Wait for server to be ready
-6. ✅ Run comprehensive health checks
-7. ✅ Provide summary and access information
+5. ✅ Offer to seed sample data
+6. ✅ Provide URLs and login instructions
 
-### Manual Verification Steps
+Then open http://localhost:3000/admin in your browser to:
+- Create your admin user account
+- Log in and explore collections
+- Test your changes like an end user
 
-If you need to verify manually or the automated script fails:
+### Manual Steps (if needed)
+
+If the automated script doesn't work:
 
 #### 1. Install Dependencies
 
@@ -115,43 +126,30 @@ npm install
 npm run payload:migrate
 ```
 
-Check that:
-- No migration errors occur
-- Database schema is up to date
-
 #### 3. Start Payload Server
 
 ```bash
 npm run payload:dev
 ```
 
-The server should start at http://localhost:3000
+Server starts at http://localhost:3000
 
-#### 4. Verify Access Points
+#### 4. Use the Application
 
-**Admin UI:**
-- URL: http://localhost:3000/admin
-- Should show login screen or dashboard
+**Admin UI:** http://localhost:3000/admin
+- Create an admin account
+- Log in and browse collections
+- Create/edit content
+- Test your changes
 
-**API Endpoint:**
+**API Endpoint:** http://localhost:3000/api
+**GraphQL Playground:** http://localhost:3000/api/graphql
+
+#### 5. Seed Sample Data (optional)
+
 ```bash
-curl http://localhost:3000/api/users
+npm run payload:seed
 ```
-
-**GraphQL Playground:**
-- URL: http://localhost:3000/api/graphql
-- Should show GraphQL interface
-
-#### 5. Test Your Changes
-
-Depending on what you changed:
-
-**Collection Changes:**
-```bash
-# Test via API
-curl http://localhost:3000/api/[collection-name]
-
-# Test via GraphQL
 # Visit http://localhost:3000/api/graphql and run queries
 ```
 
@@ -170,27 +168,31 @@ npx tsx bin/agent-helpers/health-check-payload.ts
 
 ---
 
-## Legacy Site Verification
+## Using the Legacy Site
 
-### Automated Verification Script
-
-The quickest way to verify the legacy site is working:
+### Automated Setup
 
 ```bash
-./bin/agent-helpers/verify-legacy.sh
+npm run verify:legacy
 ```
 
 This script will:
 1. ✅ Check Docker is running
-2. ✅ Clean up any existing containers
-3. ✅ Start Docker containers (MySQL, PHP-FPM, Apache, PHPMyAdmin)
-4. ✅ Wait for services to be ready
-5. ✅ Run health checks
-6. ✅ Provide access information
+2. ✅ Start Docker containers (MySQL, PHP-FPM, Apache, PHPMyAdmin)
+3. ✅ Wait for services to be ready
+4. ✅ Provide URLs and credentials
 
-### Manual Verification Steps
+Then open http://localhost:8080 in your browser to:
+- Browse the legacy PHP site
+- Test functionality like an end user
+- Verify your PHP changes work
 
-If you need to verify manually:
+Use PHPMyAdmin at http://localhost:8181 to:
+- View and edit database records
+- Run SQL queries
+- Import/export data
+
+### Manual Steps (if needed)
 
 #### 1. Start Docker Containers
 
@@ -198,37 +200,24 @@ If you need to verify manually:
 docker-compose up -d
 ```
 
-#### 2. Wait for Services
+#### 2. Use the Application
 
-```bash
-# Check container status
-docker-compose ps
+**Main Site:** http://localhost:8080
+- Browse pages
+- Test functionality
+- Verify your changes
 
-# Check MySQL is ready
-docker-compose exec mysql mysqladmin ping -h localhost -u root -proot
-
-# Check logs if needed
-docker-compose logs -f [service]
-```
-
-#### 3. Verify Access Points
-
-**Main Site:**
-- URL: http://localhost:8080
-- Should display the site homepage
-
-**PHPMyAdmin:**
-- URL: http://localhost:8181
+**PHPMyAdmin:** http://localhost:8181
 - Server: `mysql`
 - Username: `ynot_sql_user`
 - Password: `ynot_sql_pass`
 - Database: `ynot_site`
 
-#### 4. Test Database Access
+#### 3. Import Database (if needed)
 
 ```bash
-# Connect to MySQL
-docker-compose exec mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site
+./bin/import_db.sh
+```
 
 # Run a test query
 docker-compose exec mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "SHOW TABLES;"

@@ -107,72 +107,41 @@ if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
     exit 1
 fi
 
-# Run health checks
-echo "🏥 Running health checks..."
-echo ""
-
-# Check main site
-echo "1. Checking main site (http://localhost:8080)..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080)
-if [ "$HTTP_STATUS" = "200" ]; then
-    echo "   ✅ Main site responding (HTTP $HTTP_STATUS)"
-else
-    echo "   ⚠️  Main site returned HTTP $HTTP_STATUS"
-fi
-
-# Check PHPMyAdmin
-echo "2. Checking PHPMyAdmin (http://localhost:8181)..."
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8181)
-if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "302" ]; then
-    echo "   ✅ PHPMyAdmin accessible (HTTP $HTTP_STATUS)"
-else
-    echo "   ⚠️  PHPMyAdmin returned HTTP $HTTP_STATUS"
-fi
-
-# Check MySQL connection
-echo "3. Checking MySQL connection..."
-if docker-compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "SELECT 1" > /dev/null 2>&1; then
-    echo "   ✅ MySQL connection successful"
-else
-    echo "   ⚠️  MySQL connection failed"
-fi
-
-# Check database tables
-echo "4. Checking database tables..."
+# Check if database has tables
+echo "📊 Checking database status..."
 TABLE_COUNT=$(docker-compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ynot_site'" 2>/dev/null || echo "0")
 if [ "$TABLE_COUNT" -gt 0 ]; then
     echo "   ✅ Found $TABLE_COUNT tables in database"
 else
-    echo "   ⚠️  No tables found in database (may need to import schema)"
-    echo "   💡 Run: ./bin/import_db.sh (if you have ynot_db.sql)"
+    echo "   ⚠️  No tables found in database"
+    echo "   💡 You may need to import the database schema:"
+    echo "      ./bin/import_db.sh"
 fi
 
-# Check PHP version
-echo "5. Checking PHP version..."
-PHP_VERSION=$(docker-compose exec -T phpfpm php -v 2>/dev/null | head -n 1 || echo "Unknown")
-echo "   ℹ️  $PHP_VERSION"
-
 echo ""
-echo "🎉 Verification Complete!"
+echo "🎉 Setup Complete!"
 echo ""
-echo "📊 Summary:"
-echo "   - Main site: http://localhost:8080"
-echo "   - PHPMyAdmin: http://localhost:8181"
-echo "     - Server: mysql"
-echo "     - Username: ynot_sql_user"
-echo "     - Password: ynot_sql_pass"
-echo "     - Database: ynot_site"
+echo "📊 Access Information:"
+echo "   🌐 Main Site: http://localhost:8080"
+echo "      (Browse the legacy PHP site)"
 echo ""
-echo "🐳 Docker Containers:"
-docker-compose ps
+echo "   🗄️  PHPMyAdmin: http://localhost:8181"
+echo "      Server: mysql"
+echo "      Username: ynot_sql_user"
+echo "      Password: ynot_sql_pass"
+echo "      Database: ynot_site"
+echo ""
+echo "💡 Next Steps:"
+echo "   1. Open http://localhost:8080 in your browser"
+echo "   2. Browse the site and test functionality"
+echo "   3. Use PHPMyAdmin at http://localhost:8181 to view/edit data"
+echo "   4. Import database if needed: ./bin/import_db.sh"
+echo ""
+echo "🛑 To stop the containers:"
+echo "   docker-compose down"
 echo ""
 echo "📋 Useful Commands:"
 echo "   - View logs: docker-compose logs -f [service]"
-echo "   - Stop containers: docker-compose down"
-echo "   - Restart containers: docker-compose restart"
+echo "   - Restart: docker-compose restart"
 echo "   - Execute MySQL: docker-compose exec mysql mysql -u root -proot ynot_site"
-echo "   - Import database: ./bin/import_db.sh"
-echo ""
-echo "📝 Note: Containers will keep running in the background"
-echo "   To stop them: docker-compose down"
 echo ""
