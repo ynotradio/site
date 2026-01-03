@@ -46,6 +46,14 @@ If you would like to run Docker without seeing the terminal output, use `docker-
 
 If you run into challenges with a Docker container, this is a [helpful cheatsheet for removing images and volumes](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) before starting over.
 
+## For GitHub Copilot Agents
+
+If you're a GitHub Copilot agent working on this repository, please read the **[Agent Verification Guide](docs/AGENT_VERIFICATION.md)** for step-by-step instructions on how to verify your changes work with both the Payload CMS instance and the legacy PHP/MySQL site.
+
+Quick verification commands:
+- **Verify Payload CMS**: `npm run verify:payload` or `./bin/agent-helpers/verify-payload.sh`
+- **Verify Legacy Site**: `npm run verify:legacy` or `./bin/agent-helpers/verify-legacy.sh`
+
 ## Development
 
 ### PHP Linting

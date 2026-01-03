@@ -26,7 +26,10 @@
     "payload:migrate": "tsx node_modules/.bin/payload migrate",
     "payload:migrate:create": "tsx node_modules/.bin/payload migrate:create",
     "payload:migrate:status": "tsx node_modules/.bin/payload migrate:status",
-    "payload:seed": "tsx node_modules/.bin/payload seed"
+    "payload:seed": "tsx node_modules/.bin/payload seed",
+    "verify:payload": "./bin/agent-helpers/verify-payload.sh",
+    "verify:legacy": "./bin/agent-helpers/verify-legacy.sh",
+    "verify:all": "./bin/agent-helpers/verify-payload.sh && ./bin/agent-helpers/verify-legacy.sh"
   },
   "author": "",
   "license": "ISC",
