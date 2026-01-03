@@ -12,7 +12,7 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveCdOfTheWeek, type CdOfTheWeek } from './database';
-import { getPayloadClient } from './shared/payloadClient';
+import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
@@ -97,6 +97,9 @@ async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<bo
 /**
  * Import a single CD of the Week entry
  */
+/**
+ * Import a single CD of the Week record, dynamically creating artist and record
+ */
 async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promise<boolean> {
   try {
     // Check if already imported
@@ -105,29 +108,47 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       return false;
     }
 
-    // Find record by legacy ID
-    if (!item.record_id) {
-      logger.warn(`CD of the Week ${item.id} has no record ID, skipping`);
-      return false;
-    }
+    // Find or create artist
+    const artistId = await findOrCreateArtist(payload, item.artist, null);
 
-    // Find existing record by legacy ID
+    // Find or create record (album)
+    let recordId: string | number;
     const existingRecord = await payload.find({
       collection: 'records',
       where: {
-        legacyId: {
-          equals: item.record_id,
-        },
+        and: [
+          {
+            title: {
+              equals: item.title,
+            },
+          },
+          {
+            artist: {
+              equals: artistId,
+            },
+          },
+        ],
       },
       limit: 1,
     });
 
-    if (existingRecord.docs.length === 0) {
-      logger.warn(`CD of the Week ${item.id} references record ${item.record_id} which does not exist, skipping`);
-      return false;
+    if (existingRecord.docs.length > 0) {
+      recordId = existingRecord.docs[0].id;
+    } else {
+      // Create new record
+      const newRecord = await payload.create({
+        collection: 'records',
+        data: {
+          title: item.title,
+          artist: artistId as any,
+          label: item.label || undefined,
+          coverImage: item.cd_pic_url || undefined,
+          legacyId: item.id,
+          migratedAt: new Date().toISOString(),
+        },
+      });
+      recordId = newRecord.id;
     }
-
-    const recordId = existingRecord.docs[0].id;
 
     // Convert HTML review to Lexical format
     const review = convertHtmlToLexical(item.review);
@@ -145,7 +166,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       },
     });
 
-    logger.debug(`Imported CD of the Week ${item.id} for ${item.record_title}`);
+    logger.debug(`Imported CD of the Week ${item.id} for ${item.artist} - ${item.title}`);
     return true;
   } catch (error) {
     logger.error(`Failed to import CD of the Week ${item.id}`, error as Error);

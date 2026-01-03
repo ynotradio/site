@@ -5,161 +5,106 @@ This directory contains scripts for importing data from the legacy MySQL databas
 ## Overview
 
 The import scripts migrate data from MySQL tables to Payload collections while:
-- Preserving legacy IDs for tracking and idempotent imports
-- Creating relationships between collections (e.g., artists, venues, DJs)
-- Normalizing data formats (e.g., HTML to Lexical rich text)
-- Enriching data with external services (e.g., MusicBrainz IDs for artists)
-- Supporting incremental imports with `--start-id` option
+- **Normalizing denormalized data**: Extracting artist/venue names from strings into separate collections
+- **Preserving legacy IDs**: For tracking and idempotent imports
+- **Creating relationships**: Between collections (e.g., artists, venues, DJs)
+- **Enriching data**: With external services (e.g., MusicBrainz IDs for artists)
+- **Supporting incremental imports**: With `--start-id` option for large datasets
+
+## Key Architecture Note
+
+The MySQL database has a **denormalized schema** where artist names, venue names, etc. are stored as text fields. The Payload CMS has a **normalized relational schema** where these are separate collections with relationships.
+
+**Migration strategy**: Import scripts dynamically create artist/venue/people records as they encounter new names during import, avoiding duplicates through deduplication logic.
 
 ## Prerequisites
 
-1. **Environment Setup**: Create a `.env.local` file with database credentials:
+1. **Environment Setup**: Create a `.env` file in `bin/migrations/` with database credentials:
 
 ```env
-# Development PostgreSQL database
-DATABASE_URI=postgres://user:pass@localhost:5432/ynot_payload_dev
-NEON_DEV_DATABASE_URL=postgres://user:pass@ep-dev.neon.tech/neondb
-
-# Production PostgreSQL database
-NEON_PROD_DATABASE_URL=postgres://user:pass@ep-prod.neon.tech/neondb
-
 # Legacy MySQL database
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=password
 DB_NAME=ynot_site
+
+# Development PostgreSQL database (if using local)
+DATABASE_URI=postgres://user:pass@localhost:5432/ynot_payload_dev
+
+# Neon PostgreSQL databases
+NEON_DEV_DATABASE_URL=postgres://user:pass@ep-dev.neon.tech/neondb
+NEON_PROD_DATABASE_URL=postgres://user:pass@ep-prod.neon.tech/neondb
 ```
 
 2. **Install Dependencies**:
 ```bash
-npm install
+yarn install
 ```
 
 3. **Database Access**: Ensure you have access to both the legacy MySQL database and target PostgreSQL (Neon) database.
+
+## MySQL Database Schema
+
+The actual MySQL tables available for import:
+
+| MySQL Table | Active Records | Description |
+|-------------|---------------|-------------|
+| `deejays` | 84 | Radio host information |
+| `concerts` | 4,386 | Concert listings with artist/venue names |
+| `cdotw` | 845 | CD of the Week album reviews |
+| `music` | 5,369 | New music tracks |
+| `schedule` | 23,496 | Radio show schedule |
+| `ondemand` | 516 | On-demand audio content |
+| `ads` | - | Sponsor advertisements |
+| `stories` | - | Featured stories |
+| `custom_texts` | - | Custom content blocks |
+
+**Tables that do NOT exist**: `people`, `artists`, `venues`, `records`, `songs`, `shows`
+These are created dynamically during import as destination Payload collections.
 
 ## Import Order
 
 Import scripts should be run in this order to satisfy dependencies:
 
-### 1. Foundation Collections (No Dependencies)
+### Phase 1: Foundation Collections (No Dependencies)
+
 ```bash
-# People - base collection for individuals
-tsx bin/migrations/importPeople.ts --env dev
-
-# Artists - musicians and bands (includes MusicBrainz enrichment)
-tsx bin/migrations/importArtists.ts --env dev
-
-# Venues - concert locations
-tsx bin/migrations/importVenues.ts --env dev
-
 # Ads - sponsor advertisements
-tsx bin/migrations/importAds.ts --env dev
+npx tsx bin/migrations/importAds.ts --env dev
 
 # Posts - content blocks (stories and custom text)
-tsx bin/migrations/importPosts.ts --env dev
+npx tsx bin/migrations/importPosts.ts --env dev
+
+# OnDemand - audio content
+npx tsx bin/migrations/importOnDemand.ts --env dev
 ```
 
-### 2. Dependent Collections (Level 1)
-```bash
-# DJs - depends on People
-tsx bin/migrations/importDJs.ts --env dev
-
-# Songs - depends on Artists
-tsx bin/migrations/importSongs.ts --env dev
-
-# Records - depends on Artists
-tsx bin/migrations/importRecords.ts --env dev
-
-# OnDemand - depends on Artists
-tsx bin/migrations/importOnDemand.ts --env dev
-
-# Concerts - depends on Artists and Venues (already exists)
-tsx bin/migrations/importConcerts.ts --env dev
-```
-
-### 3. Dependent Collections (Level 2)
-```bash
-# Shows - depends on DJs
-tsx bin/migrations/importShows.ts --env dev
-
-# CdOfTheWeek - depends on Records
-tsx bin/migrations/importCdOfTheWeek.ts --env dev
-```
-
-## Script Documentation
-
-### importPeople.ts
-Imports individuals (musicians, DJs, etc.) to the People collection.
-
-**Source**: MySQL `people` table  
-**Target**: Payload `people` collection  
-**Fields**: name, slug, bio, photo, legacyId, migratedAt
+### Phase 2: Core Data with Dynamic Creation
 
 ```bash
-tsx bin/migrations/importPeople.ts --env dev
-tsx bin/migrations/importPeople.ts --env prod --start-id 100
+# DJs - creates People + DJs collections from deejays table
+npx tsx bin/migrations/importDJs.ts --env dev
+
+# Concerts - creates Concerts + Artists + Venues collections from concerts table
+npx tsx bin/migrations/importConcerts.ts --env dev
+
+# CD of the Week - creates CdOfTheWeek + Records + Artists collections from cdotw table
+npx tsx bin/migrations/importCdOfTheWeek.ts --env dev
 ```
 
-### importDJs.ts
-Imports DJ records and links them to their Person records.
-
-**Source**: MySQL `deejays` table  
-**Target**: Payload `djs` collection  
-**Dependencies**: People collection  
-**Fields**: person (relationship), showName, email, externalConnectText, externalConnectUrl, onAir, sortOrder
+### Phase 3: New Music and Schedule
 
 ```bash
-tsx bin/migrations/importDJs.ts --env dev
+# Music - creates Songs + Artists collections from music table
+npx tsx bin/migrations/importMusic.ts --env dev
+
+# Schedule - creates Shows collection from schedule table (references DJs)
+npx tsx bin/migrations/importSchedule.ts --env dev
 ```
 
-### importArtists.ts
-Imports artists with MusicBrainz enrichment for additional metadata.
+## Available Import Scripts
 
-**Source**: MySQL `artists` table  
-**Target**: Payload `artists` collection  
-**Fields**: name, slug, bio, website, musicbrainzId, legacyId, migratedAt  
-**Features**: Automatic MusicBrainz ID lookup
-
-```bash
-tsx bin/migrations/importArtists.ts --env dev
-```
-
-### importVenues.ts
-Imports concert venue information.
-
-**Source**: MySQL `venues` table  
-**Target**: Payload `venues` collection  
-**Fields**: name, slug, address, city, website, legacyId, migratedAt
-
-```bash
-tsx bin/migrations/importVenues.ts --env dev
-```
-
-### importSongs.ts
-Imports song catalog with artist relationships.
-
-**Source**: MySQL `songs` table  
-**Target**: Payload `songs` collection  
-**Dependencies**: Artists collection  
-**Fields**: title, slug, artist (relationship), streamUrl, releaseDate, featureOnNewMusic
-
-```bash
-tsx bin/migrations/importSongs.ts --env dev
-```
-
-### importRecords.ts
-Imports album/record information.
-
-**Source**: MySQL `records` table  
-**Target**: Payload `records` collection  
-**Dependencies**: Artists collection  
-**Fields**: title, slug, artist (relationship), label, releaseDate, coverImage
-
-```bash
-tsx bin/migrations/importRecords.ts --env dev
-```
-
-### importAds.ts
+### ✅ importAds.ts
 Imports sponsor advertisements.
 
 **Source**: MySQL `ads` table  
@@ -167,70 +112,109 @@ Imports sponsor advertisements.
 **Fields**: name, startDate, endDate, imageUrl, webUrl, priority
 
 ```bash
-tsx bin/migrations/importAds.ts --env dev
+npx tsx bin/migrations/importAds.ts --env dev
+npx tsx bin/migrations/importAds.ts --env prod --start-id 100
 ```
 
-### importPosts.ts
+### ✅ importPosts.ts
 Imports content blocks (unified Story + CustomText).
 
-**Source**: MySQL `posts` table  
+**Source**: MySQL `stories` and `custom_texts` tables  
 **Target**: Payload `posts` collection  
 **Fields**: headline, startDate, endDate, content (Lexical), imageUrl, priority  
 **Features**: HTML to Lexical conversion
 
 ```bash
-tsx bin/migrations/importPosts.ts --env dev
+npx tsx bin/migrations/importPosts.ts --env dev
 ```
 
-### importShows.ts
-Imports show schedule entries.
+### ✅ importDJs.ts
+Imports DJ records and dynamically creates linked Person records.
 
-**Source**: MySQL `shows` table  
-**Target**: Payload `shows` collection  
-**Dependencies**: DJs collection  
-**Fields**: date, day, startTime, endTime, host (relationship), note
+**Source**: MySQL `deejays` table  
+**Target**: Payload `djs` + `people` collections  
+**Creates**: Person record for each DJ (from `deejays.name`)  
+**Fields**: person (relationship), showName, email, externalConnectText, externalConnectUrl, onAir, sortOrder
 
 ```bash
-tsx bin/migrations/importShows.ts --env dev
+npx tsx bin/migrations/importDJs.ts --env dev
 ```
 
-### importOnDemand.ts
-Imports on-demand audio content.
+### ✅ importConcerts.ts
+Imports concert listings with dynamic artist and venue creation.
 
-**Source**: MySQL `ondemand` table  
-**Target**: Payload `ondemand` collection  
-**Dependencies**: Artists collection  
-**Fields**: title, artist (relationship), streamUrl
+**Source**: MySQL `concerts` table  
+**Target**: Payload `concerts` + `artists` + `venues` collections  
+**Creates**: 
+- Artist records from `concerts.artist` field (deduplicated)
+- Venue records from `concerts.venue` field (deduplicated)
+- Concert records linking to artists and venues
+
+**Features**: Artist name parsing, MusicBrainz enrichment
 
 ```bash
-tsx bin/migrations/importOnDemand.ts --env dev
+npx tsx bin/migrations/importConcerts.ts --env dev
 ```
 
-### importCdOfTheWeek.ts
-Imports album review entries.
+See [CONCERTS_IMPORT_README.md](./CONCERTS_IMPORT_README.md) for detailed documentation.
 
-**Source**: MySQL `cdoftheweek` table  
-**Target**: Payload `cdoftheweek` collection  
-**Dependencies**: Records collection  
+### ✅ importCdOfTheWeek.ts
+Imports album review entries with dynamic record and artist creation.
+
+**Source**: MySQL `cdotw` table  
+**Target**: Payload `cd_of_the_week` + `records` + `artists` collections  
+**Creates**: 
+- Artist records from `cdotw.artist` field (deduplicated)
+- Record (album) records from `cdotw.title` field (deduplicated)
+- CD of the Week records linking to records and artists
+
 **Fields**: record (relationship), review (Lexical), reviewer, date  
 **Features**: HTML to Lexical conversion
 
 ```bash
-tsx bin/migrations/importCdOfTheWeek.ts --env dev
+npx tsx bin/migrations/importCdOfTheWeek.ts --env dev
 ```
 
-### importConcerts.ts (Existing)
-Imports concert listings with artist and venue relationships.
+### ✅ importOnDemand.ts
+Imports on-demand audio content.
 
-**Source**: MySQL `concerts` table  
-**Target**: Payload `concerts` collection  
-**Dependencies**: Artists, Venues collections  
-**Features**: Artist name parsing, MusicBrainz enrichment
-
-See [CONCERTS_IMPORT_README.md](./CONCERTS_IMPORT_README.md) for details.
+**Source**: MySQL `ondemand` table  
+**Target**: Payload `ondemand` collection  
+**Fields**: headline, note, songs, audioUrl, imageUrl, date
 
 ```bash
-tsx bin/migrations/importConcerts.ts --env dev
+npx tsx bin/migrations/importOnDemand.ts --env dev
+```
+
+### ✅ importMusic.ts
+Imports music tracks with dynamic artist creation.
+
+**Source**: MySQL `music` table (5,369 active records)  
+**Target**: Payload `songs` + `artists` collections  
+**Creates**: 
+- Artist records from `music.artist` field (deduplicated)
+- Song records from `music.song` field
+
+**Fields**: title, slug, artist (relationship), streamUrl, releaseDate, featureOnNewMusic
+
+```bash
+npx tsx bin/migrations/importMusic.ts --env dev
+npx tsx bin/migrations/importMusic.ts --env prod --start-id 1000
+```
+
+### ✅ importSchedule.ts
+Imports radio show schedule entries.
+
+**Source**: MySQL `schedule` table (23,496 active records)  
+**Target**: Payload `shows` collection  
+**Dependencies**: DJs collection (must run importDJs.ts first)  
+**Links**: Attempts to link shows to DJ records by matching host names to people names
+
+**Fields**: date, day, startTime, endTime, host (relationship to djs), hostName, note
+
+```bash
+npx tsx bin/migrations/importSchedule.ts --env dev
+npx tsx bin/migrations/importSchedule.ts --env prod --start-id 1000
 ```
 
 ## Common Options
@@ -260,29 +244,23 @@ This allows for safe incremental imports and recovery from failures.
 ## Shared Utilities
 
 ### database.ts
-Provides MySQL connection and query functions for all tables.
+Provides MySQL connection and query functions.
 
 **Key Functions**:
 - `connectToDatabase()` - Establish MySQL connection
-- `getActivePeople()` - Fetch active people records
-- `getActiveDeejays()` - Fetch active DJ records
-- `getActiveArtists()` - Fetch active artist records
-- `getActiveVenues()` - Fetch active venue records
-- `getActiveSongs()` - Fetch active songs with artist info
-- `getActiveRecords()` - Fetch active records with artist info
-- `getActiveAds()` - Fetch active ads
-- `getActivePosts()` - Fetch active posts
-- `getActiveShows()` - Fetch active shows with DJ info
-- `getActiveOnDemand()` - Fetch active on-demand items
-- `getActiveCdOfTheWeek()` - Fetch active CD of the Week entries
-- `getActiveConcerts()` - Fetch active concerts
+- `getActiveDeejays()` - Fetch active DJ records from `deejays` table
+- `getActiveConcerts()` - Fetch active concerts from `concerts` table
+- `getActiveCdOfTheWeek()` - Fetch active CD of the Week entries from `cdotw` table
+- `getActiveOnDemand()` - Fetch active on-demand items from `ondemand` table
+- `getActiveAds()` - Fetch active ads from `ads` table
+- `getActivePosts()` - Fetch active posts from `stories`/`custom_texts` tables
 
 ### shared/payloadClient.ts
 Provides Payload connection and helper functions.
 
 **Key Functions**:
 - `getPayloadClient(env)` - Get Payload instance for dev/prod
-- `findOrCreateArtist(payload, name, legacyId)` - Upsert artist with MusicBrainz
+- `findOrCreateArtist(payload, name, legacyId)` - Upsert artist with MusicBrainz enrichment
 - `findOrCreateVenue(payload, name, legacyId)` - Upsert venue
 - `findOrCreatePerson(payload, name, legacyId)` - Upsert person
 - `findDJByLegacyId(payload, legacyId)` - Find DJ by legacy ID
@@ -308,19 +286,19 @@ Common validation utilities.
 ## Troubleshooting
 
 ### "Database URI not found"
-Ensure `.env.local` has the correct database URLs for your environment.
+Ensure `.env` file exists in `bin/migrations/` directory with correct database URLs.
 
 ### "MySQL connection failed"
-Check that MySQL server is running and credentials are correct in `.env.local`.
+Check that MySQL server is running and credentials are correct in `.env` file.
+
+### "Table 'ynot_site.X' doesn't exist"
+The script is trying to query a non-existent MySQL table. Refer to this README for actual available tables.
 
 ### "Legacy ID already exists"
 This is normal - the record was already imported. The script skips it automatically.
 
 ### "Artist/DJ/Record not found"
 Run dependent imports first. See [Import Order](#import-order) above.
-
-### Duplicate entries
-If you see duplicates, likely due to name variations (spaces, punctuation). Run a cleanup script or manually merge duplicates in Payload Admin.
 
 ## Testing
 
@@ -352,32 +330,30 @@ For large datasets (1000+ records), consider:
 
 ```bash
 # Production import example
-tsx bin/migrations/importPeople.ts --env prod
-tsx bin/migrations/importArtists.ts --env prod
+npx tsx bin/migrations/importAds.ts --env prod
+npx tsx bin/migrations/importDJs.ts --env prod
+npx tsx bin/migrations/importConcerts.ts --env prod
+npx tsx bin/migrations/importCdOfTheWeek.ts --env prod
 # ... etc
 ```
 
 ## Migration Status
 
-| Collection | Script | Status | Dependencies |
-|------------|--------|--------|--------------|
-| People | importPeople.ts | ✅ Ready | None |
-| DJs | importDJs.ts | ✅ Ready | People |
-| Artists | importArtists.ts | ✅ Ready | None |
-| Venues | importVenues.ts | ✅ Ready | None |
-| Songs | importSongs.ts | ✅ Ready | Artists |
-| Records | importRecords.ts | ✅ Ready | Artists |
-| Ads | importAds.ts | ✅ Ready | None |
-| Posts | importPosts.ts | ✅ Ready | None |
-| Shows | importShows.ts | ✅ Ready | DJs |
-| OnDemand | importOnDemand.ts | ✅ Ready | Artists |
-| CdOfTheWeek | importCdOfTheWeek.ts | ✅ Ready | Records |
-| Concerts | importConcerts.ts | ✅ Ready | Artists, Venues |
+| Script | Status | Source Table | Destination Collection(s) |
+|--------|--------|--------------|---------------------------|
+| importAds.ts | ✅ Ready + Tested | `ads` | `ads` |
+| importPosts.ts | ✅ Ready + Tested | `stories`, `custom_texts` | `posts` |
+| importDJs.ts | ✅ Ready + Tested | `deejays` | `djs`, `people` |
+| importConcerts.ts | ✅ Ready + Tested | `concerts` | `concerts`, `artists`, `venues` |
+| importCdOfTheWeek.ts | ✅ Ready + Tested | `cdotw` | `cd_of_the_week`, `records`, `artists` |
+| importOnDemand.ts | ✅ Ready + Tested | `ondemand` | `ondemand` |
+| importMusic.ts | ✅ Ready + Tested | `music` | `songs`, `artists` |
+| importSchedule.ts | ✅ Ready + Tested | `schedule` | `shows` |
 
 ## Related Documentation
 
 - [CONCERTS_IMPORT_README.md](./CONCERTS_IMPORT_README.md) - Detailed concerts import documentation
 - [ARTIST_CLEANUP_SPEC.md](./ARTIST_CLEANUP_SPEC.md) - Artist name normalization
 - [MUSICBRAINZ_INTEGRATION.md](./MUSICBRAINZ_INTEGRATION.md) - MusicBrainz enrichment
-- [../docs/READONLY_COLLECTIONS.md](../docs/READONLY_COLLECTIONS.md) - Collection schemas
-- [../docs/payload-migration/04-migration-tasks.md](../docs/payload-migration/04-migration-tasks.md) - Migration plan
+- [../../docs/payload-migration/03-core-data-models.md](../../docs/payload-migration/03-core-data-models.md) - Payload collection schemas
+- [AUDIT_FINDINGS.md](./AUDIT_FINDINGS.md) - Detailed audit of import scripts vs MySQL structure

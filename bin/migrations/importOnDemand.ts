@@ -104,25 +104,22 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       return false;
     }
 
-    // Find or create artist if artist_id and artist_name are available
-    let artistId;
-    if (item.artist_id && item.artist_name) {
-      artistId = await findOrCreateArtist(payload, item.artist_name, item.artist_id);
-    }
-
-    // Create on-demand record
+    // Create on-demand record (no artist relationships in actual ondemand table)
     await payload.create({
       collection: 'ondemand',
       data: {
-        title: item.title,
-        artist: artistId ? (artistId as any) : undefined,
-        streamUrl: item.stream_url,
+        headline: item.headline || undefined,
+        note: item.note || undefined,
+        songs: item.songs || undefined,
+        audioUrl: item.audio_url || undefined,
+        imageUrl: item.image || undefined,
+        date: item.date,
         legacyId: item.id,
         migratedAt: new Date().toISOString(),
       },
     });
 
-    logger.debug(`Imported on-demand ${item.id}: ${item.title}`);
+    logger.debug(`Imported on-demand ${item.id}: ${item.headline}`);
     return true;
   } catch (error) {
     logger.error(`Failed to import on-demand ${item.id}`, error as Error);

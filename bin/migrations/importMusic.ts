@@ -1,9 +1,12 @@
 #!/usr/bin/env tsx
 /**
- * Import people from MySQL to Payload CMS PostgreSQL database
+ * Import music (songs) from MySQL to Payload CMS PostgreSQL database
+ *
+ * This script imports songs from the MySQL 'music' table and dynamically
+ * creates artist records as needed.
  *
  * Usage:
- *   tsx bin/migrations/importPeople.ts --env dev --start-id 100
+ *   tsx bin/migrations/importMusic.ts --env dev --start-id 100
  *
  * Options:
  *   --env       Environment to import to: 'dev' (default) or 'prod'
@@ -11,13 +14,23 @@
  */
 
 import type { Payload } from 'payload';
-import { connectToDatabase, getActivePeople, type Person } from './database';
-import { getPayloadClient } from './shared/payloadClient';
+import * as mysql from 'mysql2/promise';
+import { connectToDatabase } from './database';
+import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { generateSlug } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
-const logger = createLogger('PeopleImport');
+const logger = createLogger('MusicImport');
+
+interface Music {
+  id: number;
+  artist: string;
+  song: string;
+  url: string;
+  date: string;
+  deleted: string;
+}
 
 interface ImportStats {
   total: number;
@@ -59,7 +72,7 @@ function parseArgs(): ImportOptions {
       i += 1;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
-Usage: tsx bin/migrations/importPeople.ts [options]
+Usage: tsx bin/migrations/importMusic.ts [options]
 
 Options:
   --env ENV        Environment to import to: 'dev' (default) or 'prod'
@@ -67,8 +80,8 @@ Options:
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importPeople.ts --env dev
-  tsx bin/migrations/importPeople.ts --env prod --start-id 100
+  tsx bin/migrations/importMusic.ts --env dev
+  tsx bin/migrations/importMusic.ts --env prod --start-id 1000
       `);
       process.exit(0);
     }
@@ -78,11 +91,44 @@ Examples:
 }
 
 /**
- * Check if a person with the given legacy ID already exists
+ * Fetch active music records from MySQL
  */
-async function personExists(payload: Payload, legacyId: number): Promise<boolean> {
+async function getActiveMusic(
+  connection: mysql.Connection,
+  options: { startId?: number } = {},
+): Promise<Music[]> {
+  try {
+    let query = "SELECT * FROM music WHERE deleted = 'n'";
+    const params: any[] = [];
+
+    if (options.startId) {
+      query += ' AND id >= ?';
+      params.push(options.startId);
+    }
+
+    query += ' ORDER BY id ASC';
+
+    const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
+
+    let filterMsg = '';
+    if (options.startId) filterMsg += ` startId=${options.startId}`;
+
+    console.log(
+      `Retrieved ${rows.length} music records from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
+    );
+    return rows as Music[];
+  } catch (error) {
+    console.error('Query failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Check if a song with the given legacy ID already exists
+ */
+async function songExists(payload: Payload, legacyId: number): Promise<boolean> {
   const existing = await payload.find({
-    collection: 'people',
+    collection: 'songs',
     where: {
       legacyId: {
         equals: legacyId,
@@ -95,35 +141,41 @@ async function personExists(payload: Payload, legacyId: number): Promise<boolean
 }
 
 /**
- * Import a single person record
+ * Import a single music record, creating artist if needed
  */
-async function importPerson(payload: Payload, person: Person): Promise<boolean> {
+async function importMusic(payload: Payload, music: Music): Promise<boolean> {
   try {
     // Check if already imported
-    if (await personExists(payload, person.id)) {
-      logger.debug(`Person ${person.id} already exists, skipping`);
+    if (await songExists(payload, music.id)) {
+      logger.debug(`Song ${music.id} already exists, skipping`);
       return false;
     }
 
-    // Generate slug from name
-    const slug = generateSlug(person.name);
+    // Find or create artist
+    const artistId = await findOrCreateArtist(payload, music.artist, null);
 
-    // Create person record
+    // Generate slug from song title
+    const slug = generateSlug(`${music.artist} ${music.song}`);
+
+    // Create song record
     await payload.create({
-      collection: 'people',
+      collection: 'songs',
       data: {
-        name: person.name,
+        title: music.song,
         slug,
-        bio: person.bio || undefined,
-        legacyId: person.id,
+        artist: artistId as any,
+        streamUrl: music.url || undefined,
+        releaseDate: music.date,
+        featureOnNewMusic: true, // Assume all imported songs were featured
+        legacyId: music.id,
         migratedAt: new Date().toISOString(),
       },
     });
 
-    logger.debug(`Imported person ${person.id}: ${person.name}`);
+    logger.debug(`Imported song ${music.id}: ${music.artist} - ${music.song}`);
     return true;
   } catch (error) {
-    logger.error(`Failed to import person ${person.id}`, error as Error);
+    logger.error(`Failed to import song ${music.id}`, error as Error);
     return false;
   }
 }
@@ -131,8 +183,8 @@ async function importPerson(payload: Payload, person: Person): Promise<boolean> 
 /**
  * Main import function
  */
-async function importPeople(options: ImportOptions): Promise<void> {
-  logger.info('Starting people import...');
+async function importAllMusic(options: ImportOptions): Promise<void> {
+  logger.info('Starting music import...');
   logger.info(`Environment: ${options.env}`);
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
@@ -156,20 +208,20 @@ async function importPeople(options: ImportOptions): Promise<void> {
     // Connect to Payload (destination)
     payload = await getPayloadClient(options.env);
 
-    // Fetch people from MySQL
-    logger.info('Fetching people from MySQL...');
-    const people = await getActivePeople(mysqlConnection, {
+    // Fetch music from MySQL
+    logger.info('Fetching music records from MySQL...');
+    const musicRecords = await getActiveMusic(mysqlConnection, {
       startId: options.startId,
     });
 
-    stats.total = people.length;
-    logger.info(`Found ${stats.total} people to import`);
+    stats.total = musicRecords.length;
+    logger.info(`Found ${stats.total} music records to import`);
 
-    // Import each person
-    for (let i = 0; i < people.length; i += 1) {
-      const person = people[i];
+    // Import each song
+    for (let i = 0; i < musicRecords.length; i += 1) {
+      const music = musicRecords[i];
 
-      const imported = await importPerson(payload, person);
+      const imported = await importMusic(payload, music);
 
       if (imported) {
         stats.success += 1;
@@ -178,8 +230,8 @@ async function importPeople(options: ImportOptions): Promise<void> {
       }
 
       // Log progress every 10 records
-      if ((i + 1) % 10 === 0 || i === people.length - 1) {
-        logProgress(i + 1, people.length, `Person ${person.id}`);
+      if ((i + 1) % 10 === 0 || i === musicRecords.length - 1) {
+        logProgress(i + 1, musicRecords.length, `Song ${music.id}`);
       }
     }
   } catch (error) {
@@ -195,7 +247,7 @@ async function importPeople(options: ImportOptions): Promise<void> {
 
   // Log summary
   logSummary(stats);
-  logger.info('People import completed');
+  logger.info('Music import completed');
 }
 
 /**
@@ -211,10 +263,10 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importPeople(options).catch((error) => {
+  importAllMusic(options).catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
   });
 }
 
-export { importPeople, parseArgs, importPerson };
+export { importAllMusic, parseArgs, importMusic, getActiveMusic };

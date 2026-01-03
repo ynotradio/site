@@ -1,0 +1,240 @@
+/**
+ * Unit tests for DJs import script
+ */
+
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import type { Payload } from 'payload';
+import type { Deejay } from './database';
+
+// Mock modules
+vi.mock('./database', () => ({
+  connectToDatabase: vi.fn(),
+  getActiveDeejays: vi.fn(),
+}));
+
+vi.mock('./shared/payloadClient', () => ({
+  getPayloadClient: vi.fn(),
+  findOrCreatePerson: vi.fn(),
+}));
+
+vi.mock('./shared/logger', () => ({
+  createLogger: () => ({
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  }),
+  logProgress: vi.fn(),
+  logSummary: vi.fn(),
+}));
+
+describe('importDJs', () => {
+  let mockPayload: Partial<Payload>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mockPayload = {
+      find: vi.fn(),
+      create: vi.fn(),
+    };
+  });
+
+  describe('parseArgs', () => {
+    it('should parse --env dev argument', async () => {
+      const { parseArgs } = await import('./importDJs');
+
+      process.argv = ['node', 'script.ts', '--env', 'dev'];
+      const options = parseArgs();
+
+      expect(options.env).toBe('dev');
+      expect(options.startId).toBeUndefined();
+    });
+
+    it('should parse --env prod argument', async () => {
+      const { parseArgs } = await import('./importDJs');
+
+      process.argv = ['node', 'script.ts', '--env', 'prod'];
+      const options = parseArgs();
+
+      expect(options.env).toBe('prod');
+    });
+
+    it('should parse --start-id argument', async () => {
+      const { parseArgs } = await import('./importDJs');
+
+      process.argv = ['node', 'script.ts', '--start-id', '100'];
+      const options = parseArgs();
+
+      expect(options.startId).toBe(100);
+    });
+
+    it('should throw error for invalid --env value', async () => {
+      const { parseArgs } = await import('./importDJs');
+
+      process.argv = ['node', 'script.ts', '--env', 'invalid'];
+
+      expect(() => parseArgs()).toThrow('--env must be either "dev" or "prod"');
+    });
+  });
+
+  describe('importDJ', () => {
+    it('should skip already imported DJ', async () => {
+      const { importDJ } = await import('./importDJs');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [{ id: 'existing-dj' }] });
+
+      const dj: Deejay = {
+        id: 1,
+        name: 'John Doe',
+        show: 'The Morning Show',
+        email: 'john@example.com',
+        external_connect_text: 'Follow on Twitter',
+        external_connect_url: 'https://twitter.com/johndoe',
+        pic: 'john.jpg',
+        sort: 1,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(false);
+      expect(mockPayload.create).not.toHaveBeenCalled();
+    });
+
+    it('should import new DJ successfully and create person', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 1,
+        name: 'John Doe',
+        show: 'The Morning Show',
+        email: 'john@example.com',
+        external_connect_text: 'Follow on Twitter',
+        external_connect_url: 'https://twitter.com/johndoe',
+        pic: 'john.jpg',
+        sort: 1,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(findOrCreatePerson).toHaveBeenCalledWith(mockPayload, 'John Doe');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: {
+          person: 'person-id-123',
+          showName: 'The Morning Show',
+          email: 'john@example.com',
+          externalConnectText: 'Follow on Twitter',
+          externalConnectUrl: 'https://twitter.com/johndoe',
+          onAir: true,
+          sortOrder: 1,
+          legacyId: 1,
+          migratedAt: expect.any(String),
+        },
+      });
+    });
+
+    it('should handle empty email and external connect fields', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 1,
+        name: 'Jane Smith',
+        show: 'Afternoon Drive',
+        email: '',
+        external_connect_text: '',
+        external_connect_url: '',
+        pic: '',
+        sort: 2,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: expect.objectContaining({
+          email: undefined,
+          externalConnectText: undefined,
+          externalConnectUrl: undefined,
+        }),
+      });
+    });
+
+    it('should set onAir to false when deleted is Yes', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 1,
+        name: 'Former DJ',
+        show: 'Old Show',
+        email: 'former@example.com',
+        external_connect_text: '',
+        external_connect_url: '',
+        pic: '',
+        sort: 99,
+        deleted: 'Yes',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: expect.objectContaining({
+          onAir: false,
+        }),
+      });
+    });
+
+    it('should preserve sort order', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 1,
+        name: 'DJ Name',
+        show: 'Show Name',
+        email: 'dj@example.com',
+        external_connect_text: '',
+        external_connect_url: '',
+        pic: '',
+        sort: 5,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: expect.objectContaining({
+          sortOrder: 5,
+        }),
+      });
+    });
+  });
+});
