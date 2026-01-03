@@ -46,10 +46,11 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
   process.env.DATABASE_URI = databaseUri;
 
   // Import the payload config (it will use the overridden DATABASE_URI)
-  // Note: We import it but don't use it directly since getPayload will load it
-  await import('../../../payload.config');
+  // Import and pass the config directly to getPayload to ensure it's available
+  const payloadConfigModule = await import('../../../payload.config');
+  const payloadConfig = payloadConfigModule.default ?? payloadConfigModule;
 
-  const payload = await getPayload({ config: undefined as any });
+  const payload = await getPayload({ config: payloadConfig as any });
   logger.info(`Connected to ${env} database successfully`);
 
   return payload;

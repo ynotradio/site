@@ -19,8 +19,9 @@ export const DJs: CollectionConfig = {
       name: 'person',
       type: 'relationship',
       relationTo: 'people',
+      hasMany: true,
       admin: {
-        description: 'Link to the person record',
+        description: 'Link to the person record(s) - can be multiple for co-hosted shows',
       },
     },
     {

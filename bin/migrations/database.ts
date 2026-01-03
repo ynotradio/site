@@ -28,8 +28,6 @@ export interface Concert {
   deleted: string;
 }
 
-
-
 // Ad (Sponsor) interface
 export interface Ad {
   id: number;

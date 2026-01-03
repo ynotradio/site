@@ -94,6 +94,24 @@ async function djExists(payload: Payload, legacyId: number): Promise<boolean> {
 }
 
 /**
+ * Parse DJ names that may contain multiple people
+ * E.g., "M.J. & Patria" -> ["M.J.", "Patria"]
+ */
+function parseDJNames(name: string): string[] {
+  // Split on " & " or " and " (case insensitive)
+  const separators = [' & ', ' and ', ' And ', ' AND '];
+
+  for (const separator of separators) {
+    if (name.includes(separator)) {
+      return name.split(separator).map((n) => n.trim()).filter(Boolean);
+    }
+  }
+
+  // Single person
+  return [name];
+}
+
+/**
  * Import a single DJ record
  */
 async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
@@ -104,14 +122,20 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       return false;
     }
 
-    // Find or create person record for this DJ
-    const personId = await findOrCreatePerson(payload, dj.name);
+    // Parse DJ name(s) - may contain multiple people (e.g., "M.J. & Patria")
+    const names = parseDJNames(dj.name);
+    logger.debug(`DJ ${dj.id}: Found ${names.length} person(s): ${names.join(', ')}`);
+
+    // Find or create person record(s) for this DJ
+    const personIds = await Promise.all(
+      names.map((name) => findOrCreatePerson(payload, name)),
+    );
 
     // Create DJ record
     await payload.create({
       collection: 'djs',
       data: {
-        person: personId as any,
+        person: personIds as any,
         showName: dj.show,
         email: dj.email || undefined,
         externalConnectText: dj.external_connect_text || undefined,
@@ -123,7 +147,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       },
     });
 
-    logger.debug(`Imported DJ ${dj.id}: ${dj.name} (${dj.show})`);
+    logger.debug(`Imported DJ ${dj.id}: ${dj.name} (${dj.show}) - ${personIds.length} person(s)`);
     return true;
   } catch (error) {
     logger.error(`Failed to import DJ ${dj.id}`, error as Error);
@@ -214,10 +238,14 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importDJs(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importDJs(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
-export { importDJs, parseArgs, importDJ };
+export {
+  importDJs, parseArgs, importDJ, parseDJNames,
+};

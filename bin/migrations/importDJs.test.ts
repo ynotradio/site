@@ -40,6 +40,28 @@ describe('importDJs', () => {
     };
   });
 
+  describe('parseDJNames', () => {
+    it('should parse single name', async () => {
+      const { parseDJNames } = await import('./importDJs');
+      expect(parseDJNames('John Doe')).toEqual(['John Doe']);
+    });
+
+    it('should parse names separated by &', async () => {
+      const { parseDJNames } = await import('./importDJs');
+      expect(parseDJNames('M.J. & Patria')).toEqual(['M.J.', 'Patria']);
+    });
+
+    it('should parse names separated by and', async () => {
+      const { parseDJNames } = await import('./importDJs');
+      expect(parseDJNames('John and Jane')).toEqual(['John', 'Jane']);
+    });
+
+    it('should handle whitespace properly', async () => {
+      const { parseDJNames } = await import('./importDJs');
+      expect(parseDJNames('Bob  &  Alice')).toEqual(['Bob', 'Alice']);
+    });
+  });
+
   describe('parseArgs', () => {
     it('should parse --env dev argument', async () => {
       const { parseArgs } = await import('./importDJs');
@@ -129,7 +151,7 @@ describe('importDJs', () => {
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'djs',
         data: {
-          person: 'person-id-123',
+          person: ['person-id-123'],
           showName: 'The Morning Show',
           email: 'john@example.com',
           externalConnectText: 'Follow on Twitter',
@@ -137,6 +159,48 @@ describe('importDJs', () => {
           onAir: true,
           sortOrder: 1,
           legacyId: 1,
+          migratedAt: expect.any(String),
+        },
+      });
+    });
+
+    it('should handle multi-person DJs (e.g., "M.J. & Patria")', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock)
+        .mockResolvedValueOnce('person-id-mj')
+        .mockResolvedValueOnce('person-id-patria');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-789' });
+
+      const dj: Deejay = {
+        id: 34,
+        name: 'M.J. & Patria',
+        show: 'Women CRUSH Wednesdays',
+        email: 'mjpatria@example.com',
+        external_connect_text: '',
+        external_connect_url: '',
+        pic: 'mjpatria.jpg',
+        sort: 10,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(findOrCreatePerson).toHaveBeenCalledTimes(2);
+      expect(findOrCreatePerson).toHaveBeenCalledWith(mockPayload, 'M.J.');
+      expect(findOrCreatePerson).toHaveBeenCalledWith(mockPayload, 'Patria');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: {
+          person: ['person-id-mj', 'person-id-patria'],
+          showName: 'Women CRUSH Wednesdays',
+          email: 'mjpatria@example.com',
+          onAir: true,
+          sortOrder: 10,
+          legacyId: 34,
           migratedAt: expect.any(String),
         },
       });

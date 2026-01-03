@@ -12,7 +12,7 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveOnDemand, type OnDemand } from './database';
-import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
+import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import type { DatabaseEnv } from './shared/payloadClient';
 

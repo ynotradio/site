@@ -320,4 +320,6 @@ if (isMainModule()) {
   });
 }
 
-export { importAllSchedule, parseArgs, importSchedule, getActiveSchedule };
+export {
+  importAllSchedule, parseArgs, importSchedule, getActiveSchedule,
+};

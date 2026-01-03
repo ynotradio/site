@@ -269,4 +269,6 @@ if (isMainModule()) {
   });
 }
 
-export { importAllMusic, parseArgs, importMusic, getActiveMusic };
+export {
+  importAllMusic, parseArgs, importMusic, getActiveMusic,
+};
