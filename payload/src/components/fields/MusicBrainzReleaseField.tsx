@@ -30,7 +30,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
   const [showResults, setShowResults] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<MusicBrainzRelease | null>(null);
 
-  // Load selected release data if value exists
+  // Load selected release data if value exists (only once on mount or when value changes)
   useEffect(() => {
     if (value && !selectedRelease) {
       setSelectedRelease({
@@ -39,7 +39,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
         score: 100,
       });
     }
-  }, [value, selectedRelease, albumTitle]);
+  }, [value]); // Removed selectedRelease and albumTitle to prevent re-renders
 
   // Debounced search
   useEffect(() => {

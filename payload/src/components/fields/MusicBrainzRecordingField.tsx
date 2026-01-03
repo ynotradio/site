@@ -30,7 +30,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
   const [showResults, setShowResults] = useState(false);
   const [selectedRecording, setSelectedRecording] = useState<MusicBrainzRecording | null>(null);
 
-  // Load selected recording data if value exists
+  // Load selected recording data if value exists (only once on mount or when value changes)
   useEffect(() => {
     if (value && !selectedRecording) {
       setSelectedRecording({
@@ -39,7 +39,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
         score: 100,
       });
     }
-  }, [value, selectedRecording, songTitle]);
+  }, [value]); // Removed selectedRecording and songTitle to prevent re-renders
 
   // Debounced search
   useEffect(() => {

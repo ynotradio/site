@@ -26,7 +26,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
   const [showResults, setShowResults] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<MusicBrainzArtist | null>(null);
 
-  // Load selected artist data if value exists
+  // Load selected artist data if value exists (only once on mount or when value changes)
   useEffect(() => {
     if (value && !selectedArtist) {
       // We have an MBID but no artist data - this means it was set externally or on load
@@ -38,7 +38,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
         score: 100,
       });
     }
-  }, [value, selectedArtist]);
+  }, [value]); // Removed selectedArtist to prevent re-renders
 
   // Debounced search
   useEffect(() => {
