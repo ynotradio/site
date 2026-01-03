@@ -106,7 +106,8 @@ export async function getActiveDeejays(
   options: ImportOptions = {},
 ): Promise<Deejay[]> {
   try {
-    let query = "SELECT * FROM deejays WHERE deleted = 'No'";
+    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
+    let query = "SELECT * FROM deejays WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
     const params: any[] = [];
 
     // Add ID filter if provided
@@ -173,7 +174,9 @@ export async function getActiveAds(
   options: ImportOptions = {},
 ): Promise<Ad[]> {
   try {
-    let query = "SELECT * FROM ads WHERE deleted = 'No'";
+    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
+    // This is more inclusive and will catch records where deleted is 'n', 'N', 'no', 'No', NULL, or empty
+    let query = "SELECT * FROM ads WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
     const params: any[] = [];
 
     if (options.startId) {
@@ -203,7 +206,8 @@ export async function getActivePosts(
   options: ImportOptions = {},
 ): Promise<Post[]> {
   try {
-    let query = "SELECT * FROM posts WHERE deleted = 'No'";
+    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
+    let query = "SELECT * FROM posts WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
     const params: any[] = [];
 
     if (options.startId) {
@@ -233,7 +237,8 @@ export async function getActiveOnDemand(
   options: ImportOptions = {},
 ): Promise<OnDemand[]> {
   try {
-    let query = "SELECT * FROM ondemand WHERE deleted = 'n'";
+    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
+    let query = "SELECT * FROM ondemand WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
     const params: any[] = [];
 
     if (options.startId) {
