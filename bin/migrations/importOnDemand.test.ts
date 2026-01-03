@@ -112,7 +112,7 @@ describe('importOnDemand', () => {
           note: 'Great music and discussion',
           songs: 'Track 1, Track 2, Track 3',
           audioUrl: 'https://example.com/audio.mp3',
-          imageUrl: 'https://example.com/image.jpg',
+          image: undefined,
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
@@ -148,7 +148,7 @@ describe('importOnDemand', () => {
           note: undefined,
           songs: undefined,
           audioUrl: undefined,
-          imageUrl: undefined,
+          image: undefined,
         }),
       });
     });
@@ -181,7 +181,7 @@ describe('importOnDemand', () => {
           note: 'Live from the studio',
           songs: 'Song A, Song B, Song C',
           audioUrl: 'https://audio.example.com/episode42.mp3',
-          imageUrl: 'https://img.example.com/show.jpg',
+          image: undefined,
           date: '2024-03-20',
           legacyId: 42,
           migratedAt: expect.any(String),

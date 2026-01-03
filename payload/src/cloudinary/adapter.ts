@@ -21,44 +21,40 @@ function generateRandomFilename(): string {
   return `${timestamp}-${random}`;
 }
 
-export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
+export const cloudinaryAdapter: Adapter = ({ prefix }) => {
   const collectionPrefix = prefix || folder;
 
   return {
     name: 'cloudinary',
-    
-    handleUpload: async ({ data, file }) => {
-      try {
-        const randomFilename = generateRandomFilename();
-        
-        const result: UploadApiResponse = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream(
-            {
-              folder: collectionPrefix,
-              public_id: randomFilename,
-              resource_type: 'image',
-              overwrite: false,
-            },
-            (error, result) => {
-              if (error) reject(error);
-              else if (result) resolve(result);
-              else reject(new Error('Upload failed without error'));
-            }
-          );
-          uploadStream.end(file.buffer);
-        });
 
-        // Store Cloudinary public_id for deletion and reference
-        data.cloudinaryPublicId = result.public_id;
-        
-        // Important: The filename field should contain just the public_id
-        // The plugin's generateFileURL will construct the full URL
-        data.filename = result.public_id;
-        
-      } catch (error) {
-        console.error('Cloudinary upload error:', error);
-        throw error;
-      }
+    handleUpload: async ({ data, file }) => {
+      const randomFilename = generateRandomFilename();
+
+      const uploadResult: UploadApiResponse = await new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: collectionPrefix,
+            public_id: randomFilename,
+            resource_type: 'image',
+            overwrite: false,
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else if (result) resolve(result);
+            else reject(new Error('Upload failed without error'));
+          },
+        );
+        uploadStream.end(file.buffer);
+      });
+
+      // Store Cloudinary public_id for deletion and reference
+      // eslint-disable-next-line no-param-reassign
+      data.cloudinaryPublicId = uploadResult.public_id;
+
+      // Important: The filename field should contain just the public_id
+      // The plugin's generateFileURL will construct the full URL
+      // eslint-disable-next-line no-param-reassign
+      data.filename = uploadResult.public_id;
     },
 
     handleDelete: async ({ doc, filename }) => {
@@ -67,7 +63,6 @@ export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
         const publicId = (doc as any).cloudinaryPublicId || filename;
         await cloudinary.uploader.destroy(publicId);
       } catch (error) {
-        console.error('Cloudinary delete error:', error);
         // Don't throw - file might already be deleted
       }
     },
@@ -77,7 +72,7 @@ export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
       // Redirect to the actual Cloudinary URL
       const { filename } = params;
       const publicId = filename.includes('/') ? filename : `${collectionPrefix}/${filename}`;
-      
+
       const url = cloudinary.url(publicId, {
         secure: true,
         resource_type: 'image',

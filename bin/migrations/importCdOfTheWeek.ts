@@ -127,7 +127,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
 
     // Import cover image if available
     let coverImageId: string | undefined;
-    
+
     // Try legacy URL first
     if (item.cd_pic_url && item.cd_pic_url.trim() !== '') {
       logger.debug(`Importing cover image for CD ${item.id}: ${item.cd_pic_url}`);
@@ -151,7 +151,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       try {
         logger.debug(`Attempting to fetch cover art from MusicBrainz for ${item.title}`);
         const coverArtUrl = await getAlbumCoverArt(item.title, item.artist);
-        
+
         if (coverArtUrl) {
           logger.debug(`Found MusicBrainz cover art: ${coverArtUrl}`);
           const imageResult = await importImageFromUrl(payload, coverArtUrl, {
