@@ -1,6 +1,5 @@
 import type { Adapter } from '@payloadcms/plugin-cloud-storage/types';
-import { v2 as cloudinary } from 'cloudinary';
-import type { CollectionConfig } from 'payload';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import path from 'path';
 
 // Configure Cloudinary
@@ -20,27 +19,30 @@ export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
     
     handleUpload: async ({ data, file }) => {
       try {
-        const result = await new Promise<any>((resolve, reject) => {
+        const result: UploadApiResponse = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
               folder: collectionPrefix,
               public_id: path.parse(file.filename).name,
-              resource_type: 'auto',
+              resource_type: 'image',
               overwrite: false,
             },
             (error, result) => {
               if (error) reject(error);
-              else resolve(result);
+              else if (result) resolve(result);
+              else reject(new Error('Upload failed without error'));
             }
           );
           uploadStream.end(file.buffer);
         });
 
-        // Store Cloudinary public_id in the document
+        // Store Cloudinary public_id for deletion and reference
         data.cloudinaryPublicId = result.public_id;
-        data.url = result.secure_url;
         
-        return data;
+        // Important: The filename field should contain just the public_id
+        // The plugin's generateFileURL will construct the full URL
+        data.filename = result.public_id;
+        
       } catch (error) {
         console.error('Cloudinary upload error:', error);
         throw error;
@@ -49,30 +51,26 @@ export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
 
     handleDelete: async ({ doc, filename }) => {
       try {
-        const publicId = (doc as any).cloudinaryPublicId || `${collectionPrefix}/${path.parse(filename).name}`;
+        // Use the stored cloudinaryPublicId if available, otherwise derive from filename
+        const publicId = (doc as any).cloudinaryPublicId || filename;
         await cloudinary.uploader.destroy(publicId);
       } catch (error) {
         console.error('Cloudinary delete error:', error);
-        throw error;
+        // Don't throw - file might already be deleted
       }
     },
 
-    generateURL: ({ filename, prefix: urlPrefix }) => {
-      // Return the Cloudinary URL directly
-      const publicId = `${urlPrefix || collectionPrefix}/${path.parse(filename).name}`;
-      return cloudinary.url(publicId, {
-        secure: true,
-        resource_type: 'auto',
-      });
-    },
-
     staticHandler: async (req, { params }) => {
-      // For direct file access, redirect to Cloudinary
+      // This handles direct file access via /media/file/:filename
+      // Redirect to the actual Cloudinary URL
       const { filename } = params;
-      const publicId = `${collectionPrefix}/${path.parse(filename).name}`;
+      const publicId = filename.includes('/') ? filename : `${collectionPrefix}/${filename}`;
+      
       const url = cloudinary.url(publicId, {
         secure: true,
-        resource_type: 'auto',
+        resource_type: 'image',
+        fetch_format: 'auto',
+        quality: 'auto',
       });
 
       return Response.redirect(url, 302);
