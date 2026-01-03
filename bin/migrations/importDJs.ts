@@ -156,7 +156,26 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       collection: 'djs',
       data: {
         person: personIds as any,
-        showName: dj.show,
+        description: {
+          root: {
+            type: 'root',
+            children: [
+              {
+                type: 'paragraph',
+                children: [
+                  {
+                    type: 'text',
+                    text: dj.show,
+                  },
+                ],
+              },
+            ],
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            version: 1,
+          },
+        },
         email: dj.email || undefined,
         externalConnectText: dj.external_connect_text || undefined,
         externalConnectUrl: dj.external_connect_url || undefined,

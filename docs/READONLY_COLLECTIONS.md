@@ -23,7 +23,7 @@ Radio hosts and show information
 
 **Fields:**
 - `person` (relationship to people)
-- `showName` (text, required, indexed)
+- `description` (richText - description of show(s) hosted)
 - `email` (email)
 - `externalConnectText` (text)
 - `externalConnectUrl` (text)

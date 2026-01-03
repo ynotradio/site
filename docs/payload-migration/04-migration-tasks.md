@@ -216,12 +216,12 @@ The People collection stores individuals (musicians, DJs, etc.). This is a base 
 **Estimated Effort:** Small
 
 **Context:**
-The DJ collection extends People with DJ-specific information (show name, social links, on-air status).
+The DJ collection extends People with DJ-specific information (show description, social links, on-air status).
 
 **Requirements:**
 1. Create `payload/src/collections/DJs.ts`
 2. Add relationship to People collection
-3. Add fields: showName, onAir, bio, socialLinks (JSON)
+3. Add fields: description (richText), onAir, externalConnectText, externalConnectUrl
 4. Add migration tracking fields
 5. Test CRUD operations
 

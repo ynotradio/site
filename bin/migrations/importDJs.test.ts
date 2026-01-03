@@ -152,7 +152,26 @@ describe('importDJs', () => {
         collection: 'djs',
         data: {
           person: ['person-id-123'],
-          showName: 'The Morning Show',
+          description: {
+            root: {
+              type: 'root',
+              children: [
+                {
+                  type: 'paragraph',
+                  children: [
+                    {
+                      type: 'text',
+                      text: 'The Morning Show',
+                    },
+                  ],
+                },
+              ],
+              direction: 'ltr',
+              format: '',
+              indent: 0,
+              version: 1,
+            },
+          },
           email: 'john@example.com',
           externalConnectText: 'Follow on Twitter',
           externalConnectUrl: 'https://twitter.com/johndoe',
@@ -196,7 +215,26 @@ describe('importDJs', () => {
         collection: 'djs',
         data: {
           person: ['person-id-mj', 'person-id-patria'],
-          showName: 'Women CRUSH Wednesdays',
+          description: {
+            root: {
+              type: 'root',
+              children: [
+                {
+                  type: 'paragraph',
+                  children: [
+                    {
+                      type: 'text',
+                      text: 'Women CRUSH Wednesdays',
+                    },
+                  ],
+                },
+              ],
+              direction: 'ltr',
+              format: '',
+              indent: 0,
+              version: 1,
+            },
+          },
           email: 'mjpatria@example.com',
           onAir: true,
           sortOrder: 10,

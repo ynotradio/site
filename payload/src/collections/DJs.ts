@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const DJs: CollectionConfig = {
@@ -7,8 +8,8 @@ export const DJs: CollectionConfig = {
     drafts: true,
   },
   admin: {
-    useAsTitle: 'showName',
-    defaultColumns: ['showName', 'person', 'onAir', 'updatedAt'],
+    useAsTitle: 'person',
+    defaultColumns: ['person', 'onAir', 'updatedAt'],
     group: 'Radio',
   },
   access: {
@@ -28,12 +29,11 @@ export const DJs: CollectionConfig = {
       },
     },
     {
-      name: 'showName',
-      type: 'text',
-      required: true,
-      index: true,
+      name: 'description',
+      type: 'richText',
+      editor: lexicalEditor(),
       admin: {
-        description: 'Name of the radio show',
+        description: 'Description of the show(s) hosted by this DJ - supports line breaks for multiple shows',
       },
     },
     {

@@ -53,8 +53,8 @@ Each collection's `admin` configuration includes a `group` property:
 export const DJs: CollectionConfig = {
   slug: 'djs',
   admin: {
-    useAsTitle: 'showName',
-    defaultColumns: ['showName', 'person', 'onAir', 'updatedAt'],
+    useAsTitle: 'person',
+    defaultColumns: ['person', 'onAir', 'updatedAt'],
     group: 'Radio', // <-- Hierarchical navigation group
   },
   // ... rest of configuration
