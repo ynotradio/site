@@ -51,10 +51,17 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 **👋 Welcome, Copilot Agents!** 
 
 **First time?** → **[Local Setup Guide](docs/LOCAL_SETUP_GUIDE.md)** 📖
+**Automated/CI?** → **[Automated Agent Setup](docs/AUTOMATED_AGENT_SETUP.md)** 🤖
 
 **Spin up dev environments:**
 - **Payload CMS**: `npm run verify:payload` → http://localhost:3000/admin
 - **Legacy Site**: `npm run verify:legacy` → http://localhost:8080
+
+**For containerized Playwright testing:**
+```bash
+./bin/agent-helpers/setup-agent-environment.sh --all
+npx playwright test
+```
 
 These scripts will:
 - Start the application
@@ -65,6 +72,7 @@ These scripts will:
 Then use the app like an end user to test your changes!
 
 **Documentation:**
+- **🤖 [Automated Agent Setup](docs/AUTOMATED_AGENT_SETUP.md)** - Containerized environments for CI/Playwright
 - **🏠 [Local Setup Guide](docs/LOCAL_SETUP_GUIDE.md)** - Step-by-step workstation setup
 - **📚 [Complete Agent Index](docs/AGENT_INDEX.md)** - All resources
 - **🚀 [Quick Start](docs/AGENT_QUICK_START.md)** - Checklist for every task

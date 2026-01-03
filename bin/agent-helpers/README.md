@@ -2,7 +2,7 @@
 
 This directory contains scripts to help GitHub Copilot agents spin up working development environments for the Y-Not Radio site.
 
-## Scripts
+## For Human Developers (Local Workstation)
 
 ### `verify-payload.sh`
 Spins up a working Payload CMS development environment.
@@ -45,6 +45,44 @@ Spins up the legacy PHP/MySQL site with Docker.
 - Test PHP code changes
 - Browse the site like an end user
 - Access the database via PHPMyAdmin
+
+## For Automated Agents (CI/CD, Containerized)
+
+### `setup-agent-environment.sh`
+**NEW:** Sets up fully containerized environments for automated testing with Playwright.
+
+**Usage:**
+```bash
+./bin/agent-helpers/setup-agent-environment.sh [--payload] [--legacy] [--all]
+```
+
+**What it does:**
+- Starts Payload and/or Legacy in fully containerized environments
+- Includes PostgreSQL and MySQL in containers
+- Waits for all services to be ready
+- Provides accessible URLs for Playwright testing
+
+**Use this for:**
+- GitHub Copilot agents needing to test with real apps
+- CI/CD pipelines requiring functional environments
+- Taking screenshots with Playwright
+- Automated end-to-end testing
+
+### `teardown-agent-environment.sh`
+Stops and cleans up all containerized services.
+
+**Usage:**
+```bash
+./bin/agent-helpers/teardown-agent-environment.sh
+```
+
+### `start-payload-containerized.sh`
+Starts only Payload in a containerized environment.
+
+### `start-legacy-containerized.sh`
+Starts only Legacy site in a containerized environment.
+
+See [docs/AUTOMATED_AGENT_SETUP.md](../../docs/AUTOMATED_AGENT_SETUP.md) for complete automated agent setup instructions.
 
 ## NPM Scripts
 

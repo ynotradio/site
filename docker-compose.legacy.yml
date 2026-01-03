@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ynot_site
+      MYSQL_USER: ynot_sql_user
+      MYSQL_PASSWORD: ynot_sql_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    command: --default-authentication-plugin=mysql_native_password
+
+  phpfpm:
+    build:
+      context: .
+      dockerfile: bin/docker/phpfpm/Dockerfile
+    volumes:
+      - ./src:/app
+    environment:
+      DB_HOST: mysql
+      DB_USER: ynot_sql_user
+      DB_PASSWORD: ynot_sql_pass
+      DB_NAME: ynot_site
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  apache:
+    image: httpd:2.4-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/usr/local/apache2/htdocs/
+    depends_on:
+      - phpfpm
+      - mysql
+
+volumes:
+  mysql_data:
