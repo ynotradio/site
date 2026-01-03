@@ -84,15 +84,14 @@ Created comprehensive documentation:
 
 ## Files Changed
 
-### New Files (9)
+### New Files (8)
 1. `payload/src/utils/musicbrainz-api.ts` - API client
 2. `payload/src/components/fields/MusicBrainzArtistField.tsx`
 3. `payload/src/components/fields/MusicBrainzReleaseField.tsx`
 4. `payload/src/components/fields/MusicBrainzRecordingField.tsx`
 5. `payload/src/components/fields/MusicBrainzField.css`
-6. `payload/src/components/fields/index.ts`
-7. `payload/src/components/fields/README.md`
-8. `payload/src/components/fields/TESTING.md`
+6. `payload/src/components/fields/README.md`
+7. `payload/src/components/fields/TESTING.md`
 
 ### Modified Files (4)
 1. `payload/src/collections/Artists.ts`
