@@ -124,10 +124,10 @@ The static files will be generated in the `storybook-static` directory.
 
 #### Creating Stories
 
-Stories are located in the `src/stories` directory. To create a new story:
+Stories should be colocated with your components in the same directory. To create a new story:
 
-1. Create a React component (e.g., `MyComponent.tsx`)
-2. Create a corresponding story file (e.g., `MyComponent.stories.ts`)
+1. Create a React component (e.g., `app/components/MyComponent.tsx`)
+2. Create a corresponding story file next to it (e.g., `app/components/MyComponent.stories.tsx`)
 3. Define your component variants as stories
 
 Example story structure:
@@ -151,6 +151,8 @@ export const Default: Story = {
   },
 };
 ```
+
+See `app/components/ExampleButton.stories.tsx` for a complete example.
 
 For more information, see the [Storybook documentation](https://storybook.js.org/docs).
 

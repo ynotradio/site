@@ -33,8 +33,6 @@
     "bin/**/*.ts",
     "test/**/*.ts",
     "src/types/**/*.ts",
-    "src/stories/**/*.ts",
-    "src/stories/**/*.tsx",
     "vitest.config.ts",
     "payload/**/*.ts",
     "netlify/**/*.ts",
