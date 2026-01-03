@@ -1,6 +1,6 @@
 import type { Adapter } from '@payloadcms/plugin-cloud-storage/types';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
-import path from 'path';
+import { randomBytes } from 'crypto';
 
 // Configure Cloudinary
 cloudinary.config({
@@ -11,6 +11,16 @@ cloudinary.config({
 
 const folder = process.env.NODE_ENV === 'production' ? 'prod/uploads' : 'dev/uploads';
 
+/**
+ * Generate a random filename using timestamp and random bytes
+ * Format: {timestamp}-{random} (e.g., 1704251928-a3f9c2d1)
+ */
+function generateRandomFilename(): string {
+  const timestamp = Date.now();
+  const random = randomBytes(4).toString('hex');
+  return `${timestamp}-${random}`;
+}
+
 export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
   const collectionPrefix = prefix || folder;
 
@@ -19,11 +29,13 @@ export const cloudinaryAdapter: Adapter = ({ collection, prefix }) => {
     
     handleUpload: async ({ data, file }) => {
       try {
+        const randomFilename = generateRandomFilename();
+        
         const result: UploadApiResponse = await new Promise((resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
               folder: collectionPrefix,
-              public_id: path.parse(file.filename).name,
+              public_id: randomFilename,
               resource_type: 'image',
               overwrite: false,
             },
