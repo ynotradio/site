@@ -15,6 +15,7 @@ import { connectToDatabase, getActiveCdOfTheWeek, type CdOfTheWeek } from './dat
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
+import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('CdOfTheWeekImport');
@@ -111,6 +112,25 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     // Find or create artist
     const artistId = await findOrCreateArtist(payload, item.artist, null);
 
+    // Import cover image if available
+    let coverImageId: string | undefined;
+    if (item.cd_pic_url && item.cd_pic_url.trim() !== '') {
+      logger.debug(`Importing cover image for CD ${item.id}: ${item.cd_pic_url}`);
+      const imageResult = await importImageFromUrl(payload, item.cd_pic_url, {
+        alt: `Album cover for ${item.title} by ${item.artist}`,
+        caption: `${item.title} - ${item.artist}`,
+        legacyUrl: item.cd_pic_url,
+        legacyId: item.id,
+      });
+
+      if (imageResult.success && imageResult.mediaId) {
+        coverImageId = imageResult.mediaId;
+        logger.debug(`Cover image imported: ${imageResult.cloudinaryUrl}`);
+      } else {
+        logger.warn(`Failed to import cover image for CD ${item.id}: ${imageResult.error}`);
+      }
+    }
+
     // Find or create record (album)
     let recordId: string | number;
     const existingRecord = await payload.find({
@@ -142,7 +162,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
           title: item.title,
           artist: artistId as any,
           label: item.label || undefined,
-          coverImage: item.cd_pic_url || undefined,
+          coverImage: coverImageId,
           legacyId: item.id,
           migratedAt: new Date().toISOString(),
         },
