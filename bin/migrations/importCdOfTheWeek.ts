@@ -16,6 +16,7 @@ import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { getReleaseMbid, getAlbumCoverArt } from './shared/musicbrainz';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('CdOfTheWeekImport');
@@ -112,8 +113,22 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     // Find or create artist
     const artistId = await findOrCreateArtist(payload, item.artist, null);
 
+    // Query MusicBrainz for release MBID
+    let releaseMbid: string | null = null;
+    try {
+      logger.debug(`Querying MusicBrainz for: ${item.title} by ${item.artist}`);
+      releaseMbid = await getReleaseMbid(item.title, item.artist);
+      if (releaseMbid) {
+        logger.debug(`Found MusicBrainz release ID: ${releaseMbid}`);
+      }
+    } catch (error) {
+      logger.debug(`MusicBrainz query failed for ${item.title}`);
+    }
+
     // Import cover image if available
     let coverImageId: string | undefined;
+    
+    // Try legacy URL first
     if (item.cd_pic_url && item.cd_pic_url.trim() !== '') {
       logger.debug(`Importing cover image for CD ${item.id}: ${item.cd_pic_url}`);
       const imageResult = await importImageFromUrl(payload, item.cd_pic_url, {
@@ -127,7 +142,32 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
         coverImageId = imageResult.mediaId;
         logger.debug(`Cover image imported: ${imageResult.cloudinaryUrl}`);
       } else {
-        logger.warn(`Failed to import cover image for CD ${item.id}: ${imageResult.error}`);
+        logger.warn(`Failed to import legacy cover image for CD ${item.id}: ${imageResult.error}`);
+      }
+    }
+
+    // If legacy image failed and we have MusicBrainz release ID, try Cover Art Archive
+    if (!coverImageId && releaseMbid) {
+      try {
+        logger.debug(`Attempting to fetch cover art from MusicBrainz for ${item.title}`);
+        const coverArtUrl = await getAlbumCoverArt(item.title, item.artist);
+        
+        if (coverArtUrl) {
+          logger.debug(`Found MusicBrainz cover art: ${coverArtUrl}`);
+          const imageResult = await importImageFromUrl(payload, coverArtUrl, {
+            alt: `Album cover for ${item.title} by ${item.artist}`,
+            caption: `${item.title} - ${item.artist} (from MusicBrainz)`,
+            legacyUrl: coverArtUrl,
+            legacyId: item.id,
+          });
+
+          if (imageResult.success && imageResult.mediaId) {
+            coverImageId = imageResult.mediaId;
+            logger.info(`✓ Cover art imported from MusicBrainz: ${imageResult.cloudinaryUrl}`);
+          }
+        }
+      } catch (error) {
+        logger.debug(`MusicBrainz cover art fetch failed for ${item.title}`);
       }
     }
 
@@ -163,6 +203,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
           artist: artistId as any,
           label: item.label || undefined,
           coverImage: coverImageId,
+          musicbrainzId: releaseMbid || undefined,
           legacyId: item.id,
           migratedAt: new Date().toISOString(),
         },

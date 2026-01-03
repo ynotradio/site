@@ -311,3 +311,53 @@ export async function getReleaseMbid(
     return null;
   }
 }
+
+/**
+ * Get album cover art URL from MusicBrainz Cover Art Archive
+ * Returns the front cover URL if available, null otherwise
+ */
+export async function getAlbumCoverArt(
+  albumTitle: string,
+  artistName?: string,
+): Promise<string | null> {
+  try {
+    // First, get the release MBID
+    const mbid = await getReleaseMbid(albumTitle, artistName);
+    if (!mbid) {
+      return null;
+    }
+
+    // Fetch cover art from Cover Art Archive
+    // Note: No rate limiting needed for Cover Art Archive (different service)
+    const url = `https://coverartarchive.org/release/${mbid}`;
+
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Find the front cover
+    if (data.images && Array.isArray(data.images)) {
+      const frontCover = data.images.find((img: any) => img.front === true);
+      if (frontCover && frontCover.image) {
+        return frontCover.image;
+      }
+
+      // If no front cover specified, return the first image
+      if (data.images.length > 0 && data.images[0].image) {
+        return data.images[0].image;
+      }
+    }
+
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
