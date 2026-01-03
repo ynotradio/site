@@ -134,7 +134,7 @@ Imports DJ records and dynamically creates linked Person records.
 **Source**: MySQL `deejays` table  
 **Target**: Payload `djs` + `people` collections  
 **Creates**: Person record for each DJ (from `deejays.name`)  
-**Fields**: person (relationship), showName, email, externalConnectText, externalConnectUrl, onAir, sortOrder
+**Fields**: person (relationship), description (richText), email, externalConnectText, externalConnectUrl, onAir, sortOrder
 
 ```bash
 npx tsx bin/migrations/importDJs.ts --env dev
