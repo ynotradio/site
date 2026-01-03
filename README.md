@@ -48,11 +48,17 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 ## For GitHub Copilot Agents
 
-If you're a GitHub Copilot agent working on this repository, please read the **[Agent Verification Guide](docs/AGENT_VERIFICATION.md)** for step-by-step instructions on how to verify your changes work with both the Payload CMS instance and the legacy PHP/MySQL site.
+**👋 Welcome, Copilot Agents!** Start here:
 
-Quick verification commands:
-- **Verify Payload CMS**: `npm run verify:payload` or `./bin/agent-helpers/verify-payload.sh`
-- **Verify Legacy Site**: `npm run verify:legacy` or `./bin/agent-helpers/verify-legacy.sh`
+1. **📚 [Complete Agent Index](docs/AGENT_INDEX.md)** - Your comprehensive resource guide
+2. **🚀 [Quick Start Checklist](docs/AGENT_QUICK_START.md)** - Follow this for every task
+3. **📖 [Verification Guide](docs/AGENT_VERIFICATION.md)** - Detailed verification procedures
+4. **💡 [Verification Examples](docs/AGENT_VERIFICATION_EXAMPLES.md)** - Practical scenarios
+
+**Quick verification commands:**
+- **Verify Payload CMS**: `npm run verify:payload`
+- **Verify Legacy Site**: `npm run verify:legacy`
+- **Verify Both**: `npm run verify:all`
 
 ## Development
 
@@ -84,6 +90,10 @@ In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typica
 Please [open an issue](https://github.com/ynotradio/site/issues) for support.
 
 ## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**For GitHub Copilot Agents:** Start with the [Agent Quick Start Guide](docs/AGENT_QUICK_START.md).
 
 Please contribute using [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Create a branch, add commits, and [open a pull request](https://github.com/ynotradio/site/pulls).
 
