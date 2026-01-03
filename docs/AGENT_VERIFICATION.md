@@ -4,6 +4,8 @@
 
 This guide provides step-by-step instructions for Copilot agents to verify their changes work correctly with both the Payload CMS instance and the legacy PHP/MySQL site.
 
+> **💡 New to agent verification?** Check out [AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md) for practical examples and common scenarios.
+
 ---
 
 ## 🎯 Quick Start
@@ -12,12 +14,16 @@ This guide provides step-by-step instructions for Copilot agents to verify their
 
 ```bash
 ./bin/agent-helpers/verify-payload.sh
+# or
+npm run verify:payload
 ```
 
 ### For Legacy PHP/MySQL Site Changes
 
 ```bash
 ./bin/agent-helpers/verify-legacy.sh
+# or
+npm run verify:legacy
 ```
 
 ---
@@ -509,10 +515,13 @@ Before submitting your changes, verify:
 6. **Check relevant migration docs for context**
 7. **When in doubt, start both systems and test manually**
 
+**💡 Need practical examples?** See [AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md) for step-by-step examples of common verification scenarios.
+
 ---
 
 ## 📚 Additional Resources
 
+- **Verification Examples**: [AGENT_VERIFICATION_EXAMPLES.md](./AGENT_VERIFICATION_EXAMPLES.md) - Practical examples for common scenarios
 - **Migration Overview**: [docs/payload-migration/README.md](./payload-migration/README.md)
 - **Core Data Models**: [docs/payload-migration/03-core-data-models.md](./payload-migration/03-core-data-models.md)
 - **Migration Tasks**: [docs/payload-migration/04-migration-tasks.md](./payload-migration/04-migration-tasks.md)
