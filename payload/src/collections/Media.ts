@@ -47,6 +47,15 @@ export const Media: CollectionConfig = {
     { name: 'alt', type: 'text', required: true },
     { name: 'caption', type: 'text' },
     {
+      name: 'cloudinaryPublicId',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Cloudinary public ID for reference',
+      },
+    },
+    {
       name: 'legacyUrl',
       type: 'text',
       admin: { position: 'sidebar' },
