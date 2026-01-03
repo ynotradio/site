@@ -70,6 +70,15 @@ let lastRequestTime = 0;
 const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
 
 /**
+ * Escape special characters for Lucene query syntax
+ * MusicBrainz uses Lucene, which has special characters: + - && || ! ( ) { } [ ] ^ " ~ * ? : \
+ */
+function escapeLuceneSpecialChars(str: string): string {
+  // Escape special Lucene characters
+  return str.replace(/([+\-!(){}[\]^"~*?:\\])/g, '\\$1');
+}
+
+/**
  * Wait to respect rate limiting (1 request per second)
  */
 async function waitForRateLimit(): Promise<void> {
@@ -134,9 +143,12 @@ export async function searchReleases(
   try {
     await waitForRateLimit();
 
-    const queryParts = [title];
+    // Build query with proper escaping
+    const escapedTitle = escapeLuceneSpecialChars(title);
+    const queryParts = [escapedTitle];
     if (artistName?.trim()) {
-      queryParts.push(`artist:${artistName}`);
+      const escapedArtist = escapeLuceneSpecialChars(artistName);
+      queryParts.push(`artist:${escapedArtist}`);
     }
     const query = encodeURIComponent(queryParts.join(' AND '));
     const url = `${API_BASE}/release?query=${query}&fmt=json&limit=${limit}`;
@@ -175,9 +187,12 @@ export async function searchRecordings(
   try {
     await waitForRateLimit();
 
-    const queryParts = [title];
+    // Build query with proper escaping
+    const escapedTitle = escapeLuceneSpecialChars(title);
+    const queryParts = [escapedTitle];
     if (artistName?.trim()) {
-      queryParts.push(`artist:${artistName}`);
+      const escapedArtist = escapeLuceneSpecialChars(artistName);
+      queryParts.push(`artist:${escapedArtist}`);
     }
     const query = encodeURIComponent(queryParts.join(' AND '));
     const url = `${API_BASE}/recording?query=${query}&fmt=json&limit=${limit}`;
