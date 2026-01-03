@@ -7,7 +7,7 @@
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useField, useFormFields } from '@payloadcms/ui';
 import { searchRecordings, formatDuration, type MusicBrainzRecording } from '../../utils/musicbrainz-api';
 
@@ -29,17 +29,21 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedRecording, setSelectedRecording] = useState<MusicBrainzRecording | null>(null);
+  
+  // Track if we've initialized from the value to prevent unnecessary updates
+  const initializedRef = useRef(false);
 
-  // Load selected recording data if value exists (only once on mount or when value changes)
+  // Load selected recording data if value exists (only once on initial load)
   useEffect(() => {
-    if (value && !selectedRecording) {
+    if (value && !initializedRef.current) {
       setSelectedRecording({
         id: value,
         title: songTitle || 'Unknown Song',
         score: 100,
       });
+      initializedRef.current = true;
     }
-  }, [value]); // Removed selectedRecording and songTitle to prevent re-renders
+  }, [value, songTitle]);
 
   // Debounced search
   useEffect(() => {
@@ -72,6 +76,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     setValue('');
     setSearchQuery('');
     setSearchResults([]);
+    initializedRef.current = false; // Reset initialization flag
   }, [setValue]);
 
   const handleUseSongTitle = useCallback(() => {

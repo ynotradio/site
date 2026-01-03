@@ -7,7 +7,7 @@
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useField } from '@payloadcms/ui';
 import { searchArtists, type MusicBrainzArtist } from '../../utils/musicbrainz-api';
 
@@ -25,10 +25,13 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<MusicBrainzArtist | null>(null);
+  
+  // Track if we've initialized from the value to prevent unnecessary updates
+  const initializedRef = useRef(false);
 
-  // Load selected artist data if value exists (only once on mount or when value changes)
+  // Load selected artist data if value exists (only once on initial load)
   useEffect(() => {
-    if (value && !selectedArtist) {
+    if (value && !initializedRef.current) {
       // We have an MBID but no artist data - this means it was set externally or on load
       // We can't fetch the full artist details without making an API call
       // So we'll just show the MBID
@@ -37,8 +40,9 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
         name: 'Unknown Artist',
         score: 100,
       });
+      initializedRef.current = true;
     }
-  }, [value]); // Removed selectedArtist to prevent re-renders
+  }, [value]);
 
   // Debounced search
   useEffect(() => {
@@ -71,6 +75,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
     setValue('');
     setSearchQuery('');
     setSearchResults([]);
+    initializedRef.current = false; // Reset initialization flag
   }, [setValue]);
 
   return (

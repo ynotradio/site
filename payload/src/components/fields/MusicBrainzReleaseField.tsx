@@ -7,7 +7,7 @@
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useField, useFormFields } from '@payloadcms/ui';
 import { searchReleases, type MusicBrainzRelease } from '../../utils/musicbrainz-api';
 
@@ -29,17 +29,21 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<MusicBrainzRelease | null>(null);
+  
+  // Track if we've initialized from the value to prevent unnecessary updates
+  const initializedRef = useRef(false);
 
-  // Load selected release data if value exists (only once on mount or when value changes)
+  // Load selected release data if value exists (only once on initial load)
   useEffect(() => {
-    if (value && !selectedRelease) {
+    if (value && !initializedRef.current) {
       setSelectedRelease({
         id: value,
         title: albumTitle || 'Unknown Album',
         score: 100,
       });
+      initializedRef.current = true;
     }
-  }, [value]); // Removed selectedRelease and albumTitle to prevent re-renders
+  }, [value, albumTitle]);
 
   // Debounced search
   useEffect(() => {
@@ -72,6 +76,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     setValue('');
     setSearchQuery('');
     setSearchResults([]);
+    initializedRef.current = false; // Reset initialization flag
   }, [setValue]);
 
   const handleUseAlbumTitle = useCallback(() => {

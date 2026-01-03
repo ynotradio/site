@@ -67,6 +67,7 @@ const USER_AGENT = 'YNotRadio/1.0.0 (https://ynotradio.org)';
 
 // Rate limiting: MusicBrainz requires max 1 request per second
 let lastRequestTime = 0;
+let requestInProgress = false;
 const MIN_REQUEST_INTERVAL = 1000; // 1 second in milliseconds
 
 /**
@@ -84,13 +85,19 @@ function escapeLuceneSpecialChars(str: string): string {
 
 /**
  * Wait to respect rate limiting (1 request per second)
+ * Uses a request queue to prevent race conditions
  */
 async function waitForRateLimit(): Promise<void> {
+  // Wait for any in-progress request to complete
+  while (requestInProgress) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 50);
+    });
+  }
+
+  requestInProgress = true;
   const now = Date.now();
   const timeSinceLastRequest = now - lastRequestTime;
-
-  // Update lastRequestTime immediately to prevent race conditions
-  lastRequestTime = now + MIN_REQUEST_INTERVAL;
 
   if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
     const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
@@ -98,6 +105,9 @@ async function waitForRateLimit(): Promise<void> {
       setTimeout(resolve, waitTime);
     });
   }
+
+  lastRequestTime = Date.now();
+  requestInProgress = false;
 }
 
 /**
