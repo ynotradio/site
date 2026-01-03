@@ -8,9 +8,10 @@
 
 **New to this project?** Follow this path:
 
-1. **[Agent Quick Start Guide](AGENT_QUICK_START.md)** ⭐ - Checklist for every task
-2. **[Agent Verification Guide](AGENT_VERIFICATION.md)** - Detailed verification procedures
-3. **[Verification Examples](AGENT_VERIFICATION_EXAMPLES.md)** - Practical scenarios and solutions
+1. **[Local Setup Guide](LOCAL_SETUP_GUIDE.md)** 🏠 - Set up on your workstation
+2. **[Agent Quick Start Guide](AGENT_QUICK_START.md)** ⭐ - Checklist for every task
+3. **[Agent Verification Guide](AGENT_VERIFICATION.md)** - Detailed verification procedures
+4. **[Verification Examples](AGENT_VERIFICATION_EXAMPLES.md)** - Practical scenarios and solutions
 
 ---
 
@@ -20,6 +21,7 @@
 
 | Document | Purpose | When to Use |
 |----------|---------|-------------|
+| [Local Setup Guide](LOCAL_SETUP_GUIDE.md) | Step-by-step local workstation setup | First time setting up or having issues |
 | [Agent Quick Start](AGENT_QUICK_START.md) | Checklist-based guide | Every time you start work |
 | [Agent Verification Guide](AGENT_VERIFICATION.md) | Complete verification procedures | When you need detailed instructions |
 | [Verification Examples](AGENT_VERIFICATION_EXAMPLES.md) | Real-world scenarios | When you need practical examples |

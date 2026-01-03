@@ -50,6 +50,8 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 **👋 Welcome, Copilot Agents!** 
 
+**First time?** → **[Local Setup Guide](docs/LOCAL_SETUP_GUIDE.md)** 📖
+
 **Spin up dev environments:**
 - **Payload CMS**: `npm run verify:payload` → http://localhost:3000/admin
 - **Legacy Site**: `npm run verify:legacy` → http://localhost:8080
@@ -63,6 +65,7 @@ These scripts will:
 Then use the app like an end user to test your changes!
 
 **Documentation:**
+- **🏠 [Local Setup Guide](docs/LOCAL_SETUP_GUIDE.md)** - Step-by-step workstation setup
 - **📚 [Complete Agent Index](docs/AGENT_INDEX.md)** - All resources
 - **🚀 [Quick Start](docs/AGENT_QUICK_START.md)** - Checklist for every task
 - **📖 [Verification Guide](docs/AGENT_VERIFICATION.md)** - Detailed instructions
