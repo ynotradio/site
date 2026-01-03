@@ -263,7 +263,9 @@ export async function getActiveCdOfTheWeek(
   options: ImportOptions = {},
 ): Promise<CdOfTheWeek[]> {
   try {
-    let query = "SELECT * FROM cdotw WHERE deleted = 'n'";
+    // Get all records where deleted is NOT 'y', 'Y', 'yes', or 'Yes'
+    // This is more inclusive and will catch records where deleted is 'n', 'N', 'no', 'No', NULL, or empty
+    let query = "SELECT * FROM cdotw WHERE (LOWER(deleted) NOT IN ('y', 'yes') OR deleted IS NULL OR deleted = '')";
     const params: any[] = [];
 
     if (options.startId) {
