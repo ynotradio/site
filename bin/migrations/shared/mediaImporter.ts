@@ -140,6 +140,19 @@ async function downloadImage(url: string): Promise<Buffer | null> {
  * Process image URLs to handle special cases (Google Drive, etc.)
  */
 function processImageUrl(url: string): string {
+  // Handle relative paths with backslashes (e.g., "images\mattsummers.jpg")
+  // or forward slashes (e.g., "images/mattsummers.jpg")
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    // Convert backslashes to forward slashes
+    const normalizedPath = url.replace(/\\/g, '/');
+    
+    // Remove leading slash if present
+    const cleanPath = normalizedPath.startsWith('/') ? normalizedPath.slice(1) : normalizedPath;
+    
+    // Construct full URL to ynotradio.net
+    return `https://www.ynotradio.net/${cleanPath}`;
+  }
+
   // Google Drive: Convert sharing URL to direct download URL
   if (url.includes('drive.google.com')) {
     const fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -147,6 +160,14 @@ function processImageUrl(url: string): string {
       const fileId = fileIdMatch[1];
       return `https://drive.google.com/uc?export=download&id=${fileId}`;
     }
+  }
+
+  // Fix URLs with multiple slashes (e.g., "http://example.com//images//photo.jpg")
+  // Keep the protocol double slash but fix the rest
+  if (url.includes('://')) {
+    const [protocol, ...rest] = url.split('://');
+    const cleanedPath = rest.join('://').replace(/\/+/g, '/');
+    return `${protocol}://${cleanedPath}`;
   }
 
   return url;
