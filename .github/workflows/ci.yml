@@ -51,6 +51,26 @@ jobs:
           file: ./coverage/lcov.info
           fail_ci_if_error: false
 
+  storybook:
+    name: Storybook Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'yarn'
+      
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      
+      - name: Build Storybook
+        run: yarn build-storybook
+
   php-lint:
     name: PHP Lint
     runs-on: ubuntu-latest

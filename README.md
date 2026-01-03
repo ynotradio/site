@@ -93,9 +93,66 @@ The repository uses GitHub Actions for CI. The following checks run on every pul
 
 - **Lint**: Runs ESLint on TypeScript/JavaScript code
 - **Test**: Runs the Vitest test suite with coverage
+- **Storybook Build**: Ensures Storybook can build successfully
 - **PHP Lint**: Runs PHP_CodeSniffer to check PHP code style
 
 All CI checks must pass before a pull request can be merged.
+
+### Storybook
+
+Storybook is available for developing and testing UI components in isolation.
+
+#### Running Storybook
+
+To run Storybook in development mode:
+
+```bash
+yarn storybook
+```
+
+This will start Storybook at [http://localhost:6006](http://localhost:6006).
+
+#### Building Storybook
+
+To build a static version of Storybook:
+
+```bash
+yarn build-storybook
+```
+
+The static files will be generated in the `storybook-static` directory.
+
+#### Creating Stories
+
+Stories are located in the `src/stories` directory. To create a new story:
+
+1. Create a React component (e.g., `MyComponent.tsx`)
+2. Create a corresponding story file (e.g., `MyComponent.stories.ts`)
+3. Define your component variants as stories
+
+Example story structure:
+
+```typescript
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { MyComponent } from './MyComponent';
+
+const meta = {
+  title: 'Components/MyComponent',
+  component: MyComponent,
+  tags: ['autodocs'],
+} satisfies Meta<typeof MyComponent>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    // component props
+  },
+};
+```
+
+For more information, see the [Storybook documentation](https://storybook.js.org/docs).
 
 ## Deployment to Lightsail
 
