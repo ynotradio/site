@@ -13,6 +13,11 @@ use PDOException;
 class PostgresStory implements Story {
     private PDO $db;
 
+    // Lexical text format bit flags
+    private const FORMAT_BOLD = 1;
+    private const FORMAT_ITALIC = 2;
+    private const FORMAT_UNDERLINE = 8;
+
     public function __construct(PDO $db) {
         $this->db = $db;
     }
@@ -96,11 +101,12 @@ class PostgresStory implements Story {
         $odd_results = array();
         $even_results = array();
         
-        for ($i = 0; $i < count($results); $i++) {
-            if (($i + 1) % 2 == 0) {
-                array_push($even_results, $results[$i]);
+        $resultCount = count($results);
+        for ($i = 0; $i < $resultCount; $i++) {
+            if ($i % 2 === 1) {
+                $even_results[] = $results[$i];
             } else {
-                array_push($odd_results, $results[$i]);
+                $odd_results[] = $results[$i];
             }
         }
         
@@ -251,11 +257,14 @@ class PostgresStory implements Story {
         
         // If it's not valid JSON, assume it's already HTML
         if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("PostgresStory: Content is not valid JSON, treating as HTML: " . 
+                substr($lexicalJson, 0, 100));
             return $lexicalJson;
         }
         
         try {
             if (!isset($lexical['root']['children'])) {
+                error_log("PostgresStory: Invalid Lexical structure, missing root.children");
                 return $lexicalJson; // Return original if structure is unexpected
             }
             
@@ -267,7 +276,7 @@ class PostgresStory implements Story {
             return $html;
         } catch (\Exception $e) {
             // If conversion fails, return original content
-            error_log("Failed to convert Lexical to HTML: " . $e->getMessage());
+            error_log("PostgresStory: Failed to convert Lexical to HTML: " . $e->getMessage());
             return $lexicalJson;
         }
     }
@@ -302,11 +311,9 @@ class PostgresStory implements Story {
                 return "<li>$content</li>\n";
                 
             case 'link':
-                $url = $node['url'] ?? '#';
-                // Sanitize URL - only allow http, https, and relative URLs
-                if (!$this->isValidUrl($url)) {
-                    $url = '#';
-                }
+                $rawUrl = $node['url'] ?? '';
+                // Validate URL first, then apply fallback if invalid
+                $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $content = $this->convertLexicalChildren($node);
                 return "<a href=\"$url\">$content</a>";
@@ -315,14 +322,14 @@ class PostgresStory implements Story {
                 $text = htmlspecialchars($node['text'] ?? '', ENT_QUOTES, 'UTF-8');
                 $format = $node['format'] ?? 0;
                 
-                // Apply text formatting
-                if ($format & 1) { // bold
+                // Apply text formatting using defined constants
+                if ($format & self::FORMAT_BOLD) {
                     $text = "<strong>$text</strong>";
                 }
-                if ($format & 2) { // italic
+                if ($format & self::FORMAT_ITALIC) {
                     $text = "<em>$text</em>";
                 }
-                if ($format & 8) { // underline
+                if ($format & self::FORMAT_UNDERLINE) {
                     $text = "<u>$text</u>";
                 }
                 
