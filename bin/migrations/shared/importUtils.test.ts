@@ -1,0 +1,154 @@
+import { describe, it, expect } from 'vitest';
+import { generateSlug, convertHtmlToLexical, getStatusFromDeleted } from './importUtils';
+
+describe('generateSlug', () => {
+  it('should convert text to lowercase', () => {
+    expect(generateSlug('Hello World')).toBe('hello-world');
+  });
+
+  it('should replace spaces with dashes', () => {
+    expect(generateSlug('foo bar baz')).toBe('foo-bar-baz');
+  });
+
+  it('should remove special characters', () => {
+    expect(generateSlug('hello@world!#$')).toBe('helloworld');
+  });
+
+  it('should collapse multiple spaces', () => {
+    expect(generateSlug('hello    world')).toBe('hello-world');
+  });
+
+  it('should collapse multiple dashes', () => {
+    expect(generateSlug('hello--world---test')).toBe('hello-world-test');
+  });
+
+  it('should remove leading dashes', () => {
+    expect(generateSlug('---hello-world')).toBe('hello-world');
+  });
+
+  it('should remove trailing dashes', () => {
+    expect(generateSlug('hello-world---')).toBe('hello-world');
+  });
+
+  it('should handle mixed case and special chars', () => {
+    expect(generateSlug('The Quick! Brown@ Fox#')).toBe('the-quick-brown-fox');
+  });
+
+  it('should preserve alphanumeric and hyphens', () => {
+    expect(generateSlug('test-123-abc')).toBe('test-123-abc');
+  });
+});
+
+describe('convertHtmlToLexical', () => {
+  it('should return empty root for empty string', () => {
+    const result = convertHtmlToLexical('');
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    });
+  });
+
+  it('should return empty root for null/undefined', () => {
+    const result = convertHtmlToLexical(null as any);
+    expect(result.root.children).toEqual([]);
+  });
+
+  it('should convert plain text to paragraph with text node', () => {
+    const result = convertHtmlToLexical('Hello World');
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+    expect(result.root.children[0].children[0].text).toBe('Hello World');
+  });
+
+  it('should strip HTML tags from content', () => {
+    const result = convertHtmlToLexical('<p>Hello <strong>World</strong></p>');
+    expect(result.root.children[0].children[0].text).toBe('Hello World');
+  });
+
+  it('should handle complex HTML', () => {
+    const html = '<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>';
+    const result = convertHtmlToLexical(html);
+    expect(result.root.children[0].children[0].text).toBe('TitleParagraph with link');
+  });
+
+  it('should set correct structure properties', () => {
+    const result = convertHtmlToLexical('test');
+    expect(result.root.type).toBe('root');
+    expect(result.root.version).toBe(1);
+    expect(result.root.direction).toBe('ltr');
+    expect(result.root.children[0].type).toBe('paragraph');
+    expect(result.root.children[0].direction).toBe('ltr');
+  });
+});
+
+describe('getStatusFromDeleted', () => {
+  it('should return published for null', () => {
+    expect(getStatusFromDeleted(null)).toBe('published');
+  });
+
+  it('should return published for undefined', () => {
+    expect(getStatusFromDeleted(undefined)).toBe('published');
+  });
+
+  it('should return published for empty string', () => {
+    expect(getStatusFromDeleted('')).toBe('published');
+  });
+
+  it('should return draft for "y"', () => {
+    expect(getStatusFromDeleted('y')).toBe('draft');
+  });
+
+  it('should return draft for "Y"', () => {
+    expect(getStatusFromDeleted('Y')).toBe('draft');
+  });
+
+  it('should return draft for "yes"', () => {
+    expect(getStatusFromDeleted('yes')).toBe('draft');
+  });
+
+  it('should return draft for "Yes"', () => {
+    expect(getStatusFromDeleted('Yes')).toBe('draft');
+  });
+
+  it('should return draft for "YES"', () => {
+    expect(getStatusFromDeleted('YES')).toBe('draft');
+  });
+
+  it('should return published for "n"', () => {
+    expect(getStatusFromDeleted('n')).toBe('published');
+  });
+
+  it('should return published for "N"', () => {
+    expect(getStatusFromDeleted('N')).toBe('published');
+  });
+
+  it('should return published for "no"', () => {
+    expect(getStatusFromDeleted('no')).toBe('published');
+  });
+
+  it('should return published for "No"', () => {
+    expect(getStatusFromDeleted('No')).toBe('published');
+  });
+
+  it('should return published for "NO"', () => {
+    expect(getStatusFromDeleted('NO')).toBe('published');
+  });
+
+  it('should return published for any other value', () => {
+    expect(getStatusFromDeleted('maybe')).toBe('published');
+    expect(getStatusFromDeleted('unknown')).toBe('published');
+    expect(getStatusFromDeleted('123')).toBe('published');
+  });
+
+  it('should handle whitespace', () => {
+    expect(getStatusFromDeleted('  y  ')).toBe('draft');
+    expect(getStatusFromDeleted('  yes  ')).toBe('draft');
+    expect(getStatusFromDeleted('  n  ')).toBe('published');
+  });
+});
