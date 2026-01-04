@@ -1,11 +1,12 @@
-import { getPayloadHMR } from '@payloadcms/next/utilities'
-import config from '@payload-config'
+/* eslint-disable no-console */
+import { getPayloadHMR } from '@payloadcms/next/utilities';
+import config from '@payload-config';
 
 /**
  * Seed Payload database with sample data for testing
- * 
+ *
  * Usage: yarn tsx bin/seed-payload.ts
- * 
+ *
  * Creates sample data for:
  * - People (DJs, Artists)
  * - Venues
@@ -16,28 +17,28 @@ import config from '@payload-config'
  */
 
 async function seed() {
-  console.log('🌱 Seeding Payload database with sample data...\n')
+  console.log('🌱 Seeding Payload database with sample data...\n');
 
-  const payload = await getPayloadHMR({ config })
+  const payload = await getPayloadHMR({ config });
 
   try {
     // Check if already seeded (skip if People collection has data)
     const existingPeople = await payload.find({
       collection: 'people',
       limit: 1,
-    })
-    
+    });
+
     if (existingPeople.docs.length > 0) {
-      console.log('⏭️  Database already has data. Skipping seed.')
-      console.log('   To re-seed, first clear existing data or drop the database.')
-      process.exit(0)
+      console.log('⏭️  Database already has data. Skipping seed.');
+      console.log('   To re-seed, first clear existing data or drop the database.');
+      process.exit(0);
     }
 
-    console.log('🗑️  Database is empty, proceeding with seed...')
+    console.log('🗑️  Database is empty, proceeding with seed...');
 
     // Create sample People (DJs and Artists)
-    console.log('👤 Creating sample people...')
-    
+    console.log('👤 Creating sample people...');
+
     const dj1 = await payload.create({
       collection: 'people',
       data: {
@@ -50,7 +51,7 @@ async function seed() {
         priority: 1,
         active: true,
       },
-    })
+    });
 
     const dj2 = await payload.create({
       collection: 'people',
@@ -63,7 +64,7 @@ async function seed() {
         priority: 2,
         active: true,
       },
-    })
+    });
 
     const artist1 = await payload.create({
       collection: 'people',
@@ -75,13 +76,13 @@ async function seed() {
         website: 'https://sampleartist.com',
         active: true,
       },
-    })
+    });
 
-    console.log(`   ✅ Created ${dj1.name}, ${dj2.name}, ${artist1.name}`)
+    console.log(`   ✅ Created ${dj1.name}, ${dj2.name}, ${artist1.name}`);
 
     // Create sample Venues
-    console.log('🏢 Creating sample venues...')
-    
+    console.log('🏢 Creating sample venues...');
+
     const venue1 = await payload.create({
       collection: 'venues',
       data: {
@@ -91,7 +92,7 @@ async function seed() {
         state: 'PA',
         website: 'https://www.thefoundry.com',
       },
-    })
+    });
 
     const venue2 = await payload.create({
       collection: 'venues',
@@ -102,7 +103,7 @@ async function seed() {
         state: 'PA',
         website: 'https://www.utphilly.com',
       },
-    })
+    });
 
     const venue3 = await payload.create({
       collection: 'venues',
@@ -113,13 +114,13 @@ async function seed() {
         state: 'PA',
         website: 'https://www.worldcafelive.com',
       },
-    })
+    });
 
-    console.log(`   ✅ Created ${venue1.name}, ${venue2.name}, ${venue3.name}`)
+    console.log(`   ✅ Created ${venue1.name}, ${venue2.name}, ${venue3.name}`);
 
     // Create sample Artists (for music collections)
-    console.log('🎸 Creating sample artists...')
-    
+    console.log('🎸 Creating sample artists...');
+
     const musicArtist1 = await payload.create({
       collection: 'artists',
       data: {
@@ -128,7 +129,7 @@ async function seed() {
         website: 'https://sampleband.com',
         spotifyUrl: 'https://open.spotify.com/artist/example',
       },
-    })
+    });
 
     const musicArtist2 = await payload.create({
       collection: 'artists',
@@ -137,13 +138,13 @@ async function seed() {
         slug: 'test-group',
         website: 'https://testgroup.com',
       },
-    })
+    });
 
-    console.log(`   ✅ Created ${musicArtist1.name}, ${musicArtist2.name}`)
+    console.log(`   ✅ Created ${musicArtist1.name}, ${musicArtist2.name}`);
 
     // Create sample Records
-    console.log('💿 Creating sample records...')
-    
+    console.log('💿 Creating sample records...');
+
     const record1 = await payload.create({
       collection: 'records',
       data: {
@@ -154,7 +155,7 @@ async function seed() {
         label: 'Independent Records',
         spotifyUrl: 'https://open.spotify.com/album/example1',
       },
-    })
+    });
 
     const record2 = await payload.create({
       collection: 'records',
@@ -165,13 +166,13 @@ async function seed() {
         releaseYear: 2026,
         label: 'Test Label',
       },
-    })
+    });
 
-    console.log(`   ✅ Created "${record1.title}", "${record2.title}"`)
+    console.log(`   ✅ Created "${record1.title}", "${record2.title}"`);
 
     // Create sample Songs
-    console.log('🎵 Creating sample songs...')
-    
+    console.log('🎵 Creating sample songs...');
+
     const song1 = await payload.create({
       collection: 'songs',
       data: {
@@ -181,7 +182,7 @@ async function seed() {
         record: record1.id,
         spotifyUrl: 'https://open.spotify.com/track/example1',
       },
-    })
+    });
 
     const song2 = await payload.create({
       collection: 'songs',
@@ -191,7 +192,7 @@ async function seed() {
         artist: musicArtist1.id,
         record: record1.id,
       },
-    })
+    });
 
     const song3 = await payload.create({
       collection: 'songs',
@@ -201,68 +202,67 @@ async function seed() {
         artist: musicArtist2.id,
         record: record2.id,
       },
-    })
+    });
 
-    console.log(`   ✅ Created "${song1.title}", "${song2.title}", "${song3.title}"`)
+    console.log(`   ✅ Created "${song1.title}", "${song2.title}", "${song3.title}"`);
 
     // Create sample Concerts
-    console.log('🎤 Creating sample concerts...')
-    
-    const futureDate1 = new Date()
-    futureDate1.setDate(futureDate1.getDate() + 30)
-    
-    const futureDate2 = new Date()
-    futureDate2.setDate(futureDate2.getDate() + 45)
-    
-    const futureDate3 = new Date()
-    futureDate3.setDate(futureDate3.getDate() + 60)
+    console.log('🎤 Creating sample concerts...');
 
-    const concert1 = await payload.create({
+    const futureDate1 = new Date();
+    futureDate1.setDate(futureDate1.getDate() + 30);
+
+    const futureDate2 = new Date();
+    futureDate2.setDate(futureDate2.getDate() + 45);
+
+    const futureDate3 = new Date();
+    futureDate3.setDate(futureDate3.getDate() + 60);
+
+    await payload.create({
       collection: 'concerts',
       data: {
         date: futureDate1.toISOString(),
-        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id)],
-        venue: typeof venue1.id === 'number' ? venue1.id : parseInt(venue1.id),
+        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10)],
+        venue: typeof venue1.id === 'number' ? venue1.id : parseInt(venue1.id, 10),
         ticketUrl: 'https://ticketmaster.com/example1',
         featured: true,
       },
-    })
+    });
 
-    const concert2 = await payload.create({
+    await payload.create({
       collection: 'concerts',
       data: {
         date: futureDate2.toISOString(),
-        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id)],
-        venue: typeof venue2.id === 'number' ? venue2.id : parseInt(venue2.id),
+        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10)],
+        venue: typeof venue2.id === 'number' ? venue2.id : parseInt(venue2.id, 10),
         ticketUrl: 'https://ticketmaster.com/example2',
         featured: false,
       },
-    })
+    });
 
-    const concert3 = await payload.create({
+    await payload.create({
       collection: 'concerts',
       data: {
         date: futureDate3.toISOString(),
         artists: [
-          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id),
-          typeof musicArtist2.id === 'number' ? musicArtist2.id : parseInt(musicArtist2.id),
+          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
+          typeof musicArtist2.id === 'number' ? musicArtist2.id : parseInt(musicArtist2.id, 10),
         ],
-        venue: typeof venue3.id === 'number' ? venue3.id : parseInt(venue3.id),
+        venue: typeof venue3.id === 'number' ? venue3.id : parseInt(venue3.id, 10),
         ticketUrl: 'https://worldcafelive.com/events',
         featured: true,
       },
-    })
+    });
 
-    console.log(`   ✅ Created 3 concerts`)
+    console.log('   ✅ Created 3 concerts');
 
     // Create sample Posts (stories)
-    console.log('📝 Creating sample posts...')
-    
-    const now = new Date()
-    const startDate = new Date()
-    const endDate = new Date()
-    endDate.setDate(endDate.getDate() + 90) // Active for 90 days
-    
+    console.log('📝 Creating sample posts...');
+
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setDate(endDate.getDate() + 90); // Active for 90 days
+
     const post1 = await payload.create({
       collection: 'posts',
       data: {
@@ -287,7 +287,7 @@ async function seed() {
         endDate: endDate.toISOString(),
         priority: 1,
       },
-    })
+    });
 
     const post2 = await payload.create({
       collection: 'posts',
@@ -313,7 +313,7 @@ async function seed() {
         endDate: endDate.toISOString(),
         priority: 2,
       },
-    })
+    });
 
     const post3 = await payload.create({
       collection: 'posts',
@@ -339,17 +339,17 @@ async function seed() {
         endDate: endDate.toISOString(),
         priority: 3,
       },
-    })
+    });
 
-    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}"`)
+    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}"`);
 
     // Create sample DJs first (for Shows)
-    console.log('🎧 Creating sample DJs...')
-    
+    console.log('🎧 Creating sample DJs...');
+
     const djRecord1 = await payload.create({
       collection: 'djs',
       data: {
-        person: [typeof dj1.id === 'number' ? dj1.id : parseInt(dj1.id)],
+        person: [typeof dj1.id === 'number' ? dj1.id : parseInt(dj1.id, 10)],
         description: {
           root: {
             type: 'root',
@@ -368,12 +368,12 @@ async function seed() {
         },
         onAir: true,
       },
-    })
-    
+    });
+
     const djRecord2 = await payload.create({
       collection: 'djs',
       data: {
-        person: [typeof dj2.id === 'number' ? dj2.id : parseInt(dj2.id)],
+        person: [typeof dj2.id === 'number' ? dj2.id : parseInt(dj2.id, 10)],
         description: {
           root: {
             type: 'root',
@@ -392,62 +392,62 @@ async function seed() {
         },
         onAir: true,
       },
-    })
-    
-    console.log(`   ✅ Created 2 DJ records`)
+    });
+
+    console.log('   ✅ Created 2 DJ records');
 
     // Create sample Shows
-    console.log('📻 Creating sample shows...')
-    
-    const showDate1 = new Date()
-    showDate1.setDate(showDate1.getDate() + 7)
-    
-    const showDate2 = new Date()
-    showDate2.setDate(showDate2.getDate() + 8)
-    
-    const show1 = await payload.create({
+    console.log('📻 Creating sample shows...');
+
+    const showDate1 = new Date();
+    showDate1.setDate(showDate1.getDate() + 7);
+
+    const showDate2 = new Date();
+    showDate2.setDate(showDate2.getDate() + 8);
+
+    await payload.create({
       collection: 'shows',
       data: {
         date: showDate1.toISOString(),
         day: 'friday',
         startTime: '11:00',
         endTime: '13:00',
-        host: typeof djRecord1.id === 'number' ? djRecord1.id : parseInt(djRecord1.id),
+        host: typeof djRecord1.id === 'number' ? djRecord1.id : parseInt(djRecord1.id, 10),
         note: 'Top 11 @ 11 countdown show',
       },
-    })
+    });
 
-    const show2 = await payload.create({
+    await payload.create({
       collection: 'shows',
       data: {
         date: showDate2.toISOString(),
         day: 'monday',
         startTime: '13:00',
         endTime: '17:00',
-        host: typeof djRecord2.id === 'number' ? djRecord2.id : parseInt(djRecord2.id),
+        host: typeof djRecord2.id === 'number' ? djRecord2.id : parseInt(djRecord2.id, 10),
         note: 'Indie Rock Hour',
       },
-    })
+    });
 
-    console.log(`   ✅ Created 2 shows`)
+    console.log('   ✅ Created 2 shows');
 
-    console.log('\n✅ Database seeded successfully!\n')
-    console.log('📊 Summary:')
-    console.log(`   People: 3`)
-    console.log(`   Venues: 3`)
-    console.log(`   Artists: 2`)
-    console.log(`   Records: 2`)
-    console.log(`   Songs: 3`)
-    console.log(`   Concerts: 3`)
-    console.log(`   Posts: 3`)
-    console.log(`   Shows: 2`)
-    console.log('\n🌐 View at: http://localhost:3000/admin\n')
+    console.log('\n✅ Database seeded successfully!\n');
+    console.log('📊 Summary:');
+    console.log('   People: 3');
+    console.log('   Venues: 3');
+    console.log('   Artists: 2');
+    console.log('   Records: 2');
+    console.log('   Songs: 3');
+    console.log('   Concerts: 3');
+    console.log('   Posts: 3');
+    console.log('   Shows: 2');
+    console.log('\n🌐 View at: http://localhost:3000/admin\n');
 
-    process.exit(0)
+    process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error)
-    process.exit(1)
+    console.error('❌ Error seeding database:', error);
+    process.exit(1);
   }
 }
 
-seed()
+seed();
