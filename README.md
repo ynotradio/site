@@ -46,6 +46,39 @@ If you would like to run Docker without seeing the terminal output, use `docker-
 
 If you run into challenges with a Docker container, this is a [helpful cheatsheet for removing images and volumes](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) before starting over.
 
+## For GitHub Copilot Agents
+
+**👋 Working on this codebase as an automated agent?**
+
+**Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) ⭐ **Required reading**
+
+This checklist provides:
+- ✅ Clear success criteria (screenshots, performance baselines)
+- 🔄 Incremental verification strategy
+- 🚨 When to stop and report blockers
+- 📋 Fallback strategies when full testing isn't possible
+
+**Quick commands to verify your work:**
+```bash
+# Test Payload CMS
+yarn payload:dev
+yarn seed:payload  # Sample data for testing
+# → Open http://localhost:3000/admin and take screenshot
+
+# Test legacy site
+docker compose up -d
+yarn seed:legacy  # Sample data for testing
+# Or: ./bin/refresh_local.sh for production data
+# → Open http://localhost:8080 and take screenshot
+
+# Run tests
+yarn test && yarn lint
+```
+
+**Context:**
+- [Migration Overview](docs/payload-migration/README.md) - PHP→Payload migration strategy
+- [Core Data Models](docs/payload-migration/03-core-data-models.md) - Collection schemas
+
 ## Development
 
 ### PHP Linting
@@ -76,6 +109,10 @@ In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typica
 Please [open an issue](https://github.com/ynotradio/site/issues) for support.
 
 ## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**For GitHub Copilot Agents:** Read [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) before starting work.
 
 Please contribute using [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Create a branch, add commits, and [open a pull request](https://github.com/ynotradio/site/pulls).
 
@@ -181,7 +218,7 @@ See [docs/payload-migration/](docs/payload-migration/) for the migration plannin
 ### Working with Payload Locally
 
 1. Run `cp .env.example .env.local` and update the Neon `DATABASE_URI`, `PAYLOAD_SECRET`, and Cloudinary placeholders.
-2. Run `npm install` (once) and start the admin server with `npm run payload:dev`.
-3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `npm run payload:migrate`.
+2. Run `yarn install` (once) and start the admin server with `yarn payload:dev`.
+3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `yarn payload:migrate`.
 
-For production, Netlify will execute `npm run payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.
+For production, Netlify will execute `yarn payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.
