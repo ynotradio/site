@@ -51,7 +51,9 @@ After adding domains to the firewall allowlist, automated agents can now:
 docker build -t ghcr.io/ynotradio/payload-dev:latest -f Dockerfile.payload .
 docker push ghcr.io/ynotradio/payload-dev:latest
 
-docker build -t ghcr.io/ynotradio/legacy-php:latest -f bin/docker/phpfpm/Dockerfile .
+# Legacy PHP image would use the existing Dockerfile from docker-compose.legacy.yml
+docker compose -f docker-compose.legacy.yml build phpfpm
+docker tag site-phpfpm:latest ghcr.io/ynotradio/legacy-php:latest
 docker push ghcr.io/ynotradio/legacy-php:latest
 ```
 
@@ -102,10 +104,10 @@ docker compose up -d
    - Faster npm install
    - Trade: Larger image size
 
-2. **Layer npm install**
+2. **Layer npm install** (for development containers)
    ```dockerfile
    COPY package*.json ./
-   RUN npm ci --only=production
+   RUN npm ci  # Install all dependencies including dev
    COPY . .
    ```
 
