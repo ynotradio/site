@@ -29,6 +29,34 @@ export const Posts: CollectionConfig = {
       },
     },
     {
+      name: 'slug',
+      type: 'text',
+      required: true,
+      unique: true,
+      index: true,
+      admin: {
+        description: 'URL-friendly slug (auto-generated from headline if not provided)',
+      },
+      hooks: {
+        beforeValidate: [
+          ({ data, operation, value }) => {
+            // Auto-generate slug from headline if not provided or if creating new post
+            if (operation === 'create' && !value && data?.headline) {
+              return data.headline
+                .replace(/<[^>]*>/g, '') // Remove HTML tags
+                .toLowerCase()
+                .replace(/[^\w\s-]/g, '') // Remove special chars except hyphens
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single
+                .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+                .trim();
+            }
+            return value;
+          },
+        ],
+      },
+    },
+    {
       name: 'startDate',
       type: 'date',
       required: true,
