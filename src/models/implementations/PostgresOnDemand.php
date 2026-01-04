@@ -32,12 +32,10 @@ class PostgresOnDemand implements OnDemand {
                 headline,
                 note,
                 songs,
-                audio_url as audio_url,
-                COALESCE(source, 'opendrive') as source,
-                '_deleted' IS NOT NULL as deleted
+                audio_url,
+                COALESCE(source, 'opendrive') as source
             FROM ondemand
             WHERE id = :id
-                AND _status = 'published'
         ");
         
         $stmt->execute(['id' => $id]);
@@ -49,7 +47,6 @@ class PostgresOnDemand implements OnDemand {
         
         // Convert PostgreSQL timestamp to MySQL date format
         $result['date'] = $this->formatDate($result['date']);
-        $result['deleted'] = $result['deleted'] ? 'yes' : 'no';
         
         return $result;
     }
@@ -83,7 +80,6 @@ class PostgresOnDemand implements OnDemand {
                 songs,
                 audio_url
             FROM ondemand
-            WHERE _status = 'published'
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
         ");
@@ -107,7 +103,6 @@ class PostgresOnDemand implements OnDemand {
                 headline,
                 date
             FROM ondemand
-            WHERE _status = 'published'
             ORDER BY headline ASC, date DESC
         ");
         
@@ -132,7 +127,6 @@ class PostgresOnDemand implements OnDemand {
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as num
             FROM ondemand
-            WHERE _status = 'published'
         ");
         
         $stmt->execute();
@@ -207,7 +201,6 @@ class PostgresOnDemand implements OnDemand {
                 audio_url,
                 COALESCE(source, 'opendrive') as source
             FROM ondemand
-            WHERE _status = 'published'
             ORDER BY date DESC
         ");
         
