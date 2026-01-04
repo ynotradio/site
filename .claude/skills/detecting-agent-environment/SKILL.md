@@ -1,7 +1,9 @@
-# Agent Helper Scripts
+---
+name: detecting-agent-environment
+description: Utilities and patterns for detecting execution environment (CI/CD vs local, network access, available ports, timeouts). Use when you need to adapt scripts or workflows based on where the agent is running, or when creating helper scripts that need environment-aware behavior.
+---
 
-> **Note:** This documentation has been refactored into agent skills for better discoverability.  
-> See `.claude/skills/detecting-agent-environment/SKILL.md` for the skill version.
+# Agent Helper Scripts
 
 Utilities for GitHub Copilot agents working on Y-Not Radio site.
 
@@ -67,12 +69,12 @@ When creating helper scripts:
    command 2>&1 | tee .agent-tmp/command.log
    ```
 
-## Required Reading
+## Related Skills
 
-Before creating scripts or PRs:
+Before creating scripts or PRs, see:
 
-- [Agent Testing Checklist](../../docs/AGENT_TESTING_CHECKLIST.md) - Success criteria
-- [Agent Automation Status](../../docs/AGENT_AUTOMATION_STATUS.md) - Current state
+- `testing-pr-changes` skill - Success criteria and testing workflows
+- `agent-automation-infrastructure` skill - Current automation state and pre-built images
 
 ## Performance Baselines
 

@@ -1,7 +1,9 @@
-# Agent Testing Checklist
+---
+name: testing-pr-changes
+description: Comprehensive testing and verification checklist for agent-created pull requests. Use when preparing to submit a PR, verifying changes work correctly, or ensuring all evidence requirements are met. Covers Docker setup, database seeding, performance baselines, and proof-of-functionality requirements.
+---
 
-> **Note:** This documentation has been refactored into agent skills for better discoverability.  
-> See `.claude/skills/testing-pr-changes/SKILL.md` for the skill version.
+# Agent Testing Checklist
 
 **For GitHub Copilot Agents: Use this checklist to verify your work is complete before submitting PRs.**
 
@@ -373,7 +375,7 @@ Ask for human assistance when:
 - Local setup: `docs/LOCAL_SETUP_GUIDE.md`
 - Agent examples: `docs/AGENT_VERIFICATION_EXAMPLES.md`
 - Migration context: `docs/payload-migration/README.md`
-- Automation status: `docs/AGENT_AUTOMATION_STATUS.md`
+- Automation status: See the `agent-automation-infrastructure` skill
 
 ---
 

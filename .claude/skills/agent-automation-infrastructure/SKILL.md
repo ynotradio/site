@@ -1,7 +1,9 @@
-# Agent Automation Status & Recommendations
+---
+name: agent-automation-infrastructure
+description: Current state of CI/CD automation infrastructure, pre-built Docker images, and performance optimization strategies. Use when dealing with slow builds, container timeouts, yarn install issues, or when you need to understand available pre-built images and automation tooling.
+---
 
-> **Note:** This documentation has been refactored into agent skills for better discoverability.  
-> See `.claude/skills/agent-automation-infrastructure/SKILL.md` for the skill version.
+# Agent Automation Status & Recommendations
 
 ## Current State (Updated 2026-01-04)
 

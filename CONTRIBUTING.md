@@ -6,9 +6,19 @@ Thank you for your interest in contributing to the Y-Not Radio site! This guide 
 
 If you're a GitHub Copilot agent working on this repository:
 
-1. **Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) - **Required reading**
-2. **Migration context:** [Migration Overview](docs/payload-migration/README.md)
-3. **Data models:** [Core Data Models](docs/payload-migration/03-core-data-models.md)
+### Agent Skills Available
+
+This repository uses Agent Skills for better guidance discovery. Key skills:
+
+1. **testing-pr-changes** - Complete testing and verification workflow (`.claude/skills/testing-pr-changes/SKILL.md`)
+2. **agent-automation-infrastructure** - Pre-built images and CI/CD optimization (`.claude/skills/agent-automation-infrastructure/SKILL.md`)
+3. **detecting-agent-environment** - Environment detection utilities (`.claude/skills/detecting-agent-environment/SKILL.md`)
+
+### Additional Resources
+
+- **Migration context:** [Migration Overview](docs/payload-migration/README.md)
+- **Data models:** [Core Data Models](docs/payload-migration/03-core-data-models.md)
+- **Legacy docs:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) (also available as skill)
 
 ### Quick Verification Commands
 
@@ -38,7 +48,7 @@ Every agent PR **MUST** include:
 - ✅ Test results (`yarn test` and `yarn lint` passing)
 - ✅ Description of what changed and why
 
-See [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) for complete criteria.
+For complete testing criteria, use the `testing-pr-changes` skill or see [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md).
 
 ## For Human Contributors
 
