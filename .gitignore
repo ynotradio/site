@@ -40,3 +40,6 @@ payload/types/
 
 # Local Netlify folder
 .netlify
+
+*storybook.log
+storybook-static
