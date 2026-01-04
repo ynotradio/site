@@ -62,12 +62,13 @@ This checklist provides:
 ```bash
 # Test Payload CMS
 yarn payload:dev
-yarn payload:seed  # Optional: add sample data
+yarn seed:payload  # Sample data for testing
 # → Open http://localhost:3000/admin and take screenshot
 
 # Test legacy site
 docker compose up -d
-./bin/refresh_local.sh  # Import production data
+yarn seed:legacy  # Sample data for testing
+# Or: ./bin/refresh_local.sh for production data
 # → Open http://localhost:8080 and take screenshot
 
 # Run tests

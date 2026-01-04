@@ -84,8 +84,8 @@ fi
 - [ ] Startup completes in < 3 minutes
 
 ### Phase 4: Database Seeding (Optional but Recommended)
-- [ ] Legacy site: `./bin/refresh_local.sh` (imports production data)
-- [ ] Payload: `yarn payload:seed` (creates sample data)
+- [ ] Legacy site: `yarn seed:legacy` (sample data) or `./bin/refresh_local.sh` (production)
+- [ ] Payload: `yarn seed:payload` (sample data based on Y-Not structure)
 - [ ] Data visible in applications
 
 ### Phase 4: Application Access
@@ -105,17 +105,24 @@ fi
 
 ### For Legacy PHP/MySQL Site
 
-**Script:** `./bin/refresh_local.sh`
+**Quick seed (sample data):** `yarn seed:legacy`
+
+Creates minimal sample data for testing without requiring production database access.
+
+**Production data:** `./bin/refresh_local.sh`
 
 This script:
-1. Pulls latest production database snapshot
+1. Pulls latest production database snapshot (`./bin/pull_db.sh`)
 2. Stops containers and removes volumes
 3. Starts fresh containers
-4. Imports production data into MySQL
+4. Imports production data into MySQL (`./bin/import_db.sh`)
 
 **Usage:**
 ```bash
-# Full refresh with production data
+# Quick seed with sample data (no production DB needed)
+yarn seed:legacy
+
+# Or use production data (requires DB access)
 ./bin/refresh_local.sh
 
 # Manual steps if needed:
@@ -124,45 +131,43 @@ This script:
 ```
 
 **Expected outcome:**
-- Site at http://localhost:8080 shows real content
+- Site at http://localhost:8080 shows content (sample or real)
 - PHPMyAdmin at http://localhost:8181 shows populated tables
 - Can browse shows, concerts, DJ profiles, etc.
 
 **Files:**
-- Database dump: `src/db/docker/ynot_db.sql` (gitignored)
+- Sample seed: `bin/seed-legacy.sh` (in repo)
+- Production dump: `src/db/docker/ynot_db.sql` (gitignored, requires access)
 - Import script: `bin/import_db.sh`
 - Refresh script: `bin/refresh_local.sh`
 
 ### For Payload CMS
 
-**Script:** `yarn payload:seed`
+**Script:** `yarn seed:payload`
 
-Creates sample data for testing:
-- Admin user accounts
-- Sample posts, shows, concerts
-- Test media uploads
-- Relationships between collections
+Creates sample data for testing based on actual Y-Not Radio content structure:
+- People (DJs like "Josh T. Landow", Artists)
+- Venues (The Foundry, Union Transfer, World Cafe Live)
+- Concerts with dates, artists, venues
+- Posts (news stories, contest announcements)
+- Shows (Top 11 @ 11, specialty shows)
+- Songs, Records, Artists (music catalog)
 
 **Usage:**
 ```bash
 # After Payload is running
-yarn payload:seed
-
-# Or during startup in scripts:
-yarn payload:migrate && yarn payload:seed && yarn payload:dev
+yarn seed:payload
 ```
 
 **Expected outcome:**
 - Admin UI shows populated collections
-- Can browse and edit sample data
-- Relationships work correctly
+- Can browse and edit sample data (DJs, venues, concerts, posts, shows)
+- Relationships work correctly (concerts → artists & venues, shows → DJs)
 - API returns data at endpoints
 
-**Note:** Payload seeding may not be fully implemented yet. If `yarn payload:seed` fails:
-1. Document that it's not available
-2. Create sample data manually via Admin UI
-3. Take screenshots showing data entry works
-4. Consider implementing seed script if needed for testing
+**Files:**
+- Seed script: `bin/seed-payload.ts` (TypeScript, uses Payload API)
+- Based on structure from `src/db/docker/ynot_db.sql`
 
 ### Seeding Checklist
 
@@ -299,7 +304,7 @@ Include this section in every PR:
 ### Testing Performed
 - [ ] Payload accessible: http://localhost:3000/admin
 - [ ] Legacy accessible: http://localhost:8080
-- [ ] Database seeded (Payload: `yarn payload:seed` or Legacy: `./bin/refresh_local.sh`)
+- [ ] Database seeded (`yarn seed:payload` and/or `yarn seed:legacy`)
 - [ ] Tests pass: `yarn test`
 - [ ] Linting passes: `yarn lint`
 
@@ -333,8 +338,9 @@ Ask for human assistance when:
 ## Resources
 
 - **Database seeding:**
-  - Legacy site: `./bin/refresh_local.sh` (pulls and imports production data)
-  - Payload CMS: `yarn payload:seed` (creates sample data for testing)
+  - Payload: `yarn seed:payload` (sample data based on ynot_db.sql structure)
+  - Legacy (sample): `yarn seed:legacy` (quick test data)
+  - Legacy (production): `./bin/refresh_local.sh` (real data, requires access)
 - Local setup: `docs/LOCAL_SETUP_GUIDE.md`
 - Agent examples: `docs/AGENT_VERIFICATION_EXAMPLES.md`
 - Migration context: `docs/payload-migration/README.md`

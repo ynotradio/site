@@ -15,13 +15,14 @@ If you're a GitHub Copilot agent working on this repository:
 ```bash
 # Verify Payload CMS works
 yarn payload:dev
+yarn seed:payload  # Sample data for testing
 # Open http://localhost:3000/admin
-# Seed data: yarn payload:seed
 # Take screenshot of working admin UI
 
 # Verify legacy PHP site works  
 docker compose up -d
-./bin/refresh_local.sh  # Import production data
+yarn seed:legacy  # Sample data for testing
+# Or: ./bin/refresh_local.sh for production data
 # Open http://localhost:8080
 # Take screenshot of working homepage
 

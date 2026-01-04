@@ -119,8 +119,8 @@ docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
 docker compose up -d
 
 # Seed databases with data
-./bin/refresh_local.sh    # Legacy site with production data
-yarn payload:seed         # Payload with sample data
+yarn seed:legacy    # Legacy site with production data
+yarn seed:payload         # Payload with sample data
 
 # Ready in ~20 seconds (+ seed time)
 ```
@@ -131,8 +131,8 @@ yarn payload:seed         # Payload with sample data
 docker compose up -d --build
 
 # Seed databases
-./bin/refresh_local.sh    # Legacy site
-yarn payload:seed         # Payload
+yarn seed:legacy    # Legacy site
+yarn seed:payload         # Payload
 
 # Takes 5+ minutes due to yarn install
 ```
@@ -144,12 +144,12 @@ yarn payload:seed         # Payload
 - Screenshots of empty dashboards don't prove functionality
 - Real data helps test relationships and queries
 
-**Legacy site:** `./bin/refresh_local.sh`
+**Legacy site:** `yarn seed:legacy`
 - Pulls production database snapshot
 - Imports into MySQL container
 - Site shows real content at http://localhost:8080
 
-**Payload:** `yarn payload:seed`
+**Payload:** `yarn seed:payload`
 - Creates sample collections and data
 - Admin UI shows populated tables
 - May need implementation if not yet available
