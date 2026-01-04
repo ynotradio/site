@@ -44,6 +44,16 @@ Utilities for detecting execution environment and creating environment-aware scr
 
 **Use when:** Need to adapt scripts based on execution environment or creating helper utilities.
 
+### payload-migration-workflow
+Guide for migrating from PHP/MySQL to Payload CMS with PostgreSQL. Covers:
+- Migration strategy and architecture decisions
+- Core data models and priority order
+- Step-by-step migration tasks
+- PHP PostgreSQL integration patterns
+- Success criteria per collection
+
+**Use when:** Working on Payload migration tasks, understanding data models, or implementing Payload collections.
+
 ## Skill Structure
 
 Each skill follows this structure:
@@ -77,12 +87,13 @@ Skills in this repository follow these principles:
 
 ## Migration from Legacy Docs
 
-These skills were refactored from:
+Agent documentation has been consolidated into skills:
 - `docs/AGENT_TESTING_CHECKLIST.md` → `testing-pr-changes`
 - `docs/AGENT_AUTOMATION_STATUS.md` → `agent-automation-infrastructure`
 - `bin/agent-helpers/README.md` → `detecting-agent-environment`
+- `docs/payload-migration/` → `payload-migration-workflow`
 
-Legacy documentation files remain in place with notes pointing to skills.
+Legacy documentation files now contain only pointers to skills. All updates should be made to the skill versions.
 
 ## Contributing
 
