@@ -7,8 +7,8 @@ export const OnDemand: CollectionConfig = {
     drafts: true,
   },
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'artist', 'updatedAt'],
+    useAsTitle: 'headline',
+    defaultColumns: ['headline', 'date', 'updatedAt'],
     group: 'Radio',
   },
   access: {
@@ -19,28 +19,60 @@ export const OnDemand: CollectionConfig = {
   },
   fields: [
     {
-      name: 'title',
+      name: 'date',
+      type: 'date',
+      required: true,
+      index: true,
+      admin: {
+        description: 'Date of the on-demand recording',
+      },
+    },
+    {
+      name: 'image',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'URL of the image/thumbnail',
+      },
+    },
+    {
+      name: 'headline',
       type: 'text',
       required: true,
       index: true,
       admin: {
-        description: 'Title of the on-demand content',
+        description: 'Headline/title of the on-demand content',
       },
     },
     {
-      name: 'artist',
-      type: 'relationship',
-      relationTo: 'artists',
-      admin: {
-        description: 'Featured artist or band',
-      },
-    },
-    {
-      name: 'streamUrl',
+      name: 'note',
       type: 'text',
       required: true,
       admin: {
-        description: 'URL for streaming the content',
+        description: 'Description or note about the content',
+      },
+    },
+    {
+      name: 'songs',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'List of songs performed',
+      },
+    },
+    {
+      name: 'audioUrl',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'Audio stream identifier (e.g., OpenDrive ID)',
+      },
+    },
+    {
+      name: 'source',
+      type: 'text',
+      admin: {
+        description: 'Source platform (e.g., opendrive)',
       },
     },
     {
