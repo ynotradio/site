@@ -16,6 +16,7 @@ import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { slugify, cleanHeadline } from './shared/slugify';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -129,11 +130,16 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       }
     }
 
+    // Clean headline and generate slug
+    const cleanedHeadline = cleanHeadline(post.headline);
+    const slug = slugify(post.headline);
+
     // Create post record
     await payload.create({
       collection: 'posts',
       data: {
-        headline: post.headline,
+        headline: cleanedHeadline,
+        slug,
         startDate: post.start_date,
         endDate: post.end_date,
         content,
@@ -146,7 +152,7 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       },
     });
 
-    logger.debug(`Imported post ${post.id}: ${post.headline}`);
+    logger.debug(`Imported post ${post.id}: ${cleanedHeadline} (slug: ${slug})`);
     return 'success';
   } catch (error) {
     logger.error(`Failed to import post ${post.id}`, error as Error);

@@ -8,8 +8,9 @@ import { connectToDatabase } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { slugify, cleanHeadline } from './shared/slugify';
 
-const STORY_IDS = [776, 781, 168, 162, 167, 105, 641, 251, 11, 234];
+const STORY_IDS = [776, 781, 162, 641, 251, 234]; // Current front-page stories
 
 async function reimportStories() {
   console.log('🔄 Re-importing current front-page stories with images...');
@@ -42,6 +43,10 @@ async function reimportStories() {
       
       const content = convertHtmlToLexical(story.content);
       
+      // Clean headline and generate slug
+      const cleanedHeadline = cleanHeadline(story.headline);
+      const slug = slugify(story.headline);
+      
       let imageId: string | undefined;
       if (story.image_url && story.image_url.trim() !== '') {
         console.log(`   ⬇️  Importing image to Cloudinary...`);
@@ -63,7 +68,8 @@ async function reimportStories() {
       await payload.create({
         collection: 'posts',
         data: {
-          headline: story.headline,
+          headline: cleanedHeadline,
+          slug,
           startDate: story.start_date,
           endDate: story.end_date,
           content,
@@ -77,6 +83,8 @@ async function reimportStories() {
       });
       
       console.log(`   ✅ Story created successfully`);
+      console.log(`   📝 Headline: ${cleanedHeadline}`);
+      console.log(`   🔗 Slug: ${slug}`);
       success++;
     } catch (error) {
       console.error(`   ❌ Failed to import story ${story.id}:`, error);
