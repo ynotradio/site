@@ -38,6 +38,9 @@ media/
 test-results/
 payload/types/
 
+# Agent helpers temporary directory
+.agent-tmp/
+
 # Local Netlify folder
 .netlify
 

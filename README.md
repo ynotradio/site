@@ -46,6 +46,36 @@ If you would like to run Docker without seeing the terminal output, use `docker-
 
 If you run into challenges with a Docker container, this is a [helpful cheatsheet for removing images and volumes](https://www.digitalocean.com/community/tutorials/how-to-remove-docker-images-containers-and-volumes) before starting over.
 
+## For GitHub Copilot Agents
+
+**👋 Working on this codebase as an automated agent?**
+
+**Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) ⭐ **Required reading**
+
+This checklist provides:
+- ✅ Clear success criteria (screenshots, performance baselines)
+- 🔄 Incremental verification strategy
+- 🚨 When to stop and report blockers
+- 📋 Fallback strategies when full testing isn't possible
+
+**Quick commands to verify your work:**
+```bash
+# Test Payload CMS
+npm run payload:dev
+# → Open http://localhost:3000/admin and take screenshot
+
+# Test legacy site
+docker compose up -d
+# → Open http://localhost:8080 and take screenshot
+
+# Run tests
+npm test && npm run lint
+```
+
+**Context:**
+- [Migration Overview](docs/payload-migration/README.md) - PHP→Payload migration strategy
+- [Core Data Models](docs/payload-migration/03-core-data-models.md) - Collection schemas
+
 ## Development
 
 ### PHP Linting
@@ -76,6 +106,10 @@ In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typica
 Please [open an issue](https://github.com/ynotradio/site/issues) for support.
 
 ## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**For GitHub Copilot Agents:** Read [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) before starting work.
 
 Please contribute using [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Create a branch, add commits, and [open a pull request](https://github.com/ynotradio/site/pulls).
 
