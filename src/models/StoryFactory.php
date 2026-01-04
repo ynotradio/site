@@ -2,7 +2,6 @@
 
 namespace YNotRadio\Models;
 
-// Require the necessary classes
 require_once __DIR__ . '/FeatureManager.php';
 require_once __DIR__ . '/Story.php';
 require_once __DIR__ . '/implementations/SqlStory.php';

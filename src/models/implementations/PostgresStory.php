@@ -246,14 +246,15 @@ class PostgresStory implements Story {
      * @return string HTML content
      */
     private function convertLexicalToHtml(string $lexicalJson): string {
-        // If it's already HTML (not JSON), return as-is
-        if (substr(trim($lexicalJson), 0, 1) !== '{') {
+        // Try to decode as JSON first
+        $lexical = json_decode($lexicalJson, true);
+        
+        // If it's not valid JSON, assume it's already HTML
+        if (json_last_error() !== JSON_ERROR_NONE) {
             return $lexicalJson;
         }
         
         try {
-            $lexical = json_decode($lexicalJson, true);
-            
             if (!isset($lexical['root']['children'])) {
                 return $lexicalJson; // Return original if structure is unexpected
             }
@@ -302,11 +303,16 @@ class PostgresStory implements Story {
                 
             case 'link':
                 $url = $node['url'] ?? '#';
+                // Sanitize URL - only allow http, https, and relative URLs
+                if (!$this->isValidUrl($url)) {
+                    $url = '#';
+                }
+                $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $content = $this->convertLexicalChildren($node);
                 return "<a href=\"$url\">$content</a>";
                 
             case 'text':
-                $text = $node['text'] ?? '';
+                $text = htmlspecialchars($node['text'] ?? '', ENT_QUOTES, 'UTF-8');
                 $format = $node['format'] ?? 0;
                 
                 // Apply text formatting
@@ -345,5 +351,40 @@ class PostgresStory implements Story {
         }
         
         return $html;
+    }
+
+    /**
+     * Validate URL to prevent XSS attacks
+     * Only allows http, https, and relative URLs
+     * 
+     * @param string $url URL to validate
+     * @return bool True if URL is valid and safe
+     */
+    private function isValidUrl(string $url): bool {
+        // Allow relative URLs
+        if (substr($url, 0, 1) === '/') {
+            return true;
+        }
+        
+        // Allow anchors
+        if (substr($url, 0, 1) === '#') {
+            return true;
+        }
+        
+        // Parse the URL
+        $parsed = parse_url($url);
+        
+        if ($parsed === false) {
+            return false;
+        }
+        
+        // If there's a scheme, it must be http or https
+        if (isset($parsed['scheme'])) {
+            $scheme = strtolower($parsed['scheme']);
+            return $scheme === 'http' || $scheme === 'https';
+        }
+        
+        // No scheme means relative URL - allowed
+        return true;
     }
 }
