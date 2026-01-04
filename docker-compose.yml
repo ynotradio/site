@@ -57,6 +57,27 @@ services:
         source: ./bin/docker/apache-vhost/my_vhost.conf
         target: /opt/bitnami/apache/conf/vhosts/my_vhost.conf
       - ./src:/app
+  postgres:
+    build:
+      context: ./
+      dockerfile: ./bin/docker/postgres/Dockerfile
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_DB: ynot_payload_dev
+      POSTGRES_USER: ynot_postgres_user
+      POSTGRES_PASSWORD: ynot_postgres_pass
+    networks:
+      - app-tier
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ynot_postgres_user -d ynot_payload_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 volumes:
   mysqldb_data:
+    driver: local
+  postgres_data:
     driver: local

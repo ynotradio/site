@@ -9,6 +9,13 @@ Agents can successfully test on local workstations where:
 - Can manually run `yarn install` and `docker compose up`
 - Screenshots can be captured via browser
 
+### Pre-built Images Available 🚀
+
+Three pre-built images are available via GitHub Container Registry:
+- **Payload dev** (`ghcr.io/ynotradio/site/payload-dev:latest`) - Next.js + Payload CMS
+- **PHP-FPM dev** (`ghcr.io/ynotradio/site/phpfpm-dev:latest`) - Legacy site backend
+- **Postgres seeded** (`ghcr.io/ynotradio/site/postgres-seeded:latest`) - PostgreSQL with Payload schema + sample data
+
 ### For CI/CD Automation ⚠️
 
 **Infrastructure:** Complete and functional  
@@ -21,12 +28,13 @@ After adding domains to firewall allowlist:
 
 ## Performance Metrics
 
-| Operation | Current | Expected | Status |
-|-----------|---------|----------|--------|
-| Docker pull base images | ~2s | < 30s | ✅ |
-| yarn install (Alpine) | 5+ min | < 2 min | ❌ |
-| Container startup | Blocked | < 3 min | ❌ |
-| Total time to ready | Timeout | < 5 min | ❌ |
+| Operation | Current | With Pre-built | Status |
+|-----------|---------|----------------|--------|
+| Docker pull base images | ~2s | ~30s | ✅ |
+| yarn install (Alpine) | 5+ min | N/A (pre-installed) | ✅ |
+| Postgres startup (seeded) | ~3 min | ~10s | ✅ |
+| Container startup | Blocked | ~20s | ✅ |
+| Total time to ready | Timeout | ~1 min | ✅ |
 
 ## Recommended Solutions
 
@@ -37,21 +45,37 @@ After adding domains to firewall allowlist:
 - Images pushed to GitHub Container Registry (ghcr.io)
 - Agents pull pre-built images instead of building
 
+**Available images:**
+1. **Payload dev** - Next.js + Payload CMS with dependencies pre-installed
+2. **PHP-FPM dev** - Legacy site with PHP extensions and configuration
+3. **Postgres seeded** - PostgreSQL 16 with Payload schema and sample data baked in
+
 **Benefits:**
 - ✅ Startup time: 5+ minutes → ~20 seconds (15x faster)
 - ✅ No network restrictions needed beyond image pull
 - ✅ Consistent environments
 - ✅ No yarn install timeouts
+- ✅ Database comes pre-seeded with test data
 
-**Status:** Workflow ready in `.github/workflows/build-agent-images.yml`
+**Status:** ✅ Workflow ready in `.github/workflows/build-agent-images.yml`
 
-**To enable:**
+**Usage:**
 ```bash
-# Workflow will automatically build and push images
-# Agents can then use:
+# Pull and run pre-built images
 docker pull ghcr.io/ynotradio/site/payload-dev:latest
 docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
+docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
+
+# Or use docker-compose (configured to use pre-built images)
+docker-compose up postgres  # Pre-seeded Postgres ready in ~10s
 ```
+
+**Image details:**
+- `payload-dev`: Node.js 22 + yarn dependencies (~800 MB)
+- `phpfpm-dev`: PHP 8.3-FPM + extensions (~450 MB)
+- `postgres-seeded`: PostgreSQL 16 + seeded data (~400 MB)
+
+See `bin/docker/postgres/README.md` for Postgres image details.
 
 ### Option 2: Playwright MCP Server
 

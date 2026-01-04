@@ -21,16 +21,19 @@ async function seed() {
   const payload = await getPayloadHMR({ config })
 
   try {
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    console.log('🗑️  Clearing existing sample data...')
-    await payload.delete({ collection: 'concerts', where: {} })
-    await payload.delete({ collection: 'posts', where: {} })
-    await payload.delete({ collection: 'shows', where: {} })
-    await payload.delete({ collection: 'people', where: {} })
-    await payload.delete({ collection: 'venues', where: {} })
-    await payload.delete({ collection: 'songs', where: {} })
-    await payload.delete({ collection: 'records', where: {} })
-    await payload.delete({ collection: 'artists', where: {} })
+    // Check if already seeded (skip if People collection has data)
+    const existingPeople = await payload.find({
+      collection: 'people',
+      limit: 1,
+    })
+    
+    if (existingPeople.docs.length > 0) {
+      console.log('⏭️  Database already has data. Skipping seed.')
+      console.log('   To re-seed, first clear existing data or drop the database.')
+      process.exit(0)
+    }
+
+    console.log('🗑️  Database is empty, proceeding with seed...')
 
     // Create sample People (DJs and Artists)
     console.log('👤 Creating sample people...')

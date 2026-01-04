@@ -143,21 +143,40 @@ yarn seed:legacy
 
 ### For Payload CMS
 
-**Script:** `yarn seed:payload`
+**Option 1: Use Pre-seeded Postgres Container (Fastest)**
 
-Creates sample data for testing based on actual Y-Not Radio content structure:
+The pre-built Postgres image includes schema and sample data pre-installed:
+
+```bash
+# Using docker-compose (recommended)
+docker-compose up postgres
+
+# Or pull pre-built image directly
+docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
+docker run -d -p 5432:5432 ghcr.io/ynotradio/site/postgres-seeded:latest
+```
+
+**Performance:**
+- ✅ First start: ~2-3 minutes (seeds automatically)
+- ✅ Subsequent starts: ~10 seconds (data persists)
+- ⚠️ Requires GHCR access for pre-built image
+
+**Option 2: Manual Seeding**
+
+If you need custom data or don't have GHCR access:
+
+```bash
+# After Payload is running with empty database
+yarn seed:payload
+```
+
+**What's included in seed data:**
 - People (DJs like "Josh T. Landow", Artists)
 - Venues (The Foundry, Union Transfer, World Cafe Live)
 - Concerts with dates, artists, venues
 - Posts (news stories, contest announcements)
 - Shows (Top 11 @ 11, specialty shows)
 - Songs, Records, Artists (music catalog)
-
-**Usage:**
-```bash
-# After Payload is running
-yarn seed:payload
-```
 
 **Expected outcome:**
 - Admin UI shows populated collections
@@ -166,8 +185,15 @@ yarn seed:payload
 - API returns data at endpoints
 
 **Files:**
+- Pre-seeded image: `bin/docker/postgres/Dockerfile`
 - Seed script: `bin/seed-payload.ts` (TypeScript, uses Payload API)
 - Based on structure from `src/db/docker/ynot_db.sql`
+
+**Connection details:**
+```env
+DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev
+DATABASE_SSL=disable
+```
 
 ### Seeding Checklist
 
