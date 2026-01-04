@@ -62,8 +62,10 @@ export const Artists: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        readOnly: true,
-        description: 'MusicBrainz artist ID (MBID)',
+        description: 'MusicBrainz artist ID (MBID) - Search and select from MusicBrainz',
+        components: {
+          Field: '/payload/src/components/fields/MusicBrainzArtistField#MusicBrainzArtistField',
+        },
       },
     },
     {

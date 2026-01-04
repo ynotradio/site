@@ -2,9 +2,51 @@
 
 ## Overview
 
-The artist cleanup module now uses the MusicBrainz API to intelligently determine whether ambiguous artist strings (those containing "and", "&", or "+") represent a single artist or multiple artists.
+The YNot Radio site integrates with MusicBrainz in two ways:
 
-## How It Works
+1. **Migration Scripts**: During data import, the artist cleanup module uses the MusicBrainz API to intelligently determine whether ambiguous artist strings represent single artists or multiple artists.
+
+2. **Admin UI**: Content managers can search and select MusicBrainz entities (artists, releases, recordings) directly in the Payload CMS admin interface using custom field components.
+
+## Admin UI Integration
+
+### Custom Field Components
+
+The Payload CMS includes custom MusicBrainz field components for:
+
+- **Artists Collection**: `MusicBrainzArtistField` - Search for artists/bands
+- **Records Collection**: `MusicBrainzReleaseField` - Search for albums/releases  
+- **Songs Collection**: `MusicBrainzRecordingField` - Search for recordings/tracks
+
+### Features
+
+- **Real-time Search**: Type to search MusicBrainz as you type (debounced)
+- **Rich Results**: See artist type, disambiguation, dates, and match scores
+- **Smart Context**: Release and recording searches can use the album/song title from the form
+- **Clear Selection**: Easy to clear and re-search
+- **Rate Limited**: Automatically respects MusicBrainz's 1 request/second limit
+
+### Usage in Admin UI
+
+1. Navigate to an Artist, Record, or Song in the Payload admin
+2. Find the "MusicBrainz ID" field in the sidebar
+3. Type in the search box to search MusicBrainz
+4. Click a result to select it and populate the MBID field
+5. The MBID is saved with the record
+
+### Implementation
+
+Field components are located in:
+- `payload/src/components/fields/MusicBrainzArtistField.tsx`
+- `payload/src/components/fields/MusicBrainzReleaseField.tsx`
+- `payload/src/components/fields/MusicBrainzRecordingField.tsx`
+
+API client utility:
+- `payload/src/utils/musicbrainz-api.ts`
+
+## Migration Scripts Integration
+
+### How It Works
 
 ### Pattern Matching First
 The system first attempts to match artist names using predefined patterns:
