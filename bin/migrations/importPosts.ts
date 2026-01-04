@@ -132,7 +132,8 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
 
     // Clean headline and generate slug
     const cleanedHeadline = cleanHeadline(post.headline);
-    const slug = slugify(post.headline);
+    // For custom texts, use the existing permalink as slug; otherwise generate from headline
+    const slug = post.permalink || slugify(post.headline);
 
     // Create post record
     await payload.create({
@@ -152,7 +153,7 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       },
     });
 
-    logger.debug(`Imported post ${post.id}: ${cleanedHeadline} (slug: ${slug})`);
+    logger.debug(`Imported post ${post.id} [${post.source}]: ${cleanedHeadline} (slug: ${slug})`);
     return 'success';
   } catch (error) {
     logger.error(`Failed to import post ${post.id}`, error as Error);
