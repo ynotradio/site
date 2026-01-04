@@ -24,19 +24,20 @@
 | 12 | Shows | `shows` | ✅ Complete | Schedule entries referencing DJs |
 | 13 | Posts | `posts` | ✅ Complete | Content blocks (unified Story + CustomText) |
 | 14 | Users | `users` | ✅ Complete | Authentication and admin access |
-| 15 | Top11Contests | `top11_contests` | 🔲 Todo | Weekly contest config |
-| 16 | Top11Results | `top11_results` | 🔲 Todo | Published weekly results |
-| 17 | Top11Votes | `top11_votes` | 🔲 Todo | User votes (PostgreSQL native, not NoSQL) |
-| 18 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
-| 19 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
-| 20 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
-| 21 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
-| 22 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
-| 23 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
-| 24 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| 15 | YearEndPollResults | `year_end_poll_results` | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
+| 16 | Top11Contests | `top11_contests` | 🔲 Todo | Weekly contest config |
+| 17 | Top11Results | `top11_results` | 🔲 Todo | Published weekly results |
+| 18 | Top11Votes | `top11_votes` | 🔲 Todo | User votes (PostgreSQL native, not NoSQL) |
+| 19 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
+| 20 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
+| 21 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| 22 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
+| 23 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
+| 24 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
+| 25 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
 
 ### Summary
-- **Completed:** 14 collections (all core content types)
+- **Completed:** 15 collections (all core content types + Year End Poll Results)
 - **Remaining:** 10 collections (voting/tournament systems)
 
 ---
