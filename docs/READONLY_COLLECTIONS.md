@@ -1,7 +1,5 @@
 # Read-Only Data Collections - PostgreSQL Schema
 
-**Last Updated:** January 4, 2026
-
 **Status:** ✅ All collections implemented (Nov-Dec 2025)  
 **Last Updated:** January 4, 2026
 
