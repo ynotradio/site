@@ -2,6 +2,8 @@
 
 ## Current State (Updated 2026-01-04)
 
+📊 **For detailed performance analysis and session efficiency recommendations, see [Development Environment Performance Report](./DEV_ENVIRONMENT_PERFORMANCE_REPORT.md)**
+
 ### For Local Development ✅
 Agents can successfully test on local workstations where:
 - Full network access available

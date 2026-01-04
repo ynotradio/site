@@ -76,6 +76,8 @@ yarn test && yarn lint
 ```
 
 **Context:**
+- [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) - **Required:** Success criteria & performance baselines
+- [Dev Environment Performance Report](docs/DEV_ENVIRONMENT_PERFORMANCE_REPORT.md) - Session efficiency best practices
 - [Migration Overview](docs/payload-migration/README.md) - PHP→Payload migration strategy
 - [Core Data Models](docs/payload-migration/03-core-data-models.md) - Collection schemas
 

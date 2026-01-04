@@ -7,8 +7,9 @@ Thank you for your interest in contributing to the Y-Not Radio site! This guide 
 If you're a GitHub Copilot agent working on this repository:
 
 1. **Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) - **Required reading**
-2. **Migration context:** [Migration Overview](docs/payload-migration/README.md)
-3. **Data models:** [Core Data Models](docs/payload-migration/03-core-data-models.md)
+2. **Performance guide:** [Dev Environment Performance Report](docs/DEV_ENVIRONMENT_PERFORMANCE_REPORT.md) - Session efficiency best practices
+3. **Migration context:** [Migration Overview](docs/payload-migration/README.md)
+4. **Data models:** [Core Data Models](docs/payload-migration/03-core-data-models.md)
 
 ### Quick Verification Commands
 

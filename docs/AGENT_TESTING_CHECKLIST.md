@@ -27,6 +27,8 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
 
 **Know when to stop and report issues:**
 
+### Infrastructure Setup Times
+
 | Metric | Expected | Warning | Failure |
 |--------|----------|---------|---------|
 | Container startup | < 60s | 60-120s | > 120s |
@@ -37,6 +39,22 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
 ⚠️ **If you exceed "Warning" thresholds:** Document the issue and investigate alternatives (pre-built images, optimized containers, etc.)
 
 ❌ **If you hit "Failure" thresholds:** Stop and report the blocker. Do not proceed with untested work.
+
+### Session Duration Targets
+
+| Task Complexity | Target Duration | Warning | Notes |
+|----------------|-----------------|---------|-------|
+| Simple (docs, config) | 10-15 min | > 20 min | Documentation updates, config changes |
+| Medium (single feature) | 15-25 min | > 30 min | Single component changes, focused features |
+| Complex (multi-component) | 25-40 min | > 50 min | Multiple files, integration work |
+
+**Session Efficiency Tips:**
+- Use parallel tool calls (grep, view, glob) to explore faster
+- Create plan with `report_progress` within first 5 minutes
+- Run targeted tests during development, full suite at end only
+- Minimize iteration cycles by planning upfront
+
+📊 **For detailed session efficiency analysis, see [Development Environment Performance Report](./DEV_ENVIRONMENT_PERFORMANCE_REPORT.md)**
 
 ## Environment Detection
 
@@ -338,9 +356,18 @@ Include this section in every PR:
 [Screenshots or explain why not available]
 
 ### Performance Metrics
-- Container startup: [time]
-- yarn install: [time]
-- Service ready: [time]
+
+**Infrastructure:**
+- Container startup: [time] (target: < 60s)
+- yarn install: [time] (target: < 120s)
+- Service ready: [time] (target: < 180s)
+
+**Session Efficiency:**
+- Total session duration: [time] (target: see complexity baselines)
+- Task complexity: Simple / Medium / Complex
+- Exploration time: [time] (target: 3-5 min)
+- Implementation time: [time]
+- Validation time: [time] (target: 3-5 min)
 
 ### Issues Encountered
 [None / List specific issues and how resolved]
