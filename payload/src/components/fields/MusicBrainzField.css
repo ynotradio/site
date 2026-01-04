@@ -4,16 +4,16 @@
   width: 100%;
 }
 
-/* Selected Item Display */
+/* Selected Item Display - styled like Sanity's positive tone card */
 .musicbrainz-selected {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 12px;
-  background: var(--theme-elevation-100);
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: 4px;
-  gap: 12px;
+  padding: 16px;
+  background: var(--theme-success-50, #f0fdf4);
+  border: 1px solid var(--theme-success-200, #bbf7d0);
+  border-radius: 6px;
+  gap: 16px;
 }
 
 .musicbrainz-selected-info {
@@ -24,202 +24,240 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
   font-size: 14px;
 }
 
 .musicbrainz-selected-name strong {
   font-weight: 600;
+  color: var(--theme-text, #1f2937);
 }
 
 .musicbrainz-type,
 .musicbrainz-duration {
-  padding: 2px 6px;
-  background: var(--theme-elevation-200);
-  border-radius: 3px;
+  padding: 2px 8px;
+  background: var(--theme-elevation-200, #e5e7eb);
+  border-radius: 4px;
   font-size: 11px;
-  color: var(--theme-text);
+  font-weight: 500;
+  color: var(--theme-text, #1f2937);
 }
 
 .musicbrainz-artist {
   font-size: 13px;
-  color: var(--theme-elevation-600);
+  color: var(--theme-elevation-600, #6b7280);
   margin-bottom: 4px;
 }
 
 .musicbrainz-disambiguation {
   font-size: 12px;
-  color: var(--theme-elevation-500);
+  color: var(--theme-elevation-500, #9ca3af);
   font-style: italic;
   margin-bottom: 4px;
 }
 
 .musicbrainz-id {
   font-size: 12px;
-  color: var(--theme-elevation-500);
-  margin-bottom: 2px;
+  color: var(--theme-elevation-500, #9ca3af);
+  margin-bottom: 4px;
 }
 
 .musicbrainz-id code {
-  background: var(--theme-elevation-50);
-  padding: 2px 4px;
-  border-radius: 2px;
-  font-family: monospace;
+  background: var(--theme-elevation-50, #f9fafb);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
   font-size: 11px;
 }
 
 .musicbrainz-dates {
   font-size: 12px;
-  color: var(--theme-elevation-500);
+  color: var(--theme-elevation-500, #9ca3af);
+}
+
+.musicbrainz-selected-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.musicbrainz-view-btn {
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--theme-primary-500, #3b82f6);
+  border: 1px solid var(--theme-primary-200, #bfdbfe);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.musicbrainz-view-btn:hover {
+  background: var(--theme-primary-50, #eff6ff);
+  border-color: var(--theme-primary-300, #93c5fd);
 }
 
 .musicbrainz-clear-btn {
   padding: 6px 12px;
-  background: var(--theme-error-500);
+  background: transparent;
+  color: var(--theme-error-500, #ef4444);
+  border: 1px solid var(--theme-error-200, #fecaca);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.musicbrainz-clear-btn:hover {
+  background: var(--theme-error-50, #fef2f2);
+  border-color: var(--theme-error-300, #fca5a5);
+}
+
+/* Search Wrapper */
+.musicbrainz-search-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Search Prompt - styled like Sanity's bordered card */
+.musicbrainz-search-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--theme-elevation-0, #ffffff);
+  border: 1px solid var(--theme-elevation-200, #e5e7eb);
+  border-radius: 6px;
+  gap: 12px;
+}
+
+.musicbrainz-search-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--theme-elevation-600, #6b7280);
+}
+
+.musicbrainz-search-text strong {
+  font-weight: 600;
+  color: var(--theme-text, #1f2937);
+}
+
+.musicbrainz-search-btn {
+  padding: 8px 16px;
+  background: var(--theme-primary-500, #3b82f6);
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
+  font-weight: 500;
   white-space: nowrap;
+  transition: background 0.15s ease;
 }
 
-.musicbrainz-clear-btn:hover {
-  background: var(--theme-error-600);
+.musicbrainz-search-btn:hover:not(:disabled) {
+  background: var(--theme-primary-600, #2563eb);
 }
 
-/* Search Interface */
-.musicbrainz-search {
-  position: relative;
+.musicbrainz-search-btn:disabled {
+  background: var(--theme-elevation-200, #e5e7eb);
+  color: var(--theme-elevation-400, #9ca3af);
+  cursor: not-allowed;
 }
 
-.musicbrainz-search-controls {
+/* Results Wrapper */
+.musicbrainz-results-wrapper {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  margin-bottom: 8px;
 }
 
-.musicbrainz-search-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: 4px;
-  font-size: 14px;
-  background: var(--theme-elevation-0);
-  color: var(--theme-text);
-}
-
-.musicbrainz-search-input:focus {
-  outline: none;
-  border-color: var(--theme-input-border-focus);
-  box-shadow: 0 0 0 1px var(--theme-input-border-focus);
-}
-
-.musicbrainz-use-title-btn {
-  padding: 8px 12px;
-  background: var(--theme-elevation-200);
-  color: var(--theme-text);
-  border: 1px solid var(--theme-elevation-300);
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 13px;
-  white-space: nowrap;
-}
-
-.musicbrainz-use-title-btn:hover {
-  background: var(--theme-elevation-300);
+.musicbrainz-results-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--theme-text, #1f2937);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  padding: 0 4px;
 }
 
 .musicbrainz-loading {
-  padding: 8px 12px;
+  padding: 16px;
   text-align: center;
-  color: var(--theme-elevation-500);
+  color: var(--theme-elevation-500, #9ca3af);
+  font-size: 13px;
+}
+
+.musicbrainz-error {
+  padding: 12px 16px;
+  background: var(--theme-error-50, #fef2f2);
+  border: 1px solid var(--theme-error-200, #fecaca);
+  border-radius: 6px;
+  color: var(--theme-error-700, #b91c1c);
   font-size: 13px;
 }
 
 /* Search Results */
 .musicbrainz-results {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   max-height: 400px;
   overflow-y: auto;
-  background: var(--theme-elevation-0);
-  border: 1px solid var(--theme-elevation-200);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  margin-top: 4px;
+  padding: 4px;
 }
 
 .musicbrainz-result-item {
   width: 100%;
-  padding: 12px;
-  border: none;
-  background: var(--theme-elevation-0);
+  padding: 12px 16px;
+  border: 1px solid var(--theme-elevation-200, #e5e7eb);
+  background: var(--theme-elevation-0, #ffffff);
   text-align: left;
   cursor: pointer;
-  border-bottom: 1px solid var(--theme-elevation-100);
-  transition: background 0.15s ease;
-}
-
-.musicbrainz-result-item:last-child {
-  border-bottom: none;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .musicbrainz-result-item:hover {
-  background: var(--theme-elevation-50);
+  background: var(--theme-elevation-50, #f9fafb);
+  border-color: var(--theme-primary-200, #bfdbfe);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
 }
 
 .musicbrainz-result-name {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: baseline;
+  gap: 6px;
   margin-bottom: 4px;
   font-size: 14px;
+  line-height: 1.4;
 }
 
 .musicbrainz-result-name strong {
   font-weight: 600;
-}
-
-.musicbrainz-result-type,
-.musicbrainz-result-duration {
-  padding: 2px 6px;
-  background: var(--theme-elevation-200);
-  border-radius: 3px;
-  font-size: 11px;
-  color: var(--theme-text);
-}
-
-.musicbrainz-result-artist {
-  font-size: 13px;
-  color: var(--theme-elevation-600);
-  margin-bottom: 4px;
-}
-
-.musicbrainz-result-disambiguation {
-  font-size: 12px;
-  color: var(--theme-elevation-500);
-  font-style: italic;
-  margin-bottom: 4px;
-}
-
-.musicbrainz-result-dates {
-  font-size: 12px;
-  color: var(--theme-elevation-500);
-  margin-bottom: 2px;
+  color: var(--theme-text, #1f2937);
 }
 
 .musicbrainz-result-score {
   font-size: 11px;
-  color: var(--theme-elevation-400);
+  color: var(--theme-elevation-400, #9ca3af);
+  margin-top: 4px;
 }
 
 .musicbrainz-no-results {
-  padding: 12px;
+  padding: 16px;
   text-align: center;
-  color: var(--theme-elevation-500);
+  color: var(--theme-elevation-500, #9ca3af);
   font-size: 13px;
+  border: 1px dashed var(--theme-elevation-200, #e5e7eb);
+  border-radius: 6px;
 }

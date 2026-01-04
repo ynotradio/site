@@ -2,12 +2,15 @@
 
 /**
  * MusicBrainz Recording Picker Field Component
- * 
+ *
  * Custom field component for selecting a MusicBrainz recording (song)
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState, useCallback, useEffect, useRef,
+} from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { useField, useFormFields } from '@payloadcms/ui';
 import { searchRecordings, formatDuration, type MusicBrainzRecording } from '../../utils/musicbrainz-api';
 
@@ -23,17 +26,26 @@ interface MusicBrainzRecordingFieldProps {
 
 export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
-  
-  // Try to get the song title from the form context to help with search
+
+  // Try to get the song title and artist from the form context
   const titleField = useFormFields(([fields]) => fields?.title);
+  const artistField = useFormFields(([fields]) => fields?.artist);
   const songTitle = (titleField?.value as string | undefined) || '';
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Handle artist - could be an object with name or just a string reference
+  let artistName = '';
+  if (artistField?.value) {
+    if (typeof artistField.value === 'object' && 'name' in artistField.value) {
+      artistName = artistField.value.name as string;
+    }
+  }
+
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedRecording, setSelectedRecording] = useState<MusicBrainzRecording | null>(null);
-  
+  const [error, setError] = useState<string | null>(null);
+
   // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
@@ -49,51 +61,66 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     }
   }, [value, songTitle]);
 
-  // Debounced search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setShowResults(false);
+  const searchMusicBrainz = useCallback(async () => {
+    if (!songTitle?.trim()) {
+      setError('Please enter a song title first');
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true);
-      const results = await searchRecordings(searchQuery);
-      setSearchResults(results);
-      setShowResults(true);
-      setIsSearching(false);
-    }, 500);
+    setIsSearching(true);
+    setError(null);
+    setShowResults(true);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+    try {
+      // Include artist name if available for better results
+      const results = await searchRecordings(songTitle, artistName || undefined);
+      setSearchResults(results);
+      if (results.length === 0) {
+        setError('No results found');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search MusicBrainz');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [songTitle, artistName]);
 
   const handleSelectRecording = useCallback((recording: MusicBrainzRecording) => {
     setSelectedRecording(recording);
     setValue(recording.id);
     setShowResults(false);
-    setSearchQuery('');
+    setSearchResults([]);
   }, [setValue]);
 
   const handleClear = useCallback(() => {
     setSelectedRecording(null);
     setValue('');
-    setSearchQuery('');
     setSearchResults([]);
-    initializedRef.current = false; // Reset initialization flag
+    setShowResults(false);
+    setError(null);
+    initializedRef.current = false;
   }, [setValue]);
-
-  const handleUseSongTitle = useCallback(() => {
-    if (songTitle) {
-      setSearchQuery(songTitle);
-    }
-  }, [songTitle]);
 
   const getArtistName = (recording: MusicBrainzRecording): string => {
     if (recording['artist-credit'] && recording['artist-credit'].length > 0) {
       return recording['artist-credit'].map((ac) => ac.name).join(', ');
     }
     return 'Unknown Artist';
+  };
+
+  const formatRecordingInfo = (recording: MusicBrainzRecording) => {
+    const parts = [];
+    if (recording['artist-credit']) {
+      parts.push(`by ${getArtistName(recording)}`);
+    }
+    if (recording.disambiguation) {
+      parts.push(`(${recording.disambiguation})`);
+    }
+    if (recording.length) {
+      parts.push(`[${formatDuration(recording.length)}]`);
+    }
+    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
   };
 
   return (
@@ -121,76 +148,80 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
               MBID: <code>{value}</code>
             </div>
           </div>
-          <button
-            type="button"
-            className="musicbrainz-clear-btn"
-            onClick={handleClear}
-          >
-            Clear
-          </button>
+          <div className="musicbrainz-selected-actions">
+            <a
+              href={`https://musicbrainz.org/recording/${value}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="musicbrainz-view-btn"
+            >
+              View on MusicBrainz
+            </a>
+            <button
+              type="button"
+              className="musicbrainz-clear-btn"
+              onClick={handleClear}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="musicbrainz-search">
-          <div className="musicbrainz-search-controls">
-            <input
-              type="text"
-              className="musicbrainz-search-input"
-              placeholder="Search MusicBrainz for a recording..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (searchResults.length > 0) {
-                  setShowResults(true);
-                }
-              }}
-            />
-            {songTitle && (
-              <button
-                type="button"
-                className="musicbrainz-use-title-btn"
-                onClick={handleUseSongTitle}
-              >
-                Use Song Title
-              </button>
-            )}
-          </div>
-          {isSearching && <div className="musicbrainz-loading">Searching...</div>}
-          {showResults && searchResults.length > 0 && (
-            <div className="musicbrainz-results">
-              {searchResults.map((recording) => (
-                <button
-                  key={recording.id}
-                  type="button"
-                  className="musicbrainz-result-item"
-                  onClick={() => handleSelectRecording(recording)}
-                >
-                  <div className="musicbrainz-result-name">
-                    <strong>{recording.title}</strong>
-                    {recording.length && (
-                      <span className="musicbrainz-result-duration">
-                        {formatDuration(recording.length)}
-                      </span>
-                    )}
-                  </div>
-                  {recording['artist-credit'] && (
-                    <div className="musicbrainz-result-artist">
-                      by {getArtistName(recording)}
-                    </div>
-                  )}
-                  {recording.disambiguation && (
-                    <div className="musicbrainz-result-disambiguation">
-                      {recording.disambiguation}
-                    </div>
-                  )}
-                  <div className="musicbrainz-result-score">
-                    Score: {recording.score}
-                  </div>
-                </button>
-              ))}
+        <div className="musicbrainz-search-wrapper">
+          <div className="musicbrainz-search-prompt">
+            <div className="musicbrainz-search-text">
+              {songTitle ? (
+                <>Search for <strong>"{songTitle}"</strong> on MusicBrainz</>
+              ) : (
+                'Enter song title first'
+              )}
             </div>
-          )}
-          {showResults && searchResults.length === 0 && !isSearching && searchQuery && (
-            <div className="musicbrainz-no-results">No recordings found</div>
+            <button
+              type="button"
+              className="musicbrainz-search-btn"
+              onClick={searchMusicBrainz}
+              disabled={!songTitle?.trim() || isSearching}
+            >
+              {isSearching ? 'Searching...' : 'Search MusicBrainz'}
+            </button>
+          </div>
+
+          {showResults && (
+            <div className="musicbrainz-results-wrapper">
+              {isSearching && <div className="musicbrainz-loading">Searching...</div>}
+
+              {!isSearching && error && (
+                <div className="musicbrainz-error">{error}</div>
+              )}
+
+              {!isSearching && !error && searchResults.length > 0 && (
+                <>
+                  <div className="musicbrainz-results-label">
+                    Select a Recording ({searchResults.length} results)
+                  </div>
+                  <div className="musicbrainz-results">
+                    {searchResults.map((recording) => (
+                      <button
+                        key={recording.id}
+                        type="button"
+                        className="musicbrainz-result-item"
+                        onClick={() => handleSelectRecording(recording)}
+                      >
+                        <div className="musicbrainz-result-name">
+                          <strong>{recording.title}</strong>
+                          {formatRecordingInfo(recording)}
+                        </div>
+                        {recording.score && (
+                          <div className="musicbrainz-result-score">
+                            Match: {recording.score}%
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       )}

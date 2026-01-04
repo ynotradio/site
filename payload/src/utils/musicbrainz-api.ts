@@ -1,6 +1,6 @@
 /**
  * MusicBrainz API Client for Frontend
- * 
+ *
  * Provides search functionality for artists, releases, and recordings
  * to be used in custom field components
  */
@@ -89,8 +89,9 @@ function escapeLuceneSpecialChars(str: string): string {
  * Uses a request queue to prevent race conditions
  */
 async function waitForRateLimit(): Promise<void> {
-  // Wait for any in-progress request to complete
+  // eslint-disable-next-line no-await-in-loop
   while (requestInProgress) {
+    // eslint-disable-next-line no-await-in-loop
     await new Promise((resolve) => {
       setTimeout(resolve, BUSY_WAIT_INTERVAL);
     });
@@ -115,7 +116,10 @@ async function waitForRateLimit(): Promise<void> {
 /**
  * Search for artists by name
  */
-export async function searchArtists(query: string, limit: number = 10): Promise<MusicBrainzArtist[]> {
+export async function searchArtists(
+  query: string,
+  limit: number = 10,
+): Promise<MusicBrainzArtist[]> {
   if (!query.trim()) {
     return [];
   }
@@ -135,14 +139,12 @@ export async function searchArtists(query: string, limit: number = 10): Promise<
     });
 
     if (!response.ok) {
-      console.error('MusicBrainz API error:', response.statusText);
       return [];
     }
 
     const data: MusicBrainzArtistSearchResponse = await response.json();
     return data.artists || [];
   } catch (error) {
-    console.error('Error searching artists:', error);
     return [];
   }
 }
@@ -179,20 +181,19 @@ export async function searchReleases(
     });
 
     if (!response.ok) {
-      console.error('MusicBrainz API error:', response.statusText);
       return [];
     }
 
     const data: MusicBrainzReleaseSearchResponse = await response.json();
     return data.releases || [];
   } catch (error) {
-    console.error('Error searching releases:', error);
     return [];
   }
 }
 
 /**
  * Search for recordings (songs) by title and optional artist
+ * Filters out live and video recordings to prioritize studio versions
  */
 export async function searchRecordings(
   title: string,
@@ -213,6 +214,10 @@ export async function searchRecordings(
       const escapedArtist = escapeLuceneSpecialChars(artistName);
       queryParts.push(`artist:${escapedArtist}`);
     }
+
+    // Filter out live and video recordings to prioritize studio versions
+    queryParts.push('NOT video:true');
+
     const query = encodeURIComponent(queryParts.join(' AND '));
     const url = `${API_BASE}/recording?query=${query}&fmt=json&limit=${limit}`;
 
@@ -223,14 +228,27 @@ export async function searchRecordings(
     });
 
     if (!response.ok) {
-      console.error('MusicBrainz API error:', response.statusText);
       return [];
     }
 
     const data: MusicBrainzRecordingSearchResponse = await response.json();
-    return data.recordings || [];
+    const recordings = data.recordings || [];
+
+    // Sort to prioritize non-live versions
+    // MusicBrainz marks live recordings in the disambiguation field
+    return recordings.sort((a, b) => {
+      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+
+      // Live recordings go to the bottom
+      if (aIsLive !== bIsLive) {
+        return aIsLive - bIsLive;
+      }
+
+      // Otherwise maintain original score order
+      return (b.score || 0) - (a.score || 0);
+    });
   } catch (error) {
-    console.error('Error searching recordings:', error);
     return [];
   }
 }

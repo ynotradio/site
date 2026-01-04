@@ -2,13 +2,16 @@
 
 /**
  * MusicBrainz Artist Picker Field Component
- * 
+ *
  * Custom field component for selecting a MusicBrainz artist
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useField } from '@payloadcms/ui';
+import React, {
+  useState, useCallback, useEffect, useRef,
+} from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { useField, useFormFields } from '@payloadcms/ui';
 import { searchArtists, type MusicBrainzArtist } from '../../utils/musicbrainz-api';
 
 import './MusicBrainzField.css';
@@ -23,64 +26,84 @@ interface MusicBrainzArtistFieldProps {
 
 export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Try to get the artist name from the form context
+  const nameField = useFormFields(([fields]) => fields?.name);
+  const artistName = (nameField?.value as string | undefined) || '';
+
   const [searchResults, setSearchResults] = useState<MusicBrainzArtist[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedArtist, setSelectedArtist] = useState<MusicBrainzArtist | null>(null);
-  
+  const [error, setError] = useState<string | null>(null);
+
   // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
   // Load selected artist data if value exists (only once on initial load)
   useEffect(() => {
     if (value && !initializedRef.current) {
-      // We have an MBID but no artist data - this means it was set externally or on load
-      // We can't fetch the full artist details without making an API call
-      // So we'll just show the MBID
       setSelectedArtist({
         id: value,
-        name: UNKNOWN_ARTIST_NAME,
+        name: artistName || UNKNOWN_ARTIST_NAME,
         score: DEFAULT_SCORE,
       });
       initializedRef.current = true;
     }
-  }, [value]);
+  }, [value, artistName]);
 
-  // Debounced search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setShowResults(false);
+  const searchMusicBrainz = useCallback(async () => {
+    if (!artistName?.trim()) {
+      setError('Please enter an artist name first');
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true);
-      const results = await searchArtists(searchQuery);
-      setSearchResults(results);
-      setShowResults(true);
-      setIsSearching(false);
-    }, 500);
+    setIsSearching(true);
+    setError(null);
+    setShowResults(true);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+    try {
+      const results = await searchArtists(artistName);
+      setSearchResults(results);
+      if (results.length === 0) {
+        setError('No results found');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search MusicBrainz');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [artistName]);
 
   const handleSelectArtist = useCallback((artist: MusicBrainzArtist) => {
     setSelectedArtist(artist);
     setValue(artist.id);
     setShowResults(false);
-    setSearchQuery('');
+    setSearchResults([]);
   }, [setValue]);
 
   const handleClear = useCallback(() => {
     setSelectedArtist(null);
     setValue('');
-    setSearchQuery('');
     setSearchResults([]);
-    initializedRef.current = false; // Reset initialization flag
+    setShowResults(false);
+    setError(null);
+    initializedRef.current = false;
   }, [setValue]);
+
+  const formatArtistInfo = (artist: MusicBrainzArtist) => {
+    const parts = [];
+    if (artist.disambiguation) parts.push(`(${artist.disambiguation})`);
+    if (artist.type) parts.push(`[${artist.type}]`);
+    if (artist['life-span']?.begin) {
+      const years = artist['life-span'].end
+        ? `${artist['life-span'].begin}–${artist['life-span'].end}`
+        : `${artist['life-span'].begin}–`;
+      parts.push(years);
+    }
+    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+  };
 
   return (
     <div className="musicbrainz-field">
@@ -106,64 +129,80 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className="musicbrainz-clear-btn"
-            onClick={handleClear}
-          >
-            Clear
-          </button>
+          <div className="musicbrainz-selected-actions">
+            <a
+              href={`https://musicbrainz.org/artist/${value}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="musicbrainz-view-btn"
+            >
+              View on MusicBrainz
+            </a>
+            <button
+              type="button"
+              className="musicbrainz-clear-btn"
+              onClick={handleClear}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="musicbrainz-search">
-          <input
-            type="text"
-            className="musicbrainz-search-input"
-            placeholder="Search MusicBrainz for an artist..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => {
-              if (searchResults.length > 0) {
-                setShowResults(true);
-              }
-            }}
-          />
-          {isSearching && <div className="musicbrainz-loading">Searching...</div>}
-          {showResults && searchResults.length > 0 && (
-            <div className="musicbrainz-results">
-              {searchResults.map((artist) => (
-                <button
-                  key={artist.id}
-                  type="button"
-                  className="musicbrainz-result-item"
-                  onClick={() => handleSelectArtist(artist)}
-                >
-                  <div className="musicbrainz-result-name">
-                    <strong>{artist.name}</strong>
-                    {artist.type && (
-                      <span className="musicbrainz-result-type">{artist.type}</span>
-                    )}
-                  </div>
-                  {artist.disambiguation && (
-                    <div className="musicbrainz-result-disambiguation">
-                      {artist.disambiguation}
-                    </div>
-                  )}
-                  {artist['life-span']?.begin && (
-                    <div className="musicbrainz-result-dates">
-                      {artist['life-span'].begin}
-                      {artist['life-span'].end && ` - ${artist['life-span'].end}`}
-                    </div>
-                  )}
-                  <div className="musicbrainz-result-score">
-                    Score: {artist.score}
-                  </div>
-                </button>
-              ))}
+        <div className="musicbrainz-search-wrapper">
+          <div className="musicbrainz-search-prompt">
+            <div className="musicbrainz-search-text">
+              {artistName ? (
+                <>Search for <strong>"{artistName}"</strong> on MusicBrainz</>
+              ) : (
+                'Enter artist name first'
+              )}
             </div>
-          )}
-          {showResults && searchResults.length === 0 && !isSearching && searchQuery && (
-            <div className="musicbrainz-no-results">No artists found</div>
+            <button
+              type="button"
+              className="musicbrainz-search-btn"
+              onClick={searchMusicBrainz}
+              disabled={!artistName?.trim() || isSearching}
+            >
+              {isSearching ? 'Searching...' : 'Search MusicBrainz'}
+            </button>
+          </div>
+
+          {showResults && (
+            <div className="musicbrainz-results-wrapper">
+              {isSearching && <div className="musicbrainz-loading">Searching...</div>}
+
+              {!isSearching && error && (
+                <div className="musicbrainz-error">{error}</div>
+              )}
+
+              {!isSearching && !error && searchResults.length > 0 && (
+                <>
+                  <div className="musicbrainz-results-label">
+                    Select an Artist ({searchResults.length} results)
+                  </div>
+                  <div className="musicbrainz-results">
+                    {searchResults.map((artist) => (
+                      <button
+                        key={artist.id}
+                        type="button"
+                        className="musicbrainz-result-item"
+                        onClick={() => handleSelectArtist(artist)}
+                      >
+                        <div className="musicbrainz-result-name">
+                          <strong>{artist.name}</strong>
+                          {formatArtistInfo(artist)}
+                        </div>
+                        {artist.score && (
+                          <div className="musicbrainz-result-score">
+                            Match: {artist.score}%
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       )}

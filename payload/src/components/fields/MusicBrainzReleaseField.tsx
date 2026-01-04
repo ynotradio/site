@@ -2,12 +2,15 @@
 
 /**
  * MusicBrainz Release Picker Field Component
- * 
+ *
  * Custom field component for selecting a MusicBrainz release (album)
  * and populating the musicbrainzId field
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, {
+  useState, useCallback, useEffect, useRef,
+} from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { useField, useFormFields } from '@payloadcms/ui';
 import { searchReleases, type MusicBrainzRelease } from '../../utils/musicbrainz-api';
 
@@ -23,17 +26,26 @@ interface MusicBrainzReleaseFieldProps {
 
 export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
-  
-  // Try to get the album title from the form context to help with search
+
+  // Try to get the album title and artist from the form context
   const titleField = useFormFields(([fields]) => fields?.title);
+  const artistField = useFormFields(([fields]) => fields?.artist);
   const albumTitle = (titleField?.value as string | undefined) || '';
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+  // Handle artist - could be an object with name or just a string reference
+  let artistName = '';
+  if (artistField?.value) {
+    if (typeof artistField.value === 'object' && 'name' in artistField.value) {
+      artistName = artistField.value.name as string;
+    }
+  }
+
   const [searchResults, setSearchResults] = useState<MusicBrainzRelease[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedRelease, setSelectedRelease] = useState<MusicBrainzRelease | null>(null);
-  
+  const [error, setError] = useState<string | null>(null);
+
   // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
@@ -49,51 +61,70 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     }
   }, [value, albumTitle]);
 
-  // Debounced search
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults([]);
-      setShowResults(false);
+  const searchMusicBrainz = useCallback(async () => {
+    if (!albumTitle?.trim()) {
+      setError('Please enter an album title first');
       return;
     }
 
-    const timeoutId = setTimeout(async () => {
-      setIsSearching(true);
-      const results = await searchReleases(searchQuery);
-      setSearchResults(results);
-      setShowResults(true);
-      setIsSearching(false);
-    }, 500);
+    setIsSearching(true);
+    setError(null);
+    setShowResults(true);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+    try {
+      // Include artist name if available for better results
+      const results = await searchReleases(albumTitle, artistName || undefined);
+      setSearchResults(results);
+      if (results.length === 0) {
+        setError('No results found');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search MusicBrainz');
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  }, [albumTitle, artistName]);
 
   const handleSelectRelease = useCallback((release: MusicBrainzRelease) => {
     setSelectedRelease(release);
     setValue(release.id);
     setShowResults(false);
-    setSearchQuery('');
+    setSearchResults([]);
   }, [setValue]);
 
   const handleClear = useCallback(() => {
     setSelectedRelease(null);
     setValue('');
-    setSearchQuery('');
     setSearchResults([]);
-    initializedRef.current = false; // Reset initialization flag
+    setShowResults(false);
+    setError(null);
+    initializedRef.current = false;
   }, [setValue]);
-
-  const handleUseAlbumTitle = useCallback(() => {
-    if (albumTitle) {
-      setSearchQuery(albumTitle);
-    }
-  }, [albumTitle]);
 
   const getArtistName = (release: MusicBrainzRelease): string => {
     if (release['artist-credit'] && release['artist-credit'].length > 0) {
       return release['artist-credit'].map((ac) => ac.name).join(', ');
     }
     return 'Unknown Artist';
+  };
+
+  const formatReleaseInfo = (release: MusicBrainzRelease) => {
+    const parts = [];
+    if (release['artist-credit']) {
+      parts.push(`by ${getArtistName(release)}`);
+    }
+    if (release.disambiguation) {
+      parts.push(`(${release.disambiguation})`);
+    }
+    if (release['release-group']?.['primary-type']) {
+      parts.push(`[${release['release-group']['primary-type']}]`);
+    }
+    if (release.date) {
+      const year = release.date.split('-')[0];
+      parts.push(year);
+    }
+    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
   };
 
   return (
@@ -126,81 +157,80 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
               </div>
             )}
           </div>
-          <button
-            type="button"
-            className="musicbrainz-clear-btn"
-            onClick={handleClear}
-          >
-            Clear
-          </button>
+          <div className="musicbrainz-selected-actions">
+            <a
+              href={`https://musicbrainz.org/release/${value}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="musicbrainz-view-btn"
+            >
+              View on MusicBrainz
+            </a>
+            <button
+              type="button"
+              className="musicbrainz-clear-btn"
+              onClick={handleClear}
+            >
+              Clear
+            </button>
+          </div>
         </div>
       ) : (
-        <div className="musicbrainz-search">
-          <div className="musicbrainz-search-controls">
-            <input
-              type="text"
-              className="musicbrainz-search-input"
-              placeholder="Search MusicBrainz for a release..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onFocus={() => {
-                if (searchResults.length > 0) {
-                  setShowResults(true);
-                }
-              }}
-            />
-            {albumTitle && (
-              <button
-                type="button"
-                className="musicbrainz-use-title-btn"
-                onClick={handleUseAlbumTitle}
-              >
-                Use Album Title
-              </button>
-            )}
-          </div>
-          {isSearching && <div className="musicbrainz-loading">Searching...</div>}
-          {showResults && searchResults.length > 0 && (
-            <div className="musicbrainz-results">
-              {searchResults.map((release) => (
-                <button
-                  key={release.id}
-                  type="button"
-                  className="musicbrainz-result-item"
-                  onClick={() => handleSelectRelease(release)}
-                >
-                  <div className="musicbrainz-result-name">
-                    <strong>{release.title}</strong>
-                    {release['release-group']?.['primary-type'] && (
-                      <span className="musicbrainz-result-type">
-                        {release['release-group']['primary-type']}
-                      </span>
-                    )}
-                  </div>
-                  {release['artist-credit'] && (
-                    <div className="musicbrainz-result-artist">
-                      by {getArtistName(release)}
-                    </div>
-                  )}
-                  {release.disambiguation && (
-                    <div className="musicbrainz-result-disambiguation">
-                      {release.disambiguation}
-                    </div>
-                  )}
-                  {release.date && (
-                    <div className="musicbrainz-result-dates">
-                      {release.date}
-                    </div>
-                  )}
-                  <div className="musicbrainz-result-score">
-                    Score: {release.score}
-                  </div>
-                </button>
-              ))}
+        <div className="musicbrainz-search-wrapper">
+          <div className="musicbrainz-search-prompt">
+            <div className="musicbrainz-search-text">
+              {albumTitle ? (
+                <>Search for <strong>"{albumTitle}"</strong> on MusicBrainz</>
+              ) : (
+                'Enter album title first'
+              )}
             </div>
-          )}
-          {showResults && searchResults.length === 0 && !isSearching && searchQuery && (
-            <div className="musicbrainz-no-results">No releases found</div>
+            <button
+              type="button"
+              className="musicbrainz-search-btn"
+              onClick={searchMusicBrainz}
+              disabled={!albumTitle?.trim() || isSearching}
+            >
+              {isSearching ? 'Searching...' : 'Search MusicBrainz'}
+            </button>
+          </div>
+
+          {showResults && (
+            <div className="musicbrainz-results-wrapper">
+              {isSearching && <div className="musicbrainz-loading">Searching...</div>}
+
+              {!isSearching && error && (
+                <div className="musicbrainz-error">{error}</div>
+              )}
+
+              {!isSearching && !error && searchResults.length > 0 && (
+                <>
+                  <div className="musicbrainz-results-label">
+                    Select a Release ({searchResults.length} results)
+                  </div>
+                  <div className="musicbrainz-results">
+                    {searchResults.map((release) => (
+                      <button
+                        key={release.id}
+                        type="button"
+                        className="musicbrainz-result-item"
+                        onClick={() => handleSelectRelease(release)}
+                      >
+                        <div className="musicbrainz-result-name">
+                          <strong>{release.title}</strong>
+                          {formatReleaseInfo(release)}
+                        </div>
+                        {release.score && (
+                          <div className="musicbrainz-result-score">
+                            Match: {release.score}%
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       )}

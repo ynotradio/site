@@ -25,6 +25,16 @@ interface MusicBrainzRelease {
   }>;
 }
 
+interface MusicBrainzRecording {
+  id: string;
+  title: string;
+  score: number;
+  disambiguation?: string;
+  'artist-credit'?: Array<{
+    name: string;
+  }>;
+}
+
 interface MusicBrainzSearchResponse {
   artists: MusicBrainzArtist[];
 }
@@ -33,21 +43,27 @@ interface MusicBrainzReleaseSearchResponse {
   releases: MusicBrainzRelease[];
 }
 
+interface MusicBrainzRecordingSearchResponse {
+  recordings: MusicBrainzRecording[];
+}
+
 interface CacheData {
   version: number;
   artists: Record<string, boolean>;
   artistMbids: Record<string, string>;
   releaseMbids: Record<string, string>;
+  recordingMbids: Record<string, string>;
 }
 
 // Persistent cache file location
 const CACHE_FILE = path.join(__dirname, '.musicbrainz-cache.json');
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 
 // In-memory cache loaded from disk
 let artistCache = new Map<string, boolean>();
 let artistMbidCache = new Map<string, string>();
 let releaseMbidCache = new Map<string, string>();
+let recordingMbidCache = new Map<string, string>();
 let cacheLoaded = false;
 
 // Rate limiting: MusicBrainz requires max 1 request per second
@@ -67,6 +83,7 @@ function loadCache(): void {
         artistCache = new Map(Object.entries(data.artists));
         artistMbidCache = new Map(Object.entries(data.artistMbids || {}));
         releaseMbidCache = new Map(Object.entries(data.releaseMbids || {}));
+        recordingMbidCache = new Map(Object.entries(data.recordingMbids || {}));
       }
     }
   } catch (error) {
@@ -86,6 +103,7 @@ function saveCache(): void {
       artists: Object.fromEntries(artistCache),
       artistMbids: Object.fromEntries(artistMbidCache),
       releaseMbids: Object.fromEntries(releaseMbidCache),
+      recordingMbids: Object.fromEntries(recordingMbidCache),
     };
     fs.writeFileSync(CACHE_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
@@ -172,6 +190,7 @@ export function clearArtistCache(): void {
   artistCache.clear();
   artistMbidCache.clear();
   releaseMbidCache.clear();
+  recordingMbidCache.clear();
   cacheLoaded = false;
   if (fs.existsSync(CACHE_FILE)) {
     fs.unlinkSync(CACHE_FILE);
@@ -186,12 +205,14 @@ export function getCacheStats(): {
   keys: string[];
   mbidSize: number;
   releaseSize: number;
+  recordingSize: number;
 } {
   return {
     size: artistCache.size,
     keys: Array.from(artistCache.keys()),
     mbidSize: artistMbidCache.size,
     releaseSize: releaseMbidCache.size,
+    recordingSize: recordingMbidCache.size,
   };
 }
 
@@ -253,6 +274,7 @@ export async function getArtistMbid(artistName: string): Promise<string | null> 
 /**
  * Search MusicBrainz for a release (album) and return its MBID
  * Returns the MBID if found, null otherwise
+ * Always includes artist name in search to avoid ambiguous results
  */
 export async function getReleaseMbid(
   albumTitle: string,
@@ -271,13 +293,13 @@ export async function getReleaseMbid(
     // Respect rate limiting
     await waitForRateLimit();
 
-    // Build search query
+    // Build search query - always include artist if available
     const queryParts = [albumTitle];
     if (artistName?.trim()) {
       queryParts.push(`artist:${artistName}`);
     }
     const query = encodeURIComponent(queryParts.join(' AND '));
-    const url = `https://musicbrainz.org/ws/2/release?query=${query}&fmt=json&limit=1`;
+    const url = `https://musicbrainz.org/ws/2/release?query=${query}&fmt=json&limit=5`;
 
     // Make request with required User-Agent
     const response = await fetch(url, {
@@ -292,11 +314,32 @@ export async function getReleaseMbid(
 
     const data: MusicBrainzReleaseSearchResponse = await response.json();
 
-    // Get the best match (first result)
+    // Get the best match (first result with high score)
     if (data.releases && data.releases.length > 0) {
-      const release = data.releases[0];
-      // Only accept if score is reasonably high
-      if (release.score >= 85) {
+      // Filter and sort to prioritize studio albums over compilations/live
+      const studioReleases = data.releases
+        .filter((release) => {
+          // Filter out obvious live recordings
+          const isLive = release.title?.toLowerCase().includes('live');
+          return !isLive && release.score >= 85;
+        })
+        .sort((a, b) => {
+          // Prefer official studio albums
+          const aIsCompilation = a.title?.toLowerCase().includes('compilation')
+                                  || a.title?.toLowerCase().includes('greatest hits');
+          const bIsCompilation = b.title?.toLowerCase().includes('compilation')
+                                  || b.title?.toLowerCase().includes('greatest hits');
+
+          if (aIsCompilation !== bIsCompilation) {
+            return aIsCompilation ? 1 : -1;
+          }
+
+          // Otherwise sort by score
+          return (b.score || 0) - (a.score || 0);
+        });
+
+      if (studioReleases.length > 0) {
+        const release = studioReleases[0];
         releaseMbidCache.set(cacheKey, release.id);
         saveCache();
         return release.id;
@@ -305,6 +348,81 @@ export async function getReleaseMbid(
 
     // Cache null result to avoid repeated lookups
     releaseMbidCache.set(cacheKey, '');
+    saveCache();
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Search MusicBrainz for a recording (song) and return its MBID
+ * Returns the MBID if found, null otherwise
+ * Filters out live and video recordings to prioritize studio versions
+ * Always includes artist name in search to avoid ambiguous results
+ */
+export async function getRecordingMbid(
+  songTitle: string,
+  artistName?: string,
+): Promise<string | null> {
+  // Load cache from disk on first use
+  loadCache();
+
+  // Check cache first
+  const cacheKey = `${songTitle}|${artistName || ''}`.toLowerCase().trim();
+  if (recordingMbidCache.has(cacheKey)) {
+    return recordingMbidCache.get(cacheKey) || null;
+  }
+
+  try {
+    // Respect rate limiting
+    await waitForRateLimit();
+
+    // Build search query - always include artist if available
+    const queryParts = [songTitle];
+    if (artistName?.trim()) {
+      queryParts.push(`artist:${artistName}`);
+    }
+
+    // Filter out video recordings
+    queryParts.push('NOT video:true');
+
+    const query = encodeURIComponent(queryParts.join(' AND '));
+    const url = `https://musicbrainz.org/ws/2/recording?query=${query}&fmt=json&limit=10`;
+
+    // Make request with required User-Agent
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)',
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data: MusicBrainzRecordingSearchResponse = await response.json();
+
+    // Get the best match, filtering and sorting to prioritize studio versions
+    if (data.recordings && data.recordings.length > 0) {
+      const studioRecordings = data.recordings
+        .filter((recording) => {
+          // Filter out live recordings based on disambiguation
+          const isLive = recording.disambiguation?.toLowerCase().includes('live');
+          return !isLive && recording.score >= 85;
+        })
+        .sort((a, b) => (b.score || 0) - (a.score || 0));
+
+      if (studioRecordings.length > 0) {
+        const recording = studioRecordings[0];
+        recordingMbidCache.set(cacheKey, recording.id);
+        saveCache();
+        return recording.id;
+      }
+    }
+
+    // Cache null result to avoid repeated lookups
+    recordingMbidCache.set(cacheKey, '');
     saveCache();
     return null;
   } catch (error) {

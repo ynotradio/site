@@ -35,6 +35,7 @@
     "src/types/**/*.ts",
     "vitest.config.ts",
     "payload/**/*.ts",
+    "payload/**/*.tsx",
     "netlify/**/*.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
