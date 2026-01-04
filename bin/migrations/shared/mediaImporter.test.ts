@@ -47,7 +47,7 @@ describe('mediaImporter', () => {
 
     it('should return error for empty URL', async () => {
       const result = await importImageFromUrl(mockPayload as Payload, '', metadata);
-      
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('Empty image URL');
     });
