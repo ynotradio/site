@@ -4,41 +4,16 @@ Thank you for your interest in contributing to the Y-Not Radio site! This guide 
 
 ## For GitHub Copilot Agents
 
-If you're a GitHub Copilot agent working on this repository:
+If you're a GitHub Copilot agent working on this repository, use the Agent Skills in `.claude/skills/` for guidance:
 
-1. **Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) - **Required reading**
-2. **Migration context:** [Migration Overview](docs/payload-migration/README.md)
-3. **Data models:** [Core Data Models](docs/payload-migration/03-core-data-models.md)
+1. **testing-pr-changes** - Complete testing and verification workflow
+2. **agent-automation-infrastructure** - Pre-built images and CI/CD optimization  
+3. **detecting-agent-environment** - Environment detection utilities
+4. **payload-migration-workflow** - Payload CMS migration context and tasks
 
-### Quick Verification Commands
-
-```bash
-# Verify Payload CMS works
-yarn payload:dev
-yarn seed:payload  # Sample data for testing
-# Open http://localhost:3000/admin
-# Take screenshot of working admin UI
-
-# Verify legacy PHP site works  
-docker compose up -d
-yarn seed:legacy  # Sample data for testing
-# Or: ./bin/refresh_local.sh for production data
-# Open http://localhost:8080
-# Take screenshot of working homepage
-
-# Run tests
-yarn test
-yarn lint
-```
-
-### Critical Requirements
-
-Every agent PR **MUST** include:
-- ✅ Evidence of working functionality (screenshots or detailed explanation)
-- ✅ Test results (`yarn test` and `yarn lint` passing)
-- ✅ Description of what changed and why
-
-See [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) for complete criteria.
+For project context, also see:
+- [Migration Overview](docs/payload-migration/README.md)
+- [Core Data Models](docs/payload-migration/03-core-data-models.md)
 
 ## For Human Contributors
 
