@@ -45,7 +45,7 @@ INSERT INTO stories (start_date, end_date, headline, story, pic, pic_url, priori
 'https://i.imgur.com/example3.jpg', 'contests.php', 3, 'n');
 
 -- Seed sample DJs
-INSERT INTO deejays (id, real_name, show_name, email, extra, extra_url, pic, priority, deleted) VALUES
+INSERT INTO deejays (id, name, `show`, email, external_connect_text, external_connect_url, pic, sort, deleted) VALUES
 (1, 'Josh T. Landow', 'Top 11 @ 11<br>Future Fridays', 'josh@ynotradio.net', 'Josh T. on Facebook', 'http://www.facebook.com/josh.t.landow.1', 'https://i.imgur.com/example.jpg', 1, 'no'),
 (2, 'Test DJ', 'Mondays 1-5pm', 'test@ynotradio.net', '', '', 'https://i.imgur.com/example.jpg', 2, 'no'),
 (3, 'Sample Host', 'Wednesdays 8-10pm', 'sample@ynotradio.net', 'Follow on Twitter', 'http://twitter.com/sample', 'https://i.imgur.com/example.jpg', 3, 'no');
@@ -59,10 +59,10 @@ INSERT INTO concerts (date, artist, band_pic_url, band_url, venue, ticketinfo, t
 ('2026-02-20', 'Another Band', 'https://i.imgur.com/band5.jpg', 'https://anotherband.com', 'Johnny Brenda\'s', 'Tickets', 'https://johnnybrendas.com', 'no', 'n');
 
 -- Seed sample CD of the Week
-INSERT INTO cdotw (artist, album, label, review, pic, pic_url, reviewer, date_entered, active) VALUES
+INSERT INTO cdotw (artist, title, label, review, cd_pic_url, band, reviewer, date, deleted) VALUES
 ('Sample Artist', 'Great Album', 'Independent', 
 'This is a sample review for testing purposes. <b>Sample Artist</b> delivers an incredible performance on their latest album <em>Great Album</em>. The production is crisp, the songwriting is mature, and the energy is infectious. Standout tracks include "Hit Single" and "Deep Cut". Highly recommended!', 
-'https://i.imgur.com/album1.jpg', 'https://sampleartist.com', 'Test Reviewer', CURDATE(), 'yes');
+'https://i.imgur.com/album1.jpg', 'https://sampleartist.com', 'Test Reviewer', CURDATE(), 'no');
 
 EOF
 

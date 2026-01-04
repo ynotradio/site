@@ -18,16 +18,16 @@ services:
     networks:
       - app-tier
     volumes:
-      - 'mysqldb_data:/bitnami'
+      - 'mysqldb_data:/var/lib/mysql'
   phpmyadmin:
-    image: 'docker.io/bitnami/phpmyadmin:latest'
+    image: 'phpmyadmin/phpmyadmin:latest'
     ports:
-      - '8181:8181'
+      - '8181:80'
     depends_on:
       - mysql
     environment:
-      - APACHE_HTTP_PORT_NUMBER=8181
-      - DATABASE_HOST=mysql
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
     networks:
       - app-tier
   phpfpm:
@@ -44,9 +44,9 @@ services:
     volumes:
       - ./src:/app
   apache:
-    image: docker.io/bitnami/apache:latest
+    image: httpd:2.4
     ports:
-      - 8080:8080
+      - 8080:80
     networks:
       - app-tier
     depends_on:
@@ -54,9 +54,15 @@ services:
       - phpfpm
     volumes:
       - type: bind
-        source: ./bin/docker/apache-vhost/my_vhost.conf
-        target: /opt/bitnami/apache/conf/vhosts/my_vhost.conf
+        source: ./bin/docker/apache-vhost/httpd-vhost.conf
+        target: /usr/local/apache2/conf/extra/httpd-vhosts.conf
       - ./src:/app
+    command: >
+      sh -c "echo 'LoadModule proxy_module modules/mod_proxy.so' >> /usr/local/apache2/conf/httpd.conf &&
+             echo 'LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so' >> /usr/local/apache2/conf/httpd.conf &&
+             echo 'LoadModule rewrite_module modules/mod_rewrite.so' >> /usr/local/apache2/conf/httpd.conf &&
+             echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf &&
+             httpd-foreground"
   postgres:
     build:
       context: ./
