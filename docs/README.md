@@ -24,7 +24,7 @@ Welcome to the Y-Not Radio site documentation. This index helps you find the inf
 
 ### Migration & Architecture
 - **[Payload Migration Overview](payload-migration/README.md)** - Complete migration plan and chapter index
-- **[Core Data Models](payload-migration/03-core-data-models.md)** - Collection schemas and status (14/24 complete)
+- **[Core Data Models](payload-migration/03-core-data-models.md)** - Collection schemas and current status
 - **[Migration Tasks](payload-migration/04-migration-tasks.md)** - Step-by-step task breakdown
 - **[Architecture Decisions](payload-migration/02-architecture-decisions.md)** - Technical design choices
 

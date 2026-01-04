@@ -150,7 +150,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 3: Create Media Upload Collection
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 0  
 **Estimated Effort:** Small
 
@@ -160,7 +160,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 4: Create People Collection
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 3 (Media)  
 **Estimated Effort:** Small
 
@@ -170,7 +170,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 5: Create DJ Collection
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 4 (People)  
 **Estimated Effort:** Small
 
@@ -180,7 +180,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 6: Create Artist Collection with Many-to-Many
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 4 (People), Task 3 (Media)  
 **Estimated Effort:** Medium
 
@@ -190,7 +190,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 7: Create Venue Collection
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 0  
 **Estimated Effort:** Small
 
@@ -200,7 +200,7 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 8: Create Concert Collection
 
-**Status:** ✅ Complete (2025)  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 6 (Artist), Task 7 (Venue)  
 **Estimated Effort:** Medium
 
