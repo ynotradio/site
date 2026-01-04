@@ -6,25 +6,25 @@
 Agents can successfully test on local workstations where:
 - Full network access available
 - Docker and Node.js installed
-- Can manually run `npm install` and `docker compose up`
+- Can manually run `yarn install` and `docker compose up`
 - Screenshots can be captured via browser
 
 ### For CI/CD Automation ⚠️
 
 **Infrastructure:** Complete and functional  
-**Blocker:** Performance (npm install takes 5+ minutes in containers)
+**Blocker:** Performance (yarn install takes 5+ minutes in containers)
 
 After adding domains to firewall allowlist:
 - ✅ `registry.hub.docker.com` - Docker Hub access working
 - ✅ `registry.npmjs.org` - npm package downloads working
-- ❌ **npm install in Alpine containers: 5+ minutes** (timeout)
+- ❌ **yarn install in Alpine containers: 5+ minutes** (timeout)
 
 ## Performance Metrics
 
 | Operation | Current | Expected | Status |
 |-----------|---------|----------|--------|
 | Docker pull base images | ~2s | < 30s | ✅ |
-| npm install (Alpine) | 5+ min | < 2 min | ❌ |
+| yarn install (Alpine) | 5+ min | < 2 min | ❌ |
 | Container startup | Blocked | < 3 min | ❌ |
 | Total time to ready | Timeout | < 5 min | ❌ |
 
@@ -41,7 +41,7 @@ After adding domains to firewall allowlist:
 - ✅ Startup time: 5+ minutes → ~20 seconds (15x faster)
 - ✅ No network restrictions needed beyond image pull
 - ✅ Consistent environments
-- ✅ No npm install timeouts
+- ✅ No yarn install timeouts
 
 **Status:** Workflow ready in `.github/workflows/build-agent-images.yml`
 
@@ -74,7 +74,7 @@ docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
 
 **Improvements to current approach:**
 
-1. **Use Debian instead of Alpine** (faster npm install)
+1. **Use Debian instead of Alpine** (faster yarn install)
    ```dockerfile
    FROM node:22  # Not -alpine
    ```
@@ -118,7 +118,11 @@ docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
 # Start services (uses pre-built images)
 docker compose up -d
 
-# Ready in ~20 seconds
+# Seed databases with data
+./bin/refresh_local.sh    # Legacy site with production data
+yarn payload:seed         # Payload with sample data
+
+# Ready in ~20 seconds (+ seed time)
 ```
 
 ### Building Locally (Slow)
@@ -126,8 +130,29 @@ docker compose up -d
 # Build from scratch
 docker compose up -d --build
 
-# Takes 5+ minutes due to npm install
+# Seed databases
+./bin/refresh_local.sh    # Legacy site
+yarn payload:seed         # Payload
+
+# Takes 5+ minutes due to yarn install
 ```
+
+### Database Seeding Notes
+
+**Why seed:**
+- Empty applications are hard to verify
+- Screenshots of empty dashboards don't prove functionality
+- Real data helps test relationships and queries
+
+**Legacy site:** `./bin/refresh_local.sh`
+- Pulls production database snapshot
+- Imports into MySQL container
+- Site shows real content at http://localhost:8080
+
+**Payload:** `yarn payload:seed`
+- Creates sample collections and data
+- Admin UI shows populated tables
+- May need implementation if not yet available
 
 ## Monitoring
 

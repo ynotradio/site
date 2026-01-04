@@ -61,15 +61,17 @@ This checklist provides:
 **Quick commands to verify your work:**
 ```bash
 # Test Payload CMS
-npm run payload:dev
+yarn payload:dev
+yarn payload:seed  # Optional: add sample data
 # → Open http://localhost:3000/admin and take screenshot
 
 # Test legacy site
 docker compose up -d
+./bin/refresh_local.sh  # Import production data
 # → Open http://localhost:8080 and take screenshot
 
 # Run tests
-npm test && npm run lint
+yarn test && yarn lint
 ```
 
 **Context:**
@@ -215,7 +217,7 @@ See [docs/payload-migration/](docs/payload-migration/) for the migration plannin
 ### Working with Payload Locally
 
 1. Run `cp .env.example .env.local` and update the Neon `DATABASE_URI`, `PAYLOAD_SECRET`, and Cloudinary placeholders.
-2. Run `npm install` (once) and start the admin server with `npm run payload:dev`.
-3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `npm run payload:migrate`.
+2. Run `yarn install` (once) and start the admin server with `yarn payload:dev`.
+3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `yarn payload:migrate`.
 
-For production, Netlify will execute `npm run payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.
+For production, Netlify will execute `yarn payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.

@@ -14,25 +14,27 @@ If you're a GitHub Copilot agent working on this repository:
 
 ```bash
 # Verify Payload CMS works
-npm run payload:dev
+yarn payload:dev
 # Open http://localhost:3000/admin
+# Seed data: yarn payload:seed
 # Take screenshot of working admin UI
 
 # Verify legacy PHP site works  
 docker compose up -d
+./bin/refresh_local.sh  # Import production data
 # Open http://localhost:8080
 # Take screenshot of working homepage
 
 # Run tests
-npm test
-npm run lint
+yarn test
+yarn lint
 ```
 
 ### Critical Requirements
 
 Every agent PR **MUST** include:
 - ✅ Evidence of working functionality (screenshots or detailed explanation)
-- ✅ Test results (`npm test` and `npm run lint` passing)
+- ✅ Test results (`yarn test` and `yarn lint` passing)
 - ✅ Description of what changed and why
 
 See [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) for complete criteria.
@@ -49,7 +51,7 @@ See [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) for complete crit
    ```
 3. **Install dependencies**:
    ```bash
-   npm install
+   yarn install
    ```
 4. **Set up environment** - Copy `.env.example` to `.env.local` and configure:
    ```bash
@@ -76,8 +78,8 @@ Follow these conventions for branch names:
 
 3. **Test your changes**:
    ```bash
-   npm run lint          # Check code style
-   npm test              # Run test suite
+   yarn lint          # Check code style
+   yarn test              # Run test suite
    ```
 
 4. **Commit your changes** with clear commit messages:

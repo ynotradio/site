@@ -19,8 +19,8 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
   - For Legacy: Pages render with content (not directory listings)
 
 - [ ] **Tests pass**
-  - `npm test` exits with code 0
-  - `npm run lint` exits with code 0
+  - `yarn test` exits with code 0
+  - `yarn lint` exits with code 0
   - No new test failures introduced
 
 ## Performance Baselines
@@ -30,7 +30,7 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
 | Metric | Expected | Warning | Failure |
 |--------|----------|---------|---------|
 | Container startup | < 60s | 60-120s | > 120s |
-| npm install | < 120s | 120-300s | > 300s |
+| yarn install | < 120s | 120-300s | > 300s |
 | Service ready (total) | < 180s | 180-360s | > 360s |
 | Docker image pull | < 30s | 30-60s | > 60s |
 
@@ -68,7 +68,7 @@ fi
 ### Phase 1: Infrastructure
 - [ ] Docker installed and running
 - [ ] Can pull base images: `docker pull node:22-alpine`
-- [ ] Can access npm registry: `npm ping`
+- [ ] Can access npm registry: `yarn --version`
 - [ ] Required ports available: 3000, 8080, 5432
 
 ### Phase 2: Build
@@ -83,6 +83,11 @@ fi
 - [ ] Services respond on localhost
 - [ ] Startup completes in < 3 minutes
 
+### Phase 4: Database Seeding (Optional but Recommended)
+- [ ] Legacy site: `./bin/refresh_local.sh` (imports production data)
+- [ ] Payload: `yarn payload:seed` (creates sample data)
+- [ ] Data visible in applications
+
 ### Phase 4: Application Access
 - [ ] HTTP requests succeed (200, not 500/502)
 - [ ] UI renders (not blank page or error)
@@ -90,6 +95,83 @@ fi
 - [ ] Screenshots prove functionality
 
 **Stop at each phase if failures occur. Document and report before proceeding.**
+
+## Database Seeding
+
+**Why seed databases:**
+- Empty applications are hard to test meaningfully
+- Screenshots of empty dashboards don't prove functionality
+- Seeded data helps verify relationships, queries, and UI work correctly
+
+### For Legacy PHP/MySQL Site
+
+**Script:** `./bin/refresh_local.sh`
+
+This script:
+1. Pulls latest production database snapshot
+2. Stops containers and removes volumes
+3. Starts fresh containers
+4. Imports production data into MySQL
+
+**Usage:**
+```bash
+# Full refresh with production data
+./bin/refresh_local.sh
+
+# Manual steps if needed:
+./bin/pull_db.sh          # Download latest DB
+./bin/import_db.sh        # Import into running container
+```
+
+**Expected outcome:**
+- Site at http://localhost:8080 shows real content
+- PHPMyAdmin at http://localhost:8181 shows populated tables
+- Can browse shows, concerts, DJ profiles, etc.
+
+**Files:**
+- Database dump: `src/db/docker/ynot_db.sql` (gitignored)
+- Import script: `bin/import_db.sh`
+- Refresh script: `bin/refresh_local.sh`
+
+### For Payload CMS
+
+**Script:** `yarn payload:seed`
+
+Creates sample data for testing:
+- Admin user accounts
+- Sample posts, shows, concerts
+- Test media uploads
+- Relationships between collections
+
+**Usage:**
+```bash
+# After Payload is running
+yarn payload:seed
+
+# Or during startup in scripts:
+yarn payload:migrate && yarn payload:seed && yarn payload:dev
+```
+
+**Expected outcome:**
+- Admin UI shows populated collections
+- Can browse and edit sample data
+- Relationships work correctly
+- API returns data at endpoints
+
+**Note:** Payload seeding may not be fully implemented yet. If `yarn payload:seed` fails:
+1. Document that it's not available
+2. Create sample data manually via Admin UI
+3. Take screenshots showing data entry works
+4. Consider implementing seed script if needed for testing
+
+### Seeding Checklist
+
+- [ ] Know which system you're testing (Payload, Legacy, or both)
+- [ ] Understand data dependencies (collections, relationships)
+- [ ] Run appropriate seed script
+- [ ] Verify data appears in UI
+- [ ] Take screenshots showing populated application
+- [ ] Test functionality with real-ish data
 
 ## Fallback Strategy
 
@@ -105,7 +187,7 @@ When full automation fails, provide partial success:
 - Services accessible on localhost
 
 ⚠️ **Performance Issues:**
-- npm install takes 5+ minutes (timeout)
+- yarn install takes 5+ minutes (timeout)
 - Total startup: 8 minutes (expected < 3 minutes)
 
 📋 **Recommendations:**
@@ -129,7 +211,7 @@ When full automation fails, provide partial success:
 ❌ **Blockers:**
 - Port 3000 unavailable
 - PostgreSQL connection fails
-- npm install times out
+- yarn install times out
 
 📋 **Next Steps:**
 1. [Specific actions to unblock]
@@ -173,7 +255,7 @@ This is **not acceptable**. Provide proof or explain why you cannot.
 ### ✅ DO: Provide Evidence or Explain Why Not
 ```markdown
 "The scripts work on local workstations (see manual test results).
-Cannot test in CI due to npm install timeout (5+ min).
+Cannot test in CI due to yarn install timeout (5+ min).
 Recommend pre-built images for CI automation. See alternatives in [link]."
 ```
 
@@ -217,15 +299,16 @@ Include this section in every PR:
 ### Testing Performed
 - [ ] Payload accessible: http://localhost:3000/admin
 - [ ] Legacy accessible: http://localhost:8080
-- [ ] Tests pass: `npm test`
-- [ ] Linting passes: `npm run lint`
+- [ ] Database seeded (Payload: `yarn payload:seed` or Legacy: `./bin/refresh_local.sh`)
+- [ ] Tests pass: `yarn test`
+- [ ] Linting passes: `yarn lint`
 
 ### Evidence
 [Screenshots or explain why not available]
 
 ### Performance Metrics
 - Container startup: [time]
-- npm install: [time]
+- yarn install: [time]
 - Service ready: [time]
 
 ### Issues Encountered
@@ -249,6 +332,9 @@ Ask for human assistance when:
 
 ## Resources
 
+- **Database seeding:**
+  - Legacy site: `./bin/refresh_local.sh` (pulls and imports production data)
+  - Payload CMS: `yarn payload:seed` (creates sample data for testing)
 - Local setup: `docs/LOCAL_SETUP_GUIDE.md`
 - Agent examples: `docs/AGENT_VERIFICATION_EXAMPLES.md`
 - Migration context: `docs/payload-migration/README.md`
