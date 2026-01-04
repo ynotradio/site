@@ -105,7 +105,7 @@ Create collections and migration scripts for:
 
 - **Project Status**: [docs/PROJECT_STATUS.md](docs/PROJECT_STATUS.md)
 - **Migration Overview**: [docs/payload-migration/README.md](docs/payload-migration/README.md)
-- **Agent Testing Checklist**: [docs/AGENT_TESTING_CHECKLIST.md](docs/AGENT_TESTING_CHECKLIST.md)
+- **Testing PR Changes Skill**: [.claude/skills/testing-pr-changes/SKILL.md](.claude/skills/testing-pr-changes/SKILL.md)
 - **Completed Work**: [docs/archive/completed-implementations/](docs/archive/completed-implementations/)
 
 ---

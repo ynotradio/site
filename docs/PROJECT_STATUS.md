@@ -161,7 +161,7 @@ None currently. All infrastructure is in place and ready for data migration exec
 - [Migration Overview](./payload-migration/README.md)
 - [Core Data Models](./payload-migration/03-core-data-models.md)
 - [Migration Tasks](./payload-migration/04-migration-tasks.md)
-- [Agent Testing Checklist](./AGENT_TESTING_CHECKLIST.md)
+- [Testing PR Changes Skill](../.claude/skills/testing-pr-changes/SKILL.md)
 - [Completed Implementations](./archive/completed-implementations/)
 
 ---
