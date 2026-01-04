@@ -21,7 +21,7 @@ export DATABASE_SSL="disable"
 
 # Run Payload migrations
 echo "🔄 Running Payload migrations..."
-yarn payload migrate
+yarn tsx node_modules/payload/bin.js migrate
 
 # Seed the database
 echo "🌱 Seeding database with sample data..."
