@@ -10,7 +10,7 @@ import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
 import { slugify, cleanHeadline } from './shared/slugify';
 
-const STORY_IDS = [776, 781, 162, 641, 251, 234]; // Current front-page stories
+const STORY_IDS = [781]; // Testing HTML-to-Lexical anchor preservation
 
 async function reimportStories() {
   console.log('🔄 Re-importing current front-page stories with images...');
@@ -18,6 +18,28 @@ async function reimportStories() {
   
   const mysqlConnection = await connectToDatabase();
   const payload = await getPayloadClient('dev');
+  
+  // Delete existing posts with these legacyIds
+  console.log('🗑️  Deleting existing posts...');
+  for (const storyId of STORY_IDS) {
+    try {
+      const existing = await payload.find({
+        collection: 'posts',
+        where: { legacyId: { equals: storyId } },
+        limit: 1,
+      });
+      if (existing.docs.length > 0) {
+        await payload.delete({
+          collection: 'posts',
+          id: existing.docs[0].id,
+        });
+        console.log(`   ✅ Deleted post with legacyId ${storyId}`);
+      }
+    } catch (error) {
+      console.log(`   ⚠️  Could not delete legacyId ${storyId}:`, error);
+    }
+  }
+  console.log('');
   
   const query = `
     SELECT id, headline, start_date, end_date, story as content, 

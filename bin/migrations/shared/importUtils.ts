@@ -133,9 +133,12 @@ function parseInlineElements(html: string): any[] {
       const plainText = html.substring(lastProcessedIndex, m.start).trim();
       if (plainText) {
         nodes.push({
-          type: 'text',
+          detail: 0,
           format: 0,
+          mode: 'normal',
+          style: '',
           text: plainText,
+          type: 'text',
           version: 1,
         });
       }
@@ -158,15 +161,19 @@ function parseInlineElements(html: string): any[] {
           type: 'link',
           format: '',
           indent: 0,
-          version: 2,
-          url: href,
+          version: 3,
           rel: null,
           target: null,
+          title: null,
+          url: href,
           children: [
             {
-              type: 'text',
-              format: 1, // Bold by default for visibility
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
               text: linkText,
+              type: 'text',
               version: 1,
             },
           ],
@@ -182,18 +189,24 @@ function parseInlineElements(html: string): any[] {
       } else {
         // Plain bold text
         nodes.push({
-          type: 'text',
+          detail: 0,
           format: 1, // Bold
+          mode: 'normal',
+          style: '',
           text: innerHtml.trim(),
+          type: 'text',
           version: 1,
         });
       }
     } else if (tag === 'em' || tag === 'i') {
       // Plain italic text
       nodes.push({
-        type: 'text',
+        detail: 0,
         format: 2, // Italic
+        mode: 'normal',
+        style: '',
         text: innerHtml.replace(/<[^>]*>/g, '').trim(),
+        type: 'text',
         version: 1,
       });
     }
@@ -206,9 +219,12 @@ function parseInlineElements(html: string): any[] {
     const plainText = html.substring(lastProcessedIndex).trim();
     if (plainText) {
       nodes.push({
-        type: 'text',
+        detail: 0,
         format: 0,
+        mode: 'normal',
+        style: '',
         text: plainText,
+        type: 'text',
         version: 1,
       });
     }
