@@ -93,19 +93,18 @@ class PostgresDeejay implements Deejay {
         $results = array_map([$this, 'formatResult'], $results);
         
         // Split into left and right columns (odd/even split)
-        $left_column = array();
-        $right_column = array();
+        $left_column = [];
+        $right_column = [];
         
-        for ($i = 1; $i <= count($results); $i++) {
-            $info = $results[$i - 1];
-            if (fmod($i, 2) == 0) {
-                array_push($right_column, $info);
+        for ($i = 0; $i < count($results); $i++) {
+            if ($i % 2 === 0) {
+                $left_column[] = $results[$i];
             } else {
-                array_push($left_column, $info);
+                $right_column[] = $results[$i];
             }
         }
         
-        return array($left_column, $right_column);
+        return [$left_column, $right_column];
     }
 
     /**
