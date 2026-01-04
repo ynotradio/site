@@ -42,6 +42,7 @@ async function seed() {
       collection: 'people',
       data: {
         name: 'Josh T. Landow',
+        slug: 'josh-t-landow',
         email: 'josh@ynotradio.net',
         role: 'dj',
         bio: 'Host of Top 11 @ 11 and Future Fridays',
@@ -55,6 +56,7 @@ async function seed() {
       collection: 'people',
       data: {
         name: 'Test DJ',
+        slug: 'test-dj',
         email: 'test@ynotradio.net',
         role: 'dj',
         bio: 'Sample DJ for testing',
@@ -67,6 +69,7 @@ async function seed() {
       collection: 'people',
       data: {
         name: 'Sample Artist',
+        slug: 'sample-artist',
         role: 'artist',
         bio: 'Indie rock artist from Philadelphia',
         website: 'https://sampleartist.com',
