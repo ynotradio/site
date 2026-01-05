@@ -14,11 +14,18 @@ export const DJs: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ data, req, operation }) => {
+      async ({ data, req }) => {
         // Generate display name from person relationship
-        if (data.person && Array.isArray(data.person) && data.person.length > 0) {
-          const personIds = data.person.map((p: any) => typeof p === 'object' ? p.id : p);
-          
+        // eslint-disable-next-line no-param-reassign
+        const updatedData = data;
+
+        if (
+          updatedData.person
+          && Array.isArray(updatedData.person)
+          && updatedData.person.length > 0
+        ) {
+          const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
+
           try {
             const people = await req.payload.find({
               collection: 'people',
@@ -29,20 +36,24 @@ export const DJs: CollectionConfig = {
               },
               limit: personIds.length,
             });
-            
+
             if (people.docs.length > 0) {
-              data.displayName = people.docs.map((p: any) => p.name).join(', ');
+              updatedData.displayName = people.docs.map((p: any) => p.name).join(', ');
             }
           } catch (error) {
-            console.error('Error fetching person names for DJ:', error);
+            // Error fetching person names for DJ
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.error('Error fetching person names for DJ:', error);
+            }
           }
         }
-        
-        if (!data.displayName) {
-          data.displayName = `DJ #${data.id || 'New'}`;
+
+        if (!updatedData.displayName) {
+          updatedData.displayName = `DJ #${updatedData.id || 'New'}`;
         }
-        
-        return data;
+
+        return updatedData;
       },
     ],
   },

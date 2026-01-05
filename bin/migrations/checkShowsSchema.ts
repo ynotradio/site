@@ -14,12 +14,12 @@ async function checkSchema() {
     WHERE table_name = 'shows'
     ORDER BY ordinal_position
   `;
-  
+
   console.log('Columns in shows table:');
-  columns.forEach(col => {
+  columns.forEach((col) => {
     console.log(`  - ${col.column_name}: ${col.data_type} (${col.udt_name})`);
   });
-  
+
   await sql.end();
 }
 

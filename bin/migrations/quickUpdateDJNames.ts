@@ -21,8 +21,8 @@ async function updateDJDisplayNames() {
 
   try {
     console.log('Fetching all DJs with their person relationships...');
-    
-    // Get all DJs  
+
+    // Get all DJs
     const djs = await sql`
       SELECT 
         id, 
@@ -39,7 +39,8 @@ async function updateDJDisplayNames() {
       // Skip if already has a good displayName
       if (dj.current_display_name && !dj.current_display_name.startsWith('DJ #')) {
         console.log(`DJ ${dj.id} already has displayName: ${dj.current_display_name}, skipping`);
-        skipped++;
+        skipped += 1;
+        // eslint-disable-next-line no-continue
         continue;
       }
 
@@ -54,8 +55,8 @@ async function updateDJDisplayNames() {
       `;
 
       if (rels.length > 0) {
-        const personIds = rels.map(r => r.people_id);
-        
+        const personIds = rels.map((r) => r.people_id);
+
         // Get person names
         const people = await sql`
           SELECT name 
@@ -65,7 +66,7 @@ async function updateDJDisplayNames() {
         `;
 
         if (people.length > 0) {
-          displayName = people.map(p => p.name).join(', ');
+          displayName = people.map((p) => p.name).join(', ');
         }
       }
 
@@ -77,7 +78,7 @@ async function updateDJDisplayNames() {
       `;
 
       console.log(`Updated DJ ${dj.id}: displayName="${displayName}"`);
-      updated++;
+      updated += 1;
     }
 
     console.log(`\nCompleted! Updated: ${updated}, Skipped: ${skipped}`);

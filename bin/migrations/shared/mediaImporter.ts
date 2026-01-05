@@ -221,7 +221,7 @@ export async function importImageFromUrl(
 
     // Upload to Payload (which will handle Cloudinary via the plugin)
     logger.debug(`Uploading to Payload/Cloudinary: ${filename}`);
-    
+
     // Don't set legacyId for media - it causes unique constraint conflicts
     // when multiple posts reference images (since we're using post IDs, not image IDs)
     // Instead, rely on legacyUrl for deduplication
@@ -231,7 +231,7 @@ export async function importImageFromUrl(
       legacyUrl: metadata.legacyUrl,
       migratedAt: new Date().toISOString(),
     };
-    
+
     const media = await payload.create({
       collection: 'media',
       data: mediaData,

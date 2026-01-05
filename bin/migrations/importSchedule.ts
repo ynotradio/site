@@ -199,7 +199,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
     // Find DJ by host name (optional - some shows may not have a DJ link)
     let djId: string | number | null = null;
     let showName: string | undefined;
-    
+
     if (schedule.host) {
       djId = await findDJByName(payload, schedule.host);
       if (!djId) {

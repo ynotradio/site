@@ -4,7 +4,7 @@
  */
 export function slugify(text: string): string {
   if (!text) return '';
-  
+
   return text
     .replace(/<[^>]*>/g, '') // Remove HTML tags like <br>, <font>, etc.
     .toLowerCase()
@@ -20,7 +20,7 @@ export function slugify(text: string): string {
  */
 export function cleanHeadline(headline: string): string {
   if (!headline) return '';
-  
+
   return headline
     .replace(/<br\s*\/?>/gi, ' ') // Replace <br> with space
     .replace(/<[^>]*>/g, '') // Remove all other HTML tags

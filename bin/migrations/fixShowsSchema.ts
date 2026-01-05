@@ -3,10 +3,12 @@
  * Fix the shows table schema manually
  */
 
+/* eslint-disable import/no-extraneous-dependencies */
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as dotenv from 'dotenv';
 import { sql } from 'drizzle-orm';
+/* eslint-enable import/no-extraneous-dependencies */
 
 // Load environment
 dotenv.config({ path: '.env.local' });
@@ -24,20 +26,20 @@ async function fixSchema() {
 
   try {
     console.log('Checking current schema...');
-    
+
     // Add name column (drop first if it exists with wrong type)
     console.log('Fixing name column...');
     await db.execute(sql`ALTER TABLE shows DROP COLUMN IF EXISTS name`);
     await db.execute(sql`ALTER TABLE shows ADD COLUMN name TEXT`);
-    
+
     // Add displayName column to djs if it doesn't exist
     console.log('Adding displayName column to djs...');
     await db.execute(sql`ALTER TABLE djs ADD COLUMN IF NOT EXISTS "displayName" TEXT`);
-    
+
     // Drop day column from shows if it exists (we calculate it from date in PHP now)
     console.log('Dropping day column from shows if it exists...');
     await db.execute(sql`ALTER TABLE shows DROP COLUMN IF EXISTS day`);
-    
+
     // Handle note column conversion from text to jsonb
     console.log('Converting note column to jsonb...');
     const hasNoteColumn = await db.execute(sql`
@@ -45,9 +47,9 @@ async function fixSchema() {
       FROM information_schema.columns 
       WHERE table_name = 'shows' AND column_name = 'note'
     `);
-    
+
     console.log('Note column check result:', hasNoteColumn);
-    
+
     if (hasNoteColumn && Array.isArray(hasNoteColumn) && hasNoteColumn.length > 0 && (hasNoteColumn[0].data_type === 'text' || hasNoteColumn[0].data_type === 'character varying')) {
       console.log('Note column is text, converting to jsonb...');
       await db.execute(sql`ALTER TABLE shows ADD COLUMN note_new JSONB`);
@@ -58,7 +60,7 @@ async function fixSchema() {
     } else {
       console.log('Note column is already jsonb or does not exist');
     }
-    
+
     console.log('Schema migration completed successfully!');
   } catch (error) {
     console.error('Error fixing schema:', error);

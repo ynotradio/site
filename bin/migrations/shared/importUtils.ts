@@ -57,18 +57,18 @@ export function convertHtmlToLexical(html: string): any {
  */
 function parseHtmlToLexicalNodes(html: string): any[] {
   const nodes: any[] = [];
-  
+
   // Remove <center> tags but keep content
   html = html.replace(/<\/?center>/gi, '');
-  
+
   // Split by paragraph and br tags
-  const segments = html.split(/<\/?p>|<br\s*\/?>/gi).filter(s => s.trim());
-  
+  const segments = html.split(/<\/?p>|<br\s*\/?>/gi).filter((s) => s.trim());
+
   for (const segment of segments) {
     if (!segment.trim()) continue;
-    
+
     const children = parseInlineElements(segment.trim());
-    
+
     if (children.length > 0) {
       nodes.push({
         type: 'paragraph',
@@ -80,7 +80,7 @@ function parseHtmlToLexicalNodes(html: string): any[] {
       });
     }
   }
-  
+
   // If no paragraphs were created, wrap everything in one
   if (nodes.length === 0 && html.trim()) {
     const children = parseInlineElements(html.trim());
@@ -95,7 +95,7 @@ function parseHtmlToLexicalNodes(html: string): any[] {
       });
     }
   }
-  
+
   return nodes;
 }
 
@@ -105,15 +105,15 @@ function parseHtmlToLexicalNodes(html: string): any[] {
  */
 function parseInlineElements(html: string): any[] {
   const nodes: any[] = [];
-  let currentIndex = 0;
-  
+  const currentIndex = 0;
+
   // Match opening tags with their content
   const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
   let match;
-  
+
   // Track last processed position
   let lastProcessedIndex = 0;
-  
+
   const matches = [];
   while ((match = tagRegex.exec(html)) !== null) {
     matches.push({
@@ -125,7 +125,7 @@ function parseInlineElements(html: string): any[] {
       fullMatch: match[0],
     });
   }
-  
+
   // Process text and tags in order
   for (const m of matches) {
     // Add any plain text before this tag
@@ -143,19 +143,19 @@ function parseInlineElements(html: string): any[] {
         });
       }
     }
-    
+
     // Process the tag
     const tag = m.tag.toLowerCase();
-    const innerHtml = m.innerHtml;
-    
+    const { innerHtml } = m;
+
     if (tag === 'a') {
       // Extract href
       const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
       const href = hrefMatch ? hrefMatch[1] : '';
-      
+
       // Get link text (may contain nested formatting)
       const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
-      
+
       if (linkText && href) {
         nodes.push({
           type: 'link',
@@ -210,10 +210,10 @@ function parseInlineElements(html: string): any[] {
         version: 1,
       });
     }
-    
+
     lastProcessedIndex = m.end;
   }
-  
+
   // Add any remaining plain text
   if (lastProcessedIndex < html.length) {
     const plainText = html.substring(lastProcessedIndex).trim();
@@ -229,7 +229,7 @@ function parseInlineElements(html: string): any[] {
       });
     }
   }
-  
+
   // Fallback: if no nodes created, just strip all tags
   if (nodes.length === 0 && html.trim()) {
     const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
@@ -242,7 +242,7 @@ function parseInlineElements(html: string): any[] {
       });
     }
   }
-  
+
   return nodes;
 }
 
