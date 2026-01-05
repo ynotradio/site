@@ -25,13 +25,18 @@ async function fixSchema() {
   try {
     console.log('Checking current schema...');
     
-    // Add name column if it doesn't exist
-    console.log('Adding name column...');
-    await db.execute(sql`ALTER TABLE shows ADD COLUMN IF NOT EXISTS name TEXT`);
+    // Add name column (drop first if it exists with wrong type)
+    console.log('Fixing name column...');
+    await db.execute(sql`ALTER TABLE shows DROP COLUMN IF EXISTS name`);
+    await db.execute(sql`ALTER TABLE shows ADD COLUMN name TEXT`);
     
     // Add displayName column to djs if it doesn't exist
     console.log('Adding displayName column to djs...');
     await db.execute(sql`ALTER TABLE djs ADD COLUMN IF NOT EXISTS "displayName" TEXT`);
+    
+    // Drop day column from shows if it exists (we calculate it from date in PHP now)
+    console.log('Dropping day column from shows if it exists...');
+    await db.execute(sql`ALTER TABLE shows DROP COLUMN IF EXISTS day`);
     
     // Handle note column conversion from text to jsonb
     console.log('Converting note column to jsonb...');

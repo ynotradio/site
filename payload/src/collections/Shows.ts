@@ -9,19 +9,6 @@ export const Shows: CollectionConfig = {
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
   },
-  hooks: {
-    beforeChange: [
-      ({ data }) => {
-        // Auto-derive day from date
-        if (data.date) {
-          const dateObj = new Date(data.date);
-          const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-          data.day = days[dateObj.getDay()];
-        }
-        return data;
-      },
-    ],
-  },
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),

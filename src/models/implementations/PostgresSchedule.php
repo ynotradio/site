@@ -28,7 +28,6 @@ class PostgresSchedule implements Schedule {
             SELECT 
                 s.id,
                 s.date,
-                s.day,
                 s.start_time as start_time,
                 s.end_time as end_time,
                 COALESCE(
@@ -39,7 +38,7 @@ class PostgresSchedule implements Schedule {
                     s.name,
                     ''
                 ) as host,
-                COALESCE(s.note, '') as note,
+                COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
             LEFT JOIN djs d ON s.host_id = d.id
@@ -67,7 +66,6 @@ class PostgresSchedule implements Schedule {
             SELECT 
                 s.id,
                 s.date,
-                s.day,
                 s.start_time as start_time,
                 s.end_time as end_time,
                 COALESCE(
@@ -78,7 +76,7 @@ class PostgresSchedule implements Schedule {
                     s.name,
                     ''
                 ) as host,
-                COALESCE(s.note, '') as note,
+                COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
             LEFT JOIN djs d ON s.host_id = d.id
@@ -123,7 +121,6 @@ class PostgresSchedule implements Schedule {
             SELECT 
                 s.id,
                 s.date,
-                s.day,
                 TO_CHAR(s.date, 'MM/DD/YY') as fdate,
                 s.start_time as start_time,
                 s.end_time as end_time,
@@ -135,7 +132,7 @@ class PostgresSchedule implements Schedule {
                     s.name,
                     ''
                 ) as host,
-                COALESCE(s.note, '') as note,
+                COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
             LEFT JOIN djs d ON s.host_id = d.id
@@ -157,7 +154,6 @@ class PostgresSchedule implements Schedule {
                 SELECT 
                     s.id,
                     s.date,
-                    s.day,
                     TO_CHAR(s.date, 'MM/DD/YY') as fdate,
                     s.start_time as start_time,
                     s.end_time as end_time,
@@ -169,7 +165,7 @@ class PostgresSchedule implements Schedule {
                         s.name,
                         ''
                     ) as host,
-                    COALESCE(s.note, '') as note,
+                    COALESCE(s.note::text, '') as note,
                     'n' as deleted
                 FROM shows s
                 LEFT JOIN djs d ON s.host_id = d.id
@@ -305,9 +301,16 @@ class PostgresSchedule implements Schedule {
         // Format date to MySQL format (YYYY-MM-DD)
         if (isset($row['date'])) {
             $row['date'] = $this->formatDate($row['date']);
+            
+            // Calculate day from date if not present
+            if (!isset($row['day'])) {
+                $date = new \DateTime($row['date']);
+                $dayName = strtolower($date->format('l')); // 'monday', 'tuesday', etc.
+                $row['day'] = ucfirst($dayName); // 'Monday', 'Tuesday', etc.
+            }
         }
 
-        // Format day name to match MySQL format (e.g., "Monday")
+        // Format day name to match MySQL format (e.g., "Monday") if it exists
         if (isset($row['day'])) {
             $row['day'] = $this->formatDayName($row['day']);
         }
