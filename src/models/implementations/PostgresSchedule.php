@@ -377,11 +377,17 @@ class PostgresSchedule implements Schedule {
         // Format minute with leading zero
         $minuteStr = str_pad($minute, 2, '0', STR_PAD_LEFT);
 
-        // Build result array
+        // Build result array with appropriate field names
         $result = [];
         $result[$prefix . 'time'] = sprintf('%d:%s%s', $hour12, $minuteStr, $ampm);
         $result[$prefix . 'time_no_min'] = sprintf('%d%s', $hour12, $ampm);
-        $result[$prefix . ($prefix === 's' ? 'tart' : 'nd') . '_min'] = $minuteStr;
+        
+        // Generate minute field name: start_min or end_min
+        if ($prefix === 's') {
+            $result['start_min'] = $minuteStr;
+        } else {
+            $result['end_min'] = $minuteStr;
+        }
 
         return $result;
     }
