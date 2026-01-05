@@ -27,6 +27,10 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      * @return array|null The current CD of the week data or null if none exists
      */
     public function getCurrent(): ?array {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations: fill and crop to 200x200, auto quality/format
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        
         $stmt = $this->db->prepare("
             SELECT 
                 c.id,
@@ -37,7 +41,11 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.label,
                 a.name as artist,
                 COALESCE(a.website, '') as band,
-                COALESCE(m.url, '') as cd_pic_url,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.url, '')
+                END as cd_pic_url,
                 'no' as deleted
             FROM cdoftheweek c
             LEFT JOIN records r ON c.record_id = r.id
@@ -64,6 +72,10 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      * @return array|null The CD of the week data or null if not found
      */
     public function getById(int $id): ?array {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations: fill and crop to 200x200, auto quality/format
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        
         $stmt = $this->db->prepare("
             SELECT 
                 c.id,
@@ -74,7 +86,11 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.label,
                 a.name as artist,
                 COALESCE(a.website, '') as band,
-                COALESCE(m.url, '') as cd_pic_url,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.url, '')
+                END as cd_pic_url,
                 'no' as deleted
             FROM cdoftheweek c
             LEFT JOIN records r ON c.record_id = r.id
@@ -99,6 +115,10 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      * @return array Array of CD of the week entries
      */
     public function getAll(int $limit = 64): array {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations: fill and crop to 100x100, auto quality/format for thumbnails
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_100,h_100,q_auto,f_auto/";
+        
         $stmt = $this->db->prepare("
             SELECT 
                 c.id,
@@ -109,7 +129,11 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.label,
                 a.name as artist,
                 COALESCE(a.website, '') as band,
-                COALESCE(m.url, '') as cd_pic_url,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.url, '')
+                END as cd_pic_url,
                 'no' as deleted
             FROM cdoftheweek c
             LEFT JOIN records r ON c.record_id = r.id
