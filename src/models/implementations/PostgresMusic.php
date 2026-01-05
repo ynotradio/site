@@ -27,7 +27,7 @@ class PostgresMusic implements Music {
         $stmt = $this->db->prepare("
             SELECT 
                 s.id,
-                s.release_date as date,
+                s.release_date::date as date,
                 COALESCE(a.name, '') as artist,
                 s.title as song,
                 COALESCE(s.stream_url, '') as url,
@@ -56,7 +56,7 @@ class PostgresMusic implements Music {
         $stmt = $this->db->prepare("
             SELECT 
                 s.id,
-                s.release_date as date,
+                s.release_date::date as date,
                 COALESCE(a.name, '') as artist,
                 s.title as song,
                 COALESCE(s.stream_url, '') as url,
@@ -83,7 +83,7 @@ class PostgresMusic implements Music {
         $stmt = $this->db->prepare("
             SELECT 
                 s.id,
-                s.release_date as date,
+                s.release_date::date as date,
                 COALESCE(a.name, '') as artist,
                 s.title as song,
                 COALESCE(s.stream_url, '') as url,
@@ -168,9 +168,18 @@ class PostgresMusic implements Music {
      * @return array Formatted result
      */
     private function formatResult(array $row): array {
+        // Format date to only show the date part (YYYY-MM-DD)
+        $date = $row['date'];
+        if ($date instanceof \DateTime) {
+            $date = $date->format('Y-m-d');
+        } elseif (is_string($date) && strpos($date, ' ') !== false) {
+            // If it's a string with time, extract just the date part
+            $date = explode(' ', $date)[0];
+        }
+        
         return [
             'id' => $row['id'],
-            'date' => $row['date'],
+            'date' => $date,
             'artist' => $row['artist'],
             'song' => $row['song'],
             'url' => $row['url'],
