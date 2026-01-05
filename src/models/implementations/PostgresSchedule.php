@@ -99,70 +99,7 @@ class PostgresSchedule implements Schedule {
      * @return array Array of schedule entries grouped by date
      */
     public function getUpcoming(int $limit = 7): array {
-        // Get unique dates for the next N days
-        $dateStmt = $this->db->prepare("
-            SELECT DISTINCT
-                date,
-                day,
-                TO_CHAR(date, 'MM/DD/YY') as fdate
-            FROM shows
-            WHERE date >= CURRENT_DATE
-            ORDER BY date
-            LIMIT :limit
-        ");
-        $dateStmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $dateStmt->execute();
-        $dates = $dateStmt->fetchAll();
-
-        // Get all entries for those dates
-        $entriesStmt = $this->db->prepare("
-            SELECT 
-                s.id,
-                s.date,
-                s.day,
-                s.start_time as start_time,
-                s.end_time as end_time,
-                COALESCE(
-                    (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
-                     FROM djs_rels dr
-                     JOIN people p ON dr.people_id = p.id
-                     WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    d.show_name,
-                    ''
-                ) as host,
-                COALESCE(s.note, '') as note,
-                'n' as deleted
-            FROM shows s
-            LEFT JOIN djs d ON s.host_id = d.id
-            WHERE s.date >= CURRENT_DATE
-            ORDER BY s.date, s.start_time
-        ");
-        $entriesStmt->execute();
-        $allEntries = $entriesStmt->fetchAll();
-
-        // Format all entries
-        $allEntries = array_map([$this, 'formatResult'], $allEntries);
-
-        // Group entries by date
-        $schedule = [];
-        foreach ($dates as $date) {
-            $dateEntries = [];
-            foreach ($allEntries as $entry) {
-                if ($entry['date'] === $this->formatDate($date['date'])) {
-                    $dateEntries[] = $entry;
-                }
-            }
-            $schedule[] = [
-                'date_info' => [
-                    'date' => $this->formatDate($date['date']),
-                    'day' => $this->formatDayName($date['day']),
-                    'fdate' => $date['fdate']
-                ],
-                'entries' => $dateEntries
-            ];
-        }
-
-        return $schedule;
+        return $this->getScheduleGroupedByDate($limit);
     }
 
     /**
@@ -171,25 +108,23 @@ class PostgresSchedule implements Schedule {
      * @return array Array of schedule entries grouped by date
      */
     public function getAllForAdmin(): array {
-        // Get all dates from current date forward
-        $dateStmt = $this->db->prepare("
-            SELECT DISTINCT
-                date,
-                day,
-                TO_CHAR(date, 'MM/DD/YY') as fdate
-            FROM shows
-            WHERE date >= CURRENT_DATE
-            ORDER BY date
-        ");
-        $dateStmt->execute();
-        $dates = $dateStmt->fetchAll();
+        return $this->getScheduleGroupedByDate(null);
+    }
 
-        // Get all entries for those dates
-        $entriesStmt = $this->db->prepare("
+    /**
+     * Get schedule entries grouped by date
+     * 
+     * @param int|null $limit The number of days to include (null for all days)
+     * @return array Array of schedule entries grouped by date
+     */
+    private function getScheduleGroupedByDate(?int $limit): array {
+        // Build query to get all entries with date info in one go
+        $query = "
             SELECT 
                 s.id,
                 s.date,
                 s.day,
+                TO_CHAR(s.date, 'MM/DD/YY') as fdate,
                 s.start_time as start_time,
                 s.end_time as end_time,
                 COALESCE(
@@ -206,28 +141,86 @@ class PostgresSchedule implements Schedule {
             LEFT JOIN djs d ON s.host_id = d.id
             WHERE s.date >= CURRENT_DATE
             ORDER BY s.date, s.start_time
-        ");
-        $entriesStmt->execute();
-        $allEntries = $entriesStmt->fetchAll();
+        ";
+        
+        // Add limit if specified (for getUpcoming)
+        if ($limit !== null) {
+            // Use a subquery to limit by distinct dates
+            $query = "
+                WITH limited_dates AS (
+                    SELECT DISTINCT date
+                    FROM shows
+                    WHERE date >= CURRENT_DATE
+                    ORDER BY date
+                    LIMIT :limit
+                )
+                SELECT 
+                    s.id,
+                    s.date,
+                    s.day,
+                    TO_CHAR(s.date, 'MM/DD/YY') as fdate,
+                    s.start_time as start_time,
+                    s.end_time as end_time,
+                    COALESCE(
+                        (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
+                         FROM djs_rels dr
+                         JOIN people p ON dr.people_id = p.id
+                         WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
+                        d.show_name,
+                        ''
+                    ) as host,
+                    COALESCE(s.note, '') as note,
+                    'n' as deleted
+                FROM shows s
+                LEFT JOIN djs d ON s.host_id = d.id
+                WHERE s.date IN (SELECT date FROM limited_dates)
+                ORDER BY s.date, s.start_time
+            ";
+        }
 
-        // Format all entries
+        $stmt = $this->db->prepare($query);
+        if ($limit !== null) {
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+        $allEntries = $stmt->fetchAll();
+
+        // Format all entries and group by date
         $allEntries = array_map([$this, 'formatResult'], $allEntries);
 
         // Group entries by date
         $schedule = [];
-        foreach ($dates as $date) {
-            $dateEntries = [];
-            foreach ($allEntries as $entry) {
-                if ($entry['date'] === $this->formatDate($date['date'])) {
-                    $dateEntries[] = $entry;
+        $currentDate = null;
+        $dateEntries = [];
+        $dateInfo = null;
+
+        foreach ($allEntries as $entry) {
+            if ($currentDate !== $entry['date']) {
+                // Save previous date's entries if any
+                if ($currentDate !== null) {
+                    $schedule[] = [
+                        'date_info' => $dateInfo,
+                        'entries' => $dateEntries
+                    ];
                 }
+                
+                // Start new date group
+                $currentDate = $entry['date'];
+                $dateEntries = [];
+                $dateInfo = [
+                    'date' => $entry['date'],
+                    'day' => $entry['day'],
+                    'fdate' => $entry['fdate']
+                ];
             }
+            
+            $dateEntries[] = $entry;
+        }
+
+        // Add the last date's entries
+        if ($currentDate !== null) {
             $schedule[] = [
-                'date_info' => [
-                    'date' => $this->formatDate($date['date']),
-                    'day' => $this->formatDayName($date['day']),
-                    'fdate' => $date['fdate']
-                ],
+                'date_info' => $dateInfo,
                 'entries' => $dateEntries
             ];
         }
