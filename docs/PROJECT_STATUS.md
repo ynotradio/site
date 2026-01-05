@@ -62,6 +62,12 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] Test coverage reporting
 - [x] Comprehensive test files for migration scripts
 
+#### Schema Analysis & Cleanup (January 2026)
+- [x] Analyzed Neon Postgres schema for unused fields
+- [x] Identified 2 unused fields (`djs.show_name`, `shows.day`)
+- [x] Created cleanup migration for production deployment
+- [x] Documented cleanup process and testing
+
 ---
 
 ### 🚧 In Progress
@@ -135,14 +141,22 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 None currently. All infrastructure is in place and ready for data migration execution.
 
+**⚠️ Schema Cleanup Recommended:**
+Two unused fields identified in Neon Postgres schema (see `docs/migrations/CLEANUP_SUMMARY.md`):
+- `djs.show_name` - Never used, safe to remove
+- `shows.day` - Never used, safe to remove
+
+**Action:** Run cleanup migration before production data import: `yarn payload:migrate`
+
 ---
 
 ## Next Agent Tasks
 
 ### High Priority
-1. **DJ Photo Import**: Update `importDJs.ts` to download photos from legacy URLs (imgur, box.com, local paths) and upload to Cloudinary
-2. **Production Data Import**: Execute all import scripts against production MySQL database
-3. **Data Validation Script**: Create utility to compare MySQL vs PostgreSQL record counts and verify relationships
+1. **Schema Cleanup**: Run cleanup migration before production deployment (✅ migration created)
+2. **DJ Photo Import**: Update `importDJs.ts` to download photos from legacy URLs (imgur, box.com, local paths) and upload to Cloudinary
+3. **Production Data Import**: Execute all import scripts against production MySQL database
+4. **Data Validation Script**: Create utility to compare MySQL vs PostgreSQL record counts and verify relationships
 
 ### Medium Priority
 4. **Top 11 Collections**: Create collections and migration scripts for Top 11 contests
