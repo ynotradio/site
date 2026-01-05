@@ -125,128 +125,6 @@ const RankedRecordsBlock: Block = {
 };
 
 /**
- * Block for ranked DJs list
- * Used for "DJ of the Year" type content
- */
-const RankedDJsBlock: Block = {
-  slug: 'rankedDJs',
-  labels: {
-    singular: 'Ranked DJs Section',
-    plural: 'Ranked DJs Sections',
-  },
-  fields: [
-    {
-      name: 'categoryName',
-      type: 'text',
-      required: true,
-      defaultValue: 'Top DJs',
-      admin: {
-        description: 'Section title (e.g., "DJ of the Year", "Best New DJs")',
-      },
-    },
-    {
-      name: 'items',
-      type: 'array',
-      required: true,
-      minRows: 1,
-      admin: {
-        description: 'Ranked list of DJs',
-      },
-      fields: [
-        {
-          name: 'rank',
-          type: 'number',
-          required: true,
-          admin: {
-            description: 'Position in the ranking (1, 2, 3, etc.)',
-            width: '20%',
-          },
-        },
-        {
-          name: 'dj',
-          type: 'relationship',
-          relationTo: 'djs',
-          required: true,
-          admin: {
-            description: 'Select the DJ',
-            width: '50%',
-          },
-        },
-        {
-          name: 'note',
-          type: 'text',
-          admin: {
-            description: 'Optional note or comment about this ranking',
-            width: '30%',
-          },
-        },
-      ],
-    },
-  ],
-};
-
-/**
- * Block for ranked on-demand content list
- * Used for "Best Interviews" or "Top On-Demand Content" type sections
- */
-const RankedOnDemandBlock: Block = {
-  slug: 'rankedOnDemand',
-  labels: {
-    singular: 'Ranked On-Demand Section',
-    plural: 'Ranked On-Demand Sections',
-  },
-  fields: [
-    {
-      name: 'categoryName',
-      type: 'text',
-      required: true,
-      defaultValue: 'Top On-Demand',
-      admin: {
-        description: 'Section title (e.g., "Best Interviews", "Top On-Demand Content")',
-      },
-    },
-    {
-      name: 'items',
-      type: 'array',
-      required: true,
-      minRows: 1,
-      admin: {
-        description: 'Ranked list of on-demand content',
-      },
-      fields: [
-        {
-          name: 'rank',
-          type: 'number',
-          required: true,
-          admin: {
-            description: 'Position in the ranking (1, 2, 3, etc.)',
-            width: '20%',
-          },
-        },
-        {
-          name: 'onDemand',
-          type: 'relationship',
-          relationTo: 'ondemand',
-          required: true,
-          admin: {
-            description: 'Select the on-demand content',
-            width: '50%',
-          },
-        },
-        {
-          name: 'note',
-          type: 'text',
-          admin: {
-            description: 'Optional note or comment about this ranking',
-            width: '30%',
-          },
-        },
-      ],
-    },
-  ],
-};
-
-/**
  * Block for individual DJ staff picks
  * Used for "Staff Picks" pages where each DJ shares their favorites
  */
@@ -273,6 +151,24 @@ const StaffPicksBlock: Block = {
       admin: {
         description: 'Optional intro text from the DJ',
       },
+    },
+    {
+      name: 'onDemandShows',
+      type: 'array',
+      admin: {
+        description: 'On-demand audio embeds of the DJ\'s show where they present their picks (usually just 1)',
+      },
+      fields: [
+        {
+          name: 'onDemand',
+          type: 'relationship',
+          relationTo: 'ondemand',
+          required: true,
+          admin: {
+            description: 'Select the on-demand show',
+          },
+        },
+      ],
     },
     {
       name: 'songPicks',
@@ -364,8 +260,8 @@ const TextContentBlock: Block = {
  *
  * Stores published Year End Poll results and specialty recap pages.
  * Uses Payload blocks to allow flexible composition of different content types:
- * - Ranked lists of songs, records, DJs, and on-demand content
- * - Staff picks sections for DJ-curated favorites
+ * - Ranked lists of songs and records
+ * - Staff picks sections for DJ-curated favorites (with optional on-demand audio embeds)
  * - Text content for introductions and narratives
  *
  * This replaces the need for content managers to edit HTML manually
@@ -471,8 +367,6 @@ export const YearEndPollResults: CollectionConfig = {
       blocks: [
         RankedSongsBlock,
         RankedRecordsBlock,
-        RankedDJsBlock,
-        RankedOnDemandBlock,
         StaffPicksBlock,
         TextContentBlock,
       ],

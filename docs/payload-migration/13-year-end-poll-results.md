@@ -53,21 +53,11 @@ YearEndPollResults
     │       ├── rank: number
     │       ├── record: relationship (Records)
     │       └── note: text
-    ├── RankedDJsBlock
-    │   ├── categoryName: text
-    │   └── items: array[]
-    │       ├── rank: number
-    │       ├── dj: relationship (DJs)
-    │       └── note: text
-    ├── RankedOnDemandBlock
-    │   ├── categoryName: text
-    │   └── items: array[]
-    │       ├── rank: number
-    │       ├── onDemand: relationship (OnDemand)
-    │       └── note: text
     ├── StaffPicksBlock
     │   ├── dj: relationship (DJs)
     │   ├── introduction: richText
+    │   ├── onDemandShows: array[] (audio embeds of DJ's show)
+    │   │   └── onDemand: relationship (OnDemand)
     │   ├── songPicks: array[]
     │   │   ├── song: relationship (Songs)
     │   │   └── comment: text
@@ -115,8 +105,6 @@ For pages with multiple category results:
 2. Add multiple blocks for different categories:
    - `RankedSongsBlock` for "Best Song"
    - `RankedRecordsBlock` for "Best Album"
-   - `RankedDJsBlock` for "DJ of the Year"
-   - `RankedOnDemandBlock` for "Best Interview"
 
 **Example structure:**
 ```
@@ -134,9 +122,6 @@ Sections:
   - RankedRecordsBlock:
       Category: "Best Album"
       Items: [1st, 2nd, 3rd...]
-  - RankedDJsBlock:
-      Category: "DJ of the Year"
-      Items: [1st, 2nd, 3rd...]
 ```
 
 ### Staff Picks Pages
@@ -145,7 +130,7 @@ For DJ-curated picks pages:
 
 1. Set `pageType` to "Staff Picks"
 2. Add multiple `StaffPicksBlock` sections, one per DJ
-3. Each DJ can have their own song picks, record picks, and comments
+3. Each DJ can have their own song picks, record picks, comments, and on-demand show audio embeds
 
 **Example structure:**
 ```
@@ -159,10 +144,12 @@ Sections:
   - StaffPicksBlock:
       DJ: DJ Name
       Introduction: "2025 was an incredible year..."
+      On-Demand Shows: [Audio embed of DJ's show presenting picks]
       Song Picks: [Song 1, Song 2, Song 3...]
       Record Picks: [Album 1, Album 2...]
   - StaffPicksBlock:
       DJ: Another DJ
+      On-Demand Shows: [Audio embed]
       Song Picks: [...]
 ```
 
