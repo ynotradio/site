@@ -6,31 +6,38 @@
 
 ## Priority Order
 
+**Last Updated:** January 4, 2026
+
 | Priority | Collection | PostgreSQL Table | Status | Notes |
 |----------|-----------|------------------|--------|-------|
-| 1 | People | `people` | 🔲 Todo | Base collection for individuals |
-| 2 | DJs | `djs` | 🔲 Todo | References People collection |
-| 3 | Artists | `artists` | 🔲 Todo | Musicians/bands with many-to-many to People |
-| 4 | Venues | `venues` | 🔲 Todo | Concert locations |
-| 5 | Media | `media` | 🔲 Todo | Upload collection for images |
-| 6 | Ads | `ads` | 🔲 Todo | Sponsor/advertisement data |
-| 7 | Concerts | `concerts` | 🔲 Todo | References Artists and Venues |
-| 8 | Songs | `songs` | 🔲 Todo | Music catalog with Artist references |
-| 9 | Records | `records` | 🔲 Todo | Albums (used by CD of the Week) |
-| 10 | CdOfTheWeek | `cd_of_the_week` | 🔲 Todo | Album reviews referencing Records |
-| 11 | OnDemand | `on_demand` | 🔲 Todo | Audio content referencing Artists/DJs |
-| 12 | Shows | `shows` | 🔲 Todo | Schedule entries referencing DJs |
-| 13 | Posts | `posts` | 🔲 Todo | Content blocks (unified Story + CustomText) |
-| 14 | Top11Contests | `top11_contests` | 🔲 Todo | Weekly contest config |
-| 15 | Top11Results | `top11_results` | 🔲 Todo | Published weekly results |
-| 16 | Top11Votes | `top11_votes` | 🔲 Todo | User votes (PostgreSQL native, not NoSQL) |
-| 17 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
-| 18 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
-| 19 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
-| 20 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
-| 21 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
-| 22 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
-| 23 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| 1 | People | `people` | ✅ Complete | Base collection for individuals |
+| 2 | DJs | `djs` | ✅ Complete | References People collection, supports multi-person DJs |
+| 3 | Artists | `artists` | ✅ Complete | Musicians/bands with MusicBrainz integration |
+| 4 | Venues | `venues` | ✅ Complete | Concert locations |
+| 5 | Media | `media` | ✅ Complete | Upload collection with Cloudinary integration |
+| 6 | Ads | `ads` | ✅ Complete | Sponsor/advertisement data |
+| 7 | Concerts | `concerts` | ✅ Complete | References Artists and Venues |
+| 8 | Songs | `songs` | ✅ Complete | Music catalog with MusicBrainz integration |
+| 9 | Records | `records` | ✅ Complete | Albums (used by CD of the Week) with MusicBrainz |
+| 10 | CdOfTheWeek | `cd_of_the_week` | ✅ Complete | Album reviews referencing Records |
+| 11 | OnDemand | `on_demand` | ✅ Complete | Audio content referencing Artists/DJs |
+| 12 | Shows | `shows` | ✅ Complete | Schedule entries referencing DJs |
+| 13 | Posts | `posts` | ✅ Complete | Content blocks (unified Story + CustomText) |
+| 14 | Users | `users` | ✅ Complete | Authentication and admin access |
+| 15 | Top11Contests | `top11_contests` | 🔲 Todo | Weekly contest config |
+| 16 | Top11Results | `top11_results` | 🔲 Todo | Published weekly results |
+| 17 | Top11Votes | `top11_votes` | 🔲 Todo | User votes (PostgreSQL native, not NoSQL) |
+| 18 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
+| 19 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
+| 20 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| 21 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
+| 22 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
+| 23 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
+| 24 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+
+### Summary
+- **Completed:** 14 collections (all core content types)
+- **Remaining:** 10 collections (voting/tournament systems)
 
 ---
 
