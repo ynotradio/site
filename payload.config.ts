@@ -21,6 +21,7 @@ import { OnDemand } from './payload/src/collections/OnDemand';
 import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
+import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -91,6 +92,7 @@ export default buildConfig({
     Shows,
     Posts,
     CdOfTheWeek,
+    YearEndPollResults,
   ],
   plugins: [
     cloudStoragePlugin({

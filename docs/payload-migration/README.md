@@ -36,6 +36,7 @@ This migration plan provides an alternative to the Sanity CMS approach, leveragi
 | [10 - CMS Comparison](./10-cms-switching-considerations.md) | Sanity vs Payload comparison for MySQL migration |
 | [11 - Capacity Planning](./11-capacity-planning.md) | PostgreSQL limits, Neon pricing, content inventory |
 | [12 - Cloudinary Integration](./12-cloudinary-integration.md) | Detailed guide for media storage with Cloudinary |
+| [13 - Year End Poll Results](./13-year-end-poll-results.md) | Payload-friendly approach for specialty recap pages |
 
 ---
 
