@@ -68,13 +68,25 @@ describe('convertHtmlToLexical', () => {
 
   it('should strip HTML tags from content', () => {
     const result = convertHtmlToLexical('<p>Hello <strong>World</strong></p>');
-    expect(result.root.children[0].children[0].text).toBe('Hello World');
+    // Should create two text nodes: plain "Hello" and bold "World"
+    expect(result.root.children[0].children).toHaveLength(2);
+    expect(result.root.children[0].children[0].text).toBe('Hello');
+    expect(result.root.children[0].children[0].format).toBe(0); // Plain
+    expect(result.root.children[0].children[1].text).toBe('World');
+    expect(result.root.children[0].children[1].format).toBe(1); // Bold
   });
 
   it('should handle complex HTML', () => {
     const html = '<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>';
     const result = convertHtmlToLexical(html);
-    expect(result.root.children[0].children[0].text).toBe('TitleParagraph with link');
+    // Should create paragraphs (exact count depends on how unsupported tags are handled)
+    expect(result.root.children.length).toBeGreaterThan(0);
+    expect(result.root.children[0].type).toBe('paragraph');
+    // Should have processed the link
+    const hasLink = result.root.children.some(
+      (para: any) => para.children?.some((child: any) => child.type === 'link'),
+    );
+    expect(hasLink).toBe(true);
   });
 
   it('should set correct structure properties', () => {

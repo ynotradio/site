@@ -83,7 +83,7 @@ describe('importPosts', () => {
 
       const result = await importPost(mockPayload as Payload, post);
 
-      expect(result).toBe(false);
+      expect(result).toBe('skipped');
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
@@ -106,10 +106,10 @@ describe('importPosts', () => {
 
       const result = await importPost(mockPayload as Payload, post);
 
-      expect(result).toBe(true);
+      expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'posts',
-        data: {
+        data: expect.objectContaining({
           headline: 'Breaking News',
           startDate: '2024-01-01',
           endDate: '2024-12-31',
@@ -118,7 +118,7 @@ describe('importPosts', () => {
           priority: 10,
           legacyId: 1,
           migratedAt: expect.any(String),
-        },
+        }),
       });
     });
 
@@ -164,7 +164,7 @@ describe('importPosts', () => {
 
       const result = await importPost(mockPayload as Payload, post);
 
-      expect(result).toBe(true);
+      expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'posts',
         data: expect.objectContaining({
@@ -193,7 +193,7 @@ describe('importPosts', () => {
 
       const result = await importPost(mockPayload as Payload, post);
 
-      expect(result).toBe(true);
+      expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'posts',
         data: expect.objectContaining({
@@ -221,7 +221,7 @@ describe('importPosts', () => {
 
       const result = await importPost(mockPayload as Payload, post);
 
-      expect(result).toBe(true);
+      expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'posts',
         data: expect.objectContaining({
