@@ -36,7 +36,7 @@ class PostgresSchedule implements Schedule {
                      FROM djs_rels dr
                      JOIN people p ON dr.people_id = p.id
                      WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    d.show_name,
+                    s.name,
                     ''
                 ) as host,
                 COALESCE(s.note, '') as note,
@@ -75,7 +75,7 @@ class PostgresSchedule implements Schedule {
                      FROM djs_rels dr
                      JOIN people p ON dr.people_id = p.id
                      WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    d.show_name,
+                    s.name,
                     ''
                 ) as host,
                 COALESCE(s.note, '') as note,
@@ -132,7 +132,7 @@ class PostgresSchedule implements Schedule {
                      FROM djs_rels dr
                      JOIN people p ON dr.people_id = p.id
                      WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    d.show_name,
+                    s.name,
                     ''
                 ) as host,
                 COALESCE(s.note, '') as note,
@@ -166,7 +166,7 @@ class PostgresSchedule implements Schedule {
                          FROM djs_rels dr
                          JOIN people p ON dr.people_id = p.id
                          WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                        d.show_name,
+                        s.name,
                         ''
                     ) as host,
                     COALESCE(s.note, '') as note,

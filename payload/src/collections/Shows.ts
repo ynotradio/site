@@ -1,12 +1,26 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
   admin: {
     useAsTitle: 'date',
-    defaultColumns: ['date', 'day', 'startTime', 'endTime', 'host', 'updatedAt'],
+    defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        // Auto-derive day from date
+        if (data.date) {
+          const dateObj = new Date(data.date);
+          const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+          data.day = days[dateObj.getDay()];
+        }
+        return data;
+      },
+    ],
   },
   access: {
     read: () => true, // Public read access
@@ -27,23 +41,7 @@ export const Shows: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'day',
-      type: 'select',
-      required: true,
-      options: [
-        { label: 'Monday', value: 'monday' },
-        { label: 'Tuesday', value: 'tuesday' },
-        { label: 'Wednesday', value: 'wednesday' },
-        { label: 'Thursday', value: 'thursday' },
-        { label: 'Friday', value: 'friday' },
-        { label: 'Saturday', value: 'saturday' },
-        { label: 'Sunday', value: 'sunday' },
-      ],
-      admin: {
-        description: 'Day of the week',
-      },
-    },
+
     {
       name: 'startTime',
       type: 'text',
@@ -61,17 +59,24 @@ export const Shows: CollectionConfig = {
       },
     },
     {
+      name: 'name',
+      type: 'text',
+      admin: {
+        description: 'Show name (optional - use when show has a specific name)',
+      },
+    },
+    {
       name: 'host',
       type: 'relationship',
       relationTo: 'djs',
-      required: true,
       admin: {
-        description: 'DJ hosting the show',
+        description: 'DJ hosting the show (optional)',
       },
     },
     {
       name: 'note',
-      type: 'textarea',
+      type: 'richText',
+      editor: lexicalEditor(),
       admin: {
         description: 'Additional notes or special information',
       },

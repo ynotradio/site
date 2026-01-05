@@ -198,10 +198,14 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
 
     // Find DJ by host name (optional - some shows may not have a DJ link)
     let djId: string | number | null = null;
+    let showName: string | undefined;
+    
     if (schedule.host) {
       djId = await findDJByName(payload, schedule.host);
       if (!djId) {
-        logger.warn(`Could not find DJ for host: ${schedule.host} (show ${schedule.id})`);
+        // If we can't find a DJ record, store the host name as the show name
+        showName = schedule.host;
+        logger.warn(`Could not find DJ for host: ${schedule.host} (show ${schedule.id}) - storing as show name`);
       }
     }
 
@@ -210,11 +214,10 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
       collection: 'shows',
       data: {
         date: schedule.date,
-        day: schedule.day,
         startTime: schedule.start_time,
         endTime: schedule.end_time,
         host: djId ? (djId as any) : undefined,
-        hostName: schedule.host || undefined, // Store original host name as fallback
+        name: showName,
         note: schedule.note || undefined,
         legacyId: schedule.id,
         migratedAt: new Date().toISOString(),
@@ -222,7 +225,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
     });
 
     logger.debug(
-      `Imported show ${schedule.id}: ${schedule.day} ${schedule.start_time}-${schedule.end_time} (${schedule.host})`,
+      `Imported show ${schedule.id}: ${schedule.day} ${schedule.start_time}-${schedule.end_time} (${schedule.host || 'no host'})`,
     );
     return true;
   } catch (error) {

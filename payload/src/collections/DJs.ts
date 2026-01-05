@@ -8,9 +8,43 @@ export const DJs: CollectionConfig = {
     drafts: true,
   },
   admin: {
-    useAsTitle: 'person',
-    defaultColumns: ['person', 'onAir', 'updatedAt'],
+    useAsTitle: 'displayName',
+    defaultColumns: ['displayName', 'onAir', 'updatedAt'],
     group: 'Radio',
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req, operation }) => {
+        // Generate display name from person relationship
+        if (data.person && Array.isArray(data.person) && data.person.length > 0) {
+          const personIds = data.person.map((p: any) => typeof p === 'object' ? p.id : p);
+          
+          try {
+            const people = await req.payload.find({
+              collection: 'people',
+              where: {
+                id: {
+                  in: personIds,
+                },
+              },
+              limit: personIds.length,
+            });
+            
+            if (people.docs.length > 0) {
+              data.displayName = people.docs.map((p: any) => p.name).join(', ');
+            }
+          } catch (error) {
+            console.error('Error fetching person names for DJ:', error);
+          }
+        }
+        
+        if (!data.displayName) {
+          data.displayName = `DJ #${data.id || 'New'}`;
+        }
+        
+        return data;
+      },
+    ],
   },
   access: {
     read: () => true, // Public read access
@@ -19,6 +53,15 @@ export const DJs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   fields: [
+    {
+      name: 'displayName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Auto-generated from person names',
+      },
+    },
     {
       name: 'person',
       type: 'relationship',
