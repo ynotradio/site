@@ -24,18 +24,27 @@ class PostgresOnDemand implements OnDemand {
      * @return array|null The on demand data or null if not found
      */
     public function getById(int $id): ?array {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations for on-demand images
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url,
-                COALESCE(source, 'opendrive') as source
-            FROM ondemand
-            WHERE id = :id
+                o.id,
+                o.date,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.legacy_url, '')
+                END as image,
+                o.headline,
+                o.note,
+                o.songs,
+                o.audio_url,
+                COALESCE(o.source, 'opendrive') as source
+            FROM ondemand o
+            LEFT JOIN media m ON o.image_id = m.id
+            WHERE o.id = :id
         ");
         
         $stmt->execute(['id' => $id]);
@@ -64,22 +73,31 @@ class PostgresOnDemand implements OnDemand {
             return $this->getAllTextList();
         }
         
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations for on-demand images
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        
         // Calculate the starting position for pagination
         $offset = ($page - 1) * $limit;
         
         // Determine order by clause
-        $orderBy = ($sort === 'date') ? 'date DESC' : 'headline ASC';
+        $orderBy = ($sort === 'date') ? 'o.date DESC' : 'o.headline ASC';
         
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url
-            FROM ondemand
+                o.id,
+                o.date,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.legacy_url, '')
+                END as image,
+                o.headline,
+                o.note,
+                o.songs,
+                o.audio_url
+            FROM ondemand o
+            LEFT JOIN media m ON o.image_id = m.id
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
         ");
@@ -190,18 +208,27 @@ class PostgresOnDemand implements OnDemand {
      * @return array Array of on demand entries
      */
     public function getAllForAdmin(): array {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
+        // Cloudinary transformations for on-demand images
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url,
-                COALESCE(source, 'opendrive') as source
-            FROM ondemand
-            ORDER BY date DESC
+                o.id,
+                o.date,
+                CASE 
+                    WHEN m.filename IS NOT NULL AND m.filename != '' 
+                    THEN '$cloudinaryBase' || m.filename
+                    ELSE COALESCE(m.legacy_url, '')
+                END as image,
+                o.headline,
+                o.note,
+                o.songs,
+                o.audio_url,
+                COALESCE(o.source, 'opendrive') as source
+            FROM ondemand o
+            LEFT JOIN media m ON o.image_id = m.id
+            ORDER BY o.date DESC
         ");
         
         $stmt->execute();
