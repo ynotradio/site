@@ -13,7 +13,7 @@ import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres'
  */
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
-   -- Remove unused show_name column from djs table
+  -- Remove unused show_name column from djs table
   ALTER TABLE "djs" DROP COLUMN IF EXISTS "show_name";
   
   -- Drop the show_name index if it exists
@@ -28,7 +28,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
-   -- Recreate enum type
+  -- Recreate enum type
   CREATE TYPE "enum_shows_day" AS ENUM('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
   
   -- Re-add show_name column to djs table
