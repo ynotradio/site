@@ -51,6 +51,7 @@ export interface Post {
   priority: number;
   deleted: string;
   source: 'story' | 'custom_text'; // Track which table it came from
+  permalink?: string; // For custom texts only
 }
 
 // Story interface (from stories table)
@@ -68,9 +69,10 @@ export interface Story {
 // CustomText interface (from custom_texts table)
 export interface CustomText {
   id: number;
-  name: string; // Note: field name is 'name', not 'headline'
-  content: string;
-  deleted: string;
+  title: string;
+  permalink: string;
+  html: string;
+  status: string; // 'active' or 'deleted'
 }
 
 // OnDemand interface - matches MySQL ondemand table
@@ -260,9 +262,9 @@ export async function getActivePosts(
       });
     });
 
-    // Fetch custom texts - import all records
-    let customTextsQuery = 'SELECT * FROM custom_texts WHERE 1=1';
-    const customTextsParams: any[] = [];
+    // Fetch custom texts - import only active records
+    let customTextsQuery = 'SELECT * FROM custom_texts WHERE status = ?';
+    const customTextsParams: any[] = ['active'];
 
     if (options.startId) {
       customTextsQuery += ' AND id >= ?';
@@ -279,15 +281,16 @@ export async function getActivePosts(
     // Convert custom texts to Post format
     (customTexts as CustomText[]).forEach((customText) => {
       posts.push({
-        id: customText.id + 10000, // Offset IDs to avoid collisions
-        headline: customText.name, // Map 'name' field to 'headline'
+        id: customText.id + 10000, // Offset IDs to avoid collisions with story IDs
+        headline: customText.title, // Map 'title' field to 'headline'
         start_date: '2000-01-01', // Default start date for custom texts (always visible)
         end_date: '2099-12-31', // Default end date for custom texts (always visible)
-        content: customText.content,
+        content: customText.html, // Map 'html' field to 'content'
         image_url: '', // Custom texts don't have images
         priority: 0, // Default priority
-        deleted: customText.deleted,
+        deleted: customText.status === 'deleted' ? 'y' : 'n',
         source: 'custom_text',
+        permalink: customText.permalink, // Preserve permalink for slug generation
       });
     });
 

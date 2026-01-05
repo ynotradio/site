@@ -1,6 +1,11 @@
 # Read-Only Data Collections - PostgreSQL Schema
 
-This document describes the Payload CMS collections created for all read-only data on the Y-Not Radio site. These collections exclude interactive features like Top 11, Modern Rock Madness, and Year End Poll.
+**Status:** ✅ All collections implemented (Nov-Dec 2025)  
+**Last Updated:** January 4, 2026
+
+This document describes the Payload CMS collections created for all read-only data on the Y-Not Radio site. These collections exclude interactive features like Top 11, Modern Rock Madness, and Year End Poll, which are planned for future implementation.
+
+---
 
 ## Created Collections
 

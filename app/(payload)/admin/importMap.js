@@ -22,6 +22,9 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { UnderlineFeatureClient as UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { MusicBrainzArtistField as MusicBrainzArtistField_50489d8f6f9d8ebab0181b54a6d2f07c } from '../../../payload/src/components/fields/MusicBrainzArtistField'
+import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
+import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
 export const importMap = {
@@ -49,5 +52,8 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#UnderlineFeatureClient": UnderlineFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BoldFeatureClient": BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/payload/src/components/fields/MusicBrainzArtistField#MusicBrainzArtistField": MusicBrainzArtistField_50489d8f6f9d8ebab0181b54a6d2f07c,
+  "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
+  "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }
