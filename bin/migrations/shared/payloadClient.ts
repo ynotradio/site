@@ -184,9 +184,11 @@ export async function findOrCreateArtist(
       errors: error.data?.errors,
     }, null, 2));
 
-    // If slug validation fails, likely a duplicate with slight name variation
+    // Check for slug or musicbrainzId duplicate errors
     const isSlugError = error.status === 400
       && error.data?.errors?.some((e: any) => e.path === 'slug');
+    const isMbidError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'musicbrainzId');
 
     if (isSlugError) {
       console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
@@ -210,8 +212,32 @@ export async function findOrCreateArtist(
       }
       logger.debug(`No existing artist found with slug: "${slug}"`);
     }
-    // Re-throw if it's not a slug validation error or we couldn't find existing
-    logger.debug(`Re-throwing error for artist: ${name}, isSlugError: ${isSlugError}`);
+
+    if (isMbidError) {
+      // MusicBrainz ID collision - try creating without MBID
+      console.error(`[DEBUG] MusicBrainz ID collision for artist: ${name}, creating without MBID...`);
+      try {
+        const slug = generateSlug(name);
+        const newArtist = await payload.create({
+          collection: 'artists',
+          data: {
+            name,
+            slug,
+            // Skip musicbrainzId to avoid duplicate
+            legacyId,
+            migratedAt: new Date().toISOString(),
+          },
+        });
+        logger.debug(`Created artist without MBID: ${name}`);
+        return newArtist.id;
+      } catch (retryError) {
+        logger.error(`Failed to create artist without MBID: ${name}`);
+        throw retryError;
+      }
+    }
+
+    // Re-throw if it's not a handled validation error
+    logger.debug(`Re-throwing error for artist: ${name}`);
     throw error;
   }
 }

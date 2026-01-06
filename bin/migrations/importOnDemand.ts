@@ -12,9 +12,10 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveOnDemand, type OnDemand } from './database';
-import { getPayloadClient } from './shared/payloadClient';
+import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { processArtistString } from './shared/artistCleaner';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('OnDemandImport');
@@ -95,6 +96,163 @@ async function onDemandExists(payload: Payload, legacyId: number): Promise<boole
 }
 
 /**
+ * Parse song titles from the songs field
+ * Handles delimiters: " / " and ", "
+ */
+function parseSongTitles(songsText: string | null | undefined): string[] {
+  if (!songsText || songsText.trim() === '' || songsText.toLowerCase().trim() === 'n/a') {
+    return [];
+  }
+
+  // Split by " / " or ", " (prioritize " / " as it's more specific)
+  const delimiter = songsText.includes(' / ') ? ' / ' : ', ';
+  const titles = songsText.split(delimiter)
+    .map((title) => title.trim())
+    .filter((title) => title && title.toLowerCase() !== 'n/a');
+
+  return titles;
+}
+
+/**
+ * Find or create a song in the songs collection
+ */
+async function findOrCreateSong(
+  payload: Payload,
+  title: string,
+  artistId: string | null,
+): Promise<string | null> {
+  try {
+    // Search for existing song by title
+    const existing = await payload.find({
+      collection: 'songs',
+      where: {
+        title: {
+          equals: title,
+        },
+      },
+      limit: 1,
+    });
+
+    if (existing.docs.length > 0) {
+      return existing.docs[0].id;
+    }
+
+    // Create new song - only include artist if we have one
+    const songData: any = {
+      title,
+    };
+    if (artistId) {
+      songData.artist = artistId;
+    }
+
+    const song = await payload.create({
+      collection: 'songs',
+      data: songData,
+    });
+
+    logger.debug(`Created song: ${title}${artistId ? ` (artist: ${artistId})` : ''}`);
+    return song.id;
+  } catch (error) {
+    logger.error(`Failed to create song "${title}": ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Convert plain text to Lexical JSON format
+ */
+function convertTextToLexical(text: string | null | undefined): object {
+  if (!text || text.trim() === '') {
+    return {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    };
+  }
+
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              type: 'text',
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: text.trim(),
+              version: 1,
+            },
+          ],
+          direction: 'ltr',
+        },
+      ],
+      direction: 'ltr',
+    },
+  };
+}
+
+/**
+ * Try to find a DJ by parsing the note field for DJ names
+ * Returns DJ ID if found, null otherwise
+ */
+async function findDJFromNote(
+  payload: Payload,
+  note: string | null | undefined,
+): Promise<string[]> {
+  if (!note) {
+    return [];
+  }
+
+  const djIds: string[] = [];
+
+  // Common patterns: "with [DJ Name]", "hosted by [DJ Name]", etc.
+  const djPatterns = [
+    /with\s+([A-Z][a-z]+(?:\s+[A-Z]\.?\s*)?[A-Z][a-z]+)/g, // "with Josh T. Landow"
+    /hosted\s+by\s+([A-Z][a-z]+(?:\s+[A-Z]\.?\s*)?[A-Z][a-z]+)/g, // "hosted by Josh Landow"
+  ];
+
+  for (const pattern of djPatterns) {
+    let match;
+    // eslint-disable-next-line no-cond-assign
+    while ((match = pattern.exec(note)) !== null) {
+      const djName = match[1].trim();
+
+      // Search for DJ by person name
+      const djs = await payload.find({
+        collection: 'djs',
+        where: {
+          displayName: {
+            contains: djName,
+          },
+        },
+        limit: 1,
+      });
+
+      if (djs.docs.length > 0) {
+        djIds.push(djs.docs[0].id);
+        logger.debug(`Found DJ from note: ${djName} (ID: ${djs.docs[0].id})`);
+      }
+    }
+  }
+
+  return djIds;
+}
+
+/**
  * Import a single on-demand item
  */
 async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boolean> {
@@ -124,14 +282,38 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       }
     }
 
-    // Create on-demand record (no artist relationships in actual ondemand table)
+    // Parse artists from headline
+    const artistResult = processArtistString(item.headline || '');
+    const artistIds = await Promise.all(
+      artistResult.artistNames.map((name) => findOrCreateArtist(payload, name)),
+    );
+    const validArtistIds = artistIds.filter((id): id is string => id !== null);
+
+    // Parse and create songs (use first artist ID for song artist relationship)
+    const primaryArtistId = validArtistIds.length > 0 ? validArtistIds[0] : null;
+    const songTitles = parseSongTitles(item.songs);
+    const songIds = await Promise.all(
+      songTitles.map((title) => findOrCreateSong(payload, title, primaryArtistId)),
+    );
+    const validSongIds = songIds.filter((id): id is string => id !== null);
+
+    // Find DJs from note
+    const djIds = await findDJFromNote(payload, item.note);
+
+    // Convert note to Lexical JSON
+    const lexicalNote = convertTextToLexical(item.note);
+
+    // Create on-demand record with all relationships
     await payload.create({
       collection: 'ondemand',
       data: {
         headline: item.headline || undefined,
-        note: item.note || undefined,
-        songs: item.songs || undefined,
+        note: lexicalNote,
+        songs: validSongIds.length > 0 ? validSongIds : undefined,
+        djs: djIds.length > 0 ? djIds : undefined,
+        artists: validArtistIds.length > 0 ? validArtistIds : undefined,
         audioUrl: item.audio_url || undefined,
+        source: item.source || 'opendrive',
         image: imageId,
         date: item.date,
         legacyId: item.id,
@@ -139,7 +321,7 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       },
     });
 
-    logger.debug(`Imported on-demand ${item.id}: ${item.headline}`);
+    logger.debug(`Imported on-demand ${item.id}: ${item.headline} (${validArtistIds.length} artists, ${validSongIds.length} songs, ${djIds.length} DJs)`);
     return true;
   } catch (error) {
     logger.error(`Failed to import on-demand ${item.id}`, error as Error);
