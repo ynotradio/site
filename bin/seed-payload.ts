@@ -36,6 +36,33 @@ async function seed() {
 
     console.log('🗑️  Database is empty, proceeding with seed...');
 
+    // Create admin user for development
+    console.log('👤 Creating admin user...');
+
+    const existingAdmin = await payload.find({
+      collection: 'users',
+      where: {
+        email: {
+          equals: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+        },
+      },
+      limit: 1,
+    });
+
+    if (existingAdmin.docs.length === 0) {
+      await payload.create({
+        collection: 'users',
+        data: {
+          email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+          password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
+          role: 'admin',
+        },
+      });
+      console.log(`   ✅ Created admin user: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'}`);
+    } else {
+      console.log('   ⏭️  Admin user already exists');
+    }
+
     // Create sample People (DJs and Artists)
     console.log('👤 Creating sample people...');
 
@@ -433,6 +460,7 @@ async function seed() {
 
     console.log('\n✅ Database seeded successfully!\n');
     console.log('📊 Summary:');
+    console.log('   Users: 1 (admin)');
     console.log('   People: 3');
     console.log('   Venues: 3');
     console.log('   Artists: 2');
@@ -441,7 +469,8 @@ async function seed() {
     console.log('   Concerts: 3');
     console.log('   Posts: 3');
     console.log('   Shows: 2');
-    console.log('\n🌐 View at: http://localhost:3000/admin\n');
+    console.log('\n🌐 View at: http://localhost:3000/admin');
+    console.log(`   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`);
 
     process.exit(0);
   } catch (error) {
