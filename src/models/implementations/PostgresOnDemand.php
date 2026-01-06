@@ -75,7 +75,6 @@ class PostgresOnDemand implements OnDemand {
         
         return $this->formatResult($result);
     }
-    }
 
     /**
      * Get all on demand entries, filtered by page and sort order
