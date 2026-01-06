@@ -63,6 +63,16 @@ export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   admin: {
     user: Users.slug,
+    // Auto-login for development: Pre-fills credentials but user must click login
+    // https://payloadcms.com/docs/authentication/overview#auto-login
+    autoLogin:
+      process.env.NODE_ENV === 'development'
+        ? {
+            email: 'admin@ynotradio.net',
+            password: 'password',
+            prefillOnly: true,
+          }
+        : false,
     components: {
       beforeDashboard: [],
     },
