@@ -1,7 +1,7 @@
 # Project Status - Y-Not Radio Site Migration
 
-**Last Updated:** January 4, 2026  
-**Current Phase:** Payload CMS Migration - Data Population
+**Last Updated:** January 6, 2026  
+**Current Phase:** Payload CMS Migration - Fresh Database Initialization
 
 ---
 
@@ -62,11 +62,11 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] Test coverage reporting
 - [x] Comprehensive test files for migration scripts
 
-#### Schema Analysis & Cleanup (January 2026)
-- [x] Analyzed Neon Postgres schema for unused fields
-- [x] Identified 2 unused fields (`djs.show_name`, `shows.day`)
-- [x] Created cleanup migration for production deployment
-- [x] Documented cleanup process and testing
+#### Schema Finalization (January 2026)
+- [x] Removed legacy migration tracking fields (legacyId, migratedAt) from Artists, Venues, YearEndPollResults
+- [x] Updated CdOfTheWeek reviewer to use People relationship
+- [x] Cleared all Payload migrations for fresh database start
+- [x] Prepared SQL DROP statements for clean database reset
 
 ---
 
@@ -139,21 +139,17 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 ## Known Issues & Blockers
 
-None currently. All infrastructure is in place and ready for data migration execution.
+None currently. Database schema is finalized and ready for fresh initialization.
 
-**⚠️ Schema Cleanup Recommended:**
-Two unused fields identified in Neon Postgres schema (see `docs/migrations/CLEANUP_SUMMARY.md`):
-- `djs.show_name` - Never used, safe to remove
-- `shows.day` - Never used, safe to remove
-
-**Action:** Run cleanup migration before production data import: `yarn payload:migrate`
+**⚠️ Database Reset Required:**
+After recent schema changes (removed legacy fields, updated relationships), we recommend dropping all Payload tables in Neon and starting fresh. Use the SQL DROP statements provided, then restart the app to auto-create clean tables.
 
 ---
 
 ## Next Agent Tasks
 
 ### High Priority
-1. **Schema Cleanup**: Run cleanup migration before production deployment (✅ migration created)
+1. **Database Reset**: Drop all Payload tables in Neon and restart app for clean schema
 2. **DJ Photo Import**: Update `importDJs.ts` to download photos from legacy URLs (imgur, box.com, local paths) and upload to Cloudinary
 3. **Production Data Import**: Execute all import scripts against production MySQL database
 4. **Data Validation Script**: Create utility to compare MySQL vs PostgreSQL record counts and verify relationships
