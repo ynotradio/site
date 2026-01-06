@@ -50,9 +50,9 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 
 **👋 Working on this codebase as an automated agent?**
 
-**Start here:** [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) ⭐ **Required reading**
+**Start here:** [Testing PR Changes Skill](.claude/skills/testing-pr-changes/SKILL.md) ⭐ **Required reading**
 
-This checklist provides:
+This skill provides:
 - ✅ Clear success criteria (screenshots, performance baselines)
 - 🔄 Incremental verification strategy
 - 🚨 When to stop and report blockers
@@ -76,6 +76,7 @@ yarn test && yarn lint
 ```
 
 **Context:**
+- [Project Status](docs/PROJECT_STATUS.md) - Current state and priorities
 - [Migration Overview](docs/payload-migration/README.md) - PHP→Payload migration strategy
 - [Core Data Models](docs/payload-migration/03-core-data-models.md) - Collection schemas
 
@@ -112,7 +113,7 @@ Please [open an issue](https://github.com/ynotradio/site/issues) for support.
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-**For GitHub Copilot Agents:** Read [Agent Testing Checklist](docs/AGENT_TESTING_CHECKLIST.md) before starting work.
+**For GitHub Copilot Agents:** Read [Testing PR Changes Skill](.claude/skills/testing-pr-changes/SKILL.md) and [Project Status](docs/PROJECT_STATUS.md) before starting work.
 
 Please contribute using [Gitflow Workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Create a branch, add commits, and [open a pull request](https://github.com/ynotradio/site/pulls).
 

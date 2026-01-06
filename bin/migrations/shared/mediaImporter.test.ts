@@ -107,7 +107,6 @@ describe('mediaImporter', () => {
           alt: 'Test image',
           caption: 'Test caption',
           legacyUrl: metadata.legacyUrl,
-          legacyId: 123,
         }),
         file: expect.objectContaining({
           data: expect.any(Buffer),

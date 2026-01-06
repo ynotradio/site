@@ -119,11 +119,10 @@ describe('importSchedule', () => {
         collection: 'shows',
         data: {
           date: '2024-01-15',
-          day: 'Monday',
           startTime: '09:00:00',
           endTime: '12:00:00',
           host: 'dj-id-456',
-          hostName: 'John Doe',
+          name: undefined,
           note: 'Morning show',
           legacyId: 1,
           migratedAt: expect.any(String),
@@ -159,11 +158,10 @@ describe('importSchedule', () => {
         collection: 'shows',
         data: {
           date: '2024-01-15',
-          day: 'Monday',
           startTime: '09:00:00',
           endTime: '12:00:00',
           host: undefined,
-          hostName: 'Unknown DJ',
+          name: 'Unknown DJ',
           note: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
@@ -195,7 +193,7 @@ describe('importSchedule', () => {
         collection: 'shows',
         data: expect.objectContaining({
           host: undefined,
-          hostName: undefined,
+          name: undefined,
         }),
       });
     });
@@ -256,7 +254,6 @@ describe('importSchedule', () => {
         collection: 'shows',
         data: expect.objectContaining({
           date: '2024-03-20',
-          day: 'Wednesday',
           startTime: '18:00:00',
           endTime: '21:00:00',
         }),

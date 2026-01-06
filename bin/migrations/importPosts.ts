@@ -16,6 +16,7 @@ import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { slugify, cleanHeadline } from './shared/slugify';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -97,13 +98,14 @@ async function postExists(payload: Payload, legacyId: number): Promise<boolean> 
 
 /**
  * Import a single post record
+ * Returns: 'success' | 'skipped' | 'error'
  */
-async function importPost(payload: Payload, post: Post): Promise<boolean> {
+async function importPost(payload: Payload, post: Post): Promise<'success' | 'skipped' | 'error'> {
   try {
     // Check if already imported
     if (await postExists(payload, post.id)) {
       logger.debug(`Post ${post.id} already exists, skipping`);
-      return false;
+      return 'skipped';
     }
 
     // Convert HTML content to Lexical format
@@ -128,26 +130,34 @@ async function importPost(payload: Payload, post: Post): Promise<boolean> {
       }
     }
 
+    // Clean headline and generate slug
+    const cleanedHeadline = cleanHeadline(post.headline);
+    // For custom texts, use the existing permalink as slug; otherwise generate from headline
+    const slug = post.permalink || slugify(post.headline);
+
     // Create post record
     await payload.create({
       collection: 'posts',
       data: {
-        headline: post.headline,
+        headline: cleanedHeadline,
+        slug,
         startDate: post.start_date,
         endDate: post.end_date,
         content,
         image: imageId,
+        imageUrl: post.image_url, // Store original URL as fallback
         priority: post.priority || 0,
         legacyId: post.id,
         migratedAt: new Date().toISOString(),
+        _status: 'published', // Set status to published so posts are immediately visible
       },
     });
 
-    logger.debug(`Imported post ${post.id}: ${post.headline}`);
-    return true;
+    logger.debug(`Imported post ${post.id} [${post.source}]: ${cleanedHeadline} (slug: ${slug})`);
+    return 'success';
   } catch (error) {
     logger.error(`Failed to import post ${post.id}`, error as Error);
-    return false;
+    return 'error';
   }
 }
 
@@ -192,12 +202,14 @@ async function importPosts(options: ImportOptions): Promise<void> {
     for (let i = 0; i < posts.length; i += 1) {
       const post = posts[i];
 
-      const imported = await importPost(payload, post);
+      const result = await importPost(payload, post);
 
-      if (imported) {
+      if (result === 'success') {
         stats.success += 1;
-      } else {
+      } else if (result === 'skipped') {
         stats.skipped += 1;
+      } else {
+        stats.errors += 1;
       }
 
       // Log progress every 10 records

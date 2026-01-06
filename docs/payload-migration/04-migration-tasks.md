@@ -4,6 +4,24 @@
 
 ---
 
+## Migration Progress Overview
+
+**Last Updated:** January 4, 2026
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Setup & Infrastructure | ✅ Complete | Payload CMS, PostgreSQL, Netlify, Cloudinary all configured |
+| Core Collections | ✅ Complete | All 14 core collections created and tested |
+| Migration Scripts | ✅ Complete | Import scripts created with test coverage |
+| Custom Features | ✅ Complete | MusicBrainz fields, PostgreSQL read model |
+| Data Population | 🚧 In Progress | Ready to run against production MySQL |
+| Voting Collections | 🔲 Not Started | Top 11, Year End Polls, MRM tournaments |
+| Frontend Cutover | 🔲 Not Started | Feature flags, Next.js components |
+
+See [docs/PROJECT_STATUS.md](../PROJECT_STATUS.md) for detailed current status.
+
+---
+
 Each task below is designed to be **self-contained** for cold-start agent conversations. Tasks include all necessary context and can be completed independently.
 
 ---
@@ -132,197 +150,61 @@ Export data from MySQL and import into PostgreSQL, handling data type conversion
 
 ## Task 3: Create Media Upload Collection
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 0  
 **Estimated Effort:** Small
 
-**Context:**
-Set up the Media collection for image uploads. This is a prerequisite for other collections that reference images.
-
-**Requirements:**
-1. Create `payload/src/collections/Media.ts`
-2. Configure upload sizes (thumbnail, card, hero)
-3. Set up cloud storage adapter (Cloudinary or S3) - See [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md)
-4. Add alt text and caption fields
-5. Test upload workflow
-
-**Payload Collection:**
-```typescript
-export const Media: CollectionConfig = {
-  slug: 'media',
-  upload: {
-    staticDir: 'media',
-    imageSizes: [
-      { name: 'thumbnail', width: 400, height: 300 },
-      { name: 'card', width: 768, height: 576 },
-      { name: 'hero', width: 1600, height: 900 },
-    ],
-    mimeTypes: ['image/*'],
-  },
-  fields: [
-    { name: 'alt', type: 'text' },
-    { name: 'caption', type: 'text' },
-  ],
-};
-```
-
-**Detailed Guide:** See [Chapter 12: Cloudinary Integration](./12-cloudinary-integration.md) for complete setup instructions, including:
-- Cloudinary account setup (dev + production)
-- Plugin installation and configuration
-- Environment variable setup
-- Code examples
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can upload images in Payload Admin
-- [ ] Images accessible via REST API
-- [ ] Thumbnail generation works
-- [ ] Cloud storage configured (if production)
+**Completed:** Media collection created with Cloudinary integration. Supports image uploads with automatic thumbnail generation.
 
 ---
 
 ## Task 4: Create People Collection
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 3 (Media)  
 **Estimated Effort:** Small
 
-**Context:**
-The People collection stores individuals (musicians, DJs, etc.). This is a base collection referenced by DJs and Artists.
-
-**Requirements:**
-1. Create `payload/src/collections/People.ts`
-2. Add fields: name, slug, bio (rich text), photo (upload), djRecord (relationship)
-3. Add migration tracking fields: legacyId, migratedAt
-4. Configure admin UI
-5. Test CRUD operations
-
-**Files to Create:**
-- `payload/src/collections/People.ts`
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can create/edit People in Payload Admin
-- [ ] Photo upload works
-- [ ] Slug auto-generated from name
-- [ ] REST/GraphQL API functional
+**Completed:** People collection created with photo upload support and relationship to DJs collection.
 
 ---
 
 ## Task 5: Create DJ Collection
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 4 (People)  
 **Estimated Effort:** Small
 
-**Context:**
-The DJ collection extends People with DJ-specific information (show description, social links, on-air status).
-
-**Requirements:**
-1. Create `payload/src/collections/DJs.ts`
-2. Add relationship to People collection
-3. Add fields: description (richText), onAir, externalConnectText, externalConnectUrl
-4. Add migration tracking fields
-5. Test CRUD operations
-
-**Files to Create:**
-- `payload/src/collections/DJs.ts`
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can create/edit DJs in Payload Admin
-- [ ] Person reference works
-- [ ] Social links (JSON field) stores multiple URLs
+**Completed:** DJs collection created with support for multi-person DJs (e.g., "M.J. & Patria"). Includes relationships to People collection.
 
 ---
 
 ## Task 6: Create Artist Collection with Many-to-Many
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 4 (People), Task 3 (Media)  
 **Estimated Effort:** Medium
 
-**Context:**
-The Artist collection stores bands/musicians with many-to-many relationships to People (members).
-
-**Requirements:**
-1. Create `payload/src/collections/Artists.ts`
-2. Add many-to-many relationship to People (members)
-3. Add fields: name, slug, bio, photo, website
-4. Add migration tracking fields
-5. Test many-to-many relationships
-
-**PostgreSQL Join Table:**
-```sql
-CREATE TABLE artist_members (
-  id SERIAL PRIMARY KEY,
-  artist_id INTEGER REFERENCES artists(id) ON DELETE CASCADE,
-  person_id INTEGER REFERENCES people(id) ON DELETE CASCADE,
-  UNIQUE(artist_id, person_id)
-);
-```
-
-**Payload Configuration:**
-```typescript
-{
-  name: 'members',
-  type: 'relationship',
-  relationTo: 'people',
-  hasMany: true,
-}
-```
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can create/edit Artists in Payload Admin
-- [ ] Can add/remove members (many-to-many)
-- [ ] GraphQL query returns members with depth
+**Completed:** Artists collection created with MusicBrainz integration for artist search. Includes photo upload and website fields.
 
 ---
 
 ## Task 7: Create Venue Collection
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 0  
 **Estimated Effort:** Small
 
-**Context:**
-Venues are concert locations. Simple collection with name, address, and website.
-
-**Requirements:**
-1. Create `payload/src/collections/Venues.ts`
-2. Add fields: name, slug, address, city, website
-3. Add migration tracking fields
-4. Test CRUD operations
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can create/edit Venues in Payload Admin
-- [ ] REST/GraphQL API functional
+**Completed:** Venues collection created with name, slug, address, city, and website fields.
 
 ---
 
 ## Task 8: Create Concert Collection
 
-**Status:** 🔲 Not Started  
+**Status:** ✅ Complete (Nov-Dec 2025)  
 **Depends On:** Task 6 (Artist), Task 7 (Venue)  
 **Estimated Effort:** Medium
 
-**Context:**
-Concerts reference Artists and Venues. Include date, ticket info, and featured flag.
-
-**Requirements:**
-1. Create `payload/src/collections/Concerts.ts`
-2. Add relationships to Artists and Venues
-3. Add fields: date, ticketInfo, ticketUrl, featured
-4. Add migration tracking fields
-5. Test CRUD operations with relationships
-
-**Acceptance Criteria:**
-- [ ] Collection compiles without errors
-- [ ] Can create/edit Concerts in Payload Admin
-- [ ] Artist and Venue references required
-- [ ] GraphQL query returns related data
+**Completed:** Concerts collection created with relationships to Artists and Venues. Includes PostgreSQL read model implementation for backward compatibility with legacy PHP site.
 
 ---
 
