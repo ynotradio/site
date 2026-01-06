@@ -31,6 +31,12 @@ yarn payload:validate
 yarn payload:seed
 ```
 
+**Development Login:**
+- Auto-login is enabled in development (NODE_ENV=development)
+- Email and password are pre-filled at `/admin` login page
+- Click the login button to authenticate
+- Credentials: `admin@ynotradio.net` / `password`
+
 ### Database Commands
 
 ```bash
