@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const OnDemand: CollectionConfig = {
@@ -48,6 +49,7 @@ export const OnDemand: CollectionConfig = {
     {
       name: 'note',
       type: 'richText',
+      editor: lexicalEditor(),
       required: true,
       admin: {
         description: 'Description or note about the content',
