@@ -47,7 +47,7 @@ export const OnDemand: CollectionConfig = {
     },
     {
       name: 'note',
-      type: 'text',
+      type: 'richText',
       required: true,
       admin: {
         description: 'Description or note about the content',
@@ -55,10 +55,29 @@ export const OnDemand: CollectionConfig = {
     },
     {
       name: 'songs',
-      type: 'text',
-      required: true,
+      type: 'relationship',
+      relationTo: 'songs',
+      hasMany: true,
       admin: {
-        description: 'List of songs performed',
+        description: 'Songs performed in this on-demand recording',
+      },
+    },
+    {
+      name: 'djs',
+      type: 'relationship',
+      relationTo: 'djs',
+      hasMany: true,
+      admin: {
+        description: 'DJs featured in this recording',
+      },
+    },
+    {
+      name: 'artists',
+      type: 'relationship',
+      relationTo: 'artists',
+      hasMany: true,
+      admin: {
+        description: 'Artists featured in this recording',
       },
     },
     {

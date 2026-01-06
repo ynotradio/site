@@ -39,9 +39,28 @@ class PostgresOnDemand implements OnDemand {
                 END as image,
                 o.headline,
                 o.note,
-                o.songs,
                 o.audio_url,
-                COALESCE(o.source, 'opendrive') as source
+                COALESCE(o.source, 'opendrive') as source,
+                (
+                    SELECT string_agg(s.title, ', ' ORDER BY or_songs.order)
+                    FROM ondemand_rels or_songs
+                    JOIN songs s ON or_songs.songs_id = s.id
+                    WHERE or_songs.parent_id = o.id AND or_songs.path = 'songs'
+                ) as songs,
+                (
+                    SELECT string_agg(p.name, ', ' ORDER BY or_djs.order)
+                    FROM ondemand_rels or_djs
+                    JOIN djs d ON or_djs.djs_id = d.id
+                    JOIN djs_rels dr ON d.id = dr.parent_id AND dr.path = 'person'
+                    JOIN people p ON dr.people_id = p.id
+                    WHERE or_djs.parent_id = o.id AND or_djs.path = 'djs'
+                ) as dj_names,
+                (
+                    SELECT string_agg(a.name, ', ' ORDER BY or_artists.order)
+                    FROM ondemand_rels or_artists
+                    JOIN artists a ON or_artists.artists_id = a.id
+                    WHERE or_artists.parent_id = o.id AND or_artists.path = 'artists'
+                ) as artist_names
             FROM ondemand o
             LEFT JOIN media m ON o.image_id = m.id
             WHERE o.id = :id
@@ -54,10 +73,8 @@ class PostgresOnDemand implements OnDemand {
             return null;
         }
         
-        // Convert PostgreSQL timestamp to MySQL date format
-        $result['date'] = $this->formatDate($result['date']);
-        
-        return $result;
+        return $this->formatResult($result);
+    }
     }
 
     /**
@@ -94,8 +111,13 @@ class PostgresOnDemand implements OnDemand {
                 END as image,
                 o.headline,
                 o.note,
-                o.songs,
-                o.audio_url
+                o.audio_url,
+                (
+                    SELECT string_agg(s.title, ', ' ORDER BY or_songs.order)
+                    FROM ondemand_rels or_songs
+                    JOIN songs s ON or_songs.songs_id = s.id
+                    WHERE or_songs.parent_id = o.id AND or_songs.path = 'songs'
+                ) as songs
             FROM ondemand o
             LEFT JOIN media m ON o.image_id = m.id
             ORDER BY $orderBy
@@ -223,9 +245,14 @@ class PostgresOnDemand implements OnDemand {
                 END as image,
                 o.headline,
                 o.note,
-                o.songs,
                 o.audio_url,
-                COALESCE(o.source, 'opendrive') as source
+                COALESCE(o.source, 'opendrive') as source,
+                (
+                    SELECT string_agg(s.title, ', ' ORDER BY or_songs.order)
+                    FROM ondemand_rels or_songs
+                    JOIN songs s ON or_songs.songs_id = s.id
+                    WHERE or_songs.parent_id = o.id AND or_songs.path = 'songs'
+                ) as songs
             FROM ondemand o
             LEFT JOIN media m ON o.image_id = m.id
             ORDER BY o.date DESC
@@ -259,18 +286,74 @@ class PostgresOnDemand implements OnDemand {
     }
 
     /**
+     * Convert Lexical JSON to plain text
+     * Extracts text content from Lexical editor format
+     * 
+     * @param string|null $lexicalJson The Lexical JSON string
+     * @return string Plain text content
+     */
+    private function lexicalToText(?string $lexicalJson): string {
+        if (!$lexicalJson) {
+            return '';
+        }
+        
+        $data = json_decode($lexicalJson, true);
+        if (!$data || !isset($data['root']['children'])) {
+            return '';
+        }
+        
+        $text = [];
+        foreach ($data['root']['children'] as $node) {
+            if (isset($node['children'])) {
+                foreach ($node['children'] as $child) {
+                    if (isset($child['text'])) {
+                        $text[] = $child['text'];
+                    } elseif ($child['type'] === 'link' && isset($child['children'])) {
+                        foreach ($child['children'] as $linkChild) {
+                            if (isset($linkChild['text'])) {
+                                $text[] = $linkChild['text'];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return implode(' ', $text);
+    }
+
+    /**
+     * Format a single result row
+     * 
+     * @param array $row Raw database row
+     * @return array Formatted row
+     */
+    private function formatResult(array $row): array {
+        if (isset($row['date'])) {
+            $row['fdate'] = $this->formatDateShort($row['date']);
+            $row['date'] = $this->formatDate($row['date']);
+        }
+        
+        // Convert Lexical JSON note to plain text
+        if (isset($row['note'])) {
+            $row['note'] = $this->lexicalToText($row['note']);
+        }
+        
+        // Ensure songs is not null
+        if (!isset($row['songs']) || $row['songs'] === null) {
+            $row['songs'] = '';
+        }
+        
+        return $row;
+    }
+
+    /**
      * Format results array to match MySQL output format
      * 
      * @param array $results Raw database results
      * @return array Formatted results
      */
     private function formatResults(array $results): array {
-        return array_map(function($row) {
-            if (isset($row['date'])) {
-                $row['fdate'] = $this->formatDateShort($row['date']);
-                $row['date'] = $this->formatDate($row['date']);
-            }
-            return $row;
-        }, $results);
+        return array_map([$this, 'formatResult'], $results);
     }
 }
