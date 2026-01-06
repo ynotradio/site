@@ -68,10 +68,10 @@ export default buildConfig({
     autoLogin:
       process.env.NODE_ENV === 'development'
         ? {
-            email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
-            password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
-            prefillOnly: true,
-          }
+          email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+          password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
+          prefillOnly: true,
+        }
         : false,
     components: {
       beforeDashboard: [],
