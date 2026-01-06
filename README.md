@@ -64,6 +64,7 @@ This skill provides:
 yarn payload:dev
 yarn seed:payload  # Sample data for testing
 # → Open http://localhost:3000/admin and take screenshot
+# → Login credentials are pre-filled in development (just click login)
 
 # Test legacy site
 docker compose up -d
