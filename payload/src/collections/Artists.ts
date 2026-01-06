@@ -68,25 +68,7 @@ export const Artists: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-      },
-    },
-    {
-      name: 'migratedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Timestamp of migration from MySQL',
-      },
-    },
+
   ],
   timestamps: true,
 };

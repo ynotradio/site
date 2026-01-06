@@ -58,7 +58,6 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'Administrator', value: 'admin' },
         { label: 'Editor', value: 'editor' },
-        { label: 'DJ', value: 'dj' },
         { label: 'Read Only', value: 'readonly' },
       ],
       admin: {

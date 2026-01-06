@@ -374,25 +374,7 @@ export const YearEndPollResults: CollectionConfig = {
         description: 'Add sections to build your results page. Each section can be a ranked list, staff picks, or text content.',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-      },
-    },
-    {
-      name: 'migratedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Timestamp of migration from MySQL',
-      },
-    },
+
   ],
   timestamps: true,
 };

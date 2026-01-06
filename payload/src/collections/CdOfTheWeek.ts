@@ -39,9 +39,10 @@ export const CdOfTheWeek: CollectionConfig = {
     },
     {
       name: 'reviewer',
-      type: 'text',
+      type: 'relationship',
+      relationTo: 'people',
       admin: {
-        description: 'Name of the reviewer',
+        description: 'Person who reviewed this album',
       },
     },
     {
