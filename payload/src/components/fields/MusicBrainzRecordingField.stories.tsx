@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { setMockFieldValue, setMockFormFields, resetMocks } from '@payloadcms/ui';
+import { setMockFieldValue, setMockFormFields, resetMocks } from '@/.storybook/mocks/@payloadcms/ui';
 import { MusicBrainzRecordingField } from './MusicBrainzRecordingField';
 
 const meta = {
