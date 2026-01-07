@@ -67,7 +67,7 @@ export async function findOrCreateArtist(
 ): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
-  
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -230,7 +230,7 @@ export async function findOrCreateVenue(
 ): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
-  
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -324,7 +324,7 @@ export async function findOrCreatePerson(
 ): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
-  
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({

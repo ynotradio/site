@@ -132,7 +132,7 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
 
     // Clean headline and generate slug
     const cleanedHeadline = cleanHeadline(post.headline);
-    
+
     // Generate slug based on source type
     let slug: string;
     if (post.permalink) {
