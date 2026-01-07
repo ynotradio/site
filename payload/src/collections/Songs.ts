@@ -9,46 +9,6 @@ export const Songs: CollectionConfig = {
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'updatedAt'],
     group: 'Music',
   },
-  hooks: {
-    beforeChange: [
-      async ({ data, req }) => {
-        // Generate display name from artist relationship and title
-        const updatedData = data;
-
-        let artistName = '';
-        if (updatedData.artist) {
-          const artistId = typeof updatedData.artist === 'object' ? updatedData.artist.id : updatedData.artist;
-
-          try {
-            const artist = await req.payload.findByID({
-              collection: 'artists',
-              id: artistId,
-            });
-
-            if (artist) {
-              artistName = artist.name;
-            }
-          } catch (error) {
-            // Error fetching artist name for Song
-            if (process.env.NODE_ENV !== 'production') {
-              // eslint-disable-next-line no-console
-              console.error('Error fetching artist name for Song:', error);
-            }
-          }
-        }
-
-        if (artistName && updatedData.title) {
-          updatedData.displayName = `${artistName} - ${updatedData.title}`;
-        } else if (updatedData.title) {
-          updatedData.displayName = updatedData.title;
-        } else {
-          updatedData.displayName = `Song #${updatedData.id || 'New'}`;
-        }
-
-        return updatedData;
-      },
-    ],
-  },
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -59,10 +19,41 @@ export const Songs: CollectionConfig = {
     {
       name: 'displayName',
       type: 'text',
+      virtual: true,
       admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Auto-generated from artist and title',
+        hidden: true,
+      },
+      hooks: {
+        afterRead: [
+          async ({ data, req }) => {
+            if (!data) return data?.title || 'Untitled';
+
+            let artistName = '';
+            if (data.artist) {
+              // Artist may be populated or just an ID
+              if (typeof data.artist === 'object' && data.artist.name) {
+                artistName = data.artist.name;
+              } else if (data.artist) {
+                try {
+                  const artist = await req.payload.findByID({
+                    collection: 'artists',
+                    id: typeof data.artist === 'object' ? data.artist.id : data.artist,
+                  });
+                  if (artist) {
+                    artistName = artist.name;
+                  }
+                } catch {
+                  // Silently handle errors
+                }
+              }
+            }
+
+            if (artistName && data.title) {
+              return `${artistName} - ${data.title}`;
+            }
+            return data.title || `Song #${data.id || 'New'}`;
+          },
+        ],
       },
     },
     {
