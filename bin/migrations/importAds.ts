@@ -15,6 +15,7 @@ import { connectToDatabase, getActiveAds, type Ad } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { stripHtmlTags } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('AdsImport');
@@ -105,13 +106,16 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
       return false;
     }
 
+    // Strip HTML tags from name field
+    const cleanName = stripHtmlTags(ad.name);
+
     // Import ad image if available
     let imageId: string | undefined;
     if (ad.image_url && ad.image_url.trim() !== '') {
       logger.debug(`Importing image for ad ${ad.id}: ${ad.image_url}`);
       const imageResult = await importImageFromUrl(payload, ad.image_url, {
-        alt: `Advertisement for ${ad.name}`,
-        caption: ad.name,
+        alt: `Advertisement for ${cleanName}`,
+        caption: cleanName,
         legacyUrl: ad.image_url,
         legacyId: ad.id,
       });
@@ -128,10 +132,11 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
     await payload.create({
       collection: 'ads',
       data: {
-        name: ad.name,
+        name: cleanName,
         startDate: ad.start_date,
         endDate: ad.end_date,
         image: imageId,
+        imageUrl: ad.image_url, // Store original URL for reference
         webUrl: ad.web_url || undefined,
         priority: ad.priority || 0,
         legacyId: ad.id,
@@ -139,7 +144,7 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
       },
     });
 
-    logger.debug(`Imported ad ${ad.id}: ${ad.name}`);
+    logger.debug(`Imported ad ${ad.id}: ${cleanName}`);
     return true;
   } catch (error) {
     logger.error(`Failed to import ad ${ad.id}`, error as Error);
