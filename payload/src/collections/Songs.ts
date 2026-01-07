@@ -5,9 +5,49 @@ import { hasRole } from '../utils/auth';
 export const Songs: CollectionConfig = {
   slug: 'songs',
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'artist', 'releaseDate', 'updatedAt'],
+    useAsTitle: 'displayName',
+    defaultColumns: ['displayName', 'artist', 'releaseDate', 'updatedAt'],
     group: 'Music',
+  },
+  hooks: {
+    beforeChange: [
+      async ({ data, req }) => {
+        // Generate display name from artist relationship and title
+        const updatedData = data;
+
+        let artistName = '';
+        if (updatedData.artist) {
+          const artistId = typeof updatedData.artist === 'object' ? updatedData.artist.id : updatedData.artist;
+
+          try {
+            const artist = await req.payload.findByID({
+              collection: 'artists',
+              id: artistId,
+            });
+
+            if (artist) {
+              artistName = artist.name;
+            }
+          } catch (error) {
+            // Error fetching artist name for Song
+            if (process.env.NODE_ENV !== 'production') {
+              // eslint-disable-next-line no-console
+              console.error('Error fetching artist name for Song:', error);
+            }
+          }
+        }
+
+        if (artistName && updatedData.title) {
+          updatedData.displayName = `${artistName} - ${updatedData.title}`;
+        } else if (updatedData.title) {
+          updatedData.displayName = updatedData.title;
+        } else {
+          updatedData.displayName = `Song #${updatedData.id || 'New'}`;
+        }
+
+        return updatedData;
+      },
+    ],
   },
   access: {
     read: () => true, // Public read access
@@ -16,6 +56,15 @@ export const Songs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   fields: [
+    {
+      name: 'displayName',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Auto-generated from artist and title',
+      },
+    },
     {
       name: 'title',
       type: 'text',
