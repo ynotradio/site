@@ -132,8 +132,21 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
 
     // Clean headline and generate slug
     const cleanedHeadline = cleanHeadline(post.headline);
-    // For custom texts, use the existing permalink as slug; otherwise generate from headline
-    const slug = post.permalink || slugify(post.headline);
+
+    // Generate slug based on source type
+    let slug: string;
+    if (post.permalink) {
+      // For custom texts with existing permalinks, keep them unchanged
+      slug = post.permalink;
+    } else if (post.source === 'story') {
+      // For stories, generate slug with date prefix: 2025-01-31--headline
+      const datePrefix = post.start_date; // Format: YYYY-MM-DD
+      const headlineSlug = slugify(post.headline);
+      slug = `${datePrefix}--${headlineSlug}`;
+    } else {
+      // Fallback for other cases
+      slug = slugify(post.headline);
+    }
 
     // Create post record
     await payload.create({

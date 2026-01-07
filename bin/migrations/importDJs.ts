@@ -15,6 +15,7 @@ import { connectToDatabase, getActiveDeejays, type Deejay } from './database';
 import { getPayloadClient, findOrCreatePerson } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { stripHtmlTags } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('DJsImport');
@@ -123,8 +124,13 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       return false;
     }
 
+    // Strip HTML tags from name and show fields
+    const cleanName = stripHtmlTags(dj.name);
+    const cleanShow = stripHtmlTags(dj.show);
+    const cleanExternalConnectText = stripHtmlTags(dj.external_connect_text);
+
     // Parse DJ name(s) - may contain multiple people (e.g., "M.J. & Patria")
-    const names = parseDJNames(dj.name);
+    const names = parseDJNames(cleanName);
     logger.debug(`DJ ${dj.id}: Found ${names.length} person(s): ${names.join(', ')}`);
 
     // Find or create person record(s) for this DJ
@@ -137,8 +143,8 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
     if (dj.pic && dj.pic.trim() !== '') {
       logger.debug(`Importing photo for DJ ${dj.id}: ${dj.pic}`);
       const photoResult = await importImageFromUrl(payload, dj.pic, {
-        alt: `Photo of ${dj.name}`,
-        caption: `${dj.show} DJ photo`,
+        alt: `Photo of ${cleanName}`,
+        caption: `${cleanShow} DJ photo`,
         legacyUrl: dj.pic,
         legacyId: dj.id,
       });
@@ -165,7 +171,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
                 children: [
                   {
                     type: 'text',
-                    text: dj.show,
+                    text: cleanShow,
                   },
                 ],
               },
@@ -177,7 +183,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
           },
         },
         email: dj.email || undefined,
-        externalConnectText: dj.external_connect_text || undefined,
+        externalConnectText: cleanExternalConnectText || undefined,
         externalConnectUrl: dj.external_connect_url || undefined,
         photo: photoId,
         onAir: dj.deleted === 'No',
@@ -187,7 +193,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
       },
     });
 
-    logger.debug(`Imported DJ ${dj.id}: ${dj.name} (${dj.show}) - ${personIds.length} person(s)`);
+    logger.debug(`Imported DJ ${dj.id}: ${cleanName} (${cleanShow}) - ${personIds.length} person(s)`);
     return true;
   } catch (error) {
     logger.error(`Failed to import DJ ${dj.id}`, error as Error);

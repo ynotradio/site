@@ -272,3 +272,77 @@ export function getStatusFromDeleted(deleted: string | null | undefined): 'publi
   // Everything else is published ('n', 'no', 'No', etc.)
   return 'published';
 }
+
+/**
+ * Strip HTML tags from plain text fields
+ * Use this for text fields that should not contain HTML (names, titles, etc.)
+ * Do NOT use for richText/Lexical fields - use convertHtmlToLexical instead
+ *
+ * @param text - Text that may contain HTML tags
+ * @returns Plain text with HTML tags removed
+ */
+export function stripHtmlTags(text: string | null | undefined): string {
+  if (!text) {
+    return '';
+  }
+
+  return text
+    .replace(/<br\s*\/?>/gi, ' ') // Replace <br> with space
+    .replace(/<\/(p|div|h[1-6]|li|td|th|tr)>/gi, ' ') // Add space after block-level closing tags
+    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/\s+/g, ' ') // Normalize whitespace
+    .trim();
+}
+
+/**
+ * Convert plain text to Lexical JSON format
+ * Use this when you need to convert plain text (not HTML) to Lexical
+ * For HTML content, use convertHtmlToLexical instead
+ *
+ * @param text - Plain text string
+ * @returns Lexical JSON structure
+ */
+export function convertTextToLexical(text: string | null | undefined): any {
+  if (!text || text.trim() === '') {
+    return {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    };
+  }
+
+  return {
+    root: {
+      type: 'root',
+      format: '',
+      indent: 0,
+      version: 1,
+      children: [
+        {
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: text.trim(),
+              type: 'text',
+              version: 1,
+            },
+          ],
+          direction: 'ltr',
+        },
+      ],
+      direction: 'ltr',
+    },
+  };
+}

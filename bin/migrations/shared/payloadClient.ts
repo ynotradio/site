@@ -9,7 +9,7 @@ import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
-import { generateSlug } from './importUtils';
+import { generateSlug, stripHtmlTags } from './importUtils';
 
 const logger = createLogger('PayloadClient');
 
@@ -65,6 +65,9 @@ export async function findOrCreateArtist(
   name: string,
   legacyId?: number,
 ): Promise<number> {
+  // Strip HTML tags from name
+  const cleanName = stripHtmlTags(name);
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -83,7 +86,7 @@ export async function findOrCreateArtist(
       // If artist exists but doesn't have MusicBrainz ID, try to add it
       if (!artist.musicbrainzId) {
         try {
-          const mbid = await getArtistMbid(name);
+          const mbid = await getArtistMbid(cleanName);
           if (mbid) {
             await payload.update({
               collection: 'artists',
@@ -92,11 +95,11 @@ export async function findOrCreateArtist(
                 musicbrainzId: mbid,
               },
             });
-            logger.debug(`Added MusicBrainz ID to existing artist: ${name}`);
+            logger.debug(`Added MusicBrainz ID to existing artist: ${cleanName}`);
           }
         } catch (error) {
           // Log but don't fail
-          logger.debug(`Failed to update MusicBrainz ID for ${name}`);
+          logger.debug(`Failed to update MusicBrainz ID for ${cleanName}`);
         }
       }
 
@@ -109,7 +112,7 @@ export async function findOrCreateArtist(
     collection: 'artists',
     where: {
       name: {
-        equals: name,
+        equals: cleanName,
       },
     },
     limit: 1,
@@ -121,7 +124,7 @@ export async function findOrCreateArtist(
     // If artist exists but doesn't have MusicBrainz ID, try to add it
     if (!artist.musicbrainzId) {
       try {
-        const mbid = await getArtistMbid(name);
+        const mbid = await getArtistMbid(cleanName);
         if (mbid) {
           await payload.update({
             collection: 'artists',
@@ -130,11 +133,11 @@ export async function findOrCreateArtist(
               musicbrainzId: mbid,
             },
           });
-          logger.debug(`Added MusicBrainz ID to existing artist: ${name}`);
+          logger.debug(`Added MusicBrainz ID to existing artist: ${cleanName}`);
         }
       } catch (error) {
         // Log but don't fail
-        logger.debug(`Failed to update MusicBrainz ID for ${name}`);
+        logger.debug(`Failed to update MusicBrainz ID for ${cleanName}`);
       }
     }
 
@@ -144,27 +147,27 @@ export async function findOrCreateArtist(
   // Try to create new artist
   try {
     // Generate slug from name
-    const slug = generateSlug(name);
+    const slug = generateSlug(cleanName);
 
     // Fetch MusicBrainz ID if not provided
     let mbid = null;
     if (!legacyId) {
       // Only lookup for new artists (not during migration with legacyId)
       try {
-        mbid = await getArtistMbid(name);
+        mbid = await getArtistMbid(cleanName);
         if (mbid) {
-          logger.debug(`Found MusicBrainz ID for ${name}: ${mbid}`);
+          logger.debug(`Found MusicBrainz ID for ${cleanName}: ${mbid}`);
         }
       } catch (error) {
         // Log but don't fail if MusicBrainz lookup fails
-        logger.debug(`MusicBrainz lookup failed for ${name}`);
+        logger.debug(`MusicBrainz lookup failed for ${cleanName}`);
       }
     }
 
     const newArtist = await payload.create({
       collection: 'artists',
       data: {
-        name,
+        name: cleanName,
         slug,
         musicbrainzId: mbid || undefined,
         legacyId,
@@ -172,7 +175,7 @@ export async function findOrCreateArtist(
       },
     });
 
-    logger.debug(`Created artist: ${name}`);
+    logger.debug(`Created artist: ${cleanName}`);
     return newArtist.id;
   } catch (error: any) {
     // Log the full error structure for debugging
@@ -225,6 +228,9 @@ export async function findOrCreateVenue(
   name: string,
   legacyId?: number,
 ): Promise<number> {
+  // Strip HTML tags from name
+  const cleanName = stripHtmlTags(name);
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -247,7 +253,7 @@ export async function findOrCreateVenue(
     collection: 'venues',
     where: {
       name: {
-        equals: name,
+        equals: cleanName,
       },
     },
     limit: 1,
@@ -260,19 +266,19 @@ export async function findOrCreateVenue(
   // Try to create new venue
   try {
     // Generate slug from name
-    const slug = generateSlug(name);
+    const slug = generateSlug(cleanName);
 
     const newVenue = await payload.create({
       collection: 'venues',
       data: {
-        name,
+        name: cleanName,
         slug,
         legacyId,
         migratedAt: new Date().toISOString(),
       },
     });
 
-    logger.debug(`Created venue: ${name}`);
+    logger.debug(`Created venue: ${cleanName}`);
     return newVenue.id;
   } catch (error: any) {
     // If slug validation fails, likely a duplicate with slight name variation
@@ -316,6 +322,9 @@ export async function findOrCreatePerson(
   name: string,
   legacyId?: number,
 ): Promise<number> {
+  // Strip HTML tags from name
+  const cleanName = stripHtmlTags(name);
+
   // First try to find by legacy ID if provided
   if (legacyId !== undefined) {
     const existingByLegacyId = await payload.find({
@@ -338,7 +347,7 @@ export async function findOrCreatePerson(
     collection: 'people',
     where: {
       name: {
-        equals: name,
+        equals: cleanName,
       },
     },
     limit: 1,
@@ -351,19 +360,19 @@ export async function findOrCreatePerson(
   // Try to create new person
   try {
     // Generate slug from name
-    const slug = generateSlug(name);
+    const slug = generateSlug(cleanName);
 
     const newPerson = await payload.create({
       collection: 'people',
       data: {
-        name,
+        name: cleanName,
         slug,
         legacyId,
         migratedAt: new Date().toISOString(),
       },
     });
 
-    logger.debug(`Created person: ${name}`);
+    logger.debug(`Created person: ${cleanName}`);
     return newPerson.id;
   } catch (error: any) {
     // If slug validation fails, likely a duplicate with slight name variation

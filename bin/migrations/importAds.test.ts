@@ -144,6 +144,7 @@ describe('importAds', () => {
           startDate: '2024-01-01',
           endDate: '2024-12-31',
           image: undefined,
+          imageUrl: 'https://example.com/image.jpg',
           webUrl: 'https://example.com',
           priority: 5,
           legacyId: 1,
@@ -206,6 +207,62 @@ describe('importAds', () => {
         collection: 'ads',
         data: expect.objectContaining({
           priority: 0,
+        }),
+      });
+    });
+
+    it('should strip HTML tags from ad name', async () => {
+      const { importAd } = await import('./importAds');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'ad-id-123' });
+
+      const ad: Ad = {
+        id: 1,
+        name: '<font color="red">Special Sponsor</font>',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        image_url: '',
+        web_url: 'https://example.com',
+        priority: 5,
+        deleted: 'n',
+      };
+
+      const result = await importAd(mockPayload as Payload, ad);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'ads',
+        data: expect.objectContaining({
+          name: 'Special Sponsor',
+        }),
+      });
+    });
+
+    it('should store imageUrl field for reference', async () => {
+      const { importAd } = await import('./importAds');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'ad-id-123' });
+
+      const ad: Ad = {
+        id: 1,
+        name: 'Test Ad',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        image_url: 'https://example.com/ad-image.jpg',
+        web_url: 'https://example.com',
+        priority: 0,
+        deleted: 'n',
+      };
+
+      const result = await importAd(mockPayload as Payload, ad);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'ads',
+        data: expect.objectContaining({
+          imageUrl: 'https://example.com/ad-image.jpg',
         }),
       });
     });

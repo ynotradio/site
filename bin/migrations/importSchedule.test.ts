@@ -123,7 +123,35 @@ describe('importSchedule', () => {
           endTime: '12:00:00',
           host: 'dj-id-456',
           name: undefined,
-          note: 'Morning show',
+          note: {
+            root: {
+              type: 'root',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'paragraph',
+                  format: '',
+                  indent: 0,
+                  version: 1,
+                  children: [
+                    {
+                      detail: 0,
+                      format: 0,
+                      mode: 'normal',
+                      style: '',
+                      text: 'Morning show',
+                      type: 'text',
+                      version: 1,
+                    },
+                  ],
+                  direction: 'ltr',
+                },
+              ],
+              direction: 'ltr',
+            },
+          },
           legacyId: 1,
           migratedAt: expect.any(String),
         },
@@ -256,6 +284,125 @@ describe('importSchedule', () => {
           date: '2024-03-20',
           startTime: '18:00:00',
           endTime: '21:00:00',
+        }),
+      });
+    });
+
+    it('should convert note field to Lexical format', async () => {
+      const { importSchedule } = await import('./importSchedule');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // showExists
+        .mockResolvedValueOnce({ docs: [{ id: 'dj-123' }] }); // findDJByName - person lookup
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
+
+      const schedule = {
+        id: 1,
+        date: '2024-01-15',
+        day: 'Monday',
+        start_time: '10:00:00',
+        end_time: '14:00:00',
+        host: 'Test Host',
+        note: 'Win Dinosaur Jr. Tickets',
+        deleted: 'n',
+      };
+
+      const result = await importSchedule(mockPayload as Payload, schedule);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'shows',
+        data: expect.objectContaining({
+          note: {
+            root: {
+              type: 'root',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'paragraph',
+                  format: '',
+                  indent: 0,
+                  version: 1,
+                  children: [
+                    {
+                      detail: 0,
+                      format: 0,
+                      mode: 'normal',
+                      style: '',
+                      text: 'Win Dinosaur Jr. Tickets',
+                      type: 'text',
+                      version: 1,
+                    },
+                  ],
+                  direction: 'ltr',
+                },
+              ],
+              direction: 'ltr',
+            },
+          },
+        }),
+      });
+    });
+
+    it('should handle empty note field', async () => {
+      const { importSchedule } = await import('./importSchedule');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // showExists
+        .mockResolvedValueOnce({ docs: [{ id: 'dj-123' }] }); // findDJByName - person lookup
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
+
+      const schedule = {
+        id: 1,
+        date: '2024-01-15',
+        day: 'Monday',
+        start_time: '10:00:00',
+        end_time: '14:00:00',
+        host: 'Test Host',
+        note: '',
+        deleted: 'n',
+      };
+
+      const result = await importSchedule(mockPayload as Payload, schedule);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'shows',
+        data: expect.objectContaining({
+          note: undefined,
+        }),
+      });
+    });
+
+    it('should strip HTML from show name when DJ not found', async () => {
+      const { importSchedule } = await import('./importSchedule');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // showExists
+        .mockResolvedValueOnce({ docs: [] }); // findDJByName - no person found
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
+
+      const schedule = {
+        id: 1,
+        date: '2024-01-15',
+        day: 'Monday',
+        start_time: '10:00:00',
+        end_time: '14:00:00',
+        host: '<b>Special</b> Guest Host',
+        note: '',
+        deleted: 'n',
+      };
+
+      const result = await importSchedule(mockPayload as Payload, schedule);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'shows',
+        data: expect.objectContaining({
+          name: 'Special Guest Host',
+          host: undefined,
         }),
       });
     });

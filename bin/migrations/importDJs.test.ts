@@ -338,5 +338,83 @@ describe('importDJs', () => {
         }),
       });
     });
+
+    it('should strip HTML tags from DJ name field', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 1,
+        name: '<font color="blue">DJ Blue</font>',
+        show: 'The <b>Bold</b> Show',
+        email: 'dj@example.com',
+        external_connect_text: '<i>Follow</i> me',
+        external_connect_url: 'https://twitter.com',
+        pic: '',
+        sort: 1,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(findOrCreatePerson).toHaveBeenCalledWith(mockPayload, 'DJ Blue');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: expect.objectContaining({
+          description: expect.objectContaining({
+            root: expect.objectContaining({
+              children: [
+                expect.objectContaining({
+                  children: [
+                    expect.objectContaining({
+                      text: 'The Bold Show',
+                    }),
+                  ],
+                }),
+              ],
+            }),
+          }),
+          externalConnectText: 'Follow me',
+          legacyId: 1,
+        }),
+      });
+    });
+
+    it('should preserve legacyId when importing DJ', async () => {
+      const { importDJ } = await import('./importDJs');
+      const { findOrCreatePerson } = await import('./shared/payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (findOrCreatePerson as Mock).mockResolvedValue('person-id-123');
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'dj-id-456' });
+
+      const dj: Deejay = {
+        id: 42,
+        name: 'Test DJ',
+        show: 'Test Show',
+        email: 'test@example.com',
+        external_connect_text: '',
+        external_connect_url: '',
+        pic: '',
+        sort: 1,
+        deleted: 'No',
+      };
+
+      const result = await importDJ(mockPayload as Payload, dj);
+
+      expect(result).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'djs',
+        data: expect.objectContaining({
+          legacyId: 42,
+          migratedAt: expect.any(String),
+        }),
+      });
+    });
   });
 });

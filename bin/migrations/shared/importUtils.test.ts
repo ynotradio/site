@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { generateSlug, convertHtmlToLexical, getStatusFromDeleted } from './importUtils';
+import {
+  generateSlug,
+  convertHtmlToLexical,
+  getStatusFromDeleted,
+  stripHtmlTags,
+  convertTextToLexical,
+} from './importUtils';
 
 describe('generateSlug', () => {
   it('should convert text to lowercase', () => {
@@ -162,5 +168,161 @@ describe('getStatusFromDeleted', () => {
     expect(getStatusFromDeleted('  y  ')).toBe('draft');
     expect(getStatusFromDeleted('  yes  ')).toBe('draft');
     expect(getStatusFromDeleted('  n  ')).toBe('published');
+  });
+});
+
+describe('stripHtmlTags', () => {
+  it('should return empty string for null', () => {
+    expect(stripHtmlTags(null)).toBe('');
+  });
+
+  it('should return empty string for undefined', () => {
+    expect(stripHtmlTags(undefined)).toBe('');
+  });
+
+  it('should return empty string for empty string', () => {
+    expect(stripHtmlTags('')).toBe('');
+  });
+
+  it('should remove HTML tags', () => {
+    expect(stripHtmlTags('<p>Hello World</p>')).toBe('Hello World');
+  });
+
+  it('should remove multiple HTML tags', () => {
+    expect(stripHtmlTags('<div><p>Hello</p><span>World</span></div>')).toBe('Hello World');
+  });
+
+  it('should convert <br> tags to spaces', () => {
+    expect(stripHtmlTags('Hello<br>World')).toBe('Hello World');
+    expect(stripHtmlTags('Hello<br/>World')).toBe('Hello World');
+    expect(stripHtmlTags('Hello<br />World')).toBe('Hello World');
+  });
+
+  it('should remove inline formatting tags', () => {
+    expect(stripHtmlTags('<strong>Bold</strong> and <em>italic</em>')).toBe('Bold and italic');
+  });
+
+  it('should normalize whitespace', () => {
+    expect(stripHtmlTags('Hello    World')).toBe('Hello World');
+    expect(stripHtmlTags('  Hello   World  ')).toBe('Hello World');
+  });
+
+  it('should handle mixed HTML and plain text', () => {
+    expect(stripHtmlTags('Plain <b>bold</b> text')).toBe('Plain bold text');
+  });
+
+  it('should handle complex HTML', () => {
+    expect(stripHtmlTags('<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>')).toBe(
+      'Title Paragraph with link',
+    );
+  });
+
+  it('should handle font tags common in legacy content', () => {
+    expect(stripHtmlTags('<font color="red">Red text</font>')).toBe('Red text');
+  });
+
+  it('should preserve text content only', () => {
+    expect(stripHtmlTags('DJ <font color="blue">Blue</font> Show')).toBe('DJ Blue Show');
+  });
+});
+
+describe('convertTextToLexical', () => {
+  it('should return empty root for null', () => {
+    const result = convertTextToLexical(null);
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    });
+  });
+
+  it('should return empty root for undefined', () => {
+    const result = convertTextToLexical(undefined);
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    });
+  });
+
+  it('should return empty root for empty string', () => {
+    const result = convertTextToLexical('');
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    });
+  });
+
+  it('should return empty root for whitespace-only string', () => {
+    const result = convertTextToLexical('   ');
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [],
+        direction: null,
+      },
+    });
+  });
+
+  it('should convert plain text to Lexical format', () => {
+    const result = convertTextToLexical('Hello World');
+    expect(result).toEqual({
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        children: [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: 'Hello World',
+                type: 'text',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+          },
+        ],
+        direction: 'ltr',
+      },
+    });
+  });
+
+  it('should trim whitespace from text', () => {
+    const result = convertTextToLexical('  Hello World  ');
+    expect(result.root.children[0].children[0].text).toBe('Hello World');
+  });
+
+  it('should handle special characters', () => {
+    const result = convertTextToLexical('Win Dinosaur Jr. Tickets!');
+    expect(result.root.children[0].children[0].text).toBe('Win Dinosaur Jr. Tickets!');
   });
 });

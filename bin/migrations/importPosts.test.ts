@@ -230,5 +230,96 @@ describe('importPosts', () => {
         }),
       });
     });
+
+    it('should generate slug with date prefix for stories', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 1,
+        headline: 'Top 11 Giveaway',
+        start_date: '2025-01-31',
+        end_date: '2025-02-28',
+        content: 'Story content',
+        image_url: '',
+        priority: 0,
+        deleted: 'n',
+        source: 'story',
+      };
+
+      const result = await importPost(mockPayload as Payload, post);
+
+      expect(result).toBe('success');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          headline: 'Top 11 Giveaway',
+          slug: '2025-01-31--top-11-giveaway',
+        }),
+      });
+    });
+
+    it('should preserve permalink slug for custom texts', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 10001,
+        headline: 'About Us',
+        start_date: '2000-01-01',
+        end_date: '2099-12-31',
+        content: 'About page content',
+        image_url: '',
+        priority: 0,
+        deleted: 'n',
+        source: 'custom_text',
+        permalink: 'about',
+      };
+
+      const result = await importPost(mockPayload as Payload, post);
+
+      expect(result).toBe('success');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          headline: 'About Us',
+          slug: 'about',
+        }),
+      });
+    });
+
+    it('should handle HTML in headline for slug generation', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 1,
+        headline: 'Win <b>Free</b> Tickets!',
+        start_date: '2025-01-15',
+        end_date: '2025-01-31',
+        content: 'Contest details',
+        image_url: '',
+        priority: 0,
+        deleted: 'n',
+        source: 'story',
+      };
+
+      const result = await importPost(mockPayload as Payload, post);
+
+      expect(result).toBe('success');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          headline: 'Win Free Tickets!',
+          slug: '2025-01-15--win-free-tickets',
+        }),
+      });
+    });
   });
 });

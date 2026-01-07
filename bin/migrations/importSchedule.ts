@@ -18,6 +18,7 @@ import * as mysql from 'mysql2/promise';
 import { connectToDatabase } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
+import { convertTextToLexical, stripHtmlTags } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('ScheduleImport');
@@ -203,8 +204,8 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
     if (schedule.host) {
       djId = await findDJByName(payload, schedule.host);
       if (!djId) {
-        // If we can't find a DJ record, store the host name as the show name
-        showName = schedule.host;
+        // If we can't find a DJ record, store the host name as the show name (strip HTML)
+        showName = stripHtmlTags(schedule.host);
         logger.warn(`Could not find DJ for host: ${schedule.host} (show ${schedule.id}) - storing as show name`);
       }
     }
@@ -218,7 +219,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
         endTime: schedule.end_time,
         host: djId ? (djId as any) : undefined,
         name: showName,
-        note: schedule.note || undefined,
+        note: schedule.note ? convertTextToLexical(schedule.note) : undefined,
         legacyId: schedule.id,
         migratedAt: new Date().toISOString(),
       },
