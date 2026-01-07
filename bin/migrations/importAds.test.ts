@@ -144,6 +144,7 @@ describe('importAds', () => {
           startDate: '2024-01-01',
           endDate: '2024-12-31',
           image: undefined,
+          imageUrl: 'https://example.com/image.jpg',
           webUrl: 'https://example.com',
           priority: 5,
           legacyId: 1,

@@ -288,6 +288,7 @@ export function stripHtmlTags(text: string | null | undefined): string {
 
   return text
     .replace(/<br\s*\/?>/gi, ' ') // Replace <br> with space
+    .replace(/<\/(p|div|h[1-6]|li|td|th|tr)>/gi, ' ') // Add space after block-level closing tags
     .replace(/<[^>]*>/g, '') // Remove all HTML tags
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim();

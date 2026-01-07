@@ -123,7 +123,35 @@ describe('importSchedule', () => {
           endTime: '12:00:00',
           host: 'dj-id-456',
           name: undefined,
-          note: 'Morning show',
+          note: {
+            root: {
+              type: 'root',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'paragraph',
+                  format: '',
+                  indent: 0,
+                  version: 1,
+                  children: [
+                    {
+                      detail: 0,
+                      format: 0,
+                      mode: 'normal',
+                      style: '',
+                      text: 'Morning show',
+                      type: 'text',
+                      version: 1,
+                    },
+                  ],
+                  direction: 'ltr',
+                },
+              ],
+              direction: 'ltr',
+            },
+          },
           legacyId: 1,
           migratedAt: expect.any(String),
         },
