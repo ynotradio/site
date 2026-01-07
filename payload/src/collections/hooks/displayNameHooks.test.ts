@@ -26,7 +26,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   // Simulates the afterRead hook logic from Songs.ts virtual field
   function getAfterReadHook() {
     return async ({ data, req }: { data: Record<string, unknown> | null; req: { payload: Payload } }) => {
-      if (!data) return data?.title || 'Untitled';
+      if (!data) return 'Untitled';
 
       let artistName = '';
       if (data.artist) {
@@ -139,7 +139,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   // Simulates the afterRead hook logic from Records.ts virtual field
   function getAfterReadHook() {
     return async ({ data, req }: { data: Record<string, unknown> | null; req: { payload: Payload } }) => {
-      if (!data) return data?.title || 'Untitled';
+      if (!data) return 'Untitled';
 
       let artistName = '';
       if (data.artist) {

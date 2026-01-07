@@ -26,7 +26,7 @@ export const Records: CollectionConfig = {
       hooks: {
         afterRead: [
           async ({ data, req }) => {
-            if (!data) return data?.title || 'Untitled';
+            if (!data) return 'Untitled';
 
             let artistName = '';
             if (data.artist) {
