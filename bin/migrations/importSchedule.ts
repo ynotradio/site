@@ -44,6 +44,7 @@ interface ImportStats {
 interface ImportOptions {
   env: DatabaseEnv;
   startId?: number;
+  startDate?: string;
 }
 
 /**
@@ -72,18 +73,28 @@ function parseArgs(): ImportOptions {
       }
       options.startId = startId;
       i += 1;
+    } else if (arg === '--start-date') {
+      const startDate = args[i + 1];
+      // Validate date format YYYY-MM-DD
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate)) {
+        throw new Error('--start-date must be in YYYY-MM-DD format');
+      }
+      options.startDate = startDate;
+      i += 1;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/migrations/importSchedule.ts [options]
 
 Options:
-  --env ENV        Environment to import to: 'dev' (default) or 'prod'
-  --start-id ID    Optional ID to start import from (for incremental imports)
-  --help, -h       Show this help message
+  --env ENV            Environment to import to: 'dev' (default) or 'prod'
+  --start-id ID        Optional ID to start import from (for incremental imports)
+  --start-date DATE    Optional date to start import from (YYYY-MM-DD format)
+  --help, -h           Show this help message
 
 Examples:
   tsx bin/migrations/importSchedule.ts --env dev
   tsx bin/migrations/importSchedule.ts --env prod --start-id 1000
+  tsx bin/migrations/importSchedule.ts --env dev --start-date 2025-12-01
       `);
       process.exit(0);
     }
@@ -97,7 +108,7 @@ Examples:
  */
 async function getActiveSchedule(
   connection: mysql.Connection,
-  options: { startId?: number } = {},
+  options: { startId?: number; startDate?: string } = {},
 ): Promise<Schedule[]> {
   try {
     let query = "SELECT * FROM schedule WHERE deleted = 'n'";
@@ -108,12 +119,18 @@ async function getActiveSchedule(
       params.push(options.startId);
     }
 
+    if (options.startDate) {
+      query += ' AND date >= ?';
+      params.push(options.startDate);
+    }
+
     query += ' ORDER BY id ASC';
 
     const [rows] = await connection.query<mysql.RowDataPacket[]>(query, params);
 
     let filterMsg = '';
     if (options.startId) filterMsg += ` startId=${options.startId}`;
+    if (options.startDate) filterMsg += ` startDate=${options.startDate}`;
 
     console.log(
       `Retrieved ${rows.length} schedule records from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,
@@ -244,6 +261,9 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
   }
+  if (options.startDate) {
+    logger.info(`Starting from date: ${options.startDate}`);
+  }
 
   const stats: ImportStats = {
     total: 0,
@@ -267,6 +287,7 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
     logger.info('Fetching schedule records from MySQL...');
     const scheduleRecords = await getActiveSchedule(mysqlConnection, {
       startId: options.startId,
+      startDate: options.startDate,
     });
 
     stats.total = scheduleRecords.length;
