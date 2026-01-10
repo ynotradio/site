@@ -53,11 +53,30 @@ export const OnDemand: CollectionConfig = {
       },
     },
     {
-      name: 'songs',
-      type: 'text',
-      required: true,
+      name: 'djs',
+      type: 'relationship',
+      relationTo: 'djs',
+      hasMany: true,
       admin: {
-        description: 'List of songs performed',
+        description: 'DJs associated with this on-demand recording',
+      },
+    },
+    {
+      name: 'artists',
+      type: 'relationship',
+      relationTo: 'artists',
+      hasMany: true,
+      admin: {
+        description: 'Artists featured in this on-demand recording',
+      },
+    },
+    {
+      name: 'songs',
+      type: 'relationship',
+      relationTo: 'songs',
+      hasMany: true,
+      admin: {
+        description: 'Songs performed in this on-demand recording',
       },
     },
     {
