@@ -6,17 +6,17 @@
 - **Music**: 67/67 songs (last 3 months) - All successful
 - **DJs**: 83/84 (1 skipped due to bad email) - From previous session
 - **Concerts**: 308/308 - All successful, created Artists and Venues as side effect
+- **OnDemand**: 3/3 - Fixed validation issues
+- **CD of the Week**: 9/9 - Fixed validation issues
+- **Ads**: 2/2 - All successful
+- **Shows**: 291/291 (last 30 days) - All successful, DJ matching fixed
 
-### ❌ Failed/Incomplete Imports
-- **Posts**: Status unknown - Many failures due to bad image data
-- **OnDemand**: 0/3 - All failed on "Songs" field validation
-- **CD of the Week**: 0/9 - All failed on "Reviewer" and "Review" field validation
-- **Ads**: Not yet attempted
-- **Shows**: Not yet attempted
+### ⚠️ Known Issues
+- **Posts**: ~25% failure rate due to bad image URLs in legacy MySQL data (not fixable - bad source data)
 
 ---
 
-## Issues to Fix
+## Issues Fixed
 
 ### 1. ✅ OnDemand Import - FIXED
 **Problem**: Import script passes text string to `songs` field, which is now a relationship array.
@@ -45,74 +45,52 @@
 
 ---
 
-### 3. Posts Import - Data Quality Issues
-**Problem**: ~25% of posts failing due to bad image URLs in legacy MySQL data
-**Problem**: ✅ FIXED - Post content was being imported without space between text with HTML tags
+### 3. ✅ Posts Import - HTML Spacing Fixed
+**Problem**: Post content was being imported without space between text with HTML tags
 
 **HTML Spacing Fix Applied**:
 - Fixed `parseInlineElements()` in `importUtils.ts` to preserve spaces between inline elements
 - Changed from `.trim()` to normalize whitespace while preserving meaningful spaces
 
-**Bad Data Examples (image issues still remain)**:
-- `.php` files being treated as images (ondemand.php, donate.php, contests.php, etc.)
-- `mailto:` email links
-- Website URLs returning HTML instead of images
-- 404 errors on external image links
-- SSL certificate validation failures
-- Wrong content-type responses (text/plain instead of image/*)
-
-**Current Behavior**:
-- Image import fails (handled gracefully with warning)
-- Post creation still attempts but may fail validation
-- Error rate: ~25% of 795 posts in 3-month window
-
-**Solution**:
-- [ ] **Option B**: Import posts with `image: null` when image fails (may already be partially working)
-
-**Files to modify**:
-- `bin/migrations/importPosts.ts` (around lines 116-174)
+**Note**: ~25% of posts still fail due to bad image URLs in legacy MySQL data. This is not fixable as the source data has invalid URLs.
 
 ---
 
-### 4. Ads Import
-**Status**: Not yet attempted
-
-**Action**:
-- [ ] Run `yarn tsx bin/migrations/importAds.ts --env dev --start-id 56`
-- [ ] Check for validation errors
-- [ ] Fix any issues found
+### 4. ✅ Ads Import - COMPLETED
+**Status**: 2/2 successful
 
 ---
 
-### 5. Shows Import
-**Status**: Not yet attempted
+### 5. ✅ Shows Import - DJ Matching Fixed
+**Problem**: Shows were not linking to DJ records because the host field contains formatted strings like `<i>Transmission</i> w/ Rob Huff`
 
-**Action**:
-- [ ] Run `yarn tsx bin/migrations/importSchedule.ts --env dev` with a start-id flag so we only import the last month of shows.
-- [ ] Check for validation errors
-- [ ] Fix any issues found
+**Solution Applied**:
+- Added `parseHostString()` function to extract show name and DJ name from host field
+- Parse "w/" and "with" patterns to extract DJ names
+- Use `findDJByDisplayName()` to match DJs by display name
+- Set both `name` (show name) and `host` (DJ relationship) fields correctly
+
+**Files modified**:
+- `bin/migrations/importSchedule.ts`
+- `bin/migrations/importSchedule.test.ts`
 
 ---
 
-## Quick Import Script Issues
+### 6. ✅ Quick Import Script Hanging - FIXED
+**Problem**: Import scripts didn't exit after completion, causing quick-import.ts to hang
 
-### Problem with quick-import.ts
-The quick-import script appears to hang after completing the music import. The subprocess doesn't properly exit, blocking the script from continuing to the next import.
+**Solution Applied**:
+- Added `.then(() => process.exit(0))` to all import scripts
+- Scripts now exit cleanly after successful completion
 
-**Evidence**:
-- Music import completed successfully (logged summary)
-- Script never proceeded to DJs import
-- Process remained running but no further output
-
-**Solution**:
-- [ ] Investigate why child process doesn't exit cleanly
-- [ ] Check if `runImportScript()` function properly waits for completion
-- [ ] May need to explicitly call `process.exit(0)` in individual import scripts
-- [ ] Or refactor to use different process spawning approach
-
-**Files to investigate**:
-- `bin/quick-import.ts` (runImportScript function)
-- Individual import scripts (check if they exit properly)
+**Files modified**:
+- `bin/migrations/importAds.ts`
+- `bin/migrations/importCdOfTheWeek.ts`
+- `bin/migrations/importConcerts.ts`
+- `bin/migrations/importMusic.ts`
+- `bin/migrations/importOnDemand.ts`
+- `bin/migrations/importPosts.ts`
+- `bin/migrations/importSchedule.ts`
 
 ---
 

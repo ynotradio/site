@@ -259,10 +259,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importPosts(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importPosts(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export { importPosts, parseArgs, importPost };

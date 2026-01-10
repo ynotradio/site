@@ -277,10 +277,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importOnDemand(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importOnDemand(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export { importOnDemand, parseArgs, importOnDemandItem };

@@ -263,10 +263,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importAllMusic(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importAllMusic(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export {

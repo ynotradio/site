@@ -16,7 +16,7 @@
 import type { Payload } from 'payload';
 import * as mysql from 'mysql2/promise';
 import { connectToDatabase } from './database';
-import { getPayloadClient } from './shared/payloadClient';
+import { getPayloadClient, findDJByDisplayName } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertTextToLexical, stripHtmlTags } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
@@ -143,6 +143,56 @@ async function getActiveSchedule(
 }
 
 /**
+ * Parse host string to extract show name and DJ name
+ * Examples:
+ *   "<i>Transmission</i> w/ Rob Huff" -> { showName: "Transmission", djName: "Rob Huff" }
+ *   "John Q." -> { showName: undefined, djName: "John Q." }
+ *   "<i>Y-Not on Shuffle</i>" -> { showName: "Y-Not on Shuffle", djName: undefined }
+ */
+export interface ParsedHost {
+  showName?: string;
+  djName?: string;
+}
+
+export function parseHostString(host: string): ParsedHost {
+  // Strip HTML tags first for easier parsing
+  const cleanHost = stripHtmlTags(host).trim();
+
+  // Common patterns for "with" in show names
+  // Match: "Show Name w/ DJ Name" or "Show Name with DJ Name"
+  const withPatterns = [
+    /^(.+?)\s+w\/\s*(.+)$/i,
+    /^(.+?)\s+with\s+(.+)$/i,
+  ];
+
+  for (const pattern of withPatterns) {
+    const match = cleanHost.match(pattern);
+    if (match) {
+      return {
+        showName: match[1].trim(),
+        djName: match[2].trim(),
+      };
+    }
+  }
+
+  // Check if the original host has HTML formatting (suggesting it's a show name, not a DJ name)
+  // e.g., <i>Y-Not on Shuffle</i> or <b>Artist Name</b>
+  const hasFormatting = /<[ib]>/i.test(host);
+  if (hasFormatting) {
+    return {
+      showName: cleanHost,
+      djName: undefined,
+    };
+  }
+
+  // No "w/" pattern and no formatting - assume it's a DJ name
+  return {
+    showName: undefined,
+    djName: cleanHost,
+  };
+}
+
+/**
  * Check if a show with the given legacy ID already exists
  */
 async function showExists(payload: Payload, legacyId: number): Promise<boolean> {
@@ -160,50 +210,6 @@ async function showExists(payload: Payload, legacyId: number): Promise<boolean> 
 }
 
 /**
- * Find DJ by name (from host field)
- */
-async function findDJByName(payload: Payload, hostName: string): Promise<string | null> {
-  try {
-    // First, find person with matching name
-    const people = await payload.find({
-      collection: 'people',
-      where: {
-        name: {
-          equals: hostName,
-        },
-      },
-      limit: 1,
-    });
-
-    if (people.docs.length === 0) {
-      return null;
-    }
-
-    const personId = people.docs[0].id;
-
-    // Find DJ record that references this person
-    const djs = await payload.find({
-      collection: 'djs',
-      where: {
-        person: {
-          equals: personId,
-        },
-      },
-      limit: 1,
-    });
-
-    if (djs.docs.length === 0) {
-      return null;
-    }
-
-    return djs.docs[0].id as string;
-  } catch (error) {
-    logger.error(`Failed to find DJ for host ${hostName}`, error as Error);
-    return null;
-  }
-}
-
-/**
  * Import a single schedule record
  */
 async function importSchedule(payload: Payload, schedule: Schedule): Promise<boolean> {
@@ -214,16 +220,32 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
       return false;
     }
 
-    // Find DJ by host name (optional - some shows may not have a DJ link)
-    let djId: string | number | null = null;
+    // Parse the host field to extract show name and DJ name
+    let djId: number | null = null;
     let showName: string | undefined;
 
     if (schedule.host) {
-      djId = await findDJByName(payload, schedule.host);
-      if (!djId) {
-        // If we can't find a DJ record, store the host name as the show name (strip HTML)
+      const parsed = parseHostString(schedule.host);
+
+      // Always set the show name if parsed
+      showName = parsed.showName;
+
+      // Try to find DJ by display name
+      if (parsed.djName) {
+        djId = await findDJByDisplayName(payload, parsed.djName);
+        if (!djId) {
+          // If we can't find the DJ, include the DJ name in the show name
+          if (showName) {
+            showName = `${showName} w/ ${parsed.djName}`;
+          } else {
+            showName = parsed.djName;
+          }
+          logger.warn(`Could not find DJ: ${parsed.djName} (show ${schedule.id}) - storing as show name`);
+        }
+      } else if (!showName) {
+        // No DJ name and no show name extracted - use the raw host as show name
         showName = stripHtmlTags(schedule.host);
-        logger.warn(`Could not find DJ for host: ${schedule.host} (show ${schedule.id}) - storing as show name`);
+        logger.warn(`Could not parse host: ${schedule.host} (show ${schedule.id}) - storing as show name`);
       }
     }
 
@@ -234,7 +256,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
         date: schedule.date,
         startTime: schedule.start_time,
         endTime: schedule.end_time,
-        host: djId ? (djId as any) : undefined,
+        host: djId || undefined,
         name: showName,
         note: schedule.note ? convertTextToLexical(schedule.note) : undefined,
         legacyId: schedule.id,
@@ -339,10 +361,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importAllSchedule(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importAllSchedule(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export {
