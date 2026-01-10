@@ -53,7 +53,7 @@ $userInfo = $auth0->getUser();
 
 if ($userInfo) {
     ?>
-| <a href="/social_logout.php">Log out</a>
+| <a href="/auth_logout.php?returnTo=/madness">Log out</a>
         <?php
 }
 ?>

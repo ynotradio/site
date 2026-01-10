@@ -135,20 +135,20 @@ function renderContestNewsletterOptions() {
             // User is not logged in - show login button
             echo "<div class=\"information center top-spacer_20\">";
             echo "<p><strong>Please log in to vote in the Top 11 @ 11.</strong></p>";
-            echo "<a href=\"top11_social_login.php\" class=\"btn-success\">Log in to Vote</a>";
+            echo "<a href=\"auth_login.php?returnTo=/top11\" class=\"btn-success\">Log in to Vote</a>";
             echo "</div>";
           } else {
             // Check if user has already voted this week
             $hasVoted = $top11Model->hasUserVotedThisWeek($voter_email, $userInfo['sub'] ?? null);
             if ($hasVoted) {
-              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"top11_social_logout.php\">Log out</a></div>";
+              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
               echo "<div class=\"alert alert-info\">";
               echo "<h3>You've already voted!</h3>";
               echo "<p>You have already cast your vote for this week's Top 11 @ 11. Come back next week to vote again!</p>";
               echo "</div>";
             } else {
               // User is logged in and hasn't voted - show voting form
-              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"top11_social_logout.php\">Log out</a></div>";
+              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
               echo "<form action=\"" . $page_file . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
               echo renderSongCheckboxes($songs);
               echo renderWriteInField();
