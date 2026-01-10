@@ -305,7 +305,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE TABLE "ondemand" (
   	"id" serial PRIMARY KEY NOT NULL,
   	"date" timestamp(3) with time zone,
-  	"image" varchar,
+  	"image_id" integer,
   	"headline" varchar,
   	"note" varchar,
   	"songs" varchar,
@@ -322,7 +322,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   	"id" serial PRIMARY KEY NOT NULL,
   	"parent_id" integer,
   	"version_date" timestamp(3) with time zone,
-  	"version_image" varchar,
+  	"version_image_id" integer,
   	"version_headline" varchar,
   	"version_note" varchar,
   	"version_songs" varchar,
@@ -704,7 +704,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   ALTER TABLE "_concerts_v" ADD CONSTRAINT "_concerts_v_version_venue_id_venues_id_fk" FOREIGN KEY ("version_venue_id") REFERENCES "public"."venues"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_concerts_v_rels" ADD CONSTRAINT "_concerts_v_rels_parent_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."_concerts_v"("id") ON DELETE cascade ON UPDATE no action;
   ALTER TABLE "_concerts_v_rels" ADD CONSTRAINT "_concerts_v_rels_artists_fk" FOREIGN KEY ("artists_id") REFERENCES "public"."artists"("id") ON DELETE cascade ON UPDATE no action;
+  ALTER TABLE "ondemand" ADD CONSTRAINT "ondemand_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_ondemand_v" ADD CONSTRAINT "_ondemand_v_parent_id_ondemand_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."ondemand"("id") ON DELETE set null ON UPDATE no action;
+  ALTER TABLE "_ondemand_v" ADD CONSTRAINT "_ondemand_v_version_image_id_media_id_fk" FOREIGN KEY ("version_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "shows" ADD CONSTRAINT "shows_host_id_djs_id_fk" FOREIGN KEY ("host_id") REFERENCES "public"."djs"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "posts" ADD CONSTRAINT "posts_image_id_media_id_fk" FOREIGN KEY ("image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
   ALTER TABLE "_posts_v" ADD CONSTRAINT "_posts_v_parent_id_posts_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."posts"("id") ON DELETE set null ON UPDATE no action;
@@ -875,6 +877,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "_concerts_v_rels_path_idx" ON "_concerts_v_rels" USING btree ("path");
   CREATE INDEX "_concerts_v_rels_artists_id_idx" ON "_concerts_v_rels" USING btree ("artists_id");
   CREATE INDEX "ondemand_date_idx" ON "ondemand" USING btree ("date");
+  CREATE INDEX "ondemand_image_idx" ON "ondemand" USING btree ("image_id");
   CREATE INDEX "ondemand_headline_idx" ON "ondemand" USING btree ("headline");
   CREATE UNIQUE INDEX "ondemand_legacy_id_idx" ON "ondemand" USING btree ("legacy_id");
   CREATE INDEX "ondemand_updated_at_idx" ON "ondemand" USING btree ("updated_at");
@@ -882,6 +885,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "ondemand__status_idx" ON "ondemand" USING btree ("_status");
   CREATE INDEX "_ondemand_v_parent_idx" ON "_ondemand_v" USING btree ("parent_id");
   CREATE INDEX "_ondemand_v_version_version_date_idx" ON "_ondemand_v" USING btree ("version_date");
+  CREATE INDEX "_ondemand_v_version_version_image_idx" ON "_ondemand_v" USING btree ("version_image_id");
   CREATE INDEX "_ondemand_v_version_version_headline_idx" ON "_ondemand_v" USING btree ("version_headline");
   CREATE INDEX "_ondemand_v_version_version_legacy_id_idx" ON "_ondemand_v" USING btree ("version_legacy_id");
   CREATE INDEX "_ondemand_v_version_version_updated_at_idx" ON "_ondemand_v" USING btree ("version_updated_at");

@@ -5,7 +5,7 @@ import { hasRole } from '../utils/auth';
 export const Songs: CollectionConfig = {
   slug: 'songs',
   admin: {
-    useAsTitle: 'displayName',
+    useAsTitle: 'title',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'updatedAt'],
     group: 'Music',
   },

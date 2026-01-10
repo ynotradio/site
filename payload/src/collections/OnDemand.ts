@@ -29,10 +29,10 @@ export const OnDemand: CollectionConfig = {
     },
     {
       name: 'image',
-      type: 'text',
-      required: true,
+      type: 'upload',
+      relationTo: 'media',
       admin: {
-        description: 'URL of the image/thumbnail',
+        description: 'Image/thumbnail for the on-demand content',
       },
     },
     {

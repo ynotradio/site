@@ -3682,9 +3682,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "image": {
-          "name": "image",
-          "type": "varchar",
+        "image_id": {
+          "name": "image_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -3759,6 +3759,21 @@
           "columns": [
             {
               "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_image_idx": {
+          "name": "ondemand_image_idx",
+          "columns": [
+            {
+              "expression": "image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3845,7 +3860,21 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "ondemand_image_id_media_id_fk": {
+          "name": "ondemand_image_id_media_id_fk",
+          "tableFrom": "ondemand",
+          "tableTo": "media",
+          "columnsFrom": [
+            "image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -3874,9 +3903,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "version_image": {
-          "name": "version_image",
-          "type": "varchar",
+        "version_image_id": {
+          "name": "version_image_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -3984,6 +4013,21 @@
           "columns": [
             {
               "expression": "version_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_version_version_image_idx": {
+          "name": "_ondemand_v_version_version_image_idx",
+          "columns": [
+            {
+              "expression": "version_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -4122,6 +4166,19 @@
           "tableTo": "ondemand",
           "columnsFrom": [
             "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "_ondemand_v_version_image_id_media_id_fk": {
+          "name": "_ondemand_v_version_image_id_media_id_fk",
+          "tableFrom": "_ondemand_v",
+          "tableTo": "media",
+          "columnsFrom": [
+            "version_image_id"
           ],
           "columnsTo": [
             "id"
@@ -9151,6 +9208,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "e0e97622-4a5f-4a38-96a6-1f2a8459102c",
+  "id": "6fd93236-d7d8-49c4-816e-de79bca5adbb",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }
