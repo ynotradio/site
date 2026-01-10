@@ -16,4 +16,12 @@ $auth0 = new Auth0\SDK\Auth0([
     'scope' => 'openid email profile',
 ]);
 
-$auth0->logout($protocol . "://" . $uri . "/top11");
+// Clear local Auth0 session
+$auth0->logout();
+
+// Build Auth0 logout URL using SDK method and redirect
+$returnTo = $protocol . "://" . $uri . "/top11";
+$logoutUrl = $auth0->getAuthenticationClient()->get_logout_link($returnTo, $_ENV['AUTH0_CLIENT_ID']);
+
+header('Location: ' . $logoutUrl);
+exit();
