@@ -12,7 +12,7 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveCdOfTheWeek, type CdOfTheWeek } from './database';
-import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
+import { getPayloadClient, findOrCreateArtist, findOrCreatePerson } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
@@ -212,7 +212,21 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     }
 
     // Convert HTML review to Lexical format
-    const review = convertHtmlToLexical(item.review);
+    // review is required, so we need valid content
+    const review = item.review && item.review.trim()
+      ? convertHtmlToLexical(item.review)
+      : convertHtmlToLexical('<p>No review provided.</p>');
+
+    // Find or create the reviewer as a Person
+    let reviewerId: number | undefined;
+    if (item.reviewer && item.reviewer.trim()) {
+      try {
+        reviewerId = await findOrCreatePerson(payload, item.reviewer);
+        logger.debug(`Found/created reviewer: ${item.reviewer} (id: ${reviewerId})`);
+      } catch (error) {
+        logger.warn(`Failed to find/create reviewer: ${item.reviewer}`);
+      }
+    }
 
     // Create CD of the Week record
     await payload.create({
@@ -220,7 +234,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       data: {
         record: recordId as any,
         review,
-        reviewer: item.reviewer || undefined,
+        reviewer: reviewerId,
         date: item.date,
         legacyId: item.id,
         migratedAt: new Date().toISOString(),
