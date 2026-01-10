@@ -74,12 +74,38 @@ describe('convertHtmlToLexical', () => {
 
   it('should strip HTML tags from content', () => {
     const result = convertHtmlToLexical('<p>Hello <strong>World</strong></p>');
-    // Should create two text nodes: plain "Hello" and bold "World"
+    // Should create two text nodes: plain "Hello " (with space) and bold "World"
     expect(result.root.children[0].children).toHaveLength(2);
-    expect(result.root.children[0].children[0].text).toBe('Hello');
+    expect(result.root.children[0].children[0].text).toBe('Hello ');
     expect(result.root.children[0].children[0].format).toBe(0); // Plain
     expect(result.root.children[0].children[1].text).toBe('World');
     expect(result.root.children[0].children[1].format).toBe(1); // Bold
+  });
+
+  it('should preserve spaces between inline elements', () => {
+    // This is the issue from IMPORT_TODO: "new episode ofAussie UnlockedwithShanafor"
+    // should be "new episode of Aussie Unlocked with Shana for"
+    const html = '<p>new episode of<em>Aussie Unlocked</em>with<strong>Shana</strong>for</p>';
+    const result = convertHtmlToLexical(html);
+    // Combine all text nodes to check the full text
+    const fullText = result.root.children[0].children
+      .map((child: any) => child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''))
+      .join('');
+    // Should have spaces between parts
+    expect(fullText).toContain('of');
+    expect(fullText).toContain('Aussie Unlocked');
+    expect(fullText).toContain('with');
+    expect(fullText).toContain('Shana');
+    expect(fullText).toContain('for');
+  });
+
+  it('should preserve spaces with proper formatting', () => {
+    const html = '<p>Check out the <em>latest episode</em> of <strong>The Show</strong>!</p>';
+    const result = convertHtmlToLexical(html);
+    const fullText = result.root.children[0].children
+      .map((child: any) => child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''))
+      .join('');
+    expect(fullText).toBe('Check out the latest episode of The Show!');
   });
 
   it('should handle complex HTML', () => {

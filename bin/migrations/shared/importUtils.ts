@@ -46,17 +46,25 @@ function parseInlineElements(html: string): any[] {
   for (const m of matches) {
     // Add any plain text before this tag
     if (m.start > lastProcessedIndex) {
-      const plainText = html.substring(lastProcessedIndex, m.start).trim();
-      if (plainText) {
+      const plainText = html.substring(lastProcessedIndex, m.start);
+      // Normalize whitespace but preserve at least one space where there was any
+      const normalizedText = plainText.replace(/\s+/g, ' ');
+      if (normalizedText && normalizedText !== ' ') {
         nodes.push({
           detail: 0,
           format: 0,
           mode: 'normal',
           style: '',
-          text: plainText,
+          text: normalizedText,
           type: 'text',
           version: 1,
         });
+      } else if (normalizedText === ' ' && nodes.length > 0) {
+        // Add a space to the previous node if it doesn't already end with one
+        const lastNode = nodes[nodes.length - 1];
+        if (lastNode.text && !lastNode.text.endsWith(' ')) {
+          lastNode.text += ' ';
+        }
       }
     }
 
@@ -132,14 +140,25 @@ function parseInlineElements(html: string): any[] {
 
   // Add any remaining plain text
   if (lastProcessedIndex < html.length) {
-    const plainText = html.substring(lastProcessedIndex).trim();
-    if (plainText) {
+    const plainText = html.substring(lastProcessedIndex);
+    // Normalize whitespace but preserve meaningful content
+    const normalizedText = plainText.replace(/\s+/g, ' ');
+    if (normalizedText.trim()) {
+      // If text starts with whitespace and there's a previous node, add leading space
+      const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
+      const cleanText = normalizedText.trim();
+      if (leadingSpace && nodes.length > 0) {
+        const lastNode = nodes[nodes.length - 1];
+        if (lastNode.text && !lastNode.text.endsWith(' ')) {
+          lastNode.text += ' ';
+        }
+      }
       nodes.push({
         detail: 0,
         format: 0,
         mode: 'normal',
         style: '',
-        text: plainText,
+        text: cleanText,
         type: 'text',
         version: 1,
       });
