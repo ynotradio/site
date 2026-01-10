@@ -21,7 +21,7 @@
 ### 1. OnDemand Import - CRITICAL
 **Problem**: Import script passes text string to `songs` field, which is now a relationship array.
 
-**Root Cause**: 
+**Root Cause**:
 - OnDemand collection schema was updated to use relationship fields: `djs`, `artists`, `songs`
 - Import script (`bin/migrations/importOnDemand.ts` line 133) still passes raw text: `songs: item.songs`
 - MySQL `ondemand` table has text field with song info (probably comma/newline separated)
@@ -30,7 +30,7 @@
 - [ ] Parse the `songs` text field from MySQL (determine delimiter)
 - [ ] For each song name, find or create matching Song record in Payload
 - [ ] Build array of Song IDs for relationship field
-- [ ] Apply same logic for `djs` and `artists` relationships
+- [ ] Apply same logic for `djs` and `artists` relationships. Parse the post title for DJ and artist matches. If no match, assume that the episode is named for an artist.
 - [ ] Update `importOnDemand.ts` lines 127-140
 
 **Files to modify**:
@@ -58,6 +58,7 @@
 
 ### 3. Posts Import - Data Quality Issues
 **Problem**: ~25% of posts failing due to bad image URLs in legacy MySQL data
+**Problem**: Post content is being imported without space between text with HTML tags: e.g. "new episode ofAussie UnlockedwithShanafor" where "Aussie Unlocked" is italicized, and "Shanafor" is bolded.
 
 **Bad Data Examples**:
 - `.php` files being treated as images (ondemand.php, donate.php, contests.php, etc.)
@@ -72,11 +73,8 @@
 - Post creation still attempts but may fail validation
 - Error rate: ~25% of 795 posts in 3-month window
 
-**Solution Options**:
-- [ ] **Option A**: Skip posts with bad images entirely (modify error handling to skip post creation)
+**Solution**:
 - [ ] **Option B**: Import posts with `image: null` when image fails (may already be partially working)
-- [ ] **Option C**: Add fallback field to store bad image URLs for manual review
-- [ ] **Option D**: Pre-validate/sanitize image URLs before import attempt
 
 **Files to modify**:
 - `bin/migrations/importPosts.ts` (around lines 116-174)
@@ -97,7 +95,7 @@
 **Status**: Not yet attempted
 
 **Action**:
-- [ ] Run `yarn tsx bin/migrations/importSchedule.ts --env dev`
+- [ ] Run `yarn tsx bin/migrations/importSchedule.ts --env dev` with a start-id flag so we only import the last month of shows.
 - [ ] Check for validation errors
 - [ ] Fix any issues found
 
