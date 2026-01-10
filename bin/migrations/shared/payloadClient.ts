@@ -503,3 +503,189 @@ export async function findOrCreateRecord(
     throw error;
   }
 }
+
+/**
+ * Find a DJ by display name (case-insensitive partial match)
+ * Returns the DJ ID or null if not found
+ */
+export async function findDJByDisplayName(
+  payload: Payload,
+  displayName: string,
+): Promise<number | null> {
+  const cleanName = stripHtmlTags(displayName).trim();
+
+  if (!cleanName) {
+    return null;
+  }
+
+  // Try exact match first
+  const exactMatch = await payload.find({
+    collection: 'djs',
+    where: {
+      displayName: {
+        equals: cleanName,
+      },
+    },
+    limit: 1,
+  });
+
+  if (exactMatch.docs.length > 0) {
+    return exactMatch.docs[0].id;
+  }
+
+  // Try case-insensitive contains match
+  const containsMatch = await payload.find({
+    collection: 'djs',
+    where: {
+      displayName: {
+        contains: cleanName,
+      },
+    },
+    limit: 1,
+  });
+
+  if (containsMatch.docs.length > 0) {
+    return containsMatch.docs[0].id;
+  }
+
+  return null;
+}
+
+/**
+ * Find or create a song by title and artist
+ * Returns the song ID
+ */
+export async function findOrCreateSong(
+  payload: Payload,
+  title: string,
+  artistId?: number,
+): Promise<number> {
+  const cleanTitle = stripHtmlTags(title).trim();
+
+  if (!cleanTitle) {
+    throw new Error('Song title is required');
+  }
+
+  // Try to find by title and artist (if provided)
+  const whereClause: any = {
+    title: {
+      equals: cleanTitle,
+    },
+  };
+
+  if (artistId) {
+    whereClause.artist = {
+      equals: artistId,
+    };
+  }
+
+  const existing = await payload.find({
+    collection: 'songs',
+    where: whereClause,
+    limit: 1,
+  });
+
+  if (existing.docs.length > 0) {
+    return existing.docs[0].id;
+  }
+
+  // Try to create new song
+  try {
+    const slug = generateSlug(cleanTitle);
+
+    const songData: any = {
+      title: cleanTitle,
+      slug,
+    };
+
+    if (artistId) {
+      songData.artist = artistId;
+    }
+
+    const newSong = await payload.create({
+      collection: 'songs',
+      data: songData,
+    });
+
+    logger.debug(`Created song: ${cleanTitle}`);
+    return newSong.id;
+  } catch (error: any) {
+    // If slug validation fails, likely a duplicate
+    const isSlugError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'slug');
+
+    if (isSlugError) {
+      logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
+
+      const slug = generateSlug(cleanTitle);
+
+      const existingBySlug = await payload.find({
+        collection: 'songs',
+        where: {
+          slug: {
+            equals: slug,
+          },
+        },
+        limit: 1,
+      });
+
+      if (existingBySlug.docs.length > 0) {
+        logger.debug(`Found existing song by slug: "${cleanTitle}" -> "${slug}" (id: ${existingBySlug.docs[0].id})`);
+        return existingBySlug.docs[0].id;
+      }
+    }
+
+    logger.debug(`Re-throwing error for song: ${cleanTitle}`);
+    throw error;
+  }
+}
+
+/**
+ * Parse an OnDemand headline to extract DJ names, artist names, and clean title
+ * Returns extracted DJs, artists, and remaining title
+ */
+export interface ParsedOnDemandHeadline {
+  djNames: string[];
+  artistNames: string[];
+  cleanTitle: string;
+}
+
+export function parseOnDemandHeadline(headline: string): ParsedOnDemandHeadline {
+  const djNames: string[] = [];
+  const artistNames: string[] = [];
+  let cleanTitle = headline;
+
+  // Common patterns for DJ mentions:
+  // "Show Name with DJ Name"
+  // "Show Name featuring Artist"
+  // "Artist - Live Session"
+
+  // Extract "with [Name]" pattern (usually DJs)
+  const withPattern = /\bwith\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/gi;
+  let match = withPattern.exec(headline);
+  while (match) {
+    djNames.push(match[1].trim());
+    match = withPattern.exec(headline);
+  }
+
+  // Extract "featuring [Name]" or "feat. [Name]" pattern (usually artists)
+  const featPattern = /\b(?:featuring|feat\.?)\s+([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?)/gi;
+  match = featPattern.exec(headline);
+  while (match) {
+    artistNames.push(match[1].trim());
+    match = featPattern.exec(headline);
+  }
+
+  // Clean up the title by removing the extracted parts
+  cleanTitle = headline
+    .replace(withPattern, '')
+    .replace(featPattern, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return {
+    djNames,
+    artistNames,
+    cleanTitle,
+  };
+}

@@ -12,7 +12,12 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveOnDemand, type OnDemand } from './database';
-import { getPayloadClient } from './shared/payloadClient';
+import {
+  getPayloadClient,
+  findDJByDisplayName,
+  findOrCreateArtist,
+  parseOnDemandHeadline,
+} from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
 import type { DatabaseEnv } from './shared/payloadClient';
@@ -124,13 +129,55 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       }
     }
 
-    // Create on-demand record (no artist relationships in actual ondemand table)
+    // Parse headline to extract DJ and artist names
+    const parsed = parseOnDemandHeadline(item.headline || '');
+
+    // Find matching DJs by display name
+    const djIds: number[] = [];
+    for (const djName of parsed.djNames) {
+      const djId = await findDJByDisplayName(payload, djName);
+      if (djId) {
+        djIds.push(djId);
+        logger.debug(`Found DJ: ${djName} (id: ${djId})`);
+      }
+    }
+
+    // Find or create artists
+    const artistIds: number[] = [];
+    for (const artistName of parsed.artistNames) {
+      try {
+        const artistId = await findOrCreateArtist(payload, artistName);
+        artistIds.push(artistId);
+        logger.debug(`Found/created artist: ${artistName} (id: ${artistId})`);
+      } catch (error) {
+        logger.warn(`Failed to find/create artist: ${artistName}`);
+      }
+    }
+
+    // If no DJs or artists found from parsing, try treating the headline as an artist name
+    if (djIds.length === 0 && artistIds.length === 0 && item.headline) {
+      try {
+        const artistId = await findOrCreateArtist(payload, item.headline);
+        artistIds.push(artistId);
+        logger.debug(`Created artist from headline: ${item.headline} (id: ${artistId})`);
+      } catch (error) {
+        logger.debug(`Could not create artist from headline: ${item.headline}`);
+      }
+    }
+
+    // Note: We're not populating the songs relationship for now
+    // The songs field in MySQL contains free-form text that doesn't map to Song records
+    // Songs would need to be created/matched separately
+
+    // Create on-demand record with relationships
     await payload.create({
       collection: 'ondemand',
       data: {
         headline: item.headline || undefined,
         note: item.note || undefined,
-        songs: item.songs || undefined,
+        djs: djIds.length > 0 ? djIds : undefined,
+        artists: artistIds.length > 0 ? artistIds : undefined,
+        // songs: not populated - would require parsing and creating Song records
         audioUrl: item.audio_url || undefined,
         image: imageId,
         date: item.date,

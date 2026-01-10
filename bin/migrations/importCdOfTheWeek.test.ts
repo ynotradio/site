@@ -129,7 +129,7 @@ describe('importCdOfTheWeek', () => {
       const result = await importCdOfTheWeekItem(mockPayload as Payload, item);
 
       expect(result).toBe(true);
-      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National', null);
+      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National');
 
       // Should create record
       expect(mockPayload.create).toHaveBeenCalledWith({
