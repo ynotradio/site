@@ -16,7 +16,7 @@ $voter_email = $userInfo['email'] ?? null;
 
 if (empty($voter_email)) {
     // User is not logged in - show login button
-    echo '<a href="social_login.php" class="btn-success">Log in to vote</a>';
+    echo '<a href="auth_login.php?returnTo=/madness" class="btn-success">Log in to vote</a>';
 } else {
     // User is logged in - show vote form
     echo '<form action="madness.php" method="post">

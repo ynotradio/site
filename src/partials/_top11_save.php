@@ -117,7 +117,7 @@ try {
         echo "<p>You have been added to our newsletter list.</p>";
     }
     if ($useAuthVoting) {
-        echo "<p><a href=\"top11_social_logout.php\">Log out</a></p>";
+        echo "<p><a href=\"auth_logout.php?returnTo=/top11\">Log out</a></p>";
     }
     echo "</div>";
 } catch (\Exception $e) {

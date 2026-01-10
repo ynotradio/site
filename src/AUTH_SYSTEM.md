@@ -8,20 +8,20 @@ This directory contains a unified Auth0 authentication system for all voting fea
 Generic login handler that accepts a `returnTo` parameter.
 
 **Usage:**
-```
-/auth_login.php?returnTo=/top11
-/auth_login.php?returnTo=/madness
-/auth_login.php?returnTo=/yearendpoll
+```php
+<a href="auth_login.php?returnTo=/top11">Log in to Vote</a>
+<a href="auth_login.php?returnTo=/madness">Log in to Vote</a>
+<a href="auth_login.php?returnTo=/yearendpoll">Log in to Vote</a>
 ```
 
 ### `auth_logout.php`
 Generic logout handler that accepts a `returnTo` parameter.
 
 **Usage:**
-```
-/auth_logout.php?returnTo=/top11
-/auth_logout.php?returnTo=/madness
-/auth_logout.php?returnTo=/yearendpoll
+```php
+<a href="auth_logout.php?returnTo=/top11">Log out</a>
+<a href="auth_logout.php?returnTo=/madness">Log out</a>
+<a href="auth_logout.php?returnTo=/yearendpoll">Log out</a>
 ```
 
 **Features:**
@@ -29,14 +29,13 @@ Generic logout handler that accepts a `returnTo` parameter.
 - Performs federated logout at Auth0
 - Redirects user back to specified page
 
-## Feature-Specific Redirects
+## Implementation
 
-For backward compatibility and easier linking, feature-specific files redirect to the generic handlers:
+These generic handlers are used directly throughout the codebase:
 
-- `top11_social_login.php` → `auth_login.php?returnTo=/top11`
-- `top11_social_logout.php` → `auth_logout.php?returnTo=/top11`
-- `social_login.php` (MRM) → `auth_login.php?returnTo=/madness`
-- `social_logout.php` (MRM) → `auth_logout.php?returnTo=/madness`
+- **Top 11 @ 11**: `top11.php` and `partials/_top11_save.php`
+- **Modern Rock Madness**: `partials/_mrm_vote_form.php` and `partials/_footer.php`
+- **Year End Poll**: (To be implemented)
 
 ## Auth0 Configuration Required
 
@@ -60,3 +59,4 @@ https://www.ynotradio.net/
 ## Security
 
 The handlers validate that `returnTo` is a relative path (starts with `/`) to prevent open redirect vulnerabilities.
+
