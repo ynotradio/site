@@ -41,15 +41,15 @@ $auth0 = new Auth0\SDK\Auth0([
 // Clear local Auth0 session
 $auth0->logout();
 
-// Build Auth0 logout URL using Authentication API with federated logout
+// Build Auth0 logout URL using Authentication API
 $authentication = new Auth0\SDK\API\Authentication(
     $_ENV['AUTH0_DOMAIN'],
     $_ENV['AUTH0_CLIENT_ID'],
     $_ENV['AUTH0_CLIENT_SECRET']
 );
 
-// Use federated logout to ensure SSO session is also cleared
-$logoutUrl = $authentication->get_logout_link($returnToUrl, $_ENV['AUTH0_CLIENT_ID'], true);
+// Build logout URL without federated flag to keep user logged into identity provider (Google, etc)
+$logoutUrl = $authentication->get_logout_link($returnToUrl, $_ENV['AUTH0_CLIENT_ID'], false);
 
 header('Location: ' . $logoutUrl);
 exit();
