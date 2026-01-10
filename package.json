@@ -29,6 +29,7 @@
     "seed:payload": "tsx bin/seed-payload.ts",
     "seed:legacy": "./bin/seed-legacy.sh",
     "seed": "yarn seed:payload && yarn seed:legacy",
+    "import:quick": "tsx bin/quick-import.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

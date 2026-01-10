@@ -152,7 +152,7 @@ async function importMusic(payload: Payload, music: Music): Promise<boolean> {
     }
 
     // Find or create artist
-    const artistId = await findOrCreateArtist(payload, music.artist, null);
+    const artistId = await findOrCreateArtist(payload, music.artist);
 
     // Generate slug from song title
     const slug = generateSlug(`${music.artist} ${music.song}`);

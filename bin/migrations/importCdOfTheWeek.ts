@@ -111,7 +111,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     }
 
     // Find or create artist
-    const artistId = await findOrCreateArtist(payload, item.artist, null);
+    const artistId = await findOrCreateArtist(payload, item.artist);
 
     // Query MusicBrainz for release MBID
     let releaseMbid: string | null = null;

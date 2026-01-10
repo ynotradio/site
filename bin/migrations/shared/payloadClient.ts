@@ -63,49 +63,9 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
 export async function findOrCreateArtist(
   payload: Payload,
   name: string,
-  legacyId?: number,
 ): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
-
-  // First try to find by legacy ID if provided
-  if (legacyId !== undefined) {
-    const existingByLegacyId = await payload.find({
-      collection: 'artists',
-      where: {
-        legacyId: {
-          equals: legacyId,
-        },
-      },
-      limit: 1,
-    });
-
-    if (existingByLegacyId.docs.length > 0) {
-      const artist = existingByLegacyId.docs[0];
-
-      // If artist exists but doesn't have MusicBrainz ID, try to add it
-      if (!artist.musicbrainzId) {
-        try {
-          const mbid = await getArtistMbid(cleanName);
-          if (mbid) {
-            await payload.update({
-              collection: 'artists',
-              id: artist.id,
-              data: {
-                musicbrainzId: mbid,
-              },
-            });
-            logger.debug(`Added MusicBrainz ID to existing artist: ${cleanName}`);
-          }
-        } catch (error) {
-          // Log but don't fail
-          logger.debug(`Failed to update MusicBrainz ID for ${cleanName}`);
-        }
-      }
-
-      return artist.id;
-    }
-  }
 
   // Try to find by name
   const existing = await payload.find({
@@ -149,19 +109,16 @@ export async function findOrCreateArtist(
     // Generate slug from name
     const slug = generateSlug(cleanName);
 
-    // Fetch MusicBrainz ID if not provided
+    // Fetch MusicBrainz ID
     let mbid = null;
-    if (!legacyId) {
-      // Only lookup for new artists (not during migration with legacyId)
-      try {
-        mbid = await getArtistMbid(cleanName);
-        if (mbid) {
-          logger.debug(`Found MusicBrainz ID for ${cleanName}: ${mbid}`);
-        }
-      } catch (error) {
-        // Log but don't fail if MusicBrainz lookup fails
-        logger.debug(`MusicBrainz lookup failed for ${cleanName}`);
+    try {
+      mbid = await getArtistMbid(cleanName);
+      if (mbid) {
+        logger.debug(`Found MusicBrainz ID for ${cleanName}: ${mbid}`);
       }
+    } catch (error) {
+      // Log but don't fail if MusicBrainz lookup fails
+      logger.debug(`MusicBrainz lookup failed for ${cleanName}`);
     }
 
     const newArtist = await payload.create({
@@ -170,8 +127,6 @@ export async function findOrCreateArtist(
         name: cleanName,
         slug,
         musicbrainzId: mbid || undefined,
-        legacyId,
-        migratedAt: new Date().toISOString(),
       },
     });
 
@@ -187,9 +142,44 @@ export async function findOrCreateArtist(
       errors: error.data?.errors,
     }, null, 2));
 
-    // If slug validation fails, likely a duplicate with slight name variation
+    const isMbidError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'musicbrainzId');
     const isSlugError = error.status === 400
       && error.data?.errors?.some((e: any) => e.path === 'slug');
+
+    // If MusicBrainz ID is duplicate, retry without it
+    if (isMbidError) {
+      logger.debug(`MusicBrainz ID conflict for "${name}", retrying without MBID`);
+      try {
+        const slug = generateSlug(cleanName);
+        const newArtist = await payload.create({
+          collection: 'artists',
+          data: {
+            name: cleanName,
+            slug,
+          },
+        });
+        logger.debug(`Created artist without MBID: ${cleanName}`);
+        return newArtist.id;
+      } catch (retryError: any) {
+        // If still failing (e.g., slug conflict), try finding by slug
+        const retryIsSlugError = retryError.status === 400
+          && retryError.data?.errors?.some((e: any) => e.path === 'slug');
+        if (retryIsSlugError) {
+          const slug = generateSlug(cleanName);
+          const existingBySlug = await payload.find({
+            collection: 'artists',
+            where: { slug: { equals: slug } },
+            limit: 1,
+          });
+          if (existingBySlug.docs.length > 0) {
+            logger.debug(`Found existing artist by slug after MBID retry: "${name}" (id: ${existingBySlug.docs[0].id})`);
+            return existingBySlug.docs[0].id;
+          }
+        }
+        throw retryError;
+      }
+    }
 
     if (isSlugError) {
       console.error(`[DEBUG] Slug validation failed for artist: ${name}, searching by slug...`);
@@ -213,8 +203,8 @@ export async function findOrCreateArtist(
       }
       logger.debug(`No existing artist found with slug: "${slug}"`);
     }
-    // Re-throw if it's not a slug validation error or we couldn't find existing
-    logger.debug(`Re-throwing error for artist: ${name}, isSlugError: ${isSlugError}`);
+    // Re-throw if it's not a handled error or we couldn't find existing
+    logger.debug(`Re-throwing error for artist: ${name}`);
     throw error;
   }
 }
@@ -226,27 +216,9 @@ export async function findOrCreateArtist(
 export async function findOrCreateVenue(
   payload: Payload,
   name: string,
-  legacyId?: number,
 ): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
-
-  // First try to find by legacy ID if provided
-  if (legacyId !== undefined) {
-    const existingByLegacyId = await payload.find({
-      collection: 'venues',
-      where: {
-        legacyId: {
-          equals: legacyId,
-        },
-      },
-      limit: 1,
-    });
-
-    if (existingByLegacyId.docs.length > 0) {
-      return existingByLegacyId.docs[0].id;
-    }
-  }
 
   // Try to find by name
   const existing = await payload.find({
@@ -273,8 +245,6 @@ export async function findOrCreateVenue(
       data: {
         name: cleanName,
         slug,
-        legacyId,
-        migratedAt: new Date().toISOString(),
       },
     });
 
