@@ -9,3 +9,12 @@ next-env.d.ts
 .eslintrc.js
 app/(payload)/admin/importMap.js
 payload/migrations
+bin/migrations/**/test*.ts
+bin/migrations/**/debug*.ts
+bin/migrations/**/*Test*.ts
+bin/migrations/checkCustomTextTitles.ts
+bin/migrations/createTestPost.ts
+bin/migrations/importSummary.ts
+bin/migrations/inspectPost.ts
+bin/migrations/verifyQuarantine.ts
+payload/src/features/embed/index.ts

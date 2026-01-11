@@ -32,8 +32,8 @@ export const EmbedBlock = {
       },
     },
   ],
-};
+} as const;
 
 export const EmbedFeature = (): FeatureProviderServer<any> => BlocksFeature({
-  blocks: [EmbedBlock as any],
+  blocks: [EmbedBlock],
 });

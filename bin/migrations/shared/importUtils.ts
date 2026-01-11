@@ -2,6 +2,33 @@
  * Common utility functions for data import scripts
  */
 
+import { migrationConfig } from '../config';
+
+/**
+ * Convert relative URL to absolute URL
+ */
+function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
+
+  // Already absolute
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Protocol-relative URL
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+
+  // Root-relative URL (starts with /)
+  if (url.startsWith('/')) {
+    return `${migrationConfig.baseUrl.replace(/\/$/, '')}${url}`;
+  }
+
+  // Relative URL (e.g., contests.php, ../page.html)
+  return `${migrationConfig.baseUrl}${url}`;
+}
+
 /**
  * Generate a URL-friendly slug from a string
  * Used across all import scripts for consistent slug generation
@@ -89,7 +116,7 @@ function parseInlineElements(html: string): any[] {
           rel: null,
           target: null,
           title: null,
-          url: href,
+          url: toAbsoluteUrl(href),
           children: [
             {
               detail: 0,

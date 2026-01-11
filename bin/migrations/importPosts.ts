@@ -102,6 +102,8 @@ async function postExists(payload: Payload, legacyId: number): Promise<boolean> 
  * Returns: 'success' | 'skipped' | 'error'
  */
 async function importPost(payload: Payload, post: Post): Promise<'success' | 'skipped' | 'error'> {
+  let content; // Declare at function scope so it's accessible in catch block
+
   try {
     // Check if already imported
     if (await postExists(payload, post.id)) {
@@ -111,9 +113,47 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
 
     // Convert HTML content to Lexical format
     // Use enhanced converter for custom texts (complex HTML), simple converter for stories
-    const content = post.source === 'custom_text'
+    content = post.source === 'custom_text'
       ? convertHtmlToLexicalEnhanced(post.content)
       : convertHtmlToLexical(post.content);
+
+    // Ensure content has valid structure - provide fallback for empty/invalid content
+    if (!content?.root?.children || content.root.children.length === 0
+        || (content.root.children.length === 1
+         && content.root.children[0].children?.length === 1
+         && content.root.children[0].children[0].text === '')) {
+      // Content is empty or invalid - provide minimal valid structure
+      content = {
+        root: {
+          type: 'root',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'text',
+                  text: '(No content available)',
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  detail: 0,
+                  version: 1,
+                },
+              ],
+              direction: 'ltr',
+            },
+          ],
+          direction: 'ltr',
+        },
+      };
+      logger.debug(`Post ${post.id} had empty content, using fallback`);
+    }
 
     // Import post image if available
     let imageId: string | undefined;
@@ -143,8 +183,9 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       // For custom texts with existing permalinks, keep them unchanged
       slug = post.permalink;
     } else if (post.source === 'story') {
-      // For stories, generate slug with date prefix: 2025-01-31--headline
-      const datePrefix = post.start_date; // Format: YYYY-MM-DD
+      // For stories, generate slug with date prefix: YYYY-MM-DD--headline
+      const date = new Date(post.start_date);
+      const datePrefix = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
       const headlineSlug = slugify(post.headline);
       slug = `${datePrefix}--${headlineSlug}`;
     } else {
@@ -173,6 +214,11 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
     logger.debug(`Imported post ${post.id} [${post.source}]: ${cleanedHeadline} (slug: ${slug})`);
     return 'success';
   } catch (error) {
+    // Log content JSON when validation fails
+    if (error instanceof Error && error.message.includes('Content')) {
+      logger.error(`Content validation failed for post ${post.id} [${post.source}]`);
+      logger.error('Generated Lexical content:', JSON.stringify(content, null, 2));
+    }
     logger.error(`Failed to import post ${post.id}`, error as Error);
     return 'error';
   }

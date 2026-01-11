@@ -70,6 +70,34 @@ describe('enhancedHtmlToLexical', () => {
       expect(linkNode.url).toBe('https://example.com');
     });
 
+    it('should convert relative URLs to absolute URLs', () => {
+      const result = convertHtmlToLexicalEnhanced('<p><a href="contests.php">Contests</a></p>');
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.url).toBe('https://www.ynotradio.net/contests.php');
+    });
+
+    it('should convert root-relative URLs to absolute URLs', () => {
+      const result = convertHtmlToLexicalEnhanced('<p><a href="/ondemand.php?id=176">On Demand</a></p>');
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.url).toBe('https://www.ynotradio.net/ondemand.php?id=176');
+    });
+
+    it('should keep absolute URLs unchanged', () => {
+      const result = convertHtmlToLexicalEnhanced('<p><a href="https://external.com/page">External</a></p>');
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.url).toBe('https://external.com/page');
+    });
+
+    it('should handle protocol-relative URLs', () => {
+      const result = convertHtmlToLexicalEnhanced('<p><a href="//cdn.example.com/file.js">CDN</a></p>');
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.url).toBe('https://cdn.example.com/file.js');
+    });
+
     it('should handle strikethrough', () => {
       const result = convertHtmlToLexicalEnhanced('<p><s>Strikethrough</s></p>');
       const strikeNode = result.root.children[0].children.find((n: any) => n.format === 4);
