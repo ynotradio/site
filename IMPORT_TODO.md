@@ -14,7 +14,7 @@
 
 ### 🔲 Remaining Import Tasks
 1. ✅ **DJ Photos** - 82/83 DJs have photos (98.8%) - One corrupt image for DJ 75 (manual fix needed)
-2. **Custom Text Images** - Import images from custom_texts posts to media collection  
+2. ✅ **Custom Text Images** - 70/70 images imported (100%) - Images in Media collection but not linked in post content
 3. **Legacy Images** - Full migration of all images to Cloudinary (concert pics, post images, etc.)
 4. **Historical Data** - Optionally import full historical data (currently filtered to last 3 months)
 
