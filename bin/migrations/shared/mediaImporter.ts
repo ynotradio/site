@@ -145,23 +145,101 @@ function generateFilename(url: string, mimeType: string): string {
 }
 
 /**
+ * Check if URL has invalid file extension
+ */
+function hasInvalidExtension(url: string): boolean {
+  const invalidExtensions = ['.php', '.html', '.htm', '.asp', '.aspx', '.jsp'];
+  const lowerUrl = url.toLowerCase();
+  return invalidExtensions.some((ext) => lowerUrl.includes(ext));
+}
+
+/**
+ * Validate that buffer contains actual image data
+ */
+function isValidImageBuffer(buffer: Buffer): boolean {
+  if (buffer.length < 4) {
+    return false;
+  }
+
+  // Check for common image magic numbers
+  // JPEG: FF D8 FF
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return true;
+  }
+
+  // PNG: 89 50 4E 47
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return true;
+  }
+
+  // GIF: 47 49 46 38
+  if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38) {
+    return true;
+  }
+
+  // WebP: RIFF ... WEBP
+  if (
+    buffer[0] === 0x52
+    && buffer[1] === 0x49
+    && buffer[2] === 0x46
+    && buffer[3] === 0x46
+    && buffer.length >= 12
+    && buffer[8] === 0x57
+    && buffer[9] === 0x45
+    && buffer[10] === 0x42
+    && buffer[11] === 0x50
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Download image from URL
  */
 async function downloadImage(url: string): Promise<Buffer | null> {
   try {
+    // Skip URLs with invalid extensions (likely error pages)
+    if (hasInvalidExtension(url)) {
+      logger.warn(`Skipping URL with invalid extension: ${url}`);
+      return null;
+    }
+
     // Handle Google Drive URLs
     const processedUrl = processImageUrl(url);
 
     const response = await axios.get(processedUrl, {
       responseType: 'arraybuffer',
       timeout: 10000, // 10 second timeout (reduced from 30s to speed up import with dead URLs)
-      maxContentLength: 10 * 1024 * 1024, // 10 MB max
+      maxContentLength: 8 * 1024 * 1024, // 8 MB max (reduced to avoid corrupt JPG buffer issues)
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; YNotRadioBot/1.0)',
       },
     });
 
-    return Buffer.from(response.data);
+    // Validate content-type header
+    const contentType = response.headers['content-type'];
+    if (contentType && !contentType.startsWith('image/')) {
+      logger.warn(`Invalid content-type: ${contentType} for ${url}`);
+      return null;
+    }
+
+    const buffer = Buffer.from(response.data);
+
+    // Skip files larger than 8MB to avoid corrupt JPG issues
+    if (buffer.length > 8 * 1024 * 1024) {
+      logger.warn(`Image too large (${buffer.length} bytes): ${url}`);
+      return null;
+    }
+
+    // Validate buffer contains actual image data (not HTML error page)
+    if (!isValidImageBuffer(buffer)) {
+      logger.warn(`Buffer doesn't contain valid image data for ${url}`);
+      return null;
+    }
+
+    return buffer;
   } catch (error) {
     logger.error(`Failed to download ${url}:`, error as Error);
     return null;

@@ -171,7 +171,10 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
     // Songs would need to be created/matched separately
 
     // Convert note text to Lexical richText format
-    const description = convertHtmlToLexical(item.note || '');
+    // Provide default if empty since description might be required in UI
+    const description = item.note && item.note.trim()
+      ? convertHtmlToLexical(item.note)
+      : convertHtmlToLexical('<p>No description available.</p>');
 
     // Create on-demand record with relationships
     await payload.create({

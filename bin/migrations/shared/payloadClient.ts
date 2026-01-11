@@ -146,6 +146,22 @@ export async function findOrCreateArtist(
       && error.data?.errors?.some((e: any) => e.path === 'musicbrainzId');
     const isSlugError = error.status === 400
       && error.data?.errors?.some((e: any) => e.path === 'slug');
+    const isNameError = error.status === 400
+      && error.data?.errors?.some((e: any) => e.path === 'name');
+
+    // If name is duplicate (race condition), try finding again
+    if (isNameError) {
+      logger.debug(`Name conflict for "${name}" (possible race condition), retrying find`);
+      const retryExisting = await payload.find({
+        collection: 'artists',
+        where: { name: { equals: cleanName } },
+        limit: 1,
+      });
+      if (retryExisting.docs.length > 0) {
+        logger.debug(`Found existing artist after race condition: "${name}" (id: ${retryExisting.docs[0].id})`);
+        return retryExisting.docs[0].id;
+      }
+    }
 
     // If MusicBrainz ID is duplicate, retry without it
     if (isMbidError) {

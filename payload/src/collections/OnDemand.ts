@@ -49,7 +49,6 @@ export const OnDemand: CollectionConfig = {
       name: 'description',
       type: 'richText',
       editor: lexicalEditor(),
-      required: true,
       admin: {
         description: 'Description or note about the content',
       },
@@ -84,7 +83,6 @@ export const OnDemand: CollectionConfig = {
     {
       name: 'audioUrl',
       type: 'text',
-      required: true,
       admin: {
         description: 'Audio stream identifier (e.g., OpenDrive ID)',
       },
