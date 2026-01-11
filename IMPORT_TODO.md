@@ -13,8 +13,8 @@
 - **Posts**: 797/681 (117%) - Import COMPLETE! Includes 761 stories and 35 custom_texts
 
 ### 🔲 Remaining Import Tasks
-1. **DJ Photos** - Import 32 DJ photos from imgur.com, app.box.com, and local paths to Cloudinary
-2. **Custom Text Images** - Import images from custom_texts posts to media collection
+1. ✅ **DJ Photos** - 82/83 DJs have photos (98.8%) - One corrupt image for DJ 75 (manual fix needed)
+2. **Custom Text Images** - Import images from custom_texts posts to media collection  
 3. **Legacy Images** - Full migration of all images to Cloudinary (concert pics, post images, etc.)
 4. **Historical Data** - Optionally import full historical data (currently filtered to last 3 months)
 
