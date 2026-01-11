@@ -112,7 +112,7 @@ function parseInlineElements(html: string): any[] {
         // Extract target attribute
         const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
         const target = targetMatch ? targetMatch[1] : null;
-        
+
         nodes.push({
           type: 'link',
           format: '',

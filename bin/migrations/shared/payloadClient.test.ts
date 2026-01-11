@@ -25,6 +25,7 @@ vi.mock('dotenv', () => ({
   default: {
     config: vi.fn(),
   },
+  config: vi.fn(),
 }));
 
 // Mock musicbrainz

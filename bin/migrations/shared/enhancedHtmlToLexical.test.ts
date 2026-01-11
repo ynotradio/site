@@ -67,7 +67,7 @@ describe('enhancedHtmlToLexical', () => {
       const result = convertHtmlToLexicalEnhanced('<p><a href="https://example.com">Link</a></p>');
       const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
       expect(linkNode).toBeDefined();
-      expect(linkNode.url).toBe('https://example.com');
+      expect(linkNode.fields.url).toBe('https://example.com');
     });
 
     it('should convert relative URLs to absolute URLs', () => {
@@ -277,7 +277,7 @@ describe('enhancedHtmlToLexical', () => {
       const result = convertHtmlToLexicalEnhanced(html);
       const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
       expect(linkNode).toBeDefined();
-      expect(linkNode?.url).toBe('https://example.com');
+      expect(linkNode?.fields.url).toBe('https://example.com');
     });
   });
 

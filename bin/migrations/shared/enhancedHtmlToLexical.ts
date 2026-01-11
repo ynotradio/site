@@ -140,7 +140,7 @@ function parseInlineHTML(html: string): LexicalNode[] {
         const href = element.getAttribute('href') || '';
         const text = element.textContent || '';
         const target = element.getAttribute('target');
-        
+
         nodes.push({
           type: 'link',
           format: '',
