@@ -15,6 +15,7 @@ import { connectToDatabase, getActivePosts, type Post } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
+import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
 import { importImageFromUrl } from './shared/mediaImporter';
 import { slugify, cleanHeadline } from './shared/slugify';
 import type { DatabaseEnv } from './shared/payloadClient';
@@ -109,7 +110,10 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
     }
 
     // Convert HTML content to Lexical format
-    const content = convertHtmlToLexical(post.content);
+    // Use enhanced converter for custom texts (complex HTML), simple converter for stories
+    const content = post.source === 'custom_text'
+      ? convertHtmlToLexicalEnhanced(post.content)
+      : convertHtmlToLexical(post.content);
 
     // Import post image if available
     let imageId: string | undefined;
