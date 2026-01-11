@@ -154,7 +154,7 @@ async function downloadImage(url: string): Promise<Buffer | null> {
 
     const response = await axios.get(processedUrl, {
       responseType: 'arraybuffer',
-      timeout: 30000, // 30 second timeout
+      timeout: 10000, // 10 second timeout (reduced from 30s to speed up import with dead URLs)
       maxContentLength: 10 * 1024 * 1024, // 10 MB max
       headers: {
         'User-Agent': 'Mozilla/5.0 (compatible; YNotRadioBot/1.0)',
