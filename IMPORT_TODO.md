@@ -94,6 +94,31 @@
 
 ---
 
+### 7. ✅ Quick Import Reporting - COMPLETED
+**Feature**: Added comprehensive pre/post-import reporting to quick-import.ts
+
+**Functionality Added**:
+- Pre-import report showing expected record counts from MySQL
+  - Displays total records and date-filtered counts for each collection
+  - Handles both 'n'/'y' and 'no'/'yes' deleted column values
+  - Shows 3-month window for most collections, 30 days for Shows
+- Post-import summary showing results table
+  - Expected vs actual counts comparison
+  - Success/skip/error counts per collection
+  - Status indicators (✅/❌) for each import
+  - Error details section showing first 5 errors per collection
+- Capture and parse import script output for detailed reporting
+  - Extracts "Migration Summary" statistics
+  - Captures error messages from stdout/stderr
+
+**Files modified**:
+- `bin/quick-import.ts`
+
+**SQL Reference**:
+- `bin/migrations/count_expected_imports.sql` - Manual query for expected counts
+
+---
+
 ## Notes
 
 ### Artist/Venue Creation
