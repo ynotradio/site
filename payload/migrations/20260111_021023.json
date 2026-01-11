@@ -3694,9 +3694,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "note": {
-          "name": "note",
-          "type": "varchar",
+        "description": {
+          "name": "description",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -4108,9 +4108,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "version_note": {
-          "name": "version_note",
-          "type": "varchar",
+        "version_description": {
+          "name": "version_description",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -9594,6 +9594,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "f5467dde-dac9-46cb-9684-cc09f58a3480",
+  "id": "953e51c6-3fec-4677-a222-b403c6513ce3",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }
