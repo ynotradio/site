@@ -109,7 +109,9 @@ function parseInlineElements(html: string): any[] {
 
       if (linkText && href) {
         const absoluteUrl = toAbsoluteUrl(href);
-        const target = match[3]; // Extract target from regex match
+        // Extract target attribute
+        const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
+        const target = targetMatch ? targetMatch[1] : null;
         
         nodes.push({
           type: 'link',
