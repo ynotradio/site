@@ -23,6 +23,42 @@ vi.mock('./shared/payloadClient', () => ({
   }),
 }));
 
+vi.mock('./shared/importUtils', () => ({
+  convertHtmlToLexical: vi.fn((html) => {
+    if (!html || html.trim() === '') {
+      // Match the actual implementation - return minimal paragraph for empty content
+      return {
+        root: {
+          type: 'root',
+          children: [{
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [{
+              type: 'text',
+              format: 0,
+              version: 1,
+              text: '',
+              mode: 'normal',
+              style: '',
+              detail: 0,
+            }],
+            direction: 'ltr',
+          }],
+          direction: 'ltr',
+        },
+      };
+    }
+    return {
+      root: {
+        type: 'root',
+        children: [{ type: 'paragraph', children: [{ type: 'text', text: html }] }],
+      },
+    };
+  }),
+}));
+
 vi.mock('./shared/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
@@ -32,6 +68,13 @@ vi.mock('./shared/logger', () => ({
   }),
   logProgress: vi.fn(),
   logSummary: vi.fn(),
+}));
+
+vi.mock('./shared/mediaImporter', () => ({
+  importImageFromUrl: vi.fn().mockResolvedValue({
+    success: false,
+    mediaId: undefined,
+  }),
 }));
 
 describe('importOnDemand', () => {
@@ -123,7 +166,11 @@ describe('importOnDemand', () => {
         collection: 'ondemand',
         data: expect.objectContaining({
           headline: 'Test Show Episode 1',
-          note: 'Great music and discussion',
+          description: expect.objectContaining({
+            root: expect.objectContaining({
+              type: 'root',
+            }),
+          }),
           audioUrl: 'https://example.com/audio.mp3',
           date: '2024-01-15',
           legacyId: 1,
@@ -163,7 +210,11 @@ describe('importOnDemand', () => {
         collection: 'ondemand',
         data: expect.objectContaining({
           headline: undefined,
-          note: undefined,
+          description: expect.objectContaining({
+            root: expect.objectContaining({
+              type: 'root',
+            }),
+          }),
           audioUrl: undefined,
           image: undefined,
         }),

@@ -20,6 +20,7 @@ import {
 } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
+import { convertHtmlToLexical } from './shared/importUtils';
 import type { DatabaseEnv } from './shared/payloadClient';
 
 const logger = createLogger('OnDemandImport');
@@ -169,12 +170,15 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
     // The songs field in MySQL contains free-form text that doesn't map to Song records
     // Songs would need to be created/matched separately
 
+    // Convert note text to Lexical richText format
+    const description = convertHtmlToLexical(item.note || '');
+
     // Create on-demand record with relationships
     await payload.create({
       collection: 'ondemand',
       data: {
         headline: item.headline || undefined,
-        note: item.note || undefined,
+        description,
         djs: djIds.length > 0 ? djIds : undefined,
         artists: artistIds.length > 0 ? artistIds : undefined,
         // songs: not populated - would require parsing and creating Song records
