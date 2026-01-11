@@ -240,21 +240,64 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
  * @returns Lexical JSON structure
  */
 export function convertHtmlToLexical(html: string): any {
-  if (!html) {
+  if (!html || html.trim() === '') {
+    // Return a minimal valid Lexical structure with an empty paragraph
+    // Lexical requires at least one node in children
     return {
       root: {
         type: 'root',
         format: '',
         indent: 0,
         version: 1,
-        children: [],
-        direction: null,
+        children: [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [
+              {
+                type: 'text',
+                format: 0,
+                version: 1,
+                text: '',
+                mode: 'normal',
+                style: '',
+                detail: 0,
+              },
+            ],
+            direction: 'ltr',
+          },
+        ],
+        direction: 'ltr',
       },
     };
   }
 
   // Parse HTML into Lexical nodes
   const children = parseHtmlToLexicalNodes(html);
+
+  // If parsing resulted in empty children, add a minimal paragraph
+  if (children.length === 0) {
+    children.push({
+      type: 'paragraph',
+      format: '',
+      indent: 0,
+      version: 1,
+      children: [
+        {
+          type: 'text',
+          format: 0,
+          version: 1,
+          text: '',
+          mode: 'normal',
+          style: '',
+          detail: 0,
+        },
+      ],
+      direction: 'ltr',
+    });
+  }
 
   return {
     root: {

@@ -46,23 +46,24 @@ describe('generateSlug', () => {
 });
 
 describe('convertHtmlToLexical', () => {
-  it('should return empty root for empty string', () => {
+  it('should return minimal valid structure for empty string', () => {
+    // Empty string should return a valid Lexical structure with an empty paragraph
+    // This is required for Payload's richText field validation
     const result = convertHtmlToLexical('');
-    expect(result).toEqual({
-      root: {
-        type: 'root',
-        format: '',
-        indent: 0,
-        version: 1,
-        children: [],
-        direction: null,
-      },
-    });
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+    expect(result.root.children[0].children[0].text).toBe('');
+    expect(result.root.children[0].children[0].type).toBe('text');
   });
 
-  it('should return empty root for null/undefined', () => {
+  it('should return minimal valid structure for null/undefined/empty', () => {
+    // Empty content should return a valid Lexical structure with an empty paragraph
+    // This is required for Payload's richText field validation
     const result = convertHtmlToLexical(null as any);
-    expect(result.root.children).toEqual([]);
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+    expect(result.root.children[0].children[0].text).toBe('');
+    expect(result.root.children[0].children[0].type).toBe('text');
   });
 
   it('should convert plain text to paragraph with text node', () => {
