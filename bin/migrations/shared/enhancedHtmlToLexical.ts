@@ -139,12 +139,18 @@ function parseInlineHTML(html: string): LexicalNode[] {
       if (tagName === 'a') {
         const href = element.getAttribute('href') || '';
         const text = element.textContent || '';
+        const target = element.getAttribute('target');
+        
         nodes.push({
           type: 'link',
-          url: toAbsoluteUrl(href),
-          title: element.getAttribute('title') || null,
-          rel: 'noopener noreferrer',
-          target: element.getAttribute('target') || null,
+          format: '',
+          indent: 0,
+          version: 3,
+          fields: {
+            linkType: 'custom',
+            url: toAbsoluteUrl(href),
+            newTab: target === '_blank' || target === '_new',
+          },
           children: [{
             type: 'text',
             text,
@@ -155,7 +161,6 @@ function parseInlineHTML(html: string): LexicalNode[] {
             version: 1,
           }],
           direction: 'ltr',
-          version: 2,
         });
       } else if (format > 0) {
         const text = element.textContent || '';

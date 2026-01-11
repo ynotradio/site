@@ -108,15 +108,19 @@ function parseInlineElements(html: string): any[] {
       const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
 
       if (linkText && href) {
+        const absoluteUrl = toAbsoluteUrl(href);
+        const target = match[3]; // Extract target from regex match
+        
         nodes.push({
           type: 'link',
           format: '',
           indent: 0,
           version: 3,
-          rel: null,
-          target: null,
-          title: null,
-          url: toAbsoluteUrl(href),
+          fields: {
+            linkType: 'custom',
+            url: absoluteUrl,
+            newTab: target === '_blank' || target === '_new',
+          },
           children: [
             {
               detail: 0,
