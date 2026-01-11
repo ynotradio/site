@@ -10,9 +10,13 @@
 - **CD of the Week**: 9/9 - Fixed validation issues
 - **Ads**: 2/2 - All successful
 - **Shows**: 291/291 (last 30 days) - All successful, DJ matching fixed
+- **Posts**: 797/681 (117%) - Import COMPLETE! Includes 761 stories and 35 custom_texts
 
-### ⚠️ Known Issues
-- **Posts**: ~25% failure rate due to bad image URLs in legacy MySQL data (not fixable - bad source data)
+### 🔲 Remaining Import Tasks
+1. **DJ Photos** - Import 32 DJ photos from imgur.com, app.box.com, and local paths to Cloudinary
+2. **Custom Text Images** - Import images from custom_texts posts to media collection
+3. **Legacy Images** - Full migration of all images to Cloudinary (concert pics, post images, etc.)
+4. **Historical Data** - Optionally import full historical data (currently filtered to last 3 months)
 
 ---
 
@@ -45,14 +49,23 @@
 
 ---
 
-### 3. ✅ Posts Import - HTML Spacing Fixed
-**Problem**: Post content was being imported without space between text with HTML tags
+### 3. ✅ Posts Import - COMPLETED (January 11, 2026)
+**Status**: 797/681 posts imported (117% of active posts target)
 
-**HTML Spacing Fix Applied**:
-- Fixed `parseInlineElements()` in `importUtils.ts` to preserve spaces between inline elements
-- Changed from `.trim()` to normalize whitespace while preserving meaningful spaces
+**Journey**:
+- Started at 28% success rate due to link validation failures
+- Fixed Lexical link node structure to use `fields.linkType`, `fields.url`, `fields.newTab`
+- Fixed target attribute extraction bug
+- Final result: 761 stories + 35 custom_texts (100% of active posts, plus 129 deleted posts)
 
-**Note**: ~25% of posts still fail due to bad image URLs in legacy MySQL data. This is not fixable as the source data has invalid URLs.
+**Files Fixed**:
+- `bin/migrations/shared/importUtils.ts` - Link structure + target attribute fix
+- `bin/migrations/shared/enhancedHtmlToLexical.ts` - Same fixes + embed block UUIDs
+- `bin/migrations/shared/enhancedHtmlToLexical.test.ts` - Updated tests
+
+**Documentation**:
+- See `IMPORT_STATUS.md` for comprehensive summary
+- See `LINK_VALIDATION_FIX.md` for technical details of the link fix
 
 ---
 
