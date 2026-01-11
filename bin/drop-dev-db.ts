@@ -14,27 +14,27 @@ if (!connectionString) {
 
 console.log('Using connection string (masked):', connectionString.replace(/:[^:@]+@/, ':***@'));
 
-const client = new Client({ 
+const client = new Client({
   connectionString,
-  ssl: { rejectUnauthorized: true }
+  ssl: { rejectUnauthorized: true },
 });
 
 async function dropAllTables() {
   try {
     await client.connect();
     console.log('✓ Connected to Neon dev database');
-    
+
     // Drop all tables
     await client.query('DROP SCHEMA public CASCADE');
     console.log('✓ Dropped public schema and all tables');
-    
+
     await client.query('CREATE SCHEMA public');
     console.log('✓ Created fresh public schema');
-    
+
     await client.query('GRANT ALL ON SCHEMA public TO neondb_owner');
     await client.query('GRANT ALL ON SCHEMA public TO public');
     console.log('✓ Granted permissions');
-    
+
     // Verify empty database
     const result = await client.query(`
       SELECT table_name 
@@ -42,7 +42,6 @@ async function dropAllTables() {
       WHERE table_schema = 'public'
     `);
     console.log(`✓ Database is now empty. Tables remaining: ${result.rows.length}`);
-    
   } catch (err: any) {
     console.error('✗ Error:', err.message);
     process.exit(1);
