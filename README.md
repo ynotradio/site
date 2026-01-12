@@ -227,18 +227,10 @@ For production, Netlify will execute `yarn payload:build` using the settings def
 
 ### Database Management
 
-#### Copying Databases
-
-Scripts are available to completely copy one Neon database to another:
+To copy one Neon database to another (e.g., production to development for testing):
 
 ```bash
-# Copy development to production (e.g., after importing data in dev)
-yarn db:copy-dev-to-prod
-
-# Copy production to development (e.g., for testing with real data)
-yarn db:copy-prod-to-dev
+yarn neon-db:copy prod dev
 ```
 
-See [bin/DB_COPY_README.md](bin/DB_COPY_README.md) for detailed documentation and [bin/DB_COPY_TESTING.md](bin/DB_COPY_TESTING.md) for testing guide.
-
-**Note:** These operations will completely replace the target database. A weekly automated sync from production to development runs every Monday at 2 AM UTC.
+**Note:** This will completely replace the target database. A weekly automated sync from production to development runs every Monday at 2 AM UTC.

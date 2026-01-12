@@ -30,4 +30,4 @@ jobs:
           NEON_DEV_DATABASE_URL: ${{ secrets.NEON_DEV_DATABASE_URL }}
         run: |
           # Auto-confirm by piping 'yes' to the script
-          echo "yes" | yarn db:copy-prod-to-dev
+          echo "yes" | yarn neon-db:copy prod dev

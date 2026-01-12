@@ -30,9 +30,7 @@
     "seed:legacy": "./bin/seed-legacy.sh",
     "seed": "yarn seed:payload && yarn seed:legacy",
     "import:quick": "tsx bin/quick-import.ts",
-    "db:copy": "tsx bin/copy-neon-db.ts",
-    "db:copy-dev-to-prod": "./bin/copy-dev-to-prod.sh",
-    "db:copy-prod-to-dev": "./bin/copy-prod-to-dev.sh",
+    "neon-db:copy": "tsx bin/copy-neon-db.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },
