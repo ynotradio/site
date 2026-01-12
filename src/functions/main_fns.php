@@ -1,6 +1,8 @@
 <?php
 date_default_timezone_set('America/New_York');
-session_start(); #sessions to save login state
+if (session_status() === PHP_SESSION_NONE) {
+    session_start(); #sessions to save login state
+}
 error_reporting(E_ALL & ~E_NOTICE);
 
 // Use absolute paths for including vendor and env loader
