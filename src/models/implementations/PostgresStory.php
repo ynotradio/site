@@ -78,7 +78,7 @@ class PostgresStory implements Story {
             WHERE p._status = 'published'
                 AND p.start_date <= CURRENT_DATE
                 AND p.end_date >= CURRENT_DATE
-            ORDER BY p.priority ASC
+            ORDER BY p.priority ASC, p.id ASC
         ";
         
         if ($amount !== 'all') {
