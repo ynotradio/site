@@ -2,6 +2,33 @@
  * Common utility functions for data import scripts
  */
 
+import { migrationConfig } from '../config';
+
+/**
+ * Convert relative URL to absolute URL
+ */
+function toAbsoluteUrl(url: string): string {
+  if (!url) return url;
+
+  // Already absolute
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Protocol-relative URL
+  if (url.startsWith('//')) {
+    return `https:${url}`;
+  }
+
+  // Root-relative URL (starts with /)
+  if (url.startsWith('/')) {
+    return `${migrationConfig.baseUrl.replace(/\/$/, '')}${url}`;
+  }
+
+  // Relative URL (e.g., contests.php, ../page.html)
+  return `${migrationConfig.baseUrl}${url}`;
+}
+
 /**
  * Generate a URL-friendly slug from a string
  * Used across all import scripts for consistent slug generation
@@ -46,17 +73,25 @@ function parseInlineElements(html: string): any[] {
   for (const m of matches) {
     // Add any plain text before this tag
     if (m.start > lastProcessedIndex) {
-      const plainText = html.substring(lastProcessedIndex, m.start).trim();
-      if (plainText) {
+      const plainText = html.substring(lastProcessedIndex, m.start);
+      // Normalize whitespace but preserve at least one space where there was any
+      const normalizedText = plainText.replace(/\s+/g, ' ');
+      if (normalizedText && normalizedText !== ' ') {
         nodes.push({
           detail: 0,
           format: 0,
           mode: 'normal',
           style: '',
-          text: plainText,
+          text: normalizedText,
           type: 'text',
           version: 1,
         });
+      } else if (normalizedText === ' ' && nodes.length > 0) {
+        // Add a space to the previous node if it doesn't already end with one
+        const lastNode = nodes[nodes.length - 1];
+        if (lastNode.text && !lastNode.text.endsWith(' ')) {
+          lastNode.text += ' ';
+        }
       }
     }
 
@@ -73,15 +108,21 @@ function parseInlineElements(html: string): any[] {
       const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
 
       if (linkText && href) {
+        const absoluteUrl = toAbsoluteUrl(href);
+        // Extract target attribute
+        const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
+        const target = targetMatch ? targetMatch[1] : null;
+
         nodes.push({
           type: 'link',
           format: '',
           indent: 0,
           version: 3,
-          rel: null,
-          target: null,
-          title: null,
-          url: href,
+          fields: {
+            linkType: 'custom',
+            url: absoluteUrl,
+            newTab: target === '_blank' || target === '_new',
+          },
           children: [
             {
               detail: 0,
@@ -132,14 +173,25 @@ function parseInlineElements(html: string): any[] {
 
   // Add any remaining plain text
   if (lastProcessedIndex < html.length) {
-    const plainText = html.substring(lastProcessedIndex).trim();
-    if (plainText) {
+    const plainText = html.substring(lastProcessedIndex);
+    // Normalize whitespace but preserve meaningful content
+    const normalizedText = plainText.replace(/\s+/g, ' ');
+    if (normalizedText.trim()) {
+      // If text starts with whitespace and there's a previous node, add leading space
+      const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
+      const cleanText = normalizedText.trim();
+      if (leadingSpace && nodes.length > 0) {
+        const lastNode = nodes[nodes.length - 1];
+        if (lastNode.text && !lastNode.text.endsWith(' ')) {
+          lastNode.text += ' ';
+        }
+      }
       nodes.push({
         detail: 0,
         format: 0,
         mode: 'normal',
         style: '',
-        text: plainText,
+        text: cleanText,
         type: 'text',
         version: 1,
       });
@@ -221,21 +273,64 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
  * @returns Lexical JSON structure
  */
 export function convertHtmlToLexical(html: string): any {
-  if (!html) {
+  if (!html || html.trim() === '') {
+    // Return a minimal valid Lexical structure with an empty paragraph
+    // Lexical requires at least one node in children
     return {
       root: {
         type: 'root',
         format: '',
         indent: 0,
         version: 1,
-        children: [],
-        direction: null,
+        children: [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [
+              {
+                type: 'text',
+                format: 0,
+                version: 1,
+                text: '',
+                mode: 'normal',
+                style: '',
+                detail: 0,
+              },
+            ],
+            direction: 'ltr',
+          },
+        ],
+        direction: 'ltr',
       },
     };
   }
 
   // Parse HTML into Lexical nodes
   const children = parseHtmlToLexicalNodes(html);
+
+  // If parsing resulted in empty children, add a minimal paragraph
+  if (children.length === 0) {
+    children.push({
+      type: 'paragraph',
+      format: '',
+      indent: 0,
+      version: 1,
+      children: [
+        {
+          type: 'text',
+          format: 0,
+          version: 1,
+          text: '',
+          mode: 'normal',
+          style: '',
+          detail: 0,
+        },
+      ],
+      direction: 'ltr',
+    });
+  }
 
   return {
     root: {

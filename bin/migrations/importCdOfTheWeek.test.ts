@@ -15,6 +15,7 @@ vi.mock('./database', () => ({
 vi.mock('./shared/payloadClient', () => ({
   getPayloadClient: vi.fn(),
   findOrCreateArtist: vi.fn(),
+  findOrCreatePerson: vi.fn(),
 }));
 
 vi.mock('./shared/importUtils', () => ({
@@ -101,7 +102,7 @@ describe('importCdOfTheWeek', () => {
 
     it('should import new CD of the Week with new artist and record', async () => {
       const { importCdOfTheWeekItem } = await import('./importCdOfTheWeek');
-      const { findOrCreateArtist } = await import('./shared/payloadClient');
+      const { findOrCreateArtist, findOrCreatePerson } = await import('./shared/payloadClient');
 
       // Mock: CDOTW doesn't exist, record doesn't exist, so create both
       (mockPayload.find as Mock)
@@ -109,6 +110,7 @@ describe('importCdOfTheWeek', () => {
         .mockResolvedValueOnce({ docs: [] }); // Record check
 
       (findOrCreateArtist as Mock).mockResolvedValue('artist-id-123');
+      (findOrCreatePerson as Mock).mockResolvedValue('reviewer-id-999');
       (mockPayload.create as Mock)
         .mockResolvedValueOnce({ id: 'record-id-456' }) // Record creation
         .mockResolvedValueOnce({ id: 'cdotw-id-789' }); // CDOTW creation
@@ -129,7 +131,8 @@ describe('importCdOfTheWeek', () => {
       const result = await importCdOfTheWeekItem(mockPayload as Payload, item);
 
       expect(result).toBe(true);
-      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National', null);
+      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National');
+      expect(findOrCreatePerson).toHaveBeenCalledWith(mockPayload, 'John Doe');
 
       // Should create record
       expect(mockPayload.create).toHaveBeenCalledWith({
@@ -145,13 +148,13 @@ describe('importCdOfTheWeek', () => {
         },
       });
 
-      // Should create CDOTW
+      // Should create CDOTW with reviewer ID
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'cdoftheweek',
         data: {
           record: 'record-id-456',
           review: expect.any(Object),
-          reviewer: 'John Doe',
+          reviewer: 'reviewer-id-999',
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),

@@ -244,10 +244,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importConcerts(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importConcerts(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export { importConcerts, parseArgs, importConcert };

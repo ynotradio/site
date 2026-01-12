@@ -12,7 +12,7 @@
 
 import type { Payload } from 'payload';
 import { connectToDatabase, getActiveCdOfTheWeek, type CdOfTheWeek } from './database';
-import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
+import { getPayloadClient, findOrCreateArtist, findOrCreatePerson } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
@@ -111,7 +111,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     }
 
     // Find or create artist
-    const artistId = await findOrCreateArtist(payload, item.artist, null);
+    const artistId = await findOrCreateArtist(payload, item.artist);
 
     // Query MusicBrainz for release MBID
     let releaseMbid: string | null = null;
@@ -146,8 +146,8 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       }
     }
 
-    // If legacy image failed and we have MusicBrainz release ID, try Cover Art Archive
-    if (!coverImageId && releaseMbid) {
+    // If legacy image failed OR no legacy image exists, try Cover Art Archive with MusicBrainz
+    if (!coverImageId) {
       try {
         logger.debug(`Attempting to fetch cover art from MusicBrainz for ${item.title}`);
         const coverArtUrl = await getAlbumCoverArt(item.title, item.artist);
@@ -165,6 +165,8 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
             coverImageId = imageResult.mediaId;
             logger.info(`✓ Cover art imported from MusicBrainz: ${imageResult.cloudinaryUrl}`);
           }
+        } else {
+          logger.debug(`No cover art found in MusicBrainz for ${item.title}`);
         }
       } catch (error) {
         logger.debug(`MusicBrainz cover art fetch failed for ${item.title}`);
@@ -212,23 +214,75 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     }
 
     // Convert HTML review to Lexical format
-    const review = convertHtmlToLexical(item.review);
+    // review is required by Payload, so we need valid content
+    let review;
+    try {
+      if (item.review && item.review.trim() !== '') {
+        review = convertHtmlToLexical(item.review);
+        logger.debug(`Converted review for CD ${item.id} (length: ${item.review.length})`);
+      } else {
+        // Provide default review content if missing
+        review = convertHtmlToLexical('<p>No review provided.</p>');
+        logger.debug(`Using default review for CD ${item.id} (original was empty)`);
+      }
+    } catch (error) {
+      logger.error(`Failed to convert review for CD ${item.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.debug(`Review content preview: ${item.review?.substring(0, 200) || 'null'}`);
+      review = convertHtmlToLexical('<p>No review provided.</p>');
+    }
+
+    // Validate that review structure is correct
+    if (!review || !review.root || !review.root.children || review.root.children.length === 0) {
+      logger.warn(`Invalid review structure for CD ${item.id}, regenerating`);
+      review = convertHtmlToLexical('<p>Review content unavailable.</p>');
+    }
+
+    // Additional validation: ensure children have proper structure
+    if (review.root.children.length > 0) {
+      const firstChild = review.root.children[0];
+      if (!firstChild.type || !firstChild.children || firstChild.children.length === 0) {
+        logger.warn(`Invalid paragraph structure for CD ${item.id}, regenerating`);
+        review = convertHtmlToLexical('<p>Review content unavailable.</p>');
+      }
+    }
+
+    // Find or create the reviewer as a Person
+    let reviewerId: number | undefined;
+    if (item.reviewer && item.reviewer.trim()) {
+      try {
+        reviewerId = await findOrCreatePerson(payload, item.reviewer);
+        logger.debug(`Found/created reviewer: ${item.reviewer} (id: ${reviewerId})`);
+      } catch (error) {
+        logger.warn(`Failed to find/create reviewer: ${item.reviewer}`);
+      }
+    }
 
     // Create CD of the Week record
-    await payload.create({
-      collection: 'cdoftheweek',
-      data: {
-        record: recordId as any,
-        review,
-        reviewer: item.reviewer || undefined,
-        date: item.date,
-        legacyId: item.id,
-        migratedAt: new Date().toISOString(),
-      },
-    });
+    try {
+      await payload.create({
+        collection: 'cdoftheweek',
+        data: {
+          record: recordId as any,
+          review,
+          reviewer: reviewerId,
+          date: item.date,
+          legacyId: item.id,
+          migratedAt: new Date().toISOString(),
+        },
+      });
 
-    logger.debug(`Imported CD of the Week ${item.id} for ${item.artist} - ${item.title}`);
-    return true;
+      logger.debug(`Imported CD of the Week ${item.id} for ${item.artist} - ${item.title}`);
+      return true;
+    } catch (createError: any) {
+      // Log detailed error information
+      logger.error(`Failed to create CD of the Week ${item.id}`);
+      logger.error(`Error: ${createError.message}`);
+      if (createError.data?.errors) {
+        logger.error(`Validation errors: ${JSON.stringify(createError.data.errors, null, 2)}`);
+      }
+      logger.debug(`Review structure: ${JSON.stringify(review, null, 2)}`);
+      throw createError;
+    }
   } catch (error) {
     logger.error(`Failed to import CD of the Week ${item.id}`, error as Error);
     return false;
@@ -318,10 +372,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importCdOfTheWeek(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importCdOfTheWeek(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export { importCdOfTheWeek, parseArgs, importCdOfTheWeekItem };

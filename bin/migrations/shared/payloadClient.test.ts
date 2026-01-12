@@ -25,6 +25,7 @@ vi.mock('dotenv', () => ({
   default: {
     config: vi.fn(),
   },
+  config: vi.fn(),
 }));
 
 // Mock musicbrainz
@@ -49,31 +50,9 @@ describe('payloadClient', () => {
   });
 
   describe('findOrCreateArtist', () => {
-    it('should return existing artist ID when found by legacy ID', async () => {
-      const { findOrCreateArtist } = await import('./payloadClient');
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({
-        docs: [{ id: 'existing-artist-123' }],
-      });
-
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist', 42);
-
-      expect(artistId).toBe('existing-artist-123');
-      expect(mockPayload.find).toHaveBeenCalledWith({
-        collection: 'artists',
-        where: {
-          legacyId: {
-            equals: 42,
-          },
-        },
-        limit: 1,
-      });
-    });
-
     it('should return existing artist ID when found by name', async () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
-      // Mock to return existing artist when searched by name
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'existing-artist-456' }] });
 
       const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
@@ -94,62 +73,23 @@ describe('payloadClient', () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce(null);
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-artist-789' });
 
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'New Artist', 99);
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'New Artist');
 
       expect(artistId).toBe('new-artist-789');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'artists',
-        data: expect.objectContaining({
-          name: 'New Artist',
-          legacyId: 99,
-          migratedAt: expect.any(String),
-        }),
-      });
-    });
-
-    it('should search by name only when legacy ID not provided', async () => {
-      const { findOrCreateArtist } = await import('./payloadClient');
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'artist-123' }] });
-
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
-
-      expect(artistId).toBe('artist-123');
-      expect(mockPayload.find).toHaveBeenCalledTimes(1);
-      expect(mockPayload.find).toHaveBeenCalledWith({
-        collection: 'artists',
-        where: {
-          name: {
-            equals: 'Test Artist',
-          },
-        },
-        limit: 1,
-      });
-    });
-
-    it('should add MusicBrainz ID to existing artist without one (legacy ID path)', async () => {
-      const { findOrCreateArtist } = await import('./payloadClient');
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({
-        docs: [{ id: 'existing-123', musicbrainzId: null }],
-      });
-      mockGetArtistMbid.mockResolvedValueOnce('mbid-456');
-
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist', 42);
-
-      expect(artistId).toBe('existing-123');
-      expect(mockPayload.update).toHaveBeenCalledWith({
-        collection: 'artists',
-        id: 'existing-123',
         data: {
-          musicbrainzId: 'mbid-456',
+          name: 'New Artist',
+          slug: 'new-artist',
+          musicbrainzId: undefined,
         },
       });
     });
 
-    it('should add MusicBrainz ID to existing artist without one (name path)', async () => {
+    it('should add MusicBrainz ID to existing artist without one', async () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({
@@ -177,12 +117,12 @@ describe('payloadClient', () => {
       });
       mockGetArtistMbid.mockRejectedValueOnce(new Error('MB API error'));
 
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist', 42);
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
 
       expect(artistId).toBe('existing-123');
     });
 
-    it('should create artist with MusicBrainz ID when not found (no legacy ID)', async () => {
+    it('should create artist with MusicBrainz ID when not found', async () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
@@ -194,12 +134,11 @@ describe('payloadClient', () => {
       expect(artistId).toBe('new-artist-999');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'artists',
-        data: expect.objectContaining({
+        data: {
           name: 'New Artist',
           slug: 'new-artist',
           musicbrainzId: 'mbid-new',
-          migratedAt: expect.any(String),
-        }),
+        },
       });
     });
 
@@ -215,30 +154,11 @@ describe('payloadClient', () => {
       expect(artistId).toBe('new-artist-888');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'artists',
-        data: expect.objectContaining({
+        data: {
           name: 'New Artist',
+          slug: 'new-artist',
           musicbrainzId: undefined,
-        }),
-      });
-    });
-
-    it('should skip MusicBrainz lookup when creating with legacy ID', async () => {
-      const { findOrCreateArtist } = await import('./payloadClient');
-
-      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
-      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'new-artist-777' });
-
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'New Artist', 99);
-
-      expect(artistId).toBe('new-artist-777');
-      expect(mockGetArtistMbid).not.toHaveBeenCalled();
-      expect(mockPayload.create).toHaveBeenCalledWith({
-        collection: 'artists',
-        data: expect.objectContaining({
-          name: 'New Artist',
-          legacyId: 99,
-          musicbrainzId: undefined,
-        }),
+        },
       });
     });
 
@@ -246,9 +166,10 @@ describe('payloadClient', () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
       (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // Find by legacy ID returns empty
         .mockResolvedValueOnce({ docs: [] }) // Find by name returns empty
         .mockResolvedValueOnce({ docs: [{ id: 'existing-by-slug-123' }] }); // Then find by slug succeeds
+
+      mockGetArtistMbid.mockResolvedValueOnce(null);
 
       const slugError = {
         status: 400,
@@ -258,7 +179,7 @@ describe('payloadClient', () => {
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
 
-      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist', 99);
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
 
       expect(artistId).toBe('existing-by-slug-123');
       expect(mockPayload.find).toHaveBeenCalledWith({
@@ -275,9 +196,8 @@ describe('payloadClient', () => {
     it('should rethrow error if not a slug validation error', async () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // Find by legacy ID
-        .mockResolvedValueOnce({ docs: [] }); // Find by name
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // Find by name
+      mockGetArtistMbid.mockResolvedValueOnce(null);
 
       const otherError = {
         status: 500,
@@ -286,7 +206,7 @@ describe('payloadClient', () => {
       (mockPayload.create as Mock).mockRejectedValueOnce(otherError);
 
       await expect(
-        findOrCreateArtist(mockPayload as Payload, 'Test Artist', 99),
+        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
       ).rejects.toEqual(otherError);
     });
 
@@ -294,9 +214,10 @@ describe('payloadClient', () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
       (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // Find by legacy ID
         .mockResolvedValueOnce({ docs: [] }) // Find by name
         .mockResolvedValueOnce({ docs: [] }); // Find by slug also returns empty
+
+      mockGetArtistMbid.mockResolvedValueOnce(null);
 
       const slugError = {
         status: 400,
@@ -307,37 +228,38 @@ describe('payloadClient', () => {
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
 
       await expect(
-        findOrCreateArtist(mockPayload as Payload, 'Test Artist', 99),
+        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
       ).rejects.toEqual(slugError);
+    });
+
+    it('should handle MusicBrainz ID duplicate by retrying without MBID', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: {
+          errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }],
+        },
+      };
+      // First create fails with MBID duplicate
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError)
+        .mockResolvedValueOnce({ id: 'new-artist-no-mbid' }); // Retry succeeds
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
+
+      expect(artistId).toBe('new-artist-no-mbid');
+      expect(mockPayload.create).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('findOrCreateVenue', () => {
-    it('should return existing venue ID when found by legacy ID', async () => {
-      const { findOrCreateVenue } = await import('./payloadClient');
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({
-        docs: [{ id: 'existing-venue-123' }],
-      });
-
-      const venueId = await findOrCreateVenue(mockPayload as Payload, 'Test Venue', 42);
-
-      expect(venueId).toBe('existing-venue-123');
-      expect(mockPayload.find).toHaveBeenCalledWith({
-        collection: 'venues',
-        where: {
-          legacyId: {
-            equals: 42,
-          },
-        },
-        limit: 1,
-      });
-    });
-
     it('should return existing venue ID when found by name', async () => {
       const { findOrCreateVenue } = await import('./payloadClient');
 
-      // Mock to return existing venue when searched by name
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'existing-venue-456' }] });
 
       const venueId = await findOrCreateVenue(mockPayload as Payload, 'Test Venue');
@@ -360,17 +282,161 @@ describe('payloadClient', () => {
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-venue-789' });
 
-      const venueId = await findOrCreateVenue(mockPayload as Payload, 'New Venue', 99);
+      const venueId = await findOrCreateVenue(mockPayload as Payload, 'New Venue');
 
       expect(venueId).toBe('new-venue-789');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'venues',
-        data: expect.objectContaining({
+        data: {
           name: 'New Venue',
-          legacyId: 99,
-          migratedAt: expect.any(String),
-        }),
+          slug: 'new-venue',
+        },
       });
+    });
+  });
+
+  describe('findDJByDisplayName', () => {
+    it('should return DJ ID when found by exact match', async () => {
+      const { findDJByDisplayName } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'dj-123' }] });
+
+      const djId = await findDJByDisplayName(mockPayload as Payload, 'Shana');
+
+      expect(djId).toBe('dj-123');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'djs',
+        where: {
+          displayName: {
+            equals: 'Shana',
+          },
+        },
+        limit: 1,
+      });
+    });
+
+    it('should return DJ ID when found by contains match', async () => {
+      const { findDJByDisplayName } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // Exact match fails
+        .mockResolvedValueOnce({ docs: [{ id: 'dj-456' }] }); // Contains match succeeds
+
+      const djId = await findDJByDisplayName(mockPayload as Payload, 'Shana');
+
+      expect(djId).toBe('dj-456');
+    });
+
+    it('should return null when DJ not found', async () => {
+      const { findDJByDisplayName } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+
+      const djId = await findDJByDisplayName(mockPayload as Payload, 'Unknown DJ');
+
+      expect(djId).toBeNull();
+    });
+
+    it('should return null for empty name', async () => {
+      const { findDJByDisplayName } = await import('./payloadClient');
+
+      const djId = await findDJByDisplayName(mockPayload as Payload, '');
+
+      expect(djId).toBeNull();
+      expect(mockPayload.find).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('findOrCreateSong', () => {
+    it('should return existing song ID when found', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-123' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Test Song', 42);
+
+      expect(songId).toBe('song-123');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'songs',
+        where: {
+          title: { equals: 'Test Song' },
+          artist: { equals: 42 },
+        },
+        limit: 1,
+      });
+    });
+
+    it('should create new song when not found', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-789' });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'New Song', 42);
+
+      expect(songId).toBe('new-song-789');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'songs',
+        data: {
+          title: 'New Song',
+          slug: 'new-song',
+          artist: 42,
+        },
+      });
+    });
+
+    it('should create song without artist if artistId not provided', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-999' });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Orphan Song');
+
+      expect(songId).toBe('new-song-999');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'songs',
+        data: {
+          title: 'Orphan Song',
+          slug: 'orphan-song',
+        },
+      });
+    });
+
+    it('should throw error for empty title', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      await expect(
+        findOrCreateSong(mockPayload as Payload, ''),
+      ).rejects.toThrow('Song title is required');
+    });
+  });
+
+  describe('parseOnDemandHeadline', () => {
+    it('should extract DJ names from "with" pattern', async () => {
+      const { parseOnDemandHeadline } = await import('./payloadClient');
+
+      const result = parseOnDemandHeadline('Aussie Unlocked with Shana');
+
+      expect(result.djNames).toContain('Shana');
+    });
+
+    it('should extract artist names from "featuring" pattern', async () => {
+      const { parseOnDemandHeadline } = await import('./payloadClient');
+
+      const result = parseOnDemandHeadline('Live Session featuring The Strokes');
+
+      expect(result.artistNames).toContain('The Strokes');
+    });
+
+    it('should handle headlines with no special patterns', async () => {
+      const { parseOnDemandHeadline } = await import('./payloadClient');
+
+      const result = parseOnDemandHeadline('Simple Show Title');
+
+      expect(result.djNames).toHaveLength(0);
+      expect(result.artistNames).toHaveLength(0);
+      expect(result.cleanTitle).toBe('Simple Show Title');
     });
   });
 });

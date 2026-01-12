@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { EmbedFeature } from '../features/embed';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -81,7 +82,12 @@ export const Posts: CollectionConfig = {
     {
       name: 'content',
       type: 'richText',
-      editor: lexicalEditor(),
+      editor: lexicalEditor({
+        features: ({ defaultFeatures }) => [
+          ...defaultFeatures,
+          EmbedFeature(),
+        ],
+      }),
       required: true,
       admin: {
         description: 'Post content (unified Story + CustomText from legacy)',

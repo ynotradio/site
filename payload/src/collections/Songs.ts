@@ -6,7 +6,7 @@ export const Songs: CollectionConfig = {
   slug: 'songs',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'artist', 'releaseDate', 'updatedAt'],
+    defaultColumns: ['displayName', 'artist', 'releaseDate', 'updatedAt'],
     group: 'Music',
   },
   access: {
@@ -16,6 +16,46 @@ export const Songs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   fields: [
+    {
+      name: 'displayName',
+      type: 'text',
+      virtual: true,
+      admin: {
+        hidden: true,
+      },
+      hooks: {
+        afterRead: [
+          async ({ data, req }) => {
+            if (!data) return 'Untitled';
+
+            let artistName = '';
+            if (data.artist) {
+              // Artist may be populated or just an ID
+              if (typeof data.artist === 'object' && data.artist.name) {
+                artistName = data.artist.name;
+              } else if (data.artist) {
+                try {
+                  const artist = await req.payload.findByID({
+                    collection: 'artists',
+                    id: typeof data.artist === 'object' ? data.artist.id : data.artist,
+                  });
+                  if (artist) {
+                    artistName = artist.name;
+                  }
+                } catch {
+                  // Silently handle errors
+                }
+              }
+            }
+
+            if (artistName && data.title) {
+              return `${artistName} - ${data.title}`;
+            }
+            return data.title || `Song #${data.id || 'New'}`;
+          },
+        ],
+      },
+    },
     {
       name: 'title',
       type: 'text',

@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import type { Payload } from 'payload';
+import { findDJByDisplayName } from './shared/payloadClient';
 
 // Mock modules
 vi.mock('./database', () => ({
@@ -12,6 +13,7 @@ vi.mock('./database', () => ({
 
 vi.mock('./shared/payloadClient', () => ({
   getPayloadClient: vi.fn(),
+  findDJByDisplayName: vi.fn(),
 }));
 
 vi.mock('./shared/logger', () => ({
@@ -25,6 +27,8 @@ vi.mock('./shared/logger', () => ({
   logSummary: vi.fn(),
 }));
 
+const mockFindDJByDisplayName = findDJByDisplayName as Mock;
+
 describe('importSchedule', () => {
   let mockPayload: Partial<Payload>;
 
@@ -35,6 +39,9 @@ describe('importSchedule', () => {
       find: vi.fn(),
       create: vi.fn(),
     };
+
+    // Reset the mock
+    mockFindDJByDisplayName.mockReset();
   });
 
   describe('parseArgs', () => {
@@ -65,6 +72,63 @@ describe('importSchedule', () => {
     });
   });
 
+  describe('parseHostString', () => {
+    it('should extract show name and DJ name from "w/" pattern', async () => {
+      const { parseHostString } = await import('./importSchedule');
+
+      const result = parseHostString('<i>Transmission</i> w/ Rob Huff');
+
+      expect(result).toEqual({
+        showName: 'Transmission',
+        djName: 'Rob Huff',
+      });
+    });
+
+    it('should extract show name and DJ name from "with" pattern', async () => {
+      const { parseHostString } = await import('./importSchedule');
+
+      const result = parseHostString('<i>Morning Show</i> with John Smith');
+
+      expect(result).toEqual({
+        showName: 'Morning Show',
+        djName: 'John Smith',
+      });
+    });
+
+    it('should return show name only when formatted but no DJ pattern', async () => {
+      const { parseHostString } = await import('./importSchedule');
+
+      const result = parseHostString('<i>Y-Not on Shuffle</i>');
+
+      expect(result).toEqual({
+        showName: 'Y-Not on Shuffle',
+        djName: undefined,
+      });
+    });
+
+    it('should return DJ name only when no formatting and no pattern', async () => {
+      const { parseHostString } = await import('./importSchedule');
+
+      const result = parseHostString('John Q.');
+
+      expect(result).toEqual({
+        showName: undefined,
+        djName: 'John Q.',
+      });
+    });
+
+    it('should handle bold formatting', async () => {
+      const { parseHostString } = await import('./importSchedule');
+
+      const result = parseHostString('<b>Teen Jesus & The Jean Teasers</b>');
+
+      expect(result).toEqual({
+        showName: 'Teen Jesus & The Jean Teasers',
+        djName: undefined,
+      });
+    });
+  });
+
   describe('importSchedule', () => {
     it('should skip already imported show', async () => {
       const { importSchedule } = await import('./importSchedule');
@@ -90,14 +154,14 @@ describe('importSchedule', () => {
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
-    it('should import new show with DJ link', async () => {
+    it('should import new show with DJ link when DJ found by display name', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      // Mock: show doesn't exist, person exists, DJ exists
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // Show check
-        .mockResolvedValueOnce({ docs: [{ id: 'person-id-123' }] }) // Person lookup
-        .mockResolvedValueOnce({ docs: [{ id: 'dj-id-456' }] }); // DJ lookup
+      // Mock: show doesn't exist
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // Show check
+
+      // Mock: DJ found by display name
+      mockFindDJByDisplayName.mockResolvedValueOnce(456);
 
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-789' });
 
@@ -107,7 +171,7 @@ describe('importSchedule', () => {
         day: 'Monday',
         start_time: '09:00:00',
         end_time: '12:00:00',
-        host: 'John Doe',
+        host: '<i>Transmission</i> w/ Rob Huff',
         note: 'Morning show',
         deleted: 'n',
       };
@@ -115,14 +179,15 @@ describe('importSchedule', () => {
       const result = await importSchedule(mockPayload as Payload, schedule);
 
       expect(result).toBe(true);
+      expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'Rob Huff');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: {
           date: '2024-01-15',
           startTime: '09:00:00',
           endTime: '12:00:00',
-          host: 'dj-id-456',
-          name: undefined,
+          host: 456,
+          name: 'Transmission',
           note: {
             root: {
               type: 'root',
@@ -158,13 +223,14 @@ describe('importSchedule', () => {
       });
     });
 
-    it('should import show without DJ link when DJ not found', async () => {
+    it('should import show with DJ name in show name when DJ not found', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      // Mock: show doesn't exist, person not found
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // Show check
-        .mockResolvedValueOnce({ docs: [] }); // Person lookup (not found)
+      // Mock: show doesn't exist
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // Show check
+
+      // Mock: DJ not found
+      mockFindDJByDisplayName.mockResolvedValueOnce(null);
 
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-789' });
 
@@ -174,7 +240,7 @@ describe('importSchedule', () => {
         day: 'Monday',
         start_time: '09:00:00',
         end_time: '12:00:00',
-        host: 'Unknown DJ',
+        host: '<i>Test Show</i> w/ Unknown DJ',
         note: '',
         deleted: 'n',
       };
@@ -182,6 +248,7 @@ describe('importSchedule', () => {
       const result = await importSchedule(mockPayload as Payload, schedule);
 
       expect(result).toBe(true);
+      expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'Unknown DJ');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: {
@@ -189,7 +256,7 @@ describe('importSchedule', () => {
           startTime: '09:00:00',
           endTime: '12:00:00',
           host: undefined,
-          name: 'Unknown DJ',
+          name: 'Test Show w/ Unknown DJ',
           note: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
@@ -229,10 +296,10 @@ describe('importSchedule', () => {
     it('should handle empty note', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] })
-        .mockResolvedValueOnce({ docs: [{ id: 'person-id' }] })
-        .mockResolvedValueOnce({ docs: [{ id: 'dj-id' }] });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // Show check
+
+      // Mock: DJ found
+      mockFindDJByDisplayName.mockResolvedValueOnce(123);
 
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-789' });
 
@@ -242,7 +309,7 @@ describe('importSchedule', () => {
         day: 'Tuesday',
         start_time: '14:00:00',
         end_time: '17:00:00',
-        host: 'Jane Smith',
+        host: '<i>Afternoon Show</i> w/ Jane Smith',
         note: '',
         deleted: 'n',
       };
@@ -291,9 +358,11 @@ describe('importSchedule', () => {
     it('should convert note field to Lexical format', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // showExists
-        .mockResolvedValueOnce({ docs: [{ id: 'dj-123' }] }); // findDJByName - person lookup
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // showExists
+
+      // Mock: DJ found
+      mockFindDJByDisplayName.mockResolvedValueOnce(123);
+
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
 
       const schedule = {
@@ -302,7 +371,7 @@ describe('importSchedule', () => {
         day: 'Monday',
         start_time: '10:00:00',
         end_time: '14:00:00',
-        host: 'Test Host',
+        host: '<i>Test Show</i> w/ Test Host',
         note: 'Win Dinosaur Jr. Tickets',
         deleted: 'n',
       };
@@ -349,9 +418,11 @@ describe('importSchedule', () => {
     it('should handle empty note field', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // showExists
-        .mockResolvedValueOnce({ docs: [{ id: 'dj-123' }] }); // findDJByName - person lookup
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // showExists
+
+      // Mock: DJ found
+      mockFindDJByDisplayName.mockResolvedValueOnce(123);
+
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
 
       const schedule = {
@@ -360,7 +431,7 @@ describe('importSchedule', () => {
         day: 'Monday',
         start_time: '10:00:00',
         end_time: '14:00:00',
-        host: 'Test Host',
+        host: '<i>Test Show</i> w/ Test Host',
         note: '',
         deleted: 'n',
       };
@@ -376,12 +447,10 @@ describe('importSchedule', () => {
       });
     });
 
-    it('should strip HTML from show name when DJ not found', async () => {
+    it('should use show name only when no DJ pattern found and has HTML formatting', async () => {
       const { importSchedule } = await import('./importSchedule');
 
-      (mockPayload.find as Mock)
-        .mockResolvedValueOnce({ docs: [] }) // showExists
-        .mockResolvedValueOnce({ docs: [] }); // findDJByName - no person found
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // showExists
       (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
 
       const schedule = {
@@ -390,7 +459,7 @@ describe('importSchedule', () => {
         day: 'Monday',
         start_time: '10:00:00',
         end_time: '14:00:00',
-        host: '<b>Special</b> Guest Host',
+        host: '<i>Y-Not on Shuffle</i>',
         note: '',
         deleted: 'n',
       };
@@ -398,11 +467,46 @@ describe('importSchedule', () => {
       const result = await importSchedule(mockPayload as Payload, schedule);
 
       expect(result).toBe(true);
+      expect(mockFindDJByDisplayName).not.toHaveBeenCalled();
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: expect.objectContaining({
-          name: 'Special Guest Host',
+          name: 'Y-Not on Shuffle',
           host: undefined,
+        }),
+      });
+    });
+
+    it('should try to find DJ when host has no HTML formatting', async () => {
+      const { importSchedule } = await import('./importSchedule');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] }); // showExists
+
+      // Mock: DJ found
+      mockFindDJByDisplayName.mockResolvedValueOnce(456);
+
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'show-id-123' });
+
+      const schedule = {
+        id: 1,
+        date: '2024-01-15',
+        day: 'Monday',
+        start_time: '10:00:00',
+        end_time: '14:00:00',
+        host: 'John Q.',
+        note: '',
+        deleted: 'n',
+      };
+
+      const result = await importSchedule(mockPayload as Payload, schedule);
+
+      expect(result).toBe(true);
+      expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'John Q.');
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'shows',
+        data: expect.objectContaining({
+          name: undefined,
+          host: 456,
         }),
       });
     });

@@ -86,6 +86,9 @@ describe('mediaImporter', () => {
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
       mockAxios.get.mockResolvedValueOnce({
         data: mockImageBuffer,
+        headers: {
+          'content-type': 'image/jpeg',
+        },
       });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'new-media-456',
@@ -134,7 +137,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
       (mockPayload.create as Mock).mockRejectedValueOnce(new Error('Upload failed'));
 
       const result = await importImageFromUrl(
@@ -151,7 +157,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47]); // PNG magic numbers
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/png' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'gdrive-media',
         url: 'https://cloudinary.com/gdrive.png',
@@ -174,7 +183,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'relative-media',
         url: 'https://cloudinary.com/relative.jpg',
@@ -197,7 +209,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/png' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'png-media',
         url: 'https://cloudinary.com/test.png',
@@ -222,7 +237,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/gif' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'gif-media',
         url: 'https://cloudinary.com/test.gif',
@@ -251,7 +269,10 @@ describe('mediaImporter', () => {
       ]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/webp' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'webp-media',
         url: 'https://cloudinary.com/test.webp',
@@ -276,7 +297,10 @@ describe('mediaImporter', () => {
       const mockImageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({ data: mockImageBuffer });
+      mockAxios.get.mockResolvedValueOnce({
+        data: mockImageBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
       (mockPayload.create as Mock).mockResolvedValueOnce({
         id: 'backslash-media',
         url: 'https://cloudinary.com/test.jpg',
@@ -292,6 +316,78 @@ describe('mediaImporter', () => {
         'https://www.ynotradio.net/images/test.jpg',
         expect.any(Object),
       );
+    });
+
+    it('should skip URLs with invalid extensions', async () => {
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/error.php',
+        metadata,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to download image');
+      expect(mockAxios.get).not.toHaveBeenCalled();
+    });
+
+    it('should reject non-image content-type', async () => {
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: Buffer.from('<html>Not Found</html>'),
+        headers: { 'content-type': 'text/html' },
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/test.jpg',
+        metadata,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to download image');
+    });
+
+    it('should reject buffers larger than 8MB', async () => {
+      const largeBuffer = Buffer.alloc(9 * 1024 * 1024);
+      largeBuffer[0] = 0xff;
+      largeBuffer[1] = 0xd8;
+      largeBuffer[2] = 0xff;
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: largeBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/huge.jpg',
+        metadata,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to download image');
+    });
+
+    it('should reject buffers without valid image magic numbers', async () => {
+      const invalidBuffer = Buffer.from('not an image file');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: invalidBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/fake.jpg',
+        metadata,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to download image');
     });
   });
 

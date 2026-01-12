@@ -235,10 +235,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importAds(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importAds(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export { importAds, parseArgs, importAd };

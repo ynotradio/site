@@ -152,7 +152,7 @@ async function importMusic(payload: Payload, music: Music): Promise<boolean> {
     }
 
     // Find or create artist
-    const artistId = await findOrCreateArtist(payload, music.artist, null);
+    const artistId = await findOrCreateArtist(payload, music.artist);
 
     // Generate slug from song title
     const slug = generateSlug(`${music.artist} ${music.song}`);
@@ -263,10 +263,12 @@ function isMainModule(): boolean {
 // Run the import when executed directly
 if (isMainModule()) {
   const options = parseArgs();
-  importAllMusic(options).catch((error) => {
-    console.error('Fatal error:', error);
-    process.exit(1);
-  });
+  importAllMusic(options)
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error('Fatal error:', error);
+      process.exit(1);
+    });
 }
 
 export {

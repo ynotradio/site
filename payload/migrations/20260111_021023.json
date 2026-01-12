@@ -3682,9 +3682,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "image": {
-          "name": "image",
-          "type": "varchar",
+        "image_id": {
+          "name": "image_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -3694,15 +3694,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "note": {
-          "name": "note",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "songs": {
-          "name": "songs",
-          "type": "varchar",
+        "description": {
+          "name": "description",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -3759,6 +3753,21 @@
           "columns": [
             {
               "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_image_idx": {
+          "name": "ondemand_image_idx",
+          "columns": [
+            {
+              "expression": "image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -3845,7 +3854,220 @@
           "with": {}
         }
       },
-      "foreignKeys": {},
+      "foreignKeys": {
+        "ondemand_image_id_media_id_fk": {
+          "name": "ondemand_image_id_media_id_fk",
+          "tableFrom": "ondemand",
+          "tableTo": "media",
+          "columnsFrom": [
+            "image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ondemand_rels": {
+      "name": "ondemand_rels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "djs_id": {
+          "name": "djs_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "artists_id": {
+          "name": "artists_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "songs_id": {
+          "name": "songs_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ondemand_rels_order_idx": {
+          "name": "ondemand_rels_order_idx",
+          "columns": [
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_rels_parent_idx": {
+          "name": "ondemand_rels_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_rels_path_idx": {
+          "name": "ondemand_rels_path_idx",
+          "columns": [
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_rels_djs_id_idx": {
+          "name": "ondemand_rels_djs_id_idx",
+          "columns": [
+            {
+              "expression": "djs_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_rels_artists_id_idx": {
+          "name": "ondemand_rels_artists_id_idx",
+          "columns": [
+            {
+              "expression": "artists_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "ondemand_rels_songs_id_idx": {
+          "name": "ondemand_rels_songs_id_idx",
+          "columns": [
+            {
+              "expression": "songs_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ondemand_rels_parent_fk": {
+          "name": "ondemand_rels_parent_fk",
+          "tableFrom": "ondemand_rels",
+          "tableTo": "ondemand",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ondemand_rels_djs_fk": {
+          "name": "ondemand_rels_djs_fk",
+          "tableFrom": "ondemand_rels",
+          "tableTo": "djs",
+          "columnsFrom": [
+            "djs_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ondemand_rels_artists_fk": {
+          "name": "ondemand_rels_artists_fk",
+          "tableFrom": "ondemand_rels",
+          "tableTo": "artists",
+          "columnsFrom": [
+            "artists_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "ondemand_rels_songs_fk": {
+          "name": "ondemand_rels_songs_fk",
+          "tableFrom": "ondemand_rels",
+          "tableTo": "songs",
+          "columnsFrom": [
+            "songs_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -3874,9 +4096,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "version_image": {
-          "name": "version_image",
-          "type": "varchar",
+        "version_image_id": {
+          "name": "version_image_id",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -3886,15 +4108,9 @@
           "primaryKey": false,
           "notNull": false
         },
-        "version_note": {
-          "name": "version_note",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "version_songs": {
-          "name": "version_songs",
-          "type": "varchar",
+        "version_description": {
+          "name": "version_description",
+          "type": "jsonb",
           "primaryKey": false,
           "notNull": false
         },
@@ -3984,6 +4200,21 @@
           "columns": [
             {
               "expression": "version_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_version_version_image_idx": {
+          "name": "_ondemand_v_version_version_image_idx",
+          "columns": [
+            {
+              "expression": "version_image_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -4127,6 +4358,218 @@
             "id"
           ],
           "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "_ondemand_v_version_image_id_media_id_fk": {
+          "name": "_ondemand_v_version_image_id_media_id_fk",
+          "tableFrom": "_ondemand_v",
+          "tableTo": "media",
+          "columnsFrom": [
+            "version_image_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public._ondemand_v_rels": {
+      "name": "_ondemand_v_rels",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "path": {
+          "name": "path",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "djs_id": {
+          "name": "djs_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "artists_id": {
+          "name": "artists_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "songs_id": {
+          "name": "songs_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "_ondemand_v_rels_order_idx": {
+          "name": "_ondemand_v_rels_order_idx",
+          "columns": [
+            {
+              "expression": "order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_rels_parent_idx": {
+          "name": "_ondemand_v_rels_parent_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_rels_path_idx": {
+          "name": "_ondemand_v_rels_path_idx",
+          "columns": [
+            {
+              "expression": "path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_rels_djs_id_idx": {
+          "name": "_ondemand_v_rels_djs_id_idx",
+          "columns": [
+            {
+              "expression": "djs_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_rels_artists_id_idx": {
+          "name": "_ondemand_v_rels_artists_id_idx",
+          "columns": [
+            {
+              "expression": "artists_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "_ondemand_v_rels_songs_id_idx": {
+          "name": "_ondemand_v_rels_songs_id_idx",
+          "columns": [
+            {
+              "expression": "songs_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "_ondemand_v_rels_parent_fk": {
+          "name": "_ondemand_v_rels_parent_fk",
+          "tableFrom": "_ondemand_v_rels",
+          "tableTo": "_ondemand_v",
+          "columnsFrom": [
+            "parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "_ondemand_v_rels_djs_fk": {
+          "name": "_ondemand_v_rels_djs_fk",
+          "tableFrom": "_ondemand_v_rels",
+          "tableTo": "djs",
+          "columnsFrom": [
+            "djs_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "_ondemand_v_rels_artists_fk": {
+          "name": "_ondemand_v_rels_artists_fk",
+          "tableFrom": "_ondemand_v_rels",
+          "tableTo": "artists",
+          "columnsFrom": [
+            "artists_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "_ondemand_v_rels_songs_fk": {
+          "name": "_ondemand_v_rels_songs_fk",
+          "tableFrom": "_ondemand_v_rels",
+          "tableTo": "songs",
+          "columnsFrom": [
+            "songs_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -9151,6 +9594,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "e0e97622-4a5f-4a38-96a6-1f2a8459102c",
+  "id": "953e51c6-3fec-4677-a222-b403c6513ce3",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

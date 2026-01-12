@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
 
 export const OnDemand: CollectionConfig = {
@@ -29,10 +30,10 @@ export const OnDemand: CollectionConfig = {
     },
     {
       name: 'image',
-      type: 'text',
-      required: true,
+      type: 'upload',
+      relationTo: 'media',
       admin: {
-        description: 'URL of the image/thumbnail',
+        description: 'Image/thumbnail for the on-demand content',
       },
     },
     {
@@ -45,25 +46,43 @@ export const OnDemand: CollectionConfig = {
       },
     },
     {
-      name: 'note',
-      type: 'text',
-      required: true,
+      name: 'description',
+      type: 'richText',
+      editor: lexicalEditor(),
       admin: {
         description: 'Description or note about the content',
       },
     },
     {
-      name: 'songs',
-      type: 'text',
-      required: true,
+      name: 'djs',
+      type: 'relationship',
+      relationTo: 'djs',
+      hasMany: true,
       admin: {
-        description: 'List of songs performed',
+        description: 'DJs associated with this on-demand recording',
+      },
+    },
+    {
+      name: 'artists',
+      type: 'relationship',
+      relationTo: 'artists',
+      hasMany: true,
+      admin: {
+        description: 'Artists featured in this on-demand recording',
+      },
+    },
+    {
+      name: 'songs',
+      type: 'relationship',
+      relationTo: 'songs',
+      hasMany: true,
+      admin: {
+        description: 'Songs performed in this on-demand recording',
       },
     },
     {
       name: 'audioUrl',
       type: 'text',
-      required: true,
       admin: {
         description: 'Audio stream identifier (e.g., OpenDrive ID)',
       },

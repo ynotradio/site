@@ -115,7 +115,7 @@ describe('importMusic', () => {
       const result = await importMusic(mockPayload as Payload, music);
 
       expect(result).toBe(true);
-      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National', null);
+      expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National');
       expect(generateSlug).toHaveBeenCalledWith('The National Bloodbuzz Ohio');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
