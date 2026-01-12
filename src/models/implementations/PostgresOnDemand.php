@@ -26,16 +26,17 @@ class PostgresOnDemand implements OnDemand {
     public function getById(int $id): ?array {
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url,
-                COALESCE(source, 'opendrive') as source
-            FROM ondemand
-            WHERE id = :id
+                od.id,
+                od.date,
+                COALESCE(m.url, m.filename, '') as image,
+                od.headline,
+                od.note,
+                od.songs,
+                od.audio_url,
+                COALESCE(od.source, 'opendrive') as source
+            FROM ondemand od
+            LEFT JOIN media m ON od.image_id = m.id
+            WHERE od.id = :id
         ");
         
         $stmt->execute(['id' => $id]);
@@ -72,14 +73,15 @@ class PostgresOnDemand implements OnDemand {
         
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url
-            FROM ondemand
+                od.id,
+                od.date,
+                COALESCE(m.url, m.filename, '') as image,
+                od.headline,
+                od.note,
+                od.songs,
+                od.audio_url
+            FROM ondemand od
+            LEFT JOIN media m ON od.image_id = m.id
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
         ");
@@ -192,16 +194,17 @@ class PostgresOnDemand implements OnDemand {
     public function getAllForAdmin(): array {
         $stmt = $this->db->prepare("
             SELECT 
-                id,
-                date,
-                image,
-                headline,
-                note,
-                songs,
-                audio_url,
-                COALESCE(source, 'opendrive') as source
-            FROM ondemand
-            ORDER BY date DESC
+                od.id,
+                od.date,
+                COALESCE(m.url, m.filename, '') as image,
+                od.headline,
+                od.note,
+                od.songs,
+                od.audio_url,
+                COALESCE(od.source, 'opendrive') as source
+            FROM ondemand od
+            LEFT JOIN media m ON od.image_id = m.id
+            ORDER BY od.date DESC
         ");
         
         $stmt->execute();

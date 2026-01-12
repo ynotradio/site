@@ -2,13 +2,14 @@
 
 return [
     'auth_voting' => true,
-    'use_new_cd_of_the_week' => false,
-    'use_new_ads' => false,
-    'use_postgres_concerts' => false,
-    'use_postgres_ondemand' => false,
-    'use_postgres_deejays' => false,
-    'use_postgres_music' => false,
-    'use_postgres_stories' => false,
-    'use_postgres_cdoftheweek' => false,
-    'use_postgres_schedule' => false
+    'use_new_cd_of_the_week' => true,
+    'use_new_ads' => true,
+    'use_postgres_concerts' => true,
+    'use_postgres_ondemand' => true,
+    'use_postgres_deejays' => true,
+    'use_postgres_music' => true,
+    'use_postgres_stories' => true,
+    'use_postgres_cdoftheweek' => true,
+    'use_postgres_schedule' => true,
+    'use_postgres_customtext' => true
 ];
