@@ -307,7 +307,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 return "<a href=\"$url\">$content</a>";
                 
             case 'text':
-                $text = htmlspecialchars($node['text'] ?? '', ENT_QUOTES, 'UTF-8');
+                $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;
                 
                 // Apply text formatting using defined constants
