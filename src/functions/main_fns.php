@@ -146,11 +146,11 @@ function logoff(){
 
 function active_ad_count(){
   $query = "SELECT count(*) AS total FROM ads WHERE deleted = 'n' AND end_date >= now()";
-  $result = mysqli_query(open_db(), $query);
+  $result = @mysqli_query(open_db(), $query);
 
   if (!$result) {
-    echo "error: ". $query;
-    die('Invalid');
+    // Table doesn't exist or query failed, return 0
+    return 0;
   }
   $info = mysqli_fetch_assoc($result);
 
@@ -158,15 +158,31 @@ function active_ad_count(){
 }
 
 function on_air(){
-  $query = "SELECT host FROM schedule WHERE date = date(now()) AND time(now()) > start_time AND time(now()) < end_time AND deleted='n' ORDER BY start_time DESC LIMIT 1";
-  $result = mysqli_query(open_db(), $query);
-
-  $info = mysqli_fetch_assoc($result);
-
-  $display_name = str_replace("<br>", " ", $info['host']);
-  $display_name = str_replace("<i>", "", $display_name);
-  $display_name = str_replace("</i>", "", $display_name);
- 
-  return substr($display_name, 0, 35);
+  require_once __DIR__ . '/../models/ScheduleFactory.php';
+  require_once __DIR__ . '/../models/FeatureManager.php';
+  
+  // Try to get current on-air DJ from schedule
+  try {
+    $db = open_db();
+    $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
+    
+    // Get today's schedule
+    $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
+    
+    // Find current time slot
+    $currentTime = date('H:i:s');
+    foreach ($todaySchedule as $slot) {
+      if ($currentTime >= $slot['start_time'] && $currentTime < $slot['end_time']) {
+        $display_name = str_replace("<br>", " ", $slot['host']);
+        $display_name = str_replace("<i>", "", $display_name);
+        $display_name = str_replace("</i>", "", $display_name);
+        return substr($display_name, 0, 35);
+      }
+    }
+  } catch (Exception $e) {
+    error_log("Error getting on-air DJ: " . $e->getMessage());
+  }
+  
+  return '';
 }
 ?>
