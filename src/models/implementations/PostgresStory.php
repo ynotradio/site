@@ -33,11 +33,11 @@ class PostgresStory implements Story {
             SELECT 
                 p.id,
                 p.headline,
-                p.start_date,
-                p.end_date,
+                p.\"startDate\" as start_date,
+                p.\"endDate\" as end_date,
                 p.content,
                 p.priority,
-                COALESCE(m.url, p.image_url, '') as pic,
+                COALESCE(m.url, p.\"imageUrl\", '') as pic,
                 '' as pic_url,
                 'n' as deleted
             FROM posts p
@@ -66,18 +66,18 @@ class PostgresStory implements Story {
             SELECT 
                 p.id,
                 p.headline,
-                p.start_date,
-                p.end_date,
+                p.\"startDate\" as start_date,
+                p.\"endDate\" as end_date,
                 p.content,
                 p.priority,
-                COALESCE(m.url, p.image_url, '') as pic,
+                COALESCE(m.url, p.\"imageUrl\", '') as pic,
                 '' as pic_url,
                 'n' as deleted
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
             WHERE p._status = 'published'
-                AND p.start_date <= CURRENT_DATE
-                AND p.end_date >= CURRENT_DATE
+                AND p.\"startDate\" <= CURRENT_DATE
+                AND p.\"endDate\" >= CURRENT_DATE
             ORDER BY p.priority ASC
         ";
         
@@ -188,17 +188,17 @@ class PostgresStory implements Story {
             SELECT 
                 p.id,
                 p.headline,
-                p.start_date,
-                p.end_date,
+                p.\"startDate\" as start_date,
+                p.\"endDate\" as end_date,
                 p.content,
                 p.priority,
-                COALESCE(m.url, p.image_url, '') as pic,
+                COALESCE(m.url, p.\"imageUrl\", '') as pic,
                 '' as pic_url,
                 'n' as deleted
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
             WHERE p._status = 'published'
-                AND p.end_date >= CURRENT_DATE
+                AND p.\"endDate\" >= CURRENT_DATE
             ORDER BY p.priority ASC
         ");
         
