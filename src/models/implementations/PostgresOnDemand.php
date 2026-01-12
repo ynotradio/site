@@ -30,8 +30,8 @@ class PostgresOnDemand implements OnDemand {
                 od.date,
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
-                od.note,
-                od.songs,
+                od.description as note,
+                '' as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
@@ -77,8 +77,8 @@ class PostgresOnDemand implements OnDemand {
                 od.date,
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
-                od.note,
-                od.songs,
+                od.description as note,
+                '' as songs,
                 od.audio_url
             FROM ondemand od
             LEFT JOIN media m ON od.image_id = m.id
@@ -198,8 +198,8 @@ class PostgresOnDemand implements OnDemand {
                 od.date,
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
-                od.note,
-                od.songs,
+                od.description as note,
+                '' as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
