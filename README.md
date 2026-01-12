@@ -224,3 +224,13 @@ See [docs/payload-migration/](docs/payload-migration/) for the migration plannin
 3. Visit [http://localhost:3000/admin](http://localhost:3000/admin) to confirm you can create users, upload media, and run `yarn payload:migrate`.
 
 For production, Netlify will execute `yarn payload:build` using the settings defined in `netlify.toml`. Configure the Neon production connection string, `PAYLOAD_SECRET`, and other secrets inside the Netlify dashboard so the serverless function (`netlify/functions/payload.ts`) can boot against Neon.
+
+### Database Management
+
+To copy one Neon database to another (e.g., production to development for testing):
+
+```bash
+yarn neon-db:copy prod dev
+```
+
+**Note:** This will completely replace the target database. A weekly automated sync from production to development runs every Monday at 2 AM UTC.
