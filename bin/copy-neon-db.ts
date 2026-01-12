@@ -156,19 +156,99 @@ async function dropAllTables(connectionString: string): Promise<void> {
 }
 
 /**
+ * Sanitize connection string for pg_dump/psql compatibility
+ * Removes channel_binding parameter which may not be supported by all clients
+ */
+function sanitizeConnectionString(connectionString: string): string {
+  try {
+    const url = new URL(connectionString);
+    const params = new URLSearchParams(url.search);
+    
+    // Remove channel_binding if present
+    if (params.has('channel_binding')) {
+      params.delete('channel_binding');
+      url.search = params.toString();
+      return url.toString();
+    }
+    
+    return connectionString;
+  } catch {
+    // If URL parsing fails, return original string
+    return connectionString;
+  }
+}
+
+/**
+ * Find PostgreSQL tools in common locations
+ */
+function findPgTools(): { pgDump: string; psql: string } | null {
+  const commonPaths = [
+    '', // Check PATH first
+    '/opt/homebrew/opt/postgresql@17/bin/',
+    '/opt/homebrew/opt/postgresql@16/bin/',
+    '/opt/homebrew/opt/postgresql@15/bin/',
+    '/opt/homebrew/opt/postgresql/bin/',
+    '/usr/local/opt/postgresql@17/bin/',
+    '/usr/local/opt/postgresql@16/bin/',
+    '/usr/local/opt/postgresql/bin/',
+    '/usr/local/bin/',
+    '/usr/bin/',
+  ];
+
+  for (const path of commonPaths) {
+    try {
+      const pgDump = `${path}pg_dump`;
+      const psql = `${path}psql`;
+      
+      execSync(`${pgDump} --version`, { stdio: 'pipe' });
+      execSync(`${psql} --version`, { stdio: 'pipe' });
+      
+      return { pgDump, psql };
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Check if required PostgreSQL tools are available
+ */
+function checkPgTools(): { pgDump: string; psql: string } {
+  const tools = findPgTools();
+  
+  if (!tools) {
+    throw new Error(
+      'PostgreSQL client tools (pg_dump, psql) are not found.\n' +
+      'Please install them first:\n' +
+      '  macOS: brew install postgresql@17 && brew link postgresql@17\n' +
+      '  Ubuntu/Debian: sudo apt-get install postgresql-client\n' +
+      '  Windows: Download from https://www.postgresql.org/download/windows/\n\n' +
+      'If already installed via Homebrew, try linking:\n' +
+      '  brew link postgresql@17 --force'
+    );
+  }
+
+  return tools;
+}
+
+/**
  * Create a database dump using pg_dump
  */
-function createDump(connectionString: string, dumpFile: string): void {
+function createDump(connectionString: string, dumpFile: string, pgDumpPath: string): void {
   console.log('  📦 Creating database dump...');
   
   try {
+    const sanitizedUrl = sanitizeConnectionString(connectionString);
+    
     // Use pg_dump to create a dump file
     // --no-owner: Skip ownership commands
     // --no-acl: Skip access privileges
     // --clean: Add DROP statements before CREATE
     // --if-exists: Use IF EXISTS with DROP statements
     execSync(
-      `pg_dump "${connectionString}" ` +
+      `"${pgDumpPath}" "${sanitizedUrl}" ` +
       `--no-owner --no-acl --clean --if-exists ` +
       `--file="${dumpFile}"`,
       { stdio: 'inherit' }
@@ -183,15 +263,17 @@ function createDump(connectionString: string, dumpFile: string): void {
 /**
  * Restore a database dump using psql
  */
-function restoreDump(connectionString: string, dumpFile: string): void {
+function restoreDump(connectionString: string, dumpFile: string, psqlPath: string): void {
   console.log('  📥 Restoring database dump...');
   
   try {
+    const sanitizedUrl = sanitizeConnectionString(connectionString);
+    
     // Use psql to restore the dump
     // --quiet: Suppress non-error output
     // --no-psqlrc: Don't read startup file
     execSync(
-      `psql "${connectionString}" ` +
+      `"${psqlPath}" "${sanitizedUrl}" ` +
       `--quiet --no-psqlrc ` +
       `--file="${dumpFile}"`,
       { stdio: 'inherit' }
@@ -236,6 +318,11 @@ async function main() {
   }
 
   try {
+    // Check if PostgreSQL tools are available
+    const pgTools = checkPgTools();
+    console.log(`🔧 Using pg_dump: ${pgTools.pgDump}`);
+    console.log(`🔧 Using psql: ${pgTools.psql}\n`);
+    
     // Get database configurations
     const sourceConfig = getDatabaseConfig(sourceEnv);
     const targetConfig = getDatabaseConfig(targetEnv);
@@ -280,7 +367,7 @@ async function main() {
     try {
       // Step 1: Create dump from source
       console.log('Step 1/3: Creating dump from source database');
-      createDump(sourceConfig.url, dumpFile);
+      createDump(sourceConfig.url, dumpFile, pgTools.pgDump);
 
       // Step 2: Drop all tables in target
       console.log('\nStep 2/3: Clearing target database');
@@ -288,7 +375,7 @@ async function main() {
 
       // Step 3: Restore dump to target
       console.log('\nStep 3/3: Restoring dump to target database');
-      restoreDump(targetConfig.url, dumpFile);
+      restoreDump(targetConfig.url, dumpFile, pgTools.psql);
 
       console.log('\n✅ Database copy completed successfully!');
 

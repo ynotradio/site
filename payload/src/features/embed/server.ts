@@ -1,4 +1,5 @@
 import type { FeatureProviderServer } from '@payloadcms/richtext-lexical';
+import type { Block } from 'payload';
 import { BlocksFeature } from '@payloadcms/richtext-lexical';
 
 export type { EmbedType, EmbedInfo } from './utils';
@@ -10,7 +11,7 @@ export {
   extractSoundCloudInfo,
 } from './utils';
 
-export const EmbedBlock = {
+export const EmbedBlock: Block = {
   slug: 'embed',
   labels: { singular: 'Embed', plural: 'Embeds' },
   fields: [
@@ -32,7 +33,7 @@ export const EmbedBlock = {
       },
     },
   ],
-} as const;
+};
 
 export const EmbedFeature = (): FeatureProviderServer<any> => BlocksFeature({
   blocks: [EmbedBlock],
