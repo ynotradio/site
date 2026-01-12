@@ -1,21 +1,21 @@
 #!/usr/bin/env tsx
 /**
  * Copy one Neon PostgreSQL database to another
- * 
+ *
  * This script performs a complete database copy using pg_dump and pg_restore.
  * It's designed to work with Neon databases but will work with any PostgreSQL database.
- * 
+ *
  * Usage:
  *   tsx bin/copy-neon-db.ts <source> <target>
- * 
+ *
  * Where <source> and <target> are one of:
  *   - dev: Development database (NEON_DEV_DATABASE_URL or DATABASE_URI)
  *   - prod: Production database (NEON_PROD_DATABASE_URL)
- * 
+ *
  * Examples:
  *   tsx bin/copy-neon-db.ts dev prod    # Copy development to production
  *   tsx bin/copy-neon-db.ts prod dev    # Copy production to development
- * 
+ *
  * Environment Variables Required:
  *   - NEON_DEV_DATABASE_URL or DATABASE_URI (for dev database)
  *   - NEON_PROD_DATABASE_URL (for prod database)
@@ -56,8 +56,8 @@ function getDatabaseConfig(env: DatabaseEnv): DatabaseConfig {
 
   if (!url) {
     throw new Error(
-      `Database URL not found for ${name}. ` +
-      `Please set ${env === 'dev' ? 'NEON_DEV_DATABASE_URL or DATABASE_URI' : 'NEON_PROD_DATABASE_URL'} in .env.local`
+      `Database URL not found for ${name}. `
+      + `Please set ${env === 'dev' ? 'NEON_DEV_DATABASE_URL or DATABASE_URI' : 'NEON_PROD_DATABASE_URL'} in .env.local`,
     );
   }
 
@@ -122,7 +122,7 @@ async function getTableList(connectionString: string): Promise<string[]> {
         AND table_type = 'BASE TABLE'
       ORDER BY table_name
     `);
-    return result.rows.map(row => row.table_name);
+    return result.rows.map((row) => row.table_name);
   } finally {
     await client.end();
   }
@@ -140,15 +140,15 @@ async function dropAllTables(connectionString: string): Promise<void> {
   try {
     await client.connect();
     console.log('  🗑️  Dropping existing schema...');
-    
+
     // Drop all tables by dropping and recreating the public schema
     await client.query('DROP SCHEMA public CASCADE');
     await client.query('CREATE SCHEMA public');
-    
+
     // Grant permissions (Neon-specific)
     await client.query('GRANT ALL ON SCHEMA public TO neondb_owner');
     await client.query('GRANT ALL ON SCHEMA public TO public');
-    
+
     console.log('  ✅ Schema dropped and recreated');
   } finally {
     await client.end();
@@ -163,14 +163,14 @@ function sanitizeConnectionString(connectionString: string): string {
   try {
     const url = new URL(connectionString);
     const params = new URLSearchParams(url.search);
-    
+
     // Remove channel_binding if present
     if (params.has('channel_binding')) {
       params.delete('channel_binding');
       url.search = params.toString();
       return url.toString();
     }
-    
+
     return connectionString;
   } catch {
     // If URL parsing fails, return original string
@@ -195,17 +195,17 @@ function findPgTools(): { pgDump: string; psql: string } | null {
     '/usr/bin/',
   ];
 
-  for (const path of commonPaths) {
+  for (const binPath of commonPaths) {
     try {
-      const pgDump = `${path}pg_dump`;
-      const psql = `${path}psql`;
-      
+      const pgDump = `${binPath}pg_dump`;
+      const psql = `${binPath}psql`;
+
       execSync(`${pgDump} --version`, { stdio: 'pipe' });
       execSync(`${psql} --version`, { stdio: 'pipe' });
-      
+
       return { pgDump, psql };
     } catch {
-      continue;
+      // Try next path
     }
   }
 
@@ -217,16 +217,16 @@ function findPgTools(): { pgDump: string; psql: string } | null {
  */
 function checkPgTools(): { pgDump: string; psql: string } {
   const tools = findPgTools();
-  
+
   if (!tools) {
     throw new Error(
-      'PostgreSQL client tools (pg_dump, psql) are not found.\n' +
-      'Please install them first:\n' +
-      '  macOS: brew install postgresql@17 && brew link postgresql@17\n' +
-      '  Ubuntu/Debian: sudo apt-get install postgresql-client\n' +
-      '  Windows: Download from https://www.postgresql.org/download/windows/\n\n' +
-      'If already installed via Homebrew, try linking:\n' +
-      '  brew link postgresql@17 --force'
+      'PostgreSQL client tools (pg_dump, psql) are not found.\n'
+      + 'Please install them first:\n'
+      + '  macOS: brew install postgresql@17 && brew link postgresql@17\n'
+      + '  Ubuntu/Debian: sudo apt-get install postgresql-client\n'
+      + '  Windows: Download from https://www.postgresql.org/download/windows/\n\n'
+      + 'If already installed via Homebrew, try linking:\n'
+      + '  brew link postgresql@17 --force',
     );
   }
 
@@ -238,22 +238,22 @@ function checkPgTools(): { pgDump: string; psql: string } {
  */
 function createDump(connectionString: string, dumpFile: string, pgDumpPath: string): void {
   console.log('  📦 Creating database dump...');
-  
+
   try {
     const sanitizedUrl = sanitizeConnectionString(connectionString);
-    
+
     // Use pg_dump to create a dump file
     // --no-owner: Skip ownership commands
     // --no-acl: Skip access privileges
     // --clean: Add DROP statements before CREATE
     // --if-exists: Use IF EXISTS with DROP statements
     execSync(
-      `"${pgDumpPath}" "${sanitizedUrl}" ` +
-      `--no-owner --no-acl --clean --if-exists ` +
-      `--file="${dumpFile}"`,
-      { stdio: 'inherit' }
+      `"${pgDumpPath}" "${sanitizedUrl}" `
+      + '--no-owner --no-acl --clean --if-exists '
+      + `--file="${dumpFile}"`,
+      { stdio: 'inherit' },
     );
-    
+
     console.log('  ✅ Dump created successfully');
   } catch (error: any) {
     throw new Error(`Failed to create dump: ${error.message}`);
@@ -265,20 +265,20 @@ function createDump(connectionString: string, dumpFile: string, pgDumpPath: stri
  */
 function restoreDump(connectionString: string, dumpFile: string, psqlPath: string): void {
   console.log('  📥 Restoring database dump...');
-  
+
   try {
     const sanitizedUrl = sanitizeConnectionString(connectionString);
-    
+
     // Use psql to restore the dump
     // --quiet: Suppress non-error output
     // --no-psqlrc: Don't read startup file
     execSync(
-      `"${psqlPath}" "${sanitizedUrl}" ` +
-      `--quiet --no-psqlrc ` +
-      `--file="${dumpFile}"`,
-      { stdio: 'inherit' }
+      `"${psqlPath}" "${sanitizedUrl}" `
+      + '--quiet --no-psqlrc '
+      + `--file="${dumpFile}"`,
+      { stdio: 'inherit' },
     );
-    
+
     console.log('  ✅ Dump restored successfully');
   } catch (error: any) {
     throw new Error(`Failed to restore dump: ${error.message}`);
@@ -293,7 +293,7 @@ async function main() {
 
   // Parse command line arguments
   const args = process.argv.slice(2);
-  
+
   if (args.length !== 2) {
     console.error('Usage: tsx bin/copy-neon-db.ts <source> <target>');
     console.error('  source/target: dev or prod');
@@ -322,7 +322,7 @@ async function main() {
     const pgTools = checkPgTools();
     console.log(`🔧 Using pg_dump: ${pgTools.pgDump}`);
     console.log(`🔧 Using psql: ${pgTools.psql}\n`);
-    
+
     // Get database configurations
     const sourceConfig = getDatabaseConfig(sourceEnv);
     const targetConfig = getDatabaseConfig(targetEnv);
@@ -334,7 +334,7 @@ async function main() {
     console.log('🔍 Analyzing databases...');
     const sourceTableCount = await getTableCount(sourceConfig.url);
     const targetTableCount = await getTableCount(targetConfig.url);
-    
+
     console.log(`  Source has ${sourceTableCount} tables`);
     console.log(`  Target has ${targetTableCount} tables\n`);
 
@@ -353,7 +353,7 @@ async function main() {
     console.log('\n🚨 THIS ACTION CANNOT BE UNDONE!\n');
 
     const confirmed = await askConfirmation('Are you sure you want to continue? (yes/no): ');
-    
+
     if (!confirmed) {
       console.log('\n❌ Operation cancelled by user.');
       process.exit(0);
@@ -389,7 +389,6 @@ async function main() {
       } else {
         console.log('  ✅ Table count matches source');
       }
-
     } finally {
       // Clean up temporary dump file
       try {
@@ -401,7 +400,6 @@ async function main() {
     }
 
     console.log('\n✨ Done!');
-
   } catch (error: any) {
     console.error('\n❌ Error:', error.message);
     process.exit(1);
