@@ -5,7 +5,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ShowRow } from './components/ShowRow';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
-import type { Show, DateGroup } from './types';
+import type {
+  Show, DateGroup, ShowApiResponse, ShowsApiResult,
+} from './types';
 
 // Helper function to format date for display
 export const formatDate = (dateStr: string): string => {
@@ -62,16 +64,16 @@ export const ShowClonerTool: React.FC = () => {
       if (!response.ok) {
         throw new Error('Failed to fetch shows');
       }
-      const data = await response.json();
+      const data: ShowsApiResult = await response.json();
 
-      const fetchedShows: Show[] = data.docs.map((show: any) => ({
-        id: show.id,
+      const fetchedShows: Show[] = data.docs.map((show: ShowApiResponse) => ({
+        id: String(show.id),
         date: show.date ? show.date.split('T')[0] : '',
         startTime: show.startTime || '',
         endTime: show.endTime || '',
         name: show.name || undefined,
         hostName: show.host?.displayName || undefined,
-        host: show.host,
+        host: show.host ? { id: String(show.host.id), displayName: show.host.displayName } : null,
         note: show.note,
       }));
 
@@ -140,7 +142,9 @@ export const ShowClonerTool: React.FC = () => {
             newShow.host = hostId;
           }
         }
-        // Note: We don't clone the note field as it's rich text and may need special handling
+        // Note: Rich text (Lexical) note field is not cloned because it contains complex
+        // nested node structures with internal IDs that may cause issues if duplicated.
+        // Users can add notes manually to cloned shows if needed.
 
         return fetch('/api/shows', {
           method: 'POST',

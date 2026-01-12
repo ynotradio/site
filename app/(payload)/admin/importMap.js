@@ -26,6 +26,9 @@ import { MusicBrainzArtistField as MusicBrainzArtistField_50489d8f6f9d8ebab0181b
 import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { RadioToolsNavLinks as RadioToolsNavLinks_35d4e33fc5eb5565bf9002df2a9ab166 } from '../../../payload/src/features/shared/RadioToolsNavLinks'
+import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
+import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } from '../../../payload/src/features/show-cloner'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
 
 export const importMap = {
@@ -57,5 +60,8 @@ export const importMap = {
   "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks": RadioToolsNavLinks_35d4e33fc5eb5565bf9002df2a9ab166,
+  "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
+  "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
 }

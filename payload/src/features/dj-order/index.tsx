@@ -20,7 +20,7 @@ import {
 import { SortableItem } from './components/SortableItem';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
-import type { DJ } from './types';
+import type { DJ, DJApiResponse, DJsApiResult } from './types';
 
 // Main component for DJ ordering
 export const DJOrderTool: React.FC = () => {
@@ -45,9 +45,9 @@ export const DJOrderTool: React.FC = () => {
         if (!response.ok) {
           throw new Error('Failed to fetch DJs');
         }
-        const data = await response.json();
-        const fetchedDjs: DJ[] = data.docs.map((dj: any) => ({
-          id: dj.id,
+        const data: DJsApiResult = await response.json();
+        const fetchedDjs: DJ[] = data.docs.map((dj: DJApiResponse) => ({
+          id: String(dj.id),
           displayName: dj.displayName || `DJ #${dj.id}`,
           sortOrder: dj.sortOrder ?? 0,
           onAir: dj.onAir ?? true,
@@ -121,7 +121,7 @@ export const DJOrderTool: React.FC = () => {
         </h1>
         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
           Drag and drop DJs to change their display order on the Deejays page.
-          Changes won&apos;t be saved until you click the &quot;Save Order&quot; button.
+          Changes won't be saved until you click the "Save Order" button.
         </p>
       </div>
 

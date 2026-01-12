@@ -12,3 +12,19 @@ export interface SortableItemProps {
   name: string;
   isActive: boolean;
 }
+
+// API response types
+export interface DJApiResponse {
+  id: string | number;
+  displayName?: string;
+  sortOrder?: number;
+  onAir?: boolean;
+}
+
+export interface DJsApiResult {
+  docs: DJApiResponse[];
+  totalDocs: number;
+  limit: number;
+  totalPages: number;
+  page: number;
+}
