@@ -176,6 +176,12 @@ class PostgresCustomText implements CustomText {
         switch ($type) {
             case 'paragraph':
                 $content = $this->convertLexicalChildren($node);
+                
+                // Check if this paragraph contains a table marker
+                if (strpos($content, '[Table]') === 0) {
+                    return $this->convertTableMarkupToHtml($content);
+                }
+                
                 return "<p>$content</p>\n";
                 
             case 'heading':
@@ -250,6 +256,48 @@ class PostgresCustomText implements CustomText {
         foreach ($node['children'] as $child) {
             $html .= $this->convertLexicalNodeToHtml($child);
         }
+        
+        return $html;
+    }
+
+    /**
+     * Convert [Table] markup to HTML table
+     * Format: [Table] HEADER1 | HEADER2 | HEADER3 Row1Col1 | Row1Col2 | Row1Col3 ...
+     */
+    private function convertTableMarkupToHtml(string $content): string {
+        // Remove [Table] prefix
+        $content = trim(substr($content, 7));
+        
+        // Split by newlines or multiple spaces to get rows
+        $lines = preg_split('/\s{2,}|\n/', $content);
+        if (empty($lines)) {
+            return '';
+        }
+        
+        $html = '<table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse:collapse;">' . "\n";
+        
+        // First line is headers
+        $headers = array_map('trim', explode('|', array_shift($lines)));
+        $html .= '<thead><tr>';
+        foreach ($headers as $header) {
+            $html .= '<th>' . htmlspecialchars($header, ENT_QUOTES, 'UTF-8') . '</th>';
+        }
+        $html .= '</tr></thead>' . "\n";
+        
+        // Remaining lines are data rows
+        $html .= '<tbody>';
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if (empty($line)) continue;
+            
+            $cells = array_map('trim', explode('|', $line));
+            $html .= '<tr>';
+            foreach ($cells as $cell) {
+                $html .= '<td>' . htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') . '</td>';
+            }
+            $html .= '</tr>' . "\n";
+        }
+        $html .= '</tbody></table>' . "\n";
         
         return $html;
     }
