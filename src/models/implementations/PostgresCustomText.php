@@ -140,6 +140,17 @@ class PostgresCustomText implements CustomText {
             $row['html'] = $this->convertLexicalToHtml($row['html']);
         }
         
+        // Special handling for Future Friday page - use image instead of text title and add CSS
+        if (isset($row['permalink']) && $row['permalink'] === 'future-friday') {
+            if (isset($row['title'])) {
+                $row['title'] = '<img src="https://i.imgur.com/1QIvI46.png" width="685">';
+            }
+            
+            // Prepend CSS styling for tables
+            $tableCSS = '<style type="text/css">body table { font-size: small; }</style>' . "\n";
+            $row['html'] = $tableCSS . $row['html'];
+        }
+        
         return $row;
     }
 
@@ -274,30 +285,42 @@ class PostgresCustomText implements CustomText {
             return '';
         }
         
-        $html = '<table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse:collapse;">' . "\n";
+        // Use the same styling as the original MySQL version
+        $html = '<table width="100%" cellspacing="0" cellpadding="0">' . "\n";
+        $html .= '  <colgroup><col width="33%" span="3"></colgroup>' . "\n";
+        $html .= '  <tbody>' . "\n";
         
-        // First line is headers
+        // First line is headers - black background with white text
         $headers = array_map('trim', explode('|', array_shift($lines)));
-        $html .= '<thead><tr>';
+        $html .= '  <tr>' . "\n";
         foreach ($headers as $header) {
-            $html .= '<th>' . htmlspecialchars($header, ENT_QUOTES, 'UTF-8') . '</th>';
+            $escaped = htmlspecialchars($header, ENT_QUOTES, 'UTF-8');
+            $html .= '    <td width="33%" bgcolor="#000000"><font color="#FFFFFF"><strong>' . $escaped . '</strong></font></td>' . "\n";
         }
-        $html .= '</tr></thead>' . "\n";
+        $html .= '  </tr>' . "\n";
         
-        // Remaining lines are data rows
-        $html .= '<tbody>';
+        // Remaining lines are data rows - alternate gray/white
+        $rowIndex = 0;
         foreach ($lines as $line) {
             $line = trim($line);
             if (empty($line)) continue;
             
             $cells = array_map('trim', explode('|', $line));
-            $html .= '<tr>';
+            
+            // Alternate row colors: white, gray (#CCCCCC)
+            $bgcolor = ($rowIndex % 2 === 1) ? ' bgcolor="#CCCCCC"' : '';
+            $html .= '  <tr' . $bgcolor . '>' . "\n";
+            
             foreach ($cells as $cell) {
-                $html .= '<td>' . htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') . '</td>';
+                $escaped = htmlspecialchars($cell, ENT_QUOTES, 'UTF-8');
+                $html .= '    <td valign="top"><p>' . $escaped . '</p></td>' . "\n";
             }
-            $html .= '</tr>' . "\n";
+            $html .= '  </tr>' . "\n";
+            
+            $rowIndex++;
         }
-        $html .= '</tbody></table>' . "\n";
+        $html .= '  </tbody>' . "\n";
+        $html .= '</table>' . "\n";
         
         return $html;
     }
