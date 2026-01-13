@@ -3,13 +3,18 @@ import { hasRole } from '../utils/auth';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
+  labels: {
+    singular: 'Advertisement',
+    plural: 'Advertisements',
+  },
   versions: {
     drafts: true,
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'startDate', 'endDate', 'priority', 'updatedAt'],
+    defaultColumns: ['name', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Marketing',
+    defaultSort: '-startDate',
   },
   access: {
     read: () => true, // Public read access
@@ -54,6 +59,9 @@ export const Ads: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Advertisement image',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

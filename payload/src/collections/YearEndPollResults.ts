@@ -269,6 +269,10 @@ const TextContentBlock: Block = {
  */
 export const YearEndPollResults: CollectionConfig = {
   slug: 'year-end-poll-results',
+  labels: {
+    singular: 'Year End Poll Result',
+    plural: 'Year End Poll Results',
+  },
   versions: {
     drafts: true,
   },
@@ -276,6 +280,7 @@ export const YearEndPollResults: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
+    defaultSort: '-year',
   },
   access: {
     read: () => true, // Public read access

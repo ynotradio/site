@@ -6,6 +6,10 @@ const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  labels: {
+    singular: 'Media File',
+    plural: 'Media Files',
+  },
   access: {
     // Only authenticated users can create/update/delete media
     create: ({ req }) => Boolean(req.user),
@@ -40,7 +44,7 @@ export const Media: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'alt',
-    defaultColumns: ['filename', 'filesize', 'updatedAt'],
+    defaultColumns: ['filename', 'alt', 'filesize', 'updatedAt'],
     group: 'Content',
   },
   fields: [

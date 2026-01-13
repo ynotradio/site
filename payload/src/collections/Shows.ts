@@ -4,10 +4,15 @@ import { hasRole } from '../utils/auth';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
+  labels: {
+    singular: 'Show',
+    plural: 'Shows',
+  },
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
+    defaultSort: '-date',
     components: {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },

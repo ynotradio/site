@@ -4,6 +4,10 @@ import { hasRole } from '../utils/auth';
 
 export const Venues: CollectionConfig = {
   slug: 'venues',
+  labels: {
+    singular: 'Venue',
+    plural: 'Venues',
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'city', 'updatedAt'],
