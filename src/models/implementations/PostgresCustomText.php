@@ -26,13 +26,12 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                title,
+                headline as title,
                 content as html,
                 legacy_id
             FROM posts
-            WHERE type = 'custom_text'
-                AND _status = 'published'
-            ORDER BY title ASC
+            WHERE _status = 'published'
+            ORDER BY headline ASC
         ");
         
         $stmt->execute();
@@ -46,12 +45,11 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                title,
+                headline as title,
                 content as html,
                 legacy_id
             FROM posts
             WHERE id = :id 
-                AND type = 'custom_text'
                 AND _status = 'published'
         ");
         
@@ -70,12 +68,11 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                title,
+                headline as title,
                 content as html,
                 legacy_id
             FROM posts
             WHERE slug = :permalink 
-                AND type = 'custom_text'
                 AND _status = 'published'
         ");
         
@@ -202,6 +199,26 @@ class PostgresCustomText implements CustomText {
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $content = $this->convertLexicalChildren($node);
                 return "<a href=\"$url\">$content</a>";
+                
+            case 'block':
+                // Handle Payload CMS block types (embeds, etc.)
+                $fields = $node['fields'] ?? [];
+                $blockType = $fields['blockType'] ?? '';
+                
+                if ($blockType === 'embed' && !empty($fields['url'])) {
+                    $url = $fields['url'];
+                    $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                    
+                    // Check if it's a MixCloud embed
+                    if (strpos($url, 'mixcloud.com') !== false) {
+                        return "<br><br>\n<iframe width=\"100%\" height=\"60\" src=\"$escapedUrl\" frameborder=\"0\" ></iframe>\n<br><br>\n";
+                    }
+                    
+                    // Generic iframe for other embeds
+                    return "<br><br>\n<iframe src=\"$escapedUrl\" frameborder=\"0\"></iframe>\n<br><br>\n";
+                }
+                
+                return '';
                 
             case 'text':
                 $text = $node['text'] ?? '';
