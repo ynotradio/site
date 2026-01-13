@@ -1,12 +1,12 @@
 'use client';
 
-// Show Cloner Tool - Clone shows from one date to another
+// Show Cloner Tool - Clone shows from a date range to another date range
 import React, { useCallback, useEffect, useState } from 'react';
 import { ShowRow } from './components/ShowRow';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
 import type {
-  Show, DateGroup, ShowApiResponse, ShowsApiResult,
+  Show, DateGroup, ShowApiResponse, ShowsApiResult, NewShowPayload,
 } from './types';
 
 // Helper function to format date for display
@@ -20,10 +20,53 @@ export const formatDate = (dateStr: string): string => {
   });
 };
 
+// Helper function to format date range for display
+export const formatDateRange = (startDate: string, endDate: string): string => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const startStr = start.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+  const endStr = end.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  return `${startStr} - ${endStr}`;
+};
+
 // Helper function to get day name
 export const getDayName = (dateStr: string): string => {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-US', { weekday: 'long' });
+};
+
+// Helper function to format date without weekday (for compact display)
+export const formatDateShort = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+};
+
+// Helper function to calculate the number of days between two dates
+export const getDaysDifference = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = end.getTime() - start.getTime();
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+};
+
+// Helper function to add days to a date
+export const addDays = (dateStr: string, days: number): string => {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
 };
 
 // Helper function to group shows by date
@@ -46,14 +89,22 @@ export const groupShowsByDate = (shows: Show[]): DateGroup[] => {
     }));
 };
 
+// Helper function to get shows within a date range
+export const getShowsInRange = (
+  shows: Show[],
+  startDate: string,
+  endDate: string,
+): Show[] => shows.filter((show) => show.date >= startDate && show.date <= endDate);
+
 // Main component for Show cloning
 export const ShowClonerTool: React.FC = () => {
   const [shows, setShows] = useState<Show[]>([]);
   const [dateGroups, setDateGroups] = useState<DateGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
-  const [sourceDate, setSourceDate] = useState<string>('');
-  const [targetDate, setTargetDate] = useState<string>('');
+  const [sourceStartDate, setSourceStartDate] = useState<string>('');
+  const [sourceEndDate, setSourceEndDate] = useState<string>('');
+  const [targetStartDate, setTargetStartDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -80,11 +131,6 @@ export const ShowClonerTool: React.FC = () => {
       setShows(fetchedShows);
       const groupedDates = groupShowsByDate(fetchedShows);
       setDateGroups(groupedDates);
-
-      // Set default source date to first available date
-      if (groupedDates.length > 0 && !sourceDate) {
-        setSourceDate(groupedDates[0].date);
-      }
     } catch (err) {
       setError('Error loading shows. Please try again.');
       // eslint-disable-next-line no-console
@@ -92,21 +138,32 @@ export const ShowClonerTool: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [sourceDate]);
+  }, []);
 
   useEffect(() => {
     loadShows();
   }, [loadShows]);
 
-  // Handle cloning shows from source date to target date
+  // Handle cloning shows from source date range to target date range
   const handleClone = useCallback(async () => {
-    if (!sourceDate || !targetDate) {
-      setError('Please select both a source date and target date');
+    if (!sourceStartDate || !sourceEndDate || !targetStartDate) {
+      setError('Please select a source date range and target start date');
       return;
     }
 
-    if (sourceDate === targetDate) {
-      setError('Source and target dates cannot be the same');
+    if (sourceStartDate > sourceEndDate) {
+      setError('Source start date must be before or equal to end date');
+      return;
+    }
+
+    // Check for overlapping date ranges
+    const daysDiff = getDaysDifference(sourceStartDate, sourceEndDate);
+    const targetEndDate = addDays(targetStartDate, daysDiff);
+
+    // Check if source and target ranges overlap
+    const rangesOverlap = !(targetEndDate < sourceStartDate || targetStartDate > sourceEndDate);
+    if (rangesOverlap) {
+      setError('Source and target date ranges cannot overlap');
       return;
     }
 
@@ -115,19 +172,23 @@ export const ShowClonerTool: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      // Get shows from source date
-      const sourceShows = shows.filter((show) => show.date === sourceDate);
+      // Get shows from source date range
+      const sourceShows = getShowsInRange(shows, sourceStartDate, sourceEndDate);
 
       if (sourceShows.length === 0) {
-        setError('No shows found on the source date');
+        setError('No shows found in the source date range');
         setCloning(false);
         return;
       }
 
-      // Create new shows for target date
+      // Create new shows for target date range, preserving day offsets
       const createPromises = sourceShows.map((show) => {
-        const newShow: Record<string, any> = {
-          date: targetDate,
+        // Calculate the day offset from source start date
+        const dayOffset = getDaysDifference(sourceStartDate, show.date);
+        const newDate = addDays(targetStartDate, dayOffset);
+
+        const newShow: NewShowPayload = {
+          date: newDate,
           startTime: show.startTime,
           endTime: show.endTime,
         };
@@ -136,10 +197,12 @@ export const ShowClonerTool: React.FC = () => {
           newShow.name = show.name;
         }
         if (show.host) {
-          // Handle both object and string references
+          // Handle both object and string references - Payload expects numeric IDs
           const hostId = typeof show.host === 'object' ? show.host.id : show.host;
           if (hostId) {
-            newShow.host = hostId;
+            // Convert to number if it's a valid numeric value
+            const numericId = Number(hostId);
+            newShow.host = !Number.isNaN(numericId) ? numericId : hostId;
           }
         }
         // Note: Rich text (Lexical) note field is not cloned because it contains complex
@@ -156,7 +219,9 @@ export const ShowClonerTool: React.FC = () => {
       });
 
       await Promise.all(createPromises);
-      setSuccessMessage(`Successfully cloned ${sourceShows.length} show(s) to ${formatDate(targetDate)}`);
+
+      const targetRange = formatDateRange(targetStartDate, targetEndDate);
+      setSuccessMessage(`Successfully cloned ${sourceShows.length} show(s) to ${targetRange}`);
 
       // Reload shows
       setLoading(true);
@@ -169,12 +234,20 @@ export const ShowClonerTool: React.FC = () => {
       setCloning(false);
       setLoading(false);
     }
-  }, [loadShows, shows, sourceDate, targetDate]);
+  }, [loadShows, shows, sourceStartDate, sourceEndDate, targetStartDate]);
 
-  // Get shows for selected source date
-  const selectedDateShows = sourceDate
-    ? dateGroups.find((group) => group.date === sourceDate)?.shows || []
+  // Get shows for selected source date range
+  const selectedRangeShows = sourceStartDate && sourceEndDate
+    ? getShowsInRange(shows, sourceStartDate, sourceEndDate)
     : [];
+
+  // Group the selected shows by date for display
+  const selectedRangeDateGroups = groupShowsByDate(selectedRangeShows);
+
+  // Calculate target end date for display
+  const targetEndDate = sourceStartDate && sourceEndDate && targetStartDate
+    ? addDays(targetStartDate, getDaysDifference(sourceStartDate, sourceEndDate))
+    : '';
 
   if (loading) {
     return <LoadingSpinner />;
@@ -187,8 +260,8 @@ export const ShowClonerTool: React.FC = () => {
           Show Cloner
         </h1>
         <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-          Copy all shows from one date to another. This is useful for creating
-          recurring schedules.
+          Clone shows from a date range to another. Perfect for copying an entire week
+          of programming to a new week.
         </p>
       </div>
 
@@ -228,7 +301,7 @@ export const ShowClonerTool: React.FC = () => {
         <EmptyState message="No shows found. Create some shows first." />
       ) : (
         <>
-          {/* Source date selection */}
+          {/* Source date range selection */}
           <div
             style={{
               padding: '16px',
@@ -238,45 +311,85 @@ export const ShowClonerTool: React.FC = () => {
               backgroundColor: '#fafafa',
             }}
           >
-            <div style={{ marginBottom: '12px' }}>
-              <label
-                htmlFor="source-date"
-                style={{
-                  display: 'block',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  marginBottom: '8px',
-                  color: '#333',
-                }}
-              >
-                Source Date (copy from)
-              </label>
-              <select
-                id="source-date"
-                value={sourceDate}
-                onChange={(e) => {
-                  setSourceDate(e.target.value);
-                  setSuccessMessage(null);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '8px 12px',
-                  fontSize: '14px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  backgroundColor: '#fff',
-                }}
-              >
-                {dateGroups.map((group) => (
-                  <option key={group.date} value={group.date}>
-                    {group.formattedDate} ({group.shows.length} show
-                    {group.shows.length !== 1 ? 's' : ''})
-                  </option>
-                ))}
-              </select>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 600,
+                marginBottom: '12px',
+                color: '#333',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
+              }}
+            >
+              Source Date Range (copy from)
             </div>
 
-            {selectedDateShows.length > 0 && (
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+              <div style={{ flex: 1 }}>
+                <label
+                  htmlFor="source-start-date"
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    marginBottom: '8px',
+                    color: '#555',
+                  }}
+                >
+                  Start Date
+                </label>
+                <input
+                  id="source-start-date"
+                  type="date"
+                  value={sourceStartDate}
+                  onChange={(e) => {
+                    setSourceStartDate(e.target.value);
+                    setSuccessMessage(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#fff',
+                  }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label
+                  htmlFor="source-end-date"
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    marginBottom: '8px',
+                    color: '#555',
+                  }}
+                >
+                  End Date
+                </label>
+                <input
+                  id="source-end-date"
+                  type="date"
+                  value={sourceEndDate}
+                  onChange={(e) => {
+                    setSourceEndDate(e.target.value);
+                    setSuccessMessage(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#fff',
+                  }}
+                />
+              </div>
+            </div>
+
+            {selectedRangeDateGroups.length > 0 && (
               <div>
                 <div
                   style={{
@@ -286,13 +399,54 @@ export const ShowClonerTool: React.FC = () => {
                     color: '#333',
                   }}
                 >
-                  Shows on {formatDate(sourceDate)}:
+                  Shows in selected range ({selectedRangeShows.length} total):
                 </div>
-                <div>
-                  {selectedDateShows.map((show) => (
-                    <ShowRow key={show.id} show={show} />
+                <div
+                  style={{
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '4px',
+                    backgroundColor: '#fff',
+                  }}
+                >
+                  {selectedRangeDateGroups.map((group) => (
+                    <div key={group.date}>
+                      <div
+                        style={{
+                          padding: '8px 12px',
+                          backgroundColor: '#f5f5f5',
+                          borderBottom: '1px solid #e0e0e0',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          color: '#555',
+                        }}
+                      >
+                        {group.dayName}, {formatDateShort(group.date)}
+                        {' '}
+                        ({group.shows.length} show{group.shows.length !== 1 ? 's' : ''})
+                      </div>
+                      <div style={{ padding: '4px 0' }}>
+                        {group.shows.map((show) => (
+                          <ShowRow key={show.id} show={show} />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {sourceStartDate && sourceEndDate && selectedRangeShows.length === 0 && (
+              <div
+                style={{
+                  padding: '12px',
+                  textAlign: 'center',
+                  color: '#666',
+                  fontSize: '14px',
+                }}
+              >
+                No shows found in the selected date range.
               </div>
             )}
           </div>
@@ -307,42 +461,109 @@ export const ShowClonerTool: React.FC = () => {
               backgroundColor: '#fafafa',
             }}
           >
-            <label
-              htmlFor="target-date"
+            <div
               style={{
-                display: 'block',
                 fontSize: '13px',
-                fontWeight: 500,
-                marginBottom: '8px',
+                fontWeight: 600,
+                marginBottom: '12px',
                 color: '#333',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px',
               }}
             >
-              Target Date (copy to)
-            </label>
-            <input
-              id="target-date"
-              type="date"
-              value={targetDate}
-              onChange={(e) => {
-                setTargetDate(e.target.value);
-                setSuccessMessage(null);
-              }}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                fontSize: '14px',
-                borderRadius: '4px',
-                border: '1px solid #ccc',
-                backgroundColor: '#fff',
-              }}
-            />
+              Target Date Range (copy to)
+            </div>
+
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <label
+                  htmlFor="target-start-date"
+                  style={{
+                    display: 'block',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    marginBottom: '8px',
+                    color: '#555',
+                  }}
+                >
+                  Target Start Date
+                </label>
+                <input
+                  id="target-start-date"
+                  type="date"
+                  value={targetStartDate}
+                  onChange={(e) => {
+                    setTargetStartDate(e.target.value);
+                    setSuccessMessage(null);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    backgroundColor: '#fff',
+                  }}
+                />
+              </div>
+              {targetEndDate && (
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 500,
+                      marginBottom: '8px',
+                      color: '#555',
+                    }}
+                  >
+                    Target End Date (calculated)
+                  </div>
+                  <div
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '14px',
+                      borderRadius: '4px',
+                      border: '1px solid #ccc',
+                      backgroundColor: '#f0f0f0',
+                      color: '#666',
+                    }}
+                  >
+                    {formatDate(targetEndDate)}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {targetStartDate && sourceStartDate && sourceEndDate && (
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '10px 12px',
+                  backgroundColor: '#e8f4fd',
+                  borderRadius: '4px',
+                  fontSize: '13px',
+                  color: '#0066cc',
+                }}
+              >
+                Shows will be cloned from{' '}
+                <strong>{formatDateRange(sourceStartDate, sourceEndDate)}</strong>
+                {' '}to{' '}
+                <strong>{formatDateRange(targetStartDate, targetEndDate)}</strong>
+              </div>
+            )}
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <button
               type="button"
               onClick={handleClone}
-              disabled={cloning || !sourceDate || !targetDate}
+              disabled={
+                cloning
+                || !sourceStartDate
+                || !sourceEndDate
+                || !targetStartDate
+                || selectedRangeShows.length === 0
+              }
               style={{
                 padding: '10px 20px',
                 fontSize: '14px',
@@ -351,11 +572,26 @@ export const ShowClonerTool: React.FC = () => {
                 backgroundColor: cloning ? '#999' : '#3182ce',
                 border: 'none',
                 borderRadius: '4px',
-                cursor: cloning || !sourceDate || !targetDate ? 'not-allowed' : 'pointer',
-                opacity: !sourceDate || !targetDate ? 0.5 : 1,
+                cursor:
+                  cloning
+                  || !sourceStartDate
+                  || !sourceEndDate
+                  || !targetStartDate
+                  || selectedRangeShows.length === 0
+                    ? 'not-allowed'
+                    : 'pointer',
+                opacity:
+                  !sourceStartDate
+                  || !sourceEndDate
+                  || !targetStartDate
+                  || selectedRangeShows.length === 0
+                    ? 0.5
+                    : 1,
               }}
             >
-              {cloning ? 'Cloning...' : 'Clone Shows'}
+              {cloning
+                ? 'Cloning...'
+                : `Clone ${selectedRangeShows.length} Show${selectedRangeShows.length !== 1 ? 's' : ''}`}
             </button>
           </div>
         </>

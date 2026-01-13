@@ -46,3 +46,12 @@ export interface ShowsApiResult {
   totalPages: number;
   page: number;
 }
+
+// Payload for creating a new show via API
+export interface NewShowPayload {
+  date: string;
+  startTime: string;
+  endTime: string;
+  name?: string;
+  host?: number | string;
+}

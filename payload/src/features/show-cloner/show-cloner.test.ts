@@ -6,7 +6,16 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { formatDate, getDayName, groupShowsByDate } from './index';
+import {
+  formatDate,
+  formatDateRange,
+  formatDateShort,
+  getDayName,
+  getDaysDifference,
+  addDays,
+  groupShowsByDate,
+  getShowsInRange,
+} from './index';
 import type { Show } from './types';
 
 describe('formatDate', () => {
@@ -21,6 +30,30 @@ describe('formatDate', () => {
     const result = formatDate('2024-12-25');
     expect(result).toContain('2024');
     expect(result).toContain('25');
+  });
+});
+
+describe('formatDateRange', () => {
+  it('should format a date range correctly', () => {
+    const result = formatDateRange('2024-01-15', '2024-01-21');
+    expect(result).toContain('15');
+    expect(result).toContain('21');
+    expect(result).toContain('-');
+  });
+
+  it('should include year only in end date', () => {
+    const result = formatDateRange('2024-01-15', '2024-01-21');
+    expect(result).toContain('2024');
+  });
+});
+
+describe('formatDateShort', () => {
+  it('should format date without weekday', () => {
+    const result = formatDateShort('2024-01-15');
+    expect(result).toContain('15');
+    expect(result).toContain('2024');
+    // Should not contain day name
+    expect(result).not.toContain('Monday');
   });
 });
 
@@ -41,6 +74,80 @@ describe('getDayName', () => {
     // January 14, 2024 was a Sunday
     const result = getDayName('2024-01-14');
     expect(result).toBe('Sunday');
+  });
+});
+
+describe('getDaysDifference', () => {
+  it('should return 0 for the same date', () => {
+    const result = getDaysDifference('2024-01-15', '2024-01-15');
+    expect(result).toBe(0);
+  });
+
+  it('should return positive number for later end date', () => {
+    const result = getDaysDifference('2024-01-15', '2024-01-22');
+    expect(result).toBe(7);
+  });
+
+  it('should return 6 for a week minus one day', () => {
+    const result = getDaysDifference('2024-01-15', '2024-01-21');
+    expect(result).toBe(6);
+  });
+});
+
+describe('addDays', () => {
+  it('should add days to a date', () => {
+    const result = addDays('2024-01-15', 7);
+    expect(result).toBe('2024-01-22');
+  });
+
+  it('should handle month rollover', () => {
+    const result = addDays('2024-01-30', 5);
+    expect(result).toBe('2024-02-04');
+  });
+
+  it('should handle adding 0 days', () => {
+    const result = addDays('2024-01-15', 0);
+    expect(result).toBe('2024-01-15');
+  });
+});
+
+describe('getShowsInRange', () => {
+  const createShow = (overrides: Partial<Show> = {}): Show => ({
+    id: '1',
+    date: '2024-01-15',
+    startTime: '10:00',
+    endTime: '12:00',
+    ...overrides,
+  });
+
+  it('should return empty array when no shows in range', () => {
+    const shows = [
+      createShow({ id: '1', date: '2024-01-10' }),
+      createShow({ id: '2', date: '2024-01-25' }),
+    ];
+    const result = getShowsInRange(shows, '2024-01-15', '2024-01-21');
+    expect(result).toHaveLength(0);
+  });
+
+  it('should return shows within the range', () => {
+    const shows = [
+      createShow({ id: '1', date: '2024-01-15' }),
+      createShow({ id: '2', date: '2024-01-18' }),
+      createShow({ id: '3', date: '2024-01-21' }),
+      createShow({ id: '4', date: '2024-01-25' }),
+    ];
+    const result = getShowsInRange(shows, '2024-01-15', '2024-01-21');
+    expect(result).toHaveLength(3);
+    expect(result.map((s) => s.id)).toEqual(['1', '2', '3']);
+  });
+
+  it('should include boundary dates', () => {
+    const shows = [
+      createShow({ id: '1', date: '2024-01-15' }),
+      createShow({ id: '2', date: '2024-01-21' }),
+    ];
+    const result = getShowsInRange(shows, '2024-01-15', '2024-01-21');
+    expect(result).toHaveLength(2);
   });
 });
 
