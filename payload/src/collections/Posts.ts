@@ -19,9 +19,6 @@ export const Posts: CollectionConfig = {
     listSearchableFields: ['headline', 'slug'],
     defaultSort: '-startDate',
     description: 'Stories appearing on the front page. Use date range to filter currently active posts.',
-    pagination: {
-      defaultLimit: 25,
-    },
   },
   access: {
     read: () => true, // Public read access

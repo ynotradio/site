@@ -3,6 +3,7 @@
 import React from 'react';
 import { useConfig } from '@payloadcms/ui';
 import Link from 'next/link';
+import './CustomDashboard.css';
 
 /**
  * Custom dashboard component that highlights top-level user pages
@@ -35,57 +36,33 @@ export const CustomDashboard: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+    <div className="dashboard-container">
+      <h1 className="dashboard-title">
         Y-Not Radio CMS
       </h1>
-      <p style={{ color: '#666', marginBottom: '2rem' }}>
+      <p className="dashboard-subtitle">
         Welcome to the Y-Not Radio content management system
       </p>
 
       {/* Primary Collections - Large Cards */}
-      <section style={{ marginBottom: '3rem' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>
+      <section className="section">
+        <h2 className="section-title">
           Main Content Areas
         </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-            gap: '1.5rem',
-          }}
-        >
+        <div className="primary-grid">
           {primaryCollections.map((collection) => (
             <Link
               key={collection.slug}
               href={`${baseURL}/collections/${collection.slug}`}
-              style={{
-                display: 'block',
-                padding: '1.5rem',
-                backgroundColor: 'white',
-                border: '2px solid #e0e0e0',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'all 0.2s',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#3b82f6';
-                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#e0e0e0';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className="primary-card"
             >
-              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>
+              <div className="primary-card-icon">
                 {collection.icon}
               </div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+              <h3 className="primary-card-label">
                 {collection.label}
               </h3>
-              <p style={{ fontSize: '0.875rem', color: '#666' }}>
+              <p className="primary-card-description">
                 {collection.description}
               </p>
             </Link>
@@ -95,44 +72,20 @@ export const CustomDashboard: React.FC = () => {
 
       {/* Secondary Collections - Compact List */}
       <section>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '1rem', fontWeight: '600' }}>
+        <h2 className="section-title">
           Supporting Content
         </h2>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-            gap: '1rem',
-          }}
-        >
+        <div className="secondary-grid">
           {secondaryCollections.map((collection) => (
             <Link
               key={collection.slug}
               href={`${baseURL}/collections/${collection.slug}`}
-              style={{
-                display: 'block',
-                padding: '1rem',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '6px',
-                textDecoration: 'none',
-                color: 'inherit',
-                transition: 'all 0.2s',
-                cursor: 'pointer',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.borderColor = '#9ca3af';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f9fafb';
-                e.currentTarget.style.borderColor = '#e5e7eb';
-              }}
+              className="secondary-card"
             >
-              <div style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+              <div className="secondary-card-label">
                 {collection.label}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+              <div className="secondary-card-group">
                 {collection.group}
               </div>
             </Link>
