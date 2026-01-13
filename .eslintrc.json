@@ -2,13 +2,25 @@
   "root": true,
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
   },
   "extends": [
     "airbnb-base",
-    "airbnb-typescript/base"
+    "airbnb-typescript/base",
+    "plugin:react/recommended",
+    "plugin:react/jsx-runtime",
+    "plugin:react-hooks/recommended",
+    "plugin:jsx-a11y/recommended"
   ],
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y"],
   "env": {
     "node": true
   },
@@ -34,9 +46,30 @@
     "import/prefer-default-export": "off",
     "import/no-extraneous-dependencies": ["error", {
       "devDependencies": true
-    }]
+    }],
+    "react/function-component-definition": ["error", {
+      "namedComponents": "arrow-function"
+    }],
+    "react/jsx-props-no-spreading": "off",
+    "react/no-unescaped-entities": "off",
+    "react-hooks/exhaustive-deps": "warn",
+    "max-lines": ["warn", { 
+      "max": 300, 
+      "skipBlankLines": true, 
+      "skipComments": true 
+    }],
+    "complexity": ["warn", 15]
   },
   "overrides": [
+    {
+      "files": ["**/*.tsx"],
+      "env": { 
+        "browser": true 
+      },
+      "rules": {
+        "react/prop-types": "off"
+      }
+    },
     {
       "files": ["**/*.test.ts", "**/*.test.tsx"],
       "rules": {
@@ -55,7 +88,16 @@
         "no-console": "off",
         "no-await-in-loop": "off",
         "no-restricted-syntax": "off",
-        "no-plusplus": "off"
+        "no-plusplus": "off",
+        "max-lines": "off",
+        "complexity": "off"
+      }
+    },
+    {
+      "files": ["payload/src/collections/**/*.ts", "payload/src/components/**/*.tsx"],
+      "rules": {
+        "max-lines": "off",
+        "complexity": "off"
       }
     },
     {
