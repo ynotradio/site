@@ -255,6 +255,25 @@ export const ShowClonerTool: React.FC = () => {
 
   return (
     <div style={{ padding: '24px', maxWidth: '800px' }}>
+      {/* Breadcrumb Navigation */}
+      <nav
+        style={{
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#666',
+        }}
+      >
+        <a
+          href="/admin/collections/shows"
+          style={{
+            color: '#3182ce',
+            textDecoration: 'none',
+          }}
+        >
+          ← Back to Shows
+        </a>
+      </nav>
+
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
           Show Cloner
