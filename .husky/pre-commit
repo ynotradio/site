@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+export PATH="/usr/bin:$PATH"
+yarn lint-staged
