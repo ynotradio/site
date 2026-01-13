@@ -13,6 +13,7 @@ export const People: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
     group: 'People',
+    description: 'People profiles including DJs, reviewers, and other individuals.',
   },
   access: {
     read: () => true, // Public read access

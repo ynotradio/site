@@ -15,6 +15,7 @@ export const CdOfTheWeek: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', 'updatedAt'],
     group: 'Music',
+    description: 'Weekly album reviews featured as CD of the Week.',
     defaultSort: '-date',
   },
   access: {

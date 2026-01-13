@@ -15,6 +15,7 @@ export const DJs: CollectionConfig = {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', 'updatedAt'],
     group: 'Radio',
+    description: 'DJ profiles. Filter by "onAir" to see active DJs.',
     defaultSort: 'sortOrder',
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],

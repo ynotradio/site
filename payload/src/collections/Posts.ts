@@ -17,7 +17,8 @@ export const Posts: CollectionConfig = {
     defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
-    defaultSort: 'startDate',
+    defaultSort: '-startDate',
+    description: 'Stories appearing on the front page. Use date range to filter currently active posts.',
     pagination: {
       defaultLimit: 25,
     },

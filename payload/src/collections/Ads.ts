@@ -14,6 +14,7 @@ export const Ads: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Marketing',
+    description: 'Advertisement and sponsor management.',
     defaultSort: '-startDate',
   },
   access: {

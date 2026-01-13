@@ -14,6 +14,7 @@ export const Concerts: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'date', 'venue', 'featured', 'updatedAt'],
     group: 'Events',
+    description: 'Concert listings. Filter by "featured" to see homepage concerts.',
     defaultSort: '-date',
   },
   access: {

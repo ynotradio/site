@@ -25,6 +25,7 @@ export const Users: CollectionConfig = {
     defaultColumns: ['email', 'role', 'lastLoggedIn', 'updatedAt'],
     useAsTitle: 'email',
     group: 'People',
+    description: 'User accounts and access management.',
   },
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours

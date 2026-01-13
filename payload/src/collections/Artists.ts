@@ -13,6 +13,7 @@ export const Artists: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
     group: 'Music',
+    description: 'Artists and bands in the music catalog.',
   },
   access: {
     read: () => true, // Public read access

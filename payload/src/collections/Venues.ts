@@ -12,6 +12,7 @@ export const Venues: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'city', 'updatedAt'],
     group: 'Events',
+    description: 'Concert venues and locations.',
   },
   access: {
     read: () => true, // Public read access

@@ -46,6 +46,7 @@ export const Media: CollectionConfig = {
     useAsTitle: 'alt',
     defaultColumns: ['filename', 'alt', 'filesize', 'updatedAt'],
     group: 'Content',
+    description: 'Media library for images and files.',
   },
   fields: [
     { name: 'alt', type: 'text', required: true },

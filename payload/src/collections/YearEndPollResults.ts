@@ -280,6 +280,7 @@ export const YearEndPollResults: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
+    description: 'Year-end poll results and staff picks pages.',
     defaultSort: '-year',
   },
   access: {

@@ -12,6 +12,7 @@ export const Songs: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
+    description: 'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
     defaultSort: '-releaseDate',
   },
   access: {
