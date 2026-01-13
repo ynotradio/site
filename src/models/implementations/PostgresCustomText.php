@@ -151,6 +151,16 @@ class PostgresCustomText implements CustomText {
             $row['html'] = $tableCSS . $row['html'];
         }
         
+        // Special handling for Rodney Anonymous page - replace plain text with archive link
+        if (isset($row['permalink']) && $row['permalink'] === 'rodney-anonymous') {
+            // Remove the plain text paragraph and replace with styled link
+            $row['html'] = preg_replace(
+                '/<p>FIND MORE PREVIOUS EPISODES HERE >><\/p>\s*$/s',
+                '<a href="http://rodneyanonymous.com/" target=_blank><b><i>FIND MORE PREVIOUS EPISODES HERE >></i></b></a>' . "\n",
+                $row['html']
+            );
+        }
+        
         return $row;
     }
 
@@ -211,7 +221,8 @@ class PostgresCustomText implements CustomText {
                 return "<li>$content</li>\n";
                 
             case 'link':
-                $rawUrl = $node['url'] ?? '';
+                // Payload stores links with fields.url structure
+                $rawUrl = $node['fields']['url'] ?? $node['url'] ?? '';
                 $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $content = $this->convertLexicalChildren($node);
