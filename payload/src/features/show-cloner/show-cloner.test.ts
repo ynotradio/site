@@ -15,7 +15,7 @@ import {
   addDays,
   groupShowsByDate,
   getShowsInRange,
-} from './index';
+} from './utils';
 import type { Show } from './types';
 
 describe('formatDate', () => {

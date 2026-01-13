@@ -17,6 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { Gutter, useStepNav } from '@payloadcms/ui';
 import { SortableItem } from './components/SortableItem';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
@@ -30,12 +31,27 @@ export const DJOrderTool: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const { setStepNav } = useStepNav();
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
+
+  // Set up step nav breadcrumbs
+  useEffect(() => {
+    setStepNav([
+      {
+        label: 'DJs',
+        url: '/admin/collections/djs',
+      },
+      {
+        label: 'DJ Order',
+      },
+    ]);
+  }, [setStepNav]);
 
   // Load DJs from Payload API
   useEffect(() => {
@@ -110,126 +126,113 @@ export const DJOrderTool: React.FC = () => {
   };
 
   if (loading) {
-    return <LoadingSpinner />;
+    return (
+      <Gutter>
+        <LoadingSpinner />
+      </Gutter>
+    );
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: '800px' }}>
-      {/* Breadcrumb Navigation */}
-      <nav
-        style={{
-          marginBottom: '16px',
-          fontSize: '14px',
-          color: '#666',
-        }}
-      >
-        <a
-          href="/admin/collections/djs"
-          style={{
-            color: '#3182ce',
-            textDecoration: 'none',
-          }}
-        >
-          ← Back to DJs
-        </a>
-      </nav>
-
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-          DJ Order
-        </h1>
-        <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-          Drag and drop DJs to change their display order on the Deejays page.
-          Changes won't be saved until you click the "Save Order" button.
-        </p>
-      </div>
-
-      {error && (
-        <div
-          style={{
-            padding: '12px 16px',
-            marginBottom: '16px',
-            backgroundColor: '#fee',
-            border: '1px solid #fcc',
-            borderRadius: '4px',
-            color: '#c00',
-            fontSize: '14px',
-          }}
-        >
-          {error}
+    <Gutter>
+      <div style={{ maxWidth: '800px', paddingTop: '24px', paddingBottom: '24px' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
+            DJ Order
+          </h1>
+          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+            Drag and drop DJs to change their display order on the Deejays page.
+            Changes won&apos;t be saved until you click the &quot;Save Order&quot; button.
+          </p>
         </div>
-      )}
 
-      {successMessage && (
-        <div
-          style={{
-            padding: '12px 16px',
-            marginBottom: '16px',
-            backgroundColor: '#e6ffed',
-            border: '1px solid #a3d9a5',
-            borderRadius: '4px',
-            color: '#22863a',
-            fontSize: '14px',
-          }}
-        >
-          {successMessage}
-        </div>
-      )}
-
-      <div
-        style={{
-          padding: '16px',
-          borderRadius: '8px',
-          border: '1px solid #ddd',
-          backgroundColor: '#fafafa',
-        }}
-      >
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={djs.map((dj) => dj.id)}
-            strategy={verticalListSortingStrategy}
+        {error && (
+          <div
+            style={{
+              padding: '12px 16px',
+              marginBottom: '16px',
+              backgroundColor: '#fee',
+              border: '1px solid #fcc',
+              borderRadius: '4px',
+              color: '#c00',
+              fontSize: '14px',
+            }}
           >
-            {djs.length === 0 ? (
-              <EmptyState message="No DJs found. Create some DJs first." />
-            ) : (
-              djs.map((dj) => (
-                <SortableItem
-                  key={dj.id}
-                  id={dj.id}
-                  name={dj.displayName}
-                  isActive={dj.onAir}
-                />
-              ))
-            )}
-          </SortableContext>
-        </DndContext>
-      </div>
+            {error}
+          </div>
+        )}
 
-      <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          type="button"
-          onClick={saveOrder}
-          disabled={saving || djs.length === 0}
+        {successMessage && (
+          <div
+            style={{
+              padding: '12px 16px',
+              marginBottom: '16px',
+              backgroundColor: '#e6ffed',
+              border: '1px solid #a3d9a5',
+              borderRadius: '4px',
+              color: '#22863a',
+              fontSize: '14px',
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
+
+        <div
           style={{
-            padding: '10px 20px',
-            fontSize: '14px',
-            fontWeight: 500,
-            color: '#fff',
-            backgroundColor: saving ? '#999' : '#3182ce',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: saving || djs.length === 0 ? 'not-allowed' : 'pointer',
-            opacity: djs.length === 0 ? 0.5 : 1,
+            padding: '16px',
+            borderRadius: '8px',
+            border: '1px solid #ddd',
+            backgroundColor: '#fafafa',
           }}
         >
-          {saving ? 'Saving...' : 'Save Order'}
-        </button>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={djs.map((dj) => dj.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {djs.length === 0 ? (
+                <EmptyState message="No DJs found. Create some DJs first." />
+              ) : (
+                djs.map((dj) => (
+                  <SortableItem
+                    key={dj.id}
+                    id={dj.id}
+                    name={dj.displayName}
+                    isActive={dj.onAir}
+                  />
+                ))
+              )}
+            </SortableContext>
+          </DndContext>
+        </div>
+
+        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            onClick={saveOrder}
+            disabled={saving || djs.length === 0}
+            style={{
+              padding: '10px 20px',
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#fff',
+              backgroundColor: saving ? '#999' : '#3182ce',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: saving || djs.length === 0 ? 'not-allowed' : 'pointer',
+              opacity: djs.length === 0 ? 0.5 : 1,
+            }}
+          >
+            {saving ? 'Saving...' : 'Save Order'}
+          </button>
+        </div>
       </div>
-    </div>
+    </Gutter>
   );
 };
 
