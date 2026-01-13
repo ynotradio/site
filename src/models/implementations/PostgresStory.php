@@ -78,7 +78,7 @@ class PostgresStory implements Story {
             WHERE p._status = 'published'
                 AND p.start_date <= CURRENT_DATE
                 AND p.end_date >= CURRENT_DATE
-            ORDER BY p.priority ASC
+            ORDER BY p.priority ASC, p.id ASC
         ";
         
         if ($amount !== 'all') {
@@ -319,8 +319,11 @@ class PostgresStory implements Story {
                 return "<a href=\"$url\">$content</a>";
                 
             case 'text':
-                $text = htmlspecialchars($node['text'] ?? '', ENT_QUOTES, 'UTF-8');
+                $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;
+                
+                // Don't escape HTML - content was imported with HTML tags as plain text
+                // These should render as actual HTML, not escaped entities
                 
                 // Apply text formatting using defined constants
                 if ($format & self::FORMAT_BOLD) {

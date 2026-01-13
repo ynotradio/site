@@ -51,7 +51,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN records r ON c.record_id = r.id
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
-            WHERE c._status = 'published'
+            WHERE c._status IN ('published', 'draft')
             ORDER BY c.date DESC, c.id DESC
             LIMIT 1
         ");
@@ -139,7 +139,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN records r ON c.record_id = r.id
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
-            WHERE c._status = 'published'
+            WHERE c._status IN ('published', 'draft')
             ORDER BY c.date DESC, c.id DESC
             LIMIT :limit
         ");
@@ -307,7 +307,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 return "<a href=\"$url\">$content</a>";
                 
             case 'text':
-                $text = htmlspecialchars($node['text'] ?? '', ENT_QUOTES, 'UTF-8');
+                $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;
                 
                 // Apply text formatting using defined constants

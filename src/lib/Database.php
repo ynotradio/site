@@ -51,9 +51,9 @@ class Database {
                 $sslMode
             );
             
-            // For old libpq versions without SNI support, add project parameter
+            // For old libpq versions without SNI support, add endpoint parameter
             if ($endpoint) {
-                $dsn .= ";options='project=$endpoint'";
+                $dsn .= ";options=endpoint=$endpoint";
             }
             
             $options = [

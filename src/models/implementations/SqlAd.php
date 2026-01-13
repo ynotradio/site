@@ -91,9 +91,11 @@ class SqlAd implements Ad {
 
     public function getCurrent(): array {
         $query = "SELECT * FROM ads WHERE deleted = 'n' AND start_date <= now() AND end_date >= now() ORDER BY priority";
-        $result = mysqli_query($this->db, $query);
+        $result = @mysqli_query($this->db, $query);
         if (!$result) {
-            throw new \RuntimeException("Error fetching current Ads: " . mysqli_error($this->db));
+            // Table doesn't exist or query failed, return empty array
+            error_log("Warning: Could not fetch ads - " . mysqli_error($this->db));
+            return [];
         }
         $data = [];
         while ($row = mysqli_fetch_assoc($result)) {

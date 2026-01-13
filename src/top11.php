@@ -1,5 +1,10 @@
 <?php
 
+// Start session first, before any output or Auth0 initialization
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 $page_file = "top11.php";
 $page_title = "Top 11 @ 11";
 

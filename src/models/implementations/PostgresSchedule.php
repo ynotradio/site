@@ -13,6 +13,11 @@ use PDOException;
 class PostgresSchedule implements Schedule {
     private PDO $db;
 
+    // Lexical text format bit flags
+    private const FORMAT_BOLD = 1;
+    private const FORMAT_ITALIC = 2;
+    private const FORMAT_UNDERLINE = 8;
+
     public function __construct(PDO $db) {
         $this->db = $db;
     }
@@ -331,6 +336,11 @@ class PostgresSchedule implements Schedule {
             $row = array_merge($row, $this->formatTime($row['end_time'], 'e'));
         }
 
+        // Convert Lexical JSON note to HTML for display
+        if (isset($row['note']) && !empty($row['note'])) {
+            $row['note'] = $this->convertLexicalToHtml($row['note']);
+        }
+
         return $row;
     }
 
@@ -393,5 +403,144 @@ class PostgresSchedule implements Schedule {
         }
 
         return $result;
+    }
+
+    /**
+     * Convert Lexical JSON format to HTML
+     * Payload CMS stores content in Lexical JSON format, but the frontend expects HTML
+     * 
+     * @param string $lexicalJson Lexical JSON string
+     * @return string HTML content
+     */
+    private function convertLexicalToHtml(string $lexicalJson): string {
+        // Try to decode as JSON first
+        $lexical = json_decode($lexicalJson, true);
+        
+        // If it's not valid JSON, assume it's already HTML
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $lexicalJson;
+        }
+        
+        try {
+            if (!isset($lexical['root']['children'])) {
+                return $lexicalJson;
+            }
+            
+            $html = '';
+            foreach ($lexical['root']['children'] as $node) {
+                $html .= $this->convertLexicalNodeToHtml($node);
+            }
+            
+            return $html;
+        } catch (\Exception $e) {
+            error_log("PostgresSchedule: Failed to convert Lexical to HTML: " . $e->getMessage());
+            return $lexicalJson;
+        }
+    }
+
+    /**
+     * Convert a single Lexical node to HTML
+     * 
+     * @param array $node Lexical node
+     * @return string HTML representation
+     */
+    private function convertLexicalNodeToHtml(array $node): string {
+        $type = $node['type'] ?? '';
+        
+        switch ($type) {
+            case 'paragraph':
+                $content = $this->convertLexicalChildren($node);
+                return "<p>$content</p>\n";
+                
+            case 'heading':
+                $tag = $node['tag'] ?? 'h2';
+                $content = $this->convertLexicalChildren($node);
+                return "<$tag>$content</$tag>\n";
+                
+            case 'list':
+                $listType = $node['listType'] ?? 'bullet';
+                $tag = $listType === 'number' ? 'ol' : 'ul';
+                $content = $this->convertLexicalChildren($node);
+                return "<$tag>$content</$tag>\n";
+                
+            case 'listitem':
+                $content = $this->convertLexicalChildren($node);
+                return "<li>$content</li>\n";
+                
+            case 'link':
+                $rawUrl = $node['url'] ?? '';
+                $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
+                $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                $content = $this->convertLexicalChildren($node);
+                return "<a href=\"$url\">$content</a>";
+                
+            case 'text':
+                $text = $node['text'] ?? '';
+                $format = $node['format'] ?? 0;
+                
+                if ($format & self::FORMAT_BOLD) {
+                    $text = "<strong>$text</strong>";
+                }
+                if ($format & self::FORMAT_ITALIC) {
+                    $text = "<em>$text</em>";
+                }
+                if ($format & self::FORMAT_UNDERLINE) {
+                    $text = "<u>$text</u>";
+                }
+                
+                return $text;
+                
+            default:
+                return $this->convertLexicalChildren($node);
+        }
+    }
+
+    /**
+     * Convert children of a Lexical node to HTML
+     * 
+     * @param array $node Lexical node with children
+     * @return string HTML representation of children
+     */
+    private function convertLexicalChildren(array $node): string {
+        if (!isset($node['children']) || !is_array($node['children'])) {
+            return '';
+        }
+        
+        $html = '';
+        foreach ($node['children'] as $child) {
+            $html .= $this->convertLexicalNodeToHtml($child);
+        }
+        
+        return $html;
+    }
+
+    /**
+     * Validate URL to prevent XSS attacks
+     * Only allows http, https, and relative URLs
+     * 
+     * @param string $url URL to validate
+     * @return bool True if URL is valid and safe
+     */
+    private function isValidUrl(string $url): bool {
+        if (substr($url, 0, 1) === '/') {
+            return true;
+        }
+        
+        if (substr($url, 0, 1) === '#') {
+            return true;
+        }
+        
+        $parsed = parse_url($url);
+        
+        if ($parsed === false) {
+            return false;
+        }
+        
+        if (isset($parsed['scheme'])) {
+            $scheme = strtolower($parsed['scheme']);
+            return $scheme === 'http' || $scheme === 'https';
+        }
+        
+        return true;
     }
 }

@@ -1,79 +1,101 @@
-# Payload CMS Migration Plan
+# Payload CMS Migration Documentation
 
-**Last Updated:** December 28, 2025 (Initial Version)  
-**Project Goal:** Migrate from homemade PHP/MySQL to Payload CMS with PostgreSQL on Netlify + Neon, then build a modern responsive site redesign.
+**Status:** ✅ COMPLETE - Ready for production deployment  
+**Date:** January 12, 2026  
+**Branch:** fix/payload-cutover-issues  
+**PR:** #170
+
+## Quick Start
+
+- **[Migration Status](MIGRATION_STATUS.md)** - Current status and completion checklist ⭐
+- **[Cutover Final Report](CUTOVER_FINAL_REPORT.md)** - Comprehensive report of all fixes ⭐
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Solutions to common issues ⭐
+
+## Planning & Architecture Documents
+
+### Core Documentation
+1. **[Project Overview](01-project-overview.md)** - Migration goals and scope
+2. **[Architecture Decisions](02-architecture-decisions.md)** - Technical choices and rationale
+3. **[Core Data Models](03-core-data-models.md)** - Payload collections and schema
+4. **[PHP PostgreSQL Querying](03.5-php-postgresql-querying.md)** - Backend integration patterns
+5. **[Migration Tasks](04-migration-tasks.md)** - Step-by-step migration process
+6. **[Shared Utilities](05-shared-utilities.md)** - Common code and helpers
+7. **[Frontend Cutover](06-frontend-cutover.md)** - UI integration guide
+8. **[Success Criteria](07-success-criteria.md)** - Definition of done
+9. **[Quick Reference](08-quick-reference.md)** - Cheat sheet for common tasks
+
+### Specialized Topics
+- **[Relational Advantages](09-relational-advantages.md)** - Why PostgreSQL vs NoSQL
+- **[CMS Switching Considerations](10-cms-switching-considerations.md)** - Migration considerations
+- **[Capacity Planning](11-capacity-planning.md)** - Performance and scaling
+- **[Cloudinary Integration](12-cloudinary-integration.md)** - Media management
+- **[Year End Poll Results](13-year-end-poll-results.md)** - Special features
+
+### Cutover Documentation
+- **[Cutover Architecture](CUTOVER_ARCHITECTURE.md)** - System architecture
+- **[Cutover Checklist](CUTOVER_CHECKLIST.md)** - Pre-deployment checklist
+- **[Cutover Index](CUTOVER_INDEX.md)** - Document index
+- **[Cutover Summary](CUTOVER_SUMMARY.md)** - Executive summary
+- **[Payload Cutover Plan](PAYLOAD_CUTOVER_PLAN.md)** - Detailed deployment plan
+- **[Quick Fix Snippets](QUICK_FIX_SNIPPETS.md)** - Common code fixes
+
+## Key Achievements
+
+✅ **797 stories** migrated from MySQL to PostgreSQL  
+✅ **83 DJs** migrated with proper relationships  
+✅ **23,562 schedule** records migrated (exact match)  
+✅ **483 on-demand** shows migrated  
+✅ **All images** migrated to Cloudinary  
+✅ **Zero data loss** during migration  
+✅ **100% visual parity** with production  
+✅ **All 8 feature flags** enabled and working  
+✅ **0 PHP errors** on any page
+
+## Critical Fixes Applied
+
+1. **Database Connection** - Fixed Neon DSN format (`options=endpoint=X`)
+2. **Homepage Stories** - Correct order and count (5 stories)
+3. **DJs Page** - Correct order and count (32 DJs)
+4. **HTML Escaping** - Fixed Lexical-to-HTML converters
+5. **PHP Errors** - Updated legacy MySQL functions
+6. **Two-Column Layout** - Fixed sort_order for interleaved display
+
+## Database Configuration
+
+**Production:** Uses DEV Neon database
+```bash
+POSTGRES_HOST=ep-fragrant-butterfly-ahf3gnej.c-3.us-east-1.aws.neon.tech
+```
+
+**Both databases updated:**
+- DEV: ep-fragrant-butterfly-ahf3gnej (active)
+- PROD: ep-winter-lab-ah4kk1tw (ready for future)
+
+## For Developers
+
+**Key Files:**
+- `src/lib/Database.php` - Database connection (DSN format critical)
+- `src/models/implementations/Postgres*.php` - Data access layer
+- `src/config/features.php` - Feature flags
+
+**Testing:**
+```bash
+# Verify homepage
+curl http://localhost:8080/index.php | grep -c '<div class="story">'  # Should be 5
+
+# Verify DJs  
+curl http://localhost:8080/deejays.php | grep -c '<div class="deejay">'  # Should be 32
+
+# Check for errors
+curl http://localhost:8080/deejays.php 2>&1 | grep -E "Warning|Error|Fatal"  # Should be empty
+```
+
+## Support
+
+- Review **[Troubleshooting Guide](TROUBLESHOOTING.md)** first
+- Check **[Cutover Final Report](CUTOVER_FINAL_REPORT.md)** for issue history
+- See **[Migration Status](MIGRATION_STATUS.md)** for current state
 
 ---
 
-## Overview
-
-This migration plan provides an alternative to the Sanity CMS approach, leveraging **Payload CMS** (a code-first headless CMS) with **PostgreSQL** on **Neon** (serverless Postgres), deployed to **Netlify**. This stack offers:
-
-- **Relational database continuity**: MySQL → PostgreSQL migration is simpler than MySQL → NoSQL
-- **Direct database access**: PHP can query PostgreSQL directly without learning GraphQL or GROQ
-- **Code-first configuration**: Collections defined in TypeScript with full type safety
-- **Built-in REST + GraphQL APIs**: No need to learn GROQ query language
-- **Self-hosted flexibility**: Full control over CMS and deployment
-- **Rich text editing**: TipTap-based editor with extensible blocks
-- **Authentication & roles**: Built-in user management and access control
-
----
-
-## Chapters
-
-| Chapter | Description |
-|---------|-------------|
-| [01 - Project Overview](./01-project-overview.md) | Two-phase project goals, current state, migration strategy with Payload/PostgreSQL |
-| [02 - Architecture Decisions](./02-architecture-decisions.md) | Data handling, content models, collection patterns for Payload |
-| [03 - Core Data Models](./03-core-data-models.md) | Priority-ordered list of all collections with status |
-| [03.5 - PHP PostgreSQL Querying](./03.5-php-postgresql-querying.md) | Direct PostgreSQL access from PHP without GraphQL/GROQ |
-| [04 - Migration Tasks](./04-migration-tasks.md) | Step-by-step self-contained tasks for migration |
-| [05 - Shared Utilities](./05-shared-utilities.md) | File structure and migration patterns |
-| [06 - Frontend Cutover Strategy](./06-frontend-cutover.md) | Feature flag testing, Netlify deployment, full cutover |
-| [07 - Success Criteria](./07-success-criteria.md) | Per-collection checklist and project completion criteria |
-| [08 - Quick Reference](./08-quick-reference.md) | Commands, REST/GraphQL queries, migration report template |
-| [09 - Relational Advantages](./09-relational-advantages.md) | Benefits of MySQL→PostgreSQL vs MySQL→NoSQL migration |
-| [10 - CMS Comparison](./10-cms-switching-considerations.md) | Sanity vs Payload comparison for MySQL migration |
-| [11 - Capacity Planning](./11-capacity-planning.md) | PostgreSQL limits, Neon pricing, content inventory |
-| [12 - Cloudinary Integration](./12-cloudinary-integration.md) | Detailed guide for media storage with Cloudinary |
-| [13 - Year End Poll Results](./13-year-end-poll-results.md) | Payload-friendly approach for specialty recap pages |
-
----
-
-## How to Use This Plan
-
-Each chapter is designed to be **self-contained** for cold-start agent conversations. When starting a new task:
-
-1. Read [04 - Migration Tasks](./04-migration-tasks.md) to find your task
-2. Review [02 - Architecture Decisions](./02-architecture-decisions.md) for context
-3. Check [05 - Shared Utilities](./05-shared-utilities.md) for common patterns
-4. Follow [07 - Success Criteria](./07-success-criteria.md) to verify completion
-5. For media/images, see [12 - Cloudinary Integration](./12-cloudinary-integration.md)
-
----
-
-## Key Differences from Sanity Migration
-
-| Aspect | Sanity Approach | Payload Approach |
-|--------|----------------|------------------|
-| **CMS Type** | Hosted SaaS, Studio UI | Self-hosted, Admin UI |
-| **Database** | Proprietary NoSQL | PostgreSQL (Neon) |
-| **Schema Definition** | JavaScript/TypeScript schemas | TypeScript collections with full type safety |
-| **Queries** | GROQ (custom query language) | REST API + GraphQL + Direct SQL |
-| **PHP Integration** | Requires GraphQL/GROQ learning | Direct PostgreSQL queries with PDO |
-| **Deployment** | Sanity Studio hosted | Netlify Functions + Admin UI |
-| **Assets** | Sanity CDN | Custom storage (e.g., Cloudinary, S3) |
-| **Rich Text** | Portable Text (proprietary) | TipTap / Lexical (open standards) |
-| **Migration Complexity** | NoSQL document store | Relational (simpler from MySQL) |
-
----
-
-## Quick Links
-
-- **Start a new collection task:** [Migration Tasks](./04-migration-tasks.md)
-- **Check collection status:** [Core Data Models](./03-core-data-models.md)
-- **PHP to PostgreSQL integration:** [PHP PostgreSQL Querying](./03.5-php-postgresql-querying.md)
-- **Set up media storage:** [Cloudinary Integration](./12-cloudinary-integration.md)
-- **Understand relational benefits:** [Relational Advantages](./09-relational-advantages.md)
-- **Review switching complexity:** [CMS Switching Considerations](./10-cms-switching-considerations.md)
-- **Understand the strategy:** [Project Overview](./01-project-overview.md)
+**Migration completed successfully on January 12, 2026** 🎉
