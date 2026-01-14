@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -32,6 +28,8 @@
   "include": [
     "bin/**/*.ts",
     "test/**/*.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts",
     "src/types/**/*.ts",
     "vitest.config.ts",
     "payload/**/*.ts",
@@ -41,8 +39,5 @@
     "app/**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules",
-    "src/**/*.js"
-  ]
+  "exclude": ["node_modules", "src/**/*.js"]
 }

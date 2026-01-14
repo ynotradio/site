@@ -37,6 +37,8 @@ media/
 .playwright/
 test-results/
 payload/types/
+playwright-report/
+e2e/screenshots/
 
 # Agent helpers temporary directory
 .agent-tmp/
