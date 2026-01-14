@@ -36,6 +36,24 @@ export const useStepNav = () => {
   };
 };
 
+// Mock useConfig hook (for Payload config access)
+export const useConfig = () => {
+  return {
+    config: {
+      admin: {
+        components: {},
+      },
+      collections: [],
+      globals: [],
+      routes: {
+        admin: '/admin',
+        api: '/api',
+      },
+      serverURL: 'http://localhost:3000',
+    },
+  };
+};
+
 // Helper to set mock values (used by stories)
 export const setMockFieldValue = (value: string) => {
   mockFieldValue = value;
