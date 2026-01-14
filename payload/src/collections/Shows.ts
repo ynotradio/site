@@ -8,6 +8,9 @@ export const Shows: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
+    components: {
+      beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
+    },
   },
   access: {
     read: () => true, // Public read access

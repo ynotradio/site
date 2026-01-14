@@ -11,6 +11,9 @@ export const DJs: CollectionConfig = {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'onAir', 'updatedAt'],
     group: 'Radio',
+    components: {
+      beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
+    },
   },
   hooks: {
     beforeChange: [

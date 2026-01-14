@@ -75,6 +75,24 @@ export default buildConfig({
         : false,
     components: {
       beforeDashboard: [],
+      views: {
+        DJOrder: {
+          Component: '/payload/src/features/dj-order#DJOrderTool',
+          path: '/dj-order',
+          exact: true,
+          meta: {
+            title: 'DJ Order',
+          },
+        },
+        ShowCloner: {
+          Component: '/payload/src/features/show-cloner#ShowClonerTool',
+          path: '/show-cloner',
+          exact: true,
+          meta: {
+            title: 'Show Cloner',
+          },
+        },
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
