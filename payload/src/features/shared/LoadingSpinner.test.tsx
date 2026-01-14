@@ -2,6 +2,7 @@
  * Unit tests for LoadingSpinner component
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';

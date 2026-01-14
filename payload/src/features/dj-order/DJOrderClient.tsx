@@ -57,7 +57,7 @@ export const DJOrderClient: React.FC = () => {
   useEffect(() => {
     async function fetchDjs() {
       try {
-        const response = await fetch('/api/djs?limit=100&sort=sortOrder');
+        const response = await fetch('/api/djs?limit=100&sort=sortOrder&where[onAir][equals]=true');
         if (!response.ok) {
           throw new Error('Failed to fetch DJs');
         }
@@ -104,6 +104,7 @@ export const DJOrderClient: React.FC = () => {
 
     try {
       // Update each DJ with its new sortOrder
+      // Include _status and onAir to preserve existing values when drafts are enabled
       const updatePromises = djs.map((dj, index) => fetch(`/api/djs/${dj.id}`, {
         method: 'PATCH',
         headers: {
@@ -111,6 +112,8 @@ export const DJOrderClient: React.FC = () => {
         },
         body: JSON.stringify({
           sortOrder: index,
+          onAir: dj.onAir,
+          _status: 'published',
         }),
       }));
 

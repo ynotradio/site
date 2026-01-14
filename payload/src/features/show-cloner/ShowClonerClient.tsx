@@ -1,6 +1,8 @@
 'use client';
 
+/* eslint-disable max-lines */
 // Show Cloner Tool - Client Component for interactive functionality
+// TODO: Refactor to reduce complexity and split into smaller components
 import React, { useCallback, useEffect, useState } from 'react';
 import { Gutter, useStepNav } from '@payloadcms/ui';
 import { ShowRow } from './components/ShowRow';
@@ -16,18 +18,59 @@ import {
   getShowsInRange,
 } from './utils';
 import type {
-  Show, DateGroup, ShowApiResponse, ShowsApiResult, NewShowPayload,
+  Show,
+  DateGroup,
+  ShowApiResponse,
+  ShowsApiResult,
+  NewShowPayload,
 } from './types';
 
+// Helper function to get the most recent Monday
+const getMostRecentMonday = (date: Date): Date => {
+  const result = new Date(date);
+  const day = result.getDay();
+  const diff = day === 0 ? -6 : 1 - day; // If Sunday, go back 6 days; otherwise go back to Monday
+  result.setDate(result.getDate() + diff);
+  return result;
+};
+
+// Helper function to format date as YYYY-MM-DD
+const formatDateForInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 // Client component for Show cloning
+// eslint-disable-next-line complexity
 export const ShowClonerClient: React.FC = () => {
+  // Calculate default date ranges
+  // Source: Most recent complete week (Mon-Sun that has already ended)
+  // Target: The upcoming Monday (next week)
+  const today = new Date();
+  const currentMonday = getMostRecentMonday(today);
+
+  // Get the Monday of the previous week (the most recent complete week)
+  const lastWeekMonday = new Date(currentMonday);
+  lastWeekMonday.setDate(lastWeekMonday.getDate() - 7);
+
+  const lastWeekSunday = new Date(lastWeekMonday);
+  lastWeekSunday.setDate(lastWeekSunday.getDate() + 6);
+
+  // Target: Next Monday (the week after current)
+  const nextMonday = new Date(currentMonday);
+  nextMonday.setDate(nextMonday.getDate() + 7);
+
   const [shows, setShows] = useState<Show[]>([]);
   const [dateGroups, setDateGroups] = useState<DateGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [cloning, setCloning] = useState(false);
-  const [sourceStartDate, setSourceStartDate] = useState<string>('');
-  const [sourceEndDate, setSourceEndDate] = useState<string>('');
-  const [targetStartDate, setTargetStartDate] = useState<string>('');
+  const [sourceStartDate, setSourceStartDate] = useState<string>(
+    formatDateForInput(lastWeekMonday),
+  );
+  const [sourceEndDate, setSourceEndDate] = useState<string>(formatDateForInput(lastWeekSunday));
+  const [targetStartDate, setTargetStartDate] = useState<string>(formatDateForInput(nextMonday));
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
@@ -49,22 +92,38 @@ export const ShowClonerClient: React.FC = () => {
   // Load shows from Payload API
   const loadShows = useCallback(async () => {
     try {
-      const response = await fetch('/api/shows?limit=1000&sort=date,startTime');
+      // Use limit=0 to get all shows (Payload returns all when limit is 0)
+      const response = await fetch('/api/shows?limit=0&sort=-date,startTime');
       if (!response.ok) {
         throw new Error('Failed to fetch shows');
       }
       const data: ShowsApiResult = await response.json();
 
-      const fetchedShows: Show[] = data.docs.map((show: ShowApiResponse) => ({
-        id: String(show.id),
-        date: show.date ? show.date.split('T')[0] : '',
-        startTime: show.startTime || '',
-        endTime: show.endTime || '',
-        name: show.name || undefined,
-        hostName: show.host?.displayName || undefined,
-        host: show.host ? { id: String(show.host.id), displayName: show.host.displayName } : null,
-        note: show.note,
-      }));
+      const fetchedShows: Show[] = data.docs.map((show: ShowApiResponse) => {
+        // Convert UTC date string to local date in YYYY-MM-DD format
+        // The API returns dates like "2026-02-01T05:00:00.000Z" which represents
+        // Jan 31, 2026 at midnight EST, so we need to parse it properly
+        let localDate = '';
+        if (show.date) {
+          const utcDate = new Date(show.date);
+          // Get the date in the local timezone as YYYY-MM-DD
+          const year = utcDate.getFullYear();
+          const month = String(utcDate.getMonth() + 1).padStart(2, '0');
+          const day = String(utcDate.getDate()).padStart(2, '0');
+          localDate = `${year}-${month}-${day}`;
+        }
+
+        return {
+          id: String(show.id),
+          date: localDate,
+          startTime: show.startTime || '',
+          endTime: show.endTime || '',
+          name: show.name || undefined,
+          hostName: show.host?.displayName || undefined,
+          host: show.host ? { id: String(show.host.id), displayName: show.host.displayName } : null,
+          note: show.note,
+        };
+      });
 
       setShows(fetchedShows);
       const groupedDates = groupShowsByDate(fetchedShows);
@@ -199,12 +258,10 @@ export const ShowClonerClient: React.FC = () => {
     <Gutter>
       <div style={{ maxWidth: '800px', paddingTop: '24px', paddingBottom: '24px' }}>
         <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-            Show Cloner
-          </h1>
+          <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>Show Cloner</h1>
           <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Clone shows from a date range to another. Perfect for copying an entire week
-            of programming to a new week.
+            Clone shows from a date range to another. Perfect for copying an entire week of
+            programming to a new week.
           </p>
         </div>
 
@@ -296,6 +353,8 @@ export const ShowClonerClient: React.FC = () => {
                       borderRadius: '4px',
                       border: '1px solid #ccc',
                       backgroundColor: '#fff',
+                      color: '#333',
+                      colorScheme: 'light',
                     }}
                   />
                 </div>
@@ -327,6 +386,8 @@ export const ShowClonerClient: React.FC = () => {
                       borderRadius: '4px',
                       border: '1px solid #ccc',
                       backgroundColor: '#fff',
+                      color: '#333',
+                      colorScheme: 'light',
                     }}
                   />
                 </div>
@@ -365,9 +426,8 @@ export const ShowClonerClient: React.FC = () => {
                             color: '#555',
                           }}
                         >
-                          {group.dayName}, {formatDateShort(group.date)}
-                          {' '}
-                          ({group.shows.length} show{group.shows.length !== 1 ? 's' : ''})
+                          {group.dayName}, {formatDateShort(group.date)} ({group.shows.length} show
+                          {group.shows.length !== 1 ? 's' : ''})
                         </div>
                         <div style={{ padding: '4px 0' }}>
                           {group.shows.map((show) => (
@@ -446,6 +506,8 @@ export const ShowClonerClient: React.FC = () => {
                       borderRadius: '4px',
                       border: '1px solid #ccc',
                       backgroundColor: '#fff',
+                      color: '#333',
+                      colorScheme: 'light',
                     }}
                   />
                 </div>
@@ -489,8 +551,7 @@ export const ShowClonerClient: React.FC = () => {
                   }}
                 >
                   Shows will be cloned from{' '}
-                  <strong>{formatDateRange(sourceStartDate, sourceEndDate)}</strong>
-                  {' '}to{' '}
+                  <strong>{formatDateRange(sourceStartDate, sourceEndDate)}</strong> to{' '}
                   <strong>{formatDateRange(targetStartDate, targetEndDate)}</strong>
                 </div>
               )}

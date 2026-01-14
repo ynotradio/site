@@ -2,6 +2,7 @@
  * Unit tests for EmptyState component
  */
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -26,11 +27,7 @@ describe('EmptyState', () => {
   });
 
   it('accepts and displays various message types', () => {
-    const messages = [
-      'No DJs found.',
-      'No concerts available.',
-      'Empty playlist.',
-    ];
+    const messages = ['No DJs found.', 'No concerts available.', 'Empty playlist.'];
 
     messages.forEach((message) => {
       const { unmount } = render(<EmptyState message={message} />);

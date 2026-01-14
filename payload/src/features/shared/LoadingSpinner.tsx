@@ -1,6 +1,7 @@
 'use client';
 
 // Loading spinner component
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 
 export const LoadingSpinner = () => (
