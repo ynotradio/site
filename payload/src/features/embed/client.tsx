@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { detectEmbedType } from './utils';
+import './client.css';
 
 export interface EmbedComponentProps {
   url: string;
@@ -13,42 +14,17 @@ export const EmbedComponent: React.FC<EmbedComponentProps> = ({ url, caption }) 
   const { embedUrl } = detectEmbedType(url);
 
   return (
-    <div className="embed-container" style={{ margin: '1rem 0' }}>
-      <div
-        className="embed-wrapper"
-        style={{
-          position: 'relative',
-          paddingBottom: '56.25%',
-          height: 0,
-          overflow: 'hidden',
-          borderRadius: '8px',
-        }}
-      >
+    <div className="embed-container">
+      <div className="embed-wrapper">
         <iframe
           src={embedUrl}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            border: 0,
-          }}
+          className="embed-wrapper__iframe"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           title={caption || 'Embedded content'}
         />
       </div>
-      {caption && (
-        <p style={{
-          fontSize: '0.875rem',
-          color: '#666',
-          marginTop: '0.5rem',
-          fontStyle: 'italic',
-        }}>
-          {caption}
-        </p>
-      )}
+      {caption && <p className="embed-caption">{caption}</p>}
     </div>
   );
 };
