@@ -1,3 +1,9 @@
+/* Hide default Payload dashboard collection cards when using afterDashboard */
+/* This allows CustomDashboard to be the only visible dashboard content */
+.collections__wrap {
+  display: none !important;
+}
+
 .dashboard-container {
   padding: 2rem;
 }

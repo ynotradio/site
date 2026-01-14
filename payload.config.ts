@@ -73,7 +73,8 @@ export default buildConfig({
           }
         : false,
     components: {
-      Dashboard: '/payload/src/components/dashboard/CustomDashboard#CustomDashboard',
+      beforeDashboard: [],
+      afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
       views: {
         DJOrder: {
           Component: '/payload/src/features/dj-order#DJOrderTool',
