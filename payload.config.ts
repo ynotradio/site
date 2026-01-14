@@ -32,11 +32,10 @@ dotenv.config({
   override: false,
 });
 
-const coerceList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean);
+const coerceList = (value: string): string[] => value
+  .split(',')
+  .map((entry) => entry.trim())
+  .filter(Boolean);
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -67,10 +66,10 @@ export default buildConfig({
     autoLogin:
       process.env.NODE_ENV === 'development'
         ? {
-            email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
-            password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
-            prefillOnly: true,
-          }
+          email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+          password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
+          prefillOnly: true,
+        }
         : false,
     components: {
       beforeDashboard: [],

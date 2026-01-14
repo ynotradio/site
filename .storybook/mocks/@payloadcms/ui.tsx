@@ -36,6 +36,16 @@ export const useStepNav = () => {
   };
 };
 
+// Mock useListRelationships hook (for ThumbnailCell and relationship data)
+export const useListRelationships = () => {
+  return {
+    documents: {},
+    getRelationships: () => {
+      // No-op in Storybook
+    },
+  };
+};
+
 // Mock useConfig hook (for Payload config access)
 export const useConfig = () => {
   return {

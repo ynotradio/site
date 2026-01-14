@@ -213,10 +213,9 @@ describe('DJOrderClient', () => {
           json: async () => mockDjsResponse,
         })
         .mockImplementation(
-          () =>
-            new Promise((resolve) => {
-              setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100);
-            }),
+          () => new Promise((resolve) => {
+            setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100);
+          }),
         );
 
       render(<DJOrderClient />);
@@ -260,10 +259,9 @@ describe('DJOrderClient', () => {
           json: async () => mockDjsResponse,
         })
         .mockImplementation(
-          () =>
-            new Promise((resolve) => {
-              setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100);
-            }),
+          () => new Promise((resolve) => {
+            setTimeout(() => resolve({ ok: true, json: async () => ({}) }), 100);
+          }),
         );
 
       render(<DJOrderClient />);

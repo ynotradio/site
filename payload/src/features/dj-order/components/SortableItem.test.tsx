@@ -23,12 +23,11 @@ vi.mock('@dnd-kit/sortable', async () => {
 });
 
 describe('SortableItem', () => {
-  const renderWithDndContext = (component: React.ReactElement) =>
-    render(
-      <DndContext>
-        <SortableContext items={['1']}>{component}</SortableContext>
-      </DndContext>,
-    );
+  const renderWithDndContext = (component: React.ReactElement) => render(
+    <DndContext>
+      <SortableContext items={['1']}>{component}</SortableContext>
+    </DndContext>,
+  );
 
   it('renders DJ name', () => {
     renderWithDndContext(<SortableItem id="1" name="DJ Test" isActive={true} />);

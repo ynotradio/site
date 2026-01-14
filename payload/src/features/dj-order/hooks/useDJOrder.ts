@@ -40,19 +40,17 @@ export const useDJOrder = () => {
     try {
       // Update each DJ with its new sortOrder
       // Include _status and onAir to preserve existing values when drafts are enabled
-      const updatePromises = djs.map((dj, index) =>
-        fetch(`/api/djs/${dj.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sortOrder: index,
-            onAir: dj.onAir,
-            _status: 'published',
-          }),
+      const updatePromises = djs.map((dj, index) => fetch(`/api/djs/${dj.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sortOrder: index,
+          onAir: dj.onAir,
+          _status: 'published',
         }),
-      );
+      }));
 
       await Promise.all(updatePromises);
       setSuccessMessage('DJ order saved successfully!');

@@ -8,7 +8,9 @@ import type { SortableItemProps } from '../types';
 import './SortableItem.css';
 
 export const SortableItem = ({ id, name, isActive }: SortableItemProps) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const {
+    attributes, listeners, setNodeRef, transform, transition, isDragging,
+  } = useSortable({
     id,
   });
 

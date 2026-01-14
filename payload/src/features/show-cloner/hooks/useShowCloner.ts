@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react';
 import type { Show, NewShowPayload } from '../types';
-import { getDaysDifference, addDays, formatDateRange, getShowsInRange } from '../utils';
+import {
+  getDaysDifference, addDays, formatDateRange, getShowsInRange,
+} from '../utils';
 
 export const useShowCloner = (shows: Show[], onComplete: () => Promise<void>) => {
   const [cloning, setCloning] = useState(false);
