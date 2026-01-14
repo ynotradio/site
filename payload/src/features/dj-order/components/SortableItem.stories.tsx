@@ -43,6 +43,11 @@ export const InactiveDJ: Story = {
 };
 
 export const Multiple: Story = {
+  args: {
+    id: '1',
+    name: 'DJ Fresh',
+    isActive: true,
+  },
   render: () => (
     <DndContext>
       <SortableContext items={['1', '2', '3', '4']} strategy={verticalListSortingStrategy}>

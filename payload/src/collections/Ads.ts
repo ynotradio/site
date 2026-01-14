@@ -15,7 +15,6 @@ export const Ads: CollectionConfig = {
     defaultColumns: ['name', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Marketing',
     description: 'Advertisement and sponsor management.',
-    defaultSort: '-startDate',
   },
   access: {
     read: () => true, // Public read access

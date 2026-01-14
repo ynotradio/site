@@ -16,7 +16,6 @@ export const OnDemand: CollectionConfig = {
     defaultColumns: ['headline', 'image', 'date', 'updatedAt'],
     group: 'Radio',
     description: 'On-demand recordings and show archives.',
-    defaultSort: '-date',
   },
   access: {
     read: () => true, // Public read access

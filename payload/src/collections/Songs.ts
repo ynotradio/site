@@ -12,8 +12,8 @@ export const Songs: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
-    description: 'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
-    defaultSort: '-releaseDate',
+    description:
+      'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
   },
   access: {
     read: () => true, // Public read access
@@ -113,7 +113,8 @@ export const Songs: CollectionConfig = {
         position: 'sidebar',
         description: 'MusicBrainz recording ID (MBID) - Search and select from MusicBrainz',
         components: {
-          Field: '/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField',
+          Field:
+            '/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField',
         },
       },
     },

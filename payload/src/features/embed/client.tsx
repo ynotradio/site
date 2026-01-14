@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { detectEmbedType } from './utils';
-import './client.css';
 
 export interface EmbedComponentProps {
   url: string;

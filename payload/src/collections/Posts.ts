@@ -17,8 +17,9 @@ export const Posts: CollectionConfig = {
     defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
-    defaultSort: '-startDate',
-    description: 'Stories appearing on the front page. Use date range to filter currently active posts.',
+
+    description:
+      'Stories appearing on the front page. Use date range to filter currently active posts.',
   },
   access: {
     read: () => true, // Public read access
@@ -90,10 +91,7 @@ export const Posts: CollectionConfig = {
       name: 'content',
       type: 'richText',
       editor: lexicalEditor({
-        features: ({ defaultFeatures }) => [
-          ...defaultFeatures,
-          EmbedFeature(),
-        ],
+        features: ({ defaultFeatures }) => [...defaultFeatures, EmbedFeature()],
       }),
       required: true,
       admin: {

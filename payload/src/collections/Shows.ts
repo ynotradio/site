@@ -13,7 +13,7 @@ export const Shows: CollectionConfig = {
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
     description: 'Radio show schedule and history.',
-    defaultSort: '-date',
+
     components: {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },

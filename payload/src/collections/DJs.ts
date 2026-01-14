@@ -16,7 +16,7 @@ export const DJs: CollectionConfig = {
     defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', 'updatedAt'],
     group: 'Radio',
     description: 'DJ profiles. Filter by "onAir" to see active DJs.',
-    defaultSort: 'sortOrder',
+
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
     },
@@ -29,9 +29,9 @@ export const DJs: CollectionConfig = {
         const updatedData = data;
 
         if (
-          updatedData.person
-          && Array.isArray(updatedData.person)
-          && updatedData.person.length > 0
+          updatedData.person &&
+          Array.isArray(updatedData.person) &&
+          updatedData.person.length > 0
         ) {
           const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
 
@@ -96,7 +96,8 @@ export const DJs: CollectionConfig = {
       type: 'richText',
       editor: lexicalEditor(),
       admin: {
-        description: 'Description of the show(s) hosted by this DJ - supports line breaks for multiple shows',
+        description:
+          'Description of the show(s) hosted by this DJ - supports line breaks for multiple shows',
       },
     },
     {

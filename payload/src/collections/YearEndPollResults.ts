@@ -282,7 +282,7 @@ export const YearEndPollResults: CollectionConfig = {
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
     description: 'Year-end poll results and staff picks pages.',
-    defaultSort: '-year',
+
     hidden: true, // Temporarily hidden from navigation
   },
   access: {

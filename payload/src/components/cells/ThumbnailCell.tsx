@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import type { CellComponentProps } from 'payload';
+import type { DefaultCellComponentProps } from 'payload';
 import { useListRelationships } from '@payloadcms/ui';
 import './ThumbnailCell.css';
 
@@ -20,7 +20,7 @@ interface MediaData {
  * Uses Payload's relationship provider to fetch media data since list views
  * don't populate relationships by default (depth=0).
  */
-export const ThumbnailCell: React.FC<CellComponentProps> = ({ cellData, field }) => {
+export const ThumbnailCell: React.FC<DefaultCellComponentProps> = ({ cellData, field }) => {
   const [imageError, setImageError] = useState(false);
   const { documents, getRelationships } = useListRelationships();
   const hasRequestedRef = useRef(false);
@@ -45,9 +45,8 @@ export const ThumbnailCell: React.FC<CellComponentProps> = ({ cellData, field })
   }, [mediaId, relationTo, getRelationships]);
 
   // Look up the media document from the provider's cache
-  const mediaData = relationTo && mediaId
-    ? documents[relationTo as string]?.[String(mediaId)]
-    : null;
+  const mediaData =
+    relationTo && mediaId ? documents[relationTo as string]?.[String(mediaId)] : null;
 
   if (!mediaData || typeof mediaData !== 'object') {
     return <span className="thumbnail-cell-placeholder">—</span>;

@@ -71,6 +71,26 @@ jobs:
       - name: Build Storybook
         run: yarn build-storybook
 
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'yarn'
+      
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      
+      - name: Run build
+        run: yarn build
+
   php-lint:
     name: PHP Lint
     runs-on: ubuntu-latest

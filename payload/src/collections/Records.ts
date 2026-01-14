@@ -13,7 +13,6 @@ export const Records: CollectionConfig = {
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
     group: 'Music',
     description: 'Album/record catalog.',
-    defaultSort: '-releaseDate',
   },
   access: {
     read: () => true, // Public read access
