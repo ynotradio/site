@@ -26,11 +26,10 @@ class FeatureManager {
         $envVarName = strtoupper($feature);
         $envValue = getenv($envVarName);
         if ($envValue !== false) {
+            // Environment variable is set, so it overrides config file
             // Check for truthy values: 'true', '1', 'yes', 'on'
             $envValue = strtolower(trim($envValue));
-            if (in_array($envValue, ['true', '1', 'yes', 'on'], true)) {
-                return true;
-            }
+            return in_array($envValue, ['true', '1', 'yes', 'on'], true);
         }
 
         // Fall back to config file
