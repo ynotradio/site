@@ -143,4 +143,4 @@ The POC test provides basic infrastructure. Future tests should:
 
 - [Playwright Documentation](https://playwright.dev/)
 - [Payload CMS Documentation](https://payloadcms.com/docs)
-- [Testing PR Changes Skill](../.claude/skills/testing-pr-changes/SKILL.md)
+- [Main README](../README.md) - General project documentation

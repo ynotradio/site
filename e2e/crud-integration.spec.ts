@@ -71,13 +71,45 @@ test.describe('CRUD Integration POC', () => {
       }, 120000);
     });
 
-    // Additional wait to ensure server is fully ready
-    await new Promise((resolve) => {
-      setTimeout(resolve, 5000);
-    });
+    // Wait for server to be reachable with HTTP health check
+    // eslint-disable-next-line no-console
+    console.log('⏳ Waiting for Payload server to respond to HTTP requests...');
+    let attempts = 0;
+    const maxAttempts = 30;
+    while (attempts < maxAttempts) {
+      try {
+        // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
+        const http = require('http');
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve, reject) => {
+          const req = http.get('http://localhost:3000/admin', (res: { statusCode: number }) => {
+            if (res.statusCode === 200 || res.statusCode === 302) {
+              resolve(true);
+            } else {
+              reject(new Error(`Unexpected status code: ${res.statusCode}`));
+            }
+          });
+          req.on('error', reject);
+          req.setTimeout(5000, () => {
+            req.destroy();
+            reject(new Error('Request timeout'));
+          });
+        });
+        break;
+      } catch (error) {
+        attempts += 1;
+        if (attempts >= maxAttempts) {
+          throw new Error('Payload server did not respond to HTTP requests in time');
+        }
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+      }
+    }
 
     // eslint-disable-next-line no-console
-    console.log('✅ Payload server started');
+    console.log('✅ Payload server started and responding');
   });
 
   test.afterAll(async () => {
@@ -93,7 +125,7 @@ test.describe('CRUD Integration POC', () => {
       });
 
       // Force kill if still running
-      if (!payloadProcess.killed) {
+      if (payloadProcess.exitCode === null) {
         payloadProcess.kill('SIGKILL');
       }
 
