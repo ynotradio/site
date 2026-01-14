@@ -86,8 +86,9 @@ describe('CustomDashboard', () => {
     expect(peopleElements.length).toBeGreaterThan(0);
     expect(screen.getByText('Venues')).toBeInTheDocument();
     expect(screen.getByText('Advertisements')).toBeInTheDocument();
-    expect(screen.getByText('Year End Polls')).toBeInTheDocument();
     expect(screen.getByText('Media Files')).toBeInTheDocument();
+    // Year End Polls temporarily hidden
+    expect(screen.queryByText('Year End Polls')).not.toBeInTheDocument();
   });
 
   it('renders secondary collection groups', () => {
@@ -99,8 +100,9 @@ describe('CustomDashboard', () => {
 
     expect(screen.getByText('Events')).toBeInTheDocument();
     expect(screen.getByText('Marketing')).toBeInTheDocument();
-    expect(screen.getByText('Polls & Contests')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
+    // Polls & Contests group temporarily hidden
+    expect(screen.queryByText('Polls & Contests')).not.toBeInTheDocument();
   });
 
   it('renders section headings', () => {
@@ -167,7 +169,7 @@ describe('CustomDashboard', () => {
     const { container } = render(<CustomDashboard />);
 
     const secondaryCards = container.querySelectorAll('.secondary-card');
-    expect(secondaryCards.length).toBe(7); // 7 secondary collections (Shows moved to primary)
+    expect(secondaryCards.length).toBe(6); // 6 secondary collections (Year End Polls hidden)
   });
 
   it('applies dashboard container class', () => {

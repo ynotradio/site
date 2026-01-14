@@ -66,7 +66,7 @@ export const CustomDashboard: React.FC = () => {
     { slug: 'people', label: 'People', group: 'People' },
     { slug: 'venues', label: 'Venues', group: 'Events' },
     { slug: 'ads', label: 'Advertisements', group: 'Marketing' },
-    { slug: 'year-end-poll-results', label: 'Year End Polls', group: 'Polls & Contests' },
+    // { slug: 'year-end-poll-results', label: 'Year End Polls', group: 'Polls & Contests' },
     { slug: 'media', label: 'Media Files', group: 'Content' },
   ];
 
