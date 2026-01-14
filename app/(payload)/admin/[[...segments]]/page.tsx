@@ -21,12 +21,13 @@ export const metadata: Metadata = {
   description: 'Y-Not Radio Admin',
 };
 
-const Page = ({ params, searchParams }: Args) =>
-  RootPage({
+function Page({ params, searchParams }: Args) {
+  return RootPage({
     config,
     params,
     searchParams,
     importMap,
   });
+}
 
 export default Page;
