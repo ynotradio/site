@@ -20,7 +20,7 @@ const serverFunction: ServerFunctionClient = async function serverFunc(args) {
   });
 };
 
-const Layout = ({ children }: Args) => (
+const Layout: React.FC<Args> = ({ children }) => (
   <RootLayout config={config} importMap={importMap} serverFunction={serverFunction}>
     {children}
   </RootLayout>

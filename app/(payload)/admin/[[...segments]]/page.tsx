@@ -11,14 +11,15 @@ type Args = {
   }>;
 };
 
-export const generateMetadata = ({ params, searchParams }: Args) => (
-  generatePageMetadata({ config, params, searchParams })
-);
+export const generateMetadata = ({ params, searchParams }: Args) =>
+  generatePageMetadata({ config, params, searchParams });
 
-const Page = ({ params, searchParams }: Args) => (
+const Page = ({ params, searchParams }: Args) =>
   RootPage({
-    config, params, searchParams, importMap,
-  })
-);
+    config,
+    params,
+    searchParams,
+    importMap,
+  });
 
 export default Page;

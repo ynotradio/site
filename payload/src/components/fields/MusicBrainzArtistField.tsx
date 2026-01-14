@@ -1,28 +1,34 @@
 'use client';
 
 /**
- * MusicBrainz Artist Picker Field Component
- *
- * Custom field component for selecting a MusicBrainz artist
- * and populating the musicbrainzId field
+ * MusicBrainz Artist Picker Field Component - Refactored
+ * Follows Single Responsibility Principle with extracted hook
  */
 
-import React, {
-  useState, useCallback, useEffect, useRef,
-} from 'react';
+import React, { useEffect } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useField, useFormFields } from '@payloadcms/ui';
 import { searchArtists, type MusicBrainzArtist } from '../../utils/musicbrainz-api';
+import { useMusicBrainzSearch } from './hooks/useMusicBrainzSearch';
 
 import './MusicBrainzField.css';
-
-// Constants for default display when MBID exists but no metadata
-const UNKNOWN_ARTIST_NAME = 'Unknown Artist';
-const DEFAULT_SCORE = 100;
 
 interface MusicBrainzArtistFieldProps {
   path: string;
 }
+
+const formatArtistInfo = (artist: MusicBrainzArtist): string => {
+  const parts: string[] = [];
+  if (artist.disambiguation) parts.push(`(${artist.disambiguation})`);
+  if (artist.type) parts.push(`[${artist.type}]`);
+  if (artist['life-span']?.begin) {
+    const years = artist['life-span'].end
+      ? `${artist['life-span'].begin}–${artist['life-span'].end}`
+      : `${artist['life-span'].begin}–`;
+    parts.push(years);
+  }
+  return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+};
 
 export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
@@ -31,78 +37,39 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
   const nameField = useFormFields(([fields]) => fields?.name);
   const artistName = (nameField?.value as string | undefined) || '';
 
-  const [searchResults, setSearchResults] = useState<MusicBrainzArtist[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [selectedArtist, setSelectedArtist] = useState<MusicBrainzArtist | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    searchResults,
+    isSearching,
+    showResults,
+    selectedItem: selectedArtist,
+    error,
+    search,
+    selectItem,
+    clear,
+    initializeFromValue,
+  } = useMusicBrainzSearch<MusicBrainzArtist>({
+    searchFunction: searchArtists,
+  });
 
-  // Track if we've initialized from the value to prevent unnecessary updates
-  const initializedRef = useRef(false);
-
-  // Load selected artist data if value exists (only once on initial load)
+  // Initialize from existing value
   useEffect(() => {
-    if (value && !initializedRef.current) {
-      setSelectedArtist({
-        id: value,
-        name: artistName || UNKNOWN_ARTIST_NAME,
-        score: DEFAULT_SCORE,
-      });
-      initializedRef.current = true;
+    if (value) {
+      initializeFromValue(value, artistName || 'Unknown Artist');
     }
-  }, [value, artistName]);
+  }, [value, artistName, initializeFromValue]);
 
-  const searchMusicBrainz = useCallback(async () => {
-    if (!artistName?.trim()) {
-      setError('Please enter an artist name first');
-      return;
-    }
+  const handleSearch = () => {
+    search(artistName);
+  };
 
-    setIsSearching(true);
-    setError(null);
-    setShowResults(true);
-
-    try {
-      const results = await searchArtists(artistName);
-      setSearchResults(results);
-      if (results.length === 0) {
-        setError('No results found');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to search MusicBrainz');
-      setSearchResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [artistName]);
-
-  const handleSelectArtist = useCallback((artist: MusicBrainzArtist) => {
-    setSelectedArtist(artist);
+  const handleSelect = (artist: MusicBrainzArtist) => {
+    selectItem(artist);
     setValue(artist.id);
-    setShowResults(false);
-    setSearchResults([]);
-  }, [setValue]);
+  };
 
-  const handleClear = useCallback(() => {
-    setSelectedArtist(null);
+  const handleClear = () => {
+    clear();
     setValue('');
-    setSearchResults([]);
-    setShowResults(false);
-    setError(null);
-    initializedRef.current = false;
-  }, [setValue]);
-
-  const formatArtistInfo = (artist: MusicBrainzArtist) => {
-    const parts = [];
-    if (artist.disambiguation) parts.push(`(${artist.disambiguation})`);
-    if (artist.type) parts.push(`[${artist.type}]`);
-    if (artist['life-span']?.begin) {
-      const years = artist['life-span'].end
-        ? `${artist['life-span'].begin}–${artist['life-span'].end}`
-        : `${artist['life-span'].begin}–`;
-      parts.push(years);
-    }
-    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
   };
 
   return (
@@ -138,11 +105,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
             >
               View on MusicBrainz
             </a>
-            <button
-              type="button"
-              className="musicbrainz-clear-btn"
-              onClick={handleClear}
-            >
+            <button type="button" className="musicbrainz-clear-btn" onClick={handleClear}>
               Clear
             </button>
           </div>
@@ -152,7 +115,9 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
           <div className="musicbrainz-search-prompt">
             <div className="musicbrainz-search-text">
               {artistName ? (
-                <>Search for <strong>"{artistName}"</strong> on MusicBrainz</>
+                <>
+                  Search for <strong>"{artistName}"</strong> on MusicBrainz
+                </>
               ) : (
                 'Enter artist name first'
               )}
@@ -160,7 +125,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
             <button
               type="button"
               className="musicbrainz-search-btn"
-              onClick={searchMusicBrainz}
+              onClick={handleSearch}
               disabled={!artistName?.trim() || isSearching}
             >
               {isSearching ? 'Searching...' : 'Search MusicBrainz'}
@@ -171,9 +136,7 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
             <div className="musicbrainz-results-wrapper">
               {isSearching && <div className="musicbrainz-loading">Searching...</div>}
 
-              {!isSearching && error && (
-                <div className="musicbrainz-error">{error}</div>
-              )}
+              {!isSearching && error && <div className="musicbrainz-error">{error}</div>}
 
               {!isSearching && !error && searchResults.length > 0 && (
                 <>
@@ -186,16 +149,14 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
                         key={artist.id}
                         type="button"
                         className="musicbrainz-result-item"
-                        onClick={() => handleSelectArtist(artist)}
+                        onClick={() => handleSelect(artist)}
                       >
                         <div className="musicbrainz-result-name">
                           <strong>{artist.name}</strong>
                           {formatArtistInfo(artist)}
                         </div>
                         {artist.score && (
-                          <div className="musicbrainz-result-score">
-                            Match: {artist.score}%
-                          </div>
+                          <div className="musicbrainz-result-score">Match: {artist.score}%</div>
                         )}
                       </button>
                     ))}
