@@ -7,11 +7,12 @@ Thank you for your interest in contributing to the Y-Not Radio site! This guide 
 If you're a GitHub Copilot agent working on this repository, use the Agent Skills in `.claude/skills/` for guidance:
 
 1. **testing-pr-changes** - Complete testing and verification workflow
-2. **agent-automation-infrastructure** - Pre-built images and CI/CD optimization  
+2. **agent-automation-infrastructure** - Pre-built images and CI/CD optimization
 3. **detecting-agent-environment** - Environment detection utilities
 4. **payload-migration-workflow** - Payload CMS migration context and tasks
 
 For project context, also see:
+
 - [Migration Overview](docs/payload-migration/README.md)
 - [Core Data Models](docs/payload-migration/03-core-data-models.md)
 
@@ -46,6 +47,7 @@ Follow these conventions for branch names:
 ### Development Workflow
 
 1. **Create a branch** from `master`:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -53,18 +55,21 @@ Follow these conventions for branch names:
 2. **Make your changes** following our coding standards
 
 3. **Test your changes**:
+
    ```bash
    yarn lint          # Check code style
    yarn test              # Run test suite
    ```
 
 4. **Commit your changes** with clear commit messages:
+
    ```bash
    git add .
    git commit -m "Add feature: brief description"
    ```
 
 5. **Push to your fork**:
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -85,33 +90,98 @@ When opening a pull request:
 
 ### Code Standards
 
+#### Code Quality Standards
+
+This project follows strict coding standards to maintain quality and consistency:
+
+- **TypeScript/React patterns**: Follow Airbnb style guide with React 19 and Next.js 15 patterns
+- **Function components**: Use arrow functions with TypeScript interfaces (no PropTypes)
+- **File naming**: Components in `PascalCase.tsx`, utilities in `kebab-case.ts`
+- **Test/Story coupling**: All components require matching `.test.tsx` and `.stories.tsx` files
+- **Import organization**: External → Internal absolute (`@/`) → Relative imports
+
+📚 **Detailed guides available**:
+
+- [Code Quality Standards](.claude/skills/code-quality-standards/SKILL.md) - Full TypeScript/React patterns
+- [Test-Story Coupling](.claude/skills/test-story-coupling/SKILL.md) - Testing requirements and naming
+- [Dependency Best Practices](.claude/skills/dependency-best-practices/SKILL.md) - Approved libraries and security
+- [CODE_QUALITY.md](docs/CODE_QUALITY.md) - Technical documentation
+
 #### JavaScript/TypeScript
+
 - Follow the ESLint configuration (`.eslintrc.json`)
 - Use TypeScript for new code when possible
 - Write clear, self-documenting code
 - Add comments for complex logic
 
 #### PHP
+
 - Follow PHP_CodeSniffer rules (`src/phpcs.xml`)
 - Use PSR-12 coding standards
 - Properly escape output to prevent XSS
 - Use parameterized queries to prevent SQL injection
 
 #### Tests
+
 - Write tests for new functionality
 - Ensure existing tests continue to pass
-- Aim for good code coverage (see `vitest.config.ts` for thresholds)
+- Match test filename to component/utility filename exactly (e.g., `Button.tsx` → `Button.test.tsx`)
+- User-facing components require both test and story files
+- Aim for good code coverage (see `vitest.config.ts` for thresholds: 80%)
+
+**Test patterns**:
+
+- **Component tests**: Use `@testing-library/react` with Vitest
+- **Utility tests**: Pure function tests with clear inputs/outputs
+- **Integration tests**: Test multiple units working together
+
+See [test-story-coupling skill](.claude/skills/test-story-coupling/SKILL.md) for detailed patterns.
+
+#### Storybook Stories
+
+- All user-facing components require `.stories.tsx` files
+- Match story filename to component filename exactly
+- Document component variations and use cases
+- Include interactive examples where applicable
+
+**Running Storybook**:
+
+```bash
+yarn storybook  # Start Storybook dev server on port 6006
+```
+
+#### Pre-commit Checks
+
+The repository uses Husky and lint-staged to enforce quality standards:
+
+- **Automatic linting**: ESLint fixes issues on staged files
+- **Code formatting**: Prettier formats code automatically
+- **Test/story validation**: Custom script checks for missing files (future)
+
+These checks run automatically when you commit. If checks fail:
+
+1. Review the error messages
+2. Fix the issues
+3. Stage the fixes and commit again
+
+To bypass checks in emergencies (use sparingly):
+
+```bash
+git commit --no-verify -m "Emergency fix"
+```
 
 ### Commit Messages
 
 Write clear, descriptive commit messages:
 
 **Good:**
+
 - `Add DJ import migration script with MusicBrainz integration`
 - `Fix concert date display formatting on homepage`
 - `Update Payload collection schema for multi-person DJs`
 
 **Bad:**
+
 - `fix bug`
 - `update code`
 - `changes`

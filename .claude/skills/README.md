@@ -16,6 +16,37 @@ For more information:
 
 ## Available Skills
 
+### code-quality-standards
+Coding conventions and best practices for TypeScript, React 19, and Next.js 15. Covers:
+- TypeScript/React patterns (Airbnb style)
+- Function components, hooks, and composition
+- Next.js 15 Server/Client Components
+- Naming conventions and file structure
+- Import organization and code style
+- Performance and accessibility best practices
+
+**Use when:** Writing new code, reviewing code quality, or ensuring consistency with project standards.
+
+### test-story-coupling
+Enforce tight coupling between components, tests, and stories with exact naming conventions. Covers:
+- Critical naming convention (exact filename matches)
+- File type requirements (components, utilities, migrations)
+- Testing patterns (component, utility, integration)
+- Storybook patterns and documentation
+- Coverage requirements and enforcement
+
+**Use when:** Creating new components, writing tests, or ensuring test/story files exist for all user-facing components.
+
+### dependency-best-practices
+Approved libraries, bundle optimization, and security best practices. Covers:
+- Preferred dependencies (state, dates, utilities, styling)
+- Bundle optimization (dynamic imports, code splitting)
+- Security practices (no secrets, sanitization, auditing)
+- Adding new dependencies checklist
+- Maintenance and update strategy
+
+**Use when:** Adding new packages, optimizing bundle size, or ensuring secure dependency management.
+
 ### testing-pr-changes
 Complete testing and verification workflow for agent-created pull requests. Covers:
 - Critical success criteria and proof requirements
