@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { fn } from '@storybook/test';
 import { DJOrderClient } from './DJOrderClient';
 
 // Mock Payload UI hook
 const mockUseStepNav = () => ({
-  setStepNav: fn(),
+  setStepNav: () => {},
 });
 
 const meta = {
@@ -51,8 +50,10 @@ const meta = {
     (Story) => {
       // Mock the useStepNav hook
       if (typeof window !== 'undefined') {
-        (window as unknown as { mockUseStepNav: typeof mockUseStepNav }).mockUseStepNav =
-          mockUseStepNav;
+        const win = window as unknown as {
+          mockUseStepNav: typeof mockUseStepNav;
+        };
+        win.mockUseStepNav = mockUseStepNav;
       }
       return <Story />;
     },

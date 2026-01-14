@@ -1,38 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { CustomDashboard } from './CustomDashboard';
 
-// Mock the useConfig hook for Storybook
-const mockUseConfig = () => ({
-  config: {
-    routes: {
-      admin: '/admin',
-    },
-  },
-});
-
 const meta: Meta<typeof CustomDashboard> = {
   title: 'Components/Dashboard/CustomDashboard',
   component: CustomDashboard,
   parameters: {
     layout: 'fullscreen',
-    // Mock the Payload UI context
-    payloadConfig: {
-      routes: {
-        admin: '/admin',
-      },
-    },
   },
-  decorators: [
-    (Story) => {
-      // Mock useConfig for Storybook
-      // eslint-disable-next-line global-require
-      const { useConfig } = require('@payloadcms/ui');
-      if (useConfig && typeof useConfig === 'function') {
-        useConfig.mockReturnValue(mockUseConfig());
-      }
-      return <Story />;
-    },
-  ],
   tags: ['autodocs'],
 };
 
@@ -92,22 +66,6 @@ export const SecondaryCollections: Story = {
  * Dashboard with custom admin route
  */
 export const CustomAdminRoute: Story = {
-  decorators: [
-    (Story) => {
-      // eslint-disable-next-line global-require
-      const { useConfig } = require('@payloadcms/ui');
-      if (useConfig && typeof useConfig === 'function') {
-        useConfig.mockReturnValue({
-          config: {
-            routes: {
-              admin: '/custom-admin-path',
-            },
-          },
-        });
-      }
-      return <Story />;
-    },
-  ],
   parameters: {
     docs: {
       description: {
