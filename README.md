@@ -1,6 +1,6 @@
-# Y-Not Radio #
+# Y-Not Radio
 
-----------------
+---
 
 ## Development Options
 
@@ -53,12 +53,14 @@ If you run into challenges with a Docker container, this is a [helpful cheatshee
 **Start here:** [Testing PR Changes Skill](.claude/skills/testing-pr-changes/SKILL.md) ⭐ **Required reading**
 
 This skill provides:
+
 - ✅ Clear success criteria (screenshots, performance baselines)
 - 🔄 Incremental verification strategy
 - 🚨 When to stop and report blockers
 - 📋 Fallback strategies when full testing isn't possible
 
 **Quick commands to verify your work:**
+
 ```bash
 # Test Payload CMS
 yarn payload:dev
@@ -74,9 +76,13 @@ yarn seed:legacy  # Sample data for testing
 
 # Run tests
 yarn test && yarn lint
+
+# Run end-to-end tests
+yarn test:e2e
 ```
 
 **Context:**
+
 - [Project Status](docs/PROJECT_STATUS.md) - Current state and priorities
 - [Migration Overview](docs/payload-migration/README.md) - PHP→Payload migration strategy
 - [Core Data Models](docs/payload-migration/03-core-data-models.md) - Collection schemas
@@ -90,17 +96,21 @@ yarn test && yarn lint
 ### Database
 
 #### Local Development
+
 Access PHPMyAdmin in local development by visiting [http://localhost:8181](http://localhost:8181)
 
 #### GitHub Codespaces
+
 In GitHub Codespaces, PHPMyAdmin will be available on the forwarded port (typically port 8181). Click on the "Ports" tab in your Codespaces environment and look for the PHPMyAdmin link.
 
 ## Teardown
 
 ### Local Environment
+
 - When you are finished with local development, run `docker-compose down` from your terminal to halt the containers.
 
 ### GitHub Codespaces
+
 - For Codespaces, you can either:
   - Stop the Docker containers using `docker-compose down`
   - Stop the Codespace by clicking on the "Codespaces" menu in the bottom left corner and selecting "Stop Current Codespace"
@@ -132,10 +142,55 @@ The repository uses GitHub Actions for CI. The following checks run on every pul
 
 - **Lint**: Runs ESLint on TypeScript/JavaScript code
 - **Test**: Runs the Vitest test suite with coverage
+- **E2E Tests**: Runs Playwright end-to-end tests with containerized services
 - **Storybook Build**: Ensures Storybook can build successfully
 - **PHP Lint**: Runs PHP_CodeSniffer to check PHP code style
 
 All CI checks must pass before a pull request can be merged.
+
+### Testing
+
+#### Unit Tests (Vitest)
+
+Unit tests are located in `**/*.test.ts` and `**/*.test.tsx` files throughout the codebase.
+
+```bash
+# Run all unit tests
+yarn test
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage
+yarn test:coverage
+```
+
+#### End-to-End Tests (Playwright)
+
+E2E tests verify the integration between Payload CMS and the legacy PHP site using containerized databases.
+
+```bash
+# Run E2E tests (headless)
+yarn test:e2e
+
+# Run E2E tests with UI (interactive)
+yarn test:e2e:ui
+
+# Run E2E tests in headed mode (see browser)
+yarn test:e2e:headed
+```
+
+The E2E tests automatically:
+
+1. Start Docker Compose services (MySQL, Postgres, PHP, Apache)
+2. Wait for services to be healthy
+3. Seed databases with test data
+4. Run Playwright tests
+5. Clean up Docker services
+
+See [e2e/README.md](e2e/README.md) for detailed documentation.
+
+**Note:** E2E tests require Docker to be installed and running.
 
 ### Storybook
 
@@ -198,9 +253,11 @@ For more information, see the [Storybook documentation](https://storybook.js.org
 ## Deployment to Lightsail
 
 - **Deploy:**
+
   ```sh
   composer deploy
   ```
+
   This runs the deployment script (`bin/deploy.sh`).
 
 - **Rollback:**
