@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CustomDashboard } from './CustomDashboard';
@@ -44,20 +46,22 @@ describe('CustomDashboard', () => {
   it('renders all primary collection cards', () => {
     render(<CustomDashboard />);
 
-    expect(screen.getByText('Stories (Home Page)')).toBeInTheDocument();
+    expect(screen.getByText('Posts')).toBeInTheDocument();
     expect(screen.getByText('New Music')).toBeInTheDocument();
     expect(screen.getByText('CD of the Week')).toBeInTheDocument();
     expect(screen.getByText('Concerts')).toBeInTheDocument();
     expect(screen.getByText('On Demand')).toBeInTheDocument();
+    expect(screen.getByText('Shows')).toBeInTheDocument();
     expect(screen.getByText('DJs')).toBeInTheDocument();
   });
 
   it('renders primary collection descriptions', () => {
     render(<CustomDashboard />);
 
-    expect(screen.getByText('Stories appearing on the front page')).toBeInTheDocument();
+    expect(screen.getByText('Front page features and custom pages')).toBeInTheDocument();
     expect(screen.getByText('Songs featured on the New Music page')).toBeInTheDocument();
     expect(screen.getByText('Weekly album reviews')).toBeInTheDocument();
+    expect(screen.getByText('Radio show schedule and information')).toBeInTheDocument();
   });
 
   it('renders primary collection icons', () => {
@@ -68,6 +72,7 @@ describe('CustomDashboard', () => {
     expect(screen.getByText('💿')).toBeInTheDocument();
     expect(screen.getByText('🎸')).toBeInTheDocument();
     expect(screen.getByText('🎧')).toBeInTheDocument();
+    expect(screen.getByText('📻')).toBeInTheDocument();
     expect(screen.getByText('🎙️')).toBeInTheDocument();
   });
 
@@ -80,7 +85,6 @@ describe('CustomDashboard', () => {
     const peopleElements = screen.getAllByText('People');
     expect(peopleElements.length).toBeGreaterThan(0);
     expect(screen.getByText('Venues')).toBeInTheDocument();
-    expect(screen.getByText('Shows')).toBeInTheDocument();
     expect(screen.getByText('Advertisements')).toBeInTheDocument();
     expect(screen.getByText('Year End Polls')).toBeInTheDocument();
     expect(screen.getByText('Media Files')).toBeInTheDocument();
@@ -94,7 +98,6 @@ describe('CustomDashboard', () => {
     expect(musicGroups.length).toBeGreaterThan(0);
 
     expect(screen.getByText('Events')).toBeInTheDocument();
-    expect(screen.getByText('Radio')).toBeInTheDocument();
     expect(screen.getByText('Marketing')).toBeInTheDocument();
     expect(screen.getByText('Polls & Contests')).toBeInTheDocument();
     expect(screen.getByText('Content')).toBeInTheDocument();
@@ -110,7 +113,7 @@ describe('CustomDashboard', () => {
   it('generates correct links for primary collections', () => {
     render(<CustomDashboard />);
 
-    const postsLink = screen.getByText('Stories (Home Page)').closest('a');
+    const postsLink = screen.getByText('Posts').closest('a');
     expect(postsLink).toHaveAttribute('href', '/admin/collections/posts');
 
     const songsLink = screen.getByText('New Music').closest('a');
@@ -138,7 +141,7 @@ describe('CustomDashboard', () => {
 
     render(<CustomDashboard />);
 
-    const postsLink = screen.getByText('Stories (Home Page)').closest('a');
+    const postsLink = screen.getByText('Posts').closest('a');
     expect(postsLink).toHaveAttribute('href', '/custom-admin/collections/posts');
   });
 
@@ -149,7 +152,7 @@ describe('CustomDashboard', () => {
 
     render(<CustomDashboard />);
 
-    const postsLink = screen.getByText('Stories (Home Page)').closest('a');
+    const postsLink = screen.getByText('Posts').closest('a');
     expect(postsLink).toHaveAttribute('href', '/admin/collections/posts');
   });
 
@@ -157,14 +160,14 @@ describe('CustomDashboard', () => {
     const { container } = render(<CustomDashboard />);
 
     const primaryCards = container.querySelectorAll('.primary-card');
-    expect(primaryCards.length).toBe(6); // 6 primary collections
+    expect(primaryCards.length).toBe(7); // 7 primary collections
   });
 
   it('applies correct CSS classes to secondary cards', () => {
     const { container } = render(<CustomDashboard />);
 
     const secondaryCards = container.querySelectorAll('.secondary-card');
-    expect(secondaryCards.length).toBe(8); // 8 secondary collections
+    expect(secondaryCards.length).toBe(7); // 7 secondary collections (Shows moved to primary)
   });
 
   it('applies dashboard container class', () => {

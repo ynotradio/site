@@ -15,12 +15,48 @@ export const CustomDashboard: React.FC = () => {
 
   // Primary collections that correspond to top-level user pages
   const primaryCollections = [
-    { slug: 'posts', label: 'Stories (Home Page)', icon: '📰', description: 'Stories appearing on the front page' },
-    { slug: 'songs', label: 'New Music', icon: '🎵', description: 'Songs featured on the New Music page' },
-    { slug: 'cdoftheweek', label: 'CD of the Week', icon: '💿', description: 'Weekly album reviews' },
-    { slug: 'concerts', label: 'Concerts', icon: '🎸', description: 'Upcoming concert listings' },
-    { slug: 'ondemand', label: 'On Demand', icon: '🎧', description: 'On-demand recordings and archives' },
-    { slug: 'djs', label: 'DJs', icon: '🎙️', description: 'DJ profiles and information' },
+    {
+      slug: 'posts',
+      label: 'Posts',
+      icon: '📰',
+      description: 'Front page features and custom pages',
+    },
+    {
+      slug: 'songs',
+      label: 'New Music',
+      icon: '🎵',
+      description: 'Songs featured on the New Music page',
+    },
+    {
+      slug: 'cdoftheweek',
+      label: 'CD of the Week',
+      icon: '💿',
+      description: 'Weekly album reviews',
+    },
+    {
+      slug: 'concerts',
+      label: 'Concerts',
+      icon: '🎸',
+      description: 'Upcoming concert listings',
+    },
+    {
+      slug: 'ondemand',
+      label: 'On Demand',
+      icon: '🎧',
+      description: 'On-demand recordings and archives',
+    },
+    {
+      slug: 'shows',
+      label: 'Shows',
+      icon: '📻',
+      description: 'Radio show schedule and information',
+    },
+    {
+      slug: 'djs',
+      label: 'DJs',
+      icon: '🎙️',
+      description: 'DJ profiles and information',
+    },
   ];
 
   // Secondary collections (supporting content)
@@ -29,7 +65,6 @@ export const CustomDashboard: React.FC = () => {
     { slug: 'artists', label: 'Artists', group: 'Music' },
     { slug: 'people', label: 'People', group: 'People' },
     { slug: 'venues', label: 'Venues', group: 'Events' },
-    { slug: 'shows', label: 'Shows', group: 'Radio' },
     { slug: 'ads', label: 'Advertisements', group: 'Marketing' },
     { slug: 'year-end-poll-results', label: 'Year End Polls', group: 'Polls & Contests' },
     { slug: 'media', label: 'Media Files', group: 'Content' },
@@ -37,18 +72,12 @@ export const CustomDashboard: React.FC = () => {
 
   return (
     <div className="dashboard-container">
-      <h1 className="dashboard-title">
-        Y-Not Radio CMS
-      </h1>
-      <p className="dashboard-subtitle">
-        Welcome to the Y-Not Radio content management system
-      </p>
+      <h1 className="dashboard-title">Y-Not Radio CMS</h1>
+      <p className="dashboard-subtitle">Welcome to the Y-Not Radio content management system</p>
 
       {/* Primary Collections - Large Cards */}
       <section className="section">
-        <h2 className="section-title">
-          Main Content Areas
-        </h2>
+        <h2 className="section-title">Main Content Areas</h2>
         <div className="primary-grid">
           {primaryCollections.map((collection) => (
             <Link
@@ -56,15 +85,9 @@ export const CustomDashboard: React.FC = () => {
               href={`${baseURL}/collections/${collection.slug}`}
               className="primary-card"
             >
-              <div className="primary-card-icon">
-                {collection.icon}
-              </div>
-              <h3 className="primary-card-label">
-                {collection.label}
-              </h3>
-              <p className="primary-card-description">
-                {collection.description}
-              </p>
+              <div className="primary-card-icon">{collection.icon}</div>
+              <h3 className="primary-card-label">{collection.label}</h3>
+              <p className="primary-card-description">{collection.description}</p>
             </Link>
           ))}
         </div>
@@ -72,9 +95,7 @@ export const CustomDashboard: React.FC = () => {
 
       {/* Secondary Collections - Compact List */}
       <section>
-        <h2 className="section-title">
-          Supporting Content
-        </h2>
+        <h2 className="section-title">Supporting Content</h2>
         <div className="secondary-grid">
           {secondaryCollections.map((collection) => (
             <Link
@@ -82,12 +103,8 @@ export const CustomDashboard: React.FC = () => {
               href={`${baseURL}/collections/${collection.slug}`}
               className="secondary-card"
             >
-              <div className="secondary-card-label">
-                {collection.label}
-              </div>
-              <div className="secondary-card-group">
-                {collection.group}
-              </div>
+              <div className="secondary-card-label">{collection.label}</div>
+              <div className="secondary-card-group">{collection.group}</div>
             </Link>
           ))}
         </div>
