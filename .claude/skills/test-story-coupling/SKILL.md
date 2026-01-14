@@ -18,6 +18,7 @@ ComponentName.stories.tsx  # Storybook stories (EXACT name match)
 ```
 
 **Key Points:**
+
 - Test files MUST match component filename exactly
 - Story files MUST match component filename exactly
 - No variations like kebab-case, snake_case, or different naming
@@ -27,23 +28,74 @@ ComponentName.stories.tsx  # Storybook stories (EXACT name match)
 ## File Type Requirements
 
 ### User-Facing Components
-**MUST have both test and story files**
+
+**MUST have a story file AND EITHER a test file OR assertions in the story file**
+
+Components can be tested in two ways:
+
+1. **Traditional**: Separate `.test.tsx` file with unit tests
+2. **Story-based**: `.stories.tsx` file with [interaction testing](https://storybook.js.org/docs/writing-tests/interaction-testing) using `play` functions
 
 ```bash
-# ✅ Good: Complete set
+# ✅ Good: Complete set with separate test file
 MusicBrainzArtistField.tsx
 MusicBrainzArtistField.test.tsx
 MusicBrainzArtistField.stories.tsx
 
-# ❌ Bad: Missing story file
+# ✅ Good: Story file with assertions (no separate test file needed)
+Button.tsx
+Button.stories.tsx  # Contains play() functions with assertions
+
+# ❌ Bad: Missing both test file and story assertions
+MusicBrainzArtistField.tsx
+MusicBrainzArtistField.stories.tsx  # No play() functions
+# Missing: MusicBrainzArtistField.test.tsx
+
+# ❌ Bad: Missing story file entirely
 MusicBrainzArtistField.tsx
 MusicBrainzArtistField.test.tsx
+# Missing: MusicBrainzArtistField.stories.tsx
+```
+
+**Story-based testing example**:
+
+```typescript
+// Button.stories.tsx with assertions
+import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from '@storybook/test';
+import { Button } from './Button';
+
+const meta: Meta<typeof Button> = {
+  title: 'Components/Button',
+  component: Button,
+};
+
+export default meta;
+type Story = StoryObj<typeof Button>;
+
+export const Default: Story = {
+  args: {
+    label: 'Click me',
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+
+    // Assertions in story file
+    await expect(button).toBeInTheDocument();
+    await userEvent.click(button);
+    await expect(button).toHaveClass('clicked');
+  },
+};
+```
 
 # ❌ Bad: Name mismatch
+
 MusicBrainzArtistField.tsx
-musicbrainz-artist-field.test.tsx  # Wrong case!
+musicbrainz-artist-field.test.tsx # Wrong case!
 MusicBrainzArtistField.stories.tsx
-```
+
+````
 
 ### Utility Functions and Hooks
 **MUST have test files, stories optional**
@@ -60,9 +112,10 @@ useArtistSearch.test.ts
 # ❌ Bad: Utility without test
 formatDate.ts
 # Missing formatDate.test.ts
-```
+````
 
 ### Migration Scripts
+
 **MUST have test files**
 
 ```bash
@@ -150,7 +203,7 @@ describe('ArtistCard', () => {
   it('handles click events', async () => {
     const handleClick = vi.fn();
     render(<ArtistCard artist={artist} onClick={handleClick} />);
-    
+
     await userEvent.click(screen.getByRole('button'));
     expect(handleClick).toHaveBeenCalledOnce();
   });
@@ -194,7 +247,7 @@ describe('importDJs', () => {
 
   it('should import new DJ successfully and create person', async () => {
     const result = await importDJs({ env: 'test', ids: [1] });
-    
+
     expect(result.imported).toBe(1);
     expect(payloadClient.findOrCreatePerson).toHaveBeenCalled();
   });

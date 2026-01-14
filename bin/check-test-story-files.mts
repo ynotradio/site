@@ -1,59 +1,15 @@
 #!/usr/bin/env tsx
 /**
  * Pre-commit hook to check for missing test/story files
- * Run with: tsx bin/check-test-story-files.mts
- * 
- * Validates that:
- * - All component files (.tsx) have matching .test.tsx and .stories.tsx files
- * - All utility files (.ts) have matching .test.ts files
- * - Migration scripts have test files
- * 
- * Usage:
- *   tsx bin/check-test-story-files.mts              # Check staged files (git pre-commit)
- *   tsx bin/check-test-story-files.mts --all        # Check all files in repo
- *   tsx bin/check-test-story-files.mts --skip-check # Skip validation (emergency)
- */
-
-import { execSync } from 'child_process';
-import * as fs from 'fs';
-import * as path from 'path';
-
-interface ValidationResult {
-  file: string;
-  missingTest?: boolean;
-  missingStory?: boolean;
-}
-
-/**
- * Get list of staged TypeScript/TSX files
- */
-function getStagedFiles(): string[] {
-  try {
-    const output = require('child_process')
-      .execSync('git diff --cached --name-only --diff-filter=ACM', { encoding: 'utf8' });
-    return output
-      .split('\n')
-      .filter((file) => file.match(/\.(ts|tsx)$/) && !file.match(/\.test\.(ts|tsx)$/) && !file.match(/\.stories\.tsx$/))
-      .filter((file) => file.trim() !== '');
-  } catch {
-    // If we can't get staged files, check all files (for initial setup)
-    return [];
-  }
-}
-
-Now let's create the custom check script:
-
-<function_calls>
-<invoke name="create">
-<parameter name="file_text">#!/usr/bin/env tsx
-/**
- * Pre-commit hook to check for missing test/story files
  * Run with: tsx bin/check-test-story-files.mts [--all] [--skip-check]
  * 
  * This script enforces the test-story coupling pattern:
- * - All .tsx components must have matching .test.tsx and .stories.tsx files
+ * - All .tsx components must have a .stories.tsx file
+ * - Components must have EITHER a .test.tsx file OR assertions in the .stories.tsx file
  * - All .ts utilities must have matching .test.ts files
  * - Migration scripts in bin/migrations/ must have test files
+ * 
+ * Story-based testing: https://storybook.js.org/docs/writing-tests/interaction-testing
  */
 
 import { execSync } from 'child_process';
@@ -62,8 +18,8 @@ import * as path from 'path';
 
 interface ValidationResult {
   file: string;
-  missingTest?: boolean;
   missingStory?: boolean;
+  missingTestAndStoryAssertions?: boolean;
   type: 'component' | 'utility' | 'migration';
 }
 
@@ -118,6 +74,29 @@ function fileExists(filePath: string): boolean {
 }
 
 /**
+ * Check if a story file contains play functions (interaction tests)
+ */
+function storyFileHasAssertions(storyFilePath: string): boolean {
+  if (!fileExists(storyFilePath)) {
+    return false;
+  }
+
+  try {
+    const content = fs.readFileSync(storyFilePath, 'utf-8');
+    // Check for play function which indicates interaction testing
+    // Look for: play: async ({ ... }) or play: ({ ... })
+    const hasPlayFunction = /play\s*:\s*(async\s*)?\(\s*\{/.test(content);
+    
+    // Also check for common assertion patterns
+    const hasAssertions = /expect\(/.test(content) || /@storybook\/test/.test(content);
+    
+    return hasPlayFunction && hasAssertions;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Check for missing test/story files
  */
 function checkFiles(files: string[]): ValidationResult[] {
@@ -150,24 +129,43 @@ function checkFiles(files: string[]): ValidationResult[] {
     const isUtility = ext === '.ts';
     const isMigration = file.startsWith('bin/migrations/') && ext === '.ts';
 
-    // Check test file
-    const testFile = path.join(dir, `${baseName}.test${ext}`);
-    const missingTest = !fileExists(testFile);
-
-    // Check story file (only for user-facing components)
-    let missingStory = false;
+    // For components: check story file AND (test file OR story assertions)
     if (isComponent) {
       const storyFile = path.join(dir, `${baseName}.stories.tsx`);
-      missingStory = !fileExists(storyFile);
+      const testFile = path.join(dir, `${baseName}.test${ext}`);
+      
+      const hasStoryFile = fileExists(storyFile);
+      const hasTestFile = fileExists(testFile);
+      const hasStoryAssertions = storyFileHasAssertions(storyFile);
+      
+      // Component must have story file
+      const missingStory = !hasStoryFile;
+      
+      // Component must have test file OR story assertions
+      const missingTestAndStoryAssertions = !hasTestFile && !hasStoryAssertions;
+      
+      if (missingStory || missingTestAndStoryAssertions) {
+        results.push({
+          file,
+          missingStory,
+          missingTestAndStoryAssertions,
+          type: 'component',
+        });
+      }
     }
-
-    if (missingTest || missingStory) {
-      results.push({
-        file,
-        missingTest,
-        missingStory,
-        type: isComponent ? 'component' : isMigration ? 'migration' : 'utility',
-      });
+    
+    // For utilities and migrations: only check test file
+    if (isUtility || isMigration) {
+      const testFile = path.join(dir, `${baseName}.test${ext}`);
+      const hasTestFile = fileExists(testFile);
+      
+      if (!hasTestFile) {
+        results.push({
+          file,
+          missingTestAndStoryAssertions: true,
+          type: isMigration ? 'migration' : 'utility',
+        });
+      }
     }
   }
 
@@ -198,15 +196,25 @@ async function main(): Promise<void> {
 
   for (const violation of violations) {
     console.error(`File: ${violation.file}`);
-    if (violation.missingTest) {
-      const ext = path.extname(violation.file);
-      const baseName = path.basename(violation.file, ext);
-      console.error(`  - Missing: ${baseName}.test${ext}`);
-    }
+    
     if (violation.missingStory) {
       const baseName = path.basename(violation.file, '.tsx');
       console.error(`  - Missing: ${baseName}.stories.tsx`);
     }
+    
+    if (violation.missingTestAndStoryAssertions) {
+      if (violation.type === 'component') {
+        const baseName = path.basename(violation.file, path.extname(violation.file));
+        console.error(`  - Missing: ${baseName}.test.tsx OR assertions in ${baseName}.stories.tsx`);
+        console.error(`    (Story files can contain tests using play functions)`);
+        console.error(`    (See: https://storybook.js.org/docs/writing-tests/interaction-testing)`);
+      } else {
+        const ext = path.extname(violation.file);
+        const baseName = path.basename(violation.file, ext);
+        console.error(`  - Missing: ${baseName}.test${ext}`);
+      }
+    }
+    
     console.error('');
   }
 

@@ -10,6 +10,7 @@ Coding conventions for the Y-Not Radio site codebase. These standards align with
 ## TypeScript & React Patterns
 
 ### Function Components
+
 Use arrow function components with TypeScript interfaces:
 
 ```typescript
@@ -39,12 +40,12 @@ export function Button({ label, onClick }) {
 // ✅ Good: Proper hook naming and dependencies
 export const useArtistSearch = (query: string) => {
   const [results, setResults] = useState<Artist[]>([]);
-  
+
   useEffect(() => {
     if (!query) return;
     fetchArtists(query).then(setResults);
   }, [query]); // Complete dependencies
-  
+
   return results;
 };
 
@@ -76,7 +77,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({ artist, actions }) => (
 );
 
 // Usage
-<ArtistCard 
+<ArtistCard
   artist={artist}
   actions={<ArtistActions onEdit={...} onDelete={...} />}
 />
@@ -101,6 +102,78 @@ interface ArtistCardProps {
 - **Test files**: No strict limit (but keep focused)
 
 Split large files into smaller, focused modules.
+
+### Single Responsibility Principle
+
+Strive to give components a single responsibility. When a component grows too complex, decompose it:
+
+1. **Business logic**: Extract into custom hooks (e.g., `useArtistData`)
+2. **CSS Styles**: Keep focused on presentation (consider utility classes)
+3. **Content**: Separate data fetching from rendering
+
+```typescript
+// ✅ Good: Single responsibility - presentation only
+interface ArtistCardProps {
+  artist: Artist;
+  onSelect: () => void;
+}
+
+export const ArtistCard: React.FC<ArtistCardProps> = ({ artist, onSelect }) => {
+  return (
+    <div className="artist-card" onClick={onSelect}>
+      <h3>{artist.name}</h3>
+      <p>{artist.genre}</p>
+    </div>
+  );
+};
+
+// ✅ Good: Business logic extracted to hook
+export const useArtistData = (artistId: string) => {
+  const [artist, setArtist] = useState<Artist | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchArtist(artistId).then((data) => {
+      setArtist(data);
+      setLoading(false);
+    });
+  }, [artistId]);
+
+  return { artist, loading };
+};
+
+// ✅ Good: Component uses hook for logic
+export const ArtistCardContainer: React.FC<{ artistId: string }> = ({ artistId }) => {
+  const { artist, loading } = useArtistData(artistId);
+
+  if (loading) return <LoadingSpinner />;
+  if (!artist) return null;
+
+  return <ArtistCard artist={artist} onSelect={() => handleSelect(artist)} />;
+};
+
+// ❌ Bad: Component doing too much
+export const ArtistCard: React.FC<{ artistId: string }> = ({ artistId }) => {
+  // Business logic mixed in
+  const [artist, setArtist] = useState<Artist | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState(false);
+
+  useEffect(() => {
+    fetchArtist(artistId).then(setArtist);
+  }, [artistId]);
+
+  // Complex styling logic
+  const cardStyle = {
+    backgroundColor: selected ? '#blue' : '#white',
+    border: '1px solid gray',
+    // ... many more style properties
+  };
+
+  // Too many responsibilities in one component
+  return <div style={cardStyle}>{/* ... */}</div>;
+};
+```
 
 ## Next.js 15 Specific
 
@@ -137,6 +210,7 @@ export default function StaticPage() {
 ### App Router Conventions
 
 **File structure**:
+
 - `page.tsx` - Route pages
 - `layout.tsx` - Shared layouts
 - `loading.tsx` - Loading UI
@@ -244,7 +318,7 @@ const count = 42; // inferred as number
 
 // ✅ Good: Explicit types for function parameters and returns
 function fetchArtist(id: string): Promise<Artist> {
-  return fetch(`/api/artists/${id}`).then(res => res.json());
+  return fetch(`/api/artists/${id}`).then((res) => res.json());
 }
 
 // ✅ Good: Use interfaces for object shapes
@@ -255,7 +329,8 @@ interface Artist {
 }
 
 // ❌ Bad: Using `any`
-function processData(data: any) { // Avoid any!
+function processData(data: any) {
+  // Avoid any!
   return data.someProperty;
 }
 
@@ -302,8 +377,8 @@ const HeavyChart = dynamic(() => import('@/components/HeavyChart'), {
 // ✅ Good: Next.js Image component
 import Image from 'next/image';
 
-<Image 
-  src="/artist.jpg" 
+<Image
+  src="/artist.jpg"
   alt="Artist name"
   width={400}
   height={300}
@@ -318,9 +393,9 @@ import Image from 'next/image';
 
 ```typescript
 // ✅ Good: Memoize expensive computations
-const sortedArtists = useMemo(() => 
-  artists.sort((a, b) => a.name.localeCompare(b.name)),
-  [artists]
+const sortedArtists = useMemo(
+  () => artists.sort((a, b) => a.name.localeCompare(b.name)),
+  [artists],
 );
 
 // ✅ Good: Memoize callbacks passed to children
@@ -335,7 +410,7 @@ Follow WCAG AA standards:
 
 ```typescript
 // ✅ Good: Semantic HTML and ARIA
-<button 
+<button
   onClick={handleClick}
   aria-label="Close dialog"
   aria-pressed={isActive}
@@ -344,7 +419,7 @@ Follow WCAG AA standards:
 </button>
 
 // ✅ Good: Keyboard navigation
-<div 
+<div
   role="button"
   tabIndex={0}
   onKeyDown={(e) => e.key === 'Enter' && handleClick()}
@@ -361,6 +436,7 @@ Follow WCAG AA standards:
 See `test-story-coupling` skill for detailed testing patterns.
 
 **Coverage targets** (from `vitest.config.ts`):
+
 - Statements: 80%
 - Branches: 80%
 - Functions: 80%
