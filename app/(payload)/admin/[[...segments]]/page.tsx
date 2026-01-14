@@ -1,5 +1,6 @@
 import config from '@payload-config';
-import { generatePageMetadata, RootPage } from '@payloadcms/next/views';
+import { RootPage } from '@payloadcms/next/views';
+import type { Metadata } from 'next';
 import { importMap } from '../importMap';
 
 type Args = {
@@ -11,14 +12,21 @@ type Args = {
   }>;
 };
 
-export const generateMetadata = ({ params, searchParams }: Args) => (
-  generatePageMetadata({ config, params, searchParams })
-);
+// Force dynamic rendering for admin pages
+export const dynamic = 'force-dynamic';
 
-const Page = ({ params, searchParams }: Args) => (
+// Static metadata to avoid auth issues during build/SSR
+export const metadata: Metadata = {
+  title: 'Admin Panel',
+  description: 'Y-Not Radio Admin',
+};
+
+const Page = ({ params, searchParams }: Args) =>
   RootPage({
-    config, params, searchParams, importMap,
-  })
-);
+    config,
+    params,
+    searchParams,
+    importMap,
+  });
 
 export default Page;
