@@ -1,6 +1,8 @@
 // Mock implementation of Payload CMS UI hooks for Storybook
 // This mock allows stories to provide initial values via story parameters
 
+import React from 'react';
+
 let mockFieldValue = '';
 let mockFormFieldsValue: Record<string, any> = {};
 
@@ -18,6 +20,20 @@ export const useFormFields = (selector?: (fields: any) => any) => {
     return selector([mockFormFieldsValue]);
   }
   return mockFormFieldsValue;
+};
+
+// Mock Gutter component (wraps content with padding)
+export const Gutter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <div style={{ padding: '0 var(--gutter-h, 25px)' }}>{children}</div>;
+};
+
+// Mock useStepNav hook (for breadcrumbs)
+export const useStepNav = () => {
+  return {
+    setStepNav: () => {
+      // No-op in Storybook
+    },
+  };
 };
 
 // Helper to set mock values (used by stories)
