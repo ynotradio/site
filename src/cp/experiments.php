@@ -115,7 +115,7 @@ if (!$_SESSION["logged_in"]) {
         <input type="hidden" name="action" value="add_flag">
         <label>Flag Name</label>
         <div class="controls">
-          <input type="text" name="new_flag" class="input-l" placeholder="e.g., auth_voting" required>
+          <input type="text" name="new_flag" class="input-l" placeholder="e.g., new_feature" required>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn-info">Add Flag</button>
@@ -125,10 +125,7 @@ if (!$_SESSION["logged_in"]) {
 
     <div class="top-spacer_20">
       <h2>Available Flags</h2>
-      <dl>
-        <dt><code>auth_voting</code></dt>
-        <dd>Enables authenticated voting for Top 11 @ 11 (requires Auth0 login)</dd>
-      </dl>
+      <p><em>No feature flags are currently documented. Add flags as needed for testing new features.</em></p>
     </div>
 
     <div class="top-spacer_20">

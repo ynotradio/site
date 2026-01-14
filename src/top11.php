@@ -10,31 +10,25 @@ $page_title = "Top 11 @ 11";
 
 require 'vendor/autoload.php';
 require 'partials/__env_loader.php';
-require_once 'models/FeatureManager.php';
 
-// Determine whether to use Auth0 voting (default on, overridable via feature flags)
-$useAuthVoting = \YNotRadio\Models\FeatureManager::isEnabled('auth_voting');
-
-// Initialize Auth0 BEFORE any output (only if feature flag is enabled)
+// Initialize Auth0 BEFORE any output
 $auth0 = null;
 $userInfo = null;
 $voter_email = null;
 
-if ($useAuthVoting) {
-  $uri = $_SERVER["HTTP_HOST"];
-  $protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
+$uri = $_SERVER["HTTP_HOST"];
+$protocol = isset($_SERVER["HTTPS"]) ? 'https' : 'http';
 
-  $auth0 = new Auth0\SDK\Auth0([
-    'domain' => $_ENV['AUTH0_DOMAIN'],
-    'client_id' => $_ENV['AUTH0_CLIENT_ID'],
-    'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
-    'redirect_uri' => $protocol . "://" . $uri . "/top11",
-    'scope' => 'openid email profile',
-  ]);
+$auth0 = new Auth0\SDK\Auth0([
+  'domain' => $_ENV['AUTH0_DOMAIN'],
+  'client_id' => $_ENV['AUTH0_CLIENT_ID'],
+  'client_secret' => $_ENV['AUTH0_CLIENT_SECRET'],
+  'redirect_uri' => $protocol . "://" . $uri . "/top11",
+  'scope' => 'openid email profile',
+]);
 
-  $userInfo = $auth0->getUser();
-  $voter_email = $userInfo['email'] ?? null;
-}
+$userInfo = $auth0->getUser();
+$voter_email = $userInfo['email'] ?? null;
 
 require("functions/main_fns.php");
 require_once("models/Top11Factory.php");
@@ -134,51 +128,37 @@ function renderContestNewsletterOptions() {
         $songs = $top11Model->getAllSongs();
         echo "<h2 class=\"center\">Vote for Your Top 3 Y-Not Songs of the Week</h2>\n";
         
-        if ($useAuthVoting) {
-          // Auth voting mode: require login
-          if (empty($voter_email)) {
-            // User is not logged in - show login button
-            echo "<div class=\"information center top-spacer_20\">";
-            echo "<p><strong>Please log in to vote in the Top 11 @ 11.</strong></p>";
-            echo "<a href=\"auth_login.php?returnTo=/top11\" class=\"btn-success\">Log in to Vote</a>";
+        // Auth voting mode: require login
+        if (empty($voter_email)) {
+          // User is not logged in - show login button
+          echo "<div class=\"information center top-spacer_20\">";
+          echo "<p><strong>Please log in to vote in the Top 11 @ 11.</strong></p>";
+          echo "<a href=\"auth_login.php?returnTo=/top11\" class=\"btn-success\">Log in to Vote</a>";
+          echo "</div>";
+        } else {
+          // Check if user has already voted this week
+          $hasVoted = $top11Model->hasUserVotedThisWeek($voter_email, $userInfo['sub'] ?? null);
+          if ($hasVoted) {
+            echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
+            echo "<div class=\"alert alert-info\">";
+            echo "<h3>You've already voted!</h3>";
+            echo "<p>You have already cast your vote for this week's Top 11 @ 11. Come back next week to vote again!</p>";
             echo "</div>";
           } else {
-            // Check if user has already voted this week
-            $hasVoted = $top11Model->hasUserVotedThisWeek($voter_email, $userInfo['sub'] ?? null);
-            if ($hasVoted) {
-              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
-              echo "<div class=\"alert alert-info\">";
-              echo "<h3>You've already voted!</h3>";
-              echo "<p>You have already cast your vote for this week's Top 11 @ 11. Come back next week to vote again!</p>";
-              echo "</div>";
-            } else {
-              // User is logged in and hasn't voted - show voting form
-              echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
-              echo "<form action=\"" . $page_file . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
-              echo renderSongCheckboxes($songs);
-              echo renderWriteInField();
-              echo "<div class=\"control-group top-spacer_20 input-seperation\">\n";
-              echo renderPersonalInfoFields(false); // Don't include email field - we have it from Auth0
-              echo renderContestNewsletterOptions();
-              echo "<div class=\"form-actions\"><button class=\"btn-info\" type=\"submit\">Cast Your Vote</button>\n";
-              echo "<input type=\"hidden\" name=\"action\" value=\"write\">";
-              echo "<input type=\"hidden\" name=\"use_auth_voting\" value=\"1\">";
-              echo "<input type=\"hidden\" name=\"voter_email\" value=\"" . htmlspecialchars($voter_email) . "\">";
-              echo "<input type=\"hidden\" name=\"auth0_id\" value=\"" . htmlspecialchars($userInfo['sub'] ?? '') . "\"></div>";
-              echo "</div>\n</fieldset>\n</form>";
-            }
+            // User is logged in and hasn't voted - show voting form
+            echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
+            echo "<form action=\"" . $page_file . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
+            echo renderSongCheckboxes($songs);
+            echo renderWriteInField();
+            echo "<div class=\"control-group top-spacer_20 input-seperation\">\n";
+            echo renderPersonalInfoFields(false); // Don't include email field - we have it from Auth0
+            echo renderContestNewsletterOptions();
+            echo "<div class=\"form-actions\"><button class=\"btn-info\" type=\"submit\">Cast Your Vote</button>\n";
+            echo "<input type=\"hidden\" name=\"action\" value=\"write\">";
+            echo "<input type=\"hidden\" name=\"voter_email\" value=\"" . htmlspecialchars($voter_email) . "\">";
+            echo "<input type=\"hidden\" name=\"auth0_id\" value=\"" . htmlspecialchars($userInfo['sub'] ?? '') . "\"></div>";
+            echo "</div>\n</fieldset>\n</form>";
           }
-        } else {
-          // Anonymous voting mode (original behavior)
-          echo "<form action=\"" . $page_file . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
-          echo renderSongCheckboxes($songs);
-          echo renderWriteInField();
-          echo "<div class=\"control-group top-spacer_20 input-seperation\">\n";
-          echo renderPersonalInfoFields(true); // Include email field
-          echo renderContestNewsletterOptions();
-          echo "<div class=\"form-actions\"><button class=\"btn-info\" type=\"submit\">Cast Your Vote</button>\n";
-          echo "<input type=\"hidden\" name=\"action\" value=\"write\"></div>";
-          echo "</div>\n</fieldset>\n</form>";
         }
       } else {
         echo "<div class=\"information center\">Sorry but voting is currently closed.
