@@ -46,6 +46,27 @@ DB_PASSWORD=root
 DB_NAME=ynot_site
 ```
 
+### Feature Flags (Optional)
+
+Feature flags can be set via environment variables to enable Postgres mode for specific models. These override the defaults in `src/config/features.php`.
+
+```bash
+# Set any of these to 'true', '1', 'yes', or 'on' to enable
+USE_POSTGRES_CONCERTS=true
+USE_POSTGRES_ONDEMAND=true
+USE_POSTGRES_DEEJAYS=true
+USE_POSTGRES_MUSIC=true
+USE_POSTGRES_STORIES=true
+USE_POSTGRES_CDOFTHEWEEK=true
+USE_POSTGRES_SCHEDULE=true
+USE_POSTGRES_CUSTOMTEXT=true
+```
+
+**Priority Order:**
+1. Runtime flags (cookie `FF` or URL parameter `ff`) - highest priority
+2. Environment variables (from `.env`) - overrides config file
+3. Config file (`src/config/features.php`) - default values
+
 ## How It Works
 
 ### Docker Environment

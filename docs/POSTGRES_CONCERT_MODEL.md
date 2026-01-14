@@ -37,21 +37,29 @@ return [
 
 ### Enabling the Feature
 
-You can enable PostgreSQL concerts in three ways:
+You can enable PostgreSQL concerts in four ways (in priority order):
 
-1. **Config File** (Persistent):
+1. **Cookie** (Session-based, highest priority):
+   - Set a cookie named `FF` with value `use_postgres_concerts`
+   - Example: `FF=use_postgres_concerts`
+
+2. **URL Parameter** (One-time, high priority):
+   - Add `?ff=use_postgres_concerts` to the URL
+   - Example: `http://example.com/concerts.php?ff=use_postgres_concerts`
+
+3. **Environment Variable** (Persistent, via .env file):
+   ```bash
+   # In src/partials/.env or .env.local
+   USE_POSTGRES_CONCERTS=true
+   ```
+   - Accepts: `true`, `1`, `yes`, `on` (case-insensitive)
+   - Overrides config file setting
+
+4. **Config File** (Persistent, lowest priority):
    ```php
    // src/config/features.php
    'use_postgres_concerts' => true
    ```
-
-2. **Cookie** (Session-based):
-   - Set a cookie named `FF` with value `use_postgres_concerts`
-   - Example: `FF=use_postgres_concerts`
-
-3. **URL Parameter** (One-time):
-   - Add `?ff=use_postgres_concerts` to the URL
-   - Example: `http://example.com/concerts.php?ff=use_postgres_concerts`
 
 ## Environment Variables
 
