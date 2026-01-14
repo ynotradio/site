@@ -5,13 +5,20 @@ import { EmbedFeature } from '../features/embed';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  labels: {
+    singular: 'Story',
+    plural: 'Stories',
+  },
   versions: {
     drafts: true,
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'startDate', 'endDate', 'priority', 'updatedAt'],
+    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
     group: 'Content',
+    listSearchableFields: ['headline', 'slug'],
+    defaultSort: '-startDate',
+    description: 'Stories appearing on the front page. Use date range to filter currently active posts.',
   },
   access: {
     read: () => true, // Public read access
@@ -99,6 +106,9 @@ export const Posts: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Featured image',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

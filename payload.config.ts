@@ -32,12 +32,10 @@ dotenv.config({
   override: false,
 });
 
-const coerceList = (value: string): string[] => (
-  value
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean)
-);
+const coerceList = (value: string): string[] => value
+  .split(',')
+  .map((entry) => entry.trim())
+  .filter(Boolean);
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -75,6 +73,7 @@ export default buildConfig({
         : false,
     components: {
       beforeDashboard: [],
+      afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
       views: {
         DJOrder: {
           Component: '/payload/src/features/dj-order#DJOrderTool',

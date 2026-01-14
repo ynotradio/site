@@ -22,6 +22,7 @@ import { SortableItem } from './components/SortableItem';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
 import type { DJ, DJApiResponse, DJsApiResult } from './types';
+import './DJOrderClient.css';
 
 // Client component for DJ ordering
 export const DJOrderClient: React.FC = () => {
@@ -138,98 +139,49 @@ export const DJOrderClient: React.FC = () => {
 
   return (
     <Gutter>
-      <div style={{ maxWidth: '800px', paddingTop: '24px', paddingBottom: '24px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>
-            DJ Order
-          </h1>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
-            Drag and drop DJs to change their display order on the Deejays page.
-            Changes won&apos;t be saved until you click the &quot;Save Order&quot; button.
+      <div className="dj-order-client">
+        <div className="dj-order-client__header">
+          <h1 className="dj-order-client__title">DJ Order</h1>
+          <p className="dj-order-client__description">
+            Drag and drop DJs to change their display order on the Deejays page. Changes won&apos;t
+            be saved until you click the &quot;Save Order&quot; button.
           </p>
         </div>
 
         {error && (
-          <div
-            style={{
-              padding: '12px 16px',
-              marginBottom: '16px',
-              backgroundColor: '#fee',
-              border: '1px solid #fcc',
-              borderRadius: '4px',
-              color: '#c00',
-              fontSize: '14px',
-            }}
-          >
-            {error}
-          </div>
+          <div className="dj-order-client__alert dj-order-client__alert--error">{error}</div>
         )}
 
         {successMessage && (
-          <div
-            style={{
-              padding: '12px 16px',
-              marginBottom: '16px',
-              backgroundColor: '#e6ffed',
-              border: '1px solid #a3d9a5',
-              borderRadius: '4px',
-              color: '#22863a',
-              fontSize: '14px',
-            }}
-          >
+          <div className="dj-order-client__alert dj-order-client__alert--success">
             {successMessage}
           </div>
         )}
 
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '8px',
-            border: '1px solid #ddd',
-            backgroundColor: '#fafafa',
-          }}
-        >
+        <div className="dj-order-client__list-container">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext
-              items={djs.map((dj) => dj.id)}
-              strategy={verticalListSortingStrategy}
-            >
+            <SortableContext items={djs.map((dj) => dj.id)} strategy={verticalListSortingStrategy}>
               {djs.length === 0 ? (
                 <EmptyState message="No DJs found. Create some DJs first." />
               ) : (
                 djs.map((dj) => (
-                  <SortableItem
-                    key={dj.id}
-                    id={dj.id}
-                    name={dj.displayName}
-                    isActive={dj.onAir}
-                  />
+                  <SortableItem key={dj.id} id={dj.id} name={dj.displayName} isActive={dj.onAir} />
                 ))
               )}
             </SortableContext>
           </DndContext>
         </div>
 
-        <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+        <div className="dj-order-client__actions">
           <button
             type="button"
             onClick={saveOrder}
             disabled={saving || djs.length === 0}
-            style={{
-              padding: '10px 20px',
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#fff',
-              backgroundColor: saving ? '#999' : '#3182ce',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: saving || djs.length === 0 ? 'not-allowed' : 'pointer',
-              opacity: djs.length === 0 ? 0.5 : 1,
-            }}
+            className={`dj-order-client__save-button ${saving ? 'dj-order-client__save-button--saving' : ''}`}
           >
             {saving ? 'Saving...' : 'Save Order'}
           </button>

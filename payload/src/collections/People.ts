@@ -5,10 +5,15 @@ import { hasRole } from '../utils/auth';
 
 export const People: CollectionConfig = {
   slug: 'people',
+  labels: {
+    singular: 'Person',
+    plural: 'People',
+  },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
     group: 'People',
+    description: 'People profiles including DJs, reviewers, and other individuals.',
   },
   access: {
     read: () => true, // Public read access
@@ -38,6 +43,9 @@ export const People: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Profile photo',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

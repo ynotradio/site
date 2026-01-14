@@ -4,6 +4,10 @@ import { hasRole } from '../utils/auth';
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
+  labels: {
+    singular: 'CD of the Week',
+    plural: 'CDs of the Week',
+  },
   versions: {
     drafts: true,
   },
@@ -11,6 +15,8 @@ export const CdOfTheWeek: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', 'updatedAt'],
     group: 'Music',
+    description: 'Weekly album reviews featured as CD of the Week.',
+    defaultSort: '-date',
   },
   access: {
     read: () => true, // Public read access

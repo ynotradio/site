@@ -4,10 +4,16 @@ import { hasRole } from '../utils/auth';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  labels: {
+    singular: 'Song',
+    plural: 'Songs',
+  },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['displayName', 'artist', 'releaseDate', 'updatedAt'],
+    defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
+    description: 'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
+    defaultSort: '-releaseDate',
   },
   access: {
     read: () => true, // Public read access

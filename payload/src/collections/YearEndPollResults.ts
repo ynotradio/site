@@ -156,7 +156,8 @@ const StaffPicksBlock: Block = {
       name: 'onDemandShows',
       type: 'array',
       admin: {
-        description: 'On-demand audio embeds of the DJ\'s show where they present their picks (usually just 1)',
+        description:
+          "On-demand audio embeds of the DJ's show where they present their picks (usually just 1)",
       },
       fields: [
         {
@@ -190,7 +191,7 @@ const StaffPicksBlock: Block = {
           name: 'comment',
           type: 'text',
           admin: {
-            description: 'DJ\'s comment about this pick',
+            description: "DJ's comment about this pick",
             width: '40%',
           },
         },
@@ -216,7 +217,7 @@ const StaffPicksBlock: Block = {
           name: 'comment',
           type: 'text',
           admin: {
-            description: 'DJ\'s comment about this pick',
+            description: "DJ's comment about this pick",
             width: '40%',
           },
         },
@@ -269,6 +270,10 @@ const TextContentBlock: Block = {
  */
 export const YearEndPollResults: CollectionConfig = {
   slug: 'year-end-poll-results',
+  labels: {
+    singular: 'Year End Poll Result',
+    plural: 'Year End Poll Results',
+  },
   versions: {
     drafts: true,
   },
@@ -276,6 +281,9 @@ export const YearEndPollResults: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
+    description: 'Year-end poll results and staff picks pages.',
+    defaultSort: '-year',
+    hidden: true, // Temporarily hidden from navigation
   },
   access: {
     read: () => true, // Public read access
@@ -364,17 +372,12 @@ export const YearEndPollResults: CollectionConfig = {
       type: 'blocks',
       required: true,
       minRows: 1,
-      blocks: [
-        RankedSongsBlock,
-        RankedRecordsBlock,
-        StaffPicksBlock,
-        TextContentBlock,
-      ],
+      blocks: [RankedSongsBlock, RankedRecordsBlock, StaffPicksBlock, TextContentBlock],
       admin: {
-        description: 'Add sections to build your results page. Each section can be a ranked list, staff picks, or text content.',
+        description:
+          'Add sections to build your results page. Each section can be a ranked list, staff picks, or text content.',
       },
     },
-
   ],
   timestamps: true,
 };

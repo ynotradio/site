@@ -4,6 +4,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 import type { ShowRowProps, Show } from '../types';
+import './ShowRow.css';
 
 // Helper to get display name for a show
 const getShowDisplayName = (show: Pick<Show, 'name' | 'hostName'>): string => {
@@ -36,20 +37,9 @@ export const ShowRow = ({ show }: ShowRowProps) => {
   const endTimeFormatted = formatTimeAmPm(show.endTime);
 
   return (
-    <div
-      style={{
-        padding: '8px 12px',
-        margin: '4px 8px',
-        border: '1px solid #e0e0e0',
-        borderRadius: '4px',
-        background: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}
-    >
-      <span style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>{displayName}</span>
-      <span style={{ fontSize: '13px', color: '#666' }}>
+    <div className="show-row">
+      <span className="show-row__name">{displayName}</span>
+      <span className="show-row__time">
         {startTimeFormatted} - {endTimeFormatted}
       </span>
     </div>

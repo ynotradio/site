@@ -17,10 +17,15 @@ const hasRole = (user: unknown, role: AppUserRole): boolean => {
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  labels: {
+    singular: 'User',
+    plural: 'Users',
+  },
   admin: {
     defaultColumns: ['email', 'role', 'lastLoggedIn', 'updatedAt'],
     useAsTitle: 'email',
     group: 'People',
+    description: 'User accounts and access management.',
   },
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours

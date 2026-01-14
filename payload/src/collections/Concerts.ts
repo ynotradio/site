@@ -3,6 +3,10 @@ import { hasRole } from '../utils/auth';
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
+  labels: {
+    singular: 'Concert',
+    plural: 'Concerts',
+  },
   versions: {
     drafts: true,
   },
@@ -10,6 +14,8 @@ export const Concerts: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'date', 'venue', 'featured', 'updatedAt'],
     group: 'Events',
+    description: 'Concert listings. Filter by "featured" to see homepage concerts.',
+    defaultSort: '-date',
   },
   access: {
     read: () => true, // Public read access

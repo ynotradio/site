@@ -25,5 +25,11 @@ export default defineConfig({
         lines: 69,
       },
     },
+    server: {
+      deps: {
+        // Force inline to avoid CSS import errors from dependencies
+        inline: ['@payloadcms/ui'],
+      },
+    },
   },
 });

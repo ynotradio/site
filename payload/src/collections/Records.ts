@@ -4,10 +4,16 @@ import { hasRole } from '../utils/auth';
 
 export const Records: CollectionConfig = {
   slug: 'records',
+  labels: {
+    singular: 'Record',
+    plural: 'Records',
+  },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['displayName', 'artist', 'label', 'releaseDate', 'updatedAt'],
+    defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
     group: 'Music',
+    description: 'Album/record catalog.',
+    defaultSort: '-releaseDate',
   },
   access: {
     read: () => true, // Public read access
@@ -98,6 +104,9 @@ export const Records: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Album cover image',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

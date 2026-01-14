@@ -5,10 +5,15 @@ import { hasRole } from '../utils/auth';
 
 export const Artists: CollectionConfig = {
   slug: 'artists',
+  labels: {
+    singular: 'Artist',
+    plural: 'Artists',
+  },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
     group: 'Music',
+    description: 'Artists and bands in the music catalog.',
   },
   access: {
     read: () => true, // Public read access
@@ -38,6 +43,9 @@ export const Artists: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Artist photo or band photo',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

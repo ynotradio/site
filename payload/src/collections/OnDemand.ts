@@ -4,13 +4,19 @@ import { hasRole } from '../utils/auth';
 
 export const OnDemand: CollectionConfig = {
   slug: 'ondemand',
+  labels: {
+    singular: 'On Demand Recording',
+    plural: 'On Demand Recordings',
+  },
   versions: {
     drafts: true,
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'date', 'updatedAt'],
+    defaultColumns: ['headline', 'image', 'date', 'updatedAt'],
     group: 'Radio',
+    description: 'On-demand recordings and show archives.',
+    defaultSort: '-date',
   },
   access: {
     read: () => true, // Public read access
@@ -34,6 +40,9 @@ export const OnDemand: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'Image/thumbnail for the on-demand content',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {

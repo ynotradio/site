@@ -4,13 +4,19 @@ import { hasRole } from '../utils/auth';
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
+  labels: {
+    singular: 'DJ',
+    plural: 'DJs',
+  },
   versions: {
     drafts: true,
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'onAir', 'updatedAt'],
+    defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', 'updatedAt'],
     group: 'Radio',
+    description: 'DJ profiles. Filter by "onAir" to see active DJs.',
+    defaultSort: 'sortOrder',
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
     },
@@ -120,6 +126,9 @@ export const DJs: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description: 'DJ photo',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
       },
     },
     {
