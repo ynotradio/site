@@ -1,0 +1,47 @@
+.sortable-item {
+  cursor: grab;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 1;
+  z-index: 1;
+}
+
+.sortable-item--dragging {
+  background: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0.8;
+  z-index: 1000;
+}
+
+.sortable-item__handle {
+  color: #2276fc;
+  margin-right: 5px;
+  font-size: 16px;
+}
+
+.sortable-item__name {
+  font-size: 14px;
+}
+
+.sortable-item__name--active {
+  font-weight: 600;
+  color: #000;
+}
+
+.sortable-item__name--inactive {
+  font-weight: 400;
+  color: #666;
+}
+
+.sortable-item__inactive-label {
+  color: #777;
+  margin-left: 8px;
+  font-weight: 400;
+}
