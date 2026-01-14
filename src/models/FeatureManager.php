@@ -21,6 +21,18 @@ class FeatureManager {
             return true;
         }
 
+        // Second, check environment variables (from .env file)
+        // Convert feature name to env var format: use_postgres_concerts -> USE_POSTGRES_CONCERTS
+        $envVarName = strtoupper($feature);
+        $envValue = getenv($envVarName);
+        if ($envValue !== false) {
+            // Check for truthy values: 'true', '1', 'yes', 'on'
+            $envValue = strtolower(trim($envValue));
+            if (in_array($envValue, ['true', '1', 'yes', 'on'], true)) {
+                return true;
+            }
+        }
+
         // Fall back to config file
         if (self::$features === null) {
             self::$features = require __DIR__ . '/../config/features.php';
