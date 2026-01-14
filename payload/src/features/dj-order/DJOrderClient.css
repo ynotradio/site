@@ -1,0 +1,75 @@
+.dj-order-client {
+  max-width: 800px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.dj-order-client__header {
+  margin-bottom: 24px;
+}
+
+.dj-order-client__title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.dj-order-client__description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.dj-order-client__alert {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.dj-order-client__alert--error {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c00;
+}
+
+.dj-order-client__alert--success {
+  background-color: #e6ffed;
+  border: 1px solid #a3d9a5;
+  color: #22863a;
+}
+
+.dj-order-client__list-container {
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background-color: #fafafa;
+}
+
+.dj-order-client__actions {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dj-order-client__save-button {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #3182ce;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.dj-order-client__save-button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dj-order-client__save-button--saving {
+  background-color: #999;
+  cursor: not-allowed;
+}
