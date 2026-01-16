@@ -106,8 +106,14 @@ async function globalSetup() {
       console.warn('⚠️  Failed to seed legacy database, continuing...\n');
     }
 
-    // Note: We don't seed Payload here because it requires the Payload server to be running
-    // The test will handle Payload seeding if needed
+    // Seed Payload Postgres database
+    console.log('🌱 Seeding Payload Postgres database...');
+    try {
+      execSync('yarn seed:payload', { cwd: projectRoot, stdio: 'inherit' });
+      console.log('✅ Payload database seeded\n');
+    } catch (error) {
+      console.warn('⚠️  Failed to seed Payload database, continuing...\n');
+    }
 
     console.log('✅ E2E test environment setup complete!\n');
     console.log('   Legacy site: http://localhost:8080');

@@ -23,7 +23,7 @@ test.describe('CRUD Integration POC', () => {
 
     const projectRoot = join(__dirname, '..');
 
-    payloadProcess = spawn('yarn', ['payload:dev'], {
+    payloadProcess = spawn('yarn', ['dev'], {
       cwd: projectRoot,
       stdio: 'pipe',
       shell: true,
@@ -33,23 +33,28 @@ test.describe('CRUD Integration POC', () => {
       },
     });
 
-    // Wait for Payload to be ready
+    // Wait for Next.js dev server to be ready
     await new Promise<void>((resolve, reject) => {
       let timeout: NodeJS.Timeout;
+      let resolved = false;
 
       const onData = (data: Buffer) => {
         const output = data.toString();
         // eslint-disable-next-line no-console
-        console.log('[Payload]', output);
+        console.log('[Next.js]', output);
 
-        // Look for indicators that server is ready
+        // Look for Next.js ready indicators
         if (
-          output.includes('listening') ||
-          output.includes('ready') ||
-          output.includes('started')
+          output.includes('Local:') ||
+          output.includes('http://localhost:3000') ||
+          output.includes('Ready in') ||
+          output.includes('compiled successfully')
         ) {
-          clearTimeout(timeout);
-          resolve();
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            resolve();
+          }
         }
       };
 
@@ -61,21 +66,27 @@ test.describe('CRUD Integration POC', () => {
       }
 
       payloadProcess?.on('error', (error) => {
-        clearTimeout(timeout);
-        reject(error);
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
+          reject(error);
+        }
       });
 
-      // Timeout after 2 minutes
+      // Timeout after 3 minutes (Next.js can take longer to start)
       timeout = setTimeout(() => {
-        reject(new Error('Payload server failed to start in time'));
-      }, 120000);
+        if (!resolved) {
+          resolved = true;
+          reject(new Error('Next.js dev server failed to start in time'));
+        }
+      }, 180000);
     });
 
     // Wait for server to be reachable with HTTP health check
     // eslint-disable-next-line no-console
-    console.log('⏳ Waiting for Payload server to respond to HTTP requests...');
+    console.log('⏳ Waiting for Next.js server to respond to HTTP requests...');
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 60; // Increased attempts for Next.js
     while (attempts < maxAttempts) {
       try {
         // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
@@ -109,14 +120,14 @@ test.describe('CRUD Integration POC', () => {
     }
 
     // eslint-disable-next-line no-console
-    console.log('✅ Payload server started and responding');
+    console.log('✅ Next.js server started and responding');
   });
 
   test.afterAll(async () => {
-    // Stop Payload server
+    // Stop Next.js dev server
     if (payloadProcess) {
       // eslint-disable-next-line no-console
-      console.log('🛑 Stopping Payload server...');
+      console.log('🛑 Stopping Next.js server...');
       payloadProcess.kill('SIGTERM');
 
       // Wait for graceful shutdown
@@ -130,11 +141,11 @@ test.describe('CRUD Integration POC', () => {
       }
 
       // eslint-disable-next-line no-console
-      console.log('✅ Payload server stopped');
+      console.log('✅ Next.js server stopped');
     }
   });
 
-  test('should verify services are running', async ({ page }) => {
+  test('should verify services are running', async ({ page }, testInfo) => {
     // Verify legacy site is accessible
     const legacyResponse = await page.goto('http://localhost:8080', {
       waitUntil: 'networkidle',
@@ -142,10 +153,13 @@ test.describe('CRUD Integration POC', () => {
     });
     expect(legacyResponse?.status()).toBe(200);
 
-    // Take screenshot of legacy site
-    await page.screenshot({
-      path: 'e2e/screenshots/legacy-homepage.png',
+    // Take screenshot of legacy site and attach to test report
+    const legacyScreenshot = await page.screenshot({
       fullPage: true,
+    });
+    await testInfo.attach('Legacy Site Homepage', {
+      body: legacyScreenshot,
+      contentType: 'image/png',
     });
 
     // Verify Payload admin is accessible
@@ -157,10 +171,13 @@ test.describe('CRUD Integration POC', () => {
     // Should see login page or dashboard
     await expect(page).toHaveURL(/\/admin/);
 
-    // Take screenshot of Payload admin
-    await page.screenshot({
-      path: 'e2e/screenshots/payload-admin.png',
+    // Take screenshot of Payload admin and attach to test report
+    const payloadScreenshot = await page.screenshot({
       fullPage: true,
+    });
+    await testInfo.attach('Payload Admin Page', {
+      body: payloadScreenshot,
+      contentType: 'image/png',
     });
   });
 
