@@ -35,54 +35,15 @@ jobs:
       - name: Setup environment file
         run: |
           cp .env.example .env.local
-          # Set Postgres feature flags for PHP legacy site
-          echo "USE_POSTGRES_CONCERTS=true" >> .env.local
-          echo "USE_POSTGRES_ONDEMAND=true" >> .env.local
-          echo "USE_POSTGRES_DEEJAYS=true" >> .env.local
-          echo "USE_POSTGRES_MUSIC=true" >> .env.local
-          echo "USE_POSTGRES_STORIES=true" >> .env.local
-          echo "USE_POSTGRES_CDOFTHEWEEK=true" >> .env.local
-          echo "USE_POSTGRES_SCHEDULE=true" >> .env.local
-          echo "USE_POSTGRES_CUSTOMTEXT=true" >> .env.local
           # Set Neon database URL (use production/seeded database)
           echo "DATABASE_URI=${{ secrets.DATABASE_URI }}" >> .env.local
-          echo "POSTGRES_HOST=${{ secrets.POSTGRES_HOST }}" >> .env.local
-          echo "POSTGRES_DATABASE=${{ secrets.POSTGRES_DATABASE }}" >> .env.local
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env.local
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env.local
-          echo "POSTGRES_SSL_MODE=require" >> .env.local
+          echo "DATABASE_SSL=require" >> .env.local
           echo "PAYLOAD_SECRET=test-secret-for-ci" >> .env.local
+          echo "PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000" >> .env.local
+          echo "PORT=3000" >> .env.local
       
-      - name: Start Docker services
-        run: |
-          docker compose up -d
-          echo "Waiting for services to be ready..."
-      
-      - name: Wait for services
-        run: |
-          # Wait for MySQL
-          for i in {1..30}; do
-            if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
-              echo "MySQL is ready"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/30)"
-            sleep 2
-          done
-          
-          # Wait for Apache
-          for i in {1..30}; do
-            if curl -f http://localhost:8080 > /dev/null 2>&1; then
-              echo "Apache is ready"
-              break
-            fi
-            echo "Waiting for Apache... ($i/30)"
-            sleep 2
-          done
-      
-      - name: Seed MySQL database
-        run: |
-          yarn seed:legacy || echo "Legacy seed failed, continuing..."
+      # Skip Docker services in CI - we connect to remote Neon database instead
+      # The test will only validate Payload CMS (not legacy PHP site) in CI
       
       - name: Run Playwright tests
         run: npx playwright test
@@ -99,8 +60,4 @@ jobs:
             test-results/
           retention-days: 7
       
-      - name: Cleanup
-        if: always()
-        run: |
-          docker compose down -v
-          docker system prune -f
+      # No cleanup needed - no Docker containers in CI

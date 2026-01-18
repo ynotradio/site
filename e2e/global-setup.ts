@@ -31,7 +31,8 @@ async function waitForService(
 
 /**
  * Global setup for E2E tests
- * - Starts Docker Compose services (MySQL, Postgres, PHP, Apache)
+ * - In local environments: Starts Docker Compose services (MySQL, Postgres, PHP, Apache)
+ * - In CI: Skips Docker setup, uses remote Neon database
  * - Waits for services to be healthy
  * - Seeds databases with test data
  */
@@ -39,13 +40,9 @@ async function globalSetup() {
   console.log('\n🚀 Starting E2E test environment setup...\n');
 
   const projectRoot = join(__dirname, '..');
+  const isCI = process.env.CI === 'true';
 
   try {
-    // Check if Docker is running
-    console.log('🐳 Checking Docker status...');
-    execSync('docker info', { stdio: 'ignore' });
-    console.log('✅ Docker is running\n');
-
     // Check if .env.local exists
     const envPath = join(projectRoot, '.env.local');
     try {
@@ -56,6 +53,25 @@ async function globalSetup() {
       execSync('cp .env.example .env.local', { cwd: projectRoot });
       console.log('✅ Created .env.local from .env.example\n');
       console.log('⚠️  Note: You may need to update DATABASE_URI and other credentials\n');
+    }
+
+    // Skip Docker setup in CI
+    if (isCI) {
+      console.log('ℹ️  Running in CI mode - skipping Docker setup');
+      console.log('   Using remote Neon database from environment variables\n');
+      console.log('✅ E2E test environment setup complete!\n');
+      return;
+    }
+
+    // Check if Docker is running (local only)
+    console.log('🐳 Checking Docker status...');
+    try {
+      execSync('docker info', { stdio: 'ignore' });
+      console.log('✅ Docker is running\n');
+    } catch (error) {
+      console.warn('⚠️  Docker is not running. Skipping Docker-based services.');
+      console.warn('   Tests may fail if they require legacy PHP site or local databases.\n');
+      return;
     }
 
     // Stop any existing containers
