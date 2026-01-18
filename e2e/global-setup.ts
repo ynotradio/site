@@ -27,9 +27,7 @@ async function globalSetup() {
 
     console.log('✅ E2E test environment setup complete!\n');
     console.log('ℹ️  Docker services should be running:');
-    console.log('   - PostgreSQL on port 5432');
-    console.log('   - MySQL on port 3306');
-    console.log('   - Apache (legacy site) on port 8080\n');
+    console.log('   - PostgreSQL on port 5432 (for Payload CMS data)\n');
   } catch (error) {
     console.error('❌ Error during E2E test environment setup:', error);
     throw error;

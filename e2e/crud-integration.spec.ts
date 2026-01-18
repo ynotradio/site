@@ -17,6 +17,24 @@ let payloadProcess: ChildProcess | null = null;
 
 test.describe('CRUD Integration POC', () => {
   test.beforeAll(async () => {
+    // Check if port 3000 is already in use and kill the process if needed
+    try {
+      const { execSync: execSyncUtil } = require('child_process');
+      const lsofOutput = execSyncUtil('lsof -ti:3000 || true', { encoding: 'utf-8' }).trim();
+      if (lsofOutput) {
+        // eslint-disable-next-line no-console
+        console.log(`⚠️  Port 3000 already in use by PID ${lsofOutput}, killing it...`);
+        execSyncUtil(`kill -9 ${lsofOutput} || true`);
+        // Wait for port to be released
+        await new Promise((resolve) => {
+          setTimeout(resolve, 2000);
+        });
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.log('Port check completed');
+    }
+
     // Skip if server is already running (e.g., on retry)
     if (payloadProcess && payloadProcess.exitCode === null) {
       // eslint-disable-next-line no-console
@@ -160,6 +178,17 @@ test.describe('CRUD Integration POC', () => {
       console.log('🛑 Stopping Next.js server...');
 
       try {
+        // Get the process tree and kill all child processes
+        const { execSync: execSyncUtil } = require('child_process');
+        const pid = payloadProcess.pid;
+        
+        // Kill all child processes first
+        try {
+          execSyncUtil(`pkill -P ${pid} || true`, { encoding: 'utf-8' });
+        } catch (err) {
+          // Ignore errors
+        }
+        
         // Try graceful shutdown first
         payloadProcess.kill('SIGTERM');
 
@@ -180,6 +209,16 @@ test.describe('CRUD Integration POC', () => {
             setTimeout(resolve, 1000);
           });
         }
+        
+        // Finally, kill any process on port 3000
+        try {
+          const lsofOutput = execSyncUtil('lsof -ti:3000 || true', { encoding: 'utf-8' }).trim();
+          if (lsofOutput) {
+            execSyncUtil(`kill -9 ${lsofOutput} || true`);
+          }
+        } catch (err) {
+          // Ignore errors
+        }
       } catch (error) {
         // eslint-disable-next-line no-console
         console.error('Error stopping server:', error);
@@ -197,22 +236,6 @@ test.describe('CRUD Integration POC', () => {
   });
 
   test('should verify services are running', async ({ page }, testInfo) => {
-    // Verify legacy site is accessible
-    const legacyResponse = await page.goto('http://localhost:8080', {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
-    expect(legacyResponse?.status()).toBe(200);
-
-    // Take screenshot of legacy site and attach to test report
-    const legacyScreenshot = await page.screenshot({
-      fullPage: true,
-    });
-    await testInfo.attach('Legacy Site Homepage', {
-      body: legacyScreenshot,
-      contentType: 'image/png',
-    });
-
     // Verify Payload admin is accessible
     await page.goto('http://localhost:3000/admin', {
       waitUntil: 'networkidle',
@@ -228,6 +251,22 @@ test.describe('CRUD Integration POC', () => {
     });
     await testInfo.attach('Payload Admin Page', {
       body: payloadScreenshot,
+      contentType: 'image/png',
+    });
+
+    // Verify public Next.js site is accessible
+    const publicResponse = await page.goto('http://localhost:3000', {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
+    expect(publicResponse?.status()).toBe(200);
+
+    // Take screenshot of public site
+    const publicScreenshot = await page.screenshot({
+      fullPage: true,
+    });
+    await testInfo.attach('Public Site Homepage', {
+      body: publicScreenshot,
       contentType: 'image/png',
     });
   });
@@ -282,13 +321,30 @@ test.describe('CRUD Integration POC', () => {
       fullPage: true,
     });
 
+    // Check public Next.js site has content from Payload/Postgres
+    await page.goto('http://localhost:3000', {
+      waitUntil: 'networkidle',
+    });
+
+    // Verify the page loads successfully
+    const publicContent = await page.content();
+    const hasPublicContent = publicContent.length > 100; // Basic check that page has content
+
+    expect(hasPublicContent).toBe(true);
+
+    // Take screenshot showing public site
+    await page.screenshot({
+      path: 'e2e/screenshots/public-site-content.png',
+      fullPage: true,
+    });
+
     // TODO: In a complete implementation, this test would:
     // 1. Login to Payload using test credentials
     // 2. Navigate to a collection (e.g., Posts or Concerts)
     // 3. Create a new record
     // 4. Verify it appears in the Payload list
-    // 5. Navigate to the legacy site
-    // 6. Verify the new record appears there (if synced)
+    // 5. Navigate to the public Next.js site
+    // 6. Verify the new record appears there
     // 7. Update the record in Payload
     // 8. Verify the update on the legacy site
     // 9. Delete the record

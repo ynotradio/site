@@ -65,8 +65,8 @@ jobs:
       
       - name: Start Docker Compose services
         run: |
-          docker compose up -d postgres mysql apache
-          echo "Waiting for services to be ready..."
+          docker compose up -d postgres
+          echo "Waiting for PostgreSQL to be ready..."
       
       - name: Wait for PostgreSQL
         run: |
@@ -79,28 +79,6 @@ jobs:
             sleep 2
           done
       
-      - name: Wait for MySQL
-        run: |
-          for i in {1..30}; do
-            if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
-              echo "MySQL is ready"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/30)"
-            sleep 2
-          done
-      
-      - name: Wait for Apache
-        run: |
-          for i in {1..30}; do
-            if curl -f http://localhost:8080 > /dev/null 2>&1; then
-              echo "Apache is ready"
-              break
-            fi
-            echo "Waiting for Apache... ($i/30)"
-            sleep 2
-          done
-      
       - name: Run database migrations
         run: |
           # Run Payload migrations to create database schema
@@ -110,8 +88,6 @@ jobs:
         run: |
           # Seed Payload Postgres database
           yarn seed:payload || echo "Payload seed not available, continuing..."
-          # Seed legacy MySQL database
-          yarn seed:legacy || echo "Legacy seed not available, continuing..."
       
       - name: Run Playwright tests
         run: npx playwright test
