@@ -17,10 +17,10 @@
     "airbnb-typescript/base",
     "plugin:react/recommended",
     "plugin:react/jsx-runtime",
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/recommended"
+    "plugin:jsx-a11y/recommended",
+    "next"
   ],
-  "plugins": ["@typescript-eslint", "react", "react-hooks", "jsx-a11y"],
+  "plugins": ["@typescript-eslint", "react", "jsx-a11y"],
   "env": {
     "node": true
   },
@@ -123,7 +123,14 @@
       "files": ["payload/src/collections/**/*.ts", "payload/src/components/**/*.tsx"],
       "rules": {
         "max-lines": "off",
-        "complexity": "off"
+        "complexity": "off",
+        "@next/next/no-img-element": "off"
+      }
+    },
+    {
+      "files": ["payload/src/features/**/*.tsx"],
+      "rules": {
+        "@next/next/no-html-link-for-pages": "off"
       }
     },
     {
@@ -136,6 +143,12 @@
             "message": "Barrel files (re-exporting from index.ts) are not allowed. Import directly from source modules."
           }
         ]
+      }
+    },
+    {
+      "files": ["app/(payload)/**/*.tsx"],
+      "rules": {
+        "import/extensions": "off"
       }
     }
   ]

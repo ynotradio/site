@@ -29,9 +29,9 @@ export const DJs: CollectionConfig = {
         const updatedData = data;
 
         if (
-          updatedData.person &&
-          Array.isArray(updatedData.person) &&
-          updatedData.person.length > 0
+          updatedData.person
+          && Array.isArray(updatedData.person)
+          && updatedData.person.length > 0
         ) {
           const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
 
