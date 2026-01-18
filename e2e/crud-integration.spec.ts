@@ -169,28 +169,23 @@ test.describe('CRUD Integration POC', () => {
   });
 
   test('should verify services are running', async ({ page }, testInfo) => {
-    const isCI = process.env.CI === 'true';
+    // Verify legacy site is accessible
+    const legacyResponse = await page.goto('http://localhost:8080', {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
+    expect(legacyResponse?.status()).toBe(200);
 
-    // Only test legacy site locally (requires Docker Compose with Apache)
-    if (!isCI) {
-      // Verify legacy site is accessible
-      const legacyResponse = await page.goto('http://localhost:8080', {
-        waitUntil: 'networkidle',
-        timeout: 30000,
-      });
-      expect(legacyResponse?.status()).toBe(200);
+    // Take screenshot of legacy site and attach to test report
+    const legacyScreenshot = await page.screenshot({
+      fullPage: true,
+    });
+    await testInfo.attach('Legacy Site Homepage', {
+      body: legacyScreenshot,
+      contentType: 'image/png',
+    });
 
-      // Take screenshot of legacy site and attach to test report
-      const legacyScreenshot = await page.screenshot({
-        fullPage: true,
-      });
-      await testInfo.attach('Legacy Site Homepage', {
-        body: legacyScreenshot,
-        contentType: 'image/png',
-      });
-    }
-
-    // Verify Payload admin is accessible (works in both CI and local)
+    // Verify Payload admin is accessible
     await page.goto('http://localhost:3000/admin', {
       waitUntil: 'networkidle',
       timeout: 30000,
@@ -210,8 +205,6 @@ test.describe('CRUD Integration POC', () => {
   });
 
   test('should perform CRUD operations and verify results', async ({ page }) => {
-    const isCI = process.env.CI === 'true';
-
     // This is a POC test - in a real scenario, you would:
     // 1. Login to Payload admin
     // 2. Create/Update/Delete records
@@ -219,34 +212,31 @@ test.describe('CRUD Integration POC', () => {
 
     // For now, we'll just verify that both sites are functional
 
-    // Only test legacy site locally
-    if (!isCI) {
-      // Check legacy site has seeded content
-      await page.goto('http://localhost:8080', {
-        waitUntil: 'networkidle',
-      });
+    // Check legacy site has seeded content
+    await page.goto('http://localhost:8080', {
+      waitUntil: 'networkidle',
+    });
 
-      // Look for typical Y-Not Radio content
-      const pageContent = await page.content();
+    // Look for typical Y-Not Radio content
+    const pageContent = await page.content();
 
-      // These are based on the seed data in bin/seed-legacy.sh
-      // We expect to find stories, DJs, or other seeded content
-      const hasContent =
-        pageContent.includes('Y-Not Radio') ||
-        pageContent.includes('story') ||
-        pageContent.includes('concert') ||
-        pageContent.includes('stories');
+    // These are based on the seed data in bin/seed-legacy.sh
+    // We expect to find stories, DJs, or other seeded content
+    const hasContent =
+      pageContent.includes('Y-Not Radio') ||
+      pageContent.includes('story') ||
+      pageContent.includes('concert') ||
+      pageContent.includes('stories');
 
-      expect(hasContent).toBe(true);
+    expect(hasContent).toBe(true);
 
-      // Take screenshot showing legacy content
-      await page.screenshot({
-        path: 'e2e/screenshots/legacy-content.png',
-        fullPage: true,
-      });
-    }
+    // Take screenshot showing legacy content
+    await page.screenshot({
+      path: 'e2e/screenshots/legacy-content.png',
+      fullPage: true,
+    });
 
-    // Access Payload admin (works in both CI and local)
+    // Access Payload admin
     await page.goto('http://localhost:3000/admin', {
       waitUntil: 'networkidle',
     });

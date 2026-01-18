@@ -93,17 +93,18 @@ Tests run the full stack in both CI and local environments using Docker Compose.
 
 ## CI/CD Integration
 
-The E2E tests run in GitHub Actions on every PR using the Playwright container with service containers for databases.
+The E2E tests run in GitHub Actions on every PR using Docker Compose with the full stack.
 
 ### CI Environment
 
-- **Container**: `mcr.microsoft.com/playwright:v1.57.0-noble` (pre-installed browsers)
-- **Services**:
-  - PostgreSQL (GitHub Actions service container)
-  - MySQL (GitHub Actions service container)
-- **Testing scope**: Payload CMS with seeded databases
+- **Runner**: `ubuntu-latest` with Docker Compose
+- **Services**: Full Docker Compose stack
+  - PostgreSQL (for Payload CMS)
+  - MySQL (for legacy site)
+  - Apache + PHP-FPM (for legacy site)
+- **Testing scope**: Full integration testing (Payload CMS + legacy PHP site)
+- **Browser caching**: Playwright browsers cached between runs
 - **Build cache**: Next.js build cache for faster CI runs
-- **Note**: Legacy PHP site tests are skipped in CI (requires Docker Compose with Apache)
 
 ### GitHub Actions Workflow
 
@@ -111,27 +112,30 @@ See `.github/workflows/e2e.yml` for the full workflow configuration.
 
 **What the workflow does:**
 
-1. Starts service containers (PostgreSQL, MySQL)
-2. Checks out code inside Playwright container
-3. Sets up Node.js 22
-4. Installs dependencies with Yarn
+1. Sets up Docker Compose using `docker/setup-compose-action`
+2. Checks out code and sets up Node.js 22
+3. Installs dependencies with Yarn
+4. Caches and installs Playwright browsers (Chromium)
 5. Sets up Next.js build cache
-6. Configures `.env.local` for service containers
-7. Seeds both databases
-8. Runs Playwright tests (browsers pre-installed in container)
-9. Uploads test results and screenshots as artifacts
+6. Configures `.env.local` for Docker services
+7. Starts Docker Compose services (PostgreSQL, MySQL, Apache, PHP-FPM)
+8. Waits for all services to be ready
+9. Seeds both databases
+10. Runs Playwright tests
+11. Uploads test results and screenshots as artifacts
+12. Cleans up Docker containers
 
 **Key features:**
 
-- No Playwright/Chromium installation needed (~300MB, 2-3 min saved)
-- Next.js build caching for faster builds
-- Service containers for databases (PostgreSQL + MySQL)
-- Tests Payload CMS with full database integration
-- Legacy site tests run locally via Docker Compose
+- **Playwright browser caching** - Browsers cached by version, avoiding ~300MB download on each run
+- **Next.js build caching** - Faster subsequent builds
+- **Full stack testing** - Tests both Payload CMS and legacy PHP site
+- **Seeded databases** - Consistent test data for every run
+- **No external dependencies** - Everything runs in containerized environments
 
 ### No GitHub Secrets Required
 
-The workflow uses GitHub Actions service containers with default credentials. No external database configuration needed. 9. Upload HTML report and artifacts
+The workflow uses Docker Compose with default credentials defined in `docker-compose.yml`. No external database configuration needed. 9. Upload HTML report and artifacts
 
 **Time savings:** ~2-3 minutes per run by skipping browser installation
 
