@@ -25,6 +25,13 @@ jobs:
           node-version: '22'
           cache: 'yarn'
       
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'
+          tools: composer:v2
+          coverage: none
+      
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       
@@ -54,6 +61,19 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
             ${{ runner.os }}-nextjs-
       
+      # Cache Composer dependencies
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+      
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('src/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+      
       - name: Setup environment file
         run: |
           cp .env.example .env.local
@@ -64,6 +84,11 @@ jobs:
           echo "DB_NAME=ynot_payload_dev" >> .env.local
           echo "DB_USER=ynot_postgres_user" >> .env.local
           echo "DB_PASSWORD=ynot_postgres_pass" >> .env.local
+      
+      - name: Install PHP dependencies
+        run: |
+          cd src
+          composer install --no-dev --optimize-autoloader
       
       - name: Start Docker Compose services
         run: |
