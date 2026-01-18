@@ -3,13 +3,13 @@ import { Page } from '@playwright/test';
 /**
  * Login to Payload CMS admin interface
  * @param page - Playwright page object
- * @param email - Admin email (default: admin@ynotradio.net)
- * @param password - Admin password (default: password)
+ * @param email - Admin email (default from env or test default)
+ * @param password - Admin password (default from env or test default)
  */
 export async function loginToPayload(
   page: Page,
-  email: string = 'admin@ynotradio.net',
-  password: string = 'password',
+  email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+  password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
 ): Promise<void> {
   // Navigate to Payload admin (it will redirect to login if not authenticated)
   await page.goto('http://localhost:3000/admin', {

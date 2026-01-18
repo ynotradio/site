@@ -91,8 +91,8 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
     });
 
     await test.step('Save the concert', async () => {
-      // Use getByRole for the Save button
-      await page.getByRole('button', { name: /^save$/i }).click();
+      // Use getByRole for the Save button - flexible pattern to match variations
+      await page.getByRole('button', { name: /save/i }).click();
 
       // Wait for save success - look for URL change or success message
       await Promise.race([
