@@ -66,7 +66,6 @@ export default defineConfig({
   webServer: {
     command: 'yarn dev',
     url: 'http://localhost:3000/admin',
-    port: 3000,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
     stdout: 'pipe',

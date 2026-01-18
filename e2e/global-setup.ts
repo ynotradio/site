@@ -30,10 +30,11 @@ async function globalSetup() {
     // Run Payload migrations to set up PostgreSQL schema
     console.log('🔄 Running Payload migrations...');
     try {
-      execSync('yarn payload:migrate', {
+      execSync('echo "y" | yarn payload:migrate', {
         cwd: projectRoot,
         stdio: 'inherit',
         env: { ...process.env, NODE_ENV: 'development' },
+        shell: '/bin/bash',
       });
       console.log('✅ Payload migrations completed\n');
     } catch (error) {
