@@ -90,6 +90,10 @@ jobs:
           echo "DB_NAME=ynot_site" >> .env.local
           echo "DB_USER=root" >> .env.local
           echo "DB_PASSWORD=root" >> .env.local
+          # Auth0 configuration (dummy values for E2E tests)
+          echo "AUTH0_DOMAIN=test.auth0.com" >> .env.local
+          echo "AUTH0_CLIENT_ID=test_client_id" >> .env.local
+          echo "AUTH0_CLIENT_SECRET=test_client_secret" >> .env.local
       
       - name: Install PHP dependencies
         run: |
