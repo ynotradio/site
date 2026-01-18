@@ -23,11 +23,11 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
     // eslint-disable-next-line no-console
     console.log('🎭 Testing Payload CMS → Legacy PHP Site integration via UI');
 
-    // Step 1: Navigate to Payload admin login page
+    // Step 1: Navigate to Payload admin (it will redirect to login if not authenticated)
     // eslint-disable-next-line no-console
     console.log('🔐 Navigating to Payload admin...');
 
-    await page.goto('http://localhost:3000/admin/login', {
+    await page.goto('http://localhost:3000/admin', {
       waitUntil: 'networkidle',
       timeout: 30000,
     });
@@ -43,10 +43,19 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
     // eslint-disable-next-line no-console
     console.log('🔑 Logging in to Payload...');
 
-    // Fill in login credentials
-    await page.fill('input[name="email"]', 'admin@ynotradio.net');
-    await page.fill('input[name="password"]', 'password');
-    await page.click('button[type="submit"]');
+    // Wait for the page to load and find the email field more flexibly
+    await page.waitForSelector('input[type="email"], input[name="email"], input[id*="email"]', { timeout: 30000 });
+
+    // Fill in login credentials using flexible selectors
+    const emailInput = page.locator('input[type="email"], input[name="email"], input[id*="email"]').first();
+    const passwordInput = page.locator('input[type="password"], input[name="password"], input[id*="password"]').first();
+    
+    await emailInput.fill('admin@ynotradio.net');
+    await passwordInput.fill('password');
+    
+    // Find and click the submit button
+    const submitButton = page.locator('button[type="submit"]').first();
+    await submitButton.click();
 
     // Wait for dashboard to load
     await page.waitForURL('**/admin', { timeout: 30000 });
@@ -187,15 +196,15 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
     // eslint-disable-next-line no-console
     console.log('🔌 Testing Payload admin UI accessibility...');
 
-    await page.goto('http://localhost:3000/admin/login', {
+    await page.goto('http://localhost:3000/admin', {
       waitUntil: 'networkidle',
       timeout: 30000,
     });
 
-    // Verify login page elements are present
-    const emailInput = page.locator('input[name="email"]');
-    const passwordInput = page.locator('input[name="password"]');
-    const submitButton = page.locator('button[type="submit"]');
+    // Verify login page elements are present using flexible selectors
+    const emailInput = page.locator('input[type="email"], input[name="email"], input[id*="email"]').first();
+    const passwordInput = page.locator('input[type="password"], input[name="password"], input[id*="password"]').first();
+    const submitButton = page.locator('button[type="submit"]').first();
 
     await expect(emailInput).toBeVisible();
     await expect(passwordInput).toBeVisible();

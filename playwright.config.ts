@@ -62,9 +62,10 @@ export default defineConfig({
   // Run global teardown after all tests (stop Docker services)
   globalTeardown: './e2e/global-teardown.ts',
 
-  // Web server configuration - Start Payload CMS server for admin UI tests
+  // Web server configuration - Start Next.js dev server with Payload admin UI
   webServer: {
-    command: 'yarn payload:dev',
+    command: 'yarn dev',
+    url: 'http://localhost:3000/admin',
     port: 3000,
     timeout: 120 * 1000,
     reuseExistingServer: !process.env.CI,
