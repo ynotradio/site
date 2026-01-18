@@ -111,7 +111,8 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
     // Select an artist (use the first artist from seeded data)
     await page.click('button:has-text("Add Artist")');
-    await page.waitForTimeout(1000); // Wait for dropdown to appear
+    // Wait for the dropdown to appear
+    await page.waitForSelector('.rs__option', { state: 'visible', timeout: 10000 });
     
     // Find and click the first artist option
     const firstArtist = page.locator('.rs__option').first();
@@ -119,7 +120,8 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
     // Select a venue (use the first venue from seeded data)
     await page.click('button:has-text("Select a Venue")');
-    await page.waitForTimeout(1000); // Wait for dropdown to appear
+    // Wait for the dropdown to appear
+    await page.waitForSelector('.rs__option', { state: 'visible', timeout: 10000 });
     
     // Find and click the first venue option
     const firstVenue = page.locator('.rs__option').first();
@@ -141,8 +143,15 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
     await page.click('button[type="submit"]:has-text("Save")');
 
-    // Wait for the save to complete and redirect back to list or edit page
-    await page.waitForTimeout(3000); // Give time for the save operation
+    // Wait for the save to complete - look for success indicators
+    // Either we stay on the page with a success message, or redirect to the edit page
+    await Promise.race([
+      page.waitForURL('**/concerts/**', { timeout: 30000 }),
+      page.waitForSelector('.payload-toast-container .toast--success', { timeout: 30000 }),
+    ]).catch(() => {
+      // If neither happens, give a small buffer for the save to complete
+      return page.waitForLoadState('networkidle', { timeout: 10000 });
+    });
 
     screenshot = await page.screenshot({ fullPage: true });
     await testInfo.attach('06-Concert Saved', {
