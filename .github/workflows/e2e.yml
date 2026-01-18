@@ -84,7 +84,7 @@ jobs:
       - name: Wait for MySQL
         run: |
           for i in {1..30}; do
-            if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
+            if docker compose exec -T -e MYSQL_PWD=root mysql mysqladmin ping -h localhost -u root > /dev/null 2>&1; then
               echo "MySQL is ready"
               break
             fi
@@ -95,11 +95,11 @@ jobs:
       - name: Initialize MySQL database schema
         run: |
           # Create database
-          docker compose exec -T mysql mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+          docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
           # Import schema if available
           if [ -f "src/db/docker/ynot_db.sql" ]; then
             echo "Importing MySQL schema..."
-            docker compose exec -T mysql mysql -u root -proot ynot_site < src/db/docker/ynot_db.sql
+            docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site < src/db/docker/ynot_db.sql
             echo "✅ Schema imported successfully"
           else
             echo "⚠️  Warning: Schema file not found, seeding may fail"

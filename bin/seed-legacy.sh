@@ -26,14 +26,14 @@ fi
 
 # Create database and import schema if needed
 echo "   Checking database schema..."
-MYSQL_PWD=root docker compose exec -T mysql mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
 
 # Import schema if tables don't exist
-TABLE_COUNT=$(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SHOW TABLES;" 2>/dev/null | wc -l)
+TABLE_COUNT=$(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SHOW TABLES;" 2>/dev/null | wc -l)
 if [ "$TABLE_COUNT" -eq "0" ]; then
     echo "   Importing database schema..."
     if [ -f "src/db/docker/ynot_db.sql" ]; then
-        MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site < src/db/docker/ynot_db.sql
+        docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site < src/db/docker/ynot_db.sql
         echo "   ✅ Schema imported successfully"
     else
         echo "   ⚠️  Warning: Schema file not found at src/db/docker/ynot_db.sql"
@@ -85,7 +85,7 @@ EOF
 
 # Import the seed data
 echo "   Importing seed data..."
-MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site < /tmp/ynot_seed.sql
+docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site < /tmp/ynot_seed.sql
 
 # Clean up
 rm /tmp/ynot_seed.sql
@@ -95,10 +95,10 @@ echo ""
 echo "✅ Sample data seeded successfully!"
 echo ""
 echo "📊 Database contents:"
-echo "   Stories: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM stories")"
-echo "   DJs: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM deejays")"
-echo "   Concerts: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM concerts")"
-echo "   CD of the Week: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM cdotw")"
+echo "   Stories: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM stories")"
+echo "   DJs: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM deejays")"
+echo "   Concerts: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM concerts")"
+echo "   CD of the Week: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM cdotw")"
 echo ""
 echo "🌐 View at: http://localhost:8080"
 echo "🗄️  PHPMyAdmin: http://localhost:8181"
