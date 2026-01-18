@@ -119,8 +119,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*'",
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*'"
     ],
     "*.{json,md}": [
       "prettier --write"

@@ -71,12 +71,12 @@ test.describe('CRUD Integration POC', () => {
 
         // Look for Next.js ready indicators
         if (
-          output.includes('Local:') ||
-          output.includes('http://localhost:3000') ||
-          output.includes('Ready in') ||
-          output.includes('compiled successfully') ||
-          output.includes('started server on') ||
-          output.includes('ready on')
+          output.includes('Local:')
+          || output.includes('http://localhost:3000')
+          || output.includes('Ready in')
+          || output.includes('compiled successfully')
+          || output.includes('started server on')
+          || output.includes('ready on')
         ) {
           if (!resolved) {
             resolved = true;
@@ -250,11 +250,10 @@ test.describe('CRUD Integration POC', () => {
 
     // These are based on the seed data in bin/seed-legacy.sh
     // We expect to find stories, DJs, or other seeded content
-    const hasContent =
-      pageContent.includes('Y-Not Radio') ||
-      pageContent.includes('story') ||
-      pageContent.includes('concert') ||
-      pageContent.includes('stories');
+    const hasContent = pageContent.includes('Y-Not Radio')
+      || pageContent.includes('story')
+      || pageContent.includes('concert')
+      || pageContent.includes('stories');
 
     expect(hasContent).toBe(true);
 
@@ -271,10 +270,9 @@ test.describe('CRUD Integration POC', () => {
 
     // Check if we can see the admin interface
     const adminContent = await page.content();
-    const hasAdminUI =
-      adminContent.includes('Payload') ||
-      adminContent.includes('Login') ||
-      adminContent.includes('admin');
+    const hasAdminUI = adminContent.includes('Payload')
+      || adminContent.includes('Login')
+      || adminContent.includes('admin');
 
     expect(hasAdminUI).toBe(true);
 
