@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { loginToPayload } from './utils/payload-auth';
 
 /**
  * E2E Integration Test: Payload CMS → Legacy PHP Site
@@ -20,212 +21,141 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
   test('should create concert via Payload UI and verify it appears on legacy site', async ({
     page,
   }, testInfo) => {
-    // eslint-disable-next-line no-console
-    console.log('🎭 Testing Payload CMS → Legacy PHP Site integration via UI');
+    await test.step('Log in to Payload CMS', async () => {
+      await loginToPayload(page);
 
-    // Step 1: Navigate to Payload admin (it will redirect to login if not authenticated)
-    // eslint-disable-next-line no-console
-    console.log('🔐 Navigating to Payload admin...');
-
-    await page.goto('http://localhost:3000/admin', {
-      waitUntil: 'networkidle',
-      timeout: 30000,
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('01-Payload Dashboard', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
 
-    // Take screenshot of login page
-    let screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('01-Payload Login Page', {
-      body: screenshot,
-      contentType: 'image/png',
+    await test.step('Navigate to Concerts collection', async () => {
+      await page.goto('http://localhost:3000/admin/collections/concerts', {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('02-Concerts Collection List', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
 
-    // Step 2: Log in to Payload
-    // eslint-disable-next-line no-console
-    console.log('🔑 Logging in to Payload...');
+    await test.step('Open create concert form', async () => {
+      // Use getByRole to find the "Create New" link
+      await page.getByRole('link', { name: /create new/i }).click();
+      await page.waitForURL('**/concerts/create', { timeout: 30000 });
 
-    // Wait for the page to load and find the email field more flexibly
-    await page.waitForSelector('input[type="email"], input[name="email"], input[id*="email"]', { timeout: 30000 });
-
-    // Fill in login credentials using flexible selectors
-    const emailInput = page.locator('input[type="email"], input[name="email"], input[id*="email"]').first();
-    const passwordInput = page.locator('input[type="password"], input[name="password"], input[id*="password"]').first();
-    
-    await emailInput.fill('admin@ynotradio.net');
-    await passwordInput.fill('password');
-    
-    // Find and click the submit button
-    const submitButton = page.locator('button[type="submit"]').first();
-    await submitButton.click();
-
-    // Wait for dashboard to load
-    await page.waitForURL('**/admin', { timeout: 30000 });
-
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('02-Payload Dashboard', {
-      body: screenshot,
-      contentType: 'image/png',
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('03-Create Concert Form', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
 
-    // eslint-disable-next-line no-console
-    console.log('   ✅ Logged in successfully');
+    await test.step('Fill out concert form', async () => {
+      // Set concert date (7 days from now)
+      const concertDate = new Date();
+      concertDate.setDate(concertDate.getDate() + 7);
+      const concertDateString = concertDate.toISOString().split('T')[0];
 
-    // Step 3: Navigate to Concerts collection
-    // eslint-disable-next-line no-console
-    console.log('🎤 Navigating to Concerts collection...');
+      // Fill in the date field using label
+      await page.getByLabel(/date/i).fill(concertDateString);
 
-    await page.goto('http://localhost:3000/admin/collections/concerts', {
-      waitUntil: 'networkidle',
-      timeout: 30000,
+      // Select an artist - use getByRole for button
+      await page.getByRole('button', { name: /add artist/i }).click();
+      // Wait for dropdown and select first option
+      const artistOption = page.locator('[role="option"]').first();
+      await artistOption.waitFor({ state: 'visible', timeout: 10000 });
+      await artistOption.click();
+
+      // Select a venue
+      await page.getByRole('button', { name: /select.*venue/i }).click();
+      // Wait for dropdown and select first option
+      const venueOption = page.locator('[role="option"]').first();
+      await venueOption.waitFor({ state: 'visible', timeout: 10000 });
+      await venueOption.click();
+
+      // Fill in ticket info using labels or names
+      await page.getByLabel(/ticket.*info/i).fill('E2E Test Tickets $30');
+      await page.getByLabel(/ticket.*url/i).fill('https://tickets.example.com/e2e-playwright-test');
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('04-Filled Concert Form', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
 
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('03-Concerts Collection List', {
-      body: screenshot,
-      contentType: 'image/png',
+    await test.step('Save the concert', async () => {
+      // Use getByRole for the Save button
+      await page.getByRole('button', { name: /^save$/i }).click();
+
+      // Wait for save success - look for URL change or success message
+      await Promise.race([
+        page.waitForURL('**/concerts/**', { timeout: 30000 }),
+        page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 }),
+      ]).catch(() => {
+        return page.waitForLoadState('networkidle', { timeout: 10000 });
+      });
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('05-Concert Saved', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
 
-    // Step 4: Click "Create New" button
-    // eslint-disable-next-line no-console
-    console.log('➕ Creating new concert...');
+    await test.step('Verify concert appears on legacy PHP site', async () => {
+      const response = await page.goto('http://localhost:8080/concerts.php', {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
 
-    await page.click('a[href="/admin/collections/concerts/create"]');
-    await page.waitForURL('**/concerts/create', { timeout: 30000 });
+      expect(response?.status()).toBe(200);
 
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('04-Create Concert Form', {
-      body: screenshot,
-      contentType: 'image/png',
+      const pageContent = await page.content();
+
+      // Check for PHP errors
+      expect(pageContent).not.toContain('Fatal error');
+      expect(pageContent).not.toContain('Parse error');
+      expect(pageContent).not.toContain('Warning:');
+
+      // Verify the concert appears
+      expect(pageContent).toContain('E2E Test Tickets $30');
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('06-Legacy Site with New Concert', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
-
-    // Step 5: Fill out the concert form
-    // eslint-disable-next-line no-console
-    console.log('📝 Filling out concert form...');
-
-    // Set concert date (7 days from now)
-    const concertDate = new Date();
-    concertDate.setDate(concertDate.getDate() + 7);
-    const concertDateString = concertDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-
-    // Fill in the date field
-    await page.fill('input[name="date"]', concertDateString);
-
-    // Select an artist (use the first artist from seeded data)
-    await page.click('button:has-text("Add Artist")');
-    // Wait for the dropdown to appear
-    await page.waitForSelector('.rs__option', { state: 'visible', timeout: 10000 });
-    
-    // Find and click the first artist option
-    const firstArtist = page.locator('.rs__option').first();
-    await firstArtist.click();
-
-    // Select a venue (use the first venue from seeded data)
-    await page.click('button:has-text("Select a Venue")');
-    // Wait for the dropdown to appear
-    await page.waitForSelector('.rs__option', { state: 'visible', timeout: 10000 });
-    
-    // Find and click the first venue option
-    const firstVenue = page.locator('.rs__option').first();
-    await firstVenue.click();
-
-    // Fill in ticket info
-    await page.fill('textarea[name="ticketInfo"]', 'E2E Test Tickets $30');
-    await page.fill('input[name="ticketUrl"]', 'https://tickets.example.com/e2e-playwright-test');
-
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('05-Filled Concert Form', {
-      body: screenshot,
-      contentType: 'image/png',
-    });
-
-    // Step 6: Save the concert
-    // eslint-disable-next-line no-console
-    console.log('💾 Saving concert...');
-
-    await page.click('button[type="submit"]:has-text("Save")');
-
-    // Wait for the save to complete - look for success indicators
-    // Either we stay on the page with a success message, or redirect to the edit page
-    await Promise.race([
-      page.waitForURL('**/concerts/**', { timeout: 30000 }),
-      page.waitForSelector('.payload-toast-container .toast--success', { timeout: 30000 }),
-    ]).catch(() => {
-      // If neither happens, give a small buffer for the save to complete
-      return page.waitForLoadState('networkidle', { timeout: 10000 });
-    });
-
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('06-Concert Saved', {
-      body: screenshot,
-      contentType: 'image/png',
-    });
-
-    // eslint-disable-next-line no-console
-    console.log('   ✅ Concert created via Payload UI');
-
-    // Step 7: Navigate to the legacy PHP concerts page
-    // eslint-disable-next-line no-console
-    console.log('🌐 Navigating to legacy PHP concerts page...');
-
-    const response = await page.goto('http://localhost:8080/concerts.php', {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
-
-    expect(response?.status()).toBe(200);
-
-    // Step 8: Verify the page loaded without errors
-    const pageContent = await page.content();
-
-    // Check for PHP errors
-    expect(pageContent).not.toContain('Fatal error');
-    expect(pageContent).not.toContain('Parse error');
-    expect(pageContent).not.toContain('Warning:');
-
-    // Step 9: Verify the newly created concert appears on the page
-    // eslint-disable-next-line no-console
-    console.log('🔍 Verifying concert appears on legacy PHP page...');
-
-    // Check for ticket info (this is unique to our test concert)
-    expect(pageContent).toContain('E2E Test Tickets $30');
-
-    // Take final screenshot showing the concert on the legacy site
-    screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('07-Legacy Site with New Concert', {
-      body: screenshot,
-      contentType: 'image/png',
-    });
-
-    // eslint-disable-next-line no-console
-    console.log('✅ Concert successfully appears on legacy PHP site!');
-    // eslint-disable-next-line no-console
-    console.log('✅ Integration test completed successfully!');
   });
 
   test('should verify Payload admin UI loads correctly', async ({ page }, testInfo) => {
-    // eslint-disable-next-line no-console
-    console.log('🔌 Testing Payload admin UI accessibility...');
+    await test.step('Verify login page loads', async () => {
+      await page.goto('http://localhost:3000/admin', {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
 
-    await page.goto('http://localhost:3000/admin', {
-      waitUntil: 'networkidle',
-      timeout: 30000,
+      // Use Playwright best practices - getByLabel for form fields
+      const emailInput = page.getByLabel(/email/i);
+      const passwordInput = page.getByLabel(/password/i);
+      const submitButton = page.getByRole('button', { name: /log in|sign in|submit/i });
+
+      await expect(emailInput).toBeVisible();
+      await expect(passwordInput).toBeVisible();
+      await expect(submitButton).toBeVisible();
+
+      const screenshot = await page.screenshot({ fullPage: true });
+      await testInfo.attach('Payload Login Page', {
+        body: screenshot,
+        contentType: 'image/png',
+      });
     });
-
-    // Verify login page elements are present using flexible selectors
-    const emailInput = page.locator('input[type="email"], input[name="email"], input[id*="email"]').first();
-    const passwordInput = page.locator('input[type="password"], input[name="password"], input[id*="password"]').first();
-    const submitButton = page.locator('button[type="submit"]').first();
-
-    await expect(emailInput).toBeVisible();
-    await expect(passwordInput).toBeVisible();
-    await expect(submitButton).toBeVisible();
-
-    const screenshot = await page.screenshot({ fullPage: true });
-    await testInfo.attach('Payload Login Page', {
-      body: screenshot,
-      contentType: 'image/png',
-    });
-
-    // eslint-disable-next-line no-console
-    console.log('✅ Payload admin UI is accessible');
   });
 });
