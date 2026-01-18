@@ -81,6 +81,17 @@ jobs:
             sleep 2
           done
       
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+      
       - name: Wait for Apache
         run: |
           echo "Waiting for Apache to be ready..."
@@ -93,21 +104,10 @@ jobs:
             sleep 2
           done
       
-      - name: Seed Postgres database for legacy PHP site
+      - name: Seed legacy MySQL database
         run: |
-          # Seed Postgres with test data for the legacy PHP site
-          # This creates the necessary tables and inserts test data
-          docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "
-            CREATE TABLE IF NOT EXISTS test_content (
-              id SERIAL PRIMARY KEY,
-              title VARCHAR(255),
-              content TEXT,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            INSERT INTO test_content (title, content) 
-            VALUES ('Test Entry', 'This is test content from Postgres')
-            ON CONFLICT DO NOTHING;
-          " || echo "Seed completed"
+          # Seed MySQL with test data for the legacy PHP site
+          yarn seed:legacy
       
       - name: Run Playwright tests
         run: npx playwright test

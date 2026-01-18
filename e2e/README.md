@@ -4,15 +4,15 @@ This directory contains simplified end-to-end integration tests for the Y-Not Ra
 
 ## Overview
 
-These tests verify that the legacy PHP site can connect to a Postgres database and load without errors. This is a proof-of-concept that demonstrates the migration path from MySQL to Postgres for the legacy PHP application.
+These tests verify that the legacy PHP site can load successfully with seeded MySQL data. This is a proof-of-concept for the E2E testing infrastructure.
 
 ## Architecture
 
 The E2E tests use:
 
 - **Legacy PHP site** (Apache/PHP-FPM) on port 8080
-- **PostgreSQL** (test database) on port 5432
-- **MySQL** (legacy database, for comparison) on port 3306
+- **MySQL** (legacy database with seeded test data) on port 3306
+- **PostgreSQL** (for future Payload CMS testing) on port 5432
 
 All services run in Docker containers managed by Docker Compose.
 
@@ -22,15 +22,16 @@ The simplified E2E tests verify:
 
 1. ✅ Legacy PHP site loads successfully (HTTP 200)
 2. ✅ No PHP errors on page load
-3. ✅ Database connectivity (Postgres connection works)
+3. ✅ Database connectivity (MySQL connection works)
 4. ✅ Seeded data is accessible
 5. ✅ No critical JavaScript console errors
 
 **Future enhancements** (not in this POC):
-- Payload CMS server startup/teardown
-- CRUD operations in Payload admin
-- Verification of data sync between Payload and legacy site
+- Payload CMS integration testing
+- CRUD operations testing
+- Verification of data migration from MySQL to Postgres
 - Full authentication flows
+- Next.js public site testing
 
 ## Running Tests
 
@@ -48,6 +49,9 @@ docker compose up -d postgres mysql phpfpm apache
 
 # Wait for services to be ready
 sleep 10
+
+# Seed the legacy MySQL database
+yarn seed:legacy
 
 # Run all E2E tests (headless)
 yarn test:e2e
@@ -71,7 +75,7 @@ The E2E tests run automatically in GitHub Actions on pull requests. The CI workf
 
 1. Sets up Docker Compose
 2. Starts PostgreSQL, MySQL, PHP-FPM, and Apache containers
-3. Seeds the Postgres database with test data
+3. Seeds the MySQL database with test data (using `yarn seed:legacy`)
 4. Runs Playwright tests against http://localhost:8080
 5. Uploads test results and screenshots as artifacts
 

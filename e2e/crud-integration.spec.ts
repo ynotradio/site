@@ -1,16 +1,16 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * E2E Integration Test: Legacy PHP site with Postgres data
+ * E2E Integration Test: Legacy PHP site with MySQL database
  *
  * This simplified proof-of-concept test demonstrates:
  * 1. Legacy PHP site loads successfully
- * 2. PHP site can connect to Postgres database (seeded data)
+ * 2. PHP site can connect to MySQL database (seeded data)
  * 3. No errors on page load
  *
  * The test assumes:
  * - Docker Compose has started MySQL and Apache services
- * - Postgres database has been seeded with test data
+ * - MySQL database has been seeded with test data using yarn seed:legacy
  * - Apache is serving the legacy PHP site on port 8080
  */
 
@@ -52,7 +52,7 @@ test.describe('Legacy PHP Site Integration', () => {
     console.log('✅ Legacy PHP site loaded successfully');
   });
 
-  test('should connect to Postgres and display seeded data', async ({ page }, testInfo) => {
+  test('should connect to MySQL and display seeded data', async ({ page }, testInfo) => {
     // eslint-disable-next-line no-console
     console.log('🗄️  Testing database connectivity and seeded data');
 
@@ -71,8 +71,7 @@ test.describe('Legacy PHP Site Integration', () => {
 
     // Look for typical Y-Not Radio content or structure
     // (This will depend on what's been seeded in the database)
-    const hasExpectedStructure = 
-      pageContent.includes('Y-Not')
+    const hasExpectedStructure = pageContent.includes('Y-Not')
       || pageContent.includes('Radio')
       || pageContent.includes('html')
       || pageContent.includes('body');
