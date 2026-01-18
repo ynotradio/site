@@ -92,6 +92,19 @@ jobs:
             sleep 2
           done
       
+      - name: Initialize MySQL database schema
+        run: |
+          # Create database
+          docker compose exec -T mysql mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+          # Import schema if available
+          if [ -f "src/db/docker/ynot_db.sql" ]; then
+            echo "Importing MySQL schema..."
+            docker compose exec -T mysql mysql -u root -proot ynot_site < src/db/docker/ynot_db.sql
+            echo "✅ Schema imported successfully"
+          else
+            echo "⚠️  Warning: Schema file not found, seeding may fail"
+          fi
+      
       - name: Wait for Apache
         run: |
           echo "Waiting for Apache to be ready..."
