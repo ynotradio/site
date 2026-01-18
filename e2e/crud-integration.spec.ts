@@ -30,12 +30,12 @@ test.describe('Legacy PHP Site Integration', () => {
 
     // Check for PHP errors on the page
     const pageContent = await page.content();
-    
+
     // Should not have PHP errors
     expect(pageContent).not.toContain('Fatal error');
     expect(pageContent).not.toContain('Parse error');
     expect(pageContent).not.toContain('Warning:');
-    
+
     // Should have some content (page is not empty)
     expect(pageContent.length).toBeGreaterThan(100);
 
@@ -96,7 +96,7 @@ test.describe('Legacy PHP Site Integration', () => {
     console.log('🔍 Checking for JavaScript console errors');
 
     const consoleErrors: string[] = [];
-    
+
     page.on('console', (msg) => {
       if (msg.type() === 'error') {
         consoleErrors.push(msg.text());

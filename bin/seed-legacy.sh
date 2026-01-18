@@ -68,7 +68,7 @@ EOF
 
 # Import the seed data
 echo "   Importing seed data..."
-docker compose exec -T mysql mysql -u root -proot ynot_site < /tmp/ynot_seed.sql
+MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site < /tmp/ynot_seed.sql
 
 # Clean up
 rm /tmp/ynot_seed.sql
@@ -78,10 +78,10 @@ echo ""
 echo "✅ Sample data seeded successfully!"
 echo ""
 echo "📊 Database contents:"
-echo "   Stories: $(docker compose exec -T mysql mysql -u root -proot ynot_site -N -e "SELECT COUNT(*) FROM stories")"
-echo "   DJs: $(docker compose exec -T mysql mysql -u root -proot ynot_site -N -e "SELECT COUNT(*) FROM deejays")"
-echo "   Concerts: $(docker compose exec -T mysql mysql -u root -proot ynot_site -N -e "SELECT COUNT(*) FROM concerts")"
-echo "   CD of the Week: $(docker compose exec -T mysql mysql -u root -proot ynot_site -N -e "SELECT COUNT(*) FROM cdotw")"
+echo "   Stories: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM stories")"
+echo "   DJs: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM deejays")"
+echo "   Concerts: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM concerts")"
+echo "   CD of the Week: $(MYSQL_PWD=root docker compose exec -T mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM cdotw")"
 echo ""
 echo "🌐 View at: http://localhost:8080"
 echo "🗄️  PHPMyAdmin: http://localhost:8181"
