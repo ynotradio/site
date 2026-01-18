@@ -101,10 +101,15 @@ jobs:
             sleep 2
           done
       
+      - name: Run database migrations
+        run: |
+          # Run Payload migrations to create database schema
+          yarn payload:migrate || echo "Migration failed, continuing..."
+      
       - name: Seed databases
         run: |
           # Seed Payload Postgres database
-          yarn payload:seed || echo "Payload seed not available, continuing..."
+          yarn seed:payload || echo "Payload seed not available, continuing..."
           # Seed legacy MySQL database
           yarn seed:legacy || echo "Legacy seed not available, continuing..."
       

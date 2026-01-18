@@ -17,6 +17,13 @@ let payloadProcess: ChildProcess | null = null;
 
 test.describe('CRUD Integration POC', () => {
   test.beforeAll(async () => {
+    // Skip if server is already running (e.g., on retry)
+    if (payloadProcess && payloadProcess.exitCode === null) {
+      // eslint-disable-next-line no-console
+      console.log('ℹ️  Server already running, skipping startup');
+      return;
+    }
+
     // Start Next.js server
     // eslint-disable-next-line no-console
     console.log('🚀 Starting Next.js server...');
@@ -151,21 +158,42 @@ test.describe('CRUD Integration POC', () => {
     if (payloadProcess) {
       // eslint-disable-next-line no-console
       console.log('🛑 Stopping Next.js server...');
-      payloadProcess.kill('SIGTERM');
 
-      // Wait for graceful shutdown
-      await new Promise((resolve) => {
-        setTimeout(resolve, 3000);
-      });
+      try {
+        // Try graceful shutdown first
+        payloadProcess.kill('SIGTERM');
 
-      // Force kill if still running
-      if (payloadProcess.exitCode === null) {
-        payloadProcess.kill('SIGKILL');
+        // Wait for graceful shutdown with timeout
+        await Promise.race([
+          new Promise((resolve) => {
+            payloadProcess?.on('exit', resolve);
+          }),
+          new Promise((resolve) => {
+            setTimeout(resolve, 5000);
+          }),
+        ]);
+
+        // Force kill if still running
+        if (payloadProcess.exitCode === null) {
+          payloadProcess.kill('SIGKILL');
+          await new Promise((resolve) => {
+            setTimeout(resolve, 1000);
+          });
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error stopping server:', error);
       }
 
+      payloadProcess = null;
       // eslint-disable-next-line no-console
       console.log('✅ Next.js server stopped');
     }
+
+    // Extra wait to ensure port is released
+    await new Promise((resolve) => {
+      setTimeout(resolve, 2000);
+    });
   });
 
   test('should verify services are running', async ({ page }, testInfo) => {
