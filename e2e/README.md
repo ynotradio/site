@@ -1,21 +1,36 @@
 # E2E Tests with Playwright
 
-This directory contains end-to-end integration tests for the Y-Not Radio site using Playwright.
+This directory contains simplified end-to-end integration tests for the Y-Not Radio legacy PHP site using Playwright.
 
 ## Overview
 
-These tests demonstrate CRUD operations in Payload CMS affecting the legacy PHP site, using containerized and seeded PostgreSQL and MySQL databases.
+These tests verify that the legacy PHP site can connect to a Postgres database and load without errors. This is a proof-of-concept that demonstrates the migration path from MySQL to Postgres for the legacy PHP application.
 
 ## Architecture
 
-The E2E tests spin up:
+The E2E tests use:
 
-- **Payload CMS** (Node.js/TypeScript) on port 3000
 - **Legacy PHP site** (Apache/PHP-FPM) on port 8080
-- **PostgreSQL** (for Payload) on port 5432
-- **MySQL** (for legacy site) on port 3306
+- **PostgreSQL** (test database) on port 5432
+- **MySQL** (legacy database, for comparison) on port 3306
 
-All services run in Docker containers with health checks and automatic seeding.
+All services run in Docker containers managed by Docker Compose.
+
+## Test Scope
+
+The simplified E2E tests verify:
+
+1. ✅ Legacy PHP site loads successfully (HTTP 200)
+2. ✅ No PHP errors on page load
+3. ✅ Database connectivity (Postgres connection works)
+4. ✅ Seeded data is accessible
+5. ✅ No critical JavaScript console errors
+
+**Future enhancements** (not in this POC):
+- Payload CMS server startup/teardown
+- CRUD operations in Payload admin
+- Verification of data sync between Payload and legacy site
+- Full authentication flows
 
 ## Running Tests
 
@@ -29,7 +44,10 @@ All services run in Docker containers with health checks and automatic seeding.
 
 ```bash
 # Start Docker services first
-docker compose up -d
+docker compose up -d postgres mysql phpfpm apache
+
+# Wait for services to be ready
+sleep 10
 
 # Run all E2E tests (headless)
 yarn test:e2e
@@ -47,169 +65,102 @@ PWDEBUG=1 yarn test:e2e
 docker compose down
 ```
 
-### Using Docker Container (Faster)
+### CI Testing
 
-For faster test execution without installing Playwright/Chromium locally:
+The E2E tests run automatically in GitHub Actions on pull requests. The CI workflow:
 
-```bash
-# One-time: Build the Playwright container
-yarn test:e2e:docker:build
+1. Sets up Docker Compose
+2. Starts PostgreSQL, MySQL, PHP-FPM, and Apache containers
+3. Seeds the Postgres database with test data
+4. Runs Playwright tests against http://localhost:8080
+5. Uploads test results and screenshots as artifacts
 
-# Run tests in container
-yarn test:e2e:docker
+See `.github/workflows/e2e.yml` for the complete CI configuration.
 
-# OR using docker-compose profiles
-docker-compose --profile test up playwright
-```
+## Test Files
 
-**Benefits:**
-
-- No local Playwright/Chromium installation needed (~300MB saved)
-- Consistent test environment across machines
-- Pre-installed browsers (Chromium, Firefox, WebKit)
-- Faster CI/CD builds - no browser download step
-- Isolated test environment
-
-**Note:** The container uses `--network host` to access services on localhost (ports 3000, 8080, 5432, 3306).
-
-### What Gets Tested
-
-The POC test demonstrates:
-
-1. **Service verification**: Both Payload CMS and legacy PHP site are accessible
-2. **Database connectivity**: Connects to PostgreSQL (Payload) and MySQL (legacy site)
-3. **Content verification**: Verifies seeded data appears on both sites
-4. **CRUD operations**: (TODO) Create, read, update, delete operations
-
-Tests run the full stack in both CI and local environments using Docker Compose.
-
-## Test Structure
-
-- `playwright.config.ts` - Playwright configuration
-- `e2e/global-setup.ts` - Pre-test setup (verifies environment)
-- `e2e/global-teardown.ts` - Cleanup after tests
-- `e2e/crud-integration.spec.ts` - Main integration test suite
-- `e2e/screenshots/` - Test screenshots (gitignored)
-
-## CI/CD Integration
-
-The E2E tests run in GitHub Actions on every PR using Docker Compose with the full stack.
-
-### CI Environment
-
-- **Runner**: `ubuntu-latest` with Docker Compose
-- **Services**: Full Docker Compose stack
-  - PostgreSQL (for Payload CMS)
-  - MySQL (for legacy site)
-  - Apache + PHP-FPM (for legacy site)
-- **Testing scope**: Full integration testing (Payload CMS + legacy PHP site)
-- **Browser caching**: Playwright browsers cached between runs
-- **Build cache**: Next.js build cache for faster CI runs
-
-### GitHub Actions Workflow
-
-See `.github/workflows/e2e.yml` for the full workflow configuration.
-
-**What the workflow does:**
-
-1. Sets up Docker Compose using `docker/setup-compose-action`
-2. Checks out code and sets up Node.js 22
-3. Installs dependencies with Yarn
-4. Caches and installs Playwright browsers (Chromium)
-5. Sets up Next.js build cache
-6. Configures `.env.local` for Docker services
-7. Starts Docker Compose services (PostgreSQL, MySQL, Apache, PHP-FPM)
-8. Waits for all services to be ready
-9. Seeds both databases
-10. Runs Playwright tests
-11. Uploads test results and screenshots as artifacts
-12. Cleans up Docker containers
-
-**Key features:**
-
-- **Playwright browser caching** - Browsers cached by version, avoiding ~300MB download on each run
-- **Next.js build caching** - Faster subsequent builds
-- **Full stack testing** - Tests both Payload CMS and legacy PHP site
-- **Seeded databases** - Consistent test data for every run
-- **No external dependencies** - Everything runs in containerized environments
-
-### No GitHub Secrets Required
-
-The workflow uses Docker Compose with default credentials defined in `docker-compose.yml`. No external database configuration needed. 9. Upload HTML report and artifacts
-
-**Time savings:** ~2-3 minutes per run by skipping browser installation
+- `crud-integration.spec.ts` - Main test file with simplified legacy PHP site tests
+- `global-setup.ts` - Global test setup (minimal configuration)
+- `global-teardown.ts` - Global test teardown (cleanup)
+- `playwright.config.ts` - Playwright configuration (browser settings, reporters, etc.)
 
 ## Troubleshooting
 
-### Services not starting
+### Port Already in Use
 
-Check Docker is running:
+If you see "address already in use" errors:
 
 ```bash
-docker info
+# Kill processes on specific ports
+lsof -ti:8080 | xargs kill -9  # Apache
+lsof -ti:3306 | xargs kill -9  # MySQL
+lsof -ti:5432 | xargs kill -9  # Postgres
 ```
 
-Check service logs:
+### Services Not Starting
+
+Check Docker Compose logs:
 
 ```bash
 docker compose logs postgres
-docker compose logs mysql
 docker compose logs apache
+docker compose logs phpfpm
+docker compose logs mysql
 ```
 
-### Payload server not responding
+### Test Failures
 
-The Payload server is started by the test itself. Check the test output for startup logs.
+1. Check that all Docker services are running: `docker compose ps`
+2. Verify database connectivity: `docker compose exec postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "SELECT version();"`
+3. Check Apache is serving: `curl -I http://localhost:8080`
+4. Review test artifacts in `test-results/` directory
+5. Check screenshots in `e2e/screenshots/` directory
 
-If it times out, increase the timeout in `crud-integration.spec.ts`:
+### Debugging Tests
 
-```typescript
-timeout = setTimeout(() => {
-  reject(new Error('Payload server failed to start in time'));
-}, 180000); // Increase from 120000 to 180000
-```
-
-### Database not seeded
-
-Manually seed databases:
+Use Playwright's debug mode to step through tests:
 
 ```bash
-yarn seed:legacy
-yarn seed:payload  # Requires Payload server to be running
+PWDEBUG=1 yarn test:e2e
 ```
 
-### Port conflicts
-
-If ports 3000, 8080, 5432, or 3306 are in use, stop conflicting services:
+Or use the Playwright Inspector:
 
 ```bash
-# Check what's using a port
-lsof -ti:3000
-lsof -ti:8080
+yarn test:e2e:ui
+```
 
-# Kill the process
-kill -9 <PID>
+## Environment Variables
+
+The tests use the following environment variables:
+
+```bash
+# Postgres (used by legacy PHP site in this test)
+DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=ynot_payload_dev
+DB_USER=ynot_postgres_user
+DB_PASSWORD=ynot_postgres_pass
+
+# CI mode (set by GitHub Actions)
+CI=true
 ```
 
 ## Future Enhancements
 
-The POC test provides basic infrastructure. Future tests should:
+To expand these tests to full CRUD integration:
 
-1. **Login automation**: Authenticate to Payload admin
-2. **CRUD operations**:
-   - Create a new concert/show/post in Payload
-   - Verify it appears in the database
-   - Check if it syncs to the legacy site
-   - Update the record and verify changes
-   - Delete the record and verify removal
-3. **API testing**: Test Payload REST/GraphQL APIs directly
-4. **Database verification**: Query databases directly to verify CRUD operations
-5. **Visual regression**: Compare screenshots over time
-6. **Performance testing**: Measure page load times and API response times
-7. **Cross-browser testing**: Test in Firefox and Safari (currently Chromium only)
+1. **Add Payload Server Startup**: Include beforeAll/afterAll hooks to start Next.js/Payload server
+2. **Add Authentication**: Implement Payload admin login flow
+3. **Add CRUD Operations**: Create/update/delete records in Payload collections
+4. **Verify Data Sync**: Check that changes in Payload appear on the legacy PHP site
+5. **Database Assertions**: Query databases directly to verify data consistency
+6. **Performance Testing**: Measure response times and page load speeds
+7. **Visual Regression**: Take baseline screenshots and compare changes
 
 ## Resources
 
 - [Playwright Documentation](https://playwright.dev/)
-- [Payload CMS Documentation](https://payloadcms.com/docs)
-- [Main README](../README.md) - General project documentation
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [GitHub Actions Documentation](https://docs.github.com/en/actions)

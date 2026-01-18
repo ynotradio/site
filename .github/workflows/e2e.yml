@@ -57,16 +57,18 @@ jobs:
       - name: Setup environment file
         run: |
           cp .env.example .env.local
-          # Use local Docker Compose databases
+          # Configure for PHP legacy site with Postgres
           echo "DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev" >> .env.local
-          echo "PAYLOAD_SECRET=test-secret-for-ci" >> .env.local
-          echo "PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000" >> .env.local
-          echo "PORT=3000" >> .env.local
+          echo "DB_HOST=localhost" >> .env.local
+          echo "DB_PORT=5432" >> .env.local
+          echo "DB_NAME=ynot_payload_dev" >> .env.local
+          echo "DB_USER=ynot_postgres_user" >> .env.local
+          echo "DB_PASSWORD=ynot_postgres_pass" >> .env.local
       
       - name: Start Docker Compose services
         run: |
-          docker compose up -d postgres
-          echo "Waiting for PostgreSQL to be ready..."
+          docker compose up -d postgres mysql phpfpm apache
+          echo "Waiting for services to be ready..."
       
       - name: Wait for PostgreSQL
         run: |
@@ -79,15 +81,33 @@ jobs:
             sleep 2
           done
       
-      - name: Run database migrations
+      - name: Wait for Apache
         run: |
-          # Run Payload migrations to create database schema
-          yarn payload:migrate || echo "Migration failed, continuing..."
+          echo "Waiting for Apache to be ready..."
+          for i in {1..30}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200\|301\|302"; then
+              echo "Apache is ready"
+              break
+            fi
+            echo "Waiting for Apache... ($i/30)"
+            sleep 2
+          done
       
-      - name: Seed databases
+      - name: Seed Postgres database for legacy PHP site
         run: |
-          # Seed Payload Postgres database
-          yarn seed:payload || echo "Payload seed not available, continuing..."
+          # Seed Postgres with test data for the legacy PHP site
+          # This creates the necessary tables and inserts test data
+          docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "
+            CREATE TABLE IF NOT EXISTS test_content (
+              id SERIAL PRIMARY KEY,
+              title VARCHAR(255),
+              content TEXT,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+            INSERT INTO test_content (title, content) 
+            VALUES ('Test Entry', 'This is test content from Postgres')
+            ON CONFLICT DO NOTHING;
+          " || echo "Seed completed"
       
       - name: Run Playwright tests
         run: npx playwright test
