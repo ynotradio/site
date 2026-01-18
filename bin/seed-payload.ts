@@ -56,9 +56,12 @@ async function seed() {
           email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
           password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
           role: 'admin',
+          _verified: true, // Skip email verification for dev/test environments
         },
       });
-      console.log(`   ✅ Created admin user: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'}`);
+      console.log(
+        `   ✅ Created admin user: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'}`,
+      );
     } else {
       console.log('   ⏭️  Admin user already exists');
     }
@@ -249,7 +252,9 @@ async function seed() {
       collection: 'concerts',
       data: {
         date: futureDate1.toISOString(),
-        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10)],
+        artists: [
+          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
+        ],
         venue: typeof venue1.id === 'number' ? venue1.id : parseInt(venue1.id, 10),
         ticketUrl: 'https://ticketmaster.com/example1',
         featured: true,
@@ -260,7 +265,9 @@ async function seed() {
       collection: 'concerts',
       data: {
         date: futureDate2.toISOString(),
-        artists: [typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10)],
+        artists: [
+          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
+        ],
         venue: typeof venue2.id === 'number' ? venue2.id : parseInt(venue2.id, 10),
         ticketUrl: 'https://ticketmaster.com/example2',
         featured: false,
@@ -470,7 +477,9 @@ async function seed() {
     console.log('   Posts: 3');
     console.log('   Shows: 2');
     console.log('\n🌐 View at: http://localhost:3000/admin');
-    console.log(`   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`);
+    console.log(
+      `   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`,
+    );
 
     process.exit(0);
   } catch (error) {
