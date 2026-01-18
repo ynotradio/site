@@ -68,44 +68,62 @@ docker-compose --profile test up playwright
 
 The POC test demonstrates:
 
-1. **Service verification**: Both Payload and legacy sites are accessible
-2. **Database connectivity**: Postgres and MySQL are properly seeded
-3. **Content verification**: Seeded data appears on both sites
+1. **Service verification**: Payload CMS admin is accessible
+2. **Database connectivity**: Connects to Postgres (local Docker or remote Neon in CI)
+3. **Content verification**: Verifies Payload admin interface loads
 4. **CRUD operations**: (TODO) Create, read, update, delete operations
+
+**Note:** In CI mode, the test only verifies Payload CMS functionality using a remote Neon database. The legacy PHP site tests are skipped as they require Docker containers which are not available inside the Playwright container.
+
+Locally, if Docker is available, the tests will also verify the legacy site at `http://localhost:8080`.
 
 ## Test Structure
 
 - `playwright.config.ts` - Playwright configuration
-- `e2e/global-setup.ts` - Starts Docker services and seeds databases
-- `e2e/global-teardown.ts` - Stops Docker services
+- `e2e/global-setup.ts` - Starts Docker services (local only) and seeds databases
+- `e2e/global-teardown.ts` - Stops Docker services (local only)
 - `e2e/crud-integration.spec.ts` - Main integration test suite
 - `e2e/screenshots/` - Test screenshots (gitignored)
 
 ## CI/CD Integration
 
-The E2E tests run in GitHub Actions on every PR using a Dockerized Playwright container for faster, more consistent builds.
+The E2E tests run in GitHub Actions on every PR using the official Playwright Docker container.
+
+### CI Environment
+
+- **Container**: `mcr.microsoft.com/playwright:v1.57.0-noble`
+- **Database**: Remote Neon Postgres (configured via GitHub Secrets)
+- **Testing scope**: Payload CMS only (legacy PHP site requires Docker-in-Docker)
+- **No Docker setup**: Docker commands are skipped in CI
 
 ### GitHub Actions Workflow
 
 See `.github/workflows/e2e.yml` for the full workflow configuration.
 
+**What the workflow does:**
+
+1. Checks out code and sets up Node.js 22
+2. Installs dependencies with Yarn
+3. Configures `.env.local` with database credentials from GitHub Secrets
+4. Builds Next.js in production mode (for faster startup)
+5. Runs Playwright tests (which start the Next.js server)
+6. Uploads test results and screenshots as artifacts
+
 **Key features:**
 
 - Uses official Playwright Docker container (pre-installed browsers)
 - Skips browser installation step (~2-3 min saved per run)
-- Connects to remote Neon Postgres database (always seeded)
-- Runs MySQL in Docker for legacy site compatibility
-- Uploads test reports and screenshots as artifacts
+- Connects to remote Neon Postgres database (configured via secrets)
+- No Docker Compose needed (runs entirely in Playwright container)
+- Tests only Payload CMS functionality in CI
 
 ### Required GitHub Secrets
 
 Add these secrets to your repository (Settings → Secrets and variables → Actions):
 
-- `DATABASE_URI` - Neon Postgres connection string
-- `POSTGRES_HOST` - Neon database host
-- `POSTGRES_DATABASE` - Database name
-- `POSTGRES_USER` - Database username
-- `POSTGRES_PASSWORD` - Database password
+- `DATABASE_URI` - Neon Postgres connection string (e.g., `postgresql://user:pass@host.neon.tech/dbname`)
+
+The workflow sets additional environment variables automatically.
 
 These allow the CI environment to connect to the same Neon database as production/development.
 
