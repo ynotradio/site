@@ -33,7 +33,7 @@ TABLE_COUNT=$(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_
 if [ "$TABLE_COUNT" -eq "0" ]; then
     echo "   Importing database schema..."
     if [ -f "src/db/docker/ynot_db.sql" ]; then
-        docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site < src/db/docker/ynot_db.sql
+        docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root ynot_site' < src/db/docker/ynot_db.sql
         echo "   ✅ Schema imported successfully"
     else
         echo "   ⚠️  Warning: Schema file not found at src/db/docker/ynot_db.sql"

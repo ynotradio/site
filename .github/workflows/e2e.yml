@@ -99,7 +99,7 @@ jobs:
           # Import schema if available
           if [ -f "src/db/docker/ynot_db.sql" ]; then
             echo "Importing MySQL schema..."
-            docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site < src/db/docker/ynot_db.sql
+            docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root ynot_site' < src/db/docker/ynot_db.sql
             echo "✅ Schema imported successfully"
           else
             echo "⚠️  Warning: Schema file not found, seeding may fail"
