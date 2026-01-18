@@ -82,6 +82,20 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  playwright:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile.playwright
+    network_mode: host
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - CI=true
+      - NODE_ENV=development
+    profiles:
+      - test
+    command: yarn test:e2e
 volumes:
   mysqldb_data:
     driver: local

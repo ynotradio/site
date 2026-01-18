@@ -84,7 +84,8 @@
         "skipComments": true
       }
     ],
-    "complexity": ["warn", 15]
+    "complexity": ["warn", 15],
+    "operator-linebreak": ["error", "before", { "overrides": { "=": "none" } }]
   },
   "overrides": [
     {

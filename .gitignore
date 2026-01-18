@@ -37,6 +37,9 @@ media/
 .playwright/
 test-results/
 payload/types/
+playwright-report/
+e2e/screenshots/*
+!e2e/screenshots/.gitkeep
 
 # Agent helpers temporary directory
 .agent-tmp/
