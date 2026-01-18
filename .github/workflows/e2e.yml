@@ -94,8 +94,16 @@ jobs:
       
       - name: Initialize MySQL database schema
         run: |
-          # Create database
-          docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+          # Wait a bit more for MySQL to be fully ready
+          sleep 5
+          # Create database and verify it worked
+          echo "Creating database..."
+          if docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;"'; then
+            echo "✅ Database created"
+          else
+            echo "❌ Failed to create database"
+            exit 1
+          fi
           # Import schema if available
           if [ -f "src/db/docker/ynot_db.sql" ]; then
             echo "Importing MySQL schema..."

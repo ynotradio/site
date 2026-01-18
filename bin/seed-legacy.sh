@@ -26,7 +26,7 @@ fi
 
 # Create database and import schema if needed
 echo "   Checking database schema..."
-docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;" 2>/dev/null || true
+docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;"'
 
 # Import schema if tables don't exist
 TABLE_COUNT=$(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SHOW TABLES;" 2>/dev/null | wc -l)
