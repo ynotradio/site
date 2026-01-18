@@ -27,20 +27,11 @@ async function globalSetup() {
       console.warn('   Make sure .env.local is configured with DATABASE_URI\n');
     }
 
-    // Run Payload migrations to set up PostgreSQL schema
-    console.log('🔄 Running Payload migrations...');
-    try {
-      execSync('echo "y" | yarn payload:migrate', {
-        cwd: projectRoot,
-        stdio: 'inherit',
-        env: { ...process.env, NODE_ENV: 'development' },
-        shell: '/bin/bash',
-      });
-      console.log('✅ Payload migrations completed\n');
-    } catch (error) {
-      console.error('❌ Failed to run Payload migrations:', error);
-      throw error;
-    }
+    // Note: Payload migrations are skipped because Playwright's webServer
+    // (yarn dev) runs before globalSetup and automatically pushes the schema
+    // to the database in development mode. This is acceptable for E2E tests
+    // since we only need a working schema, not migration history.
+    console.log('ℹ️  Schema will be auto-pushed by Next.js dev server\n');
 
     // Seed Payload database with test data
     console.log('🌱 Seeding Payload database...');

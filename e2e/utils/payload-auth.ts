@@ -22,8 +22,13 @@ export async function loginToPayload(
   await page.getByLabel(/email/i).fill(email);
   await page.getByLabel(/password/i).fill(password);
 
-  // Find submit button by role and text
-  await page.getByRole('button', { name: /log in|sign in|submit/i }).click();
+  // The Payload login button says "Login" (one word)
+  const submitButton = page
+    .getByRole('button', { name: 'Login' })
+    .or(page.locator('button:has-text("Login")'))
+    .or(page.locator('button[type="submit"]'));
+
+  await submitButton.click();
 
   // Wait for successful login - dashboard should load
   await page.waitForURL('**/admin', { timeout: 30000 });

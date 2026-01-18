@@ -98,9 +98,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await Promise.race([
         page.waitForURL('**/concerts/**', { timeout: 30000 }),
         page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 }),
-      ]).catch(() => {
-        return page.waitForLoadState('networkidle', { timeout: 10000 });
-      });
+      ]).catch(() => page.waitForLoadState('networkidle', { timeout: 10000 }));
 
       const screenshot = await page.screenshot({ fullPage: true });
       await testInfo.attach('05-Concert Saved', {
@@ -145,7 +143,10 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       // Use Playwright best practices - getByLabel for form fields
       const emailInput = page.getByLabel(/email/i);
       const passwordInput = page.getByLabel(/password/i);
-      const submitButton = page.getByRole('button', { name: /log in|sign in|submit/i });
+      // The Payload login button says "Login" (one word)
+      const submitButton = page
+        .getByRole('button', { name: 'Login' })
+        .or(page.locator('button:has-text("Login")'));
 
       await expect(emailInput).toBeVisible();
       await expect(passwordInput).toBeVisible();
