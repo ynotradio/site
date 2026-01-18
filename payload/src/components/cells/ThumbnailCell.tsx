@@ -45,8 +45,9 @@ export const ThumbnailCell: React.FC<DefaultCellComponentProps> = ({ cellData, f
   }, [mediaId, relationTo, getRelationships]);
 
   // Look up the media document from the provider's cache
-  const mediaData =
-    relationTo && mediaId ? documents[relationTo as string]?.[String(mediaId)] : null;
+  const mediaData = relationTo && mediaId
+    ? documents[relationTo as string]?.[String(mediaId)]
+    : null;
 
   if (!mediaData || typeof mediaData !== 'object') {
     return <span className="thumbnail-cell-placeholder">—</span>;

@@ -30,6 +30,7 @@ const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
 dotenv.config({
   path: path.resolve(process.cwd(), envFile),
   override: false,
+  quiet: true,
 });
 
 const coerceList = (value: string): string[] => value
