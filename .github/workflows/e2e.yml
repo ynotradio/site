@@ -13,11 +13,6 @@ jobs:
     permissions:
       contents: read
     
-    # Use Playwright container with pre-installed browsers
-    container:
-      image: mcr.microsoft.com/playwright:v1.57.0-noble
-      options: --user 1001
-    
     steps:
       - uses: actions/checkout@v6
       
@@ -30,20 +25,73 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       
-      # No need to install Playwright browsers - already in container!
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      
+      # Setup Next.js build cache
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/yarn.lock') }}-
+            ${{ runner.os }}-nextjs-
       
       - name: Setup environment file
         run: |
           cp .env.example .env.local
-          # Set Neon database URL (use production/seeded database)
-          echo "DATABASE_URI=${{ secrets.DATABASE_URI }}" >> .env.local
-          echo "DATABASE_SSL=require" >> .env.local
+          # Use local Docker Postgres and MySQL databases
+          echo "DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev" >> .env.local
           echo "PAYLOAD_SECRET=test-secret-for-ci" >> .env.local
           echo "PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000" >> .env.local
           echo "PORT=3000" >> .env.local
       
-      # Skip Docker services in CI - we connect to remote Neon database instead
-      # The test will only validate Payload CMS (not legacy PHP site) in CI
+      - name: Start Docker services
+        run: |
+          docker compose up -d postgres mysql apache
+          echo "Waiting for services to be ready..."
+      
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev > /dev/null 2>&1; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+      
+      - name: Wait for MySQL
+        run: |
+          for i in {1..30}; do
+            if docker compose exec -T mysql mysqladmin ping -h localhost -u root -proot > /dev/null 2>&1; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
+      
+      - name: Wait for Apache
+        run: |
+          for i in {1..30}; do
+            if curl -f http://localhost:8080 > /dev/null 2>&1; then
+              echo "Apache is ready"
+              break
+            fi
+            echo "Waiting for Apache... ($i/30)"
+            sleep 2
+          done
+      
+      - name: Seed databases
+        run: |
+          # Seed Payload Postgres database
+          yarn payload:seed || echo "Payload seed not available, continuing..."
+          # Seed legacy MySQL database
+          yarn seed:legacy || echo "Legacy seed not available, continuing..."
       
       - name: Run Playwright tests
         run: npx playwright test
@@ -60,4 +108,8 @@ jobs:
             test-results/
           retention-days: 7
       
-      # No cleanup needed - no Docker containers in CI
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose down -v
+
