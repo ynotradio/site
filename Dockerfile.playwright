@@ -1,0 +1,22 @@
+# Dockerfile for running Playwright E2E tests
+# Based on official Playwright image with pre-installed browsers
+FROM mcr.microsoft.com/playwright:v1.57.0-noble
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json yarn.lock ./
+
+# Install dependencies
+RUN yarn install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Set environment to test
+ENV CI=true
+ENV NODE_ENV=development
+
+# Default command runs tests
+CMD ["yarn", "test:e2e"]

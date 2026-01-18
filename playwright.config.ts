@@ -10,6 +10,11 @@ export default defineConfig({
   // Maximum time one test can run for
   timeout: 120 * 1000,
 
+  // Maximum time for test fixtures (beforeAll, afterAll)
+  expect: {
+    timeout: 10 * 1000,
+  },
+
   // Maximum time for the entire test suite
   globalTimeout: 30 * 60 * 1000, // 30 minutes
 

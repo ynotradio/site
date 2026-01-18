@@ -39,6 +39,31 @@ yarn test:e2e:headed
 PWDEBUG=1 yarn test:e2e
 ```
 
+### Using Docker Container (Faster)
+
+For faster test execution without installing Playwright/Chromium locally:
+
+```bash
+# One-time: Build the Playwright container
+yarn test:e2e:docker:build
+
+# Run tests in container
+yarn test:e2e:docker
+
+# OR using docker-compose profiles
+docker-compose --profile test up playwright
+```
+
+**Benefits:**
+
+- No local Playwright/Chromium installation needed (~300MB saved)
+- Consistent test environment across machines
+- Pre-installed browsers (Chromium, Firefox, WebKit)
+- Faster CI/CD builds - no browser download step
+- Isolated test environment
+
+**Note:** The container uses `--network host` to access services on localhost (ports 3000, 8080, 5432, 3306).
+
 ### What Gets Tested
 
 The POC test demonstrates:
@@ -58,17 +83,45 @@ The POC test demonstrates:
 
 ## CI/CD Integration
 
-The E2E tests run in GitHub Actions on every PR. See `.github/workflows/e2e.yml`.
+The E2E tests run in GitHub Actions on every PR using a Dockerized Playwright container for faster, more consistent builds.
 
-The workflow:
+### GitHub Actions Workflow
 
-1. Sets up Node.js and installs dependencies
-2. Installs Playwright browsers
-3. Starts Docker Compose services
-4. Waits for services to be healthy
-5. Seeds databases
-6. Runs Playwright tests
-7. Uploads test results and screenshots as artifacts
+See `.github/workflows/e2e.yml` for the full workflow configuration.
+
+**Key features:**
+
+- Uses official Playwright Docker container (pre-installed browsers)
+- Skips browser installation step (~2-3 min saved per run)
+- Connects to remote Neon Postgres database (always seeded)
+- Runs MySQL in Docker for legacy site compatibility
+- Uploads test reports and screenshots as artifacts
+
+### Required GitHub Secrets
+
+Add these secrets to your repository (Settings → Secrets and variables → Actions):
+
+- `DATABASE_URI` - Neon Postgres connection string
+- `POSTGRES_HOST` - Neon database host
+- `POSTGRES_DATABASE` - Database name
+- `POSTGRES_USER` - Database username
+- `POSTGRES_PASSWORD` - Database password
+
+These allow the CI environment to connect to the same Neon database as production/development.
+
+### Workflow Steps
+
+1. Checkout code
+2. Setup Node.js in Playwright container
+3. Install dependencies
+4. Configure environment with Postgres feature flags
+5. Start Docker services (MySQL only)
+6. Wait for services to be healthy
+7. Seed MySQL database
+8. Run Playwright tests (connects to Neon Postgres)
+9. Upload HTML report and artifacts
+
+**Time savings:** ~2-3 minutes per run by skipping browser installation
 
 ## Troubleshooting
 

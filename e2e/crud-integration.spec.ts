@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { ChildProcess, spawn } from 'child_process';
+import { ChildProcess, spawn, execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -17,23 +17,42 @@ let payloadProcess: ChildProcess | null = null;
 
 test.describe('CRUD Integration POC', () => {
   test.beforeAll(async () => {
-    // Start Payload server
+    // Start Next.js server
     // eslint-disable-next-line no-console
-    console.log('🚀 Starting Payload server...');
+    console.log('🚀 Starting Next.js server...');
 
     const projectRoot = join(__dirname, '..');
+    const isCI = process.env.CI === 'true';
 
-    payloadProcess = spawn('yarn', ['dev'], {
+    // In CI, build first for faster startup
+    if (isCI) {
+      // eslint-disable-next-line no-console
+      console.log('📦 Building Next.js for production (CI mode)...');
+      try {
+        execSync('yarn build', {
+          cwd: projectRoot,
+          stdio: 'inherit',
+        });
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Build failed, falling back to dev mode');
+      }
+    }
+
+    // Start server (production mode in CI, dev mode locally)
+    const command = isCI ? 'start' : 'dev';
+    payloadProcess = spawn('yarn', [command], {
       cwd: projectRoot,
       stdio: 'pipe',
       shell: true,
       env: {
         ...process.env,
-        NODE_ENV: 'development',
+        NODE_ENV: isCI ? 'production' : 'development',
+        PORT: '3000',
       },
     });
 
-    // Wait for Next.js dev server to be ready
+    // Wait for server to be ready
     await new Promise<void>((resolve, reject) => {
       let timeout: NodeJS.Timeout;
       let resolved = false;
@@ -48,12 +67,15 @@ test.describe('CRUD Integration POC', () => {
           output.includes('Local:') ||
           output.includes('http://localhost:3000') ||
           output.includes('Ready in') ||
-          output.includes('compiled successfully')
+          output.includes('compiled successfully') ||
+          output.includes('started server on') ||
+          output.includes('ready on')
         ) {
           if (!resolved) {
             resolved = true;
             clearTimeout(timeout);
-            resolve();
+            // Give it a moment to fully settle
+            setTimeout(() => resolve(), 2000);
           }
         }
       };
@@ -73,13 +95,14 @@ test.describe('CRUD Integration POC', () => {
         }
       });
 
-      // Timeout after 3 minutes (Next.js can take longer to start)
+      // Shorter timeout since production build starts much faster
+      const timeoutMs = isCI ? 60000 : 100000;
       timeout = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          reject(new Error('Next.js dev server failed to start in time'));
+          reject(new Error(`Next.js server failed to start in time (${timeoutMs}ms)`));
         }
-      }, 180000);
+      }, timeoutMs);
     });
 
     // Wait for server to be reachable with HTTP health check
