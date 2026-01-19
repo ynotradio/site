@@ -160,10 +160,7 @@ export function parseHostString(host: string): ParsedHost {
 
   // Common patterns for "with" in show names
   // Match: "Show Name w/ DJ Name" or "Show Name with DJ Name"
-  const withPatterns = [
-    /^(.+?)\s+w\/\s*(.+)$/i,
-    /^(.+?)\s+with\s+(.+)$/i,
-  ];
+  const withPatterns = [/^(.+?)\s+w\/\s*(.+)$/i, /^(.+?)\s+with\s+(.+)$/i];
 
   for (const pattern of withPatterns) {
     const match = cleanHost.match(pattern);
@@ -240,12 +237,16 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
           } else {
             showName = parsed.djName;
           }
-          logger.warn(`Could not find DJ: ${parsed.djName} (show ${schedule.id}) - storing as show name`);
+          logger.warn(
+            `Could not find DJ: ${parsed.djName} (show ${schedule.id}) - storing as show name`,
+          );
         }
       } else if (!showName) {
         // No DJ name and no show name extracted - use the raw host as show name
         showName = stripHtmlTags(schedule.host);
-        logger.warn(`Could not parse host: ${schedule.host} (show ${schedule.id}) - storing as show name`);
+        logger.warn(
+          `Could not parse host: ${schedule.host} (show ${schedule.id}) - storing as show name`,
+        );
       }
     }
 
@@ -315,22 +316,34 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
     stats.total = scheduleRecords.length;
     logger.info(`Found ${stats.total} schedule records to import`);
 
-    // Import each show
-    for (let i = 0; i < scheduleRecords.length; i += 1) {
-      const schedule = scheduleRecords[i];
+    // Import shows in batches for better performance
+    const BATCH_SIZE = 50; // Process 50 records concurrently
 
-      const imported = await importSchedule(payload, schedule);
+    for (let i = 0; i < scheduleRecords.length; i += BATCH_SIZE) {
+      const batch = scheduleRecords.slice(i, i + BATCH_SIZE);
 
-      if (imported) {
-        stats.success += 1;
-      } else {
-        stats.skipped += 1;
+      // Process batch concurrently
+      const results = await Promise.allSettled(
+        batch.map((schedule) => importSchedule(payload, schedule)),
+      );
+
+      // Count results
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          if (result.value) {
+            stats.success += 1;
+          } else {
+            stats.skipped += 1;
+          }
+        } else {
+          stats.errors += 1;
+          logger.error('Batch import error', result.reason);
+        }
       }
 
-      // Log progress every 100 records (larger dataset)
-      if ((i + 1) % 100 === 0 || i === scheduleRecords.length - 1) {
-        logProgress(i + 1, scheduleRecords.length, `Show ${schedule.id}`);
-      }
+      // Log progress
+      const processed = Math.min(i + BATCH_SIZE, scheduleRecords.length);
+      logProgress(processed, scheduleRecords.length, `Show ${batch[batch.length - 1].id}`);
     }
   } catch (error) {
     logger.error('Import failed', error as Error);

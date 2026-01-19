@@ -30,6 +30,7 @@ export const Users: CollectionConfig = {
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours
     verify: true,
+    depth: 0, // Ensure all user fields are loaded
   },
   access: {
     read: ({ req, id }) => {

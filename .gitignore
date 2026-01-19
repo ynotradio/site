@@ -49,3 +49,4 @@ e2e/screenshots/*
 
 *storybook.log
 storybook-static
+.last-import-ids.json

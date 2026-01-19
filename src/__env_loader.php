@@ -37,6 +37,7 @@ if (file_exists($final_env_path)) {
             }
             
             $_ENV[$key] = $value;
+            putenv("$key=$value");  // Make available to getenv() as well
         }
     }
 }
