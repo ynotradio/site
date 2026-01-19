@@ -60,9 +60,9 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       // Wait for form to be ready
       await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
 
-      // Set concert date (7 days from now)
+      // Set concert date (3 days from now to avoid month boundary issues)
       const concertDate = new Date();
-      concertDate.setDate(concertDate.getDate() + 7);
+      concertDate.setDate(concertDate.getDate() + 3);
 
       // Click on the date field to open date picker
       const dateField = page.locator('#field-date').getByRole('textbox');
@@ -98,11 +98,16 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await venueOption.waitFor({ state: 'visible', timeout: 10000 });
       await venueOption.click();
 
-      // Fill in ticket info using field IDs
-      await page.locator('#field-ticketInfo').fill('E2E Test Tickets $30');
-      await page
-        .locator('#field-ticketUrl')
-        .fill('https://tickets.example.com/e2e-playwright-test');
+      // Fill in UNIQUE ticket info to distinguish this concert from seeded data
+      const uniqueTicketInfo = `E2E Test Concert ${Date.now()} - Tickets $30`;
+      const uniqueTicketUrl = `https://tickets.example.com/e2e-${Date.now()}`;
+      
+      await page.locator('#field-ticketInfo').fill(uniqueTicketInfo);
+      await page.locator('#field-ticketUrl').fill(uniqueTicketUrl);
+
+      // Store these for later verification
+      // eslint-disable-next-line no-param-reassign
+      (testInfo as any).uniqueTicketInfo = uniqueTicketInfo;
 
       const screenshot = await page.screenshot({ fullPage: true });
       await testInfo.attach('04-Filled Concert Form', {
@@ -150,13 +155,10 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       expect(pageContent).not.toContain('Parse error');
       expect(pageContent).not.toContain('Warning:');
 
-      // Verify the concert appears by checking that there are at least two
-      // occurrences of the artist and venue names. One comes from seeded data;
-      // the second should be from the newly created concert.
-      const sampleBandMatches = pageContent.match(/Sample Band/g) ?? [];
-      const foundryMatches = pageContent.match(/The Foundry/g) ?? [];
-      expect(sampleBandMatches.length).toBeGreaterThanOrEqual(2);
-      expect(foundryMatches.length).toBeGreaterThanOrEqual(2);
+      // Verify the UNIQUE concert we just created appears on the page
+      // This ensures we're not just seeing seeded data
+      const uniqueTicketInfo = (testInfo as any).uniqueTicketInfo;
+      expect(pageContent).toContain(uniqueTicketInfo);
 
       const screenshot = await page.screenshot({ fullPage: true });
       await testInfo.attach('06-Legacy Site with New Concert', {

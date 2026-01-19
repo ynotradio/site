@@ -27,12 +27,6 @@ async function globalSetup() {
       console.warn('   Make sure .env.local is configured with DATABASE_URI\n');
     }
 
-    // Note: Payload migrations are skipped because Playwright's webServer
-    // (yarn dev) runs before globalSetup and automatically pushes the schema
-    // to the database in development mode. This is acceptable for E2E tests
-    // since we only need a working schema, not migration history.
-    console.log('ℹ️  Schema will be auto-pushed by Next.js dev server\n');
-
     // Check if Docker services are running, start them if not
     console.log('🐳 Checking Docker services...');
     try {
@@ -82,12 +76,15 @@ async function globalSetup() {
         },
       );
       console.log('✅ Database schema reset\n');
-    } catch (error: Error) {
-      console.error('❌ Failed to reset schema:', error.message);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('❌ Failed to reset schema:', errorMessage);
       throw error;
     }
 
     // Seed Payload database with test data
+    // Note: The seed script will initialize Payload which automatically
+    // pushes the schema to the database in development mode
     console.log('🌱 Seeding Payload database...');
     try {
       execSync('yarn seed:payload', {
