@@ -18,20 +18,20 @@ All services run in Docker containers managed by Docker Compose.
 
 ## Test Scope
 
-The simplified E2E tests verify:
+The E2E tests verify:
 
 1. ✅ Legacy PHP site loads successfully (HTTP 200)
 2. ✅ No PHP errors on page load
 3. ✅ Database connectivity (MySQL connection works)
-4. ✅ Seeded data is accessible
+4: ✅ Seeded data is accessible
 5. ✅ No critical JavaScript console errors
+6. ✅ **Payload CMS integration** - Create concert via Payload admin UI and verify it appears on legacy site
+7. ✅ **CRUD operations** - Test data flow from Payload CMS to legacy PHP site
 
-**Future enhancements** (not in this POC):
-- Payload CMS integration testing
-- CRUD operations testing
-- Verification of data migration from MySQL to Postgres
+**Future enhancements**:
 - Full authentication flows
 - Next.js public site testing
+- Visual regression testing
 
 ## Running Tests
 
@@ -83,8 +83,9 @@ See `.github/workflows/e2e.yml` for the complete CI configuration.
 
 ## Test Files
 
-- `crud-integration.spec.ts` - Main test file with simplified legacy PHP site tests
-- `global-setup.ts` - Global test setup (minimal configuration)
+- `crud-integration.spec.ts` - Tests for legacy PHP site load and database connectivity
+- `payload-integration.spec.ts` - **NEW**: Payload CMS integration test that creates a concert and verifies it appears on the legacy site
+- `global-setup.ts` - Global test setup (runs Payload migrations and seeds database)
 - `global-teardown.ts` - Global test teardown (cleanup)
 - `playwright.config.ts` - Playwright configuration (browser settings, reporters, etc.)
 

@@ -62,20 +62,13 @@ export default defineConfig({
   // Run global teardown after all tests (stop Docker services)
   globalTeardown: './e2e/global-teardown.ts',
 
-  // Web server configuration
-  // Note: We start services in globalSetup instead, so this is commented out
-  // webServer: [
-  //   {
-  //     command: 'yarn payload:dev',
-  //     port: 3000,
-  //     timeout: 120 * 1000,
-  //     reuseExistingServer: !process.env.CI,
-  //   },
-  //   {
-  //     command: 'docker compose up',
-  //     port: 8080,
-  //     timeout: 120 * 1000,
-  //     reuseExistingServer: !process.env.CI,
-  //   },
-  // ],
+  // Web server configuration - Start Next.js dev server with Payload admin UI
+  webServer: {
+    command: 'yarn dev',
+    url: 'http://localhost:3000/admin',
+    timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
+    stdout: 'pipe',
+    stderr: 'pipe',
+  },
 });
