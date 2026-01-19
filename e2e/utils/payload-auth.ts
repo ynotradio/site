@@ -8,8 +8,8 @@ import { Page } from '@playwright/test';
  */
 export async function loginToPayload(
   page: Page,
-  email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
-  password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
+  email: string = 'admin@ynotradio.net',
+  password: string = 'password',
 ): Promise<void> {
   // Navigate to Payload admin (it will redirect to login if not authenticated)
   await page.goto('http://localhost:3000/admin', {

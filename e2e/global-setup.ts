@@ -33,13 +33,73 @@ async function globalSetup() {
     // since we only need a working schema, not migration history.
     console.log('ℹ️  Schema will be auto-pushed by Next.js dev server\n');
 
+    // Check if Docker services are running, start them if not
+    console.log('🐳 Checking Docker services...');
+    try {
+      execSync('docker compose ps postgres', {
+        cwd: projectRoot,
+        stdio: 'pipe',
+      });
+      console.log('✅ Docker services are running\n');
+    } catch {
+      console.log('Starting Docker services...');
+      execSync('docker compose up -d postgres mysql phpfpm apache', {
+        cwd: projectRoot,
+        stdio: 'inherit',
+      });
+      console.log('Waiting for PostgreSQL to be ready...');
+      // Wait for postgres to be ready
+      for (let i = 0; i < 30; i += 1) {
+        try {
+          execSync(
+            'docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev',
+            {
+              cwd: projectRoot,
+              stdio: 'pipe',
+            },
+          );
+          console.log('✅ PostgreSQL is ready\n');
+          break;
+        } catch {
+          if (i === 29) {
+            throw new Error('PostgreSQL failed to start after 60 seconds');
+          }
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+      }
+    }
+
+    // Clear existing data to ensure clean test environment
+    // Drop and recreate the schema for a completely fresh state
+    console.log('🗑️  Resetting database schema...');
+    try {
+      execSync(
+        'docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"',
+        {
+          cwd: projectRoot,
+          stdio: 'pipe',
+        },
+      );
+      console.log('✅ Database schema reset\n');
+    } catch (error: any) {
+      console.error('❌ Failed to reset schema:', error.message);
+      throw error;
+    }
+
     // Seed Payload database with test data
     console.log('🌱 Seeding Payload database...');
     try {
       execSync('yarn seed:payload', {
         cwd: projectRoot,
         stdio: 'inherit',
-        env: { ...process.env, NODE_ENV: 'development' },
+        env: {
+          ...process.env,
+          NODE_ENV: 'development',
+          // Use consistent test credentials for E2E tests
+          PAYLOAD_DEV_EMAIL: 'admin@ynotradio.net',
+          PAYLOAD_DEV_PASSWORD: 'password',
+        },
       });
       console.log('✅ Payload database seeded\n');
     } catch (error) {
