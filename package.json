@@ -36,6 +36,7 @@
     "seed:legacy": "./bin/seed-legacy.sh",
     "seed": "yarn seed:payload && yarn seed:legacy",
     "import:quick": "tsx bin/quick-import.ts",
+    "import:incremental": "tsx bin/incremental-import.ts",
     "neon-db:copy": "tsx bin/copy-neon-db.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
