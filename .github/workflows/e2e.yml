@@ -74,70 +74,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
       
-      - name: Setup environment file
-        run: |
-          cp .env.example .env.local
-          # Configure for Payload CMS with Postgres
-          echo "DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev" >> .env.local
-          # Configure PostgreSQL connection for PHP site (must match docker-compose service name)
-          echo "POSTGRES_HOST=postgres" >> .env.local
-          echo "POSTGRES_PORT=5432" >> .env.local
-          echo "POSTGRES_DATABASE=ynot_payload_dev" >> .env.local
-          echo "POSTGRES_USER=ynot_postgres_user" >> .env.local
-          echo "POSTGRES_PASSWORD=ynot_postgres_pass" >> .env.local
-          echo "POSTGRES_SSL_MODE=disable" >> .env.local
-          # Enable Postgres mode for legacy PHP site
-          echo "USE_POSTGRES_CONCERTS=true" >> .env.local
-          echo "USE_POSTGRES_ONDEMAND=true" >> .env.local
-          echo "USE_POSTGRES_DEEJAYS=true" >> .env.local
-          echo "USE_POSTGRES_MUSIC=true" >> .env.local
-          echo "USE_POSTGRES_STORIES=true" >> .env.local
-          echo "USE_POSTGRES_CDOFTHEWEEK=true" >> .env.local
-          echo "USE_POSTGRES_SCHEDULE=true" >> .env.local
-          echo "USE_POSTGRES_CUSTOMTEXT=true" >> .env.local
-          # Configure for legacy PHP site with MySQL (inside Docker network)
-          echo "DB_HOST=mysql" >> .env.local
-          echo "DB_PORT=3306" >> .env.local
-          echo "DB_NAME=ynot_site" >> .env.local
-          echo "DB_USER=root" >> .env.local
-          echo "DB_PASSWORD=root" >> .env.local
-          # Auth0 configuration (dummy values for E2E tests)
-          echo "AUTH0_DOMAIN=test.auth0.com" >> .env.local
-          echo "AUTH0_CLIENT_ID=test_client_id" >> .env.local
-          echo "AUTH0_CLIENT_SECRET=test_client_secret" >> .env.local
-          
-      - name: Setup PHP .env file for Postgres mode
-        run: |
-          # Configure PHP app to use local PostgreSQL
-          cat > src/partials/.env << 'EOF'
-          AUTH0_CLIENT_ID=test_client_id
-          AUTH0_DOMAIN=test.auth0.com
-          AUTH0_CLIENT_SECRET=test_client_secret
-          
-          # MySQL Database Connection (Legacy)
-          DB_NAME=ynot_site
-          DB_USER=root
-          DB_PASSWORD=root
-          DB_HOST=mysql
-          DB_PORT=3306
-          
-          # PostgreSQL Connection (Local Docker for E2E tests)
-          POSTGRES_HOST=postgres
-          POSTGRES_PORT=5432
-          POSTGRES_DATABASE=ynot_payload_dev
-          POSTGRES_USER=ynot_postgres_user
-          POSTGRES_PASSWORD=ynot_postgres_pass
-          POSTGRES_SSL_MODE=disable
-          
-          USE_POSTGRES_CONCERTS=true
-          USE_POSTGRES_ONDEMAND=true
-          USE_POSTGRES_DEEJAYS=true
-          USE_POSTGRES_MUSIC=true
-          USE_POSTGRES_STORIES=true
-          USE_POSTGRES_CDOFTHEWEEK=true
-          USE_POSTGRES_SCHEDULE=true
-          USE_POSTGRES_CUSTOMTEXT=true
-          EOF
+      - name: Setup environment files
+        run: ./bin/setup-e2e-env.sh
       
       - name: Install PHP dependencies
         run: |
@@ -149,60 +87,11 @@ jobs:
           docker compose up -d postgres mysql phpfpm apache
           echo "Waiting for services to be ready..."
       
-      - name: Wait for PostgreSQL
-        run: |
-          for i in {1..30}; do
-            if docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev > /dev/null 2>&1; then
-              echo "PostgreSQL is ready"
-              break
-            fi
-            echo "Waiting for PostgreSQL... ($i/30)"
-            sleep 2
-          done
-      
-      - name: Wait for MySQL
-        run: |
-          for i in {1..30}; do
-            if docker compose exec -T -e MYSQL_PWD=root mysql mysqladmin ping -h localhost -u root > /dev/null 2>&1; then
-              echo "MySQL is ready"
-              break
-            fi
-            echo "Waiting for MySQL... ($i/30)"
-            sleep 2
-          done
+      - name: Wait for Docker services
+        run: ./bin/wait-for-docker-services.sh
       
       - name: Initialize MySQL database schema
-        run: |
-          # Wait a bit more for MySQL to be fully ready
-          sleep 5
-          # Create database and verify it worked
-          echo "Creating database..."
-          if docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;"'; then
-            echo "✅ Database created"
-          else
-            echo "❌ Failed to create database"
-            exit 1
-          fi
-          # Import schema if available
-          if [ -f "src/db/docker/ynot_db.sql" ]; then
-            echo "Importing MySQL schema..."
-            docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root ynot_site' < src/db/docker/ynot_db.sql
-            echo "✅ Schema imported successfully"
-          else
-            echo "⚠️  Warning: Schema file not found, seeding may fail"
-          fi
-      
-      - name: Wait for Apache
-        run: |
-          echo "Waiting for Apache to be ready..."
-          for i in {1..30}; do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 | grep -q "200\|301\|302"; then
-              echo "Apache is ready"
-              break
-            fi
-            echo "Waiting for Apache... ($i/30)"
-            sleep 2
-          done
+        run: ./bin/init-mysql-db.sh
       
       - name: Seed legacy MySQL database
         run: |

@@ -1,5 +1,20 @@
 import { test, expect } from '@playwright/test';
 import { loginToPayload } from './utils/payload-auth';
+import {
+  captureScreenshot,
+  fillPayloadDateField,
+  getFutureDate,
+  generateUniqueId,
+  checkForPhpErrors,
+} from './utils/test-helpers';
+import {
+  navigateToPayloadCollection,
+  clickPayloadCreateNew,
+  fillPayloadRelationshipField,
+  fillPayloadTextField,
+  clickPayloadSave,
+  waitForPayloadSave,
+} from './utils/payload-helpers';
 
 /**
  * E2E Integration Test: Payload CMS → Legacy PHP Site
@@ -23,37 +38,18 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
   }, testInfo) => {
     await test.step('Log in to Payload CMS', async () => {
       await loginToPayload(page);
-
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('01-Payload Dashboard', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, '01-Payload Dashboard');
     });
 
     await test.step('Navigate to Concerts collection', async () => {
-      await page.goto('http://localhost:3000/admin/collections/concerts', {
-        waitUntil: 'networkidle',
-        timeout: 30000,
-      });
-
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('02-Concerts Collection List', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await navigateToPayloadCollection(page, 'concerts');
+      await captureScreenshot(page, testInfo, '02-Concerts Collection List');
     });
 
     await test.step('Open create concert form', async () => {
-      // Use getByRole to find the "Create New" link
-      await page.getByRole('link', { name: /create new/i }).click();
+      await clickPayloadCreateNew(page);
       await page.waitForURL('**/concerts/create', { timeout: 30000 });
-
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('03-Create Concert Form', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, '03-Create Concert Form');
     });
 
     await test.step('Fill out concert form', async () => {
@@ -61,83 +57,33 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
 
       // Set concert date (3 days from now to avoid month boundary issues)
-      const concertDate = new Date();
-      concertDate.setDate(concertDate.getDate() + 3);
+      const concertDate = getFutureDate(3);
+      await fillPayloadDateField(page, 'field-date', concertDate);
 
-      // Click on the date field to open date picker
-      const dateField = page.locator('#field-date').getByRole('textbox');
-      await dateField.waitFor({ state: 'visible', timeout: 30000 });
-      await dateField.click();
+      // Select an artist
+      await fillPayloadRelationshipField(page, 'field-artists', 0);
 
-      // Wait for the date picker to appear
-      await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 10000 });
-
-      // Select the date - calculate which day to click
-      const day = concertDate.getDate();
-      await page
-        .getByRole('option', { name: new RegExp(`Choose.*${day}.*${concertDate.getFullYear()}`) })
-        .click();
-
-      // Select an artist - find the Artists field and click on its dropdown
-      const artistsField = page.locator('#field-artists');
-      await artistsField.locator('input[id^="react-select"]').click();
-
-      // Wait for dropdown and select first option
-      await page.waitForSelector('[role="listbox"]', { state: 'visible', timeout: 10000 });
-      const artistOption = page.getByRole('option').first();
-      await artistOption.waitFor({ state: 'visible', timeout: 10000 });
-      await artistOption.click();
-
-      // Select a venue - find the Venue field and click on its dropdown
-      const venueField = page.locator('#field-venue');
-      await venueField.locator('input[id^="react-select"]').click();
-
-      // Wait for dropdown and select first option
-      await page.waitForSelector('[role="listbox"]', { state: 'visible', timeout: 10000 });
-      const venueOption = page.getByRole('option').first();
-      await venueOption.waitFor({ state: 'visible', timeout: 10000 });
-      await venueOption.click();
+      // Select a venue
+      await fillPayloadRelationshipField(page, 'field-venue', 0);
 
       // Fill in UNIQUE ticket info to distinguish this concert from seeded data
-      const uniqueTicketInfo = `E2E Test Concert ${Date.now()} - Tickets $30`;
-      const uniqueTicketUrl = `https://tickets.example.com/e2e-${Date.now()}`;
+      const uniqueTicketInfo = `E2E Test Concert ${generateUniqueId()} - Tickets $30`;
+      const uniqueTicketUrl = `https://tickets.example.com/e2e-${generateUniqueId()}`;
       
-      await page.locator('#field-ticketInfo').fill(uniqueTicketInfo);
-      await page.locator('#field-ticketUrl').fill(uniqueTicketUrl);
+      await fillPayloadTextField(page, 'field-ticketInfo', uniqueTicketInfo);
+      await fillPayloadTextField(page, 'field-ticketUrl', uniqueTicketUrl);
 
       // Store these for later verification
       // eslint-disable-next-line no-param-reassign
       (testInfo as any).uniqueTicketInfo = uniqueTicketInfo;
 
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('04-Filled Concert Form', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, '04-Filled Concert Form');
     });
 
     await test.step('Save the concert', async () => {
-      // Use getByRole for the Save button - flexible pattern to match variations
-      await page.getByRole('button', { name: /save/i }).click();
-
-      // Wait for save success - look for URL change or success message
-      await Promise.race([
-        page.waitForURL('**/concerts/**', { timeout: 30000 }),
-        page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 }),
-      ]);
-
-      // Verify that either the URL has changed to the concert detail or the success message is visible
-      const currentUrl = page.url();
-      if (!currentUrl.includes('/concerts/')) {
-        await expect(
-          page.getByText(/saved successfully|successfully saved/i)
-        ).toBeVisible({ timeout: 5000 });
-      }
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('05-Concert Saved', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'concerts');
+      await captureScreenshot(page, testInfo, '05-Concert Saved');
     });
 
     await test.step('Verify concert appears on legacy PHP site', async () => {
@@ -151,20 +97,15 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       const pageContent = await page.content();
 
       // Check for PHP errors
-      expect(pageContent).not.toContain('Fatal error');
-      expect(pageContent).not.toContain('Parse error');
-      expect(pageContent).not.toContain('Warning:');
+      const errors = checkForPhpErrors(pageContent);
+      expect(errors).toHaveLength(0);
 
       // Verify the UNIQUE concert we just created appears on the page
       // This ensures we're not just seeing seeded data
       const uniqueTicketInfo = (testInfo as any).uniqueTicketInfo;
       expect(pageContent).toContain(uniqueTicketInfo);
 
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('06-Legacy Site with New Concert', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, '06-Legacy Site with New Concert');
     });
   });
 
@@ -187,11 +128,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await expect(passwordInput).toBeVisible();
       await expect(submitButton).toBeVisible();
 
-      const screenshot = await page.screenshot({ fullPage: true });
-      await testInfo.attach('Payload Login Page', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, 'Payload Login Page');
     });
   });
 });

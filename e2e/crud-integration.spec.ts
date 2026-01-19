@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { captureScreenshot, checkForPhpErrors } from './utils/test-helpers';
 
 /**
  * E2E Integration Test: Legacy PHP site with MySQL database
@@ -27,20 +28,13 @@ test.describe('Legacy PHP Site Integration', () => {
       const pageContent = await page.content();
 
       // Should not have PHP errors
-      expect(pageContent).not.toContain('Fatal error');
-      expect(pageContent).not.toContain('Parse error');
-      expect(pageContent).not.toContain('Warning:');
+      const errors = checkForPhpErrors(pageContent);
+      expect(errors).toHaveLength(0);
 
       // Should have some content (page is not empty)
       expect(pageContent.length).toBeGreaterThan(100);
 
-      const screenshot = await page.screenshot({
-        fullPage: true,
-      });
-      await testInfo.attach('Legacy PHP Site', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, 'Legacy PHP Site');
     });
   });
 
@@ -54,9 +48,8 @@ test.describe('Legacy PHP Site Integration', () => {
       const pageContent = await page.content();
 
       // Verify no database connection errors
-      expect(pageContent).not.toContain('Connection failed');
-      expect(pageContent).not.toContain('Database error');
-      expect(pageContent).not.toContain('SQLSTATE');
+      const errors = checkForPhpErrors(pageContent);
+      expect(errors).toHaveLength(0);
 
       // Look for typical Y-Not Radio content or structure
       const hasExpectedStructure = pageContent.includes('Y-Not')
@@ -66,13 +59,7 @@ test.describe('Legacy PHP Site Integration', () => {
 
       expect(hasExpectedStructure).toBe(true);
 
-      const screenshot = await page.screenshot({
-        fullPage: true,
-      });
-      await testInfo.attach('Legacy Site with DB Content', {
-        body: screenshot,
-        contentType: 'image/png',
-      });
+      await captureScreenshot(page, testInfo, 'Legacy Site with DB Content');
     });
   });
 
