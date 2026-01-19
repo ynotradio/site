@@ -1,6 +1,6 @@
 /**
  * Payload client utilities for import scripts
- * Provides connection to Payload CMS with dev/prod database selection
+ * Provides connection to Payload CMS with database selection
  */
 
 import path from 'path';
@@ -14,33 +14,35 @@ import { generateSlug, stripHtmlTags } from './importUtils';
 const logger = createLogger('PayloadClient');
 
 /**
- * Environment mode for database selection
+ * PostgreSQL/Neon target types for import scripts
  */
-export type DatabaseEnv = 'dev' | 'prod';
+export type PostgresTarget = 'local-postgres' | 'prod-neon';
 
 /**
- * Get the Payload instance configured for the specified environment
+ * Get the Payload instance configured for the specified target database
+ *
+ * @param target - 'prod-neon' for production Neon, 'local-postgres' for local/dev
  */
-export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payload> {
+export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Promise<Payload> {
   // Load environment variables from .env.local with override
   dotenv.config({
     path: path.resolve(process.cwd(), '.env.local'),
     override: true,
   });
 
-  // Select database URL based on environment
-  const databaseUri = env === 'prod'
+  // Select database URL based on target
+  const databaseUri = target === 'prod-neon'
     ? process.env.NEON_PROD_DATABASE_URL
     : process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
 
   if (!databaseUri) {
     throw new Error(
-      `Database URI not found for environment "${env}". `
-        + `Please set ${env === 'prod' ? 'NEON_PROD_DATABASE_URL' : 'NEON_DEV_DATABASE_URL or DATABASE_URI'} in .env.local`,
+      `Database URI not found for target "${target}". `
+        + `Please set ${target === 'prod-neon' ? 'NEON_PROD_DATABASE_URL' : 'NEON_DEV_DATABASE_URL or DATABASE_URI'} in .env.local`,
     );
   }
 
-  logger.info(`Connecting to ${env} database...`);
+  logger.info(`Connecting to ${target} database...`);
 
   // Override DATABASE_URI before importing config
   process.env.DATABASE_URI = databaseUri;
@@ -51,7 +53,7 @@ export async function getPayloadClient(env: DatabaseEnv = 'dev'): Promise<Payloa
   const payloadConfig = payloadConfigModule.default ?? payloadConfigModule;
 
   const payload = await getPayload({ config: payloadConfig as any });
-  logger.info(`Connected to ${env} database successfully`);
+  logger.info(`Connected to ${target} database successfully`);
 
   return payload;
 }

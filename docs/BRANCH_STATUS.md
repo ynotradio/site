@@ -12,11 +12,12 @@
    - `.env.production.mysql.example` - Template for production MySQL credentials
    - Updated `.gitignore` to protect sensitive `.env.production.mysql`
 
-3. **Updated import scripts with new CLI syntax:**
+3. **Updated ALL import scripts with new CLI syntax:**
    - `bin/incremental-import.ts` - Now uses `--from/--to` syntax
    - `bin/quick-import.ts` - Now uses `--from/--to` syntax
    - `bin/migrations/config.ts` - Refactored to use centralized config
-   - Legacy `--env dev|prod` syntax still works (with deprecation warning)
+   - All individual import scripts (`importAds.ts`, `importConcerts.ts`, etc.) - Now use `--to` instead of `--env`
+   - `bin/migrations/shared/payloadClient.ts` - Now uses `PostgresTarget` type
 
 4. **Updated documentation:**
    - `docs/incremental-import.md` - Updated with new CLI syntax
@@ -69,15 +70,11 @@ yarn import:quick --from local-mysql --to prod-neon --months 6
 
 ### Future Improvements (deferred):
 
-1. **Update individual import scripts** to use `--from/--to` natively
-   - Currently they still use `--env dev|prod` internally
-   - Wrapper scripts translate the new syntax
-
-2. **Remove legacy `src/partials/.env` complexity** once PHP site migrates
+1. **Remove legacy `src/partials/.env` complexity** once PHP site migrates
    - Currently needed for PHP feature flags
    - Can be removed after full Postgres cutover
 
-3. **Add validation scripts**
+2. **Add validation scripts**
    - Compare MySQL and Neon data for parity
    - Automated health checks
 
@@ -88,10 +85,11 @@ Before merging to main:
 - [x] Centralized database config (`config/databases.ts`)
 - [x] `.env.production.mysql.example` template created
 - [x] Import scripts use clear `--from/--to` syntax
-- [x] Legacy `--env` still works (backward compatible)
+- [x] Individual import scripts updated to use `--to` natively
+- [x] Legacy `--env` removed (simplified API)
 - [ ] TypeScript builds without errors
 - [ ] All tests pass
-- [ ] Documentation updated
+- [x] Documentation updated
 
 ## Questions/Decisions Needed
 

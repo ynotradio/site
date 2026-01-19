@@ -216,38 +216,3 @@ export function parseFromToArgs(args: string[]): {
 
   return { from, to };
 }
-
-/**
- * Convert legacy --env flag to new --from/--to format
- *
- * This provides backward compatibility during the transition period.
- * --env dev  -> --from local-mysql --to prod-neon (matches current behavior)
- * --env prod -> --from prod-mysql --to prod-neon
- *
- * @param args - Command line arguments
- * @returns Parsed from/to configuration
- */
-export function parseLegacyEnvArg(args: string[]): {
-  from: MySQLSource;
-  to: PostgresTarget;
-} {
-  let from: MySQLSource = 'local-mysql';
-  const to: PostgresTarget = 'prod-neon';
-
-  let i = 0;
-  while (i < args.length) {
-    const arg = args[i];
-    if (arg === '--env') {
-      const value = args[i + 1];
-      if (value === 'prod') {
-        from = 'prod-mysql';
-      }
-      // 'dev' keeps from as 'local-mysql'
-      i += 2; // Skip both --env and its value
-    } else {
-      i += 1; // Move to next argument
-    }
-  }
-
-  return { from, to };
-}

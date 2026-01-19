@@ -19,7 +19,6 @@ import { spawn } from 'child_process';
 import {
   getMySQLConfig,
   parseFromToArgs,
-  parseLegacyEnvArg,
   type MySQLSource,
   type PostgresTarget,
 } from '../config/databases';
@@ -59,23 +58,8 @@ interface ImportResult {
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
 
-  // Check for new --from/--to syntax first
-  const hasFromTo = args.includes('--from') || args.includes('--to');
-  const hasEnv = args.includes('--env');
-
-  let fromTo: { from: MySQLSource; to: PostgresTarget };
-
-  if (hasFromTo) {
-    fromTo = parseFromToArgs(args);
-  } else if (hasEnv) {
-    // Legacy --env support with deprecation warning
-    console.warn('⚠️  Warning: --env flag is deprecated. Use --from/--to instead.');
-    console.warn('   Example: --from local-mysql --to prod-neon');
-    fromTo = parseLegacyEnvArg(args);
-  } else {
-    // Defaults
-    fromTo = { from: 'local-mysql', to: 'prod-neon' };
-  }
+  // Parse --from/--to arguments
+  const fromTo = parseFromToArgs(args);
 
   const options: ImportOptions = {
     from: fromTo.from,
@@ -84,7 +68,8 @@ function parseArgs(): ImportOptions {
     all: false,
   };
 
-  for (let i = 0; i < args.length; i += 1) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
 
     if (arg === '--months') {
@@ -93,9 +78,10 @@ function parseArgs(): ImportOptions {
         throw new Error('--months must be a positive number');
       }
       options.months = months;
-      i += 1;
+      i += 2;
     } else if (arg === '--all') {
       options.all = true;
+      i += 1;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/quick-import.ts [options]
@@ -116,12 +102,10 @@ Examples:
 
   # Import all data
   tsx bin/quick-import.ts --from local-mysql --to prod-neon --all
-
-Legacy (deprecated):
-  --env dev   (equivalent to --from local-mysql --to prod-neon)
-  --env prod  (equivalent to --from prod-mysql --to prod-neon)
       `);
       process.exit(0);
+    } else {
+      i += 1;
     }
   }
 
@@ -341,13 +325,9 @@ function runImportScript(
   to: PostgresTarget,
   startId?: number,
 ): Promise<ImportResult> {
-  // TODO: Update individual import scripts to use --from/--to natively
-  // then remove this legacy conversion. Currently the individual scripts
-  // still use --env dev|prod, so we convert here for backward compatibility.
-  // Tracked in: https://github.com/ynotradio/site/issues - Future work
-  const legacyEnv = from === 'prod-mysql' ? 'prod' : 'dev';
   return new Promise((resolve, reject) => {
-    const args = [`bin/migrations/${script}`, '--env', legacyEnv];
+    // Pass --to directly to individual import scripts
+    const args = [`bin/migrations/${script}`, '--to', to];
     if (startId !== undefined) {
       args.push('--start-id', startId.toString());
     }

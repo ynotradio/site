@@ -67,16 +67,6 @@ yarn import:incremental --from local-mysql --to prod-neon --reset
 | `--reset` | Reset tracking and import all data |
 | `--verbose` | Show detailed output including skip reasons |
 
-### Legacy (Deprecated)
-
-The old `--env dev|prod` syntax is still supported but deprecated:
-
-```bash
-# Deprecated - use --from/--to instead
-yarn import:incremental --env dev  # equivalent to --from local-mysql --to prod-neon
-yarn import:incremental --env prod # equivalent to --from prod-mysql --to prod-neon
-```
-
 ## How It Works
 
 ### Tracking

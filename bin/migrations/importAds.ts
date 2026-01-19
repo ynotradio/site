@@ -3,10 +3,10 @@
  * Import ads (sponsors) from MySQL to Payload CMS PostgreSQL database
  *
  * Usage:
- *   tsx bin/migrations/importAds.ts --env dev --start-id 100
+ *   tsx bin/migrations/importAds.ts --to prod-neon --start-id 100
  *
  * Options:
- *   --env       Environment to import to: 'dev' (default) or 'prod'
+ *   --to        Target database: 'prod-neon' (default) or 'local-postgres'
  *   --start-id  Optional ID to start import from (for incremental imports)
  */
 
@@ -16,7 +16,7 @@ import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
 import { stripHtmlTags } from './shared/importUtils';
-import type { DatabaseEnv } from './shared/payloadClient';
+import type { PostgresTarget } from './shared/payloadClient';
 
 const logger = createLogger('AdsImport');
 
@@ -28,7 +28,7 @@ interface ImportStats {
 }
 
 interface ImportOptions {
-  env: DatabaseEnv;
+  to: PostgresTarget;
   startId?: number;
 }
 
@@ -38,18 +38,18 @@ interface ImportOptions {
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
   const options: ImportOptions = {
-    env: 'dev',
+    to: 'prod-neon',
   };
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
 
-    if (arg === '--env') {
-      const envValue = args[i + 1];
-      if (envValue !== 'dev' && envValue !== 'prod') {
-        throw new Error('--env must be either "dev" or "prod"');
+    if (arg === '--to') {
+      const toValue = args[i + 1];
+      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
+        throw new Error('--to must be "prod-neon" or "local-postgres"');
       }
-      options.env = envValue;
+      options.to = toValue;
       i += 1;
     } else if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
@@ -63,13 +63,13 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/migrations/importAds.ts [options]
 
 Options:
-  --env ENV        Environment to import to: 'dev' (default) or 'prod'
+  --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importAds.ts --env dev
-  tsx bin/migrations/importAds.ts --env prod --start-id 100
+  tsx bin/migrations/importAds.ts --to prod-neon
+  tsx bin/migrations/importAds.ts --to local-postgres --start-id 100
       `);
       process.exit(0);
     }
@@ -157,7 +157,7 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
  */
 async function importAds(options: ImportOptions): Promise<void> {
   logger.info('Starting ads import...');
-  logger.info(`Environment: ${options.env}`);
+  logger.info(`Target: ${options.to}`);
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
   }
@@ -178,7 +178,7 @@ async function importAds(options: ImportOptions): Promise<void> {
     mysqlConnection = await connectToDatabase();
 
     // Connect to Payload (destination)
-    payload = await getPayloadClient(options.env);
+    payload = await getPayloadClient(options.to);
 
     // Fetch ads from MySQL
     logger.info('Fetching ads from MySQL...');
