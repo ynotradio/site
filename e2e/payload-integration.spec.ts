@@ -119,8 +119,15 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await Promise.race([
         page.waitForURL('**/concerts/**', { timeout: 30000 }),
         page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 }),
-      ]).catch(() => page.waitForLoadState('networkidle', { timeout: 10000 }));
+      ]);
 
+      // Verify that either the URL has changed to the concert detail or the success message is visible
+      const currentUrl = page.url();
+      if (!currentUrl.includes('/concerts/')) {
+        await expect(
+          page.getByText(/saved successfully|successfully saved/i)
+        ).toBeVisible({ timeout: 5000 });
+      }
       const screenshot = await page.screenshot({ fullPage: true });
       await testInfo.attach('05-Concert Saved', {
         body: screenshot,
