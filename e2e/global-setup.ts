@@ -5,14 +5,13 @@ import { execSync } from 'child_process';
 
 /**
  * Global setup for E2E tests
- * - Checks for .env.local file
- * - Runs Payload migrations to set up PostgreSQL schema
- * - Note: Docker Compose services should be started before running tests
- *   - In CI: workflow handles Docker Compose
- *   - Locally: run `docker compose up -d` manually or let tests handle it
+ * Ensures test environment is ready before Playwright starts
+ * 
+ * In CI: Docker services already started by setup-e2e-tests.sh
+ * Locally: Starts Docker services if not running
  */
 async function globalSetup() {
-  console.log('\n🚀 Starting E2E test environment setup...\n');
+  console.log('\n🚀 Playwright Global Setup...\n');
 
   const projectRoot = join(__dirname, '..');
 
@@ -24,10 +23,10 @@ async function globalSetup() {
       console.log('✅ .env.local exists\n');
     } catch (error) {
       console.warn('⚠️  .env.local not found');
-      console.warn('   Make sure .env.local is configured with DATABASE_URI\n');
+      console.warn('   Run: yarn setup:e2e\n');
     }
 
-    // Check if Docker services are running, start them if not
+    // Check if Docker services are running
     console.log('🐳 Checking Docker services...');
     try {
       execSync('docker compose ps postgres', {
@@ -36,36 +35,23 @@ async function globalSetup() {
       });
       console.log('✅ Docker services are running\n');
     } catch {
-      console.log('Starting Docker services...');
+      console.log('⚠️  Docker services not running');
+      console.log('   Starting services (this happens automatically locally)...\n');
+      
+      // Start services using the same script as CI
       execSync('docker compose up -d postgres mysql phpfpm apache', {
         cwd: projectRoot,
         stdio: 'inherit',
       });
-      console.log('Waiting for PostgreSQL to be ready...');
-      // Wait for postgres to be ready
-      for (let i = 0; i < 30; i += 1) {
-        try {
-          execSync(
-            'docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev',
-            {
-              cwd: projectRoot,
-              stdio: 'pipe',
-            },
-          );
-          console.log('✅ PostgreSQL is ready\n');
-          break;
-        } catch {
-          if (i === 29) {
-            throw new Error('PostgreSQL failed to start after 60 seconds');
-          }
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-      }
+      
+      // Wait for Postgres using the shared script
+      execSync('./bin/wait-for-docker-services.sh', {
+        cwd: projectRoot,
+        stdio: 'inherit',
+      });
     }
 
-    // Clear existing data to ensure clean test environment
-    // Drop and recreate the schema for a completely fresh state
+    // Reset database for clean test state
     console.log('🗑️  Resetting database schema...');
     try {
       execSync(
@@ -82,9 +68,8 @@ async function globalSetup() {
       throw error;
     }
 
-    // Seed Payload database with test data
-    // Note: The seed script will initialize Payload which automatically
-    // pushes the schema to the database in development mode
+    // Seed Payload database
+    // The seed script initializes Payload which auto-pushes schema in dev mode
     console.log('🌱 Seeding Payload database...');
     try {
       execSync('yarn seed:payload', {
@@ -93,7 +78,6 @@ async function globalSetup() {
         env: {
           ...process.env,
           NODE_ENV: 'development',
-          // Use consistent test credentials for E2E tests
           PAYLOAD_DEV_EMAIL: 'admin@ynotradio.net',
           PAYLOAD_DEV_PASSWORD: 'password',
         },
@@ -104,13 +88,9 @@ async function globalSetup() {
       throw error;
     }
 
-    console.log('✅ E2E test environment setup complete!\n');
-    console.log('ℹ️  Docker services should be running:');
-    console.log('   - PostgreSQL on port 5432 (for Payload CMS data)');
-    console.log('   - MySQL on port 3306 (for legacy data)');
-    console.log('   - Apache on port 8080 (serving legacy PHP site)\n');
+    console.log('✅ Global setup complete!\n');
   } catch (error) {
-    console.error('❌ Error during E2E test environment setup:', error);
+    console.error('❌ Error during global setup:', error);
     throw error;
   }
 }

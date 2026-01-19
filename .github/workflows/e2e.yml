@@ -74,29 +74,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
       
-      - name: Setup environment files
-        run: ./bin/setup-e2e-env.sh
-      
-      - name: Install PHP dependencies
-        run: |
-          cd src
-          composer install --no-dev --optimize-autoloader
-      
-      - name: Start Docker Compose services
-        run: |
-          docker compose up -d postgres mysql phpfpm apache
-          echo "Waiting for services to be ready..."
-      
-      - name: Wait for Docker services
-        run: ./bin/wait-for-docker-services.sh
-      
-      - name: Initialize MySQL database schema
-        run: ./bin/init-mysql-db.sh
-      
-      - name: Seed legacy MySQL database
-        run: |
-          # Seed MySQL with test data for the legacy PHP site
-          yarn seed:legacy
+      - name: Setup E2E test environment
+        run: ./bin/setup-e2e-tests.sh
+        env:
+          SKIP_DEPS_CHECK: 'true'  # Dependencies already installed in previous steps
       
       - name: Run Playwright tests
         run: npx playwright test
