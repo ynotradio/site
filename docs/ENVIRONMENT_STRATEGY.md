@@ -10,34 +10,37 @@
 
 ## Proposed Architecture
 
-### Database Landscape
+### Database Landscape (Current Phase)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    PRODUCTION (ynotradio.net)                │
-│  - MySQL (primary, read/write) ← Current production site    │
-│  - Postgres/Neon (future, read-only during migration)       │
+│              PRODUCTION (ynotradio.net)                      │
+│  - MySQL (primary, active) ← Serving real users now         │
 └─────────────────────────────────────────────────────────────┘
                             ↓ mysqldump
 ┌─────────────────────────────────────────────────────────────┐
 │              LOCAL DEVELOPMENT (Docker)                      │
-│  - MySQL (read-only mirror of prod)                         │
-│  - Postgres (local testing)                                  │
+│  - MySQL (mirror of prod, refreshed via script)             │
+│  - Postgres (optional local testing)                         │
 └─────────────────────────────────────────────────────────────┘
                             ↓ import scripts
 ┌─────────────────────────────────────────────────────────────┐
-│              STAGING (Neon Dev Branch)                       │
-│  - Postgres/Neon (safe testing of imports)                  │
+│    PREVIEW/PRODUCTION NEON (Netlify Preview URLs)           │
+│  - Postgres/Neon (receiving imports, NOT serving users yet) │
+│  - Safe to experiment - no real users affected              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Note:** "Production Neon" is currently safe to treat as preview/staging since
+the feature flags on ynotradio.net are all `false`. Real users don't touch it yet.
+Once we flip those flags, we'll implement proper prod/dev separation in Neon.
 
 ### Environment Files - NEW STRUCTURE
 
 **ONE source of truth per environment:**
 
 ```
-.env.production          # Production Neon Postgres (for future cutover)
-.env.staging             # Staging Neon Postgres (for testing imports)
+.env.production          # Production Neon (currently safe for preview/testing)
 .env.local               # Local development (Docker containers)
 .env.production.mysql    # Production MySQL credentials (read-only access)
 ```
@@ -48,6 +51,10 @@
 - ❌ `bin/migrations/.env` (merged into above)
 - ❌ Multiple postgres flag overrides
 
+**Future (when Neon serves real users):**
+
+- Add `.env.development` for Neon dev branch (script exists to copy prod → dev)
+
 ### Import Script Clarity
 
 **REMOVE ambiguous `--env dev|prod` flags**
@@ -55,14 +62,14 @@
 **NEW approach - explicit database targets:**
 
 ```bash
-# Import from production MySQL → staging Neon
-yarn import --from prod-mysql --to staging-neon
-
-# Import from production MySQL → production Neon
+# Import from production MySQL → production Neon (safe - no real users yet)
 yarn import --from prod-mysql --to prod-neon
 
-# Import from local MySQL → local Postgres
+# Import from local MySQL → local Postgres (for local testing)
 yarn import --from local-mysql --to local-postgres
+
+# Future: when Neon serves real users, add preview target
+# yarn import --from prod-mysql --to preview-neon
 ```
 
 ### Deployment Safety
@@ -72,23 +79,24 @@ yarn import --from local-mysql --to local-postgres
 1. **Production PHP site (ynotradio.net)**
    - Stays on MySQL (no changes)
    - Feature flags in PHP control Postgres access (currently all `false`)
-   - Zero risk during migration work
+   - Zero risk during import work
 
-2. **Staging environment**
-   - All import testing happens here
-   - Uses Neon branch database
-   - Can be reset/wiped safely
+2. **Production Neon**
+   - Receives imports but doesn't serve users yet
+   - Safe to experiment with until feature flags flip
+   - Can be wiped/reset if needed without affecting users
 
 3. **Cutover plan** (future, when ready)
-   - Change PHP feature flags from `false` → `true`
-   - Site switches from MySQL → Postgres
-   - Can roll back instantly by toggling flags
+   - Final data sync during maintenance window
+   - Toggle feature flags from `false` → `true` one at a time
+   - Monitor each change
+   - Can roll back instantly by toggling flags back
 
 ### File Structure
 
 ```
 .env.production           # Neon production Postgres
-.env.staging              # Neon staging Postgres
+.env.preview              # Neon development Postgres
 .env.local                # Local Docker MySQL + Postgres
 .env.production.mysql     # Production MySQL (read-only)
 
@@ -108,24 +116,24 @@ docs/
 
 ### Phase 1: Cleanup (THIS BRANCH)
 
-- [ ] Create new branch: `feat/simplify-environments`
-- [ ] Consolidate .env files
-- [ ] Update import scripts with clear targets
-- [ ] Test imports to staging Neon
+- [x] Create new branch: `feat/simplify-environments`
+- [ ] Consolidate .env files (3 files total, not 4)
+- [ ] Update import scripts with clear `--from` and `--to` targets
+- [ ] Test imports to prod Neon (safe - no real users)
 - [ ] Verify production site unaffected
 
-### Phase 2: Testing
+### Phase 2: Regular Imports
 
-- [ ] Regular imports from prod MySQL → staging Neon
-- [ ] Compare staging Neon data with prod MySQL
-- [ ] Test PHP site pointing at staging Neon
+- [ ] Daily imports from prod MySQL → prod Neon
+- [ ] Monitor data quality
+- [ ] Compare prod Neon with prod MySQL
 
-### Phase 3: Production Cutover (FUTURE)
+### Phase 3: Production Cutover (FUTURE - weeks/months away)
 
-- [ ] Final sync: prod MySQL → prod Neon
+- [ ] Final data validation
 - [ ] Toggle PHP feature flags to use Postgres
-- [ ] Monitor production
-- [ ] Keep MySQL as fallback (flags can toggle back)
+- [ ] Monitor production closely
+- [ ] Keep MySQL as instant fallback
 
 ## Rollback Safety
 
@@ -139,16 +147,19 @@ USE_POSTGRES_* = true   # Forward to Postgres
 
 ## Benefits
 
-1. ✅ **Clear naming**: No more guessing what `--env dev` means
-2. ✅ **Safe by default**: Production MySQL never modified
-3. ✅ **Easy testing**: Staging environment for all experiments
-4. ✅ **Fast rollback**: Toggle feature flags instantly
-5. ✅ **Single source of truth**: One .env file per environment
-6. ✅ **Clear data flow**: Prod MySQL → Staging → Prod Neon
+1. ✅ **Clear naming**: `--from prod-mysql --to prod-neon` (no ambiguity)
+2. ✅ **Safe by default**: Production MySQL never modified, prod Neon not serving users yet
+3. ✅ **Simple for now**: Only 3 databases to manage (prod MySQL, prod Neon, local Docker)
+4. ✅ **Fast rollback**: Toggle feature flags instantly if/when Neon goes live
+5. ✅ **Single source of truth**: One .env file per environment (3 total)
+6. ✅ **Clear data flow**: Prod MySQL → Prod Neon → (Future: users)
+7. ✅ **Netlify aligned**: Matches preview/production terminology
 
 ## Next Steps
 
-1. Create new branch
-2. Implement Phase 1 changes
-3. Test thoroughly on staging
-4. Merge only when production safety verified
+1. ✅ Create new branch
+2. ✅ Document current state
+3. Consolidate to 3 .env files
+4. Update import scripts
+5. Test on prod Neon (safe - no users)
+6. Merge when production safety verified

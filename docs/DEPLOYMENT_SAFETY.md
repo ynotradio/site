@@ -13,7 +13,7 @@ This checklist ensures the production PHP site remains stable and can roll back 
 Check `src/partials/.env` on the **production server** (NOT your local copy):
 
 ```bash
-ssh ynotradio 'cat /var/www/html/partials/.env | grep USE_POSTGRES'
+ssh ynotradio 'cat ~/htdocs/partials/.env | grep USE_POSTGRES'
 ```
 
 **MUST be:**
@@ -44,12 +44,10 @@ git diff main src/partials/.env | grep USE_POSTGRES
 
 **Production PHP must connect to:**
 
-- MySQL: `mysql.ynotradio.net` (or Lightsail endpoint)
-- NOT: `mysql` (Docker hostname)
-- NOT: `localhost`
+- MySQL: `localhost`
 
 ```bash
-ssh ynotradio 'cat /var/www/html/partials/.env | grep DB_HOST'
+ssh ynotradio 'cat ~/htdocs/partials/.env | grep DB_HOST'
 ```
 
 **Should be:** Production MySQL hostname (NOT `mysql` or `localhost`)
@@ -57,7 +55,7 @@ ssh ynotradio 'cat /var/www/html/partials/.env | grep DB_HOST'
 ### 4. Verify No Payload/Next.js Files in PHP Directory
 
 ```bash
-ssh ynotradio 'ls /var/www/html/.env* 2>/dev/null'
+ssh ynotradio 'ls ~/htdocs/.env* 2>/dev/null'
 ```
 
 **Should NOT exist:**
@@ -78,10 +76,7 @@ git push --tags
 
 ### 2. Deploy Code
 
-```bash
-# Your existing deployment process
-# (rsync, git pull, etc.)
-```
+Today, this uses ./bin/deploy.sh
 
 ### 3. Immediate Post-Deploy Verification
 
@@ -103,7 +98,7 @@ ssh ynotradio 'tail -20 /var/log/apache2/error.log'
 **After every deployment, verify flags are still false:**
 
 ```bash
-ssh ynotradio 'cat /var/www/html/partials/.env | grep USE_POSTGRES | grep true'
+ssh ynotradio 'cat ~/htdocs/partials/.env | grep USE_POSTGRES | grep true'
 ```
 
 **Should return nothing** (no matches for "true")
@@ -117,7 +112,7 @@ ssh ynotradio 'cat /var/www/html/partials/.env | grep USE_POSTGRES | grep true'
 **Option A: Toggle feature flags (if Postgres is the problem)**
 
 ```bash
-ssh ynotradio 'cd /var/www/html/partials && sed -i "s/USE_POSTGRES_.*=true/&=false/g" .env'
+ssh ynotradio 'cd ~/htdocs/partials && sed -i "s/USE_POSTGRES_.*=true/&=false/g" .env'
 ```
 
 **Option B: Revert to previous Git tag**
@@ -132,16 +127,6 @@ ssh ynotradio 'cd /var/www/html && git reset --hard <previous-tag>'
 # Restore last known good deployment
 # (Your existing backup restoration process)
 ```
-
----
-
-## What NOT to Do
-
-❌ **Never** run import scripts with `--to prod-neon` on production server
-❌ **Never** change `USE_POSTGRES_*` flags without testing on staging first  
-❌ **Never** point `DB_HOST` to a non-production MySQL database
-❌ **Never** deploy without checking feature flags first
-❌ **Never** test Postgres connection on production (use staging)
 
 ---
 

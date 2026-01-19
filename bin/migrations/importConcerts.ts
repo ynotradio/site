@@ -24,6 +24,7 @@ interface ImportStats {
   success: number;
   skipped: number;
   errors: number;
+  skippedIds: number[];
 }
 
 interface ImportOptions {
@@ -101,7 +102,7 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
   try {
     // Check if already imported
     if (await concertExists(payload, concert.id)) {
-      logger.debug(`Concert ${concert.id} already exists, skipping`);
+      logger.info(`Concert ${concert.id} (${concert.artist}) already exists in Payload, skipping`);
       return false;
     }
 
@@ -169,6 +170,7 @@ async function importConcerts(options: ImportOptions): Promise<void> {
     success: 0,
     skipped: 0,
     errors: 0,
+    skippedIds: [],
   };
 
   let mysqlConnection;
@@ -204,6 +206,7 @@ async function importConcerts(options: ImportOptions): Promise<void> {
         stats.success += 1;
       } else {
         stats.skipped += 1;
+        stats.skippedIds.push(concert.id);
       }
 
       // Log progress every 10 records
@@ -224,6 +227,20 @@ async function importConcerts(options: ImportOptions): Promise<void> {
 
   // Log summary
   logSummary(stats);
+
+  // Log skipped IDs if any
+  if (stats.skippedIds.length > 0) {
+    logger.info(
+      `Skipped concert IDs (already exist in Payload): ${stats.skippedIds.slice(0, 20).join(', ')}${stats.skippedIds.length > 20 ? ` ... and ${stats.skippedIds.length - 20} more` : ''}`,
+    );
+  }
+
+  // Log highest ID for tracking
+  if (concerts.length > 0) {
+    const highestId = Math.max(...concerts.map((c) => c.id));
+    logger.info(`Highest imported ID: ${highestId}`);
+  }
+
   logger.info('Concert import completed');
 }
 
