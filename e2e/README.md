@@ -23,9 +23,9 @@ The E2E tests verify:
 1. ✅ Legacy PHP site loads successfully (HTTP 200)
 2. ✅ No PHP errors on page load
 3. ✅ Database connectivity (MySQL connection works)
-4. ✅ Seeded data is accessible
+4: ✅ Seeded data is accessible
 5. ✅ No critical JavaScript console errors
-6. ✅ **Payload CMS integration** - Create concert via Payload API and verify it appears on legacy site
+6. ✅ **Payload CMS integration** - Create concert via Payload admin UI and verify it appears on legacy site
 7. ✅ **CRUD operations** - Test data flow from Payload CMS to legacy PHP site
 
 **Future enhancements**:
