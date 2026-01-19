@@ -1,4 +1,9 @@
 #!/usr/bin/env sh
 
 export PATH="/usr/bin:$PATH"
+
+# Load nvm and use the correct node version
+. ~/.nvm/nvm.sh
+nvm use 22
+
 yarn lint-staged
