@@ -82,7 +82,7 @@ async function globalSetup() {
         },
       );
       console.log('✅ Database schema reset\n');
-    } catch (error: any) {
+    } catch (error: Error) {
       console.error('❌ Failed to reset schema:', error.message);
       throw error;
     }
