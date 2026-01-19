@@ -15,7 +15,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "pretest:e2e": "docker compose up -d postgres mysql phpfpm apache && sleep 10",
+    "pretest:e2e": "docker compose up -d postgres mysql phpfpm apache",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
