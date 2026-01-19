@@ -1,31 +1,31 @@
 <?php
 
-// Read .env
+// Read .env file manually (Dotenv library not available in all contexts)
 
-try {
-    // Try .env.local first (for development), then fall back to .env (for production)
-    if (file_exists(__DIR__ . '/.env.local')) {
-        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__, '.env.local');
-    } else {
-        $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+$env_path = __DIR__ . '/.env';
+if (file_exists($env_path)) {
+    $env_lines = file($env_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    
+    foreach ($env_lines as $line) {
+        // Skip comments
+        $line = trim($line);
+        if (empty($line) || strpos($line, '#') === 0 || strpos($line, '//') === 0) {
+            continue;
+        }
+        
+        // Parse key=value pairs
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            
+            // Remove quotes if present
+            if (preg_match('/^(["\'])(.*)\\1$/', $value, $matches)) {
+                $value = $matches[2];
+            }
+            
+            $_ENV[$key] = $value;
+            putenv("$key=$value");  // Make available to getenv() as well
+        }
     }
-    
-    $dotenv->load();
-    
-    // Copy all $_ENV variables to getenv() for compatibility
-    foreach ($_ENV as $key => $value) {
-        putenv("$key=$value");
-    }
-    
-    $dotenv->required([
-        'AUTH0_CLIENT_ID',
-        'AUTH0_DOMAIN',
-        'AUTH0_CLIENT_SECRET',
-        'DB_NAME',
-        'DB_USER',
-        'DB_PASSWORD',
-        'DB_HOST',
-    ]);
-} catch (\Dotenv\Exception\InvalidPathException $ex) {
-    // Ignore if no dotenv
 }

@@ -4,7 +4,7 @@ import * as path from 'path';
 
 const envPaths = [
   path.resolve(process.cwd(), '.', 'bin', 'migrations', '.env'),
-  path.resolve(process.cwd(), '..', 'src', 'partials', '.env'),
+  path.resolve(process.cwd(), 'src', 'partials', '.env'),
 ];
 
 // Use the first .env file that exists
