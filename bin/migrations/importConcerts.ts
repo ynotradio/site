@@ -175,6 +175,7 @@ async function importConcerts(options: ImportOptions): Promise<void> {
 
   let mysqlConnection;
   let payload;
+  let concerts: any[] = [];
 
   try {
     // Connect to MySQL (source)
@@ -186,7 +187,7 @@ async function importConcerts(options: ImportOptions): Promise<void> {
 
     // Fetch concerts from MySQL
     logger.info('Fetching concerts from MySQL...');
-    const concerts = await getActiveConcerts(mysqlConnection, {
+    concerts = await getActiveConcerts(mysqlConnection, {
       startId: options.startId,
     });
 
