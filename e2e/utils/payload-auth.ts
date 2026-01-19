@@ -31,5 +31,5 @@ export async function loginToPayload(
   await submitButton.click();
 
   // Wait for successful login - dashboard should load
-  await page.waitForURL('**/admin', { timeout: 30000 });
+  await page.waitForURL(/.*\/admin(\/.*)?/, { timeout: 30000 });
 }
