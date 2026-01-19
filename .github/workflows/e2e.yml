@@ -213,6 +213,9 @@ jobs:
         run: npx playwright test
         env:
           CI: true
+          # Test credentials for E2E tests
+          PAYLOAD_DEV_EMAIL: admin@ynotradio.net
+          PAYLOAD_DEV_PASSWORD: password
       
       - name: Upload test results
         uses: actions/upload-artifact@v4
