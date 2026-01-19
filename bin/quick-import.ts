@@ -3,7 +3,7 @@
  * Quick import script to run all migrations with last N months of data or all data
  *
  * Usage:
- *   tsx bin/quick-import.ts [--env dev|prod] [--months 3] [--all]
+ *   tsx bin/quick-import.ts [--from SOURCE] [--to TARGET] [--months 3] [--all]
  *
  * This script:
  * 1. Calculates the date N months ago (or imports all if --all flag is set)
@@ -16,10 +16,17 @@
 
 import * as mysql from 'mysql2/promise';
 import { spawn } from 'child_process';
-import { dbConfig } from './migrations/config';
+import {
+  getMySQLConfig,
+  parseFromToArgs,
+  parseLegacyEnvArg,
+  type MySQLSource,
+  type PostgresTarget,
+} from '../config/databases';
 
 interface ImportOptions {
-  env: 'dev' | 'prod';
+  from: MySQLSource;
+  to: PostgresTarget;
   months: number;
   all: boolean;
 }
@@ -51,8 +58,28 @@ interface ImportResult {
  */
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
+
+  // Check for new --from/--to syntax first
+  const hasFromTo = args.includes('--from') || args.includes('--to');
+  const hasEnv = args.includes('--env');
+
+  let fromTo: { from: MySQLSource; to: PostgresTarget };
+
+  if (hasFromTo) {
+    fromTo = parseFromToArgs(args);
+  } else if (hasEnv) {
+    // Legacy --env support with deprecation warning
+    console.warn('⚠️  Warning: --env flag is deprecated. Use --from/--to instead.');
+    console.warn('   Example: --from local-mysql --to prod-neon');
+    fromTo = parseLegacyEnvArg(args);
+  } else {
+    // Defaults
+    fromTo = { from: 'local-mysql', to: 'prod-neon' };
+  }
+
   const options: ImportOptions = {
-    env: 'dev',
+    from: fromTo.from,
+    to: fromTo.to,
     months: 3,
     all: false,
   };
@@ -60,14 +87,7 @@ function parseArgs(): ImportOptions {
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
 
-    if (arg === '--env') {
-      const envValue = args[i + 1];
-      if (envValue !== 'dev' && envValue !== 'prod') {
-        throw new Error('--env must be either "dev" or "prod"');
-      }
-      options.env = envValue;
-      i += 1;
-    } else if (arg === '--months') {
+    if (arg === '--months') {
       const months = parseInt(args[i + 1], 10);
       if (Number.isNaN(months) || months < 1) {
         throw new Error('--months must be a positive number');
@@ -81,15 +101,25 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/quick-import.ts [options]
 
 Options:
-  --env ENV        Environment to import to: 'dev' (default) or 'prod'
+  --from SOURCE    MySQL source: 'local-mysql' (default) or 'prod-mysql'
+  --to TARGET      Neon target: 'prod-neon' (default) or 'local-postgres'
   --months NUM     Number of months back to import (default: 3, ignored if --all is set)
   --all            Import all data regardless of date
   --help, -h       Show this help message
 
 Examples:
+  # Import last 3 months from local Docker MySQL to production Neon
   tsx bin/quick-import.ts
-  tsx bin/quick-import.ts --env dev --months 6
-  tsx bin/quick-import.ts --env prod --all
+
+  # Import from production MySQL to production Neon
+  tsx bin/quick-import.ts --from prod-mysql --to prod-neon --months 6
+
+  # Import all data
+  tsx bin/quick-import.ts --from local-mysql --to prod-neon --all
+
+Legacy (deprecated):
+  --env dev   (equivalent to --from local-mysql --to prod-neon)
+  --env prod  (equivalent to --from prod-mysql --to prod-neon)
       `);
       process.exit(0);
     }
@@ -307,11 +337,15 @@ function printPreImportReport(
 function runImportScript(
   script: string,
   collection: string,
-  env: string,
+  from: MySQLSource,
+  to: PostgresTarget,
   startId?: number,
 ): Promise<ImportResult> {
+  // Convert from/to to legacy --env format for individual import scripts
+  // Note: Individual import scripts still use --env for now
+  const legacyEnv = from === 'prod-mysql' ? 'prod' : 'dev';
   return new Promise((resolve, reject) => {
-    const args = [`bin/migrations/${script}`, '--env', env];
+    const args = [`bin/migrations/${script}`, '--env', legacyEnv];
     if (startId !== undefined) {
       args.push('--start-id', startId.toString());
     }
@@ -486,16 +520,18 @@ async function main() {
   const options = parseArgs();
 
   console.log('🚀 Quick Import Script');
-  console.log(`   Environment: ${options.env}`);
+  console.log(`   MySQL Source: ${options.from}`);
+  console.log(`   Neon Target:  ${options.to}`);
   if (options.all) {
     console.log('   Date range: All data\n');
   } else {
     console.log(`   Date range: Last ${options.months} months\n`);
   }
 
-  // Connect to MySQL
-  console.log('📡 Connecting to MySQL...');
-  const connection = await mysql.createConnection(dbConfig);
+  // Connect to MySQL using new config system
+  console.log(`📡 Connecting to MySQL (${options.from})...`);
+  const mysqlConfig = getMySQLConfig(options.from);
+  const connection = await mysql.createConnection(mysqlConfig);
 
   try {
     // Get expected counts for pre-import report
@@ -556,20 +592,20 @@ async function main() {
     const musicInfo = dateTables.find((t) => t.table === 'music');
     if (musicInfo?.minId) {
       console.log(`📀 Importing music data (from ID ${musicInfo.minId})...`);
-      results.push(await runImportScript('importMusic.ts', 'Music', options.env, musicInfo.minId));
+      results.push(await runImportScript('importMusic.ts', 'Music', options.from, options.to, musicInfo.minId));
     } else {
       console.log('⏭️  Skipping music (no records in date range)');
     }
 
     // 2. Import DJs - no date filter
     console.log('\n👥 Importing DJs (all records)...');
-    results.push(await runImportScript('importDJs.ts', 'DJs', options.env));
+    results.push(await runImportScript('importDJs.ts', 'DJs', options.from, options.to));
 
     // 3. Import Concerts - with date filter
     const concertsInfo = dateTables.find((t) => t.table === 'concerts');
     if (concertsInfo?.minId) {
       console.log(`\n🎤 Importing concerts (from ID ${concertsInfo.minId})...`);
-      results.push(await runImportScript('importConcerts.ts', 'Concerts', options.env, concertsInfo.minId));
+      results.push(await runImportScript('importConcerts.ts', 'Concerts', options.from, options.to, concertsInfo.minId));
     } else {
       console.log('\n⏭️  Skipping concerts (no records in date range)');
     }
@@ -578,7 +614,7 @@ async function main() {
     const postsInfo = dateTables.find((t) => t.table === 'stories');
     if (postsInfo?.minId) {
       console.log(`\n📰 Importing posts (from ID ${postsInfo.minId})...`);
-      results.push(await runImportScript('importPosts.ts', 'Posts', options.env, postsInfo.minId));
+      results.push(await runImportScript('importPosts.ts', 'Posts', options.from, options.to, postsInfo.minId));
     } else {
       console.log('\n⏭️  Skipping posts (no records in date range)');
     }
@@ -587,7 +623,7 @@ async function main() {
     const onDemandInfo = dateTables.find((t) => t.table === 'ondemand');
     if (onDemandInfo?.minId) {
       console.log(`\n🎧 Importing on-demand (from ID ${onDemandInfo.minId})...`);
-      results.push(await runImportScript('importOnDemand.ts', 'On Demand', options.env, onDemandInfo.minId));
+      results.push(await runImportScript('importOnDemand.ts', 'On Demand', options.from, options.to, onDemandInfo.minId));
     } else {
       console.log('\n⏭️  Skipping on-demand (no records in date range)');
     }
@@ -596,7 +632,7 @@ async function main() {
     const cdotwInfo = dateTables.find((t) => t.table === 'cdotw');
     if (cdotwInfo?.minId) {
       console.log(`\n💿 Importing CD of the Week (from ID ${cdotwInfo.minId})...`);
-      results.push(await runImportScript('importCdOfTheWeek.ts', 'CD of the Week', options.env, cdotwInfo.minId));
+      results.push(await runImportScript('importCdOfTheWeek.ts', 'CD of the Week', options.from, options.to, cdotwInfo.minId));
     } else {
       console.log('\n⏭️  Skipping CD of the Week (no records in date range)');
     }
@@ -605,14 +641,14 @@ async function main() {
     const adsInfo = dateTables.find((t) => t.table === 'ads');
     if (adsInfo?.minId) {
       console.log(`\n📢 Importing ads (from ID ${adsInfo.minId})...`);
-      results.push(await runImportScript('importAds.ts', 'Ads', options.env, adsInfo.minId));
+      results.push(await runImportScript('importAds.ts', 'Ads', options.from, options.to, adsInfo.minId));
     } else {
       console.log('\n⏭️  Skipping ads (no records in date range)');
     }
 
     // 8. Import Schedule (shows) - no date filter
     console.log('\n📅 Importing schedule (all records)...');
-    results.push(await runImportScript('importSchedule.ts', 'Shows', options.env));
+    results.push(await runImportScript('importSchedule.ts', 'Shows', options.from, options.to));
 
     // Print final summary
     console.log(`\n${'='.repeat(60)}`);

@@ -1,31 +1,16 @@
-import * as dotenv from 'dotenv';
-import * as fs from 'fs';
-import * as path from 'path';
+/**
+ * Migration configuration - re-exports from centralized database config
+ *
+ * This file maintains backward compatibility with existing import scripts.
+ * New scripts should import directly from 'config/databases.ts'.
+ *
+ * @deprecated Import from 'config/databases.ts' instead
+ */
 
-const envPaths = [
-  path.resolve(process.cwd(), '.', 'bin', 'migrations', '.env'),
-  path.resolve(process.cwd(), 'src', 'partials', '.env'),
-];
+import { getLegacyDbConfig, migrationConfig as centralMigrationConfig } from '../../config/databases';
 
-// Use the first .env file that exists
-for (const envPath of envPaths) {
-  console.log(`Checking for environment file at: ${envPath}`);
-  if (fs.existsSync(envPath)) {
-    console.log(`Loading environment from: ${envPath}`);
-    dotenv.config({ path: envPath });
-    break;
-  }
-}
-
-// Database configuration
-export const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'ynot_site',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-};
+// Database configuration (uses legacy loading for backward compatibility)
+export const dbConfig = getLegacyDbConfig();
 
 // Migration settings
-export const migrationConfig = {
-  baseUrl: 'https://www.ynotradio.net/',
-};
+export const migrationConfig = centralMigrationConfig;

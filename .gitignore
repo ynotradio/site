@@ -30,6 +30,7 @@ out/
 
 # Payload
 .env.local
+.env.production.mysql
 payload-types.ts
 media/
 

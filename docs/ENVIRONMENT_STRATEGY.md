@@ -117,8 +117,9 @@ docs/
 ### Phase 1: Cleanup (THIS BRANCH)
 
 - [x] Create new branch: `feat/simplify-environments`
-- [ ] Consolidate .env files (3 files total, not 4)
-- [ ] Update import scripts with clear `--from` and `--to` targets
+- [x] Create centralized database config (`config/databases.ts`)
+- [x] Create `.env.production.mysql.example` template
+- [x] Update import scripts with clear `--from` and `--to` targets
 - [ ] Test imports to prod Neon (safe - no real users)
 - [ ] Verify production site unaffected
 
