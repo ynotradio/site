@@ -192,7 +192,8 @@ export function parseFromToArgs(args: string[]): {
   let from: MySQLSource = 'local-mysql';
   let to: PostgresTarget = 'prod-neon';
 
-  for (let i = 0; i < args.length; i += 1) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
     if (arg === '--from') {
       const value = args[i + 1];
@@ -200,14 +201,16 @@ export function parseFromToArgs(args: string[]): {
         throw new Error('--from must be "local-mysql" or "prod-mysql"');
       }
       from = value;
-      i += 1;
+      i += 2; // Skip both --from and its value
     } else if (arg === '--to') {
       const value = args[i + 1];
       if (value !== 'local-postgres' && value !== 'prod-neon') {
         throw new Error('--to must be "local-postgres" or "prod-neon"');
       }
       to = value;
-      i += 1;
+      i += 2; // Skip both --to and its value
+    } else {
+      i += 1; // Move to next argument
     }
   }
 
@@ -231,7 +234,8 @@ export function parseLegacyEnvArg(args: string[]): {
   let from: MySQLSource = 'local-mysql';
   const to: PostgresTarget = 'prod-neon';
 
-  for (let i = 0; i < args.length; i += 1) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
     if (arg === '--env') {
       const value = args[i + 1];
@@ -239,7 +243,9 @@ export function parseLegacyEnvArg(args: string[]): {
         from = 'prod-mysql';
       }
       // 'dev' keeps from as 'local-mysql'
-      i += 1;
+      i += 2; // Skip both --env and its value
+    } else {
+      i += 1; // Move to next argument
     }
   }
 

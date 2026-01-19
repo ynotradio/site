@@ -341,8 +341,10 @@ function runImportScript(
   to: PostgresTarget,
   startId?: number,
 ): Promise<ImportResult> {
-  // Convert from/to to legacy --env format for individual import scripts
-  // Note: Individual import scripts still use --env for now
+  // TODO: Update individual import scripts to use --from/--to natively
+  // then remove this legacy conversion. Currently the individual scripts
+  // still use --env dev|prod, so we convert here for backward compatibility.
+  // Tracked in: https://github.com/ynotradio/site/issues - Future work
   const legacyEnv = from === 'prod-mysql' ? 'prod' : 'dev';
   return new Promise((resolve, reject) => {
     const args = [`bin/migrations/${script}`, '--env', legacyEnv];

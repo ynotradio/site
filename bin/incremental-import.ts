@@ -217,9 +217,10 @@ function runImportScript(
   verbose: boolean,
 ): Promise<ImportResult> {
   return new Promise((resolve) => {
-    // Use the new --from/--to syntax for import scripts
-    // Note: Individual import scripts still use --env for now, so we convert
-    // from 'prod-mysql' -> 'prod', 'local-mysql' -> 'dev'
+    // TODO: Update individual import scripts to use --from/--to natively
+    // then remove this legacy conversion. Currently the individual scripts
+    // still use --env dev|prod, so we convert here for backward compatibility.
+    // Tracked in: https://github.com/ynotradio/site/issues - Future work
     const legacyEnv = from === 'prod-mysql' ? 'prod' : 'dev';
     const args = ['tsx', script, '--env', legacyEnv, '--start-id', startId.toString()];
     const child = spawn('yarn', args, { stdio: 'pipe' });
