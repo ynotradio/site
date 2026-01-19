@@ -150,10 +150,13 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       expect(pageContent).not.toContain('Parse error');
       expect(pageContent).not.toContain('Warning:');
 
-      // Verify the concert appears by checking for the artist and venue
-      // The concerts page shows artist names and venues, not the full ticket info
-      expect(pageContent).toContain('Sample Band');
-      expect(pageContent).toContain('The Foundry');
+      // Verify the concert appears by checking that there are at least two
+      // occurrences of the artist and venue names. One comes from seeded data;
+      // the second should be from the newly created concert.
+      const sampleBandMatches = pageContent.match(/Sample Band/g) ?? [];
+      const foundryMatches = pageContent.match(/The Foundry/g) ?? [];
+      expect(sampleBandMatches.length).toBeGreaterThanOrEqual(2);
+      expect(foundryMatches.length).toBeGreaterThanOrEqual(2);
 
       const screenshot = await page.screenshot({ fullPage: true });
       await testInfo.attach('06-Legacy Site with New Concert', {
