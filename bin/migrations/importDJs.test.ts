@@ -63,23 +63,32 @@ describe('importDJs', () => {
   });
 
   describe('parseArgs', () => {
-    it('should parse --env dev argument', async () => {
+    it('should default to prod-neon target', async () => {
       const { parseArgs } = await import('./importDJs');
 
-      process.argv = ['node', 'script.ts', '--env', 'dev'];
+      process.argv = ['node', 'script.ts'];
       const options = parseArgs();
 
-      expect(options.env).toBe('dev');
+      expect(options.to).toBe('prod-neon');
       expect(options.startId).toBeUndefined();
     });
 
-    it('should parse --env prod argument', async () => {
+    it('should parse --to prod-neon argument', async () => {
       const { parseArgs } = await import('./importDJs');
 
-      process.argv = ['node', 'script.ts', '--env', 'prod'];
+      process.argv = ['node', 'script.ts', '--to', 'prod-neon'];
       const options = parseArgs();
 
-      expect(options.env).toBe('prod');
+      expect(options.to).toBe('prod-neon');
+    });
+
+    it('should parse --to local-postgres argument', async () => {
+      const { parseArgs } = await import('./importDJs');
+
+      process.argv = ['node', 'script.ts', '--to', 'local-postgres'];
+      const options = parseArgs();
+
+      expect(options.to).toBe('local-postgres');
     });
 
     it('should parse --start-id argument', async () => {
@@ -91,12 +100,12 @@ describe('importDJs', () => {
       expect(options.startId).toBe(100);
     });
 
-    it('should throw error for invalid --env value', async () => {
+    it('should throw error for invalid --to value', async () => {
       const { parseArgs } = await import('./importDJs');
 
-      process.argv = ['node', 'script.ts', '--env', 'invalid'];
+      process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--env must be either "dev" or "prod"');
+      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
     });
   });
 

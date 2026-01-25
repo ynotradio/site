@@ -8,8 +8,8 @@ import { Page } from '@playwright/test';
  */
 export async function loginToPayload(
   page: Page,
-  email: string = process.env.PAYLOAD_ADMIN_EMAIL ?? '',
-  password: string = process.env.PAYLOAD_ADMIN_PASSWORD ?? '',
+  email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+  password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
 ): Promise<void> {
   // Navigate to Payload admin (it will redirect to login if not authenticated)
   await page.goto('http://localhost:3000/admin', {
@@ -28,8 +28,15 @@ export async function loginToPayload(
     .or(page.locator('button:has-text("Login")'))
     .or(page.locator('button[type="submit"]'));
 
-  await submitButton.click();
+  // Wait for button to be ready and click
+  await submitButton.waitFor({ state: 'visible', timeout: 10000 });
 
-  // Wait for successful login - dashboard should load
-  await page.waitForURL(/.*\/admin(\/.*)?/, { timeout: 30000 });
+  // Click and wait for navigation to complete
+  await Promise.all([page.waitForNavigation({ timeout: 10000 }), submitButton.click()]);
+
+  // Verify we're on the admin dashboard (not login page)
+  const currentUrl = page.url();
+  if (currentUrl.includes('/login')) {
+    throw new Error(`Login failed - still on login page: ${currentUrl}`);
+  }
 }

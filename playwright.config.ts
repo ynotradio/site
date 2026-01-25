@@ -8,7 +8,7 @@ export default defineConfig({
   testDir: './e2e',
 
   // Maximum time one test can run for
-  timeout: 120 * 1000,
+  timeout: 20 * 1000,
 
   // Maximum time for test fixtures (beforeAll, afterAll)
   expect: {
@@ -62,12 +62,12 @@ export default defineConfig({
   // Run global teardown after all tests (stop Docker services)
   globalTeardown: './e2e/global-teardown.ts',
 
-  // Web server configuration - Start Next.js dev server with Payload admin UI
+  // Web server configuration
   webServer: {
     command: 'yarn dev',
     url: 'http://localhost:3000/admin',
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
+    timeout: 180 * 1000, // 3 minutes for slow Payload initialization
+    reuseExistingServer: !process.env.CI, // Reuse existing server in local dev
     stdout: 'pipe',
     stderr: 'pipe',
   },
