@@ -312,7 +312,8 @@ async function analyzeCollectionGaps(
   // Find missing records
   const missingRecords: MissingRecord[] = [];
 
-  for (const [id, identifier] of mysqlRecords) {
+  const mysqlEntries = Array.from(mysqlRecords.entries());
+  for (const [id, identifier] of mysqlEntries) {
     if (!payloadIds.has(id)) {
       missingRecords.push({
         id,
