@@ -7,8 +7,7 @@ import { execSync } from 'child_process';
  * Global setup for E2E tests
  * Ensures test environment is ready before Playwright starts
  *
- * In CI: Docker services already started by setup-e2e-tests.sh
- * Locally: Starts Docker services if not running
+ * SIMPLIFIED VERSION - Just checks services, skips seeding
  */
 async function globalSetup() {
   console.log('\n🚀 Playwright Global Setup...\n');
@@ -26,69 +25,49 @@ async function globalSetup() {
       console.warn('   Run: yarn setup:e2e\n');
     }
 
-    // Check if Docker services are running
+    // Check if Docker services are running and healthy
     console.log('🐳 Checking Docker services...');
     try {
-      execSync('docker compose ps postgres', {
+      // Check if all required services are running
+      const postgresStatus = execSync('docker compose ps postgres --format "{{.Status}}"', {
         cwd: projectRoot,
-        stdio: 'pipe',
-      });
-      console.log('✅ Docker services are running\n');
-    } catch {
-      console.log('⚠️  Docker services not running');
-      console.log('   Starting services (this happens automatically locally)...\n');
+        encoding: 'utf-8',
+      }).trim();
 
-      // Start services using the same script as CI
+      const apacheStatus = execSync('docker compose ps apache --format "{{.Status}}"', {
+        cwd: projectRoot,
+        encoding: 'utf-8',
+      }).trim();
+
+      if (
+        postgresStatus.includes('Up')
+        && postgresStatus.includes('healthy')
+        && apacheStatus.includes('Up')
+      ) {
+        console.log('✅ Docker services are running and healthy\n');
+      } else {
+        throw new Error('Services not all running');
+      }
+    } catch {
+      console.log('⚠️  Docker services not running or unhealthy');
+      console.log('   Starting services...\n');
+
       execSync('docker compose up -d postgres mysql phpfpm apache', {
         cwd: projectRoot,
         stdio: 'inherit',
       });
 
-      // Wait for Postgres using the shared script
+      // Wait for services to be healthy
+      console.log('⏳ Waiting for services to be healthy...');
       execSync('./bin/wait-for-docker-services.sh', {
         cwd: projectRoot,
         stdio: 'inherit',
       });
     }
 
-    // Reset database for clean test state
-    console.log('🗑️  Resetting database schema...');
-    try {
-      execSync(
-        'docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;"',
-        {
-          cwd: projectRoot,
-          stdio: 'pipe',
-        },
-      );
-      console.log('✅ Database schema reset\n');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error('❌ Failed to reset schema:', errorMessage);
-      throw error;
-    }
-
-    // Seed Payload database
-    // The seed script initializes Payload which auto-pushes schema in dev mode
-    console.log('🌱 Seeding Payload database...');
-    try {
-      execSync('yarn seed:payload', {
-        cwd: projectRoot,
-        stdio: 'inherit',
-        env: {
-          ...process.env,
-          NODE_ENV: 'development',
-          PAYLOAD_DEV_EMAIL: 'admin@ynotradio.net',
-          PAYLOAD_DEV_PASSWORD: 'password',
-        },
-      });
-      console.log('✅ Payload database seeded\n');
-    } catch (error) {
-      console.error('❌ Failed to seed Payload database:', error);
-      throw error;
-    }
-
     console.log('✅ Global setup complete!\n');
+    console.log('⏭️  Skipping database seeding - assuming data already exists');
+    console.log('   To re-seed manually: yarn seed:payload\n');
   } catch (error) {
     console.error('❌ Error during global setup:', error);
     throw error;
