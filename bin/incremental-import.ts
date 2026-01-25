@@ -7,18 +7,25 @@
  * records from the last 3 months.
  *
  * Usage:
- *   tsx bin/incremental-import.ts [--env dev|prod] [--reset]
+ *   tsx bin/incremental-import.ts [--from SOURCE] [--to TARGET] [--reset]
  *
  * Options:
- *   --env      Environment: 'dev' (default) or 'prod'
- *   --reset    Reset tracking and import everything from scratch
+ *   --from       MySQL source: 'local-mysql' (default) or 'prod-mysql'
+ *   --to         Neon target: 'prod-neon' (default) or 'local-postgres'
+ *   --reset      Reset tracking and import everything from scratch
+ *   --verbose    Show detailed output including skip reasons
  */
 
 import * as fs from 'fs';
 import * as path from 'path';
 import * as mysql from 'mysql2/promise';
 import { spawn } from 'child_process';
-import { dbConfig } from './migrations/config';
+import {
+  getMySQLConfig,
+  parseFromToArgs,
+  type MySQLSource,
+  type PostgresTarget,
+} from '../config/databases';
 
 interface LastImportIds {
   music: number;
@@ -32,7 +39,8 @@ interface LastImportIds {
 }
 
 interface ImportOptions {
-  env: 'dev' | 'prod';
+  from: MySQLSource;
+  to: PostgresTarget;
   reset: boolean;
   verbose: boolean;
 }
@@ -56,41 +64,50 @@ const TRACKING_FILE = path.join(process.cwd(), '.last-import-ids.json');
  */
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
+
+  // Parse --from/--to arguments
+  const fromTo = parseFromToArgs(args);
+
   const options: ImportOptions = {
-    env: 'dev',
+    from: fromTo.from,
+    to: fromTo.to,
     reset: false,
     verbose: false,
   };
 
-  for (let i = 0; i < args.length; i += 1) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
-    if (arg === '--env') {
-      const envValue = args[i + 1] as 'dev' | 'prod';
-      if (envValue !== 'dev' && envValue !== 'prod') {
-        throw new Error('--env must be either "dev" or "prod"');
-      }
-      options.env = envValue;
-      i += 1;
-    } else if (arg === '--reset') {
+    if (arg === '--reset') {
       options.reset = true;
+      i += 1;
     } else if (arg === '--verbose' || arg === '-v') {
       options.verbose = true;
+      i += 1;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/incremental-import.ts [options]
 
 Options:
-  --env ENV     Environment: 'dev' (default) or 'prod'
-  --reset       Reset tracking and import all data
-  --verbose     Show detailed output including skip reasons
-  --help, -h    Show this help message
+  --from SOURCE  MySQL source: 'local-mysql' (default) or 'prod-mysql'
+  --to TARGET    Neon target: 'prod-neon' (default) or 'local-postgres'
+  --reset        Reset tracking and import all data
+  --verbose      Show detailed output including skip reasons
+  --help, -h     Show this help message
 
 Examples:
-  tsx bin/incremental-import.ts --env dev
-  tsx bin/incremental-import.ts --env prod --verbose
-  tsx bin/incremental-import.ts --env dev --reset
+  # Import from local Docker MySQL to production Neon (default)
+  tsx bin/incremental-import.ts
+
+  # Import from production MySQL to production Neon
+  tsx bin/incremental-import.ts --from prod-mysql --to prod-neon
+
+  # Reset and re-import everything
+  tsx bin/incremental-import.ts --from local-mysql --to prod-neon --reset
       `);
       process.exit(0);
+    } else {
+      i += 1;
     }
   }
 
@@ -176,12 +193,14 @@ async function getNewRecordCounts(
  */
 function runImportScript(
   script: string,
-  env: string,
+  from: MySQLSource,
+  to: PostgresTarget,
   startId: number,
   verbose: boolean,
 ): Promise<ImportResult> {
   return new Promise((resolve) => {
-    const args = ['tsx', script, '--env', env, '--start-id', startId.toString()];
+    // Pass --to directly to individual import scripts
+    const args = ['tsx', script, '--to', to, '--start-id', startId.toString()];
     const child = spawn('yarn', args, { stdio: 'pipe' });
 
     let output = '';
@@ -263,7 +282,8 @@ async function main() {
   const options = parseArgs();
 
   console.log('🚀 Incremental Import Script');
-  console.log(`   Environment: ${options.env}`);
+  console.log(`   MySQL Source: ${options.from}`);
+  console.log(`   Neon Target:  ${options.to}`);
   console.log(`   Tracking file: ${TRACKING_FILE}`);
   console.log();
 
@@ -313,9 +333,10 @@ async function main() {
   console.log(`   DJs:        ${lastIds.djs}`);
   console.log();
 
-  // Connect to MySQL to check for new records
-  console.log('📡 Connecting to MySQL...');
-  const connection = await mysql.createConnection(dbConfig);
+  // Connect to MySQL using the new config system
+  console.log(`📡 Connecting to MySQL (${options.from})...`);
+  const mysqlConfig = getMySQLConfig(options.from);
+  const connection = await mysql.createConnection(mysqlConfig);
 
   // Check for new records
   const newCounts = await getNewRecordCounts(connection, lastIds);
@@ -360,7 +381,13 @@ async function main() {
       console.log(`Running: ${script} (starting from ID ${startId})`);
       console.log('═'.repeat(80));
 
-      const result = await runImportScript(script, options.env, startId, options.verbose);
+      const result = await runImportScript(
+        script,
+        options.from,
+        options.to,
+        startId,
+        options.verbose,
+      );
       results.push(result);
 
       // Update tracking with new max ID

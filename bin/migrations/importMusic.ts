@@ -6,10 +6,10 @@
  * creates artist records as needed.
  *
  * Usage:
- *   tsx bin/migrations/importMusic.ts --env dev --start-id 100
+ *   tsx bin/migrations/importMusic.ts --to prod-neon --start-id 100
  *
  * Options:
- *   --env       Environment to import to: 'dev' (default) or 'prod'
+ *   --to        Target database: 'prod-neon' (default) or 'local-postgres'
  *   --start-id  Optional ID to start import from (for incremental imports)
  */
 
@@ -19,7 +19,7 @@ import { connectToDatabase } from './database';
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { generateSlug } from './shared/importUtils';
-import type { DatabaseEnv } from './shared/payloadClient';
+import type { PostgresTarget } from './shared/payloadClient';
 
 const logger = createLogger('MusicImport');
 
@@ -40,7 +40,7 @@ interface ImportStats {
 }
 
 interface ImportOptions {
-  env: DatabaseEnv;
+  to: PostgresTarget;
   startId?: number;
 }
 
@@ -50,40 +50,43 @@ interface ImportOptions {
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
   const options: ImportOptions = {
-    env: 'dev',
+    to: 'prod-neon',
   };
 
-  for (let i = 0; i < args.length; i += 1) {
+  let i = 0;
+  while (i < args.length) {
     const arg = args[i];
 
-    if (arg === '--env') {
-      const envValue = args[i + 1];
-      if (envValue !== 'dev' && envValue !== 'prod') {
-        throw new Error('--env must be either "dev" or "prod"');
+    if (arg === '--to') {
+      const toValue = args[i + 1];
+      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
+        throw new Error('--to must be "prod-neon" or "local-postgres"');
       }
-      options.env = envValue;
-      i += 1;
+      options.to = toValue;
+      i += 2;
     } else if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
       if (Number.isNaN(startId) || startId < 0) {
         throw new Error('--start-id must be a positive number');
       }
       options.startId = startId;
-      i += 1;
+      i += 2;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/migrations/importMusic.ts [options]
 
 Options:
-  --env ENV        Environment to import to: 'dev' (default) or 'prod'
+  --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importMusic.ts --env dev
-  tsx bin/migrations/importMusic.ts --env prod --start-id 1000
+  tsx bin/migrations/importMusic.ts --to prod-neon
+  tsx bin/migrations/importMusic.ts --to local-postgres --start-id 1000
       `);
       process.exit(0);
+    } else {
+      i += 1;
     }
   }
 
@@ -185,7 +188,7 @@ async function importMusic(payload: Payload, music: Music): Promise<boolean> {
  */
 async function importAllMusic(options: ImportOptions): Promise<void> {
   logger.info('Starting music import...');
-  logger.info(`Environment: ${options.env}`);
+  logger.info(`Target: ${options.to}`);
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
   }
@@ -206,7 +209,7 @@ async function importAllMusic(options: ImportOptions): Promise<void> {
     mysqlConnection = await connectToDatabase();
 
     // Connect to Payload (destination)
-    payload = await getPayloadClient(options.env);
+    payload = await getPayloadClient(options.to);
 
     // Fetch music from MySQL
     logger.info('Fetching music records from MySQL...');

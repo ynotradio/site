@@ -20,3 +20,4 @@ bin/migrations/verifyQuarantine.ts
 payload/src/features/embed/index.ts
 bin/check-test-story-files.mts
 .storybook
+config/**/*.test.ts

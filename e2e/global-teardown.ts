@@ -13,10 +13,15 @@ async function globalTeardown() {
   const projectRoot = join(__dirname, '..');
 
   try {
-    // Stop Docker Compose services
-    console.log('🛑 Stopping Docker Compose services...');
-    execSync('docker compose down', { cwd: projectRoot, stdio: 'inherit' });
-    console.log('✅ Docker services stopped\n');
+    // Only stop Docker services in CI - keep them running locally for faster re-runs
+    if (process.env.CI) {
+      console.log('🛑 Stopping Docker Compose services (CI mode)...');
+      execSync('docker compose down', { cwd: projectRoot, stdio: 'inherit' });
+      console.log('✅ Docker services stopped\n');
+    } else {
+      console.log('⏭️  Skipping Docker shutdown (local dev - containers will keep running)\n');
+      console.log('   To manually stop: docker compose down\n');
+    }
 
     console.log('✅ E2E test environment teardown complete!\n');
   } catch (error) {

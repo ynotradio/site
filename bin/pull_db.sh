@@ -6,12 +6,13 @@
 set -e  # Exit on error
 set -x  # Enable debug output
 
-# Source the .env file for database credentials
-ENV_FILE="src/partials/.env"
+# Source the .env.php file for database credentials
+ENV_FILE=".env.php"
 if [ -f "$ENV_FILE" ]; then
     source "$ENV_FILE"
 else
-    echo "❌ Error: .env file not found at $ENV_FILE"
+    echo "❌ Error: .env.php file not found at $ENV_FILE"
+    echo "   Please create .env.php from .env.php.example"
     exit 1
 fi
 

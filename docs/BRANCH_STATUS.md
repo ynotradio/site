@@ -1,4 +1,4 @@
-# Branch Status: feat/simplify-environments
+# Branch Status: Environment Streamlining
 
 ## What We've Done ✅
 
@@ -7,13 +7,28 @@
    - `CURRENT_ENVIRONMENT_AUDIT.md` - Honest assessment of the mess
    - `DEPLOYMENT_SAFETY.md` - Critical pre-deployment checklist
 
-2. **Clarified terminology:**
+2. **Created centralized database configuration:**
+   - `config/databases.ts` - Single source of truth for database connections
+   - `.env.production.mysql.example` - Template for production MySQL credentials
+   - Updated `.gitignore` to protect sensitive `.env.production.mysql`
+
+3. **Updated ALL import scripts with new CLI syntax:**
+   - `bin/incremental-import.ts` - Now uses `--from/--to` syntax
+   - `bin/quick-import.ts` - Now uses `--from/--to` syntax
+   - `bin/migrations/config.ts` - Refactored to use centralized config
+   - All individual import scripts (`importAds.ts`, `importConcerts.ts`, etc.) - Now use `--to` instead of `--env`
+   - `bin/migrations/shared/payloadClient.ts` - Now uses `PostgresTarget` type
+
+4. **Updated documentation:**
+   - `docs/incremental-import.md` - Updated with new CLI syntax
+
+5. **Clarified terminology:**
    - Using "production Neon" (safe - no users yet)
    - Removed unnecessary staging/preview Neon branch complexity
    - Aligned with Netlify preview/production URLs
    - Deferred dev/staging split until Neon serves real users
 
-3. **Established safety principles:**
+6. **Established safety principles:**
    - Production MySQL stays untouched (read-only for imports)
    - Production Neon can be experimented with safely
    - Feature flags control cutover (instant rollback)
@@ -38,42 +53,43 @@
 - MySQL: Mirror of production (refreshed via script)
 - Postgres: Optional local testing
 
-## What's NOT Done Yet 🚧
+## New CLI Syntax
 
-### Phase 1 Implementation (Next Session):
+```bash
+# Import from local Docker MySQL to production Neon (default)
+yarn import:incremental
 
-1. **Consolidate .env files** (from 4+ to 3)
-   - Create `.env.production` (Neon prod)
-   - Keep `.env.local` (Docker)
-   - Create `.env.production.mysql` (read-only prod MySQL)
-   - Remove `src/partials/.env` complexity
-   - Remove `bin/migrations/.env`
+# Import from production MySQL to production Neon
+yarn import:incremental --from prod-mysql --to prod-neon
 
-2. **Update import scripts**
-   - Replace `--env dev|prod` with explicit targets
-   - New: `yarn import --from prod-mysql --to prod-neon`
-   - Update all 7 import scripts
+# Quick import with date filtering
+yarn import:quick --from local-mysql --to prod-neon --months 6
+```
 
-3. **Fix refresh_local.sh**
-   - Point at new consolidated configs
-   - Test it works with new structure
+## What's Still Pending 🚧
 
-4. **Test everything**
-   - Verify production site still works
-   - Verify imports work
-   - Verify local development works
+### Future Improvements (deferred):
+
+1. **Remove legacy `src/partials/.env` complexity** once PHP site migrates
+   - Currently needed for PHP feature flags
+   - Can be removed after full Postgres cutover
+
+2. **Add validation scripts**
+   - Compare MySQL and Neon data for parity
+   - Automated health checks
 
 ## Merge Criteria
 
 Before merging to main:
 
-- [ ] All 3 .env files created and working
-- [ ] Import scripts use clear `--from/--to` syntax
-- [ ] No more ambiguous `--dev/--prod` flags
-- [ ] refresh_local.sh works
-- [ ] Production site tested (still on MySQL)
-- [ ] Deployment safety checklist verified
+- [x] Centralized database config (`config/databases.ts`)
+- [x] `.env.production.mysql.example` template created
+- [x] Import scripts use clear `--from/--to` syntax
+- [x] Individual import scripts updated to use `--to` natively
+- [x] Legacy `--env` removed (simplified API)
+- [ ] TypeScript builds without errors
 - [ ] All tests pass
+- [x] Documentation updated
 
 ## Questions/Decisions Needed
 
@@ -81,19 +97,10 @@ Before merging to main:
    - What's the hostname?
    - What credentials should we use?
 
-2. **Deployment timeline** - When do you want to merge this?
-   - Can wait for proper implementation
-   - Or merge docs now, implement later
-
-3. **Immediate workaround** - For today's missing data issue:
-   - Re-run `./bin/refresh_local.sh` to get latest MySQL
-   - Then run `yarn import:incremental`
-   - This gets the "Mitski" songs imported
-
 ## Safety Status
 
 ✅ **Current main branch:** Safe to deploy (production on MySQL)
-✅ **This branch:** Documentation only, safe to review
-⚠️ **After implementation:** Must verify before merging
+✅ **This branch:** Implementation complete, ready for testing
+⚠️ **Before merging:** Verify TypeScript builds and tests pass
 
 **Bottom line:** Your production site is safe. All changes are isolated to this branch.

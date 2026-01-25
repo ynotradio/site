@@ -8,6 +8,7 @@ The incremental import system tracks the last imported MySQL ID for each collect
 
 - **`bin/incremental-import.ts`** - Main incremental import script
 - **`.last-import-ids.json`** - Tracking file (git-ignored) that stores last imported IDs
+- **`config/databases.ts`** - Centralized database configuration
 
 ## Usage
 
@@ -16,7 +17,11 @@ The incremental import system tracks the last imported MySQL ID for each collect
 On first run, the script will start from ID 0 for all collections:
 
 ```bash
-yarn import:incremental --env dev
+# Import from local Docker MySQL to production Neon (default)
+yarn import:incremental
+
+# Or explicitly specify source and target
+yarn import:incremental --from local-mysql --to prod-neon
 ```
 
 This creates `.last-import-ids.json` with the highest imported IDs.
@@ -26,7 +31,7 @@ This creates `.last-import-ids.json` with the highest imported IDs.
 Run the same command to import only **new** records added since the last import:
 
 ```bash
-yarn import:incremental --env dev
+yarn import:incremental
 ```
 
 The script will:
@@ -35,21 +40,32 @@ The script will:
 2. Import only those new records
 3. Update `.last-import-ids.json` with the new highest IDs
 
-### Production Imports
+### Import from Production MySQL
 
-To import to production Neon database:
+To import from production MySQL to production Neon:
 
 ```bash
-yarn import:incremental --env prod
+yarn import:incremental --from prod-mysql --to prod-neon
 ```
+
+**Note**: Requires `.env.production.mysql` with production MySQL credentials.
 
 ### Reset and Re-import Everything
 
 To start over and import all records:
 
 ```bash
-yarn import:incremental --env dev --reset
+yarn import:incremental --from local-mysql --to prod-neon --reset
 ```
+
+## Command Line Options
+
+| Option | Description |
+| ------ | ----------- |
+| `--from SOURCE` | MySQL source: `local-mysql` (default) or `prod-mysql` |
+| `--to TARGET` | Neon target: `prod-neon` (default) or `local-postgres` |
+| `--reset` | Reset tracking and import all data |
+| `--verbose` | Show detailed output including skip reasons |
 
 ## How It Works
 
@@ -98,6 +114,7 @@ The individual import scripts already skip records where `legacyId` exists in Pa
 
 The script provides clear output showing:
 
+- MySQL source and Neon target
 - Last imported IDs from tracking file
 - New records available in MySQL
 - Import progress for each collection
@@ -106,6 +123,11 @@ The script provides clear output showing:
 Example output:
 
 ```
+🚀 Incremental Import Script
+   MySQL Source: local-mysql
+   Neon Target:  prod-neon
+   Tracking file: .last-import-ids.json
+
 📋 Loaded last import IDs from 2026-01-11T05:00:00.000Z
 
 📊 New records available:
@@ -138,3 +160,15 @@ This means the records already exist in Payload (same `legacyId`). The increment
 ### Tracking file missing
 
 The script will create a new one starting from ID 0, which will check all records.
+
+### Production MySQL connection fails
+
+Ensure you have `.env.production.mysql` with the correct credentials:
+
+```bash
+PROD_MYSQL_HOST=your-production-mysql-hostname.amazonaws.com
+PROD_MYSQL_PORT=3306
+PROD_MYSQL_DATABASE=ynot_site
+PROD_MYSQL_USER=readonly_user
+PROD_MYSQL_PASSWORD=your-secure-password
+```

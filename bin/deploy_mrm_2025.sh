@@ -21,7 +21,6 @@ scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/functions/mrm_fns.php $REMO
 # MRM configuration files
 echo "Deploying MRM configuration files..."
 scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/partials/_mrm_config.php $REMOTE_HOST:$REMOTE_BASE_PATH/partials/
-scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/partials/.env.example $REMOTE_HOST:$REMOTE_BASE_PATH/partials/
 scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/partials/__env_loader.php $REMOTE_HOST:$REMOTE_BASE_PATH/partials/
 
 # Database function updates
@@ -29,9 +28,8 @@ echo "Deploying database function updates..."
 scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/functions/main_fns.php $REMOTE_HOST:$REMOTE_BASE_PATH/functions/
 scp -p /Users/tj_nicolaides/Sites/ynotradio/site/src/db/migrations/mrm_matches_reset.csv $REMOTE_HOST:$REMOTE_BASE_PATH/db/migrations/
 
-# Creating .env file on the remote server if it doesn't exist
-echo "Setting up environment variables..."
-ssh $REMOTE_HOST "if [ ! -f $REMOTE_BASE_PATH/partials/.env ]; then cp $REMOTE_BASE_PATH/partials/.env.example $REMOTE_BASE_PATH/partials/.env; fi"
+# Note: .env file should be deployed using bin/deploy.sh
+echo "Note: Environment file (.env) should be deployed using bin/deploy.sh"
 
 # Checking for errors
 if [ $? -eq 0 ]; then

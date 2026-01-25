@@ -29,12 +29,12 @@ rsync -avz --delete \
     --rsync-path="sudo rsync" \
     src/ ynotradio:~/htdocs/
 
-# Copy the .env file
+# Copy the .env file from root .env.php to server .env
 echo "🔑 Copying .env file..."
 rsync -avz \
     --chmod=F644 \
     --rsync-path="sudo rsync" \
-    src/partials/.env ynotradio:~/htdocs/partials/.env
+    .env.php ynotradio:~/htdocs/.env
 
 # Run composer install on the server with correct permissions
 echo "📦 Running composer install on server..."

@@ -27,6 +27,7 @@
   },
   "include": [
     "bin/**/*.ts",
+    "config/**/*.ts",
     "test/**/*.ts",
     "e2e/**/*.ts",
     "playwright.config.ts",

@@ -32,9 +32,9 @@ If you prefer local development:
 
 - Clone this repository to your local machine: `git clone git@github.com:ynotradio/site.git`
 - In your terminal, `cd` to the root of this project directory
-- Copy `src/partials/.env.example` to `src/partials/.env` and configure the environment variables:
+- Copy `.env.example` to `.env.local` and configure the environment variables:
   ```
-  cp src/partials/.env.example src/partials/.env
+  cp .env.example .env.local
   ```
 - Replace `/src/db/docker/ynot_db.sql` with the latest copy of the YNotRadio.net MySQL database.
 - Run `docker-compose up` to build the Docker images and run the [Apache, PHP and MySQL](https://docs.bitnami.com/containers/how-to/create-amp-environment-containers/) services

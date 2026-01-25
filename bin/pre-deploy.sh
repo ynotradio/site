@@ -27,10 +27,10 @@ if ! ssh ynotradio "which rsync" > /dev/null 2>&1; then
     ssh ynotradio "sudo apt-get install -y rsync --no-upgrade"
 fi
 
-# Check if .env file exists
-if [ ! -f "src/partials/.env" ]; then
-    echo "❌ Error: src/partials/.env file not found"
-    echo "Please create the .env file before deploying"
+# Check if .env.php file exists (for deployment)
+if [ ! -f ".env.php" ]; then
+    echo "❌ Error: .env.php file not found in repository root"
+    echo "Please create .env.php from .env.php.example before deploying"
     exit 1
 fi
 
