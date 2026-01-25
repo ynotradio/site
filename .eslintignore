@@ -12,6 +12,7 @@ payload/migrations
 bin/migrations/**/test*.ts
 bin/migrations/**/debug*.ts
 bin/migrations/**/*Test*.ts
+bin/migrations/**/*.test.ts
 bin/migrations/checkCustomTextTitles.ts
 bin/migrations/createTestPost.ts
 bin/migrations/importSummary.ts
