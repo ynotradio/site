@@ -66,8 +66,28 @@ async function globalSetup() {
     }
 
     console.log('✅ Global setup complete!\n');
-    console.log('⏭️  Skipping database seeding - assuming data already exists');
-    console.log('   To re-seed manually: yarn seed:payload\n');
+
+    // Seed databases in CI, skip in local dev (assume data exists)
+    if (process.env.CI) {
+      console.log('🌱 Setting up Payload database (CI mode)...\n');
+
+      try {
+        // Seed the database (migrations happen automatically when Payload starts)
+        console.log('🌱 Seeding Payload database...');
+        execSync('yarn seed:payload', {
+          cwd: projectRoot,
+          stdio: 'inherit',
+          timeout: 60000,
+        });
+        console.log('✅ Payload database ready\n');
+      } catch (error) {
+        console.error('❌ Failed to setup Payload database:', error);
+        throw error;
+      }
+    } else {
+      console.log('⏭️  Skipping database seeding - assuming data already exists');
+      console.log('   To re-seed manually: yarn seed:payload\n');
+    }
   } catch (error) {
     console.error('❌ Error during global setup:', error);
     throw error;
