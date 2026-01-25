@@ -40,6 +40,7 @@
     "seed": "yarn seed:payload && yarn seed:legacy",
     "import:quick": "tsx bin/quick-import.ts",
     "import:incremental": "tsx bin/incremental-import.ts",
+    "import:gap-report": "tsx bin/migrations/importGapReport.ts",
     "neon-db:copy": "tsx bin/copy-neon-db.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
@@ -123,9 +124,12 @@
     "tabWidth": 2
   },
   "lint-staged": {
-    "*.{ts,tsx}": [
+    "!(*.test).{ts,tsx}": [
       "prettier --write",
       "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*'"
+    ],
+    "*.test.{ts,tsx}": [
+      "prettier --write"
     ],
     "*.{json,md}": [
       "prettier --write"
