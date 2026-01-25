@@ -2,16 +2,17 @@
 /**
  * Environment loader for Y-Not Radio
  * Loads environment variables from a .env file
+ * 
+ * Production: Looks for .env in htdocs root (same directory)
+ * Local development: Looks for .env.local in repository root
  */
 
-// Calculate the correct path to .env based on current directory
-$current_dir = dirname($_SERVER['SCRIPT_FILENAME']);
-$in_cp_dir = strpos($current_dir, '/cp') !== false;
+// On production server: ~/htdocs/.env (deployed from .env.php)
+// In local dev: repository_root/.env.local (preferred) or .env
+$env_local_path = __DIR__ . '/.env.local';
+$env_path = __DIR__ . '/.env';
 
-// Try .env.local first (for development), then fall back to .env (for production)
-$env_local_path = $in_cp_dir ? __DIR__ . '/../partials/.env.local' : __DIR__ . '/partials/.env.local';
-$env_path = $in_cp_dir ? __DIR__ . '/../partials/.env' : __DIR__ . '/partials/.env';
-
+// Prefer .env.local (development) over .env (production)
 $final_env_path = file_exists($env_local_path) ? $env_local_path : $env_path;
 
 // Load environment variables from .env file

@@ -3,8 +3,6 @@ pdfs
 sponsors
 *.log
 src/vendor
-src/partials/.env
-src/partials/.env.local
 node_modules
 package-lock.json
 .DS_Store
@@ -30,6 +28,9 @@ out/
 
 # Payload
 .env.local
+.env.preview
+.env.production
+.env.php
 .env.production.mysql
 payload-types.ts
 media/
