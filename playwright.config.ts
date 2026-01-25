@@ -59,8 +59,9 @@ export default defineConfig({
   // Run global setup before all tests (start Docker services, seed databases)
   globalSetup: './e2e/global-setup.ts',
 
-  // Run global teardown after all tests (stop Docker services)
-  globalTeardown: './e2e/global-teardown.ts',
+  // Note: No globalTeardown needed.
+  // - In CI: The workflow cleanup step handles `docker compose down -v`
+  // - In local dev: Containers are left running for faster re-runs
 
   // Web server configuration
   webServer: {
