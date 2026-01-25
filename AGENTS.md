@@ -144,6 +144,16 @@ Or use the MCP browser tools:
 - Complete dependency arrays in hooks
 - Import organization: external → internal (`@/`) → relative
 
+### Dead Code Recognition
+
+When modifying code, actively look for and remove dead code:
+
+- **After removing functionality**, check if remaining code serves a purpose beyond logging/comments
+- **If a function/module no longer performs side effects or returns meaningful values**, remove it entirely
+- **Ask: "What would break if I deleted this?"** — if nothing breaks, remove it
+- **Prefer deletion over no-ops** — console.log statements alone don't justify keeping a module
+- **Remove unused imports, variables, and parameters** after refactoring
+
 ### Testing Requirements
 
 - All user-facing components need `.test.tsx` and `.stories.tsx` files
