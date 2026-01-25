@@ -44,6 +44,18 @@ export interface MySQLConfig {
 }
 
 /**
+ * Capture shell environment variables before dotenv loads
+ * These take precedence over .env file values
+ */
+const shellEnvOverrides: Record<string, string> = {};
+const overridableVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT'];
+overridableVars.forEach((key) => {
+  if (process.env[key] !== undefined) {
+    shellEnvOverrides[key] = process.env[key] as string;
+  }
+});
+
+/**
  * Load environment variables from the appropriate .env file
  */
 function loadEnvFile(filename: string): void {
@@ -52,6 +64,11 @@ function loadEnvFile(filename: string): void {
     // eslint-disable-next-line no-console
     console.log(`Loading environment from: ${envPath}`);
     dotenv.config({ path: envPath, override: true });
+
+    // Restore shell environment overrides (shell takes precedence)
+    Object.entries(shellEnvOverrides).forEach(([key, value]) => {
+      process.env[key] = value;
+    });
   }
 }
 
@@ -122,8 +139,7 @@ export function getNeonDatabaseUrl(target: PostgresTarget): string {
     const url = process.env.NEON_PROD_DATABASE_URL;
     if (!url) {
       throw new Error(
-        'Production Neon URL not configured. '
-          + 'Please set NEON_PROD_DATABASE_URL in .env.local',
+        'Production Neon URL not configured. Please set NEON_PROD_DATABASE_URL in .env.local',
       );
     }
     return url;
