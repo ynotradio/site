@@ -6,7 +6,7 @@ import { execSync } from 'child_process';
 /**
  * Global setup for E2E tests
  * Ensures test environment is ready before Playwright starts
- * 
+ *
  * In CI: Docker services already started by setup-e2e-tests.sh
  * Locally: Starts Docker services if not running
  */
@@ -37,13 +37,13 @@ async function globalSetup() {
     } catch {
       console.log('⚠️  Docker services not running');
       console.log('   Starting services (this happens automatically locally)...\n');
-      
+
       // Start services using the same script as CI
       execSync('docker compose up -d postgres mysql phpfpm apache', {
         cwd: projectRoot,
         stdio: 'inherit',
       });
-      
+
       // Wait for Postgres using the shared script
       execSync('./bin/wait-for-docker-services.sh', {
         cwd: projectRoot,

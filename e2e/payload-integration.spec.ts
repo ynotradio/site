@@ -69,7 +69,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       // Fill in UNIQUE ticket info to distinguish this concert from seeded data
       const uniqueTicketInfo = `E2E Test Concert ${generateUniqueId()} - Tickets $30`;
       const uniqueTicketUrl = `https://tickets.example.com/e2e-${generateUniqueId()}`;
-      
+
       await fillPayloadTextField(page, 'field-ticketInfo', uniqueTicketInfo);
       await fillPayloadTextField(page, 'field-ticketUrl', uniqueTicketUrl);
 
@@ -102,7 +102,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
       // Verify the UNIQUE concert we just created appears on the page
       // This ensures we're not just seeing seeded data
-      const uniqueTicketInfo = (testInfo as any).uniqueTicketInfo;
+      const { uniqueTicketInfo } = testInfo as any;
       expect(pageContent).toContain(uniqueTicketInfo);
 
       await captureScreenshot(page, testInfo, '06-Legacy Site with New Concert');

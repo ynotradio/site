@@ -6,10 +6,7 @@ import { Page, expect } from '@playwright/test';
  * @param page - Playwright page object
  * @param collectionName - Name of the collection (e.g., 'concerts', 'artists')
  */
-export async function waitForPayloadSave(
-  page: Page,
-  collectionName: string,
-): Promise<void> {
+export async function waitForPayloadSave(page: Page, collectionName: string): Promise<void> {
   // Wait for save success - look for URL change or success message
   await Promise.race([
     page.waitForURL(`**/${collectionName}/**`, { timeout: 30000 }),
@@ -19,9 +16,9 @@ export async function waitForPayloadSave(
   // Verify that either the URL has changed or the success message is visible
   const currentUrl = page.url();
   if (!currentUrl.includes(`/${collectionName}/`)) {
-    await expect(
-      page.getByText(/saved successfully|successfully saved/i)
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/saved successfully|successfully saved/i)).toBeVisible({
+      timeout: 5000,
+    });
   }
 }
 
