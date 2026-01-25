@@ -180,7 +180,7 @@ const COLLECTIONS: CollectionConfig[] = [
   {
     name: 'On Demand',
     mysqlTable: 'ondemand',
-    payloadCollection: 'onDemand',
+    payloadCollection: 'ondemand',
     idField: 'id',
     identifierField: 'headline',
     deletedFilter: "deleted = 'n'",
@@ -189,7 +189,7 @@ const COLLECTIONS: CollectionConfig[] = [
   {
     name: 'CD of the Week',
     mysqlTable: 'cdotw',
-    payloadCollection: 'cdOfTheWeek',
+    payloadCollection: 'cdoftheweek',
     idField: 'id',
     identifierField: 'title',
     deletedFilter: "deleted = 'n'",
