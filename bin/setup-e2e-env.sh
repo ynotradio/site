@@ -11,8 +11,15 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "🔧 Setting up E2E test environment files..."
 
+# Cloudinary credentials should come from environment (e.g., GitHub secrets)
+# For local dev, set these in your shell or leave empty if not needed
+CLOUDINARY_CLOUD_NAME="${CLOUDINARY_CLOUD_NAME:-}"
+CLOUDINARY_API_KEY="${CLOUDINARY_API_KEY:-}"
+CLOUDINARY_API_SECRET="${CLOUDINARY_API_SECRET:-}"
+
 # Create .env.local with Payload CMS and PostgreSQL configuration
-cat > "$PROJECT_ROOT/.env.local" << 'EOF'
+# Note: Using unquoted EOF to allow variable expansion for Cloudinary vars
+cat > "$PROJECT_ROOT/.env.local" << EOF
 # Payload Core
 PAYLOAD_SECRET=dev-only-secret
 PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000
@@ -27,10 +34,10 @@ PAYLOAD_CORS=http://localhost:3000,http://localhost:5173
 PAYLOAD_CSRF=http://localhost:3000
 PAYLOAD_RATE_LIMIT=300
 
-# Media Storage
-CLOUDINARY_CLOUD_NAME=duhacumtz
-CLOUDINARY_API_KEY=***REMOVED***
-CLOUDINARY_API_SECRET=***REMOVED***
+# Media Storage (injected from environment variables)
+CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
 
 # Configure PostgreSQL connection for PHP site (must match docker-compose service name)
 POSTGRES_HOST=postgres
