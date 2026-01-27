@@ -4,6 +4,8 @@ import {
   navigateToPayloadCollection,
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   clickPayloadSave,
   waitForPayloadSave,
 } from '../utils/payload-helpers';
@@ -21,7 +23,9 @@ test.describe('Venues Collection', () => {
   test('should create venue via Payload UI and verify it exists in collection', async ({
     page,
   }, testInfo) => {
-    const uniqueVenueName = `E2E Test Venue ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueVenueName = `E2E Test Venue ${uniqueId}`;
+    const uniqueSlug = generateSlug(uniqueVenueName);
     const uniqueCity = 'Test City';
 
     await test.step('Navigate directly to create venue form', async () => {
@@ -32,6 +36,9 @@ test.describe('Venues Collection', () => {
     await test.step('Fill venue form', async () => {
       // Fill venue name (required field)
       await fillPayloadTextField(page, 'field-name', uniqueVenueName);
+
+      // Fill slug (required - unlock and fill)
+      await fillPayloadSlugField(page, uniqueSlug);
 
       // Fill city
       await fillPayloadTextField(page, 'field-city', uniqueCity);

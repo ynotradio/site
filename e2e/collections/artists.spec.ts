@@ -4,6 +4,8 @@ import {
   navigateToPayloadCollection,
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   clickPayloadSave,
   waitForPayloadSave,
 } from '../utils/payload-helpers';
@@ -21,7 +23,9 @@ test.describe('Artists Collection', () => {
   test('should create artist via Payload UI and verify it exists in collection', async ({
     page,
   }, testInfo) => {
-    const uniqueArtistName = `E2E Test Artist ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueArtistName = `E2E Test Artist ${uniqueId}`;
+    const uniqueSlug = generateSlug(uniqueArtistName);
 
     await test.step('Navigate directly to create artist form', async () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
@@ -31,6 +35,9 @@ test.describe('Artists Collection', () => {
     await test.step('Fill artist form', async () => {
       // Fill artist name (required field)
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
+
+      // Fill slug (required - unlock and fill)
+      await fillPayloadSlugField(page, uniqueSlug);
 
       await captureScreenshot(page, testInfo, '02-Artists-Filled-Form');
     });

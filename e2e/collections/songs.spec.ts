@@ -7,6 +7,8 @@ import {
 import {
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   clickPayloadSave,
   waitForPayloadSave,
   fillPayloadCheckboxField,
@@ -26,14 +28,20 @@ test.describe('Songs Collection (New Music)', () => {
   test('should create song with artist and verify it appears on music.php', async ({
     page,
   }, testInfo) => {
-    const uniqueArtistName = `E2E Music Artist ${generateUniqueId()}`;
-    const uniqueSongTitle = `E2E Test Song ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueArtistName = `E2E Music Artist ${uniqueId}`;
+    const uniqueArtistSlug = generateSlug(uniqueArtistName);
+    const uniqueSongTitle = `E2E Test Song ${uniqueId}`;
+    const uniqueSongSlug = generateSlug(uniqueSongTitle);
 
     await test.step('Create an artist first (required for song)', async () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
 
       // Fill artist name
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
+
+      // Fill slug (required)
+      await fillPayloadSlugField(page, uniqueArtistSlug);
 
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'artists');
@@ -49,6 +57,9 @@ test.describe('Songs Collection (New Music)', () => {
     await test.step('Fill song form', async () => {
       // Fill song title (required)
       await fillPayloadTextField(page, 'field-title', uniqueSongTitle);
+
+      // Fill slug (required)
+      await fillPayloadSlugField(page, uniqueSongSlug);
 
       // Select the artist we just created
       const artistField = page.locator('#field-artist');

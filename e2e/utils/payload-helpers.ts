@@ -195,4 +195,36 @@ export async function navigateToLegacySiteWithPostgres(
   return response;
 }
 
+/**
+ * Fill a Payload CMS slug field
+ * The slug field is locked by default and must be unlocked first
+ * @param page - Playwright page object
+ * @param value - Slug value (should be URL-friendly, lowercase with hyphens)
+ */
+export async function fillPayloadSlugField(page: Page, value: string): Promise<void> {
+  // First, click the Unlock button to enable the slug field
+  const unlockButton = page.getByRole('button', { name: /unlock/i });
+  if (await unlockButton.isVisible()) {
+    await unlockButton.click();
+  }
+
+  // Now fill the slug field
+  await page.locator('#field-slug').fill(value);
+}
+
+/**
+ * Generate a URL-friendly slug from text
+ * @param text - Text to convert to slug
+ * @returns URL-friendly slug
+ */
+export function generateSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '') // Remove special chars except hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single
+    .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+    .trim();
+}
+
 type Response = Awaited<ReturnType<Page['goto']>>;

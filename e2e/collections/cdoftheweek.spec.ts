@@ -8,6 +8,8 @@ import {
 import {
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   fillPayloadRelationshipField,
   clickPayloadSave,
   waitForPayloadSave,
@@ -30,14 +32,18 @@ test.describe('CD of the Week Collection', () => {
   test('should create CD of the Week review and verify it appears on cdoftheweek.php', async ({
     page,
   }, testInfo) => {
-    const uniqueArtistName = `E2E COTW Artist ${generateUniqueId()}`;
-    const uniqueAlbumTitle = `E2E Test Album ${generateUniqueId()}`;
-    const uniqueReview = `This is an E2E test review - ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueArtistName = `E2E COTW Artist ${uniqueId}`;
+    const uniqueArtistSlug = generateSlug(uniqueArtistName);
+    const uniqueAlbumTitle = `E2E Test Album ${uniqueId}`;
+    const uniqueAlbumSlug = generateSlug(uniqueAlbumTitle);
+    const uniqueReview = `This is an E2E test review - ${uniqueId}`;
 
     await test.step('Create an artist first (required for record)', async () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
 
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
+      await fillPayloadSlugField(page, uniqueArtistSlug);
 
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'artists');
@@ -50,6 +56,9 @@ test.describe('CD of the Week Collection', () => {
 
       // Fill album title (required)
       await fillPayloadTextField(page, 'field-title', uniqueAlbumTitle);
+
+      // Fill slug (required)
+      await fillPayloadSlugField(page, uniqueAlbumSlug);
 
       // Select the artist we just created
       const artistField = page.locator('#field-artist');
