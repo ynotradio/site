@@ -16,6 +16,16 @@ The E2E tests use:
 
 All services run in Docker containers managed by Docker Compose.
 
+### Authentication Strategy
+
+The tests use Playwright's [authentication best practices](https://playwright.dev/docs/auth):
+
+1. **Setup Project**: The `auth.setup.ts` runs first, logs in to Payload CMS once, and saves the session state
+2. **Shared Session**: All other tests reuse this saved session, avoiding repeated logins
+3. **Direct Navigation**: Tests navigate directly to collection create pages for efficiency
+
+This dramatically reduces test execution time by eliminating redundant login operations.
+
 ## Test Scope
 
 The E2E tests verify:
@@ -86,6 +96,7 @@ See `.github/workflows/e2e.yml` for the complete CI configuration.
 
 ### Core Tests
 
+- `auth.setup.ts` - **Authentication setup** - Logs in once and saves session state for all tests
 - `crud-integration.spec.ts` - Tests for legacy PHP site load and database connectivity
 - `payload-integration.spec.ts` - Payload CMS integration test that creates a concert and verifies it appears on the legacy site
 - `global-setup.ts` - Global test setup (runs Payload migrations and seeds database)

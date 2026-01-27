@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from '../utils/payload-auth';
 import {
   captureScreenshot,
   fillPayloadDateField,
@@ -8,8 +7,7 @@ import {
   checkForPhpErrors,
 } from '../utils/test-helpers';
 import {
-  navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadTextField,
   fillPayloadRichTextField,
   clickPayloadPublish,
@@ -22,6 +20,8 @@ import {
  * Tests creating posts (stories) in Payload CMS and verifying they appear:
  * 1. On the homepage (index.php)
  * 2. As standalone pages via their slug
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
 
 test.describe('Posts Collection', () => {
@@ -31,23 +31,12 @@ test.describe('Posts Collection', () => {
     const uniqueHeadline = `E2E Test Story ${generateUniqueId()}`;
     const uniqueContent = `This is test content created by E2E tests - ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-Posts-Dashboard');
+    await test.step('Navigate directly to create post form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'posts');
+      await captureScreenshot(page, testInfo, '01-Posts-Create-Form');
     });
 
-    await test.step('Navigate to Posts collection', async () => {
-      await navigateToPayloadCollection(page, 'posts');
-      await captureScreenshot(page, testInfo, '02-Posts-Collection-List');
-    });
-
-    await test.step('Create new post', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/posts/create', { timeout: 30000 });
-
-      // Wait for form to be ready
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill post form', async () => {
       // Fill headline (required)
       await fillPayloadTextField(page, 'field-headline', uniqueHeadline);
 
@@ -62,13 +51,13 @@ test.describe('Posts Collection', () => {
       // Fill content (required rich text field)
       await fillPayloadRichTextField(page, 'field-content', uniqueContent);
 
-      await captureScreenshot(page, testInfo, '03-Posts-Filled-Form');
+      await captureScreenshot(page, testInfo, '02-Posts-Filled-Form');
     });
 
     await test.step('Publish the post', async () => {
       // Posts collection has drafts enabled, so we need to publish
       await clickPayloadPublish(page, 'posts');
-      await captureScreenshot(page, testInfo, '04-Posts-Published');
+      await captureScreenshot(page, testInfo, '03-Posts-Published');
     });
 
     await test.step('Verify post appears on homepage (index.php)', async () => {
@@ -89,7 +78,7 @@ test.describe('Posts Collection', () => {
       // Verify the unique headline we just created appears on the page
       expect(pageContent).toContain(uniqueHeadline);
 
-      await captureScreenshot(page, testInfo, '05-Posts-On-Homepage');
+      await captureScreenshot(page, testInfo, '04-Posts-On-Homepage');
     });
   });
 
@@ -100,17 +89,11 @@ test.describe('Posts Collection', () => {
     const uniqueHeadline = `E2E Standalone Page ${generateUniqueId()}`;
     const uniqueContent = `This is standalone page content - ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
+    await test.step('Navigate directly to create post form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'posts');
     });
 
-    await test.step('Create post with custom slug', async () => {
-      await navigateToPayloadCollection(page, 'posts');
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/posts/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill post form with custom slug', async () => {
       // Fill headline
       await fillPayloadTextField(page, 'field-headline', uniqueHeadline);
 

@@ -38,6 +38,24 @@ export async function navigateToPayloadCollection(
 }
 
 /**
+ * Navigate directly to a Payload CMS collection create page
+ * This is more efficient than navigating to list then clicking "Create New"
+ * @param page - Playwright page object
+ * @param collectionName - Name of the collection (e.g., 'concerts', 'artists')
+ */
+export async function navigateToPayloadCollectionCreate(
+  page: Page,
+  collectionName: string,
+): Promise<void> {
+  await page.goto(`http://localhost:3000/admin/collections/${collectionName}/create`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+  // Wait for form to be ready
+  await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
+}
+
+/**
  * Click "Create New" button in Payload CMS
  * @param page - Playwright page object
  */

@@ -1,13 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from '../utils/payload-auth';
 import {
   captureScreenshot,
   generateUniqueId,
   checkForPhpErrors,
 } from '../utils/test-helpers';
 import {
-  navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadTextField,
   clickPayloadSave,
   waitForPayloadSave,
@@ -20,6 +18,8 @@ import {
  *
  * Tests creating songs in Payload CMS and verifying they appear on music.php.
  * Songs require an artist and must have featureOnNewMusic enabled to appear.
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
 
 test.describe('Songs Collection (New Music)', () => {
@@ -29,17 +29,8 @@ test.describe('Songs Collection (New Music)', () => {
     const uniqueArtistName = `E2E Music Artist ${generateUniqueId()}`;
     const uniqueSongTitle = `E2E Test Song ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-Songs-Dashboard');
-    });
-
     await test.step('Create an artist first (required for song)', async () => {
-      await navigateToPayloadCollection(page, 'artists');
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/artists/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
+      await navigateToPayloadCollectionCreate(page, 'artists');
 
       // Fill artist name
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
@@ -47,20 +38,15 @@ test.describe('Songs Collection (New Music)', () => {
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'artists');
 
-      await captureScreenshot(page, testInfo, '02-Songs-Artist-Created');
+      await captureScreenshot(page, testInfo, '01-Songs-Artist-Created');
     });
 
-    await test.step('Navigate to Songs collection', async () => {
-      await navigateToPayloadCollection(page, 'songs');
-      await captureScreenshot(page, testInfo, '03-Songs-Collection-List');
+    await test.step('Navigate directly to create song form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'songs');
+      await captureScreenshot(page, testInfo, '02-Songs-Create-Form');
     });
 
-    await test.step('Create new song', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/songs/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill song form', async () => {
       // Fill song title (required)
       await fillPayloadTextField(page, 'field-title', uniqueSongTitle);
 
@@ -77,13 +63,13 @@ test.describe('Songs Collection (New Music)', () => {
       // Enable "Feature on New Music" checkbox so it appears on music.php
       await fillPayloadCheckboxField(page, 'field-featureOnNewMusic', true);
 
-      await captureScreenshot(page, testInfo, '04-Songs-Filled-Form');
+      await captureScreenshot(page, testInfo, '03-Songs-Filled-Form');
     });
 
     await test.step('Save the song', async () => {
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'songs');
-      await captureScreenshot(page, testInfo, '05-Songs-Saved');
+      await captureScreenshot(page, testInfo, '04-Songs-Saved');
     });
 
     await test.step('Verify song appears on music.php', async () => {
@@ -107,7 +93,7 @@ test.describe('Songs Collection (New Music)', () => {
       // Verify the artist name appears on the page
       expect(pageContent).toContain(uniqueArtistName);
 
-      await captureScreenshot(page, testInfo, '06-Songs-On-Music-Page');
+      await captureScreenshot(page, testInfo, '05-Songs-On-Music-Page');
     });
   });
 });

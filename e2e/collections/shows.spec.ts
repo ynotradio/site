@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from '../utils/payload-auth';
 import {
   captureScreenshot,
   fillPayloadDateField,
@@ -8,8 +7,7 @@ import {
   checkForPhpErrors,
 } from '../utils/test-helpers';
 import {
-  navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadRelationshipField,
   clickPayloadSave,
   waitForPayloadSave,
@@ -22,6 +20,8 @@ import {
  * E2E Integration Test: Shows Collection
  *
  * Tests creating shows in Payload CMS and verifying they appear on schedule.php.
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
 
 test.describe('Shows Collection', () => {
@@ -30,23 +30,12 @@ test.describe('Shows Collection', () => {
   }, testInfo) => {
     const uniqueShowNote = `E2E Test Show ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-Shows-Dashboard');
+    await test.step('Navigate directly to create show form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'shows');
+      await captureScreenshot(page, testInfo, '01-Shows-Create-Form');
     });
 
-    await test.step('Navigate to Shows collection', async () => {
-      await navigateToPayloadCollection(page, 'shows');
-      await captureScreenshot(page, testInfo, '02-Shows-Collection-List');
-    });
-
-    await test.step('Create new show', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/shows/create', { timeout: 30000 });
-
-      // Wait for form to be ready
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill show form', async () => {
       // Set show date (7 days from now to ensure it appears in upcoming schedule)
       const showDate = getFutureDate(7);
       await fillPayloadDateField(page, 'field-date', showDate);
@@ -67,13 +56,13 @@ test.describe('Shows Collection', () => {
       // Fill a unique note to identify this show
       await fillPayloadRichTextField(page, 'field-note', uniqueShowNote);
 
-      await captureScreenshot(page, testInfo, '03-Shows-Filled-Form');
+      await captureScreenshot(page, testInfo, '02-Shows-Filled-Form');
     });
 
     await test.step('Save the show', async () => {
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'shows');
-      await captureScreenshot(page, testInfo, '04-Shows-Saved');
+      await captureScreenshot(page, testInfo, '03-Shows-Saved');
     });
 
     await test.step('Verify show appears on schedule.php', async () => {
@@ -94,7 +83,7 @@ test.describe('Shows Collection', () => {
       // Verify the unique show note we just created appears on the page
       expect(pageContent).toContain(uniqueShowNote);
 
-      await captureScreenshot(page, testInfo, '05-Shows-On-Schedule-Page');
+      await captureScreenshot(page, testInfo, '04-Shows-On-Schedule-Page');
     });
   });
 });

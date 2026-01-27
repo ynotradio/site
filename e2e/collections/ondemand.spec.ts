@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from '../utils/payload-auth';
 import {
   captureScreenshot,
   fillPayloadDateField,
@@ -7,8 +6,7 @@ import {
   checkForPhpErrors,
 } from '../utils/test-helpers';
 import {
-  navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadTextField,
   fillPayloadRelationshipField,
   clickPayloadSave,
@@ -23,6 +21,8 @@ import {
  *
  * Tests creating On Demand recordings in Payload CMS and verifying they appear on ondemand.php.
  * On Demand recordings can be associated with DJs, artists, and songs.
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
 
 test.describe('On Demand Collection', () => {
@@ -32,22 +32,12 @@ test.describe('On Demand Collection', () => {
     const uniqueHeadline = `E2E On Demand Recording ${generateUniqueId()}`;
     const uniqueDescription = `This is an E2E test on-demand description - ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-OnDemand-Dashboard');
+    await test.step('Navigate directly to create On Demand form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'ondemand');
+      await captureScreenshot(page, testInfo, '01-OnDemand-Create-Form');
     });
 
-    await test.step('Navigate to On Demand collection', async () => {
-      await navigateToPayloadCollection(page, 'ondemand');
-      await captureScreenshot(page, testInfo, '02-OnDemand-Collection-List');
-    });
-
-    await test.step('Create new On Demand recording', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/ondemand/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill On Demand form', async () => {
       // Fill date (required)
       const recordingDate = new Date();
       await fillPayloadDateField(page, 'field-date', recordingDate);
@@ -72,13 +62,13 @@ test.describe('On Demand Collection', () => {
         // No artists available, skip
       }
 
-      await captureScreenshot(page, testInfo, '03-OnDemand-Filled-Form');
+      await captureScreenshot(page, testInfo, '02-OnDemand-Filled-Form');
     });
 
     await test.step('Publish the On Demand recording', async () => {
       // On Demand has drafts enabled
       await clickPayloadPublish(page, 'ondemand');
-      await captureScreenshot(page, testInfo, '04-OnDemand-Published');
+      await captureScreenshot(page, testInfo, '03-OnDemand-Published');
     });
 
     await test.step('Verify On Demand recording appears on ondemand.php', async () => {
@@ -99,7 +89,7 @@ test.describe('On Demand Collection', () => {
       // Verify the headline appears on the page
       expect(pageContent).toContain(uniqueHeadline);
 
-      await captureScreenshot(page, testInfo, '05-OnDemand-On-Page');
+      await captureScreenshot(page, testInfo, '04-OnDemand-On-Page');
     });
   });
 
@@ -110,16 +100,8 @@ test.describe('On Demand Collection', () => {
     const uniqueSongTitle = `E2E OnDemand Song ${generateUniqueId()}`;
     const uniqueHeadline = `E2E On Demand with Assoc ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-    });
-
     await test.step('Create an artist', async () => {
-      await navigateToPayloadCollection(page, 'artists');
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/artists/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
+      await navigateToPayloadCollectionCreate(page, 'artists');
 
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
 
@@ -130,11 +112,7 @@ test.describe('On Demand Collection', () => {
     });
 
     await test.step('Create a song for the artist', async () => {
-      await navigateToPayloadCollection(page, 'songs');
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/songs/create', { timeout: 30000 });
-
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
+      await navigateToPayloadCollectionCreate(page, 'songs');
 
       await fillPayloadTextField(page, 'field-title', uniqueSongTitle);
 
@@ -154,13 +132,11 @@ test.describe('On Demand Collection', () => {
       await captureScreenshot(page, testInfo, '02-OnDemand-Song-Created');
     });
 
-    await test.step('Create On Demand recording with associations', async () => {
-      await navigateToPayloadCollection(page, 'ondemand');
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/ondemand/create', { timeout: 30000 });
+    await test.step('Navigate directly to create On Demand form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'ondemand');
+    });
 
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill On Demand form with associations', async () => {
       // Fill date
       const recordingDate = new Date();
       await fillPayloadDateField(page, 'field-date', recordingDate);

@@ -1,8 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// Path to store authenticated session state
+const authFile = './e2e/.auth/payload-session.json';
+
 /**
  * Playwright configuration for E2E tests
  * Tests spin up Payload CMS and legacy PHP site with containerized/seeded databases
+ *
+ * Authentication Strategy:
+ * - The 'setup' project logs in once and saves session state
+ * - All other projects reuse this state, avoiding repeated logins
+ * @see https://playwright.dev/docs/auth
  */
 export default defineConfig({
   testDir: './e2e',
@@ -50,9 +58,23 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
+    // Setup project - runs first to authenticate and save session
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+
+    // Main test project - uses saved authentication state
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Use saved authentication state from setup project
+        storageState: authFile,
+      },
+      // Don't run setup tests again, and depend on setup completing first
+      testIgnore: /auth\.setup\.ts/,
+      dependencies: ['setup'],
     },
   ],
 

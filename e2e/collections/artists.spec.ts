@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from '../utils/payload-auth';
 import { captureScreenshot, generateUniqueId } from '../utils/test-helpers';
 import {
   navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadTextField,
   clickPayloadSave,
   waitForPayloadSave,
@@ -14,6 +13,8 @@ import {
  *
  * Tests creating artists in Payload CMS and verifying they exist.
  * Artists are used by Songs, Records, and Concerts collections.
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
 
 test.describe('Artists Collection', () => {
@@ -22,33 +23,22 @@ test.describe('Artists Collection', () => {
   }, testInfo) => {
     const uniqueArtistName = `E2E Test Artist ${generateUniqueId()}`;
 
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-Artists-Dashboard');
+    await test.step('Navigate directly to create artist form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'artists');
+      await captureScreenshot(page, testInfo, '01-Artists-Create-Form');
     });
 
-    await test.step('Navigate to Artists collection', async () => {
-      await navigateToPayloadCollection(page, 'artists');
-      await captureScreenshot(page, testInfo, '02-Artists-Collection-List');
-    });
-
-    await test.step('Create new artist', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/artists/create', { timeout: 30000 });
-
-      // Wait for form to be ready
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
+    await test.step('Fill artist form', async () => {
       // Fill artist name (required field)
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
 
-      await captureScreenshot(page, testInfo, '03-Artists-Filled-Form');
+      await captureScreenshot(page, testInfo, '02-Artists-Filled-Form');
     });
 
     await test.step('Save the artist', async () => {
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'artists');
-      await captureScreenshot(page, testInfo, '04-Artists-Saved');
+      await captureScreenshot(page, testInfo, '03-Artists-Saved');
     });
 
     await test.step('Verify artist exists in Payload by revisiting collection', async () => {
@@ -57,7 +47,7 @@ test.describe('Artists Collection', () => {
       // The artist should appear in the list
       await expect(page.getByText(uniqueArtistName)).toBeVisible({ timeout: 10000 });
 
-      await captureScreenshot(page, testInfo, '05-Artists-In-List');
+      await captureScreenshot(page, testInfo, '04-Artists-In-List');
     });
   });
 });

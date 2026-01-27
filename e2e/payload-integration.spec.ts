@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { loginToPayload } from './utils/payload-auth';
 import {
   captureScreenshot,
   fillPayloadDateField,
@@ -8,8 +7,7 @@ import {
   checkForPhpErrors,
 } from './utils/test-helpers';
 import {
-  navigateToPayloadCollection,
-  clickPayloadCreateNew,
+  navigateToPayloadCollectionCreate,
   fillPayloadRelationshipField,
   fillPayloadTextField,
   clickPayloadSave,
@@ -20,9 +18,10 @@ import {
  * E2E Integration Test: Payload CMS → Legacy PHP Site
  *
  * This test demonstrates end-to-end data flow using real user interactions:
- * 1. Log in to Payload CMS admin interface
- * 2. Create a new concert through the Payload UI
- * 3. Verify the concert appears on the legacy PHP site (concerts.php)
+ * 1. Create a new concert through the Payload UI (using saved session state)
+ * 2. Verify the concert appears on the legacy PHP site (concerts.php)
+ *
+ * Note: Authentication is handled by the setup project - tests run with saved session state.
  *
  * The test assumes:
  * - Docker Compose has started PostgreSQL, MySQL, and Apache services
@@ -36,26 +35,16 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
   test('should create concert via Payload UI and verify it appears on legacy site', async ({
     page,
   }, testInfo) => {
-    await test.step('Log in to Payload CMS', async () => {
-      await loginToPayload(page);
-      await captureScreenshot(page, testInfo, '01-Payload Dashboard');
-    });
+    // Store unique ticket info for later verification
+    const uniqueTicketInfo = `E2E Test Concert ${generateUniqueId()} - Tickets $30`;
+    const uniqueTicketUrl = `https://tickets.example.com/e2e-${generateUniqueId()}`;
 
-    await test.step('Navigate to Concerts collection', async () => {
-      await navigateToPayloadCollection(page, 'concerts');
-      await captureScreenshot(page, testInfo, '02-Concerts Collection List');
-    });
-
-    await test.step('Open create concert form', async () => {
-      await clickPayloadCreateNew(page);
-      await page.waitForURL('**/concerts/create', { timeout: 30000 });
-      await captureScreenshot(page, testInfo, '03-Create Concert Form');
+    await test.step('Navigate directly to create concert form', async () => {
+      await navigateToPayloadCollectionCreate(page, 'concerts');
+      await captureScreenshot(page, testInfo, '01-Create Concert Form');
     });
 
     await test.step('Fill out concert form', async () => {
-      // Wait for form to be ready
-      await page.waitForSelector('form', { state: 'visible', timeout: 30000 });
-
       // Set concert date (3 days from now to avoid month boundary issues)
       const concertDate = getFutureDate(3);
       await fillPayloadDateField(page, 'field-date', concertDate);
@@ -67,23 +56,16 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await fillPayloadRelationshipField(page, 'field-venue', 0);
 
       // Fill in UNIQUE ticket info to distinguish this concert from seeded data
-      const uniqueTicketInfo = `E2E Test Concert ${generateUniqueId()} - Tickets $30`;
-      const uniqueTicketUrl = `https://tickets.example.com/e2e-${generateUniqueId()}`;
-
       await fillPayloadTextField(page, 'field-ticketInfo', uniqueTicketInfo);
       await fillPayloadTextField(page, 'field-ticketUrl', uniqueTicketUrl);
 
-      // Store these for later verification
-      // eslint-disable-next-line no-param-reassign
-      (testInfo as any).uniqueTicketInfo = uniqueTicketInfo;
-
-      await captureScreenshot(page, testInfo, '04-Filled Concert Form');
+      await captureScreenshot(page, testInfo, '02-Filled Concert Form');
     });
 
     await test.step('Save the concert', async () => {
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'concerts');
-      await captureScreenshot(page, testInfo, '05-Concert Saved');
+      await captureScreenshot(page, testInfo, '03-Concert Saved');
     });
 
     await test.step('Verify concert appears on legacy PHP site', async () => {
@@ -102,33 +84,25 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
       // Verify the UNIQUE concert we just created appears on the page
       // This ensures we're not just seeing seeded data
-      const { uniqueTicketInfo } = testInfo as any;
       expect(pageContent).toContain(uniqueTicketInfo);
 
-      await captureScreenshot(page, testInfo, '06-Legacy Site with New Concert');
+      await captureScreenshot(page, testInfo, '04-Legacy Site with New Concert');
     });
   });
 
   test('should verify Payload admin UI loads correctly', async ({ page }, testInfo) => {
-    await test.step('Verify login page loads', async () => {
+    await test.step('Verify dashboard loads (already authenticated)', async () => {
       await page.goto('http://localhost:3000/admin', {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
 
-      // Use Playwright best practices - getByLabel for form fields
-      const emailInput = page.getByLabel(/email/i);
-      const passwordInput = page.getByLabel(/password/i);
-      // The Payload login button says "Login" (one word)
-      const submitButton = page
-        .getByRole('button', { name: 'Login' })
-        .or(page.locator('button:has-text("Login")'));
+      // Since we're authenticated via setup, we should see the dashboard, not login
+      // Look for dashboard elements instead of login form
+      const dashboardHeading = page.getByRole('heading', { name: /dashboard/i });
+      await expect(dashboardHeading).toBeVisible({ timeout: 10000 });
 
-      await expect(emailInput).toBeVisible();
-      await expect(passwordInput).toBeVisible();
-      await expect(submitButton).toBeVisible();
-
-      await captureScreenshot(page, testInfo, 'Payload Login Page');
+      await captureScreenshot(page, testInfo, 'Payload Dashboard');
     });
   });
 });

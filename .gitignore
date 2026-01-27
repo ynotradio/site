@@ -42,6 +42,7 @@ payload/types/
 playwright-report/
 e2e/screenshots/*
 !e2e/screenshots/.gitkeep
+e2e/.auth/
 
 # Agent helpers temporary directory
 .agent-tmp/
