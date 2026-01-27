@@ -151,9 +151,17 @@ export async function fillPayloadRichTextField(
   text: string,
 ): Promise<void> {
   // Payload uses Lexical editor - click on the contenteditable and type
-  const richTextField = page.locator(`#${fieldId} [contenteditable="true"]`);
+  // First, scroll the field into view and wait for it to be ready
+  const fieldContainer = page.locator(`#${fieldId}`);
+  await fieldContainer.scrollIntoViewIfNeeded();
+
+  const richTextField = fieldContainer.locator('[contenteditable="true"]');
+  // Wait for the contenteditable to be visible and attached
+  await richTextField.waitFor({ state: 'visible', timeout: 10000 });
+
+  // Click to focus, then type using keyboard (more reliable than fill for contenteditable)
   await richTextField.click();
-  await richTextField.fill(text);
+  await page.keyboard.type(text);
 }
 
 /**

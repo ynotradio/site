@@ -68,6 +68,25 @@ export async function selectDropdownOption(
 }
 
 /**
+ * Get the ordinal suffix for a day (1st, 2nd, 3rd, etc.)
+ */
+function getOrdinalSuffix(day: number): string {
+  if (day >= 11 && day <= 13) {
+    return 'th';
+  }
+  switch (day % 10) {
+    case 1:
+      return 'st';
+    case 2:
+      return 'nd';
+    case 3:
+      return 'rd';
+    default:
+      return 'th';
+  }
+}
+
+/**
  * Fill a Payload CMS date field
  * @param page - Playwright page object
  * @param fieldId - ID of the date field (e.g., 'field-date')
@@ -86,10 +105,14 @@ export async function fillPayloadDateField(
   // Wait for the date picker dialog
   await page.waitForSelector('[role="dialog"]', { state: 'visible', timeout: 10000 });
 
-  // Select the date
+  // Select the date - use specific ordinal suffix to avoid matching multiple dates
+  // The aria-label format is "Choose Saturday, January 3rd, 2026"
   const day = date.getDate();
+  const ordinal = getOrdinalSuffix(day);
+  // Use \b word boundary to match exact day number (e.g., \b3rd\b won't match 13th or 23rd)
+  const dayPattern = `\\b${day}${ordinal}\\b`;
   await page
-    .getByRole('option', { name: new RegExp(`Choose.*${day}.*${date.getFullYear()}`) })
+    .getByRole('option', { name: new RegExp(`Choose.*${dayPattern}.*${date.getFullYear()}`) })
     .click();
 }
 

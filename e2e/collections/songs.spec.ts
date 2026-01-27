@@ -3,6 +3,7 @@ import {
   captureScreenshot,
   generateUniqueId,
   checkForPhpErrors,
+  fillPayloadDateField,
 } from '../utils/test-helpers';
 import {
   navigateToPayloadCollectionCreate,
@@ -19,7 +20,7 @@ import {
  * E2E Integration Test: Songs Collection (New Music)
  *
  * Tests creating songs in Payload CMS and verifying they appear on music.php.
- * Songs require an artist and must have featureOnNewMusic enabled to appear.
+ * Songs require an artist, a releaseDate, and must have featureOnNewMusic enabled to appear.
  *
  * Note: Authentication is handled by the setup project - tests run with saved session state.
  */
@@ -60,6 +61,9 @@ test.describe('Songs Collection (New Music)', () => {
 
       // Fill slug (required)
       await fillPayloadSlugField(page, uniqueSongSlug);
+
+      // Set release date (today so it appears in the last 6 months filter)
+      await fillPayloadDateField(page, 'field-releaseDate', new Date());
 
       // Select the artist we just created
       const artistField = page.locator('#field-artist');
