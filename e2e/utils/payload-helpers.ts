@@ -87,3 +87,94 @@ export async function fillPayloadTextField(
 ): Promise<void> {
   await page.locator(`#${fieldId}`).fill(value);
 }
+
+/**
+ * Fill a Payload CMS checkbox field
+ * @param page - Playwright page object
+ * @param fieldId - ID of the checkbox field (e.g., 'field-onAir')
+ * @param checked - Whether to check or uncheck the checkbox
+ */
+export async function fillPayloadCheckboxField(
+  page: Page,
+  fieldId: string,
+  checked: boolean,
+): Promise<void> {
+  const checkbox = page.locator(`#${fieldId}`);
+  const isCurrentlyChecked = await checkbox.isChecked();
+  if (isCurrentlyChecked !== checked) {
+    await checkbox.click();
+  }
+}
+
+/**
+ * Fill a Payload CMS time field (text input for time in HH:MM format)
+ * @param page - Playwright page object
+ * @param fieldId - ID of the time field (e.g., 'field-startTime')
+ * @param time - Time value in HH:MM format (e.g., '14:00')
+ */
+export async function fillPayloadTimeField(
+  page: Page,
+  fieldId: string,
+  time: string,
+): Promise<void> {
+  await page.locator(`#${fieldId}`).fill(time);
+}
+
+/**
+ * Fill a Payload CMS rich text field (Lexical editor)
+ * Types content into the rich text editor
+ * @param page - Playwright page object
+ * @param fieldId - ID of the rich text field container (e.g., 'field-content')
+ * @param text - Plain text content to enter
+ */
+export async function fillPayloadRichTextField(
+  page: Page,
+  fieldId: string,
+  text: string,
+): Promise<void> {
+  // Payload uses Lexical editor - click on the contenteditable and type
+  const richTextField = page.locator(`#${fieldId} [contenteditable="true"]`);
+  await richTextField.click();
+  await richTextField.fill(text);
+}
+
+/**
+ * Click Publish button and wait for publish to complete
+ * Used for collections with drafts enabled (like Posts)
+ * @param page - Playwright page object
+ * @param collectionName - Name of the collection for URL verification
+ */
+export async function clickPayloadPublish(page: Page, collectionName: string): Promise<void> {
+  // Payload's publish button is in a dropdown
+  await page.getByRole('button', { name: /publish/i }).click();
+  // Wait for the document to be saved/published
+  await Promise.race([
+    page.waitForURL(`**/${collectionName}/**`, { timeout: 30000 }),
+    page.getByText(/published successfully|successfully published|saved successfully/i).waitFor({
+      timeout: 30000,
+    }),
+  ]);
+}
+
+/**
+ * Navigate to the legacy PHP site with PostgreSQL feature flag enabled
+ * @param page - Playwright page object
+ * @param phpPage - PHP page path (e.g., 'concerts.php', 'deejays.php')
+ * @param featureFlag - Feature flag name (e.g., 'use_postgres_concerts')
+ * @returns Response from the navigation
+ */
+export async function navigateToLegacySiteWithPostgres(
+  page: Page,
+  phpPage: string,
+  featureFlag: string,
+): Promise<Response | null> {
+  // The setup-e2e-env.sh already sets USE_POSTGRES_* env vars,
+  // but we can also use the URL parameter as a fallback
+  const response = await page.goto(`http://localhost:8080/${phpPage}?ff=${featureFlag}`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+  return response;
+}
+
+type Response = Awaited<ReturnType<Page['goto']>>;
