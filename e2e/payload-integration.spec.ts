@@ -98,8 +98,8 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       });
 
       // Since we're authenticated via setup, we should see the dashboard, not login
-      // Look for dashboard elements instead of login form
-      const dashboardHeading = page.getByRole('heading', { name: /dashboard/i });
+      // Look for dashboard elements - the main heading is "Y-Not Radio CMS"
+      const dashboardHeading = page.getByRole('heading', { name: /y-not radio cms/i });
       await expect(dashboardHeading).toBeVisible({ timeout: 10000 });
 
       await captureScreenshot(page, testInfo, 'Payload Dashboard');

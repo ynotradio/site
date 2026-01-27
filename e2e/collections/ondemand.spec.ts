@@ -8,6 +8,8 @@ import {
 import {
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   fillPayloadRelationshipField,
   clickPayloadSave,
   waitForPayloadSave,
@@ -29,8 +31,9 @@ test.describe('On Demand Collection', () => {
   test('should create On Demand recording and verify it appears on ondemand.php', async ({
     page,
   }, testInfo) => {
-    const uniqueHeadline = `E2E On Demand Recording ${generateUniqueId()}`;
-    const uniqueDescription = `This is an E2E test on-demand description - ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueHeadline = `E2E On Demand Recording ${uniqueId}`;
+    const uniqueDescription = `This is an E2E test on-demand description - ${uniqueId}`;
 
     await test.step('Navigate directly to create On Demand form', async () => {
       await navigateToPayloadCollectionCreate(page, 'ondemand');
@@ -96,14 +99,18 @@ test.describe('On Demand Collection', () => {
   test('should create On Demand with associated artist/songs and verify on page', async ({
     page,
   }, testInfo) => {
-    const uniqueArtistName = `E2E OnDemand Artist ${generateUniqueId()}`;
-    const uniqueSongTitle = `E2E OnDemand Song ${generateUniqueId()}`;
-    const uniqueHeadline = `E2E On Demand with Assoc ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueArtistName = `E2E OnDemand Artist ${uniqueId}`;
+    const uniqueArtistSlug = generateSlug(uniqueArtistName);
+    const uniqueSongTitle = `E2E OnDemand Song ${uniqueId}`;
+    const uniqueSongSlug = generateSlug(uniqueSongTitle);
+    const uniqueHeadline = `E2E On Demand with Assoc ${uniqueId}`;
 
     await test.step('Create an artist', async () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
 
       await fillPayloadTextField(page, 'field-name', uniqueArtistName);
+      await fillPayloadSlugField(page, uniqueArtistSlug);
 
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'artists');
@@ -115,6 +122,7 @@ test.describe('On Demand Collection', () => {
       await navigateToPayloadCollectionCreate(page, 'songs');
 
       await fillPayloadTextField(page, 'field-title', uniqueSongTitle);
+      await fillPayloadSlugField(page, uniqueSongSlug);
 
       // Select the artist we just created
       const artistField = page.locator('#field-artist');

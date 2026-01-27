@@ -3,6 +3,8 @@ import { captureScreenshot, generateUniqueId, checkForPhpErrors } from '../utils
 import {
   navigateToPayloadCollectionCreate,
   fillPayloadTextField,
+  fillPayloadSlugField,
+  generateSlug,
   clickPayloadSave,
   waitForPayloadSave,
   fillPayloadCheckboxField,
@@ -22,13 +24,18 @@ test.describe('DJs Collection', () => {
   test('should create DJ via Payload UI and verify it appears on deejays.php', async ({
     page,
   }, testInfo) => {
-    const uniquePersonName = `E2E DJ Person ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniquePersonName = `E2E DJ Person ${uniqueId}`;
+    const uniquePersonSlug = generateSlug(uniquePersonName);
 
     await test.step('Create a person first (required for DJ)', async () => {
       await navigateToPayloadCollectionCreate(page, 'people');
 
       // Fill person name
       await fillPayloadTextField(page, 'field-name', uniquePersonName);
+
+      // Fill slug (required)
+      await fillPayloadSlugField(page, uniquePersonSlug);
 
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'people');
