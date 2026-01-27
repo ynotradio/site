@@ -11,7 +11,7 @@ import { loginToPayload } from './utils/payload-auth';
  * @see https://playwright.dev/docs/auth
  */
 
-const authFile = path.join(__dirname, '../.auth/payload-session.json');
+const authFile = path.join(__dirname, '.auth/payload-session.json');
 
 setup('authenticate with Payload CMS', async ({ page }) => {
   // Log in to Payload CMS
