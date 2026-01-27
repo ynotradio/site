@@ -49,7 +49,7 @@ test.describe('On Demand Collection', () => {
       await fillPayloadTextField(page, 'field-headline', uniqueHeadline);
 
       // Fill description (rich text)
-      await fillPayloadRichTextField(page, 'field-description', uniqueDescription);
+      await fillPayloadRichTextField(page, 'description', uniqueDescription);
 
       // Optionally associate with DJs (if seeded data exists)
       try {

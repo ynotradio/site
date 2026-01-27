@@ -2,8 +2,15 @@
 
 export PATH="/usr/bin:$PATH"
 
+# Skip pre-commit hook if HUSKY=0 or in CI
+if [ "$HUSKY" = "0" ] || [ -n "$CI" ]; then
+  exit 0
+fi
+
 # Load nvm and use the correct node version
-. ~/.nvm/nvm.sh
-nvm use 22
+if [ -f ~/.nvm/nvm.sh ]; then
+  . ~/.nvm/nvm.sh
+  nvm use 22 2>/dev/null || true
+fi
 
 yarn lint-staged

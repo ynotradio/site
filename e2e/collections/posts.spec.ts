@@ -54,7 +54,7 @@ test.describe('Posts Collection', () => {
       await fillPayloadDateField(page, 'field-endDate', endDate);
 
       // Fill content (required rich text field)
-      await fillPayloadRichTextField(page, 'field-content', uniqueContent);
+      await fillPayloadRichTextField(page, 'content', uniqueContent);
 
       await captureScreenshot(page, testInfo, '02-Posts-Filled-Form');
     });
@@ -113,7 +113,7 @@ test.describe('Posts Collection', () => {
       await fillPayloadDateField(page, 'field-endDate', endDate);
 
       // Fill content
-      await fillPayloadRichTextField(page, 'field-content', uniqueContent);
+      await fillPayloadRichTextField(page, 'content', uniqueContent);
 
       await captureScreenshot(page, testInfo, '01-Posts-Slug-Form');
     });

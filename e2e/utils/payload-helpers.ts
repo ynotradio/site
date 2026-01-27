@@ -142,21 +142,25 @@ export async function fillPayloadTimeField(
  * Fill a Payload CMS rich text field (Lexical editor)
  * Types content into the rich text editor
  * @param page - Playwright page object
- * @param fieldId - ID of the rich text field container (e.g., 'field-content')
+ * @param fieldName - Name of the field (e.g., 'note', 'content', 'description')
  * @param text - Plain text content to enter
  */
 export async function fillPayloadRichTextField(
   page: Page,
-  fieldId: string,
+  fieldName: string,
   text: string,
 ): Promise<void> {
-  // Payload uses Lexical editor - click on the contenteditable and type
-  // First, scroll the field into view and wait for it to be ready
-  const fieldContainer = page.locator(`#${fieldId}`);
-  await fieldContainer.scrollIntoViewIfNeeded();
+  // Payload uses Lexical editor with a label that has for="field-{name}"
+  // The actual contenteditable is inside a .rich-text-lexical wrapper near the label
+  // Find the field by locating the label and finding the contenteditable in the same wrapper
+  const fieldLabel = page.locator(`label[for="field-${fieldName}"]`);
+  const fieldWrapper = fieldLabel.locator('..').locator('..');
 
-  const richTextField = fieldContainer.locator('[contenteditable="true"]');
-  // Wait for the contenteditable to be visible and attached
+  // Scroll the wrapper into view
+  await fieldWrapper.scrollIntoViewIfNeeded();
+
+  // Find the Lexical contenteditable within this field wrapper
+  const richTextField = fieldWrapper.locator('[data-lexical-editor="true"]');
   await richTextField.waitFor({ state: 'visible', timeout: 10000 });
 
   // Click to focus, then type using keyboard (more reliable than fill for contenteditable)

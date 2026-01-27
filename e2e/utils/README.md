@@ -55,8 +55,8 @@ await fillPayloadCheckboxField(page, 'field-onAir', true);
 // Fill time fields (HH:MM format)
 await fillPayloadTimeField(page, 'field-startTime', '14:00');
 
-// Fill rich text fields
-await fillPayloadRichTextField(page, 'field-content', 'Hello world');
+// Fill rich text fields (use field name without 'field-' prefix)
+await fillPayloadRichTextField(page, 'content', 'Hello world');
 
 // Save and wait for confirmation
 await clickPayloadSave(page);

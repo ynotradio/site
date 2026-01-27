@@ -96,7 +96,7 @@ test.describe('CD of the Week Collection', () => {
       await recordOption.click();
 
       // Fill review content (required rich text)
-      await fillPayloadRichTextField(page, 'field-review', uniqueReview);
+      await fillPayloadRichTextField(page, 'review', uniqueReview);
 
       // Fill date (required)
       const reviewDate = new Date();

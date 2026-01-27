@@ -54,7 +54,7 @@ test.describe('Shows Collection', () => {
       }
 
       // Fill a unique note to identify this show
-      await fillPayloadRichTextField(page, 'field-note', uniqueShowNote);
+      await fillPayloadRichTextField(page, 'note', uniqueShowNote);
 
       await captureScreenshot(page, testInfo, '02-Shows-Filled-Form');
     });
