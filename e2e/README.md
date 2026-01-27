@@ -23,10 +23,16 @@ The E2E tests verify:
 1. ✅ Legacy PHP site loads successfully (HTTP 200)
 2. ✅ No PHP errors on page load
 3. ✅ Database connectivity (MySQL connection works)
-4: ✅ Seeded data is accessible
+4. ✅ Seeded data is accessible
 5. ✅ No critical JavaScript console errors
 6. ✅ **Payload CMS integration** - Create concert via Payload admin UI and verify it appears on legacy site
 7. ✅ **CRUD operations** - Test data flow from Payload CMS to legacy PHP site
+8. ✅ **Content Model Tests** - Tests for all major content types:
+   - **Venues**: Create venue in Payload → verify in collection list
+   - **Artists**: Create artist in Payload → verify in collection list
+   - **Shows**: Create show in Payload → verify on schedule.php
+   - **DJs**: Create DJ with Person → verify on deejays.php
+   - **Posts**: Create and publish post → verify on homepage (index.php)
 
 **Future enhancements**:
 - Full authentication flows
@@ -84,10 +90,17 @@ See `.github/workflows/e2e.yml` for the complete CI configuration.
 ## Test Files
 
 - `crud-integration.spec.ts` - Tests for legacy PHP site load and database connectivity
-- `payload-integration.spec.ts` - **NEW**: Payload CMS integration test that creates a concert and verifies it appears on the legacy site
+- `payload-integration.spec.ts` - Payload CMS integration test that creates a concert and verifies it appears on the legacy site
+- `content-models-integration.spec.ts` - **NEW**: Comprehensive tests for all content models (Venues, Artists, Shows, DJs, Posts)
 - `global-setup.ts` - Global test setup (runs Payload migrations and seeds database)
 - `global-teardown.ts` - Global test teardown (cleanup)
 - `playwright.config.ts` - Playwright configuration (browser settings, reporters, etc.)
+
+### Helper Utilities (`utils/`)
+
+- `payload-auth.ts` - Authentication helper for Payload CMS admin interface
+- `payload-helpers.ts` - Payload CMS form interaction helpers (text fields, relationship fields, checkboxes, time fields, rich text, etc.)
+- `test-helpers.ts` - General test utilities (screenshots, date helpers, unique ID generation, PHP error checking)
 
 ## Troubleshooting
 
