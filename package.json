@@ -52,7 +52,7 @@
     "@benborla29/mcp-server-mysql": "^2.0.7",
     "@chromatic-com/storybook": "^5.0.0",
     "@netlify/plugin-nextjs": "^5.15.5",
-    "@playwright/test": "^1.57.0",
+    "@playwright/test": "^1.58.0",
     "@storybook/addon-a11y": "^10.1.11",
     "@storybook/addon-docs": "^10.1.11",
     "@storybook/addon-onboarding": "^10.1.11",
