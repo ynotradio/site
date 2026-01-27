@@ -203,9 +203,15 @@ export async function navigateToLegacySiteWithPostgres(
  */
 export async function fillPayloadSlugField(page: Page, value: string): Promise<void> {
   // First, click the Unlock button to enable the slug field
+  // (with short timeout since it may not exist)
   const unlockButton = page.getByRole('button', { name: /unlock/i });
-  if (await unlockButton.isVisible()) {
-    await unlockButton.click();
+  try {
+    const buttonCount = await unlockButton.count();
+    if (buttonCount > 0 && (await unlockButton.isVisible({ timeout: 1000 }))) {
+      await unlockButton.click();
+    }
+  } catch {
+    // Unlock button not found or not visible - field may already be unlocked
   }
 
   // Now fill the slug field
@@ -220,11 +226,10 @@ export async function fillPayloadSlugField(page: Page, value: string): Promise<v
 export function generateSlug(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special chars except hyphens
+    .replace(/[^a-z0-9\s-]/g, '') // Remove all non-alphanumeric chars except spaces and hyphens
     .replace(/\s+/g, '-') // Replace spaces with hyphens
     .replace(/-+/g, '-') // Replace multiple hyphens with single
-    .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-    .trim();
+    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
 }
 
 type Response = Awaited<ReturnType<Page['goto']>>;
