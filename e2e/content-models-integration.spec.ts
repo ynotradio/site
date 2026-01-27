@@ -180,10 +180,6 @@ test.describe('Content Models Integration Tests', () => {
         await fillPayloadRichTextField(page, 'field-note', uniqueShowNote);
 
         await captureScreenshot(page, testInfo, '03-Shows-Filled-Form');
-
-        // Store for later verification
-        // eslint-disable-next-line no-param-reassign
-        (testInfo as any).uniqueShowNote = uniqueShowNote;
       });
 
       await test.step('Save the show', async () => {
@@ -208,8 +204,7 @@ test.describe('Content Models Integration Tests', () => {
         expect(errors).toHaveLength(0);
 
         // Verify the unique show note we just created appears on the page
-        const { uniqueShowNote: showNote } = testInfo as any;
-        expect(pageContent).toContain(showNote);
+        expect(pageContent).toContain(uniqueShowNote);
 
         await captureScreenshot(page, testInfo, '05-Shows-On-Schedule-Page');
       });
@@ -242,10 +237,6 @@ test.describe('Content Models Integration Tests', () => {
         await waitForPayloadSave(page, 'people');
 
         await captureScreenshot(page, testInfo, '02-DJs-Person-Created');
-
-        // Store person name for later
-        // eslint-disable-next-line no-param-reassign
-        (testInfo as any).uniquePersonName = uniquePersonName;
       });
 
       await test.step('Navigate to DJs collection', async () => {
@@ -300,8 +291,7 @@ test.describe('Content Models Integration Tests', () => {
         expect(errors).toHaveLength(0);
 
         // Verify the DJ (person name) appears on the page
-        const { uniquePersonName: personName } = testInfo as any;
-        expect(pageContent).toContain(personName);
+        expect(pageContent).toContain(uniquePersonName);
 
         await captureScreenshot(page, testInfo, '06-DJs-On-Deejays-Page');
       });
@@ -347,12 +337,6 @@ test.describe('Content Models Integration Tests', () => {
         await fillPayloadRichTextField(page, 'field-content', uniqueContent);
 
         await captureScreenshot(page, testInfo, '03-Posts-Filled-Form');
-
-        // Store for later verification
-        // eslint-disable-next-line no-param-reassign
-        (testInfo as any).uniqueHeadline = uniqueHeadline;
-        // eslint-disable-next-line no-param-reassign
-        (testInfo as any).uniqueContent = uniqueContent;
       });
 
       await test.step('Publish the post', async () => {
@@ -377,8 +361,7 @@ test.describe('Content Models Integration Tests', () => {
         expect(errors).toHaveLength(0);
 
         // Verify the unique headline we just created appears on the page
-        const { uniqueHeadline: headline } = testInfo as any;
-        expect(pageContent).toContain(headline);
+        expect(pageContent).toContain(uniqueHeadline);
 
         await captureScreenshot(page, testInfo, '05-Posts-On-Homepage');
       });
