@@ -87,10 +87,10 @@ export default defineConfig({
 
   // Web server configuration
   webServer: {
-    command: 'yarn dev',
+    command: 'yarn --ignore-engines dev',
     url: 'http://localhost:3000/admin',
     timeout: 180 * 1000, // 3 minutes for slow Payload initialization
-    reuseExistingServer: !process.env.CI, // Reuse existing server in local dev
+    reuseExistingServer: true, // Always reuse if already running (started by setup script)
     stdout: 'pipe',
     stderr: 'pipe',
   },

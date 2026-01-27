@@ -28,8 +28,10 @@ test.describe('Posts Collection', () => {
   test('should create post via Payload UI and verify it appears on homepage', async ({
     page,
   }, testInfo) => {
-    const uniqueHeadline = `E2E Test Story ${generateUniqueId()}`;
-    const uniqueContent = `This is test content created by E2E tests - ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueHeadline = `E2E Test Story ${uniqueId}`;
+    const uniqueSlug = `e2e-test-story-${uniqueId}`;
+    const uniqueContent = `This is test content created by E2E tests - ${uniqueId}`;
 
     await test.step('Navigate directly to create post form', async () => {
       await navigateToPayloadCollectionCreate(page, 'posts');
@@ -39,6 +41,9 @@ test.describe('Posts Collection', () => {
     await test.step('Fill post form', async () => {
       // Fill headline (required)
       await fillPayloadTextField(page, 'field-headline', uniqueHeadline);
+
+      // Fill slug (required - must be URL-friendly)
+      await fillPayloadTextField(page, 'field-slug', uniqueSlug);
 
       // Fill start date (today so it's immediately visible)
       const startDate = new Date();
@@ -85,9 +90,10 @@ test.describe('Posts Collection', () => {
   test('should create post with custom slug and verify standalone page loads', async ({
     page,
   }, testInfo) => {
-    const uniqueSlug = `e2e-test-post-${generateUniqueId()}`;
-    const uniqueHeadline = `E2E Standalone Page ${generateUniqueId()}`;
-    const uniqueContent = `This is standalone page content - ${generateUniqueId()}`;
+    const uniqueId = generateUniqueId();
+    const uniqueSlug = `e2e-test-post-${uniqueId}`;
+    const uniqueHeadline = `E2E Standalone Page ${uniqueId}`;
+    const uniqueContent = `This is standalone page content - ${uniqueId}`;
 
     await test.step('Navigate directly to create post form', async () => {
       await navigateToPayloadCollectionCreate(page, 'posts');
