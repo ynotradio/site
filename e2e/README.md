@@ -16,6 +16,16 @@ The E2E tests use:
 
 All services run in Docker containers managed by Docker Compose.
 
+### Authentication Strategy
+
+The tests use Playwright's [authentication best practices](https://playwright.dev/docs/auth):
+
+1. **Setup Project**: The `auth.setup.ts` runs first, logs in to Payload CMS once, and saves the session state
+2. **Shared Session**: All other tests reuse this saved session, avoiding repeated logins
+3. **Direct Navigation**: Tests navigate directly to collection create pages for efficiency
+
+This dramatically reduces test execution time by eliminating redundant login operations.
+
 ## Test Scope
 
 The E2E tests verify:
@@ -23,10 +33,11 @@ The E2E tests verify:
 1. ✅ Legacy PHP site loads successfully (HTTP 200)
 2. ✅ No PHP errors on page load
 3. ✅ Database connectivity (MySQL connection works)
-4: ✅ Seeded data is accessible
+4. ✅ Seeded data is accessible
 5. ✅ No critical JavaScript console errors
 6. ✅ **Payload CMS integration** - Create concert via Payload admin UI and verify it appears on legacy site
 7. ✅ **CRUD operations** - Test data flow from Payload CMS to legacy PHP site
+8. ✅ **Content Model Tests** - Individual test files for each collection (see `collections/` directory)
 
 **Future enhancements**:
 - Full authentication flows
@@ -83,11 +94,35 @@ See `.github/workflows/e2e.yml` for the complete CI configuration.
 
 ## Test Files
 
+### Core Tests
+
+- `auth.setup.ts` - **Authentication setup** - Logs in once and saves session state for all tests
 - `crud-integration.spec.ts` - Tests for legacy PHP site load and database connectivity
-- `payload-integration.spec.ts` - **NEW**: Payload CMS integration test that creates a concert and verifies it appears on the legacy site
+- `payload-integration.spec.ts` - Payload CMS integration test that creates a concert and verifies it appears on the legacy site
 - `global-setup.ts` - Global test setup (runs Payload migrations and seeds database)
-- `global-teardown.ts` - Global test teardown (cleanup)
 - `playwright.config.ts` - Playwright configuration (browser settings, reporters, etc.)
+
+### Collection-Specific Tests (`collections/`)
+
+Each Payload collection has its own test file for easier maintenance and focused testing:
+
+| Test File | Collection | PHP Page | What It Tests |
+|-----------|------------|----------|---------------|
+| `venues.spec.ts` | Venues | - | Create venue → verify in Payload list |
+| `artists.spec.ts` | Artists | - | Create artist → verify in Payload list |
+| `shows.spec.ts` | Shows | schedule.php | Create show → verify on schedule page |
+| `djs.spec.ts` | DJs | deejays.php | Create DJ with Person → verify on DJs page |
+| `posts.spec.ts` | Posts | index.php, pages.php | Create post → verify on homepage and standalone page |
+| `ads.spec.ts` | Ads | - | Create ad → verify in Payload list |
+| `songs.spec.ts` | Songs | music.php | Create song with artist → verify on New Music page |
+| `cdoftheweek.spec.ts` | CD of the Week | cdoftheweek.php | Create review with record/artist → verify on CD of the Week page |
+| `ondemand.spec.ts` | On Demand | ondemand.php | Create recording with associations → verify on On Demand page |
+
+### Helper Utilities (`utils/`)
+
+- `payload-auth.ts` - Authentication helper for Payload CMS admin interface
+- `payload-helpers.ts` - Payload CMS form interaction helpers (text fields, relationship fields, checkboxes, time fields, rich text, etc.)
+- `test-helpers.ts` - General test utilities (screenshots, date helpers, unique ID generation, PHP error checking)
 
 ## Troubleshooting
 

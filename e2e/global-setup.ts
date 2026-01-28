@@ -74,7 +74,7 @@ async function globalSetup() {
       try {
         // Seed the database (migrations happen automatically when Payload starts)
         console.log('🌱 Seeding Payload database...');
-        execSync('yarn seed:payload', {
+        execSync('yarn --ignore-engines seed:payload', {
           cwd: projectRoot,
           stdio: 'inherit',
           timeout: 60000,

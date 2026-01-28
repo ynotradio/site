@@ -1,0 +1,19 @@
+# docker-compose.ci.yml
+# CI-specific override to use pre-built images for faster startup
+# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d
+
+services:
+  # MySQL uses official image - no custom build needed
+  mysql:
+    image: mysql:8.0
+    build: !reset null
+    
+  # PHP-FPM uses pre-built image from GHCR
+  phpfpm:
+    image: ghcr.io/ynotradio/site/phpfpm-dev:latest
+    build: !reset null
+    
+  # PostgreSQL uses pre-built image from GHCR
+  postgres:
+    image: ghcr.io/ynotradio/site/postgres-seeded:latest
+    build: !reset null

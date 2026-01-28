@@ -28,8 +28,13 @@ import {
   clickPayloadCreateNew,
   fillPayloadRelationshipField,
   fillPayloadTextField,
+  fillPayloadCheckboxField,
+  fillPayloadTimeField,
+  fillPayloadRichTextField,
   clickPayloadSave,
+  clickPayloadPublish,
   waitForPayloadSave,
+  navigateToLegacySiteWithPostgres,
 } from './utils/payload-helpers';
 
 // Navigate to a collection
@@ -44,9 +49,24 @@ await fillPayloadRelationshipField(page, 'field-artists', 0);
 // Fill text fields
 await fillPayloadTextField(page, 'field-ticketInfo', 'Test info');
 
+// Fill checkbox fields
+await fillPayloadCheckboxField(page, 'field-onAir', true);
+
+// Fill time fields (HH:MM format)
+await fillPayloadTimeField(page, 'field-startTime', '14:00');
+
+// Fill rich text fields (use field name without 'field-' prefix)
+await fillPayloadRichTextField(page, 'content', 'Hello world');
+
 // Save and wait for confirmation
 await clickPayloadSave(page);
 await waitForPayloadSave(page, 'concerts');
+
+// For collections with drafts (e.g., Posts), use publish
+await clickPayloadPublish(page, 'posts');
+
+// Navigate to legacy site with PostgreSQL feature flag
+await navigateToLegacySiteWithPostgres(page, 'schedule.php', 'use_postgres_schedule');
 ```
 
 ### `test-helpers.ts`

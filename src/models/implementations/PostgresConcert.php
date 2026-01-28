@@ -149,7 +149,7 @@ class PostgresConcert implements Concert {
                 LIMIT 1
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
-            WHERE c.date >= CURRENT_DATE
+            WHERE c.date::date >= CURRENT_DATE
             GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.featured, 
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date ASC
@@ -195,7 +195,7 @@ class PostgresConcert implements Concert {
                 LIMIT 1
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
-            WHERE c.date >= CURRENT_DATE 
+            WHERE c.date::date >= CURRENT_DATE 
                 AND c.featured = true
                 AND a_first_photo.url IS NOT NULL
                 AND a_first_photo.url LIKE 'http%'

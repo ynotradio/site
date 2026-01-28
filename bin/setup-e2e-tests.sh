@@ -44,7 +44,13 @@ fi
 # Step 4: Start Docker services
 echo ""
 echo "🐳 Step 4/7: Starting Docker services..."
-docker compose up -d postgres mysql phpfpm apache
+# Use CI-specific compose override if in CI environment (uses pre-built images)
+if [ "${CI:-false}" = "true" ] && [ -f "docker-compose.ci.yml" ]; then
+  echo "Using pre-built Docker images (CI mode)"
+  docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
+else
+  docker compose up -d postgres mysql phpfpm apache
+fi
 echo "Waiting for services to be ready..."
 
 # Step 5: Wait for services
