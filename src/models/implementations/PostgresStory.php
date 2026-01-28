@@ -76,8 +76,8 @@ class PostgresStory implements Story {
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
             WHERE p._status = 'published'
-                AND p.start_date <= CURRENT_DATE
-                AND p.end_date >= CURRENT_DATE
+                AND p.start_date::date <= CURRENT_DATE
+                AND p.end_date::date >= CURRENT_DATE
             ORDER BY p.priority ASC, p.id ASC
         ";
         
@@ -198,7 +198,7 @@ class PostgresStory implements Story {
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
             WHERE p._status = 'published'
-                AND p.end_date >= CURRENT_DATE
+                AND p.end_date::date >= CURRENT_DATE
             ORDER BY p.priority ASC
         ");
         

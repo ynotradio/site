@@ -64,7 +64,7 @@ class PostgresMusic implements Music {
             FROM songs s
             LEFT JOIN artists a ON s.artist_id = a.id
             WHERE s.feature_on_new_music = true
-                AND s.release_date > CURRENT_DATE - INTERVAL '6 months'
+                AND s.release_date::date > CURRENT_DATE - INTERVAL '6 months'
             ORDER BY s.release_date DESC, a.name
         ");
         
@@ -91,7 +91,7 @@ class PostgresMusic implements Music {
             FROM songs s
             LEFT JOIN artists a ON s.artist_id = a.id
             WHERE s.feature_on_new_music = true
-                AND s.release_date > CURRENT_DATE - INTERVAL '6 months'
+                AND s.release_date::date > CURRENT_DATE - INTERVAL '6 months'
             ORDER BY s.release_date DESC, a.name
         ");
         

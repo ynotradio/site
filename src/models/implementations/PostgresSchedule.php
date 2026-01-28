@@ -141,7 +141,7 @@ class PostgresSchedule implements Schedule {
                 'n' as deleted
             FROM shows s
             LEFT JOIN djs d ON s.host_id = d.id
-            WHERE s.date >= CURRENT_DATE
+            WHERE s.date::date >= CURRENT_DATE
             ORDER BY s.date, s.start_time
         ";
         
@@ -150,9 +150,9 @@ class PostgresSchedule implements Schedule {
             // Use a subquery to limit by distinct dates
             $query = "
                 WITH limited_dates AS (
-                    SELECT DISTINCT date
+                    SELECT DISTINCT date::date as date
                     FROM shows
-                    WHERE date >= CURRENT_DATE
+                    WHERE date::date >= CURRENT_DATE
                     ORDER BY date
                     LIMIT :limit
                 )
@@ -174,7 +174,7 @@ class PostgresSchedule implements Schedule {
                     'n' as deleted
                 FROM shows s
                 LEFT JOIN djs d ON s.host_id = d.id
-                WHERE s.date IN (SELECT date FROM limited_dates)
+                WHERE s.date::date IN (SELECT date FROM limited_dates)
                 ORDER BY s.date, s.start_time
             ";
         }
