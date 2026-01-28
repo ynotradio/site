@@ -53,8 +53,8 @@ test.describe('Shows Collection', () => {
 
     await test.step('Verify show exists in Payload collection', async () => {
       await navigateToPayloadCollection(page, 'shows');
-      // The list should have at least one item (the one we just created)
-      await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10000 });
+      // The list should have at least one item with the time we set
+      await expect(page.getByText('14:00')).toBeVisible({ timeout: 10000 });
       await captureScreenshot(page, testInfo, '04-Shows-In-List');
     });
   });

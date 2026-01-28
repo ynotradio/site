@@ -111,8 +111,8 @@ test.describe('CD of the Week Collection', () => {
 
     await test.step('Verify CD of the Week exists in Payload collection', async () => {
       await navigateToPayloadCollection(page, 'cdoftheweek');
-      // The list should have at least one item
-      await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10000 });
+      // Verify the album we created appears in the list
+      await expect(page.getByText(uniqueAlbumTitle)).toBeVisible({ timeout: 10000 });
       await captureScreenshot(page, testInfo, '06-COTW-In-List');
     });
   });

@@ -75,8 +75,8 @@ test.describe('DJs Collection', () => {
 
     await test.step('Verify DJ exists in Payload collection', async () => {
       await navigateToPayloadCollection(page, 'djs');
-      // The list should have at least one item
-      await expect(page.locator('table tbody tr').first()).toBeVisible({ timeout: 10000 });
+      // Verify the DJ we created appears in the list (the person name should be visible)
+      await expect(page.getByText(uniquePersonName)).toBeVisible({ timeout: 10000 });
       await captureScreenshot(page, testInfo, '05-DJs-In-List');
     });
   });
