@@ -6,7 +6,7 @@ if (session_status() === PHP_SESSION_NONE) {
 error_reporting(E_ALL & ~E_NOTICE);
 
 // Use absolute paths for including vendor and env loader
-$root_path = $_SERVER['DOCUMENT_ROOT'] ?: realpath(__DIR__ . '/../..');
+$root_path = $_SERVER['DOCUMENT_ROOT'] ?: dirname(__DIR__);
 $vendor_path = $root_path . '/vendor/autoload.php';
 $env_loader_path = $root_path . '/partials/__env_loader.php';
 
@@ -167,7 +167,7 @@ function on_air(){
     $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
     
     // Get today's schedule
-    $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
+    $todaySchedule = $scheduleModel->getByDate(gmdate('Y-m-d')); // Use UTC date to match database timezone
     
     // Find current time slot
     $currentTime = date('H:i:s');
