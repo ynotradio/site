@@ -35,6 +35,7 @@ interface LastImportIds {
   cdotw: number;
   ads: number;
   djs: number;
+  schedule: number;
   lastUpdated: string;
 }
 
@@ -166,6 +167,7 @@ async function getNewRecordCounts(
     { key: 'ondemand', table: 'ondemand' },
     { key: 'cdotw', table: 'cdotw' },
     { key: 'ads', table: 'ads' },
+    { key: 'schedule', table: 'schedule' },
   ];
 
   for (const { key, table } of tables) {
@@ -300,6 +302,7 @@ async function main() {
       cdotw: 0,
       ads: 0,
       djs: 0,
+      schedule: 0,
       lastUpdated: new Date().toISOString(),
     };
   } else {
@@ -317,6 +320,7 @@ async function main() {
         cdotw: 0,
         ads: 0,
         djs: 0,
+        schedule: 0,
         lastUpdated: new Date().toISOString(),
       };
     }
@@ -331,6 +335,7 @@ async function main() {
   console.log(`   CD of Week: ${lastIds.cdotw}`);
   console.log(`   Ads:        ${lastIds.ads}`);
   console.log(`   DJs:        ${lastIds.djs}`);
+  console.log(`   Schedule:   ${lastIds.schedule}`);
   console.log();
 
   // Connect to MySQL using the new config system
@@ -351,6 +356,7 @@ async function main() {
   console.log(`   CD of Week: ${newCounts.cdotw}`);
   console.log(`   Ads:        ${newCounts.ads}`);
   console.log(`   DJs:        ${newCounts.djs}`);
+  console.log(`   Schedule:   ${newCounts.schedule}`);
   console.log(`   TOTAL:      ${totalNew}`);
   console.log();
 
@@ -371,6 +377,7 @@ async function main() {
     { key: 'cdotw', script: 'bin/migrations/importCdotw.ts', count: newCounts.cdotw },
     { key: 'ads', script: 'bin/migrations/importAds.ts', count: newCounts.ads },
     { key: 'djs', script: 'bin/migrations/importDJs.ts', count: newCounts.djs },
+    { key: 'schedule', script: 'bin/migrations/importSchedule.ts', count: newCounts.schedule },
   ];
 
   for (const { key, script, count } of imports) {
