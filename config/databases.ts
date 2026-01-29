@@ -73,6 +73,47 @@ function loadEnvFile(filename: string): void {
 }
 
 /**
+ * Get production MySQL configuration
+ */
+function getProductionMysqlConfig(): MySQLConfig {
+  const prodMysqlEnv = path.resolve(process.cwd(), '.env.production.mysql');
+  if (fs.existsSync(prodMysqlEnv)) {
+    loadEnvFile('.env.production.mysql');
+  }
+
+  const host = process.env.PROD_MYSQL_HOST;
+  const database = process.env.PROD_MYSQL_DATABASE || process.env.DB_NAME || 'ynot_site';
+  const user = process.env.PROD_MYSQL_USER;
+  const password = process.env.PROD_MYSQL_PASSWORD;
+  const port = process.env.PROD_MYSQL_PORT ? parseInt(process.env.PROD_MYSQL_PORT, 10) : undefined;
+
+  if (!host || !user || !password) {
+    throw new Error(
+      'Production MySQL credentials not configured. '
+        + 'Please set PROD_MYSQL_HOST, PROD_MYSQL_USER, and PROD_MYSQL_PASSWORD '
+        + 'in .env.production.mysql or environment variables.',
+    );
+  }
+
+  return {
+    host, database, user, password, port,
+  };
+}
+
+/**
+ * Get local MySQL configuration
+ */
+function getLocalMysqlConfig(): MySQLConfig {
+  return {
+    host: process.env.IMPORT_DB_HOST || process.env.DB_HOST || 'localhost',
+    database: process.env.IMPORT_DB_NAME || process.env.DB_NAME || 'ynot_site',
+    user: process.env.IMPORT_DB_USER || process.env.DB_USER || 'root',
+    password: process.env.IMPORT_DB_PASSWORD || process.env.DB_PASSWORD || '',
+    port: process.env.IMPORT_DB_PORT ? parseInt(process.env.IMPORT_DB_PORT, 10) : undefined,
+  };
+}
+
+/**
  * Get MySQL configuration for the specified source
  *
  * @param source - 'local-mysql' for Docker MySQL, 'prod-mysql' for production
@@ -82,47 +123,7 @@ export function getMySQLConfig(source: MySQLSource): MySQLConfig {
   // Load base .env.local for local MySQL config
   loadEnvFile('.env.local');
 
-  if (source === 'prod-mysql') {
-    // For production MySQL, also load .env.production.mysql if it exists
-    // This allows overriding with production MySQL credentials
-    const prodMysqlEnv = path.resolve(process.cwd(), '.env.production.mysql');
-    if (fs.existsSync(prodMysqlEnv)) {
-      loadEnvFile('.env.production.mysql');
-    }
-
-    // Require PROD_MYSQL_* environment variables for production
-    const host = process.env.PROD_MYSQL_HOST;
-    const database = process.env.PROD_MYSQL_DATABASE || process.env.DB_NAME;
-    const user = process.env.PROD_MYSQL_USER;
-    const password = process.env.PROD_MYSQL_PASSWORD;
-    const port = process.env.PROD_MYSQL_PORT
-      ? parseInt(process.env.PROD_MYSQL_PORT, 10)
-      : undefined;
-
-    if (!host || !user || !password) {
-      throw new Error(
-        'Production MySQL credentials not configured. '
-          + 'Please set PROD_MYSQL_HOST, PROD_MYSQL_USER, and PROD_MYSQL_PASSWORD '
-          + 'in .env.production.mysql or environment variables.',
-      );
-    }
-
-    return {
-      host,
-      database: database || 'ynot_site',
-      user,
-      password,
-      port,
-    };
-  }
-
-  // Local MySQL (Docker)
-  return {
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'ynot_site',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-  };
+  return source === 'prod-mysql' ? getProductionMysqlConfig() : getLocalMysqlConfig();
 }
 
 /**
@@ -180,11 +181,14 @@ export function getLegacyDbConfig(): MySQLConfig {
     dotenv.config({ path: envPath });
   }
 
+  // Use IMPORT_DB_* for import scripts (connect from host machine via localhost)
+  // Fall back to DB_* for compatibility with Docker PHP site
   return {
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'ynot_site',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    host: process.env.IMPORT_DB_HOST || process.env.DB_HOST || 'localhost',
+    database: process.env.IMPORT_DB_NAME || process.env.DB_NAME || 'ynot_site',
+    user: process.env.IMPORT_DB_USER || process.env.DB_USER || 'root',
+    password: process.env.IMPORT_DB_PASSWORD || process.env.DB_PASSWORD || '',
+    port: process.env.IMPORT_DB_PORT ? parseInt(process.env.IMPORT_DB_PORT, 10) : undefined,
   };
 }
 

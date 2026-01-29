@@ -28,8 +28,8 @@ class SqlSchedule implements Schedule {
     public function getByDate(string $date): array {
         $date = mysqli_real_escape_string($this->db, $date);
         $query = "SELECT 
-                    id, date, DATE_FORMAT(date, '%M %d, %Y' ) as fdate, day, host, note, 
-                    start_time, TIME_FORMAT(start_time, '%l:%i%p' ) as stime, 
+                    id, date, start_time, end_time, DATE_FORMAT(date, '%M %d, %Y' ) as fdate, day, host, note, 
+                    TIME_FORMAT(start_time, '%l:%i%p' ) as stime, 
                     TIME_FORMAT(start_time, '%l%p' ) as stime_no_min, 
                     TIME_FORMAT(start_time, '%i' ) as start_min, 
                     TIME_FORMAT(end_time, '%l:%i%p' ) as etime, 
@@ -71,7 +71,7 @@ class SqlSchedule implements Schedule {
 
         // Get all schedule entries
         $day_query = "SELECT 
-                        id, date, DATE_FORMAT(date, '%m/%d/%y') as fdate, day, host, note, 
+                        id, date, start_time, end_time, DATE_FORMAT(date, '%m/%d/%y') as fdate, day, host, note, 
                         start_time, TIME_FORMAT(start_time, '%l:%i%p') as stime, 
                         TIME_FORMAT(start_time, '%l%p') as stime_no_min, 
                         TIME_FORMAT(start_time, '%i') as start_min, 
@@ -132,7 +132,7 @@ class SqlSchedule implements Schedule {
 
         // Get all schedule entries
         $day_query = "SELECT 
-                        id, date, DATE_FORMAT(date, '%m/%d/%y') as fdate, day, host, note, 
+                        id, date, start_time, end_time, DATE_FORMAT(date, '%m/%d/%y') as fdate, day, host, note, 
                         start_time, TIME_FORMAT(start_time, '%l:%i%p') as stime, 
                         TIME_FORMAT(start_time, '%l%p') as stime_no_min, 
                         TIME_FORMAT(start_time, '%i') as start_min, 
