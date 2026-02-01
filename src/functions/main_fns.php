@@ -166,8 +166,9 @@ function on_air(){
     $db = open_db();
     $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
     
-    // Get today's schedule
-    $todaySchedule = $scheduleModel->getByDate(gmdate('Y-m-d')); // Use UTC date to match database timezone
+    // Get today's schedule using local date, not UTC
+    // This avoids timezone issues where gmdate() can give the next day in UTC while date() is still in local time
+    $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
     
     // Find current time slot
     $currentTime = date('H:i:s');
