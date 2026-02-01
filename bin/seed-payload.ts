@@ -440,7 +440,26 @@ async function seed() {
     showDate1.setDate(showDate1.getDate() + 7);
 
     const showDate2 = new Date();
-    showDate2.setDate(showDate2.getDate() + 8);
+    showDate2.setDate(showDate2.setDate() + 8);
+
+    // Create a show for TODAY that covers current time (for testing on_air functionality)
+    const todayShow = new Date();
+    const currentHour = todayShow.getHours();
+    // Create a 6-hour window around current time
+    const startHour = Math.max(0, currentHour - 3);
+    const endHour = Math.min(23, currentHour + 3);
+    
+    await payload.create({
+      collection: 'shows',
+      data: {
+        date: todayShow.toISOString(),
+        day: todayShow.toLocaleDateString('en-US', { weekday: 'monday' }).toLowerCase(),
+        startTime: `${String(startHour).padStart(2, '0')}:00`,
+        endTime: `${String(endHour).padStart(2, '0')}:00`,
+        host: typeof djRecord1.id === 'number' ? djRecord1.id : parseInt(djRecord1.id, 10),
+        note: 'Test show for current time (E2E testing)',
+      },
+    });
 
     await payload.create({
       collection: 'shows',
@@ -466,7 +485,7 @@ async function seed() {
       },
     });
 
-    console.log('   ✅ Created 2 shows');
+    console.log('   ✅ Created 3 shows (including 1 for current time)');
 
     console.log('\n✅ Database seeded successfully!\n');
     console.log('📊 Summary:');
@@ -478,7 +497,7 @@ async function seed() {
     console.log('   Songs: 3');
     console.log('   Concerts: 3');
     console.log('   Posts: 3');
-    console.log('   Shows: 2');
+    console.log('   Shows: 3 (including 1 for current time)');
     console.log('\n🌐 View at: http://localhost:3000/admin');
     console.log(
       `   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`,

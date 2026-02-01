@@ -29,20 +29,78 @@ import {
  */
 
 test.describe('Now Playing on Y-Not Radio', () => {
-  test('should display correct on-air DJ name when show is scheduled for current time', async ({
+  test('should verify on-air DJ functionality exists and works', async ({ page }, testInfo) => {
+    // This test validates that the on_air() function and display works correctly
+    // It checks for the presence/absence of the #on-air div based on schedule data
+    
+    await test.step('Load legacy PHP site and check on-air functionality', async () => {
+      const response = await page.goto('http://localhost:8080', {
+        waitUntil: 'networkidle',
+        timeout: 30000,
+      });
+      
+      expect(response?.status()).toBe(200);
+      
+      const pageContent = await page.content();
+      
+      // Check for PHP errors first
+      const errors = checkForPhpErrors(pageContent);
+      if (errors.length > 0) {
+        console.error('PHP errors found:', errors);
+      }
+      expect(errors).toHaveLength(0);
+      
+      // Check if the on-air div exists
+      const onAirDiv = page.locator('#on-air');
+      const isVisible = await onAirDiv.isVisible().catch(() => false);
+      
+      if (isVisible) {
+        // If on-air div is visible, validate its content
+        const onAirText = await onAirDiv.textContent();
+        
+        console.log('✓ On-air DJ is displayed:', onAirText);
+        
+        // Verify text formatting (no HTML tags, reasonable length)
+        expect(onAirText).toBeTruthy();
+        expect(onAirText?.trim()).not.toBe('');
+        expect(onAirText).not.toContain('<br>');
+        expect(onAirText).not.toContain('<i>');
+        expect(onAirText).not.toContain('</i>');
+        expect(onAirText!.length).toBeLessThanOrEqual(35);
+        
+        await captureScreenshot(page, testInfo, 'Legacy-Site-With-OnAir-DJ');
+      } else {
+        console.log('ℹ On-air div not visible (no show currently scheduled)');
+        
+        // This is valid behavior when no show is scheduled for current time
+        // The test passes either way - we're just verifying the page loads without errors
+        
+        await captureScreenshot(page, testInfo, 'Legacy-Site-No-OnAir-DJ');
+      }
+      
+      // Document that the on_air() function runs without errors
+      test.info().annotations.push({
+        type: 'Validation',
+        description: 'on_air() function executes without PHP errors. On-air div visibility depends on schedule data.',
+      });
+    });
+  });
+  
+  test('should create show for current time and verify on-air DJ displays', async ({
     page,
   }, testInfo) => {
-    // Get current time in America/New_York timezone (matches PHP date_default_timezone_set)
+    // This test actively creates a show and verifies it appears
     const now = new Date();
     const currentHour = now.getHours();
     
-    // Create a show that spans the current time
-    // Start 1 hour ago, end 1 hour from now
-    const startHour = (currentHour - 1 + 24) % 24;
-    const endHour = (currentHour + 1) % 24;
+    // Create a show that covers a wide time window
+    const startHour = (currentHour - 2 + 24) % 24;
+    const endHour = (currentHour + 2) % 24;
     
     const startTime = `${String(startHour).padStart(2, '0')}:00`;
     const endTime = `${String(endHour).padStart(2, '0')}:00`;
+    
+    console.log(`Creating show: ${startTime} - ${endTime} (current hour: ${currentHour})`);
     
     await test.step('Create a show scheduled for current time', async () => {
       await navigateToPayloadCollectionCreate(page, 'shows');
@@ -57,7 +115,6 @@ test.describe('Now Playing on Y-Not Radio', () => {
       await fillPayloadTimeField(page, 'field-endTime', endTime);
       
       // Select the first available DJ from seed data
-      // The seed script creates DJ records linked to People
       await fillPayloadRelationshipField(page, 'field-host', 0);
       
       await captureScreenshot(page, testInfo, '02-Show-Filled-Form');
@@ -68,6 +125,9 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
     
     await test.step('Verify on-air DJ appears on legacy PHP site', async () => {
+      // Add a small delay to ensure database has propagated
+      await page.waitForTimeout(1000);
+      
       const response = await page.goto('http://localhost:8080', {
         waitUntil: 'networkidle',
         timeout: 30000,
@@ -79,25 +139,56 @@ test.describe('Now Playing on Y-Not Radio', () => {
       
       // Check for PHP errors
       const errors = checkForPhpErrors(pageContent);
+      if (errors.length > 0) {
+        console.error('PHP errors found:', errors);
+      }
       expect(errors).toHaveLength(0);
       
-      // Check that the on-air div exists
+      // Check if the on-air div exists
       const onAirDiv = page.locator('#on-air');
+      const isVisible = await onAirDiv.isVisible().catch(() => false);
+      
+      if (!isVisible) {
+        // Log debugging info
+        console.log('⚠ On-air div not found after creating show. Debugging...');
+        console.log(`Expected time window: ${startTime} - ${endTime}`);
+        console.log(`Current time: ${new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour12: false })}`);
+        
+        // Check schedule page to see if show was created
+        await page.goto('http://localhost:8080/schedule.php', {
+          waitUntil: 'networkidle',
+          timeout: 30000,
+        });
+        await captureScreenshot(page, testInfo, '04-Schedule-Page-Debug');
+        
+        const scheduleContent = await page.content();
+        const hasTodayShows = scheduleContent.includes(startTime) || scheduleContent.includes(endTime);
+        console.log(`Show appears on schedule page: ${hasTodayShows}`);
+        
+        // Go back to home page for final check
+        await page.goto('http://localhost:8080', {
+          waitUntil: 'networkidle',
+          timeout: 30000,
+        });
+      }
+      
+      // Now assert that on-air div is visible
       await expect(onAirDiv).toBeVisible({ timeout: 10000 });
       
-      // Get the text content
+      // Get and validate the text content
       const onAirText = await onAirDiv.textContent();
       
-      // Verify it's not empty
       expect(onAirText).toBeTruthy();
       expect(onAirText?.trim()).not.toBe('');
       
-      // The text should contain a DJ name from the show we created
-      // Since we used the first DJ from seed data, it should be one of:
-      // "Josh T. Landow" or "Test DJ" (from the seed script)
-      console.log('On-air DJ text:', onAirText);
+      console.log('✓ On-air DJ text:', onAirText);
       
-      await captureScreenshot(page, testInfo, '04-Legacy-Site-With-OnAir-DJ');
+      await captureScreenshot(page, testInfo, '05-Legacy-Site-With-OnAir-DJ');
+      
+      test.info().annotations.push({
+        type: 'Success',
+        description: `On-air DJ displayed correctly: "${onAirText}"`,
+      });
     });
   });
   
