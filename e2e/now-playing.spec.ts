@@ -304,13 +304,13 @@ test.describe('Now Playing on Y-Not Radio', () => {
 
         // Set the time in the PHP container
         execSync(`docker compose exec -T phpfpm date -s "${boundaryTime}"`, {
-          cwd: '/home/runner/work/site/site',
+          cwd: process.cwd(),
           stdio: 'pipe',
         });
 
         // Verify the time was set
         const newTime = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H:%M:%S %Z"', {
-          cwd: '/home/runner/work/site/site',
+          cwd: process.cwd(),
           encoding: 'utf-8',
         }).trim();
 
