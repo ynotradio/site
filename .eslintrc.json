@@ -109,6 +109,15 @@
       }
     },
     {
+      "files": ["e2e/**/*.ts", "e2e/**/*.tsx"],
+      "rules": {
+        "no-console": "off",
+        "max-len": "off",
+        "@typescript-eslint/no-var-requires": "off",
+        "global-require": "off"
+      }
+    },
+    {
       "files": ["bin/**/*.ts"],
       "excludedFiles": ["**/*.test.ts"],
       "rules": {

@@ -448,7 +448,7 @@ async function seed() {
     // Create a 6-hour window around current time
     const startHour = Math.max(0, currentHour - 3);
     const endHour = Math.min(23, currentHour + 3);
-    
+
     await payload.create({
       collection: 'shows',
       data: {
