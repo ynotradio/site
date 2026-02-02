@@ -1659,10 +1659,10 @@
   dependencies:
     "@netlify/types" "2.3.0"
 
-"@netlify/plugin-nextjs@^5.15.5":
-  version "5.15.5"
-  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.15.5.tgz#748a85083158251a2095153b3d230f73ab0cb366"
-  integrity sha512-Lvix59vHCEfvopILvdfIK2EPe/CrLH5qrIdwYnJbxpp/SSVgklsHpBrfNM9ADTr310r+WJRDz11NcDyHu3iT9w==
+"@netlify/plugin-nextjs@^5.15.7":
+  version "5.15.7"
+  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.15.7.tgz#118c843818109aca9f768962702bf1a6c1a55403"
+  integrity sha512-tSlGTwOR/dFZMrjhCxynlwc/NkOwY+bc0gurOranLtwASH5wat2WqZaPkyIdfVdNd/zNpmGxgbkH0uppg1Lsxg==
 
 "@netlify/types@2.3.0":
   version "2.3.0"
