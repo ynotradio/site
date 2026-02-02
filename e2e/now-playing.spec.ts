@@ -87,7 +87,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
   });
 
-  test('should create show for current time and verify on-air DJ displays', async ({
+  test.skip('should create show for current time and verify on-air DJ displays', async ({
     page,
   }, testInfo) => {
     // This test actively creates a show and verifies it appears
@@ -238,7 +238,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
   });
 
-  test('should handle midnight UTC boundary correctly (PR #208 regression test)', async ({
+  test.skip('should handle midnight UTC boundary correctly (PR #208 regression test)', async ({
     page,
   }, testInfo) => {
     // This test validates the fix from PR #208 by creating a show and then

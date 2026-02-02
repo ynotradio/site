@@ -440,7 +440,7 @@ async function seed() {
     showDate1.setDate(showDate1.getDate() + 7);
 
     const showDate2 = new Date();
-    showDate2.setDate(showDate2.setDate() + 8);
+    showDate2.setDate(showDate2.getDate() + 8);
 
     // Create a show for TODAY that covers current time (for testing on_air functionality)
     const todayShow = new Date();
@@ -453,7 +453,7 @@ async function seed() {
       collection: 'shows',
       data: {
         date: todayShow.toISOString(),
-        day: todayShow.toLocaleDateString('en-US', { weekday: 'monday' }).toLowerCase(),
+        day: todayShow.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase(),
         startTime: `${String(startHour).padStart(2, '0')}:00`,
         endTime: `${String(endHour).padStart(2, '0')}:00`,
         host: typeof djRecord1.id === 'number' ? djRecord1.id : parseInt(djRecord1.id, 10),
