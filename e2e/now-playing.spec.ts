@@ -87,10 +87,11 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
   });
 
-  test.skip('should create show for current time and verify on-air DJ displays', async ({
+  test('should create show for current time and verify on-air DJ displays', async ({
     page,
   }, testInfo) => {
     // This test actively creates a show and verifies it appears
+    // DJ data is seeded by bin/seed-payload.ts, so this test should work
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -194,12 +195,11 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
   });
 
-  test('should not display on-air div when no show is scheduled', async ({ page }, testInfo) => {
+  test('should handle empty state when no show is scheduled', async ({ page }, testInfo) => {
     await test.step('Load legacy PHP site', async () => {
-      // This test checks the default state - if no show is scheduled for current time,
-      // the on-air div should not be present
-      // Note: This might fail if seed data includes shows for current time
-      // or if previous test data exists
+      // Note: The seed script creates a show for current time, so we check if the page
+      // loads without errors rather than asserting the div is missing.
+      // This test validates the page doesn't crash when checking for on-air status.
 
       const response = await page.goto('http://localhost:8080', {
         waitUntil: 'networkidle',
@@ -210,41 +210,32 @@ test.describe('Now Playing on Y-Not Radio', () => {
 
       const pageContent = await page.content();
 
-      // Check for PHP errors
+      // Check for PHP errors - this is the main assertion
       const errors = checkForPhpErrors(pageContent);
       expect(errors).toHaveLength(0);
 
-      // The on-air function returns empty string when no show is scheduled
-      // In that case, the div should either not exist or be empty
+      // The seed script may have created a show for current time
+      // We just verify the page loads correctly regardless of whether there's a show
       const onAirDiv = page.locator('#on-air');
-
-      // Try to check if it exists
       const isVisible = await onAirDiv.isVisible().catch(() => false);
 
-      if (isVisible) {
-        // If it exists, it should be empty or very short (whitespace)
-        const text = await onAirDiv.textContent();
-        console.log('On-air div exists with text:', text);
-        // This is informational - we're documenting the current state
-        test.info().annotations.push({
-          type: 'Note',
-          description: `On-air div exists with content: "${text}". This is expected if a show is scheduled for current time.`,
-        });
-      } else {
-        console.log('On-air div not visible (expected when no show scheduled)');
-      }
+      console.log(`On-air div ${isVisible ? 'present' : 'not visible'} - both states are valid`);
 
-      await captureScreenshot(page, testInfo, 'Legacy-Site-No-Show');
+      await captureScreenshot(page, testInfo, 'On-Air-State-Check');
     });
   });
 
+  // This test is skipped by default because it requires elevated privileges to manipulate
+  // Docker container time, which may not be available in all CI environments.
+  // To enable: Remove .skip and ensure the test environment has permissions to run
+  // `docker compose exec -T phpfpm date -s`
+  //
+  // This test validates the fix from PR #208 by creating a show and then
+  // manipulating the Docker container's time to the exact timezone boundary
+  // where the bug would occur.
   test.skip('should handle midnight UTC boundary correctly (PR #208 regression test)', async ({
     page,
   }, testInfo) => {
-    // This test validates the fix from PR #208 by creating a show and then
-    // manipulating the Docker container's time to the exact timezone boundary
-    // where the bug would occur.
-    //
     // Bug: When EST is 7 PM (19:00), UTC is midnight (00:00 next day)
     // - gmdate('Y-m-d') would return next day in UTC
     // - date('H:i:s') would return EST time
@@ -317,7 +308,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
         console.log(`✓ Container time set to: ${newTime}`);
       } catch (error) {
         console.error('Failed to set container time:', error);
-        test.skip('Skipping test - requires Docker container time manipulation');
+        throw new Error('Docker container time manipulation failed. This test requires elevated privileges to run `docker compose exec` commands.');
       }
     });
 

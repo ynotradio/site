@@ -445,7 +445,7 @@ async function seed() {
     // Create a show for TODAY that covers current time (for testing on_air functionality)
     const todayShow = new Date();
     const currentHour = todayShow.getHours();
-    // Create a 6-hour window around current time
+    // Create a 6-hour window around current time, without crossing midnight
     const startHour = Math.max(0, currentHour - 3);
     const endHour = Math.min(23, currentHour + 3);
 
