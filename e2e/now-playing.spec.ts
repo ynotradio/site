@@ -287,6 +287,12 @@ test.describe('Now Playing on Y-Not Radio', () => {
         // This is the exact moment when UTC crosses to midnight of Jan 30
         const boundaryTime = '2026-01-29 19:00:00';
 
+        // Validate time format to prevent command injection
+        // Format must be: YYYY-MM-DD HH:MM:SS
+        if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(boundaryTime)) {
+          throw new Error('Invalid time format. Expected: YYYY-MM-DD HH:MM:SS');
+        }
+
         console.log('\nSetting PHP container time to timezone boundary:');
         console.log('  Local (EST): Jan 29, 2026 19:00 (7 PM)');
         console.log('  UTC:         Jan 30, 2026 00:00 (midnight)');
@@ -367,6 +373,12 @@ test.describe('Now Playing on Y-Not Radio', () => {
     await test.step('Restore original container time', async () => {
       if (originalTime) {
         try {
+          // Validate time format to prevent command injection
+          if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(originalTime)) {
+            console.warn('Invalid original time format, skipping restore');
+            return;
+          }
+
           execSync(`docker compose exec -T phpfpm date -s "${originalTime}"`, {
             cwd: process.cwd(),
             stdio: 'pipe',
