@@ -377,7 +377,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
       if (originalTime) {
         try {
           execSync(`docker compose exec -T phpfpm date -s "${originalTime}"`, {
-            cwd: '/home/runner/work/site/site',
+            cwd: process.cwd(),
             stdio: 'pipe',
           });
           console.log(`✓ Restored container time to: ${originalTime}`);
