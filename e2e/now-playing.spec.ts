@@ -94,9 +94,9 @@ test.describe('Now Playing on Y-Not Radio', () => {
     const now = new Date();
     const currentHour = now.getHours();
 
-    // Create a show that covers a wide time window
-    const startHour = (currentHour - 2 + 24) % 24;
-    const endHour = (currentHour + 2) % 24;
+    // Create a show that covers a wide time window, without crossing midnight
+    const startHour = Math.max(0, currentHour - 2);
+    const endHour = Math.min(23, currentHour + 2);
 
     const startTime = `${String(startHour).padStart(2, '0')}:00`;
     const endTime = `${String(endHour).padStart(2, '0')}:00`;
