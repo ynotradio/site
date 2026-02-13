@@ -1,7 +1,7 @@
 FROM php:7.4-fpm
 
-# Install PostgreSQL client and dev libraries
-RUN apt-get update && apt-get install -y libpq-dev \
+# Install PostgreSQL client, dev libraries, and libfaketime for time mocking in tests
+RUN apt-get update && apt-get install -y libpq-dev faketime \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql mysqli \
     && rm -rf /var/lib/apt/lists/*
 

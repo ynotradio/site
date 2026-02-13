@@ -225,15 +225,13 @@ test.describe('Now Playing on Y-Not Radio', () => {
     });
   });
 
-  // This test is skipped by default because it requires elevated privileges to manipulate
-  // Docker container time, which may not be available in all CI environments.
-  // To enable: Remove .skip and ensure the test environment has permissions to run
-  // `docker compose exec -T phpfpm date -s`
-  //
   // This test validates the fix from PR #208 by creating a show and then
-  // manipulating the Docker container's time to the exact timezone boundary
+  // using libfaketime to mock the server time to the exact timezone boundary
   // where the bug would occur.
-  test.skip('should handle midnight UTC boundary correctly (PR #208 regression test)', async ({
+  //
+  // Uses libfaketime to mock PHP server time without requiring elevated privileges.
+  // This works in GitHub Actions and all CI environments.
+  test('should handle midnight UTC boundary correctly (PR #208 regression test)', async ({
     page,
   }, testInfo) => {
     // Bug: When EST is 7 PM (19:00), UTC is midnight (00:00 next day)
@@ -242,21 +240,6 @@ test.describe('Now Playing on Y-Not Radio', () => {
     // - Result: Date mismatch, show not found
     //
     // Fix: Both date('Y-m-d') and date('H:i:s') use local EST timezone
-
-    let originalTime: string | null = null;
-
-    await test.step('Save original container time', async () => {
-      // We'll restore this after the test
-      try {
-        originalTime = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H:%M:%S"', {
-          cwd: process.cwd(),
-          encoding: 'utf-8',
-        }).trim();
-        console.log(`Original PHP container time: ${originalTime}`);
-      } catch (error) {
-        console.warn('Could not save original time:', error);
-      }
-    });
 
     await test.step('Create show for Jan 29, 2026, 18:00-21:00 EST', async () => {
       await navigateToPayloadCollectionCreate(page, 'shows');
@@ -281,45 +264,61 @@ test.describe('Now Playing on Y-Not Radio', () => {
       console.log('✓ Created show for Jan 29, 2026, 18:00-21:00 EST');
     });
 
-    await test.step('Set container time to timezone boundary (7 PM EST = midnight UTC)', async () => {
+    await test.step('Set fake time using libfaketime (7 PM EST = midnight UTC)', async () => {
       try {
-        // Set PHP container time to Jan 29, 2026 at 7:00 PM EST
+        // Use libfaketime to set PHP server time to Jan 29, 2026 at 7:00 PM EST
         // This is the exact moment when UTC crosses to midnight of Jan 30
         const boundaryTime = '2026-01-29 19:00:00';
 
         // Validate time format to prevent command injection
-        // Format must be: YYYY-MM-DD HH:MM:SS
         if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(boundaryTime)) {
           throw new Error('Invalid time format. Expected: YYYY-MM-DD HH:MM:SS');
         }
 
-        console.log('\nSetting PHP container time to timezone boundary:');
+        console.log('\nSetting fake PHP server time to timezone boundary:');
         console.log('  Local (EST): Jan 29, 2026 19:00 (7 PM)');
         console.log('  UTC:         Jan 30, 2026 00:00 (midnight)');
         console.log('  Bug (gmdate): Would look for Jan 30 schedule');
         console.log('  Fix (date):   Looks for Jan 29 schedule');
 
-        // Set the time in the PHP container
-        execSync(`docker compose exec -T phpfpm date -s "${boundaryTime}"`, {
+        // Restart PHP-FPM with libfaketime environment variables
+        // This requires the phpfpm service to have libfaketime installed
+        execSync('docker compose stop phpfpm', {
           cwd: process.cwd(),
           stdio: 'pipe',
         });
 
-        // Verify the time was set
-        const newTime = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H:%M:%S %Z"', {
+        // Write env file with faketime settings
+        const fs = require('fs');
+        const envContent = `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
+FAKETIME=@${boundaryTime}
+`;
+        fs.writeFileSync('/tmp/faketime.env', envContent);
+
+        // Start with faketime environment
+        execSync('docker compose --env-file /tmp/faketime.env up -d phpfpm', {
+          cwd: process.cwd(),
+          stdio: 'pipe',
+        });
+
+        // Wait for PHP-FPM to be ready
+        await page.waitForTimeout(5000);
+
+        // Verify the fake time is working
+        const testTime = execSync('docker compose exec -T phpfpm php -r "echo date(\'Y-m-d H:i:s\');"', {
           cwd: process.cwd(),
           encoding: 'utf-8',
         }).trim();
 
-        console.log(`✓ Container time set to: ${newTime}`);
+        console.log(`✓ Container time mocked to: ${testTime} using libfaketime`);
       } catch (error) {
-        console.error('Failed to set container time:', error);
-        throw new Error('Docker container time manipulation failed. This test requires elevated privileges to run `docker compose exec` commands.');
+        console.error('Failed to set fake time:', error);
+        throw new Error('libfaketime setup failed. Ensure libfaketime is installed in PHP container.');
       }
     });
 
     await test.step('Verify on-air DJ appears correctly at timezone boundary', async () => {
-      // Give PHP time to recognize the new system time
+      // Give PHP time to recognize the new fake time
       await page.waitForTimeout(2000);
 
       const response = await page.goto('http://localhost:8080', {
@@ -370,23 +369,28 @@ test.describe('Now Playing on Y-Not Radio', () => {
       });
     });
 
-    await test.step('Restore original container time', async () => {
-      if (originalTime) {
-        try {
-          // Validate time format to prevent command injection
-          if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(originalTime)) {
-            console.warn('Invalid original time format, skipping restore');
-            return;
-          }
+    await test.step('Restore normal time', async () => {
+      try {
+        // Stop and restart phpfpm without faketime
+        execSync('docker compose stop phpfpm', {
+          cwd: process.cwd(),
+          stdio: 'pipe',
+        });
 
-          execSync(`docker compose exec -T phpfpm date -s "${originalTime}"`, {
-            cwd: process.cwd(),
-            stdio: 'pipe',
-          });
-          console.log(`✓ Restored container time to: ${originalTime}`);
-        } catch (error) {
-          console.warn('Could not restore original time:', error);
+        execSync('docker compose up -d phpfpm', {
+          cwd: process.cwd(),
+          stdio: 'pipe',
+        });
+
+        // Clean up temp file
+        const fs = require('fs');
+        if (fs.existsSync('/tmp/faketime.env')) {
+          fs.unlinkSync('/tmp/faketime.env');
         }
+
+        console.log('✓ Restored normal time');
+      } catch (error) {
+        console.warn('Could not restore normal time:', error);
       }
     });
   });

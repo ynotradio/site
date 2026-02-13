@@ -42,6 +42,10 @@ services:
       - app-tier
     env_file:
       - .env.local
+    environment:
+      # Support for libfaketime in tests (set FAKETIME and LD_PRELOAD via env)
+      - LD_PRELOAD=${LD_PRELOAD:-}
+      - FAKETIME=${FAKETIME:-}
     volumes:
       - ./src:/app
   apache:
