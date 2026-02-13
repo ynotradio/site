@@ -20,6 +20,8 @@ Systematically analyze the codebase and implement strategic refactoring to impro
 
 Process items from [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md), prioritize improvements, implement one refactoring per run.
 
+**Context**: Solo hobby project. Be decisive. No options/comparisons. Your code demonstrates the improvement.
+
 ## Project Context
 
 - **Repository**: ynotradio/site
@@ -67,13 +69,15 @@ See [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coup
 git checkout -b refactor/[description]-$(date +%Y%m%d)
 ```
 
-Make incremental changes. After each step:
+Make incremental changes. **After each step, verify locally**:
 
 ```bash
-yarn test
-yarn lint
-yarn build
+yarn lint    # Must exit 0
+yarn test    # Must exit 0
+yarn build   # Must exit 0
 ```
+
+**Never push code that fails any of these checks.**
 
 ### 4. Validate & PR
 
@@ -90,9 +94,20 @@ git push origin HEAD
 **PR Title**: `[refactoring] [Brief description]`  
 **Labels**: `refactoring`, `code-quality`, `automation`
 
+**PR Description** (brief):
+```markdown
+## Changes
+- [Specific improvements made]
+
+## Verification  
+- [x] All checks pass locally before push
+
+Addresses: [Checklist item]
+```
+
 Update [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md) to mark completed items.
 
-**Important**: Never generate summary documentation. Let code and passing tests demonstrate improvements.
+**Important**: Your refactoring speaks for itself. No summaries or documentation as proof of work.
 
 ## Safety
 
