@@ -38,6 +38,20 @@ Skills are in `.claude/skills/`. Invoke them when relevant—they contain specia
 | **detecting-agent-environment** | When creating environment-aware scripts. CI/CD vs local detection. |
 | **storybook-best-practices** | When creating `.stories.tsx` files. Payload UI mocking, provider wrapping. |
 
+## Agentic Workflows
+
+In addition to interactive agent skills, this repository uses **GitHub Agentic Workflows** for continuous automated code quality improvements.
+
+See `.github/agents/README.md` for details. Available workflows:
+
+| Workflow | Purpose | Schedule |
+|----------|---------|----------|
+| **Code Simplifier** | Automatically simplifies recently modified code | Daily |
+| **Test Coverage Improver** | Systematically adds tests to under-tested areas | Daily |
+| **Code Refactoring Assistant** | Implements strategic refactoring from checklist | Weekly |
+
+These workflows run automatically and create pull requests for human review. They handle repetitive code quality tasks so you can focus on building features.
+
 ## Development Workflows
 
 ### Payload CMS (Modern Stack)
