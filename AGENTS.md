@@ -25,10 +25,11 @@ yarn test:e2e                 # Playwright integration tests
 
 ## Available Skills
 
-Skills are in `.claude/skills/`. Invoke them when relevant—they contain specialized knowledge.
+Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starting any task.** Invoke them when relevant—they contain specialized knowledge that prevents common mistakes.
 
 | Skill | When to Use |
 |-------|-------------|
+| **skills-usage-guide** | At start of EVERY task. Learn which skills to invoke and when. |
 | **testing-pr-changes** | Before submitting any PR. Success criteria and proof requirements. |
 | **payload-migration-workflow** | When working on Payload collections, data models, or PHP→Payload migration. |
 | **code-quality-standards** | When writing new TypeScript/React code. Airbnb style, React 19, Next.js 15 patterns. |
@@ -37,6 +38,8 @@ Skills are in `.claude/skills/`. Invoke them when relevant—they contain specia
 | **agent-automation-infrastructure** | When dealing with slow builds or Docker issues. Pre-built images available. |
 | **detecting-agent-environment** | When creating environment-aware scripts. CI/CD vs local detection. |
 | **storybook-best-practices** | When creating `.stories.tsx` files. Payload UI mocking, provider wrapping. |
+
+**Workflow**: List available skills → Identify relevant ones → Invoke them → Apply their guidance
 
 ## Agentic Workflows
 
@@ -176,11 +179,29 @@ When modifying code, actively look for and remove dead code:
 
 ### CI Must Pass
 
+**CRITICAL**: You must verify CI passes BEFORE pushing code. Never push code that fails CI.
+
+**Pre-push verification workflow**:
+1. Run `yarn lint` - must exit 0
+2. Run `yarn test` - must exit 0  
+3. Run `yarn build` - must exit 0
+4. Run `yarn test:e2e` if you changed UI/API
+5. Only push after ALL checks pass locally
+
+**If CI fails after push**:
+1. Pull the branch immediately
+2. Fix the failure locally
+3. Verify all checks pass
+4. Push the fix
+5. **NEVER** push multiple failing commits to the same branch
+
 Your PR must pass all CI checks:
 - ESLint (no warnings)
 - Vitest tests with coverage
 - E2E Playwright tests
 - Storybook build
+
+**Repeated CI failures on the same branch are unacceptable and waste time.**
 
 ## Performance Expectations
 
@@ -198,17 +219,38 @@ docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
 docker pull ghcr.io/ynotradio/site/payload-dev:latest
 ```
 
+## Project Context
+
+**This is a solo hobby project** with one expert maintainer who has occasional time to spare, not a full-time team.
+
+**What this means for you**:
+- No need for technical comparisons or pro/con analyses
+- No need for multiple implementation options
+- Make good engineering decisions and implement them
+- Only ask for human input on genuine blockers or architectural decisions
+- Trust that the maintainer knows the codebase and doesn't need hand-holding
+
+**If you need the human maintainer**:
+- Tag them in the PR description (e.g., "@owner please review security concerns")
+- Or create a GitHub issue for complex decisions that need input
+- Don't create TODO lists expecting others to complete your work
+
 ## Minimizing Reports
+
+**Your code and tests are your documentation. Let them speak.**
 
 **Do:**
 - Let passing tests demonstrate functionality
-- Include screenshots as evidence
+- Include screenshots as evidence of working features
 - Write clear commit messages
+- Make a brief PR description (2-3 sentences max)
 
 **Don't:**
 - Write lengthy summaries of what you did
+- Create "proof of work" documentation (action plans, checklists, summaries)
 - Repeat information that's in the code or tests
 - Explain every decision in prose
+- Generate documentation as evidence you completed a task
 
 **PR Description Format:**
 
@@ -217,13 +259,14 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 - [Brief bullet points of what changed]
 
 ## Testing
-- [x] Tests pass
-- [x] E2E tests pass
+- [x] All checks pass locally before push
 - [x] Screenshot attached
 
 ## Evidence
 [Single screenshot showing it works]
 ```
+
+**Exception**: If there's a genuine blocker requiring human action, state it clearly in the PR and tag the maintainer.
 
 ## Quick Reference
 

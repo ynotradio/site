@@ -21,6 +21,8 @@ Systematically identify and implement test coverage improvements to reach 80% co
 
 Work in phases: research → configuration → implementation. Add meaningful tests to under-tested areas.
 
+**Context**: Solo hobby project. Make engineering decisions confidently. No summaries or comparisons.
+
 ## Project Context
 
 - **Repository**: ynotradio/site
@@ -83,13 +85,14 @@ Check what's been completed:
 5. Select ONE under-tested area (prioritize 0% coverage files)
 6. Create tests following patterns in existing `.test.tsx` files
 7. Add `.stories.tsx` if component is user-facing
-8. Validate: `yarn test && yarn lint`
+8. **Validate locally BEFORE pushing**: `yarn test && yarn lint` - must exit 0
 9. Create PR: `[test-coverage-improver] Add tests for [component]`
    - Labels: `automation`, `testing`
    - Draft: true
+   - Brief description: what was tested, verification status
 10. Comment on discussion with progress update
 
-**Important**: Write meaningful tests that validate functionality, not just coverage padding. Never generate summary documentation.
+**Important**: Write meaningful tests that validate functionality. Your tests speak for themselves - no proof-of-work summaries.
 
 ## Testing Patterns
 
