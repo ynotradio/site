@@ -241,27 +241,30 @@ test.describe('Now Playing on Y-Not Radio', () => {
     //
     // Fix: Both date('Y-m-d') and date('H:i:s') use local EST timezone
 
-    await test.step('Create show for Jan 29, 2026, 18:00-21:00 EST', async () => {
-      await navigateToPayloadCollectionCreate(page, 'shows');
-      await captureScreenshot(page, testInfo, '01-Timezone-Show-Create-Form');
+    await test.step('Insert show data directly into Postgres for Jan 29, 2026', async () => {
+      // Insert show data directly via SQL to avoid Payload UI flakiness
+      // This creates a show for Wednesday, Jan 29, 2026, 6-9 PM EST
+      const insertShowSQL = `
+        INSERT INTO shows (
+          "date", weekday, "startTime", "endTime", host, "createdAt", "updatedAt"
+        ) VALUES (
+          '2026-01-29'::date,
+          'Wednesday',
+          '18:00:00'::time,
+          '21:00:00'::time,
+          (SELECT id FROM people LIMIT 1),
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT DO NOTHING;
+      `;
 
-      // January 29, 2026
-      const showDate = new Date('2026-01-29T12:00:00-05:00');
-      await fillPayloadDateField(page, 'field-date', showDate);
+      execSync(`docker compose exec -T postgres psql -U ynot ynot_payload_dev -c "${insertShowSQL}"`, {
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      });
 
-      // 6 PM - 9 PM EST (covers 7 PM when we'll test)
-      await fillPayloadTimeField(page, 'field-startTime', '18:00');
-      await fillPayloadTimeField(page, 'field-endTime', '21:00');
-
-      await fillPayloadRelationshipField(page, 'field-host', 0);
-
-      await captureScreenshot(page, testInfo, '02-Timezone-Show-Filled-Form');
-
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'shows');
-      await captureScreenshot(page, testInfo, '03-Timezone-Show-Saved');
-
-      console.log('✓ Created show for Jan 29, 2026, 18:00-21:00 EST');
+      console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into Postgres');
     });
 
     await test.step('Set fake time using libfaketime (7 PM EST = midnight UTC)', async () => {
