@@ -213,6 +213,10 @@ nav a:hover {
   padding: 0 5px;
 }
 
+.feature-box div p {
+  margin: 0;
+}
+
 .ads {
   padding-top: 10px;
 }
