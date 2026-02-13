@@ -149,6 +149,10 @@ steps:
       yarn install --frozen-lockfile
       
       echo "--- :playwright: Installing Playwright browsers"
+      # Note: This installs browsers on every run. For better performance,
+      # consider using pre-built Docker image with browsers pre-installed:
+      # - Use mcr.microsoft.com/playwright:v1.40.0 image, or
+      # - Build custom Dockerfile.playwright with browsers pre-installed
       npx playwright install --with-deps chromium
       
       echo "--- :gear: Setting up E2E test environment"

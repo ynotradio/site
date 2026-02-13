@@ -19,16 +19,19 @@ steps:
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
           
+          # Create short commit SHA (first 7 characters)
+          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
+          
           echo "--- :docker: Building Payload development image"
           docker build \
             -f Dockerfile.payload \
-            -t ghcr.io/$${GHCR_ORG}/payload-dev:$${BUILDKITE_COMMIT:0:7} \
+            -t ghcr.io/$${GHCR_ORG}/payload-dev:$$SHORT_COMMIT \
             -t ghcr.io/$${GHCR_ORG}/payload-dev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             .
           
           echo "--- :docker: Pushing Payload image to GHCR"
-          docker push ghcr.io/$${GHCR_ORG}/payload-dev:$${BUILDKITE_COMMIT:0:7}
+          docker push ghcr.io/$${GHCR_ORG}/payload-dev:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/payload-dev:latest
         env:
           GHCR_USERNAME: "${GHCR_USERNAME}"
@@ -44,16 +47,19 @@ steps:
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
           
+          # Create short commit SHA (first 7 characters)
+          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
+          
           echo "--- :docker: Building PHP-FPM development image"
           docker build \
             -f bin/docker/phpfpm/Dockerfile \
-            -t ghcr.io/$${GHCR_ORG}/phpfpm-dev:$${BUILDKITE_COMMIT:0:7} \
+            -t ghcr.io/$${GHCR_ORG}/phpfpm-dev:$$SHORT_COMMIT \
             -t ghcr.io/$${GHCR_ORG}/phpfpm-dev:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             .
           
           echo "--- :docker: Pushing PHP-FPM image to GHCR"
-          docker push ghcr.io/$${GHCR_ORG}/phpfpm-dev:$${BUILDKITE_COMMIT:0:7}
+          docker push ghcr.io/$${GHCR_ORG}/phpfpm-dev:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/phpfpm-dev:latest
         env:
           GHCR_USERNAME: "${GHCR_USERNAME}"
@@ -69,16 +75,19 @@ steps:
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
           
+          # Create short commit SHA (first 7 characters)
+          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
+          
           echo "--- :docker: Building seeded Postgres image"
           docker build \
             -f bin/docker/postgres/Dockerfile \
-            -t ghcr.io/$${GHCR_ORG}/postgres-seeded:$${BUILDKITE_COMMIT:0:7} \
+            -t ghcr.io/$${GHCR_ORG}/postgres-seeded:$$SHORT_COMMIT \
             -t ghcr.io/$${GHCR_ORG}/postgres-seeded:latest \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
             .
           
           echo "--- :docker: Pushing Postgres image to GHCR"
-          docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:$${BUILDKITE_COMMIT:0:7}
+          docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:latest
         env:
           GHCR_USERNAME: "${GHCR_USERNAME}"

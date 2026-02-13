@@ -582,7 +582,7 @@ Replace GitHub Actions status badge with Buildkite badge in README.md:
 
 **Total Duration**: 9 weeks
 
-- **Weeks 1**: Foundation setup
+- **Week 1**: Foundation setup
 - **Weeks 2-3**: Core CI migration
 - **Weeks 3-4**: E2E testing migration
 - **Weeks 4-5**: Docker image building and scheduled jobs
