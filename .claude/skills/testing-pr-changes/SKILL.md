@@ -11,6 +11,15 @@ description: Comprehensive testing and verification checklist for agent-created 
 
 Every agent PR **MUST** include proof of working functionality. This is **non-negotiable**.
 
+**BEFORE you push any code**:
+1. Run `yarn lint` - must exit 0
+2. Run `yarn test` - must exit 0
+3. Run `yarn build` - must exit 0
+4. If UI/API changes: run `yarn test:e2e` - must exit 0
+5. Take screenshots with Playwright showing functionality works
+
+**Never push code that fails CI checks. Repeated CI failures on the same branch are unacceptable.**
+
 ### Definition of Done
 
 - [ ] **Working environment accessible**
@@ -23,10 +32,65 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
   - For Payload: Can access collections, see data, or create records
   - For Legacy: Pages render with content (not directory listings)
 
-- [ ] **Tests pass**
-  - `yarn test` exits with code 0
+- [ ] **Tests pass locally**
   - `yarn lint` exits with code 0
+  - `yarn test` exits with code 0
+  - `yarn build` exits with code 0 (if applicable)
   - No new test failures introduced
+
+- [ ] **Screenshots taken with Playwright**
+  - Use Playwright browser tools to navigate and capture evidence
+  - Show actual working functionality, not just "service started"
+  - Include screenshots in PR for human review
+
+## Using Playwright for Verification
+
+**You MUST use Playwright browser tools to verify your work visually.**
+
+For detailed Playwright debugging workflows, see the **[e2e-debugging-workflow](../e2e-debugging-workflow/)** skill. For environment setup and detection, see **[detecting-agent-environment](../detecting-agent-environment/)** skill.
+
+### Required Workflow
+
+1. **Start the service** you're testing:
+   - Payload: `yarn payload:dev` → http://localhost:3000/admin
+   - Legacy: `docker compose up -d` → http://localhost:8080
+   - See [AGENTS.md](../../../AGENTS.md) TL;DR section for full setup commands
+
+2. **Navigate with Playwright MCP tools**:
+   - `playwright-browser_navigate` to the URL
+   - `playwright-browser_snapshot` to see the page structure
+   - `playwright-browser_take_screenshot` to capture evidence
+
+3. **Verify functionality**:
+   - Check that the page loads correctly
+   - Verify no error messages appear
+   - Test interactive elements work (if applicable)
+   - Confirm data displays correctly
+
+4. **Include in PR**:
+   - Attach screenshot showing working functionality
+   - Brief caption explaining what the screenshot shows
+
+### Example Verification Flow
+
+```bash
+# Start Payload
+yarn payload:dev
+
+# In another terminal, use Playwright tools:
+# 1. playwright-browser_navigate: http://localhost:3000/admin
+# 2. playwright-browser_snapshot: Verify page structure
+# 3. playwright-browser_take_screenshot: Capture for PR
+
+# Verify the screenshot shows:
+# - Page loaded successfully
+# - No error messages
+# - Expected UI elements visible
+```
+
+**Purpose**: Screenshots prove you tested the application end-to-end, not just that build commands succeeded.
+
+**Troubleshooting**: If tests fail, consult the [e2e-debugging-workflow](../e2e-debugging-workflow/) skill for selector debugging and common failure patterns.
 
 ## Performance Baselines
 
@@ -93,11 +157,14 @@ fi
 - [ ] Payload: `yarn seed:payload` (sample data based on Y-Not structure)
 - [ ] Data visible in applications
 
-### Phase 4: Application Access
+### Phase 5: Application Access & Playwright Verification
 - [ ] HTTP requests succeed (200, not 500/502)
 - [ ] UI renders (not blank page or error)
-- [ ] Can interact with application
+- [ ] **Use Playwright tools to navigate and verify** (see "Using Playwright for Verification" above)
 - [ ] Screenshots prove functionality
+- [ ] Can interact with application
+
+**Critical**: This phase requires Playwright browser tools. Visual verification is mandatory.
 
 **Stop at each phase if failures occur. Document and report before proceeding.**
 
@@ -211,74 +278,44 @@ DATABASE_SSL=disable
 
 ## Fallback Strategy
 
-When full automation fails, provide partial success:
+When full verification fails, be brief and specific:
 
-### If Containers Start But Are Slow
+### If Blockers Exist
 ```markdown
-## Status: Partial Success
+## Changes
+- [Brief description]
 
-✅ **What Works:**
-- Docker images build successfully
-- Containers start and run
-- Services accessible on localhost
+## Blocker
+@owner - [Specific issue blocking verification]
 
-⚠️ **Performance Issues:**
-- yarn install takes 5+ minutes (timeout)
-- Total startup: 8 minutes (expected < 3 minutes)
+Examples: Port unavailable, network timeout, resource constraints
 
-📋 **Recommendations:**
-- Use pre-built Docker images
-- Implement layer caching
-- Switch to Debian base (faster than Alpine)
-
-📸 **Evidence:**
-[Screenshots showing services eventually work]
+## What's Complete
+- Code changes made
+- Syntax/linting passes locally
+- [Any partial testing completed]
 ```
 
-### If Services Don't Start
+### If Partial Success
 ```markdown
-## Status: Infrastructure Ready, Runtime Blocked
+## Changes
+- [Brief description]
 
-✅ **What Works:**
-- Docker images build
-- Configuration files valid
-- Scripts execute without syntax errors
+## Verification Status
+✅ Partial: [What works - e.g., "Builds complete, containers slow"]
+⚠️ Issue: [Specific problem - e.g., "Startup exceeds 3min threshold"]
 
-❌ **Blockers:**
-- Port 3000 unavailable
-- PostgreSQL connection fails
-- yarn install times out
+@owner - Manual verification needed
 
-📋 **Next Steps:**
-1. [Specific actions to unblock]
-2. [Manual testing instructions for humans]
-3. [Alternative approaches to try]
+## Evidence
+[Screenshot of what does work]
 ```
 
-### If Can't Test at All
-```markdown
-## Status: Code Complete, Testing Environment Unavailable
-
-✅ **Code Quality:**
-- Syntax valid
-- Linting passes
-- Follows established patterns
-
-❌ **Cannot Verify:**
-- No Docker access in environment
-- Network restrictions prevent package install
-- Resource constraints prevent startup
-
-📋 **Manual Testing Required:**
-1. Steps for human to test locally
-2. Expected outcomes
-3. How to verify functionality
-
-🔧 **Environment Needs:**
-- [List specific requirements]
-- [Allowlist domains needed]
-- [Resource requirements]
-```
+**Key points**:
+- Be specific about the blocker
+- Don't make excuses or recommendations
+- Show what actually works with screenshots
+- Tag the maintainer for help
 
 ## Common Pitfalls
 
@@ -321,38 +358,41 @@ fi
 
 ## PR Template Checklist
 
-Include this section in every PR:
+**Keep PR descriptions brief. Your code and screenshots speak for themselves.**
+
+Include this minimal section in every PR:
 
 ```markdown
-## Agent Verification Results
+## Changes
+- [2-3 bullet points maximum]
 
-### Environment
-- [ ] Local workstation / [ ] CI/CD
-- [ ] Full network access / [ ] Restricted network
-- Node version: [version]
-- Docker version: [version]
+## Verification
+- [x] All checks pass locally before push (lint, test, build)
+- [x] Playwright verification completed
+- [x] Screenshot attached
 
-### Testing Performed
-- [ ] Payload accessible: http://localhost:3000/admin
-- [ ] Legacy accessible: http://localhost:8080
-- [ ] Database seeded (`yarn seed:payload` and/or `yarn seed:legacy`)
-- [ ] Tests pass: `yarn test`
-- [ ] Linting passes: `yarn lint`
-
-### Evidence
-[Screenshots or explain why not available]
-
-### Performance Metrics
-- Container startup: [time]
-- yarn install: [time]
-- Service ready: [time]
-
-### Issues Encountered
-[None / List specific issues and how resolved]
-
-### Recommendations
-[Any suggestions for improving agent testing workflow]
+## Evidence
+[Single screenshot showing working functionality]
 ```
+
+**If there's a blocker requiring human action**, expand to:
+
+```markdown
+## Changes
+- [Brief description]
+
+## Verification
+- [x] All checks pass locally
+- [x] Screenshot attached
+
+## Blocker
+@owner - [Specific action needed from maintainer]
+
+## Evidence
+[Screenshot]
+```
+
+**Don't include**: verbose summaries, technical comparisons, "recommendations", performance metrics unless they reveal a problem.
 
 ## When to Ask for Help
 

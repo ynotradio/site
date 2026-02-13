@@ -20,6 +20,8 @@ Enhance code clarity and maintainability for recently modified code while preser
 
 Analyze code merged in the last 24 hours, apply refinements that improve quality, create PR if improvements found.
 
+**Context**: This is a solo hobby project. Make good decisions and implement them. No summaries, comparisons, or proof-of-work documentation.
+
 ## Project Context
 
 - **Repository**: ynotradio/site
@@ -60,13 +62,15 @@ Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-qualit
 
 ### 3. Validate
 
+**CRITICAL - You MUST verify all checks pass locally BEFORE pushing:**
+
 ```bash
-yarn lint
-yarn test
-yarn build
+yarn lint    # Must exit 0
+yarn test    # Must exit 0
+yarn build   # Must exit 0
 ```
 
-All must pass. If validation fails, fix or revert changes.
+All must pass. If validation fails, fix or revert changes. **Never push failing code.**
 
 ### 4. Create PR
 
@@ -85,7 +89,16 @@ git push origin HEAD
 **Labels**: `refactoring`, `code-quality`, `automation`  
 **Expiration**: 7 days
 
-**Important**: Never generate summary documentation as proof of work. Let code and passing tests speak for themselves.
+**PR Description** (brief):
+```markdown
+## Changes
+- [List 2-3 specific improvements]
+
+## Verification
+- [x] All checks pass locally before push
+```
+
+**Important**: Your code speaks for itself. No summaries, action plans, or documentation as proof of work.
 
 ## Exit Conditions
 
