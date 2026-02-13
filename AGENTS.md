@@ -195,6 +195,9 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 - Write lengthy summaries of what you did
 - Repeat information that's in the code or tests
 - Explain every decision in prose
+- Create "quick reference" comparison guides for external tools (users can read official docs)
+- Create detailed timeline/phase plans for solo hobby projects (no team coordination needed)
+- Generate implementation summaries as proof of work (code speaks for itself)
 
 **PR Description Format:**
 
