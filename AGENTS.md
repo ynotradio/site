@@ -29,7 +29,6 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 
 | Skill | When to Use |
 |-------|-------------|
-| **skills-usage-guide** | At start of EVERY task. Learn which skills to invoke and when. |
 | **testing-pr-changes** | Before submitting any PR. Success criteria and proof requirements. |
 | **payload-migration-workflow** | When working on Payload collections, data models, or PHP→Payload migration. |
 | **code-quality-standards** | When writing new TypeScript/React code. Airbnb style, React 19, Next.js 15 patterns. |
@@ -38,8 +37,33 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 | **agent-automation-infrastructure** | When dealing with slow builds or Docker issues. Pre-built images available. |
 | **detecting-agent-environment** | When creating environment-aware scripts. CI/CD vs local detection. |
 | **storybook-best-practices** | When creating `.stories.tsx` files. Payload UI mocking, provider wrapping. |
+| **e2e-debugging-workflow** | When E2E tests fail. Playwright debugging, selector issues, local verification. |
 
-**Workflow**: List available skills → Identify relevant ones → Invoke them → Apply their guidance
+### Skills Usage Workflow
+
+**At the start of every task:**
+
+1. **Identify relevant skills** based on your task:
+   - Components? → `test-story-coupling`
+   - Adding dependencies? → `dependency-best-practices`
+   - TypeScript/React code? → `code-quality-standards`
+   - Payload CMS? → `payload-migration-workflow`
+   - Creating a PR? → `testing-pr-changes` (ALWAYS)
+   - E2E test failures? → `e2e-debugging-workflow`
+   - Build/Docker issues? → `agent-automation-infrastructure`
+   - Storybook stories? → `storybook-best-practices`
+
+2. **Invoke relevant skills** using the skill tool
+
+3. **Apply the guidance** - follow patterns and conventions described
+
+**Why this matters**: Skills contain project-specific conventions that prevent CI failures, code that doesn't match standards, and wasted rework time.
+
+**Common mistakes to avoid**:
+- ❌ Skipping skills check → code doesn't match conventions, CI fails
+- ❌ Invoking skills but ignoring content → skills become useless
+- ❌ Assuming simple changes don't need testing-pr-changes → forgot CI verification, pushed failing code
+- ✅ Check skills → Invoke relevant ones → Apply guidance → Succeed
 
 ## Agentic Workflows
 
