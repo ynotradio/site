@@ -1,0 +1,48 @@
+# Buildkite Pipeline for Scheduled Database Sync
+# This pipeline replaces the GitHub Actions weekly-db-sync.yml workflow
+#
+# Schedule: Weekly on Monday at 2:00 AM UTC
+# Purpose: Sync production database to development for testing
+# 
+# Note: Configure this as a scheduled build in Buildkite UI:
+# Schedule: 0 2 * * 1 (cron format: Monday at 2 AM UTC)
+# Branch: main
+
+env:
+  NODE_VERSION: "22"
+
+steps:
+  - label: ":database: Sync Production → Development"
+    key: "db-sync"
+    command: |
+      echo "--- :yarn: Installing dependencies"
+      yarn install --frozen-lockfile
+      
+      echo "--- :database: Copying production database to development"
+      echo "WARNING: This will completely replace the development database"
+      echo "Source: Production ($$NEON_PROD_DATABASE_URL)"
+      echo "Target: Development ($$NEON_DEV_DATABASE_URL)"
+      
+      # Auto-confirm by piping 'yes' to the script
+      echo "yes" | yarn neon-db:copy prod dev
+      
+      echo "--- :white_check_mark: Database sync completed successfully"
+    env:
+      NEON_PROD_DATABASE_URL: "${NEON_PROD_DATABASE_URL}"
+      NEON_DEV_DATABASE_URL: "${NEON_DEV_DATABASE_URL}"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22"
+          volumes:
+            - ".:/app"
+          workdir: "/app"
+    agents:
+      queue: "default"
+
+  - wait
+
+  - label: ":memo: Notify on Failure"
+    command: |
+      echo "Database sync failed! Check the logs above for details."
+      echo "You may need to manually verify the database state."
+    if: build.state == "failed"
