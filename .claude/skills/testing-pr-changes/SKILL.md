@@ -47,11 +47,14 @@ Every agent PR **MUST** include proof of working functionality. This is **non-ne
 
 **You MUST use Playwright browser tools to verify your work visually.**
 
+For detailed Playwright debugging workflows, see the **[e2e-debugging-workflow](../e2e-debugging-workflow/)** skill. For environment setup and detection, see **[detecting-agent-environment](../detecting-agent-environment/)** skill.
+
 ### Required Workflow
 
 1. **Start the service** you're testing:
    - Payload: `yarn payload:dev` → http://localhost:3000/admin
    - Legacy: `docker compose up -d` → http://localhost:8080
+   - See [AGENTS.md](../../../AGENTS.md) TL;DR section for full setup commands
 
 2. **Navigate with Playwright MCP tools**:
    - `playwright-browser_navigate` to the URL
@@ -86,6 +89,8 @@ yarn payload:dev
 ```
 
 **Purpose**: Screenshots prove you tested the application end-to-end, not just that build commands succeeded.
+
+**Troubleshooting**: If tests fail, consult the [e2e-debugging-workflow](../e2e-debugging-workflow/) skill for selector debugging and common failure patterns.
 
 ## Performance Baselines
 
