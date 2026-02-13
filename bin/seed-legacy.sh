@@ -49,16 +49,18 @@ DELETE FROM deejays;
 DELETE FROM concerts;
 DELETE FROM cdotw;
 
--- Seed stories based on real ynotradio.net content
+-- Seed stories based on real ynotradio.net content with realistic HTML markup
 INSERT INTO stories (start_date, end_date, headline, story, pic, pic_url, priority, deleted) VALUES
-('2026-02-01', '2026-03-31', 'Top 11 @ 11: Vote & Win The Hives Tickets', 
-'Every Thursday at 11am and 11pm, Y-Not Radio counts down the Top 11 indie rock songs of the week. Vote this week and you\'ll be entered to win tickets for <b>The Hives</b> on Monday, March 16th at The Fillmore.<br><br><a href="top11.php"><b>VOTE HERE</b></a>', 
+('2026-02-01', '2026-03-31', 'Top 11 @ 11:<br>Vote & Win The Hives Tickets', 
+'Every Thursday at 11am and 11pm, Y-Not Radio counts down the Top 11 indie rock songs of the week.  Vote this week and you\'ll be entered to win tickets for <b>The Hives</b> on Monday, March 16th at The Fillmore.<br><br>
+<center>
+<b><a href="top11.php">VOTE HERE</a></b></center>', 
 'https://i.imgur.com/QjZCxwM.jpeg', 'top11.php', 1, 'n'),
-('2026-02-01', '2026-03-31', 'Rodney Anonymous Tells You How To Live', 
-'On the first Friday of each month <b>Rodney Anonymous</b> takes us on a 2 hour trip into his world of industrial, goth, and dark wave music!<br><br>If you missed Rodney\'s February dance party show, catch the replay this Sunday from 7-9pm, or you can hear it any time <a href="rodney.php">On Demand</a>.', 
+('2026-02-01', '2026-03-31', '<font size=2>Rodney Anonymous Tells You How To Live</font>', 
+'On the first Friday of each month <b>Rodney Anonymous</b> takes us on a 2 hour trip into his world of industrial, goth, and dark wave music!  <!--Tune in this Friday, February 6th from 9-11pm or Sunday the 8th from 7-9pm for a dance-party episode!  -->If you missed Rodney\'s February dance party show, catch the replay this Sunday from 7-9pm, or you can hear it any time <a href="rodney.php">On Demand</a>.', 
 'images/rodney.png', 'rodney.php', 2, 'n'),
 ('2026-02-01', '2026-03-31', 'Trainwreck Boyfriend Y-Not Session', 
-'Philly newcomers <b>Trainwreck Boyfriend</b> just released their self-titled debut album and joined Y-Not\'s <b>Josh T. Landow</b> to chat about it and perform an acoustic set. If you missed Trainwreck Boyfriend\'s <em>Y-Not Session</em>, you can listen to it any time <a href="ondemand.php">On Demand</a>.', 
+'Philly newcomers <b>Trainwreck Boyfriend</b> just released their self-titled debut album and joined Y-Not\'s <strong>Josh T. Landow </strong>to chat about it and perform an acoustic set.  If you missed Trainwreck Boyfriend\'s <em>Y-Not Session</em>, you can listen to it any time  <a href="ondemand.php">On Demand</a>. <em>Get Trainwreck Boyfriend\'s album on <a href="https://trainwreckboyfriend.bandcamp.com" target="_blank">Bandcamp</a>.</em>', 
 'https://i.imgur.com/TH7qD6Y.jpeg', 'ondemand.php', 3, 'n');
 
 -- Seed sample DJs
