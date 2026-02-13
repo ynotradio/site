@@ -281,39 +281,44 @@ test.describe('Now Playing on Y-Not Radio', () => {
         console.log('  Bug (gmdate): Would look for Jan 30 schedule');
         console.log('  Fix (date):   Looks for Jan 29 schedule');
 
-        // Restart PHP-FPM with libfaketime environment variables
-        // This requires the phpfpm service to have libfaketime installed
+        // Stop PHP-FPM service
         execSync('docker compose stop phpfpm', {
           cwd: process.cwd(),
           stdio: 'pipe',
         });
 
-        // Write env file with faketime settings
-        const fs = require('fs');
-        const envContent = `LD_PRELOAD=/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1
-FAKETIME=@${boundaryTime}
-`;
-        fs.writeFileSync('/tmp/faketime.env', envContent);
+        // Restart PHP-FPM with libfaketime environment variables
+        // Export the env vars and start the service
+        const env = {
+          ...process.env,
+          LD_PRELOAD: '/usr/lib/x86_64-linux-gnu/faketime/libfaketime.so.1',
+          FAKETIME: `@${boundaryTime}`,
+        };
 
-        // Start with faketime environment
-        execSync('docker compose --env-file /tmp/faketime.env up -d phpfpm', {
+        execSync('docker compose up -d phpfpm', {
           cwd: process.cwd(),
           stdio: 'pipe',
+          env,
         });
 
         // Wait for PHP-FPM to be ready
         await page.waitForTimeout(5000);
 
         // Verify the fake time is working
-        const testTime = execSync('docker compose exec -T phpfpm php -r "echo date(\'Y-m-d H:i:s\');"', {
-          cwd: process.cwd(),
-          encoding: 'utf-8',
-        }).trim();
+        const testTime = execSync(
+          'docker compose exec -T phpfpm php -r "echo date(\'Y-m-d H:i:s\');"',
+          {
+            cwd: process.cwd(),
+            encoding: 'utf-8',
+          },
+        ).trim();
 
         console.log(`✓ Container time mocked to: ${testTime} using libfaketime`);
       } catch (error) {
         console.error('Failed to set fake time:', error);
-        throw new Error('libfaketime setup failed. Ensure libfaketime is installed in PHP container.');
+        throw new Error(
+          'libfaketime setup failed. Ensure libfaketime is installed in PHP container.',
+        );
       }
     });
 
@@ -381,12 +386,6 @@ FAKETIME=@${boundaryTime}
           cwd: process.cwd(),
           stdio: 'pipe',
         });
-
-        // Clean up temp file
-        const fs = require('fs');
-        if (fs.existsSync('/tmp/faketime.env')) {
-          fs.unlinkSync('/tmp/faketime.env');
-        }
 
         console.log('✓ Restored normal time');
       } catch (error) {
