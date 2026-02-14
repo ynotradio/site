@@ -227,3 +227,27 @@ Implement **Option 1** - Insert show data into MySQL `schedule` table to match w
 - Further investigation needed once test can actually run
 
 **Status**: Linting fixed, environment configured. Ready for test run.
+
+## Iteration 20: Fixed MySQL Credentials (CI Log Analysis)
+
+**Date**: 2026-02-15 00:00
+
+**Analysis from GitHub Actions logs** (run ID 22026135844):
+
+**Failures identified**:
+1. **MySQL Access Denied**: `ERROR 1045 (28000): Access denied for user 'ynot'@'localhost' (using password: YES)`
+   - Test used: `mysql -u ynot -pynot ynot`
+   - docker-compose.yml has:
+     - Database: `ynot_site`
+     - User: `ynot_sql_user`
+     - Password: `ynot_sql_pass`
+
+2. **On-air div not visible**: Test timeout waiting for `#on-air` div
+   - Likely caused by data not being inserted (due to MySQL auth failure)
+
+**Changes**:
+- Updated test to use correct credentials: `mysql -u ynot_sql_user -pynot_sql_pass ynot_site`
+
+**Expected Result**: MySQL INSERT should work, on-air DJ should appear
+
+**Status**: Credential mismatch fixed, testing

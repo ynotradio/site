@@ -253,7 +253,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
         ON DUPLICATE KEY UPDATE host = 'Test DJ';
       `;
 
-      execSync(`docker compose exec -T mysql mysql -u ynot -pynot ynot -e "${insertShowSQL}"`, {
+      execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
         cwd: process.cwd(),
         stdio: 'pipe',
       });
