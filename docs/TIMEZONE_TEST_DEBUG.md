@@ -200,3 +200,30 @@ Insert into both databases to cover migration scenarios.
 ## Next Action
 
 Implement **Option 1** - Insert show data into MySQL `schedule` table to match what PHP queries.
+
+## Update (Commit 19): Linting Fixes + Test Environment Setup
+
+**Problems Found:**
+1. **Linting errors** (3 errors):
+   - Line 248: Trailing spaces
+   - Line 333: Double quotes instead of single quotes in SQL command
+   - Line 353: Trailing spaces
+
+2. **Test environment not configured**:
+   - Missing `.env.local` file
+   - Missing `src/.env` file
+
+**Fixes Applied:**
+- Removed trailing spaces on lines 248 and 353
+- Changed double quotes to single quotes on line 333 (escaped inner single quotes with backslash)
+- Created `.env.local` from `.env.example`
+- Created `src/.env` from `.env.php.example`
+- ✅ Linting now passes: `yarn lint` exits with code 0
+
+**E2E Test Observation:**
+- Docker services start correctly
+- Playwright's Next.js dev server startup is slow (60+ seconds)
+- This slowness may contribute to CI timeouts
+- Further investigation needed once test can actually run
+
+**Status**: Linting fixed, environment configured. Ready for test run.

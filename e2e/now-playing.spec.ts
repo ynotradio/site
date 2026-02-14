@@ -245,7 +245,6 @@ test.describe('Now Playing on Y-Not Radio', () => {
       // CRITICAL: PHP reads from MySQL (schedule table), not Postgres (shows table)
       // The use_postgres_schedule feature flag is false in src/config/features.php
       // So we must insert into MySQL for the test to work
-      
       // Insert show data directly via SQL to avoid Payload UI flakiness
       // This creates a show for Wednesday, Jan 29, 2026, 6-9 PM EST
       const insertShowSQL = `
@@ -330,7 +329,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
 
       // Add debug: Verify show exists in MySQL
       const showCheck = execSync(
-        `docker compose exec -T mysql mysql -u ynot -pynot ynot -e "SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '2026-01-29';"`,
+        'docker compose exec -T mysql mysql -u ynot -pynot ynot -e "SELECT date, day, start_time, end_time, host FROM schedule WHERE date = \'2026-01-29\';"',
         { cwd: process.cwd(), encoding: 'utf-8' },
       );
       console.log('MySQL schedule data:', showCheck);
@@ -350,7 +349,6 @@ test.describe('Now Playing on Y-Not Radio', () => {
       const onAirDiv = page.locator('#on-air');
       const onAirExists = await onAirDiv.count();
       console.log('On-air div count:', onAirExists);
-      
       if (onAirExists > 0) {
         const onAirText = await onAirDiv.textContent();
         console.log('On-air div text:', onAirText);
