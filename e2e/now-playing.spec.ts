@@ -241,30 +241,25 @@ test.describe('Now Playing on Y-Not Radio', () => {
     //
     // Fix: Both date('Y-m-d') and date('H:i:s') use local EST timezone
 
-    await test.step('Insert show data directly into Postgres for Jan 29, 2026', async () => {
+    await test.step('Insert show data directly into MySQL for Jan 29, 2026', async () => {
+      // CRITICAL: PHP reads from MySQL (schedule table), not Postgres (shows table)
+      // The use_postgres_schedule feature flag is false in src/config/features.php
+      // So we must insert into MySQL for the test to work
+      
       // Insert show data directly via SQL to avoid Payload UI flakiness
       // This creates a show for Wednesday, Jan 29, 2026, 6-9 PM EST
       const insertShowSQL = `
-        INSERT INTO shows (
-          "date", weekday, "startTime", "endTime", host, "createdAt", "updatedAt"
-        ) VALUES (
-          '2026-01-29'::date,
-          'Wednesday',
-          '18:00:00'::time,
-          '21:00:00'::time,
-          (SELECT id FROM people LIMIT 1),
-          NOW(),
-          NOW()
-        )
-        ON CONFLICT DO NOTHING;
+        INSERT INTO schedule (date, day, start_time, end_time, host, note, deleted)
+        VALUES ('2026-01-29', 'Wednesday', '18:00:00', '21:00:00', 'Test DJ', '', 'n')
+        ON DUPLICATE KEY UPDATE host = 'Test DJ';
       `;
 
-      execSync(`docker compose exec -T postgres psql -U ynot ynot_payload_dev -c "${insertShowSQL}"`, {
+      execSync(`docker compose exec -T mysql mysql -u ynot -pynot ynot -e "${insertShowSQL}"`, {
         cwd: process.cwd(),
         stdio: 'pipe',
       });
 
-      console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into Postgres');
+      console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into MySQL');
     });
 
     await test.step('Set fake time using libfaketime (7 PM EST = midnight UTC)', async () => {
@@ -333,6 +328,13 @@ test.describe('Now Playing on Y-Not Radio', () => {
       // Give PHP time to recognize the new fake time
       await page.waitForTimeout(2000);
 
+      // Add debug: Verify show exists in MySQL
+      const showCheck = execSync(
+        `docker compose exec -T mysql mysql -u ynot -pynot ynot -e "SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '2026-01-29';"`,
+        { cwd: process.cwd(), encoding: 'utf-8' },
+      );
+      console.log('MySQL schedule data:', showCheck);
+
       const response = await page.goto('http://localhost:8080', {
         waitUntil: 'networkidle',
         timeout: 30000,
@@ -344,10 +346,20 @@ test.describe('Now Playing on Y-Not Radio', () => {
       const errors = checkForPhpErrors(pageContent);
       expect(errors).toHaveLength(0);
 
+      // Debug: Check if on-air div exists and what it contains
+      const onAirDiv = page.locator('#on-air');
+      const onAirExists = await onAirDiv.count();
+      console.log('On-air div count:', onAirExists);
+      
+      if (onAirExists > 0) {
+        const onAirText = await onAirDiv.textContent();
+        console.log('On-air div text:', onAirText);
+      }
+
       // The critical test: on-air div MUST be visible
       // If the bug exists (using gmdate), it would look for Jan 30 schedule = no match
       // With the fix (using date), it looks for Jan 29 schedule = match found
-      const onAirDiv = page.locator('#on-air');
+      await expect(onAirDiv).toBeVisible();
 
       const isVisible = await onAirDiv.isVisible().catch(() => false);
 
