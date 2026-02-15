@@ -93,8 +93,26 @@ test.describe('Now Playing on Y-Not Radio', () => {
     // This test actively creates a show and verifies it appears
     // IMPORTANT: PHP reads from MySQL schedule table, not Postgres shows table
     // So we insert directly into MySQL instead of using Payload UI
-    const now = new Date();
-    const currentHour = now.getHours();
+    
+    // CRITICAL: PHP server uses America/New_York timezone (EST/EDT)
+    // Test runner uses UTC. Must get PHP server's current time to create matching show!
+    await test.step('Get PHP server current time', async () => {
+      const phpTime = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H:%M:%S %A"', {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+      }).trim();
+      
+      console.log(`PHP server time: ${phpTime}`);
+    });
+    
+    // Query PHP server for current date/time in its timezone
+    const phpDateOutput = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H %A"', {
+      cwd: process.cwd(),
+      encoding: 'utf8',
+    }).trim();
+    
+    const [dateStr, hourStr, dayName] = phpDateOutput.split(' ');
+    const currentHour = parseInt(hourStr, 10);
 
     // Create a show that covers a wide time window, without crossing midnight
     const startHour = Math.max(0, currentHour - 2);
@@ -103,13 +121,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
     const startTime = `${String(startHour).padStart(2, '0')}:00:00`;
     const endTime = `${String(endHour).padStart(2, '0')}:00:00`;
 
-    // Format date as YYYY-MM-DD for MySQL
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = dayNames[today.getDay()];
-
-    console.log(`Creating show: ${dateStr} (${dayName}) ${startTime} - ${endTime} (current hour: ${currentHour})`);
+    console.log(`Creating show for PHP server time: ${dateStr} (${dayName}) ${startTime} - ${endTime} (PHP current hour: ${currentHour})`);
 
     await test.step('Insert show for current time directly into MySQL', async () => {
       // PHP reads from MySQL schedule table (use_postgres_schedule = false)

@@ -315,3 +315,51 @@ Implement **Option 1** - Insert show data into MySQL `schedule` table to match w
 1. Fix Test 1: Insert into MySQL instead of using Payload UI OR enable use_postgres_schedule
 2. Add PHP debug output to see what date/time PHP is actually looking for
 3. Verify libfaketime is working by checking PHP output of date()
+
+## Iteration 23: CI Logs Analysis - Timezone Mismatch Between Test Runner and PHP Server
+
+**From CI logs (run 22037640813 - commit 64a9e5a)**:
+
+### Test 1 Failure Root Cause
+```
+PHP DEBUG OUTPUT: Looking for date=2026-02-15, time=09:59:13
+Found 0 shows for today
+Expected time window: 12:00:00 - 16:00:00
+Current time: 09:59:15
+```
+
+**Problem Identified**: 
+1. Test runner calculates time using `new Date()` = **UTC timezone** (09:59)
+2. Creates MySQL show for hours 12:00-16:00 based on UTC calculation
+3. PHP server uses **America/New_York timezone** (EST/EDT, UTC-5/-4)
+4. At 09:59 UTC, PHP sees ~04:59 or 05:59 EST
+5. Show scheduled for 12:00-16:00 isn't on-air at 05:00 EST!
+6. MySQL INSERT succeeds but returns "Found 0 shows" because current time is outside show window
+
+**Test code issue** (lines 96-104):
+```typescript
+const now = new Date();  // ← Gets UTC time from test runner machine!
+const currentHour = now.getHours();  // ← UTC hour, not EST hour
+const startHour = Math.max(0, currentHour - 2);  // Based on wrong timezone
+const endHour = Math.min(23, currentHour + 2);
+```
+
+### Test 2 Failure
+```
+Error: libfaketime setup failed. Ensure libfaketime is installed in PHP container.
+Failed to set fake time: page.waitForTimeout: Test timeout of 20000ms exceeded.
+```
+
+**Issues**:
+1. Container restart with libfaketime env vars times out after 20s
+2. Even when restart completes, #on-air div still not found
+
+### Solution Required
+
+**Test 1**: Get current time in America/New_York timezone when calculating show times:
+```typescript
+// Instead of: const now = new Date();
+// Use: Get PHP server's current time (EST) first, then create show around that
+```
+
+**Test 2**: Debug why container restart is slow and whether libfaketime actually works in CI
