@@ -20,7 +20,13 @@
     "autoload": {
         "psr-4": {
             "YNotRadio\\": ""
-        }
+        },
+        "classmap": [
+            "models/",
+            "controllers/",
+            "config/",
+            "functions/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
