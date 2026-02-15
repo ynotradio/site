@@ -329,7 +329,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
 
       // Add debug: Verify show exists in MySQL
       const showCheck = execSync(
-        'docker compose exec -T mysql mysql -u ynot -pynot ynot -e "SELECT date, day, start_time, end_time, host FROM schedule WHERE date = \'2026-01-29\';"',
+        'docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "SELECT date, day, start_time, end_time, host FROM schedule WHERE date = \'2026-01-29\';"',
         { cwd: process.cwd(), encoding: 'utf-8' },
       );
       console.log('MySQL schedule data:', showCheck);

@@ -251,3 +251,16 @@ Implement **Option 1** - Insert show data into MySQL `schedule` table to match w
 **Expected Result**: MySQL INSERT should work, on-air DJ should appear
 
 **Status**: Credential mismatch fixed, testing
+
+### Iteration 21 (2026-02-15 04:07 UTC) 
+
+**Problem**: MySQL credentials still wrong in debug SELECT query (line 332)
+
+**From CI logs** (run 22026433208):
+- INSERT on line 247 used correct credentials  
+- Debug SELECT on line 332 still used wrong credentials (`ynot`/`ynot`/`ynot`)
+- Error: `ACCESS denied for user 'ynot'@'localhost'`
+
+**Fix**: Update line 332 debug query to use `ynot_sql_user`/`ynot_sql_pass`/`ynot_site`
+
+**Expected**: Both INSERT and SELECT work, timezone boundary test passes
