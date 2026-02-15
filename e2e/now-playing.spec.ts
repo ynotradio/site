@@ -91,7 +91,8 @@ test.describe('Now Playing on Y-Not Radio', () => {
     page,
   }, testInfo) => {
     // This test actively creates a show and verifies it appears
-    // DJ data is seeded by bin/seed-payload.ts, so this test should work
+    // IMPORTANT: PHP reads from MySQL schedule table, not Postgres shows table
+    // So we insert directly into MySQL instead of using Payload UI
     const now = new Date();
     const currentHour = now.getHours();
 
@@ -99,31 +100,32 @@ test.describe('Now Playing on Y-Not Radio', () => {
     const startHour = Math.max(0, currentHour - 2);
     const endHour = Math.min(23, currentHour + 2);
 
-    const startTime = `${String(startHour).padStart(2, '0')}:00`;
-    const endTime = `${String(endHour).padStart(2, '0')}:00`;
+    const startTime = `${String(startHour).padStart(2, '0')}:00:00`;
+    const endTime = `${String(endHour).padStart(2, '0')}:00:00`;
 
-    console.log(`Creating show: ${startTime} - ${endTime} (current hour: ${currentHour})`);
+    // Format date as YYYY-MM-DD for MySQL
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[today.getDay()];
 
-    await test.step('Create a show scheduled for current time', async () => {
-      await navigateToPayloadCollectionCreate(page, 'shows');
-      await captureScreenshot(page, testInfo, '01-Show-Create-Form');
+    console.log(`Creating show: ${dateStr} (${dayName}) ${startTime} - ${endTime} (current hour: ${currentHour})`);
 
-      // Set show date to today
-      const today = new Date();
-      await fillPayloadDateField(page, 'field-date', today);
+    await test.step('Insert show for current time directly into MySQL', async () => {
+      // PHP reads from MySQL schedule table (use_postgres_schedule = false)
+      // Insert directly to avoid Payload UI flakiness and database mismatch
+      const insertShowSQL = `
+        INSERT INTO schedule (date, day, start_time, end_time, host, note, deleted)
+        VALUES ('${dateStr}', '${dayName}', '${startTime}', '${endTime}', 'Test DJ', '', 'n')
+        ON DUPLICATE KEY UPDATE host = 'Test DJ';
+      `;
 
-      // Set start and end times to span current time
-      await fillPayloadTimeField(page, 'field-startTime', startTime);
-      await fillPayloadTimeField(page, 'field-endTime', endTime);
+      execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
+        cwd: process.cwd(),
+        stdio: 'pipe',
+      });
 
-      // Select the first available DJ from seed data
-      await fillPayloadRelationshipField(page, 'field-host', 0);
-
-      await captureScreenshot(page, testInfo, '02-Show-Filled-Form');
-
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'shows');
-      await captureScreenshot(page, testInfo, '03-Show-Saved');
+      console.log(`✓ Inserted show for ${dateStr} ${startTime}-${endTime} into MySQL`);
     });
 
     await test.step('Verify on-air DJ appears on legacy PHP site', async () => {
@@ -138,6 +140,14 @@ test.describe('Now Playing on Y-Not Radio', () => {
       expect(response?.status()).toBe(200);
 
       const pageContent = await page.content();
+
+      // Extract PHP debug comments to see what date/time PHP is looking for
+      const debugComments = pageContent.match(/<!-- DEBUG on_air\(\):.*?-->/g) || [];
+      console.log('\n=== PHP DEBUG OUTPUT ===');
+      debugComments.forEach(comment => {
+        console.log(comment.replace(/<!-- DEBUG on_air\(\): /, '').replace(' -->', ''));
+      });
+      console.log('========================\n');
 
       // Check for PHP errors
       const errors = checkForPhpErrors(pageContent);
@@ -344,6 +354,14 @@ test.describe('Now Playing on Y-Not Radio', () => {
       const pageContent = await page.content();
       const errors = checkForPhpErrors(pageContent);
       expect(errors).toHaveLength(0);
+
+      // Extract PHP debug comments to see what date/time PHP is looking for
+      const debugComments = pageContent.match(/<!-- DEBUG on_air\(\):.*?-->/g) || [];
+      console.log('\n=== PHP DEBUG OUTPUT ===');
+      debugComments.forEach(comment => {
+        console.log(comment.replace(/<!-- DEBUG on_air\(\): /, '').replace(' -->', ''));
+      });
+      console.log('========================\n');
 
       // Debug: Check if on-air div exists and what it contains
       const onAirDiv = page.locator('#on-air');

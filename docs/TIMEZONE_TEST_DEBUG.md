@@ -264,3 +264,54 @@ Implement **Option 1** - Insert show data into MySQL `schedule` table to match w
 **Fix**: Update line 332 debug query to use `ynot_sql_user`/`ynot_sql_pass`/`ynot_site`
 
 **Expected**: Both INSERT and SELECT work, timezone boundary test passes
+
+### Iteration 22 (2026-02-15 14:37 UTC)
+
+**Problem**: Tests still failing even with correct MySQL credentials
+
+**From CI logs** (run 22029428997):
+1. **Test 1** ("should create show for current time"):
+   - `#on-air` div not visible (element not found)
+   - Failed 3 times (original + 2 retries)
+   
+2. **Test 2** ("should handle midnight UTC boundary"):
+   - First attempt: "libfaketime setup failed"
+   - Retry attempts: `#on-air` div not visible
+
+**Investigation**: Analyzed PHP `on_air()` function
+
+**Key Findings**:
+
+1. **PHP Query Details** (src/functions/main_fns.php, src/models/implementations/SqlSchedule.php):
+   ```php
+   $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
+   // Queries: SELECT * FROM schedule WHERE date = '2026-01-29' AND deleted = 'n'
+   ```
+
+2. **Required MySQL Schema**:
+   - `date` column: 'YYYY-MM-DD' format (e.g., '2026-01-29')
+   - `day` column: full day name (e.g., 'Wednesday')
+   - `start_time`: 'HH:MM:SS' (e.g., '18:00:00')
+   - `end_time`: 'HH:MM:SS' (e.g., '21:00:00')
+   - `host`: DJ name
+   - `deleted`: 'n' or 'y'
+
+3. **🚨 ROOT CAUSE - Test 1**:
+   - Test creates shows via Payload UI (lines 107-127)
+   - Payload inserts into **Postgres `shows` table**
+   - PHP reads from **MySQL `schedule` table**
+   - **Result**: PHP never sees the data (wrong database!)
+   - Feature flag `use_postgres_schedule` is FALSE (src/config/features.php line 12)
+
+4. **Test 2 Analysis**:
+   - INSERT statement IS correct (lines 251-253)
+   - Uses proper columns: date, day, start_time, end_time, host, deleted
+   - But still fails - possible issues:
+     a) libfaketime not actually changing PHP's date()
+     b) MySQL INSERT not working despite no error
+     c) PHP caching or connection issues
+
+**Next Steps**:
+1. Fix Test 1: Insert into MySQL instead of using Payload UI OR enable use_postgres_schedule
+2. Add PHP debug output to see what date/time PHP is actually looking for
+3. Verify libfaketime is working by checking PHP output of date()
