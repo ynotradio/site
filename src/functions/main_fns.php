@@ -168,10 +168,19 @@ function on_air(){
     
     // Get today's schedule using local date, not UTC
     // This avoids timezone issues where gmdate() can give the next day in UTC while date() is still in local time
-    $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
+    $queryDate = date('Y-m-d');
+    $currentTime = date('H:i:s');
+    
+    echo "<!-- DEBUG on_air(): Looking for date=" . $queryDate . ", time=" . $currentTime . " -->\n";
+    
+    $todaySchedule = $scheduleModel->getByDate($queryDate);
+    
+    echo "<!-- DEBUG on_air(): Found " . count($todaySchedule) . " shows for today -->\n";
+    foreach ($todaySchedule as $show) {
+      echo "<!-- DEBUG show: date=" . ($show['date'] ?? 'N/A') . ", start=" . ($show['start_time'] ?? 'N/A') . ", end=" . ($show['end_time'] ?? 'N/A') . ", host=" . ($show['host'] ?? 'N/A') . " -->\n";
+    }
     
     // Find current time slot
-    $currentTime = date('H:i:s');
     foreach ($todaySchedule as $slot) {
       if ($currentTime >= $slot['start_time'] && $currentTime < $slot['end_time']) {
         $display_name = str_replace("<br>", " ", $slot['host']);
@@ -182,6 +191,7 @@ function on_air(){
     }
   } catch (Exception $e) {
     error_log("Error getting on-air DJ: " . $e->getMessage());
+    echo "<!-- DEBUG on_air(): Exception - " . $e->getMessage() . " -->\n";
   }
   
   return '';
