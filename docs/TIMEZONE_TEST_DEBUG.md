@@ -363,3 +363,48 @@ Failed to set fake time: page.waitForTimeout: Test timeout of 20000ms exceeded.
 ```
 
 **Test 2**: Debug why container restart is slow and whether libfaketime actually works in CI
+
+---
+
+## Iteration 24: Timezone Fix Applied (Commit 9b559c6)
+
+**Date**: 2026-02-15 23:36:39 UTC
+
+### Changes Made
+
+Fixed Test 1 timezone mismatch by querying PHP server's current time in America/New_York timezone:
+
+```typescript
+// Query PHP container's time (EST/EDT) instead of test runner's time (UTC)
+const phpDateOutput = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H %A"', {
+  cwd: process.cwd(),
+  encoding: 'utf8',
+}).trim();
+
+const [dateStr, hourStr, dayName] = phpDateOutput.split(' ');
+const currentHour = parseInt(hourStr, 10);  // ← EST hour, not UTC
+
+// Create show based on PHP server's current hour
+const startHour = Math.max(0, currentHour - 2);
+const endHour = Math.min(23, currentHour + 2);
+```
+
+### Expected Results
+
+**Test 1**: Should now pass because show is created for PHP's actual current time (EST), not test runner's time (UTC).
+
+**Test 2**: Still investigating libfaketime container recreation timeout.
+
+### CI Status
+
+Waiting for E2E test run 22045231763 to execute (currently "action_required" - pending approval).
+
+### Next Actions
+
+1. Monitor CI run results for commit 9b559c6
+2. If Test 1 passes: ✓ Timezone fix verified
+3. If Test 2 still fails: Consider alternative approaches:
+   - Increase timeout for container recreation
+   - Use environment variable to override PHP's timezone
+   - Mock time via PHP config instead of libfaketime
+   - Skip libfaketime test and rely on Test 1 + manual testing
