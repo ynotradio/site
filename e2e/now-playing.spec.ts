@@ -116,18 +116,17 @@ test.describe('Now Playing on Y-Not Radio', () => {
     // If near midnight (hour 22-23), extend show to end of day (23:59:59) to avoid timing issues
     const startHour = Math.max(0, currentHour - 2);
     const endHour = Math.min(23, currentHour + 3);
-    
+
     const startTime = `${String(startHour).padStart(2, '0')}:00:00`;
     // If endHour is 23, use 23:59:59 to ensure show doesn't end before current minute
     const endTime = endHour === 23 ? '23:59:59' : `${String(endHour).padStart(2, '0')}:00:00`;
-
     console.log(`Creating show for PHP server time: ${dateStr} (${dayName}) ${startTime} - ${endTime} (PHP current hour: ${currentHour})`);
 
     await test.step('Insert show for current time directly into Postgres', async () => {
       // IMPORTANT: E2E tests set USE_POSTGRES_SCHEDULE=true in .env.local
       // This overrides src/config/features.php, so PHP reads from Postgres shows table
       // Must insert into Postgres, NOT MySQL!
-      
+
       // Payload Shows schema uses date (DATE type) + startTime/endTime (text HH:MM format)
       const insertShowSQL = `
         INSERT INTO shows (date, "startTime", "endTime", name, "createdAt", "updatedAt")
@@ -294,7 +293,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
       // IMPORTANT: E2E tests set USE_POSTGRES_SCHEDULE=true in .env.local
       // This overrides src/config/features.php, so PHP reads from Postgres shows table
       // Must insert into Postgres, NOT MySQL!
-      
+
       // Insert show data directly via SQL to avoid Payload UI flakiness
       // This creates a show for Wednesday, Jan 29, 2026, 6-9 PM EST
       const insertShowSQL = `
@@ -317,7 +316,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
         });
 
         // Verify the INSERT worked
-        const verifySQL = `SELECT date, "startTime", "endTime", name FROM shows WHERE date = '2026-01-29' AND "startTime" = '18:00';`;
+        const verifySQL = 'SELECT date, "startTime", "endTime", name FROM shows WHERE date = \'2026-01-29\' AND "startTime" = \'18:00\';';
         const verifyOutput = execSync(`docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "${verifySQL}"`, {
           cwd: process.cwd(),
           encoding: 'utf-8',
