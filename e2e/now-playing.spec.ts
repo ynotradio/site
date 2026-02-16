@@ -123,36 +123,46 @@ test.describe('Now Playing on Y-Not Radio', () => {
 
     console.log(`Creating show for PHP server time: ${dateStr} (${dayName}) ${startTime} - ${endTime} (PHP current hour: ${currentHour})`);
 
-    await test.step('Insert show for current time directly into MySQL', async () => {
-      // PHP reads from MySQL schedule table (use_postgres_schedule = false)
-      // Insert directly to avoid Payload UI flakiness and database mismatch
+    await test.step('Insert show for current time directly into Postgres', async () => {
+      // IMPORTANT: E2E tests set USE_POSTGRES_SCHEDULE=true in .env.local
+      // This overrides src/config/features.php, so PHP reads from Postgres shows table
+      // Must insert into Postgres, NOT MySQL!
+      
+      // Payload Shows schema uses date (DATE type) + startTime/endTime (text HH:MM format)
       const insertShowSQL = `
-        INSERT INTO schedule (date, day, start_time, end_time, host, note, deleted)
-        VALUES ('${dateStr}', '${dayName}', '${startTime}', '${endTime}', 'Test DJ', '', 'n')
-        ON DUPLICATE KEY UPDATE host = 'Test DJ';
+        INSERT INTO shows (date, "startTime", "endTime", name, "createdAt", "updatedAt")
+        VALUES (
+          '${dateStr}',
+          '${startTime.substring(0, 5)}',
+          '${endTime.substring(0, 5)}',
+          'Test DJ',
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT DO NOTHING;
       `;
 
       try {
-        execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
+        execSync(`docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "${insertShowSQL}"`, {
           cwd: process.cwd(),
-          stdio: 'inherit', // Show MySQL errors
+          stdio: 'inherit', // Show Postgres errors
         });
 
         // Verify the INSERT worked
-        const verifySQL = `SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '${dateStr}' AND start_time = '${startTime}';`;
-        const verifyOutput = execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${verifySQL}"`, {
+        const verifySQL = `SELECT date, "startTime", "endTime", name FROM shows WHERE date = '${dateStr}' AND "startTime" = '${startTime.substring(0, 5)}';`;
+        const verifyOutput = execSync(`docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "${verifySQL}"`, {
           cwd: process.cwd(),
           encoding: 'utf-8',
         });
 
         if (verifyOutput.includes('Test DJ')) {
-          console.log(`✓ Inserted show for ${dateStr} ${startTime}-${endTime} into MySQL`);
-          console.log(`  Verification: ${verifyOutput.split('\n')[1]}`); // Show the row
+          console.log(`✓ Inserted show for ${dateStr} ${startTime}-${endTime} into Postgres`);
+          console.log(`  Verification: ${verifyOutput.split('\n')[2]}`); // Show the row
         } else {
           throw new Error(`INSERT succeeded but SELECT found no matching row. Output: ${verifyOutput}`);
         }
       } catch (error) {
-        console.error('MySQL INSERT/SELECT failed:', error);
+        console.error('Postgres INSERT/SELECT failed:', error);
         throw error;
       }
     });
@@ -280,39 +290,47 @@ test.describe('Now Playing on Y-Not Radio', () => {
     //
     // Fix: Both date('Y-m-d') and date('H:i:s') use local EST timezone
 
-    await test.step('Insert show data directly into MySQL for Jan 29, 2026', async () => {
-      // CRITICAL: PHP reads from MySQL (schedule table), not Postgres (shows table)
-      // The use_postgres_schedule feature flag is false in src/config/features.php
-      // So we must insert into MySQL for the test to work
+    await test.step('Insert show data directly into Postgres for Jan 29, 2026', async () => {
+      // IMPORTANT: E2E tests set USE_POSTGRES_SCHEDULE=true in .env.local
+      // This overrides src/config/features.php, so PHP reads from Postgres shows table
+      // Must insert into Postgres, NOT MySQL!
+      
       // Insert show data directly via SQL to avoid Payload UI flakiness
       // This creates a show for Wednesday, Jan 29, 2026, 6-9 PM EST
       const insertShowSQL = `
-        INSERT INTO schedule (date, day, start_time, end_time, host, note, deleted)
-        VALUES ('2026-01-29', 'Wednesday', '18:00:00', '21:00:00', 'Test DJ', '', 'n')
-        ON DUPLICATE KEY UPDATE host = 'Test DJ';
+        INSERT INTO shows (date, "startTime", "endTime", name, "createdAt", "updatedAt")
+        VALUES (
+          '2026-01-29',
+          '18:00',
+          '21:00',
+          'Test DJ',
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT DO NOTHING;
       `;
 
       try {
-        execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
+        execSync(`docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "${insertShowSQL}"`, {
           cwd: process.cwd(),
-          stdio: 'inherit', // Show MySQL errors
+          stdio: 'inherit', // Show Postgres errors
         });
 
         // Verify the INSERT worked
-        const verifySQL = `SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '2026-01-29' AND start_time = '18:00:00';`;
-        const verifyOutput = execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${verifySQL}"`, {
+        const verifySQL = `SELECT date, "startTime", "endTime", name FROM shows WHERE date = '2026-01-29' AND "startTime" = '18:00';`;
+        const verifyOutput = execSync(`docker compose exec -T postgres psql -U ynot_postgres_user -d ynot_payload_dev -c "${verifySQL}"`, {
           cwd: process.cwd(),
           encoding: 'utf-8',
         });
 
         if (verifyOutput.includes('Test DJ')) {
-          console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into MySQL');
-          console.log(`  Verification: ${verifyOutput.split('\n')[1]}`); // Show the row
+          console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into Postgres');
+          console.log(`  Verification: ${verifyOutput.split('\n')[2]}`); // Show the row
         } else {
           throw new Error(`INSERT succeeded but SELECT found no matching row. Output: ${verifyOutput}`);
         }
       } catch (error) {
-        console.error('MySQL INSERT/SELECT failed:', error);
+        console.error('Postgres INSERT/SELECT failed:', error);
         throw error;
       }
     });
