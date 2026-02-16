@@ -8,46 +8,14 @@
  * timers, so they will be tested with E2E Playwright tests per the testing plan.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
+import { describe, it, expect } from 'vitest';
 
-// Load the legacy JS file
-const jsFilePath = path.join(__dirname, '../../src/js/countdown.js');
-const jsCode = fs.readFileSync(jsFilePath, 'utf-8');
+// Import the Madness object directly from the legacy JS file
+// The file now exports using CommonJS for Node.js compatibility
+// eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+const { Madness } = require('../../src/js/countdown.js');
 
-// Extract the Madness.displayDiffFormat function
-// This is necessary because the legacy code is not modularized
-let displayDiffFormat: (diff: number) => string;
-
-beforeAll(() => {
-  // Create a minimal jQuery stub and declare Madness variable for the eval context
-  // The countdown.js file uses $() at the top level and assigns to global Madness
-  const setupCode = `
-    var Madness; // Declare before it's used
-    
-    function $(selector) {
-      return {
-        ready: function(fn) { /* no-op - don't execute ready callbacks */ },
-        text: function() { return 0; },
-        size: function() { return 0; },
-        load: function() { /* no-op */ }
-      };
-    }
-  `;
-
-  // Execute the JS code to create the Madness object
-  const functionWrapper = `
-    (function() {
-      ${setupCode}
-      ${jsCode}
-      return Madness;
-    })();
-  `;
-  // eslint-disable-next-line no-eval
-  const Madness = eval(functionWrapper);
-  displayDiffFormat = Madness.displayDiffFormat;
-});
+const { displayDiffFormat } = Madness;
 
 describe('Madness.displayDiffFormat', () => {
   const SEC = 1000;
