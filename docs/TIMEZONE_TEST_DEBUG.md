@@ -595,3 +595,97 @@ Stop adding more fixes without understanding the root cause. Need to:
 1. Download CI test artifacts (screenshots, HTML traces)
 2. Run tests locally with same conditions as CI
 3. Actually SEE what PHP is outputting instead of guessing
+
+---
+
+## ITERATION 31 - BREAKTHROUGH! ✅
+
+### CI Run: 22049592043 (Commit 7b5142d)
+
+**Status**: ROOT CAUSE FOUND after 30 failed iterations!
+
+### The Discovery
+
+CI logs showed MySQL INSERT succeeded, verification SELECT confirmed row exists, but PHP still returned "Found 0 shows":
+
+```
+✓ Inserted show for 2026-02-15 21:00:00-23:00:00 into MySQL
+  Verification: 2026-02-15  Sunday  21:00:00  23:00:00  Test DJ
+
+=== PHP DEBUG OUTPUT ===
+Looking for date=2026-02-15, time=23:17:19
+Found 0 shows for today
+========================
+
+⚠ On-air div not found after creating show
+Expected time window: 21:00:00 - 23:00:00
+Current time: 23:17:21
+```
+
+### Root Cause
+
+**The show had already ended!**
+
+- Show end time: 23:00:00
+- PHP checked at: 23:17:21
+- Result: Current time > end time, show is no longer on-air
+
+PHP's `on_air()` function correctly determined the show was not active because:
+```php
+if ($currentTime >= $show['start_time'] && $currentTime <= $show['end_time'])
+```
+
+`23:17:21 <= 23:00:00` evaluates to `false`.
+
+### Why This Happened
+
+Test logic created shows using:
+```typescript
+const endHour = Math.min(23, currentHour + 2);
+const endTime = `${String(endHour).padStart(2, '0')}:00:00`;
+```
+
+When `currentHour = 23`:
+- `endHour = Math.min(23, 25) = 23`
+- `endTime = '23:00:00'`
+
+But PHP checks at `23:17:21`, which is 17 minutes AFTER the show ended!
+
+### Solution (Commit da814f3)
+
+Use `23:59:59` as end time when `endHour === 23`:
+
+```typescript
+const endTime = endHour === 23 ? '23:59:59' : `${String(endHour).padStart(2, '0')}:00:00`;
+```
+
+This ensures shows near midnight remain on-air for the entire hour.
+
+### Lessons Learned
+
+1. **All previous fixes were correct**: MySQL credentials, timezone queries, database routing, INSERT verification
+2. **The data was there**: MySQL had the show record
+3. **PHP logic was correct**: It rightfully rejected the expired show
+4. **The test logic was wrong**: Created shows that ended before current time
+5. **Debug output was crucial**: Without `stdio: 'inherit'` and verification SELECT, we couldn't see the timing mismatch
+
+### What Confused Us
+
+- MySQL INSERT appeared to succeed (it did!)
+- Verification SELECT showed the row (it was there!)
+- PHP debug said "Found 0 shows" (technically wrong - it found 1 show but rejected it as expired)
+
+The actual issue: Shows can be in the database but still return "not on-air" if outside the time window.
+
+---
+
+## Summary After 31 Iterations
+
+**Total commits**: 33
+**Root causes identified**: 3
+
+1. **Database mismatch** (Iteration 22): Test inserted into Postgres, PHP read from MySQL
+2. **Timezone mismatch** (Iteration 28): System `date` returned UTC, PHP used EST
+3. **Show timing** (Iteration 31): Show ended at 23:00, PHP checked at 23:17
+
+**Key takeaway**: When debugging E2E tests with time-based logic, verify not just that data exists, but that it's within the expected time range.
