@@ -8,28 +8,12 @@
  * will be tested with E2E Playwright tests per the testing plan.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
+import { describe, it, expect } from 'vitest';
 
-// Load the legacy JS file
-const jsFilePath = path.join(__dirname, '../../src/js/yr_end_poll.js');
-const jsCode = fs.readFileSync(jsFilePath, 'utf-8');
-
-// Extract the errorMessage function using eval
-// This is necessary because the legacy code is not modularized
-let errorMessage: (numberOfChecked: number, max: number) => string | undefined;
-
-beforeAll(() => {
-  // Execute the JS code to get the errorMessage function
-  // We need to create a minimal environment for the function
-  const functionWrapper = `
-    ${jsCode}
-    errorMessage;
-  `;
-  // eslint-disable-next-line no-eval
-  errorMessage = eval(functionWrapper);
-});
+// Import the function directly from the legacy JS file
+// The file now exports functions using CommonJS for Node.js compatibility
+// eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+const { errorMessage } = require('../../src/js/yr_end_poll.js');
 
 describe('errorMessage', () => {
   it('returns message when no options selected (0 checked)', () => {
