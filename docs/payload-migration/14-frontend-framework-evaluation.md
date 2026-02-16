@@ -800,8 +800,8 @@ test('renders both bands from loader data', () => {
 - ✅ Nested routes + loaders = efficient data fetching with HTTP caching
 - ✅ Strong agent support — Copilot/Claude know React and Remix well
 - ✅ Good Netlify support with official adapters
-- ⚠️ Remix 3 direction is promising (decoupling from React) but not yet stable
-- ❌ Still ships React runtime (~90kB+) — same weight problem as Next.js
+- ⚠️ **Remix 3 has fully decoupled from React.** It uses a Preact-based reactivity layer with an imperative `this.update()` model instead of `useState`/`useEffect`. APIs are built around web-standard `Request`/`Response` objects, runnable on any JS runtime (Node, Deno, Bun). There is no migration path from Remix 2 — the team recommends React Router 7 for existing React apps. Remix 3's "AI-ready" architecture and web-standards focus aligns well with this project's goals, but it's a ground-up rewrite with a small ecosystem and community split.
+- ❌ **Remix 2 still ships React (~90kB+).** Remix 3 drops React entirely and uses a ~3kB Preact fork, so the runtime weight problem goes away — but Remix 3 is early-stage with no established patterns, limited documentation, and no Storybook/testing ecosystem yet. Evaluating Remix 3 as a separate option would be premature until it stabilizes.
 - ❌ ~200+ dependencies — no lighter than Next.js for a content site
 - ❌ Overkill for read-only pages — the loader/action pattern shines for data mutations, which this site has very few of
 
@@ -930,6 +930,25 @@ For 11ty, Vite is optional and adds complexity that may not be needed for a stat
 | **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** |
 
 *(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)*
+
+---
+
+### Storybook Compatibility
+
+Storybook is used in this project for component development and visual testing. Here's how each framework integrates:
+
+| Framework | Storybook Support | Details |
+|-----------|------------------|---------|
+| **Next.js** | ★★★★★ Native | `@storybook/nextjs` — first-class. Already configured in this repo. |
+| **Astro** | ★★★☆☆ Partial | No support for `.astro` components ([open issue](https://github.com/storybookjs/storybook/issues/18356)). Storybook works for island components (React, Svelte, Lit) embedded in Astro pages. |
+| **11ty + HTMX** | ★★☆☆☆ Indirect | 11ty templates (Nunjucks) have no Storybook integration. Pair with Lit components via `@lit-labs/eleventy-plugin-lit` — then use `@storybook/web-components` for those. |
+| **Enhance** | ★☆☆☆☆ None | No Storybook integration. Enhance elements are pure functions returning HTML strings — could potentially use `@storybook/server` with a custom renderer, but nothing exists today. |
+| **Lit** | ★★★★★ Native | `@storybook/web-components` — first-class. Lit components are standard Custom Elements with full Storybook support. |
+| **Stencil** | ★★★★☆ Good | Official `@stencil/storybook-plugin`. Well-documented integration for previewing and testing compiled web components. |
+| **Qwik** | ★★☆☆☆ Experimental | No official integration. Qwik components can be wrapped as web components for basic Storybook usage, but `$()` boundaries and resumability don't translate to Storybook's rendering model. |
+| **Remix** | ★★★★☆ Good | Uses React components — works with `@storybook/react`. Route loaders/actions aren't testable in Storybook, but UI components are. Remix 3 (non-React) has no Storybook support yet. |
+
+**Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage.
 
 ---
 
