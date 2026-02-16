@@ -336,6 +336,7 @@ test('renders both band names', () => {
 - ✅ Netlify Functions handle the few server-side needs (voting, live data)
 - ✅ Plain CSS, no build pipeline — truly evergreen
 - ✅ Templates are dead simple for agents to read and generate
+- ✅ HTMX is backend-agnostic — works with any server that returns HTML fragments (Node, Java/Quarkus, PHP, Go, Python). If the backend ever changes, the frontend stays the same. See [HTMX + Quarkus](https://htmx.org/server-examples/) for a Java example of this pattern.
 - ⚠️ No component scoping — CSS discipline needed (use `@layer`, BEM, or namespace classes)
 - ⚠️ Nunjucks templates aren't "components" in the React sense — less composable
 - ❌ Less ecosystem for complex UI patterns (bracket visualization would be hand-rolled)
