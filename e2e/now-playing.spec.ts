@@ -317,8 +317,34 @@ test.describe('Now Playing on Y-Not Radio', () => {
           env,
         });
 
-        // Wait for PHP-FPM to be ready
-        await page.waitForTimeout(5000);
+        // Wait for PHP-FPM to be ready - container recreation takes longer
+        console.log('Waiting for PHP-FPM container to be ready (may take 20-30 seconds)...');
+        await page.waitForTimeout(10000);
+
+        // Health check: verify container is responding
+        let retries = 6;
+        let containerReady = false;
+        while (retries > 0 && !containerReady) {
+          try {
+            execSync('docker compose exec -T phpfpm php -r "echo \'OK\';"', {
+              cwd: process.cwd(),
+              encoding: 'utf-8',
+              timeout: 5000,
+            });
+            containerReady = true;
+            console.log('✓ PHP-FPM container is ready');
+          } catch (e) {
+            retries--;
+            if (retries > 0) {
+              console.log(`Container not ready, retrying... (${retries} attempts left)`);
+              await page.waitForTimeout(5000);
+            }
+          }
+        }
+
+        if (!containerReady) {
+          throw new Error('PHP-FPM container failed to become ready after container recreation');
+        }
 
         // Verify the fake time is working
         const testTime = execSync(

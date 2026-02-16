@@ -408,3 +408,86 @@ Waiting for E2E test run 22045231763 to execute (currently "action_required" - p
    - Use environment variable to override PHP's timezone
    - Mock time via PHP config instead of libfaketime
    - Skip libfaketime test and rely on Test 1 + manual testing
+
+---
+
+## Iteration 25: Linting Fixes + Container Health Check (Commit 96d9b50)
+
+**Date**: 2026-02-16 00:26 UTC
+
+### Linting Fixes Applied
+
+Fixed all ESLint errors that were blocking CI:
+
+1. **Removed unused imports** (lines 3-10):
+   - `fillPayloadDateField` (no longer needed)
+   - `navigateToPayloadCollectionCreate`, `fillPayloadTimeField`, `fillPayloadRelationshipField`
+   - `clickPayloadSave`, `waitForPayloadSave`
+   - These were replaced by direct MySQL INSERT statements
+
+2. **Fixed trailing spaces** (lines 89, 96, 104, 107, 113):
+   - Removed all trailing whitespace
+
+3. **Added arrow function parentheses** (lines 152, 366):
+   - Changed `debugComments.forEach(comment => {` 
+   - To `debugComments.forEach((comment) => {`
+   - Satisfies Airbnb style guide requirement
+
+**Result**: ✅ `yarn lint` now passes with 0 errors, 0 warnings
+
+### Test 2 Container Restart Enhancement
+
+**Problem Identified**: Container recreation with libfaketime takes 20+ seconds, causing test timeouts.
+
+**Root Cause Analysis**:
+- `docker compose rm -f phpfpm` stops and removes container
+- `docker compose up -d phpfpm` creates fresh container with new env vars
+- Container must: start services, connect to MySQL/Postgres, initialize PHP-FPM
+- Previous timeout: 5 seconds (insufficient)
+
+**Solution Implemented**:
+
+1. **Increased initial wait**: 10 seconds (from 5)
+2. **Added health check loop**: Retry up to 6 times with 5-second intervals
+3. **Verify container ready**: Execute simple PHP command to confirm responsiveness
+4. **Clear error messages**: Report when container fails to become ready
+
+```typescript
+// Wait for container to start
+await page.waitForTimeout(10000);
+
+// Health check with retries
+let retries = 6;
+let containerReady = false;
+while (retries > 0 && !containerReady) {
+  try {
+    execSync('docker compose exec -T phpfpm php -r "echo \'OK\';"', {
+      timeout: 5000
+    });
+    containerReady = true;
+  } catch (e) {
+    retries--;
+    if (retries > 0) {
+      await page.waitForTimeout(5000);
+    }
+  }
+}
+```
+
+**Benefits**:
+- Handles slow container startups gracefully
+- Maximum wait time: 10s + (6 × 5s) = 40 seconds
+- Clear console logging shows progress
+- Fails explicitly if container doesn't become ready
+
+### Status
+
+**Test 1**: Expected to pass (timezone fix from iteration 24)
+**Test 2**: Should now handle slow container recreation gracefully
+
+### Next CI Run
+
+Commit 96d9b50 pushed, awaiting CI execution to verify:
+1. Linting passes ✓
+2. Test 1 passes (timezone fix)
+3. Test 2 passes (container health check)
