@@ -1,13 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { execSync } from 'child_process';
-import { captureScreenshot, checkForPhpErrors, fillPayloadDateField } from './utils/test-helpers';
-import {
-  navigateToPayloadCollectionCreate,
-  fillPayloadTimeField,
-  fillPayloadRelationshipField,
-  clickPayloadSave,
-  waitForPayloadSave,
-} from './utils/payload-helpers';
+import { captureScreenshot, checkForPhpErrors } from './utils/test-helpers';
 
 /**
  * E2E Integration Test: "Now playing on Y-Not Radio" functionality
@@ -93,7 +86,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
     // This test actively creates a show and verifies it appears
     // IMPORTANT: PHP reads from MySQL schedule table, not Postgres shows table
     // So we insert directly into MySQL instead of using Payload UI
-    
+
     // CRITICAL: PHP server uses America/New_York timezone (EST/EDT)
     // Test runner uses UTC. Must get PHP server's current time to create matching show!
     await test.step('Get PHP server current time', async () => {
@@ -101,16 +94,16 @@ test.describe('Now Playing on Y-Not Radio', () => {
         cwd: process.cwd(),
         encoding: 'utf8',
       }).trim();
-      
+
       console.log(`PHP server time: ${phpTime}`);
     });
-    
+
     // Query PHP server for current date/time in its timezone
     const phpDateOutput = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H %A"', {
       cwd: process.cwd(),
       encoding: 'utf8',
     }).trim();
-    
+
     const [dateStr, hourStr, dayName] = phpDateOutput.split(' ');
     const currentHour = parseInt(hourStr, 10);
 
@@ -156,7 +149,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
       // Extract PHP debug comments to see what date/time PHP is looking for
       const debugComments = pageContent.match(/<!-- DEBUG on_air\(\):.*?-->/g) || [];
       console.log('\n=== PHP DEBUG OUTPUT ===');
-      debugComments.forEach(comment => {
+      debugComments.forEach((comment) => {
         console.log(comment.replace(/<!-- DEBUG on_air\(\): /, '').replace(' -->', ''));
       });
       console.log('========================\n');
@@ -370,7 +363,7 @@ test.describe('Now Playing on Y-Not Radio', () => {
       // Extract PHP debug comments to see what date/time PHP is looking for
       const debugComments = pageContent.match(/<!-- DEBUG on_air\(\):.*?-->/g) || [];
       console.log('\n=== PHP DEBUG OUTPUT ===');
-      debugComments.forEach(comment => {
+      debugComments.forEach((comment) => {
         console.log(comment.replace(/<!-- DEBUG on_air\(\): /, '').replace(' -->', ''));
       });
       console.log('========================\n');
