@@ -98,11 +98,15 @@ test.describe('Now Playing on Y-Not Radio', () => {
       console.log(`PHP server time: ${phpTime}`);
     });
 
-    // Query PHP server for current date/time in its timezone
-    const phpDateOutput = execSync('docker compose exec -T phpfpm date "+%Y-%m-%d %H %A"', {
-      cwd: process.cwd(),
-      encoding: 'utf8',
-    }).trim();
+    // Query PHP server for current date/time using PHP's timezone (America/New_York)
+    // System 'date' command returns UTC, but PHP code uses America/New_York timezone
+    const phpDateOutput = execSync(
+      'docker compose exec -T phpfpm php -r "date_default_timezone_set(\'America/New_York\'); echo date(\'Y-m-d H l\');"',
+      {
+        cwd: process.cwd(),
+        encoding: 'utf8',
+      },
+    ).trim();
 
     const [dateStr, hourStr, dayName] = phpDateOutput.split(' ');
     const currentHour = parseInt(hourStr, 10);
