@@ -40,6 +40,9 @@ The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site rende
 | B | [Astro](#b-astro) | Content-first, zero-JS-by-default, island architecture |
 | C | [11ty + HTMX](#c-11ty--htmx) | Static HTML generator + hypermedia for interactivity |
 | D | [Enhance](#d-enhance) | SSR web components with progressive enhancement |
+| E | [Lit](#e-lit) | Google's lightweight web components library |
+| F | [Stencil](#f-stencil) | Web component compiler with SSG and TypeScript |
+| G | [Qwik](#g-qwik) | Resumable framework — near-zero JS until interaction |
 
 ---
 
@@ -435,6 +438,290 @@ test('renders both band names', async () => {
 
 ---
 
+## E. Lit
+
+**What it is:** Google's lightweight library (~5kB) for building web components using standard Custom Elements and Shadow DOM. Components are reactive classes with a declarative template system using tagged template literals. Lit is not a full framework — it's a thin layer over the web components API.
+
+**Why consider it:** Lit components are real web components. They work in any HTML context — drop them into an Astro page, an 11ty template, a plain HTML file, or even the existing PHP site. This makes Lit a strong **complementary** choice: use it for interactive widgets (bracket viewer, vote form) inside any of the other frameworks evaluated here.
+
+**Netlify:** Lit itself doesn't care about hosting — it's a client-side library. For SSG/SSR, pair it with Astro (which has a first-class `@astrojs/lit` integration) or 11ty (via `@lit-labs/ssr`). Deploys to Netlify however the host framework deploys.
+
+**Dependency footprint:** ~15 transitive deps for `lit` itself. As a standalone site framework, you'd pair it with a static site generator, so total deps depend on the host.
+
+**CSS approach:** Shadow DOM scoping by default — styles inside a Lit component cannot leak out or be affected by external CSS. Use `css` tagged templates for component styles, vanilla CSS custom properties for theming across components (custom properties pierce Shadow DOM).
+
+### MRM Example
+
+```
+src/
+  components/
+    mrm-match-card.ts          ← Lit component (Custom Element)
+    mrm-bracket.ts
+  pages/                        ← (Host framework provides routing)
+```
+
+```ts
+// src/components/mrm-match-card.ts
+import { LitElement, html, css } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+
+@customElement('mrm-match-card')
+export class MrmMatchCard extends LitElement {
+  @property({ type: Object }) match = { bandA: {}, bandB: {}, id: '' };
+
+  static styles = css`
+    .match-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      padding: 2rem;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-lg);
+    }
+  `;
+
+  async vote(bandId: string) {
+    await fetch('/api/mrm-vote', {
+      method: 'POST',
+      body: JSON.stringify({ matchId: this.match.id, bandId }),
+    });
+  }
+
+  render() {
+    return html`
+      <article class="match-card">
+        <div class="band">${this.match.bandA.name}</div>
+        <span class="vs">vs</span>
+        <div class="band">${this.match.bandB.name}</div>
+        <button @click=${() => this.vote(this.match.bandA.id)}>Vote ${this.match.bandA.name}</button>
+        <button @click=${() => this.vote(this.match.bandB.id)}>Vote ${this.match.bandB.name}</button>
+      </article>
+    `;
+  }
+}
+```
+
+```ts
+// test/mrm-match-card.test.ts
+import { fixture, html, expect } from '@open-wc/testing';
+import '../src/components/mrm-match-card.js';
+
+test('renders both band names', async () => {
+  const el = await fixture(html`
+    <mrm-match-card .match=${{ bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' }}>
+    </mrm-match-card>
+  `);
+  expect(el.shadowRoot.textContent).to.contain('Radiohead');
+  expect(el.shadowRoot.textContent).to.contain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ True web components — portable across any framework or plain HTML
+- ✅ Tiny runtime (~5kB), Shadow DOM scoping, reactive properties
+- ✅ Can be adopted incrementally — add Lit widgets to any of the other options
+- ✅ Backed by Google, mature ecosystem, strong TypeScript support
+- ✅ `@open-wc/testing` provides solid testing patterns
+- ⚠️ Not a full site framework — needs a host (Astro, 11ty, or manual HTML) for routing and data fetching
+- ⚠️ Shadow DOM can make global theming trickier (custom properties help, but it's an extra consideration)
+- ❌ SSR support (`@lit-labs/ssr`) is still experimental — works best as a client-side enhancement
+
+---
+
+## F. Stencil
+
+**What it is:** A web component compiler (from the Ionic team) that generates standards-compliant Custom Elements from TypeScript + JSX. Includes a built-in SSG mode (`stencil build --prerender`) that prerenders every route to static HTML. Think of it as "TypeScript components in, web-standard HTML/JS out."
+
+**Why consider it:** Stencil occupies a unique spot — it's a compiler, not a runtime. The output is vanilla Custom Elements that work anywhere. Unlike Lit (a library you ship), Stencil compiles away at build time, producing optimized, lazy-loaded components with no framework runtime in the browser. Its built-in SSG means it can serve as a complete site framework, not just a component library.
+
+**Netlify:** Static output deploys to any CDN. Stencil's `www/` build directory is standard static files. No special adapter needed.
+
+**Dependency footprint:** ~60 transitive deps for `@stencil/core`. The compiled output has zero runtime dependencies.
+
+**CSS approach:** Scoped CSS via Shadow DOM or scoped-CSS mode (no Shadow DOM but styles are scoped via generated class names). Supports CSS custom properties for theming. Each component has a co-located `css` or `scss` file.
+
+### MRM Example
+
+```
+src/
+  components/
+    mrm-match-card/
+      mrm-match-card.tsx        ← Component (TypeScript + JSX)
+      mrm-match-card.css        ← Scoped styles
+    mrm-bracket/
+      mrm-bracket.tsx
+      mrm-bracket.css
+  pages/
+    madness.tsx                  ← SSG page route
+stencil.config.ts               ← Build config with prerender settings
+```
+
+```tsx
+// src/components/mrm-match-card/mrm-match-card.tsx
+import { Component, Prop, h } from '@stencil/core';
+
+@Component({
+  tag: 'mrm-match-card',
+  styleUrl: 'mrm-match-card.css',
+  shadow: true,
+})
+export class MrmMatchCard {
+  @Prop() match: { bandA: any; bandB: any; id: string };
+
+  async vote(bandId: string) {
+    await fetch('/api/mrm-vote', {
+      method: 'POST',
+      body: JSON.stringify({ matchId: this.match.id, bandId }),
+    });
+  }
+
+  render() {
+    return (
+      <article class="match-card">
+        <div class="band">{this.match.bandA.name}</div>
+        <span class="vs">vs</span>
+        <div class="band">{this.match.bandB.name}</div>
+        <button onClick={() => this.vote(this.match.bandA.id)}>Vote {this.match.bandA.name}</button>
+        <button onClick={() => this.vote(this.match.bandB.id)}>Vote {this.match.bandB.name}</button>
+      </article>
+    );
+  }
+}
+```
+
+```ts
+// src/components/mrm-match-card/mrm-match-card.spec.ts
+import { newSpecPage } from '@stencil/core/testing';
+import { MrmMatchCard } from './mrm-match-card';
+
+test('renders both band names', async () => {
+  const page = await newSpecPage({
+    components: [MrmMatchCard],
+    html: `<mrm-match-card></mrm-match-card>`,
+  });
+  page.rootInstance.match = {
+    bandA: { name: 'Radiohead', id: '1' },
+    bandB: { name: 'Muse', id: '2' },
+    id: '99',
+  };
+  await page.waitForChanges();
+  expect(page.root.shadowRoot.textContent).toContain('Radiohead');
+  expect(page.root.shadowRoot.textContent).toContain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ Compiler output is zero-runtime web components — maximally portable
+- ✅ Built-in SSG with automatic prerendering — no separate framework needed
+- ✅ TypeScript + JSX syntax is familiar to React developers and agents
+- ✅ Lazy-loading and bundle optimization built into the compiler
+- ✅ Battle-tested (powers the Ionic Framework's component library)
+- ⚠️ JSX-in-a-compiler is its own paradigm — not React, not quite standard web components
+- ⚠️ Smaller community than Lit for web component development
+- ❌ SSG routing and data fetching are less mature than Astro or 11ty — better suited as a component system than a full content site framework
+- ❌ The Ionic team's focus is on Stencil-as-compiler-for-design-systems, not Stencil-as-site-framework
+
+---
+
+## G. Qwik
+
+**What it is:** A "resumable" framework from the creator of Angular. Instead of hydrating the entire page on load (like React/Next.js), Qwik serializes the application state into HTML and only loads JavaScript when the user interacts with something. The result: near-zero JavaScript on initial load, even for interactive pages.
+
+**Why consider it:** Qwik's ~1kB loader is the smallest initial JS payload of any framework that supports full interactivity. For a content site where most pages are read-only but a few need voting or forms, Qwik loads as fast as a static HTML site but progressively loads interaction handlers on demand — no islands pattern needed, no explicit opt-in.
+
+**Netlify:** Supported via `qwik-city` (Qwik's meta-framework) with Netlify Edge adapter. SSG, SSR, and hybrid modes available.
+
+**Dependency footprint:** ~90 transitive deps for a Qwik City project. Moderate — more than 11ty, less than Next.js.
+
+**CSS approach:** Scoped CSS via co-located `.css` files or inline `useStyles$()`. Supports vanilla CSS, Tailwind, or any CSS tool. Component styles are automatically scoped.
+
+### MRM Example
+
+```
+src/
+  routes/
+    madness/
+      index.tsx                  ← Page component (SSG or SSR)
+  components/
+    match-card/
+      match-card.tsx             ← Qwik component
+      match-card.css
+```
+
+```tsx
+// src/routes/madness/index.tsx
+import { component$ } from '@builder.io/qwik';
+import { routeLoader$ } from '@builder.io/qwik-city';
+import { MatchCard } from '../../components/match-card/match-card';
+
+export const useTournament = routeLoader$(async () => {
+  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const { docs } = await res.json();
+  return docs[0];
+});
+
+export default component$(() => {
+  const tournament = useTournament();
+  return (
+    <main>
+      <h1>Modern Rock Madness 2026</h1>
+      <MatchCard match={tournament.value.currentMatch} />
+    </main>
+  );
+});
+```
+
+```tsx
+// src/components/match-card/match-card.tsx
+import { component$, $ } from '@builder.io/qwik';
+
+export const MatchCard = component$<{ match: any }>(({ match }) => {
+  const vote = $((bandId: string) => {
+    fetch('/api/mrm-vote', {
+      method: 'POST',
+      body: JSON.stringify({ matchId: match.id, bandId }),
+    });
+  });
+
+  return (
+    <article class="match-card">
+      <div class="band">{match.bandA.name}</div>
+      <span class="vs">vs</span>
+      <div class="band">{match.bandB.name}</div>
+      <button onClick$={() => vote(match.bandA.id)}>Vote {match.bandA.name}</button>
+      <button onClick$={() => vote(match.bandB.id)}>Vote {match.bandB.name}</button>
+    </article>
+  );
+});
+```
+
+```ts
+// src/components/match-card/match-card.spec.ts
+import { createDOM } from '@builder.io/qwik/testing';
+import { MatchCard } from './match-card';
+
+test('renders both band names', async () => {
+  const { render, screen } = await createDOM();
+  await render(
+    <MatchCard match={{ bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' }} />
+  );
+  expect(screen.innerHTML).toContain('Radiohead');
+  expect(screen.innerHTML).toContain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ ~1kB initial JS — fastest interactive framework; JS loads only on interaction
+- ✅ No hydration cost — "resumability" means the page is interactive without replaying component logic
+- ✅ JSX syntax familiar to React developers and agents
+- ✅ SSG + SSR + hybrid modes, good Netlify support
+- ⚠️ `$()` boundaries and serialization rules are a new mental model to learn
+- ⚠️ Smaller ecosystem and community than React or Astro — still maturing
+- ❌ More framework-specific conventions than Lit or Enhance — moderate vendor lock-in
+- ❌ More complex than needed for a site that's mostly static HTML with occasional forms
+
+---
+
 ## CSS Strategy (Framework-Independent)
 
 Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
@@ -506,32 +793,32 @@ A radio station site should feel alive. Modern CSS enables this without JS:
 
 ## Comparison Matrix
 
-| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance |
-|-----------|-----------|-------|-------------|---------|
-| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB |
-| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 |
-| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ |
-| **Build speed** | Moderate | Fast | Fastest | Fast |
-| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ |
-| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components |
-| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` |
-| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement |
-| **Vendor lock-in** | High (React + Vercel ecosystem) | Medium (Astro-specific syntax) | Low (standards + HTMX) | Lowest (web components) |
-| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ |
-| **Creative CSS ceiling** | High | High | High | High |
-| **Ecosystem / plugins** | Massive | Growing | Mature | Small |
+| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik |
+|-----------|-----------|-------|-------------|---------|-----|---------|------|
+| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader |
+| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 |
+| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ |
+| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate |
+| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
+| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) |
+| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped |
+| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) |
+| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) |
+| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ |
+| **Creative CSS ceiling** | High | High | High | High | High | High | High |
+| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small |
 
 ### Scoring by stated priority
 
-| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance |
-|----------|--------|---------|-------|-----------|---------|
-| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 |
-| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 |
-| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 |
-| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 |
-| Evergreen | ●●●●● | 2 | 3 | 4 | 5 |
-| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 |
-| **Weighted total** | | **48** | **63** | **63** | **57** |
+| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik |
+|----------|--------|---------|-------|-----------|---------|-----|---------|------|
+| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 |
+| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 |
+| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 |
+| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 |
+| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 |
+| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 |
+| **Weighted total** | | **48** | **63** | **63** | **57** | **58** | **57** | **51** |
 
 *(Scores 1-5, weighted by priority dots. Totals are illustrative, not prescriptive.)*
 
@@ -545,7 +832,11 @@ A radio station site should feel alive. Modern CSS enables this without JS:
 
 - **11ty + HTMX** is the most radically simple and dependency-free option. It embraces HTML as the application language. The tradeoff is that you lose built-in component scoping and composition patterns — you'll rely more on conventions and discipline than framework guardrails. HTMX's approach to interactivity (server returns HTML fragments) is elegant and fits the "mostly read-only" nature of the site perfectly.
 
-**Enhance** is philosophically the most aligned with "use the platform" but its smaller ecosystem and less intuitive data-passing (JSON in attributes) add friction that may not be worth it for a solo maintainer.
+**Lit** scores well and is notable as a **complementary pick** rather than a standalone site framework. Lit components are true web components that can be dropped into Astro islands, 11ty pages, or even the existing PHP site during the transition. If the bracket visualization or vote form needs rich client-side behavior, a Lit component is the most portable way to build it — and it can move with you if you switch site frameworks later.
+
+**Stencil** and **Enhance** both champion web standards but from different angles — Stencil as a compile-away TypeScript component system, Enhance as an SSR-first HTML framework. Both have smaller ecosystems and are better suited for teams with specific design-system needs. For a solo-maintainer content site, the ecosystem tradeoff is harder to justify.
+
+**Qwik** has the most innovative runtime model (resumability), but its ~1kB advantage over Astro's 0kB only matters on pages that need interactivity — and most of this site's pages don't. The `$()` serialization boundaries add a learning curve that doesn't pay off for a mostly-static site.
 
 **Next.js** is the safe choice but carries the most weight for what is fundamentally a content site. It would make sense if the site had complex client-side state, real-time features, or heavy interactivity — but it doesn't.
 
