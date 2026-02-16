@@ -43,6 +43,7 @@ The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site rende
 | E | [Lit](#e-lit) | Google's lightweight web components library |
 | F | [Stencil](#f-stencil) | Web component compiler with SSG and TypeScript |
 | G | [Qwik](#g-qwik) | Resumable framework — near-zero JS until interaction |
+| H | [Remix](#h-remix) | Full-stack React framework built on web standards |
 
 ---
 
@@ -722,6 +723,89 @@ test('renders both band names', async () => {
 
 ---
 
+## H. Remix
+
+**What it is:** A full-stack React framework (from the creators of React Router) that emphasizes web standards — `<form>`, `Request`/`Response`, HTTP caching, and progressive enhancement. Remix 2 merged its core features into React Router 7. Remix 3 is in development and decoupling from React entirely, moving toward a framework-agnostic, web-standards-first model.
+
+**Why consider it:** Remix's philosophy — "use the platform" — aligns well with this project's goals. It uses standard `<form>` submissions for mutations (like HTMX), nested routes for efficient data loading, and HTTP caching headers for performance. It's the React framework that feels least like a React framework.
+
+**Netlify:** Official support with both serverless and edge function adapters. Netlify provides starter templates and a Vite plugin for deployment.
+
+**Dependency footprint:** ~200+ transitive deps. Still React-based (React 19, ReactDOM), so the dependency floor is similar to Next.js.
+
+**CSS approach:** Framework-agnostic — supports vanilla CSS, CSS Modules, Tailwind, or any CSS tool. Route-level `links` export for co-located stylesheets. No built-in scoping beyond CSS Modules.
+
+### MRM Example
+
+```
+app/
+  routes/
+    madness.tsx                  ← Route with loader + action
+  components/
+    MatchCard.tsx                ← Presentational component
+    MatchCard.module.css
+```
+
+```tsx
+// app/routes/madness.tsx
+import { useLoaderData, Form } from '@remix-run/react';
+import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const { docs } = await res.json();
+  return { tournament: docs[0] };
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const form = await request.formData();
+  await fetch(`${process.env.PAYLOAD_URL}/api/mrm-votes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ match: form.get('matchId'), band: form.get('bandId') }),
+  });
+  return { success: true };
+}
+
+export default function MadnessPage() {
+  const { tournament } = useLoaderData<typeof loader>();
+  const match = tournament.currentMatch;
+
+  return (
+    <main>
+      <h1>Modern Rock Madness 2026</h1>
+      <Form method="post">
+        <input type="hidden" name="matchId" value={match.id} />
+        <div>{match.bandA.name} vs {match.bandB.name}</div>
+        <button name="bandId" value={match.bandA.id}>Vote {match.bandA.name}</button>
+        <button name="bandId" value={match.bandB.id}>Vote {match.bandB.name}</button>
+      </Form>
+    </main>
+  );
+}
+```
+
+```tsx
+// __tests__/madness.test.tsx
+test('renders both bands from loader data', () => {
+  render(<MadnessPage />, { hydrationData: { loaderData: { root: {}, 'routes/madness': mockLoaderData } } });
+  expect(screen.getByText('Radiohead')).toBeInTheDocument();
+  expect(screen.getByText('Muse')).toBeInTheDocument();
+});
+```
+
+**Tradeoffs:**
+- ✅ Web-standards mutations via `<Form>` — progressive enhancement like HTMX, but with React's component model
+- ✅ Nested routes + loaders = efficient data fetching with HTTP caching
+- ✅ Strong agent support — Copilot/Claude know React and Remix well
+- ✅ Good Netlify support with official adapters
+- ⚠️ Remix 3 direction is promising (decoupling from React) but not yet stable
+- ❌ Still ships React runtime (~90kB+) — same weight problem as Next.js
+- ❌ ~200+ dependencies — no lighter than Next.js for a content site
+- ❌ Overkill for read-only pages — the loader/action pattern shines for data mutations, which this site has very few of
+
+---
+
 ## CSS Strategy (Framework-Independent)
 
 Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
@@ -791,36 +875,60 @@ A radio station site should feel alive. Modern CSS enables this without JS:
 
 ---
 
+## Vite & Build Tooling
+
+Vite is not a framework — it's a **build tool** (dev server + bundler) that most modern frameworks now use under the hood. It's not scored as a separate option because choosing a framework already determines your build toolchain:
+
+| Framework | Build Tool | Notes |
+|-----------|-----------|-------|
+| Next.js 15 | Turbopack / Webpack | Migrating toward Turbopack; Vite not used |
+| Astro | **Vite** | Core build engine |
+| 11ty | None (or Lightning CSS) | No bundler required; optionally add Vite via plugin |
+| Enhance | Architect/Begin | Custom build; no Vite |
+| Lit | **Vite** (recommended) | Official Vite starter template |
+| Stencil | Custom (Rollup-based) | Own compiler; no Vite |
+| Qwik | **Vite** | Core build engine (Qwik City) |
+| Remix | **Vite** | Migrated to Vite in v2; official Vite plugin |
+
+**What Vite gets us:** Instant HMR during development, fast production builds via Rollup, and native ES module support. For frameworks that use Vite (Astro, Qwik, Lit, Remix), the DX benefit is already baked in — you don't need to think about Vite separately.
+
+For 11ty, Vite is optional and adds complexity that may not be needed for a static site with vanilla CSS. For Next.js and Stencil, Vite isn't part of the picture at all.
+
+**Bottom line:** Vite is a positive signal for the frameworks that use it (fast DX, modern tooling), but it doesn't change the framework-level evaluation. All Vite-powered options already benefit from it in their "Build speed" scores above.
+
+---
+
 ## Comparison Matrix
 
-| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik |
-|-----------|-----------|-------|-------------|---------|-----|---------|------|
-| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader |
-| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 |
-| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ |
-| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate |
-| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ |
-| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) |
-| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped |
-| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) |
-| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) |
-| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ |
-| **Creative CSS ceiling** | High | High | High | High | High | High | High |
-| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small |
+| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix |
+|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|
+| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ |
+| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ |
+| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite |
+| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ |
+| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast |
+| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ |
+| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) |
+| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules |
+| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders |
+| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) |
+| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ |
+| **Creative CSS ceiling** | High | High | High | High | High | High | High | High |
+| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large |
 
 ### Scoring by stated priority
 
-| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik |
-|----------|--------|---------|-------|-----------|---------|-----|---------|------|
-| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 |
-| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 |
-| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 |
-| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 |
-| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 |
-| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 |
-| **Weighted total** | | **48** | **63** | **63** | **57** | **58** | **57** | **51** |
+| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix |
+|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|
+| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 |
+| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 |
+| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 |
+| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 |
+| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 |
+| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 |
+| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** |
 
-*(Scores 1-5, weighted by priority dots. Totals are illustrative, not prescriptive.)*
+*(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)*
 
 ---
 
@@ -839,6 +947,8 @@ A radio station site should feel alive. Modern CSS enables this without JS:
 **Qwik** has the most innovative runtime model (resumability), but its ~1kB advantage over Astro's 0kB only matters on pages that need interactivity — and most of this site's pages don't. The `$()` serialization boundaries add a learning curve that doesn't pay off for a mostly-static site.
 
 **Next.js** is the safe choice but carries the most weight for what is fundamentally a content site. It would make sense if the site had complex client-side state, real-time features, or heavy interactivity — but it doesn't.
+
+**Remix** scores similarly to Next.js — it's still React, still ~200+ dependencies, still ~90kB runtime. Its `<Form>`-based mutations are philosophically closer to HTMX and the web platform than Next.js's client components, and Remix 3's direction (decoupling from React entirely) is worth watching. But today, for a mostly-read-only content site, it offers the same React overhead without enough differentiation from Next.js to justify switching.
 
 ### A hybrid note
 
