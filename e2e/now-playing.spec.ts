@@ -112,11 +112,14 @@ test.describe('Now Playing on Y-Not Radio', () => {
     const currentHour = parseInt(hourStr, 10);
 
     // Create a show that covers a wide time window, without crossing midnight
+    // IMPORTANT: Show must END after current time to be considered "on-air"
+    // If near midnight (hour 22-23), extend show to end of day (23:59:59) to avoid timing issues
     const startHour = Math.max(0, currentHour - 2);
-    const endHour = Math.min(23, currentHour + 2);
-
+    const endHour = Math.min(23, currentHour + 3);
+    
     const startTime = `${String(startHour).padStart(2, '0')}:00:00`;
-    const endTime = `${String(endHour).padStart(2, '0')}:00:00`;
+    // If endHour is 23, use 23:59:59 to ensure show doesn't end before current minute
+    const endTime = endHour === 23 ? '23:59:59' : `${String(endHour).padStart(2, '0')}:00:00`;
 
     console.log(`Creating show for PHP server time: ${dateStr} (${dayName}) ${startTime} - ${endTime} (PHP current hour: ${currentHour})`);
 
