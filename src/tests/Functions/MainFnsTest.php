@@ -10,9 +10,11 @@ require_once __DIR__ . '/../../functions/main_fns.php';
 /**
  * Tests for utility functions in main_fns.php
  *
- * Tests pure logic and mockable functions:
+ * Tests pure logic functions:
  * - format($text) - Text formatting with newlines and paragraphs
- * - on_air() - Current DJ lookup from schedule
+ *
+ * Note: Other functions (on_air, validate_user, etc.) require refactoring
+ * for testability and are deferred per the testing plan.
  */
 class MainFnsTest extends TestCase
 {
