@@ -334,9 +334,10 @@ test.describe('Now Playing on Y-Not Radio', () => {
             containerReady = true;
             console.log('✓ PHP-FPM container is ready');
           } catch (e) {
-            retries--;
+            retries -= 1;
             if (retries > 0) {
               console.log(`Container not ready, retrying... (${retries} attempts left)`);
+              // eslint-disable-next-line no-await-in-loop
               await page.waitForTimeout(5000);
             }
           }
