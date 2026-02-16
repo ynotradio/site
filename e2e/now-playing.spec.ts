@@ -129,12 +129,29 @@ test.describe('Now Playing on Y-Not Radio', () => {
         ON DUPLICATE KEY UPDATE host = 'Test DJ';
       `;
 
-      execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
-        cwd: process.cwd(),
-        stdio: 'pipe',
-      });
+      try {
+        execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
+          cwd: process.cwd(),
+          stdio: 'inherit', // Show MySQL errors
+        });
 
-      console.log(`✓ Inserted show for ${dateStr} ${startTime}-${endTime} into MySQL`);
+        // Verify the INSERT worked
+        const verifySQL = `SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '${dateStr}' AND start_time = '${startTime}';`;
+        const verifyOutput = execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${verifySQL}"`, {
+          cwd: process.cwd(),
+          encoding: 'utf-8',
+        });
+
+        if (verifyOutput.includes('Test DJ')) {
+          console.log(`✓ Inserted show for ${dateStr} ${startTime}-${endTime} into MySQL`);
+          console.log(`  Verification: ${verifyOutput.split('\n')[1]}`); // Show the row
+        } else {
+          throw new Error(`INSERT succeeded but SELECT found no matching row. Output: ${verifyOutput}`);
+        }
+      } catch (error) {
+        console.error('MySQL INSERT/SELECT failed:', error);
+        throw error;
+      }
     });
 
     await test.step('Verify on-air DJ appears on legacy PHP site', async () => {
@@ -272,12 +289,29 @@ test.describe('Now Playing on Y-Not Radio', () => {
         ON DUPLICATE KEY UPDATE host = 'Test DJ';
       `;
 
-      execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
-        cwd: process.cwd(),
-        stdio: 'pipe',
-      });
+      try {
+        execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${insertShowSQL}"`, {
+          cwd: process.cwd(),
+          stdio: 'inherit', // Show MySQL errors
+        });
 
-      console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into MySQL');
+        // Verify the INSERT worked
+        const verifySQL = `SELECT date, day, start_time, end_time, host FROM schedule WHERE date = '2026-01-29' AND start_time = '18:00:00';`;
+        const verifyOutput = execSync(`docker compose exec -T mysql mysql -u ynot_sql_user -pynot_sql_pass ynot_site -e "${verifySQL}"`, {
+          cwd: process.cwd(),
+          encoding: 'utf-8',
+        });
+
+        if (verifyOutput.includes('Test DJ')) {
+          console.log('✓ Inserted show for Jan 29, 2026, 18:00-21:00 EST into MySQL');
+          console.log(`  Verification: ${verifyOutput.split('\n')[1]}`); // Show the row
+        } else {
+          throw new Error(`INSERT succeeded but SELECT found no matching row. Output: ${verifyOutput}`);
+        }
+      } catch (error) {
+        console.error('MySQL INSERT/SELECT failed:', error);
+        throw error;
+      }
     });
 
     await test.step('Set fake time using libfaketime (7 PM EST = midnight UTC)', async () => {
