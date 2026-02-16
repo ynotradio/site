@@ -50,7 +50,7 @@
   "license": "ISC",
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "^2.0.8",
-    "@chromatic-com/storybook": "^5.0.0",
+    "@chromatic-com/storybook": "^5.0.1",
     "@netlify/plugin-nextjs": "^5.15.7",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-a11y": "^10.2.1",
