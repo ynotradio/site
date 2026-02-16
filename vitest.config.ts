@@ -9,7 +9,11 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: ['bin/migrations/shared/**/*.ts'],
+      include: [
+        'bin/migrations/shared/**/*.ts',
+        // Note: Legacy JS files in src/js/ are tested via eval() in test/legacy-js/
+        // and cannot be tracked by V8 coverage. Tests exist but coverage is not measured.
+      ],
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',
