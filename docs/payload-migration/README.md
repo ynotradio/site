@@ -30,6 +30,7 @@
 - **[Capacity Planning](11-capacity-planning.md)** - Performance and scaling
 - **[Cloudinary Integration](12-cloudinary-integration.md)** - Media management
 - **[Year End Poll Results](13-year-end-poll-results.md)** - Special features
+- **[Frontend Framework Evaluation](14-frontend-framework-evaluation.md)** - Phase 2 redesign framework options
 
 ### Cutover Documentation
 - **[Cutover Architecture](CUTOVER_ARCHITECTURE.md)** - System architecture

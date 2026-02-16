@@ -1,0 +1,566 @@
+# 14. Frontend Framework Evaluation
+
+**Purpose:** Evaluate frameworks for the public-facing site redesign (Phase 2).  
+**Date:** February 2026  
+**Status:** 🔲 Evaluation — no decision made yet
+
+---
+
+## Context
+
+The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site renders server-side HTML from MySQL/Postgres queries. The next phase is a modern, responsive redesign of the public-facing site.
+
+**What we have today:**
+- Payload CMS admin running on Next.js 15, deployed to Netlify
+- PostgreSQL (Neon) as the single source of truth
+- Payload REST + GraphQL APIs available for content delivery
+- Cloudinary CDN for media
+
+**What the public site actually does:**
+- Displays mostly read-only content (shows, concerts, DJs, stories, music)
+- A few interactive features (Modern Rock Madness voting, Year End Poll, Top 11)
+- Schedule display, now-playing info
+- ~15 distinct page types, low traffic
+
+**Priorities for the new frontend:**
+1. **Minimal dependencies** — fewer things to break, less maintenance
+2. **Netlify-compatible** — already paying for it
+3. **Fast** — both build and runtime
+4. **Agent-friendly** — component-driven, clear file conventions, easy to reason about
+5. **Evergreen** — built on web standards, not framework churn
+6. **Creative CSS** — room for an expressive, custom design
+
+---
+
+## Options Evaluated
+
+| # | Stack | Philosophy |
+|---|-------|------------|
+| A | [Next.js 15](#a-nextjs-15) | Full-featured React framework (already in use for Payload) |
+| B | [Astro](#b-astro) | Content-first, zero-JS-by-default, island architecture |
+| C | [11ty + HTMX](#c-11ty--htmx) | Static HTML generator + hypermedia for interactivity |
+| D | [Enhance](#d-enhance) | SSR web components with progressive enhancement |
+
+---
+
+## A. Next.js 15
+
+**What it is:** React meta-framework with SSR, SSG, API routes, and the App Router.
+
+**Why consider it:** Already deployed for Payload admin. Shared tooling, shared Netlify config, one `node_modules`.
+
+**Netlify:** First-class support via `@netlify/plugin-nextjs`.
+
+**Dependency footprint:** ~250+ transitive deps. React 19, ReactDOM, Next.js core, Webpack/Turbopack.
+
+**CSS approach:** CSS Modules (built-in), or Tailwind, or vanilla CSS with PostCSS. Supports CSS nesting and custom properties natively in modern browsers.
+
+### MRM Example
+
+```
+app/
+  madness/
+    page.tsx              ← Server Component, fetches from Payload API
+    components/
+      Bracket.tsx         ← Client-rendered bracket visualization
+      Bracket.module.css
+      MatchCard.tsx       ← Displays two bands + vote button
+      MatchCard.module.css
+      VoteButton.tsx      ← "use client" — handles form POST
+```
+
+```tsx
+// app/madness/page.tsx
+export default async function MadnessPage() {
+  const tournament = await fetch(`${PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const { docs } = await tournament.json();
+  const currentMatch = docs[0]?.currentMatch;
+
+  return (
+    <main>
+      <h1>Modern Rock Madness 2026</h1>
+      <MatchCard match={currentMatch} />
+      <Bracket rounds={docs[0]?.rounds} />
+    </main>
+  );
+}
+```
+
+```tsx
+// app/madness/components/VoteButton.tsx
+'use client';
+export function VoteButton({ matchId, bandId }: Props) {
+  async function vote() {
+    await fetch('/api/mrm-vote', { method: 'POST', body: JSON.stringify({ matchId, bandId }) });
+  }
+  return <button onClick={vote}>Vote</button>;
+}
+```
+
+```tsx
+// __tests__/MatchCard.test.tsx
+test('renders both bands', () => {
+  render(<MatchCard match={mockMatch} />);
+  expect(screen.getByText('Band A')).toBeInTheDocument();
+  expect(screen.getByText('Band B')).toBeInTheDocument();
+});
+```
+
+**Tradeoffs:**
+- ✅ Shared deployment with Payload, familiar tooling, huge ecosystem
+- ✅ Strong agent support — Copilot/Claude know React extremely well
+- ❌ Heavy runtime (~90kB+ min React+ReactDOM), overkill for read-only pages
+- ❌ React upgrade treadmill, framework complexity (App Router, RSC, Suspense boundaries)
+- ❌ Most vendor lock-in of any option here
+
+---
+
+## B. Astro
+
+**What it is:** Content-first static site builder. Ships zero JavaScript by default. Interactive "islands" opt-in only where needed. Can use any UI library (React, Svelte, Lit, vanilla) or none at all.
+
+**Why consider it:** Best balance of modern DX and minimal output. `.astro` components are just HTML templates with fenced JS for data fetching. Perfect for a mostly-read-only site that needs a few interactive widgets.
+
+**Netlify:** Official adapter (`@astrojs/netlify`). SSR, SSG, and hybrid modes all supported.
+
+**Dependency footprint:** ~80 transitive deps for a basic project. No UI framework required.
+
+**CSS approach:** Scoped `<style>` blocks in `.astro` files (like Svelte). Supports vanilla CSS, CSS nesting, custom properties, `@layer`. Can also use Tailwind or Open Props if desired. Each component's styles are automatically scoped — no naming collisions.
+
+### MRM Example
+
+```
+src/
+  pages/
+    madness.astro               ← Static page, fetches at build or request time
+  components/
+    Bracket.astro               ← Pure HTML/CSS component, no JS shipped
+    MatchCard.astro             ← Displays two bands
+    VoteForm.astro              ← <form> that works without JS
+    VoteIsland.tsx              ← Optional: client-side enhanced voting (island)
+  layouts/
+    Base.astro                  ← Shared shell (nav, footer, <head>)
+  styles/
+    tokens.css                  ← Design tokens via custom properties
+```
+
+```astro
+---
+// src/pages/madness.astro
+import Base from '../layouts/Base.astro';
+import Bracket from '../components/Bracket.astro';
+import MatchCard from '../components/MatchCard.astro';
+
+const res = await fetch(`${import.meta.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+const { docs } = await res.json();
+const tournament = docs[0];
+---
+<Base title="Modern Rock Madness 2026">
+  <h1>Modern Rock Madness 2026</h1>
+  <MatchCard match={tournament.currentMatch} />
+  <Bracket rounds={tournament.rounds} />
+</Base>
+```
+
+```astro
+---
+// src/components/MatchCard.astro
+const { match } = Astro.props;
+---
+<article class="match-card">
+  <div class="band">{match.bandA.name}</div>
+  <span class="vs">vs</span>
+  <div class="band">{match.bandB.name}</div>
+  <form method="POST" action="/api/mrm-vote">
+    <input type="hidden" name="matchId" value={match.id} />
+    <button name="bandId" value={match.bandA.id}>Vote {match.bandA.name}</button>
+    <button name="bandId" value={match.bandB.id}>Vote {match.bandB.name}</button>
+  </form>
+</article>
+
+<style>
+  .match-card {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    padding: 2rem;
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+
+    .vs {
+      font-weight: 700;
+      align-self: center;
+    }
+  }
+</style>
+```
+
+```ts
+// src/components/__tests__/MatchCard.test.ts
+import { experimental_AstroContainer as AstroContainer } from 'astro/container';
+import MatchCard from '../MatchCard.astro';
+
+test('renders both band names', async () => {
+  const container = await AstroContainer.create();
+  const html = await container.renderToString(MatchCard, {
+    props: { match: { bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' } }
+  });
+  expect(html).toContain('Radiohead');
+  expect(html).toContain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ Zero JS shipped for read-only pages — fastest possible output
+- ✅ Scoped CSS built-in, great for creative design without naming collisions
+- ✅ Islands for interactivity — can use Lit, vanilla JS, or even React for one widget
+- ✅ Strong agent support — `.astro` files are essentially HTML with a script preamble
+- ✅ Growing ecosystem, active development, good docs
+- ⚠️ Astro-specific template syntax (`.astro` files) — not a web standard, but very close to HTML
+- ❌ Still a build-tool framework — you depend on the Astro project continuing
+
+---
+
+## C. 11ty + HTMX
+
+**What it is:** Eleventy is a zero-config static site generator. It takes templates (Nunjucks, Liquid, Markdown, JS) and produces plain HTML. HTMX adds interactivity via HTML attributes — no JavaScript authoring required for dynamic behavior like voting or live updates.
+
+**Why consider it:** The most radically simple option. Templates are just HTML with data. HTMX extends HTML itself rather than replacing it. If the web platform is the framework, this is the closest you get.
+
+**Netlify:** 11ty was created by a Netlify employee (Zach Leatherman). First-class support for static deploys. HTMX endpoints served via Netlify Functions.
+
+**Dependency footprint:** ~30 transitive deps for 11ty. HTMX is a single 14kB file (no npm install required — use a CDN or vendor it).
+
+**CSS approach:** Vanilla CSS, linked or inlined. No build step needed — modern CSS (nesting, `:has()`, container queries, `@layer`) works directly. Use a `tokens.css` file for design variables. Optionally add Lightning CSS for minification.
+
+### MRM Example
+
+```
+src/
+  _includes/
+    base.njk                    ← Shared HTML shell
+    components/
+      match-card.njk            ← Nunjucks partial
+      bracket.njk
+  madness.njk                   ← Page template
+  css/
+    tokens.css                  ← Design tokens
+    madness.css                 ← Page-specific styles
+  _data/
+    tournament.js               ← Data file — fetches from Payload at build time
+functions/
+  mrm-vote.js                  ← Netlify Function for vote POST
+```
+
+```njk
+{# src/madness.njk #}
+---
+layout: base.njk
+title: Modern Rock Madness 2026
+---
+<h1>Modern Rock Madness {{ tournament.year }}</h1>
+
+{% include "components/match-card.njk" %}
+{% include "components/bracket.njk" %}
+```
+
+```njk
+{# src/_includes/components/match-card.njk #}
+<article class="match-card">
+  <div class="band">{{ tournament.currentMatch.bandA.name }}</div>
+  <span class="vs">vs</span>
+  <div class="band">{{ tournament.currentMatch.bandB.name }}</div>
+
+  {# HTMX-powered voting — no JS to write #}
+  <form hx-post="/api/mrm-vote" hx-target="#vote-result" hx-swap="innerHTML">
+    <input type="hidden" name="matchId" value="{{ tournament.currentMatch.id }}">
+    <button name="bandId" value="{{ tournament.currentMatch.bandA.id }}">
+      Vote {{ tournament.currentMatch.bandA.name }}
+    </button>
+    <button name="bandId" value="{{ tournament.currentMatch.bandB.id }}">
+      Vote {{ tournament.currentMatch.bandB.name }}
+    </button>
+  </form>
+  <div id="vote-result"></div>
+</article>
+```
+
+```js
+// src/_data/tournament.js
+module.exports = async function() {
+  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const { docs } = await res.json();
+  return docs[0];
+};
+```
+
+```js
+// functions/mrm-vote.js  (Netlify Function)
+exports.handler = async (event) => {
+  const { matchId, bandId } = JSON.parse(event.body);
+  await fetch(`${process.env.PAYLOAD_URL}/api/mrm-votes`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ match: matchId, band: bandId }),
+  });
+  return { statusCode: 200, body: '<p class="success">Vote recorded!</p>' };
+};
+```
+
+```js
+// test/match-card.test.js
+import { renderNjk } from './helpers.js';
+
+test('renders both band names', () => {
+  const html = renderNjk('components/match-card.njk', {
+    tournament: {
+      currentMatch: {
+        bandA: { name: 'Radiohead', id: '1' },
+        bandB: { name: 'Muse', id: '2' },
+        id: '99'
+      }
+    }
+  });
+  expect(html).toContain('Radiohead');
+  expect(html).toContain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ Fewest dependencies of any option — nearly zero lock-in
+- ✅ HTMX voting is just HTML attributes — progressive enhancement by nature
+- ✅ Netlify Functions handle the few server-side needs (voting, live data)
+- ✅ Plain CSS, no build pipeline — truly evergreen
+- ✅ Templates are dead simple for agents to read and generate
+- ⚠️ No component scoping — CSS discipline needed (use `@layer`, BEM, or namespace classes)
+- ⚠️ Nunjucks templates aren't "components" in the React sense — less composable
+- ❌ Less ecosystem for complex UI patterns (bracket visualization would be hand-rolled)
+- ❌ HTMX returns HTML fragments — need to think in terms of server-rendered partials
+
+---
+
+## D. Enhance
+
+**What it is:** An HTML-first framework built on web components. Components are authored as pure functions that return HTML strings. They render on the server via SSR and progressively upgrade to Custom Elements in the browser. Built by the Begin/Architect team.
+
+**Why consider it:** The most web-standards-aligned option. Components are actual Custom Elements. No virtual DOM, no framework runtime. What you write is what the browser runs. If the goal is "use the platform," Enhance is the purest expression of that.
+
+**Netlify:** Deployable via Netlify Functions for SSR, or as a static export. The Enhance team primarily targets Begin/AWS, but the output is standard Node.js and works on any serverless platform.
+
+**Dependency footprint:** ~40 transitive deps. No UI framework. The "runtime" is the browser's built-in Custom Elements API.
+
+**CSS approach:** Enhance provides a utility-class system inspired by Tailwind but generated from a JSON config (no PostCSS, no build step). Alternatively, use `<style>` inside component definitions for scoped styles. Supports vanilla CSS, custom properties, and all modern features.
+
+### MRM Example
+
+```
+app/
+  pages/
+    madness.html                ← Page route (convention-based routing)
+  elements/
+    mrm-bracket.mjs             ← Custom Element definition (SSR + client)
+    mrm-match-card.mjs          ← Renders match with vote form
+  api/
+    mrm-vote.mjs                ← API route for vote POST
+  public/
+    css/
+      tokens.css
+```
+
+```js
+// app/elements/mrm-match-card.mjs
+export default function MrmMatchCard({ html, state }) {
+  const { attrs } = state;
+  const match = JSON.parse(attrs['match-data'] || '{}');
+
+  return html`
+    <article class="match-card">
+      <div class="band">${match.bandA?.name}</div>
+      <span class="vs">vs</span>
+      <div class="band">${match.bandB?.name}</div>
+
+      <form method="POST" action="/api/mrm-vote">
+        <input type="hidden" name="matchId" value="${match.id}" />
+        <button name="bandId" value="${match.bandA?.id}">Vote ${match.bandA?.name}</button>
+        <button name="bandId" value="${match.bandB?.id}">Vote ${match.bandB?.name}</button>
+      </form>
+    </article>
+
+    <style>
+      :host {
+        display: block;
+      }
+      .match-card {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1rem;
+        padding: 2rem;
+        border: 2px solid var(--color-accent);
+        border-radius: var(--radius-lg);
+      }
+    </style>
+  `;
+}
+```
+
+```html
+<!-- app/pages/madness.html -->
+<h1>Modern Rock Madness 2026</h1>
+<mrm-match-card match-data="${tournament.currentMatch | json}"></mrm-match-card>
+<mrm-bracket rounds="${tournament.rounds | json}"></mrm-bracket>
+```
+
+```js
+// test/elements/mrm-match-card.test.mjs
+import enhance from '@enhance/ssr';
+import MrmMatchCard from '../../app/elements/mrm-match-card.mjs';
+
+test('renders both band names', async () => {
+  const html = enhance({ elements: { 'mrm-match-card': MrmMatchCard } });
+  const result = await html`<mrm-match-card match-data='${JSON.stringify(mockMatch)}'></mrm-match-card>`;
+  expect(result).toContain('Radiohead');
+  expect(result).toContain('Muse');
+});
+```
+
+**Tradeoffs:**
+- ✅ True web components — components work in any context, no framework needed at runtime
+- ✅ SSR by default — fast first paint, progressive enhancement for interactivity
+- ✅ Scoped styles via `:host` and Shadow DOM — clean CSS isolation
+- ✅ The output IS the platform — maximally evergreen
+- ⚠️ Smaller community and ecosystem compared to Astro or Next.js
+- ⚠️ Passing complex data via HTML attributes (JSON strings) is awkward
+- ⚠️ Agent familiarity is lower — less training data for Copilot/Claude vs React or Astro
+- ❌ Begin/Architect deployment is the primary target; Netlify works but isn't the happy path
+
+---
+
+## CSS Strategy (Framework-Independent)
+
+Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
+
+### Recommended: Vanilla CSS + Design Tokens
+
+```css
+/* tokens.css — shared design language */
+:root {
+  --color-bg: #0a0a0f;
+  --color-text: #e8e6e3;
+  --color-accent: #ff3e3e;
+  --color-accent-glow: oklch(65% 0.25 25 / 0.4);
+  --font-display: 'Instrument Sans', system-ui;
+  --font-body: system-ui, sans-serif;
+  --radius-sm: 4px;
+  --radius-lg: 12px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 2rem;
+}
+```
+
+**Modern CSS features to use freely (baseline 2024+):**
+- Nesting (`& .child { }`) — eliminates need for Sass
+- Container queries (`@container`) — responsive components, not just viewports
+- `:has()` — parent selectors, state-driven styling
+- `@layer` — cascade control without specificity wars
+- `oklch()` / `color-mix()` — perceptually uniform color manipulation
+- `@scope` — component-level style scoping without Shadow DOM
+- View Transitions API — page transition animations
+
+**What this replaces:**
+- No Sass/SCSS needed (nesting + custom properties cover it)
+- No CSS-in-JS (scoped styles or `@scope` handle isolation)
+- No Tailwind required (but compatible with all options if you want it)
+- No PostCSS required for new projects (optional for minification)
+
+### Creative Design Enablers
+
+A radio station site should feel alive. Modern CSS enables this without JS:
+
+```css
+/* Example: glowing accent on hover */
+.match-card:has(button:hover) {
+  box-shadow: 0 0 30px var(--color-accent-glow);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Example: responsive grid that adapts to content */
+.bracket {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  container-type: inline-size;
+}
+
+/* Example: view transition for page navigation */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(main) {
+  animation: fade-out 0.2s ease;
+}
+```
+
+---
+
+## Comparison Matrix
+
+| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance |
+|-----------|-----------|-------|-------------|---------|
+| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB |
+| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 |
+| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ |
+| **Build speed** | Moderate | Fast | Fastest | Fast |
+| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ |
+| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components |
+| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` |
+| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement |
+| **Vendor lock-in** | High (React + Vercel ecosystem) | Medium (Astro-specific syntax) | Low (standards + HTMX) | Lowest (web components) |
+| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ |
+| **Creative CSS ceiling** | High | High | High | High |
+| **Ecosystem / plugins** | Massive | Growing | Mature | Small |
+
+### Scoring by stated priority
+
+| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance |
+|----------|--------|---------|-------|-----------|---------|
+| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 |
+| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 |
+| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 |
+| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 |
+| Evergreen | ●●●●● | 2 | 3 | 4 | 5 |
+| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 |
+| **Weighted total** | | **48** | **63** | **63** | **57** |
+
+*(Scores 1-5, weighted by priority dots. Totals are illustrative, not prescriptive.)*
+
+---
+
+## Observations
+
+**Astro and 11ty+HTMX score highest** for this specific project. They diverge on philosophy:
+
+- **Astro** gives you a modern, component-driven DX with scoped styles and island interactivity — closest to the "component-driven codebase" the problem statement asks for, while still shipping minimal JS. Its `.astro` syntax is very close to HTML and easy for agents to work with. The island model means you could even use a Lit web component for the bracket visualization and keep everything else as zero-JS templates.
+
+- **11ty + HTMX** is the most radically simple and dependency-free option. It embraces HTML as the application language. The tradeoff is that you lose built-in component scoping and composition patterns — you'll rely more on conventions and discipline than framework guardrails. HTMX's approach to interactivity (server returns HTML fragments) is elegant and fits the "mostly read-only" nature of the site perfectly.
+
+**Enhance** is philosophically the most aligned with "use the platform" but its smaller ecosystem and less intuitive data-passing (JSON in attributes) add friction that may not be worth it for a solo maintainer.
+
+**Next.js** is the safe choice but carries the most weight for what is fundamentally a content site. It would make sense if the site had complex client-side state, real-time features, or heavy interactivity — but it doesn't.
+
+### A hybrid note
+
+These options are not mutually exclusive with the Payload deployment. Payload runs its own Next.js app at `admin.ynotradio.net`. The public site can be a completely separate project using any of these frameworks, deployed as a separate Netlify site, fetching content from Payload's API. This is already the implied architecture.
+
+---
+
+## Next Steps
+
+1. **Pick one or two to prototype.** Build the concerts page and one interactive feature (MRM voting or Top 11) in the chosen framework(s). A day of prototyping will reveal more than any evaluation document.
+
+2. **Validate Netlify deployment.** Deploy the prototype to a Netlify preview site to confirm build times, function behavior, and CDN caching.
+
+3. **Test with real Payload data.** Connect to the dev Neon database and fetch actual content to validate the data-fetching patterns.
+
+4. **Evaluate agent workflow.** Have an agent build a second page in the prototype to assess how well the framework supports AI-assisted development.
