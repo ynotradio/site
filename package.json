@@ -51,7 +51,7 @@
   "devDependencies": {
     "@benborla29/mcp-server-mysql": "^2.0.8",
     "@chromatic-com/storybook": "^5.0.1",
-    "@netlify/plugin-nextjs": "^5.15.7",
+    "@netlify/plugin-nextjs": "^5.15.8",
     "@playwright/test": "^1.58.2",
     "@storybook/addon-a11y": "^10.2.1",
     "@storybook/addon-docs": "^10.2.3",
