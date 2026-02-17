@@ -7,9 +7,13 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   issues: read
-  pull-requests: write
+  pull-requests: read
+
+safe-outputs:
+  create-pull-request:
+    draft: false
 ---
 
 # Code Simplifier Agent
@@ -45,6 +49,7 @@ If no changes detected, exit gracefully.
 For each changed file:
 
 **Apply simplifications**:
+
 - Reduce complexity (nested conditionals, loops)
 - Remove dead code and unused imports
 - Improve naming clarity
@@ -54,6 +59,7 @@ For each changed file:
 - Avoid nested ternaries (use if/else or switch)
 
 **Preserve**:
+
 - Exact functionality - never change what code does
 - All tests passing
 - Build success
@@ -90,11 +96,14 @@ git push origin HEAD
 **Expiration**: 7 days
 
 **PR Description** (brief):
+
 ```markdown
 ## Changes
+
 - [List 2-3 specific improvements]
 
 ## Verification
+
 - [x] All checks pass locally before push
 ```
 

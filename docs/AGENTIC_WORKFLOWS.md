@@ -14,9 +14,10 @@ Located in `.github/agents/`:
 
 ```bash
 gh extension install github/gh-aw
-gh aw add .github/agents/*.md
-gh aw compile
-git add .github/workflows/ && git commit -m "chore: activate workflows" && git push
+cp .github/agents/*.md .github/workflows/
+gh aw compile code-simplifier.md code-refactoring.md test-coverage-improver.md
+rm .github/workflows/*.md
+git add .github/workflows/*.lock.yml && git commit -m "chore: activate agentic workflows" && git push
 ```
 
 ## How It Works
@@ -35,11 +36,11 @@ git add .github/workflows/ && git commit -m "chore: activate workflows" && git p
 
 ## Schedules
 
-| Workflow | Frequency | Scope |
-|----------|-----------|-------|
-| Code Simplifier | Daily 2AM UTC | Files changed in last 24h |
-| Test Coverage | Daily 3AM UTC | Lowest coverage areas |
-| Refactoring | Mon 4AM UTC | REFACTOR_CHECKLIST.md items |
+| Workflow        | Frequency     | Scope                       |
+| --------------- | ------------- | --------------------------- |
+| Code Simplifier | Daily 2AM UTC | Files changed in last 24h   |
+| Test Coverage   | Daily 3AM UTC | Lowest coverage areas       |
+| Refactoring     | Mon 4AM UTC   | REFACTOR_CHECKLIST.md items |
 
 ## Configuration
 
