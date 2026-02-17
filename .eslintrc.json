@@ -20,7 +20,6 @@
     "plugin:jsx-a11y/recommended",
     "next"
   ],
-  "plugins": ["@typescript-eslint", "react", "jsx-a11y"],
   "env": {
     "node": true
   },

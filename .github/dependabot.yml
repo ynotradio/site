@@ -21,6 +21,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "@typescript-eslint/parser"
         update-types: ["version-update:semver-major"]
+      # eslint-config-next v16+ requires Next.js 16 and ESLint 9
+      - dependency-name: "eslint-config-next"
+        update-types: ["version-update:semver-major"]
       # @types/node should stay aligned with project's Node version (currently using v22 types)
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
