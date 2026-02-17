@@ -11,8 +11,8 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'html'],
       include: [
         'bin/migrations/shared/**/*.ts',
-        // Note: Legacy JS files in src/js/ are tested via eval() in test/legacy-js/
-        // and cannot be tracked by V8 coverage. Tests exist but coverage is not measured.
+        'src/js/countdown.js',
+        'src/js/yr_end_poll.js',
       ],
       exclude: [
         '**/*.test.ts',
