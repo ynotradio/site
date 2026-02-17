@@ -7,10 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  discussions: write
+  contents: read
+  issues: read
+  pull-requests: read
+
+safe-outputs:
+  create-pull-request:
+    draft: false
+  create-issue: null
 ---
 
 # Test Coverage Improver Agent
@@ -49,7 +53,7 @@ Check what's been completed:
 3. Review testing standards in [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/)
 4. Create GitHub Discussion: "Test Coverage Improver - Research and Plan"
    - Current coverage stats
-   - Coverage gaps identified  
+   - Coverage gaps identified
    - Improvement plan with priorities
    - Build commands: `yarn install`, `yarn test:coverage`
 5. Exit - wait for human review

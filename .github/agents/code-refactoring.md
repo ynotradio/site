@@ -7,9 +7,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
+  issues: read
+  pull-requests: read
+
+safe-outputs:
+  create-pull-request:
+    draft: false
+  create-issue: null
 ---
 
 # Code Refactoring Assistant
@@ -55,6 +60,7 @@ Priority: Components >300 lines, 0% test coverage, high complexity.
 Select ONE tractable target. Design approach:
 
 **Common refactorings**:
+
 - Split large components (extract sub-components, hooks)
 - Add missing `.test.tsx` and `.stories.tsx` files
 - Extract inline styles to CSS modules
@@ -95,11 +101,14 @@ git push origin HEAD
 **Labels**: `refactoring`, `code-quality`, `automation`
 
 **PR Description** (brief):
+
 ```markdown
 ## Changes
+
 - [Specific improvements made]
 
-## Verification  
+## Verification
+
 - [x] All checks pass locally before push
 
 Addresses: [Checklist item]
@@ -112,12 +121,14 @@ Update [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md) to mark completed it
 ## Safety
 
 **Low-risk refactoring** (automated):
+
 - Split components/functions/hooks
 - Move inline styles to CSS
 - Add test/story files
 - Remove dead code
 
 **High-risk refactoring** (create issue instead):
+
 - Change component APIs
 - Modify state management
 - Alter critical business logic
