@@ -125,7 +125,7 @@ steps:
       queue: "default"
 
   # E2E Tests - Runs after successful build
-  # Strategy: Run docker-compose on host, then run Playwright tests in container with host networking
+  # Strategy: Run everything in Playwright container with Docker socket access
   - label: ":playwright: E2E Tests"
     key: "e2e"
     depends_on: "build"
@@ -142,14 +142,47 @@ steps:
       - docker pull ghcr.io/ynotradio/site/postgres-seeded:latest || echo "Could not pull postgres-seeded, will build if needed"
       - docker pull mysql:8.0 || true
       - docker pull httpd:2.4 || true
-      # Install dependencies in Playwright container
-      - docker run --rm -v "$$(pwd):/app" -w /app mcr.microsoft.com/playwright:v1.50.1-jammy yarn install --frozen-lockfile
-      # Set up E2E environment (starts Docker Compose services on HOST network)
-      - ./bin/setup-e2e-tests.sh
-      # Run Playwright tests in container with host networking (to access Docker Compose services)
-      - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true mcr.microsoft.com/playwright:v1.50.1-jammy npx playwright test
-      # Cleanup Docker containers
-      - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || docker compose down -v || true
+      - docker pull composer:2 || true
+      # Run all E2E setup and tests in Playwright container with Docker socket
+      - |
+        docker run --rm \
+          --network host \
+          -v "$$(pwd):/app" \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -w /app \
+          -e CI=true \
+          -e SKIP_DEPS_CHECK=false \
+          mcr.microsoft.com/playwright:v1.50.1-jammy \
+          /bin/bash -c '
+            set -e
+            echo "--- :yarn: Installing dependencies"
+            yarn install --frozen-lockfile
+            
+            echo "--- :composer: Installing PHP dependencies"
+            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+            cd src && composer install --no-dev --optimize-autoloader && cd ..
+            
+            echo "--- :gear: Setting up E2E test environment"
+            ./bin/setup-e2e-env.sh
+            
+            echo "--- :docker: Starting Docker services"
+            docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
+            
+            echo "--- :hourglass: Waiting for services..."
+            ./bin/wait-for-docker-services.sh
+            
+            echo "--- :mysql: Initializing MySQL database"
+            ./bin/init-mysql-db.sh
+            
+            echo "--- :seedling: Seeding databases"
+            yarn seed:legacy
+            
+            echo "--- :playwright: Running Playwright E2E tests"
+            npx playwright test
+            
+            echo "--- :broom: Cleaning up Docker containers"
+            docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
+          '
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
