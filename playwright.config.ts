@@ -87,12 +87,15 @@ export default defineConfig({
   // - In local dev: Containers are left running for faster re-runs
 
   // Web server configuration
-  webServer: {
-    command: 'yarn --ignore-engines dev',
-    url: 'http://localhost:3000/admin',
-    timeout: 180 * 1000, // 3 minutes for slow Payload initialization
-    reuseExistingServer: true, // Always reuse if already running (started by setup script)
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // In CI, the dev server is started externally before Playwright runs
+  webServer: process.env.CI
+    ? undefined
+    : {
+      command: 'yarn --ignore-engines dev',
+      url: 'http://localhost:3000/admin',
+      timeout: 180 * 1000, // 3 minutes for slow Payload initialization
+      reuseExistingServer: true, // Always reuse if already running (started by setup script)
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
 });
