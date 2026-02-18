@@ -64,10 +64,11 @@ steps:
           yarn test:coverage
           
           echo "--- :codecov: Uploading coverage to CodeCov"
-          if [ -n "${CODECOV_TOKEN}" ]; then
+          export CODECOV_TOKEN="$(buildkite-agent secret get CODECOV_TOKEN)"
+          if [ -n "$CODECOV_TOKEN" ]; then
             curl -Os https://uploader.codecov.io/latest/linux/codecov
             chmod +x codecov
-            ./codecov -f ./coverage/lcov.info -t ${CODECOV_TOKEN}
+            ./codecov -f ./coverage/lcov.info -t $CODECOV_TOKEN
           else
             echo "CODECOV_TOKEN not set, skipping coverage upload"
           fi
@@ -83,9 +84,6 @@ steps:
                 - "CI=true"
         agents:
           queue: "default"
-        env:
-          CI: "true"
-          CODECOV_TOKEN: "${CODECOV_TOKEN}"
 
       - label: ":storybook: Storybook Build"
         key: "storybook"
@@ -138,7 +136,9 @@ steps:
     timeout_in_minutes: 30
     command: |
       echo "--- :docker: Logging into GHCR"
-      echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
+      export GHCR_USERNAME="$(buildkite-agent secret get GHCR_USERNAME)"
+      export GHCR_TOKEN="$(buildkite-agent secret get GHCR_TOKEN)"
+      echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
       
       echo "--- :docker: Pulling pre-built images"
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
