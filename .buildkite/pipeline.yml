@@ -149,8 +149,8 @@ steps:
       - docker run --rm -v "$$(pwd):/app" -w /app node:22-slim ./bin/setup-e2e-env.sh
       # Start Docker services on host (so volume mounts work correctly)
       - docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
-      # Wait for services using Node container
-      - docker run --rm --network host -v "$$(pwd):/app" -w /app node:22-slim ./bin/wait-for-docker-services.sh
+      # Wait for services (runs directly on host since it needs docker compose exec)
+      - ./bin/wait-for-docker-services.sh
       # Initialize MySQL using Docker exec
       - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%';"
       # Run yarn install and seed in Node container
