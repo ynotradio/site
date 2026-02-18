@@ -125,47 +125,49 @@ steps:
       queue: "default"
 
   # E2E Tests - Runs after successful build
+  # Note: Uses a pre-command hook to fetch secrets before Docker plugin runs
   - label: ":playwright: E2E Tests"
     key: "e2e"
     depends_on: "build"
     timeout_in_minutes: 30
-    command: |
-      echo "--- :docker: Logging into GHCR"
-      GHCR_USERNAME=$$(buildkite-agent secret get GHCR_USERNAME)
-      GHCR_TOKEN=$$(buildkite-agent secret get GHCR_TOKEN)
-      echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-      
-      echo "--- :docker: Pulling pre-built images"
-      docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
-      docker pull ghcr.io/ynotradio/site/postgres-seeded:latest || echo "Could not pull postgres-seeded, will build if needed"
-      docker pull mysql:8.0 || true
-      docker pull httpd:2.4 || true
-      
-      echo "--- :yarn: Installing dependencies"
-      yarn install --frozen-lockfile
-      
-      echo "--- :gear: Setting up E2E test environment"
-      ./bin/setup-e2e-tests.sh
-      
-      echo "--- :playwright: Running Playwright E2E tests"
-      npx playwright test
-      
-      echo "--- :broom: Cleaning up Docker containers"
-      docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || docker compose down -v || true
+    env:
+      CI: "true"
+    commands:
+      # Fetch secrets before Docker container starts (runs on host)
+      - export GHCR_USERNAME=$$(buildkite-agent secret get GHCR_USERNAME)
+      - export GHCR_TOKEN=$$(buildkite-agent secret get GHCR_TOKEN)
+      # Login to GHCR on host (so Docker can pull private images)
+      - echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+      # Pull images on host before entering container
+      - docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
+      - docker pull ghcr.io/ynotradio/site/postgres-seeded:latest || echo "Could not pull postgres-seeded, will build if needed"
+      - docker pull mysql:8.0 || true
+      - docker pull httpd:2.4 || true
+      # Now run the E2E tests in Playwright container
+      - |
+        docker run --rm \
+          --network host \
+          -v "$$(pwd):/app" \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -w /app \
+          -e CI=true \
+          mcr.microsoft.com/playwright:v1.50.1-jammy \
+          /bin/bash -c '
+            echo "--- :yarn: Installing dependencies"
+            yarn install --frozen-lockfile
+            
+            echo "--- :gear: Setting up E2E test environment"
+            ./bin/setup-e2e-tests.sh
+            
+            echo "--- :playwright: Running Playwright E2E tests"
+            npx playwright test
+            
+            echo "--- :broom: Cleaning up Docker containers"
+            docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || docker compose down -v || true
+          '
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
-    plugins:
-      - docker#v5.11.0:
-          image: "mcr.microsoft.com/playwright:v1.50.1-jammy"
-          volumes:
-            - ".:/app"
-            - "/var/run/docker.sock:/var/run/docker.sock"
-          workdir: "/app"
-          environment:
-            - "CI=true"
-          propagate-environment: true
-          mount-buildkite-agent: true
     agents:
       queue: "default"
       docker: "true"
