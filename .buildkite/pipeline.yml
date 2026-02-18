@@ -152,19 +152,12 @@ steps:
       # Wait for services (runs directly on host since it needs docker compose exec)
       - ./bin/wait-for-docker-services.sh
       # Initialize MySQL using Docker exec
-      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%';"
-      # Run yarn install and seed in Node container
-      - |
-        docker run --rm \
-          --network host \
-          -v "$$(pwd):/app" \
-          -w /app \
-          -e CI=true \
-          node:22-slim \
-          /bin/bash -c '
-            yarn install --frozen-lockfile
-            yarn seed:legacy
-          '
+      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
+      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
+      # Run yarn install in Node container
+      - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
+      # Seed database (runs on host since it uses docker compose exec)
+      - ./bin/seed-legacy.sh
       # Run Playwright tests
       - |
         docker run --rm \
@@ -172,7 +165,7 @@ steps:
           -v "$$(pwd):/app" \
           -w /app \
           -e CI=true \
-          mcr.microsoft.com/playwright:v1.50.1-jammy \
+          mcr.microsoft.com/playwright:v1.58.0-jammy \
           /bin/bash -c '
             npx playwright test
           '
