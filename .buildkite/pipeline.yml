@@ -137,6 +137,8 @@ steps:
       - export GHCR_USERNAME=$$(buildkite-agent secret get GHCR_USERNAME)
       - export GHCR_TOKEN=$$(buildkite-agent secret get GHCR_TOKEN)
       - echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+      # Clean up any leftover containers/volumes from previous runs
+      - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
       # Pull images on host
       - docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
       - docker pull ghcr.io/ynotradio/site/postgres-seeded:latest || echo "Could not pull postgres-seeded, will build if needed"
@@ -151,9 +153,9 @@ steps:
       - docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
       # Wait for services (runs directly on host since it needs docker compose exec)
       - ./bin/wait-for-docker-services.sh
-      # Initialize MySQL using Docker exec
-      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
-      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
+      # Initialize MySQL using Docker exec - use MYSQL_ROOT_PASSWORD env var for auth
+      - docker compose exec -T mysql mysql -uroot -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS ynotradio;" || docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
+      - docker compose exec -T mysql mysql -uroot -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;" || docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
       # Run yarn install in Node container
       - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
       # Seed database (runs on host since it uses docker compose exec)
