@@ -125,7 +125,7 @@ steps:
       queue: "default"
 
   # E2E Tests - Runs after successful build
-  # Strategy: Run everything in Playwright container with Docker socket access
+  # Strategy: Start services on host, run Playwright in container with host networking
   - label: ":playwright: E2E Tests"
     key: "e2e"
     depends_on: "build"
@@ -145,51 +145,39 @@ steps:
       - docker pull composer:2 || true
       # Install composer dependencies on host using Docker
       - docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
-      # Run E2E tests in Playwright container with Docker socket (install Docker CLI + compose plugin)
+      # Setup E2E environment files on host using Node container
+      - docker run --rm -v "$$(pwd):/app" -w /app node:22-slim ./bin/setup-e2e-env.sh
+      # Start Docker services on host (so volume mounts work correctly)
+      - docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
+      # Wait for services using Node container
+      - docker run --rm --network host -v "$$(pwd):/app" -w /app node:22-slim ./bin/wait-for-docker-services.sh
+      # Initialize MySQL using Docker exec
+      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%';"
+      # Run yarn install and seed in Node container
       - |
         docker run --rm \
           --network host \
           -v "$$(pwd):/app" \
-          -v /var/run/docker.sock:/var/run/docker.sock \
           -w /app \
           -e CI=true \
-          -e SKIP_DEPS_CHECK=false \
+          node:22-slim \
+          /bin/bash -c '
+            yarn install --frozen-lockfile
+            yarn seed:legacy
+          '
+      # Run Playwright tests
+      - |
+        docker run --rm \
+          --network host \
+          -v "$$(pwd):/app" \
+          -w /app \
+          -e CI=true \
           mcr.microsoft.com/playwright:v1.50.1-jammy \
           /bin/bash -c '
-            set -e
-            echo "--- :docker: Installing Docker CLI and Compose"
-            apt-get update
-            apt-get install -y ca-certificates curl gnupg
-            install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-            chmod a+r /etc/apt/keyrings/docker.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" > /etc/apt/sources.list.d/docker.list
-            apt-get update && apt-get install -y --no-install-recommends docker-ce-cli docker-compose-plugin
-            
-            echo "--- :yarn: Installing dependencies"
-            yarn install --frozen-lockfile
-            
-            echo "--- :gear: Setting up E2E test environment"
-            ./bin/setup-e2e-env.sh
-            
-            echo "--- :docker: Starting Docker services"
-            docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
-            
-            echo "--- :hourglass: Waiting for services..."
-            ./bin/wait-for-docker-services.sh
-            
-            echo "--- :mysql: Initializing MySQL database"
-            ./bin/init-mysql-db.sh
-            
-            echo "--- :seedling: Seeding databases"
-            yarn seed:legacy
-            
-            echo "--- :playwright: Running Playwright E2E tests"
             npx playwright test
-            
-            echo "--- :broom: Cleaning up Docker containers"
-            docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
           '
+      # Cleanup
+      - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
