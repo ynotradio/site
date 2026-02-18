@@ -64,14 +64,9 @@ steps:
           yarn test:coverage
           
           echo "--- :codecov: Uploading coverage to CodeCov"
-          CODECOV_TOKEN=$$(buildkite-agent secret get CODECOV_TOKEN)
-          if [ -n "$$CODECOV_TOKEN" ]; then
-            curl -Os https://uploader.codecov.io/latest/linux/codecov
-            chmod +x codecov
-            ./codecov -f ./coverage/lcov.info -t $$CODECOV_TOKEN
-          else
-            echo "CODECOV_TOKEN not set, skipping coverage upload"
-          fi
+          # Note: CODECOV_TOKEN is not available inside Docker containers
+          # Codecov upload is skipped in containerized jobs
+          echo "Skipping CodeCov upload (not available in containerized jobs)"
         artifact_paths:
           - "coverage/**/*"
         plugins:
