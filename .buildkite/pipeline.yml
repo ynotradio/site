@@ -169,10 +169,11 @@ steps:
           /bin/bash -c '
             set -e
             
-            # Start Payload dev server in background
+            # Start Payload dev server in background with nohup to prevent signal issues
             echo "--- :payload: Starting Payload dev server..."
-            yarn --ignore-engines dev &
+            nohup yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1 &
             DEV_PID=$$!
+            echo "Payload dev server started with PID $$DEV_PID"
             
             # Wait for Payload to be ready (up to 3 minutes)
             echo "Waiting for Payload CMS to be ready..."
@@ -185,6 +186,8 @@ steps:
               fi
               if [ $$i -eq 36 ]; then
                 echo "❌ Payload CMS failed to start after 3 minutes"
+                echo "=== Last 50 lines of Payload log ==="
+                tail -50 /tmp/payload-dev.log || true
                 kill $$DEV_PID 2>/dev/null || true
                 exit 1
               fi
@@ -195,6 +198,12 @@ steps:
             # Run Playwright tests
             echo "--- :playwright: Running Playwright E2E tests..."
             npx playwright test --reporter=list || TEST_EXIT_CODE=$$?
+            
+            # Show Payload logs if tests failed
+            if [ "$${TEST_EXIT_CODE:-0}" -ne 0 ]; then
+              echo "=== Payload dev server log ==="
+              tail -100 /tmp/payload-dev.log || true
+            fi
             
             # Stop the dev server
             echo "--- :stop_sign: Stopping Payload dev server..."
