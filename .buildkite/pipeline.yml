@@ -153,9 +153,9 @@ steps:
       - docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
       # Wait for services (runs directly on host since it needs docker compose exec)
       - ./bin/wait-for-docker-services.sh
-      # Initialize MySQL using Docker exec - use MYSQL_ROOT_PASSWORD env var for auth
-      - docker compose exec -T mysql mysql -uroot -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS ynotradio;" || docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
-      - docker compose exec -T mysql mysql -uroot -p"$$MYSQL_ROOT_PASSWORD" -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;" || docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
+      # Initialize MySQL using Docker exec
+      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
+      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
       # Run yarn install in Node container
       - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
       # Seed database (runs on host since it uses docker compose exec)
