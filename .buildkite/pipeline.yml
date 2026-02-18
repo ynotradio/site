@@ -175,11 +175,10 @@ steps:
             # Start Payload dev server in background
             echo "--- :payload: Starting Payload dev server..."
             
-            # Use setsid to create new session, preventing signals from propagating
-            # Also use disown to ensure it runs independently
-            (yarn --ignore-engines dev 2>&1 | tee /tmp/payload-dev.log) &
+            # Use exec to replace shell with yarn, redirect output to file
+            # The & runs it in background
+            yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1 &
             DEV_PID=$$!
-            disown $$DEV_PID 2>/dev/null || true
             
             echo "Payload dev server started with PID $$DEV_PID"
             
@@ -212,6 +211,18 @@ steps:
               exit 1
             fi
             
+            # Keep monitoring server in background
+            (
+              while true; do
+                sleep 5
+                if ! ps -p $$DEV_PID > /dev/null 2>&1; then
+                  echo "WARNING: Payload dev server (PID $$DEV_PID) has exited!"
+                  break
+                fi
+              done
+            ) &
+            MONITOR_PID=$$!
+            
             # Run Playwright tests
             echo "--- :playwright: Running Playwright E2E tests..."
             npx playwright test --reporter=list || TEST_EXIT_CODE=$$?
@@ -222,8 +233,9 @@ steps:
               tail -100 /tmp/payload-dev.log || true
             fi
             
-            # Stop the dev server
+            # Stop monitoring and dev server
             echo "--- :stop_sign: Stopping Payload dev server..."
+            kill $$MONITOR_PID 2>/dev/null || true
             kill $$DEV_PID 2>/dev/null || true
             
             # Exit with test result
