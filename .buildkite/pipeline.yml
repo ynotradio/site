@@ -159,8 +159,7 @@ steps:
             yarn install --frozen-lockfile
             
             echo "--- :composer: Installing PHP dependencies"
-            curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-            cd src && composer install --no-dev --optimize-autoloader && cd ..
+            docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
             
             echo "--- :gear: Setting up E2E test environment"
             ./bin/setup-e2e-env.sh
