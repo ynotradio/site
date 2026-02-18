@@ -84,6 +84,7 @@ steps:
         agents:
           queue: "default"
         env:
+          CI: "true"
           CODECOV_TOKEN: "${CODECOV_TOKEN}"
 
       - label: ":storybook: Storybook Build"
@@ -137,7 +138,7 @@ steps:
     timeout_in_minutes: 30
     command: |
       echo "--- :docker: Logging into GHCR"
-      echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+      echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
       
       echo "--- :docker: Pulling pre-built images"
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
@@ -171,11 +172,6 @@ steps:
       SKIP_DEPS_CHECK: "true"
       PAYLOAD_DEV_EMAIL: "admin@ynotradio.net"
       PAYLOAD_DEV_PASSWORD: "password"
-      GHCR_USERNAME: "${GHCR_USERNAME}"
-      GHCR_TOKEN: "${GHCR_TOKEN}"
-      CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME}"
-      CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY}"
-      CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET}"
     agents:
       queue: "default"
       docker: "true"
