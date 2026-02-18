@@ -165,14 +165,20 @@ steps:
           -v "$$(pwd):/app" \
           -w /app \
           -e CI=true \
+          -e NODE_ENV=development \
           mcr.microsoft.com/playwright:v1.58.0-jammy \
           /bin/bash -c '
             set -e
             
-            # Start Payload dev server in background with nohup to prevent signal issues
+            # Start Payload dev server in background
             echo "--- :payload: Starting Payload dev server..."
-            nohup yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1 &
+            
+            # Use setsid to create new session, preventing signals from propagating
+            # Also use disown to ensure it runs independently
+            (yarn --ignore-engines dev 2>&1 | tee /tmp/payload-dev.log) &
             DEV_PID=$$!
+            disown $$DEV_PID 2>/dev/null || true
+            
             echo "Payload dev server started with PID $$DEV_PID"
             
             # Wait for Payload to be ready (up to 3 minutes)
@@ -194,6 +200,15 @@ steps:
               echo "   Waiting for Payload... ($$i/36)"
               sleep 5
             done
+            
+            # Verify server is still running
+            echo "Verifying Payload server is running..."
+            sleep 2
+            if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
+              echo "❌ Payload server stopped unexpectedly"
+              tail -50 /tmp/payload-dev.log || true
+              exit 1
+            fi
             
             # Run Playwright tests
             echo "--- :playwright: Running Playwright E2E tests..."
