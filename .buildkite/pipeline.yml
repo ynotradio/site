@@ -64,10 +64,10 @@ steps:
           yarn test:coverage
           
           echo "--- :codecov: Uploading coverage to CodeCov"
-          if [ -n "$$CODECOV_TOKEN" ]; then
+          if [ -n "${CODECOV_TOKEN}" ]; then
             curl -Os https://uploader.codecov.io/latest/linux/codecov
             chmod +x codecov
-            ./codecov -f ./coverage/lcov.info -t $$CODECOV_TOKEN
+            ./codecov -f ./coverage/lcov.info -t ${CODECOV_TOKEN}
           else
             echo "CODECOV_TOKEN not set, skipping coverage upload"
           fi
@@ -138,7 +138,7 @@ steps:
     timeout_in_minutes: 30
     command: |
       echo "--- :docker: Logging into GHCR"
-      echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+      echo "${GHCR_TOKEN}" | docker login ghcr.io -u "${GHCR_USERNAME}" --password-stdin
       
       echo "--- :docker: Pulling pre-built images"
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
@@ -167,11 +167,6 @@ steps:
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
-    env:
-      CI: "true"
-      SKIP_DEPS_CHECK: "true"
-      PAYLOAD_DEV_EMAIL: "admin@ynotradio.net"
-      PAYLOAD_DEV_PASSWORD: "password"
     agents:
       queue: "default"
       docker: "true"
