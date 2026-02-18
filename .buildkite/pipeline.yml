@@ -143,7 +143,9 @@ steps:
       - docker pull mysql:8.0 || true
       - docker pull httpd:2.4 || true
       - docker pull composer:2 || true
-      # Run all E2E setup and tests in Playwright container with Docker socket
+      # Install composer dependencies on host using Docker
+      - docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
+      # Run E2E tests in Playwright container with Docker socket
       - |
         docker run --rm \
           --network host \
@@ -155,11 +157,11 @@ steps:
           mcr.microsoft.com/playwright:v1.50.1-jammy \
           /bin/bash -c '
             set -e
+            echo "--- :docker: Installing Docker CLI"
+            apt-get update && apt-get install -y docker.io
+            
             echo "--- :yarn: Installing dependencies"
             yarn install --frozen-lockfile
-            
-            echo "--- :composer: Installing PHP dependencies"
-            docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
             
             echo "--- :gear: Setting up E2E test environment"
             ./bin/setup-e2e-env.sh
