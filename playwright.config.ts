@@ -16,7 +16,8 @@ export default defineConfig({
   testDir: './e2e',
 
   // Maximum time one test can run for
-  timeout: 20 * 1000,
+  // Increased for CI where Payload compilation can be slow
+  timeout: process.env.CI ? 60 * 1000 : 20 * 1000,
 
   // Maximum time for test fixtures (beforeAll, afterAll)
   expect: {

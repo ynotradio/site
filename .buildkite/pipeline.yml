@@ -158,7 +158,7 @@ steps:
       - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
       # Seed database (runs on host since it uses docker compose exec)
       - ./bin/seed-legacy.sh
-      # Run Playwright tests
+      # Start Payload dev server in background, run Playwright tests, cleanup
       - |
         docker run --rm \
           --network host \
@@ -167,7 +167,39 @@ steps:
           -e CI=true \
           mcr.microsoft.com/playwright:v1.58.0-jammy \
           /bin/bash -c '
-            npx playwright test
+            set -e
+            
+            # Start Payload dev server in background
+            echo "--- :payload: Starting Payload dev server..."
+            yarn --ignore-engines dev &
+            DEV_PID=$$!
+            
+            # Wait for Payload to be ready (up to 3 minutes)
+            echo "Waiting for Payload CMS to be ready..."
+            for i in {1..36}; do
+              if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
+                echo "✅ Payload CMS is ready!"
+                break
+              fi
+              if [ $$i -eq 36 ]; then
+                echo "❌ Payload CMS failed to start after 3 minutes"
+                kill $$DEV_PID 2>/dev/null || true
+                exit 1
+              fi
+              echo "   Waiting for Payload... ($$i/36)"
+              sleep 5
+            done
+            
+            # Run Playwright tests
+            echo "--- :playwright: Running Playwright E2E tests..."
+            npx playwright test --reporter=list || TEST_EXIT_CODE=$$?
+            
+            # Stop the dev server
+            echo "--- :stop_sign: Stopping Payload dev server..."
+            kill $$DEV_PID 2>/dev/null || true
+            
+            # Exit with test result
+            exit $${TEST_EXIT_CODE:-0}
           '
       # Cleanup
       - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
