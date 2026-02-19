@@ -118,25 +118,22 @@ steps:
       - echo "--- Testing Docker network connectivity"
       - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
       
-      # Get payload container IP and run Playwright tests
+      # Run Playwright tests using host network (since localhost:3000 works from host)
       - |
-        echo "--- Getting Payload container IP and network"
-        PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries[0].value.IPAddress')
-        PAYLOAD_NETWORK=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | keys[0]')
-        echo "Payload container IP: $$PAYLOAD_IP (on network: $$PAYLOAD_NETWORK)"
-        echo "--- Running Playwright E2E tests"
-        # Run playwright container on the same network as payload
+        echo "--- Running Playwright E2E tests with host network"
+        # Use host network so Chromium browser can reach localhost:3000
+        # (Container network isolation prevents browser from reaching Docker internal IPs)
         docker run --rm \
-          --network $$PAYLOAD_NETWORK \
+          --network=host \
           -e CI=true \
           -e NODE_ENV=development \
           -e SKIP_PAYLOAD_SEED=true \
-          -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" \
+          -e PLAYWRIGHT_BASE_URL="http://localhost:3000" \
           -v "$$(pwd):/app" \
           -w /app \
           mcr.microsoft.com/playwright:v1.58.0-jammy \
           bash -c "echo 'Testing connectivity to payload...' && \
-                   curl -v http://$$PAYLOAD_IP:3000/admin 2>&1 | head -30 && \
+                   curl -v http://localhost:3000/admin 2>&1 | head -30 && \
                    echo '' && \
                    yarn install --frozen-lockfile && \
                    npx playwright test --reporter=list"
