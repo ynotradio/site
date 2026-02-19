@@ -28,6 +28,8 @@ services:
       timeout: 10s
       retries: 30
       start_period: 120s
+    networks:
+      - app-tier
 
   # Playwright test runner - uses host networking for localhost access
   playwright:
