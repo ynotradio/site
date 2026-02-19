@@ -35,12 +35,12 @@ services:
     networks:
       - app-tier
 
-  # Playwright test runner - uses bridge network with explicit IP
+  # Playwright test runner - uses bridge network to communicate with payload
   playwright:
     container_name: playwright
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Override network_mode from base compose (was host mode) with bridge (empty = default)
-    network_mode: ""
+    # Use bridge network_mode to override host mode from base compose
+    network_mode: bridge
     working_dir: /app
     volumes:
       - .:/app
