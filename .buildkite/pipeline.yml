@@ -135,7 +135,11 @@ steps:
           -v "$$(pwd):/app" \
           -w /app \
           mcr.microsoft.com/playwright:v1.58.0-jammy \
-          bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"
+          bash -c "echo 'Testing connectivity to payload...' && \
+                   curl -v http://$$PAYLOAD_IP:3000/admin 2>&1 | head -30 && \
+                   echo '' && \
+                   yarn install --frozen-lockfile && \
+                   npx playwright test --reporter=list"
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
