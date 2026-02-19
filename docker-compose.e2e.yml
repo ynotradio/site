@@ -25,14 +25,13 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl &&
                yarn --ignore-engines install --frozen-lockfile &&
-               yarn build &&
-               yarn start"
+               node node_modules/.bin/next dev"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s
       timeout: 10s
-      retries: 60
-      start_period: 300s
+      retries: 30
+      start_period: 120s
     networks:
       - app-tier
 
@@ -57,4 +56,4 @@ services:
     depends_on:
       payload:
         condition: service_healthy
-    command: bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"
+    command: bash -c "echo 'Testing DNS resolution...' && getent hosts payload && getent hosts apache && echo 'Testing connectivity...' && curl -s http://payload:3000/admin | head -c 200 && echo '' && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"

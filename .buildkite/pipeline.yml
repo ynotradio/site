@@ -105,26 +105,10 @@ steps:
       - echo "--- Verifying payload is accessible"
       - curl -s http://localhost:3000/admin | head -c 500 || echo "Cannot reach payload on localhost:3000"
       
-      # Install Playwright browsers (required on host)
-      - echo "--- Installing Playwright browsers"
-      - npx playwright install --with-deps chromium
-      
-      # Verify payload is still running after browser install
-      - echo "--- Re-checking Payload after browser install"
-      - docker compose ps payload
-      - curl -s --connect-timeout 5 http://localhost:3000/admin | head -c 200 || echo "Cannot reach payload"
-      
-      # Warm up Next.js by making several requests to trigger JS compilation
-      - echo "--- Warming up Next.js compilation..."
-      - for i in 1 2 3; do echo "Warm-up request $$i..."; curl -s -o /dev/null http://localhost:3000/admin; sleep 2; done
-      - echo "Page content check..."
-      - curl -s http://localhost:3000/admin | head -c 1000
-      
-      # Run Playwright tests using localhost URLs (via port mapping)
-      # SKIP_PAYLOAD_SEED=true because we already seeded via docker compose exec above
-      # Use 127.0.0.1 instead of localhost to avoid potential IPv6 resolution issues
-      - echo "--- Running Playwright E2E tests"
-      - PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 PLAYWRIGHT_LEGACY_URL=http://127.0.0.1:8080 SKIP_PAYLOAD_SEED=true npx playwright test --reporter=list
+      # Run Playwright tests using Docker Playwright container on the same network as Payload
+      # The playwright service will use PLAYWRIGHT_BASE_URL=http://payload:3000 from docker-compose.e2e.yml
+      - echo "--- Running Playwright E2E tests via Docker container"
+      - docker compose run --rm playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
