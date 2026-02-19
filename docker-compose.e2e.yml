@@ -63,3 +63,7 @@ services:
                curl -v http://payload:3000/admin 2>&1 | head -20 &&
                yarn install --frozen-lockfile && 
                npx playwright test --reporter=list"
+
+networks:
+  app-tier:
+    driver: bridge

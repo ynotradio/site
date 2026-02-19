@@ -1,6 +1,5 @@
 # Buildkite Pipeline for Y-Not Radio Site
-# This pipeline replaces GitHub Actions CI workflow
-# TEMPORARY: E2E-only mode for fast iteration
+# Uses docker-compose plugin for proper container networking
 
 env:
   NODE_VERSION: "22"
@@ -8,151 +7,31 @@ env:
   CI: "true"
 
 steps:
-  # E2E Tests - TEMPORARY: Running first for fast feedback
+  # E2E Tests - Using docker-compose plugin
   - label: ":playwright: E2E Tests"
     key: "e2e"
     timeout_in_minutes: 30
-    env:
-      CI: "true"
-      COMPOSE_FILE: "docker-compose.yml:docker-compose.ci.yml:docker-compose.e2e.yml"
-    commands:
-      # Pre-setup: Login to GHCR for pulling images
-      - export GHCR_USERNAME=$$(buildkite-agent secret get GHCR_USERNAME)
-      - export GHCR_TOKEN=$$(buildkite-agent secret get GHCR_TOKEN)
-      - echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-      
-      # Clean up any leftover containers from previous runs
-      - docker compose down -v 2>/dev/null || true
-      
-      # Setup E2E environment files
-      - ./bin/setup-e2e-env.sh
-      
-      # Install composer dependencies
-      - docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
-      
-      # Start all backend services (databases, Apache, PHP)
-      - docker compose up -d mysql postgres phpfpm apache
-      - ./bin/wait-for-docker-services.sh
-      
-      # Initialize MySQL
-      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
-      - docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
-      
-      # Seed legacy database
-      - ./bin/seed-legacy.sh
-      
-      # Start Payload service with logging
-      - echo "--- Starting Payload service..."
-      - docker compose up -d payload
-      - sleep 10
-      - echo "--- Initial Payload logs"
-      - docker compose logs payload --tail 30
-      
-      # Wait for payload healthcheck to pass (up to 5 minutes)
-      - |
-        echo "--- Waiting for Payload to be healthy..."
-        for i in $$(seq 1 60); do
-          # Check if container is still running
-          CONTAINER_STATE=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"State":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-          if [ "$$CONTAINER_STATE" != "running" ]; then
-            echo "❌ Payload container is not running (state: $$CONTAINER_STATE)"
-            echo "=== Payload logs ==="
-            docker compose logs payload --tail 200
-            exit 1
-          fi
-          
-          # Check health status
-          STATUS=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
-          if [ "$$STATUS" = "healthy" ]; then
-            echo "✅ Payload is healthy!"
-            break
-          fi
-          
-          # Also check via HTTP directly
-          if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
-            echo "✅ Payload is responding!"
-            break
-          fi
-          
-          if [ $$i -eq 60 ]; then
-            echo "❌ Payload failed to become healthy after 5 minutes"
-            echo "=== Payload logs ==="
-            docker compose logs payload --tail 200
-            exit 1
-          fi
-          
-          # Every 10 iterations, show recent logs
-          if [ $$((i % 10)) -eq 0 ]; then
-            echo "--- Recent Payload logs:"
-            docker compose logs payload --tail 10
-          fi
-          
-          echo "   Waiting for Payload... ($$i/60, state: $$CONTAINER_STATE, health: $$STATUS)"
-          sleep 5
-        done
-      
-      # Run Playwright tests
-      # Seed Payload database using the payload container (has network access to postgres)
-      - echo "--- Seeding Payload database..."
-      - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
-      
-      # Verify Payload is still running after seeding - restart if needed
-      - |
-        if ! docker compose ps payload --format json 2>/dev/null | grep -q '"State":"running"'; then
-          echo "WARNING: Payload stopped after seeding, restarting..."
-          docker compose up -d payload
-          sleep 30
-          docker compose ps
-        fi
-      
-      # Debug: Check network and container status
-      - echo "--- Debug Network and container info"
-      - docker network ls
-      - docker compose ps
-      
-      # Verify payload is accessible via localhost port mapping
-      - echo "--- Verifying payload is accessible"
-      - curl -s http://localhost:3000/admin | head -c 500 || echo "Cannot reach payload on localhost:3000"
-      
-      # Debug: Show networks and verify connectivity from within a container
-      - echo "--- Testing Docker network connectivity"
-      - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
-      
-      # Run Playwright tests directly on the Buildkite agent host
-      # This mimics GitHub Actions where Playwright runs on the host and accesses Docker services via localhost
-      - |
-        echo "--- Checking host environment..."
-        which node && node --version || echo "No node found on host"
-        which npm && npm --version || echo "No npm found on host"
-        
-        echo "--- Installing yarn via npm..."
-        npm install -g yarn
-        yarn --version
-        
-        echo "--- Installing dependencies on host..."
-        yarn install --frozen-lockfile --ignore-engines
-        
-        echo "--- Installing Playwright browsers on host..."
-        npx playwright install --with-deps chromium
-        
-        echo "--- Running Playwright E2E tests on host"
-        # Run tests on the host - connects to Docker services via localhost port mappings
-        PLAYWRIGHT_BASE_URL="http://localhost:3000" \
-        PLAYWRIGHT_LEGACY_URL="http://localhost:8080" \
-        SKIP_PAYLOAD_SEED=true \
-        CI=true \
-        npx playwright test --reporter=list
-      
-      # Always show Payload logs and container status after tests
-      - echo "=== Final container status ==="
-      - docker compose ps
-      - echo "=== Payload logs (last 100 lines) ==="
-      - docker compose logs payload --tail 100
-      - echo "=== Test result summary ==="
-      - cat playwright-report/results.json 2>/dev/null || echo "No results.json found"
-      
-      # Cleanup
-      - docker compose down -v
+    plugins:
+      # Run playwright service with all dependencies
+      - docker-compose#v5.7.0:
+          run: playwright
+          config:
+            - docker-compose.yml
+            - docker-compose.ci.yml
+            - docker-compose.e2e.yml
+          env:
+            - CI=true
+            - NODE_ENV=development
+            - SKIP_PAYLOAD_SEED=true
+            - PLAYWRIGHT_BASE_URL=http://payload:3000
+            - PLAYWRIGHT_LEGACY_URL=http://apache:80
+          # Mount checkout dir so playwright has access to code
+          mount-checkout: true
+          # Start dependent services (payload, postgres, mysql, apache, phpfpm)
+          dependencies: true
+          # Pull images 
+          pull:
+            - playwright
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
