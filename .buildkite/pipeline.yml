@@ -96,6 +96,15 @@ steps:
       - echo "--- Seeding Payload database..."
       - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
       
+      # Verify Payload is still running after seeding - restart if needed
+      - |
+        if ! docker compose ps payload --format json 2>/dev/null | grep -q '"State":"running"'; then
+          echo "WARNING: Payload stopped after seeding, restarting..."
+          docker compose up -d payload
+          sleep 30
+          docker compose ps
+        fi
+      
       # Debug: Check network and container status
       - echo "--- Debug Network and container info"
       - docker network ls
@@ -112,8 +121,19 @@ steps:
       # Get Payload container IP and run Playwright tests with it
       - echo "--- Running Playwright E2E tests via Docker container"
       - |
-        PAYLOAD_IP=$$(docker inspect payload --format '{{ "{{" }}range .NetworkSettings.Networks{{ "}}" }}{{ "{{" }}.IPAddress{{ "}}" }}{{ "{{" }}end{{ "}}" }}')
+        # Get IP by inspecting container's network settings
+        PAYLOAD_IP=$$(docker inspect payload -f '{{.NetworkSettings.Networks}}' | grep -oP 'IPAddress:\K[0-9.]+' | head -1)
+        if [ -z "$$PAYLOAD_IP" ]; then
+          # Fallback: try to get any IP from the container
+          PAYLOAD_IP=$$(docker inspect payload | grep '"IPAddress"' | head -1 | grep -oP '"IPAddress": "\K[^"]+')
+        fi
         echo "Payload IP: $$PAYLOAD_IP"
+        if [ -z "$$PAYLOAD_IP" ]; then
+          echo "ERROR: Could not get Payload IP, container may not be running"
+          docker compose ps
+          docker compose logs payload --tail 50
+          exit 1
+        fi
         docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" -e PLAYWRIGHT_LEGACY_URL="http://apache:80" playwright
       
       # Always show Payload logs and container status after tests
