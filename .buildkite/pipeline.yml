@@ -101,9 +101,13 @@ steps:
       - docker network ls
       - docker compose ps
       
-      # Run Playwright - test network connectivity first
+      # Verify payload is accessible via localhost port mapping
+      - echo "--- Verifying payload is accessible"
+      - curl -s http://localhost:3000/admin | head -c 500 || echo "Cannot reach payload on localhost:3000"
+      
+      # Run Playwright tests using localhost URLs (via port mapping)
       - echo "--- Running Playwright E2E tests"
-      - docker compose run --rm playwright bash -c "echo '=== DNS Check ===' && getent hosts payload || echo 'Cannot resolve payload' && getent hosts postgres || echo 'Cannot resolve postgres' && echo '=== Connectivity ===' && curl -s --connect-timeout 5 http://payload:3000/admin && echo 'Payload OK' || echo 'Cannot reach payload' && echo '=== Running Tests ===' && yarn install --frozen-lockfile && npx playwright test --reporter=list" || PLAYWRIGHT_EXIT=$$?
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_LEGACY_URL=http://localhost:8080 npx playwright test --reporter=list || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - if [ "$${PLAYWRIGHT_EXIT:-0}" -ne 0 ]; then echo "=== Payload logs ===" && docker compose logs payload --tail 200 && exit $${PLAYWRIGHT_EXIT}; fi
