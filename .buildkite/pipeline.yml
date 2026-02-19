@@ -97,33 +97,16 @@ steps:
       - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
       
       # Debug: Check network and container status
-      - echo "--- Debug: Network and container info"
+      - echo "--- Debug Network and container info"
       - docker network ls
       - docker compose ps
-      - docker network inspect $$(docker network ls --filter name=app-tier --format "{{.Name}}" | head -1) 2>/dev/null || echo "No app-tier network found"
       
       # Run Playwright - test network connectivity first
-      - echo "--- Running Playwright E2E tests..."
-      - |
-        docker compose run --rm playwright bash -c "
-          echo '=== Checking DNS resolution ==='
-          getent hosts payload || echo 'Cannot resolve payload'
-          getent hosts postgres || echo 'Cannot resolve postgres'
-          getent hosts apache || echo 'Cannot resolve apache'
-          echo '=== Checking connectivity ==='
-          curl -s --connect-timeout 5 http://payload:3000/admin || echo 'Cannot reach payload:3000'
-          curl -s --connect-timeout 5 http://apache:80 || echo 'Cannot reach apache:80'
-          echo '=== Running tests ==='
-          yarn install --frozen-lockfile && npx playwright test --reporter=list
-        " || PLAYWRIGHT_EXIT=$$?
+      - echo "--- Running Playwright E2E tests"
+      - docker compose run --rm playwright bash -c "echo '=== DNS Check ===' && getent hosts payload || echo 'Cannot resolve payload' && getent hosts postgres || echo 'Cannot resolve postgres' && echo '=== Connectivity ===' && curl -s --connect-timeout 5 http://payload:3000/admin && echo 'Payload OK' || echo 'Cannot reach payload' && echo '=== Running Tests ===' && yarn install --frozen-lockfile && npx playwright test --reporter=list" || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
-      - |
-        if [ "$${PLAYWRIGHT_EXIT:-0}" -ne 0 ]; then
-          echo "=== Payload logs ==="
-          docker compose logs payload --tail 200
-          exit $${PLAYWRIGHT_EXIT}
-        fi
+      - if [ "$${PLAYWRIGHT_EXIT:-0}" -ne 0 ]; then echo "=== Payload logs ===" && docker compose logs payload --tail 200 && exit $${PLAYWRIGHT_EXIT}; fi
       
       # Cleanup
       - docker compose down -v
