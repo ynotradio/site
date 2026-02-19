@@ -1,8 +1,8 @@
 # Buildkite Pipeline for Y-Not Radio Site
-# 
-# ARCHITECTURE: Run Playwright on the host (not in container) to avoid
-# Docker-in-Docker networking issues where Chromium cannot reach container IPs.
-# We manually start docker-compose services and run Playwright directly on host.
+#
+# Note: E2E tests are temporarily excluded due to Docker-in-Docker networking
+# limitations with Chromium. See docs/buildkite-e2e-investigation.md for details.
+# E2E tests continue to run in GitHub Actions.
 
 env:
   NODE_VERSION: "22"
@@ -10,48 +10,53 @@ env:
   CI: "true"
 
 steps:
-  # E2E Tests - Start services manually, run Playwright on host
-  - label: ":playwright: E2E Tests"
-    key: "e2e"
-    timeout_in_minutes: 30
-    env:
-      # Skip database seeding in Playwright global-setup - it's done in docker-compose startup
-      SKIP_PAYLOAD_SEED: "true"
-    commands:
-      - echo "--- Starting Docker Compose services"
-      - docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.e2e.yml up -d --wait
-      
-      - echo "--- Checking service health"
-      - docker compose ps
-      
-      - echo "--- Waiting for Payload CMS to be ready"
-      - |
-        for i in {1..60}; do
-          if curl -s --max-time 5 http://localhost:3000/admin > /dev/null 2>&1; then
-            echo "Payload is ready!"
-            break
-          fi
-          echo "Waiting for Payload... (attempt $$i/60)"
-          sleep 2
-        done
-      
-      - echo "--- Payload health check"
-      - curl -s http://localhost:3000/admin | head -20
-      
-      - echo "--- Installing Node.js dependencies"
-      - npm install --legacy-peer-deps
-      
-      - echo "--- Installing Playwright browsers"
-      - npx playwright install chromium --with-deps
-      
-      - echo "+++ Running E2E tests"
-      - PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test --reporter=html
-    
+  # ESLint
+  - label: ":eslint: ESLint"
+    key: "eslint"
+    command: "npm ci --legacy-peer-deps && npm run lint"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
+  # Vitest Unit Tests
+  - label: ":test_tube: Vitest Tests"
+    key: "vitest"
+    command: "npm ci --legacy-peer-deps && npm run test:coverage"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
     artifact_paths:
-      - "playwright-report/**/*"
-      - "test-results/**/*"
-    
-    # Run on agents with Docker enabled
+      - "coverage/**/*"
+    agents:
+      queue: "default"
+
+  # Storybook Build
+  - label: ":storybook: Storybook Build"
+    key: "storybook"
+    command: "npm ci --legacy-peer-deps && npm run build-storybook"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "storybook-static/**/*"
+    agents:
+      queue: "default"
+
+  # PHPUnit Tests
+  - label: ":php: PHPUnit Tests"
+    key: "phpunit"
+    plugins:
+      - docker-compose#v5.7.0:
+          run: phpfpm
+          config:
+            - docker-compose.yml
+            - docker-compose.ci.yml
+          command: ["vendor/bin/phpunit", "--testdox"]
     agents:
       queue: "default"
       docker: "true"
