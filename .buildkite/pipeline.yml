@@ -112,7 +112,7 @@ steps:
       # Get Payload container IP and run Playwright tests with it
       - echo "--- Running Playwright E2E tests via Docker container"
       - |
-        PAYLOAD_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' payload)
+        PAYLOAD_IP=$$(docker inspect payload --format '{{ "{{" }}range .NetworkSettings.Networks{{ "}}" }}{{ "{{" }}.IPAddress{{ "}}" }}{{ "{{" }}end{{ "}}" }}')
         echo "Payload IP: $$PAYLOAD_IP"
         docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" -e PLAYWRIGHT_LEGACY_URL="http://apache:80" playwright
       
