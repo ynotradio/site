@@ -54,18 +54,21 @@ services:
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # Use service name 'payload' for DNS resolution within Docker network
-      - PLAYWRIGHT_BASE_URL=http://payload:3000
+      # PLAYWRIGHT_BASE_URL will be set dynamically in command
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     depends_on:
       payload:
         condition: service_healthy
     networks:
       - app-tier
-    # Install deps and run tests
+    # Install deps and run tests - resolve payload IP for Chromium compatibility
     command: >
       bash -c "echo 'Testing connectivity to payload...' &&
                curl -v http://payload:3000/admin 2>&1 | head -20 &&
+               PAYLOAD_IP=$$(getent hosts payload | awk '{ print $$1 }') &&
+               echo \"Resolved payload IP: $$PAYLOAD_IP\" &&
+               export PLAYWRIGHT_BASE_URL=\"http://$$PAYLOAD_IP:3000\" &&
+               echo \"Using PLAYWRIGHT_BASE_URL=$$PLAYWRIGHT_BASE_URL\" &&
                yarn install --frozen-lockfile && 
                npx playwright test --reporter=list"
 
