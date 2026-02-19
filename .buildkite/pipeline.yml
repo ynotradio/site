@@ -98,8 +98,8 @@ steps:
       
       # Run Playwright using dedicated image, but with explicit network to reach services
       - echo "--- Running Playwright E2E tests..."
-      # Get the network name from docker compose
-      - NETWORK_NAME=$$(docker compose config --format=json | jq -r '.networks | keys[0]')
+      # Get the actual network name (docker compose adds project prefix)
+      - NETWORK_NAME=$$(docker network ls --filter name=app-tier --format "{{.Name}}" | head -1)
       - echo "Using network - $${NETWORK_NAME}"
       # Run Playwright with correct network and environment
       - |
