@@ -118,25 +118,11 @@ steps:
       - echo "--- Testing Docker network connectivity"
       - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
       
-      # Run Playwright tests using host network (since localhost:3000 works from host)
+      # Run Playwright tests via docker compose (shares network with payload)
       - |
-        echo "--- Running Playwright E2E tests with host network"
-        # Use host network so Chromium browser can reach localhost:3000
-        # (Container network isolation prevents browser from reaching Docker internal IPs)
-        docker run --rm \
-          --network=host \
-          -e CI=true \
-          -e NODE_ENV=development \
-          -e SKIP_PAYLOAD_SEED=true \
-          -e PLAYWRIGHT_BASE_URL="http://localhost:3000" \
-          -v "$$(pwd):/app" \
-          -w /app \
-          mcr.microsoft.com/playwright:v1.58.0-jammy \
-          bash -c "echo 'Testing connectivity to payload...' && \
-                   curl -v http://localhost:3000/admin 2>&1 | head -30 && \
-                   echo '' && \
-                   yarn install --frozen-lockfile && \
-                   npx playwright test --reporter=list"
+        echo "--- Running Playwright E2E tests via docker compose"
+        # Use docker compose run to start playwright on same network as payload
+        docker compose run --rm playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="

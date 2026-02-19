@@ -35,12 +35,12 @@ services:
     networks:
       - app-tier
 
-  # Playwright test runner - uses bridge network to communicate with payload
+  # Playwright test runner - shares network with payload
   playwright:
     container_name: playwright
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Use bridge network_mode to override host mode from base compose
-    network_mode: bridge
+    # Reset network_mode from base compose (host) to allow networks: to work
+    network_mode: !reset null
     working_dir: /app
     volumes:
       - .:/app
@@ -49,14 +49,17 @@ services:
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # PLAYWRIGHT_BASE_URL will be set dynamically in pipeline with payload IP
+      # Use service name 'payload' for DNS resolution within Docker network
+      - PLAYWRIGHT_BASE_URL=http://payload:3000
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     depends_on:
       payload:
         condition: service_healthy
-    # Install deps and run tests - has network access for npm
+    networks:
+      - app-tier
+    # Install deps and run tests
     command: >
-      bash -c "yarn install --frozen-lockfile && 
-               echo 'Running Playwright tests with base URL:' && 
-               echo $$PLAYWRIGHT_BASE_URL && 
+      bash -c "echo 'Testing connectivity to payload...' &&
+               curl -v http://payload:3000/admin 2>&1 | head -20 &&
+               yarn install --frozen-lockfile && 
                npx playwright test --reporter=list"
