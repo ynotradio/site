@@ -160,7 +160,7 @@ steps:
       - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
       # Seed database (runs on host since it uses docker compose exec)
       - ./bin/seed-legacy.sh
-      # Start Payload dev server in background, run Playwright tests, cleanup
+      # Start Payload production server in background, run Playwright tests, cleanup
       - |
         docker run --rm \
           --network host \
@@ -172,28 +172,18 @@ steps:
           /bin/bash -c '
             set -e
             
-            # Start Payload dev server in background using a wrapper
-            echo "--- :payload: Starting Payload dev server..."
+            # Build Next.js/Payload for production (more stable than dev mode)
+            echo "--- :nextjs: Building Next.js/Payload..."
+            yarn --ignore-engines build 2>&1 | tail -20
             
-            # Create a PID file and log file
-            touch /tmp/payload-dev.log
+            echo "--- :payload: Starting Payload in production mode..."
             
-            # Start the server using sh -c to ensure proper backgrounding
-            # This avoids issues with nohup and bash builtins
-            (
-              cd /app
-              yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1
-              echo "Server exited at $(date)" >> /tmp/payload-dev.log
-            ) &
+            # Start the production server in background
+            # Production mode is more stable than dev mode
+            yarn --ignore-engines start > /tmp/payload.log 2>&1 &
             DEV_PID=$$!
             
-            echo "Payload dev server started with PID $$DEV_PID"
-            
-            # Verify the log file was created
-            if [ ! -f /tmp/payload-dev.log ]; then
-              echo "ERROR: Log file was not created"
-              exit 1
-            fi
+            echo "Payload server started with PID $$DEV_PID"
             
             # Wait for Payload to be ready (up to 3 minutes)
             echo "Waiting for Payload CMS to be ready..."
@@ -207,7 +197,7 @@ steps:
               if [ $$i -eq 36 ]; then
                 echo "❌ Payload CMS failed to start after 3 minutes"
                 echo "=== Last 50 lines of Payload log ==="
-                tail -50 /tmp/payload-dev.log || true
+                tail -50 /tmp/payload.log || true
                 kill $$DEV_PID 2>/dev/null || true
                 exit 1
               fi
@@ -221,7 +211,7 @@ steps:
             if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
               echo "❌ Payload server stopped unexpectedly after initial ready"
               echo "=== Server log ==="
-              cat /tmp/payload-dev.log || true
+              cat /tmp/payload.log || true
               exit 1
             fi
             
@@ -231,7 +221,7 @@ steps:
             if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
               echo "❌ Payload server stopped during stability check"
               echo "=== Server log ==="
-              cat /tmp/payload-dev.log || true
+              cat /tmp/payload.log || true
               exit 1
             fi
             echo "✅ Payload server is stable and ready for tests"
@@ -241,7 +231,7 @@ steps:
               while true; do
                 sleep 5
                 if ! ps -p $$DEV_PID > /dev/null 2>&1; then
-                  echo "WARNING: Payload dev server (PID $$DEV_PID) has exited!"
+                  echo "WARNING: Payload production server (PID $$DEV_PID) has exited!"
                   break
                 fi
               done
@@ -254,12 +244,12 @@ steps:
             
             # Show Payload logs if tests failed
             if [ "$${TEST_EXIT_CODE:-0}" -ne 0 ]; then
-              echo "=== Payload dev server log ==="
-              tail -100 /tmp/payload-dev.log || true
+              echo "=== Payload production server log ==="
+              tail -100 /tmp/payload.log || true
             fi
             
-            # Stop monitoring and dev server
-            echo "--- :stop_sign: Stopping Payload dev server..."
+            # Stop monitoring and production server
+            echo "--- :stop_sign: Stopping Payload production server..."
             kill $$MONITOR_PID 2>/dev/null || true
             kill $$DEV_PID 2>/dev/null || true
             
