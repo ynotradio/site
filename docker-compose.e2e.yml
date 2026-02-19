@@ -1,0 +1,44 @@
+# docker-compose.e2e.yml
+# E2E testing services for Buildkite CI
+# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.e2e.yml up
+
+services:
+  # Payload CMS / Next.js server for E2E tests
+  payload:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - CI=true
+      - NODE_ENV=development
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Install curl for healthcheck, then yarn dependencies, then start dev server
+    command: >
+      sh -c "apt-get update && apt-get install -y curl &&
+             yarn --ignore-engines install --frozen-lockfile &&
+             yarn --ignore-engines dev"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+
+  # Playwright test runner - uses host networking for localhost access
+  playwright:
+    image: mcr.microsoft.com/playwright:v1.58.0-jammy
+    working_dir: /app
+    network_mode: host
+    volumes:
+      - .:/app
+    environment:
+      - CI=true
+      - NODE_ENV=development
+    # Note: depends_on doesn't work with network_mode: host
+    # The pipeline will wait for services before running this container
+    command: npx playwright test --reporter=list

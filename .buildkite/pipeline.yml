@@ -124,140 +124,82 @@ steps:
     agents:
       queue: "default"
 
-  # E2E Tests - Runs after successful build
-  # Strategy: Start services on host, run Playwright in container with host networking
+  # E2E Tests - Uses docker-compose to orchestrate services
+  # The payload service is managed by docker-compose with a healthcheck
   - label: ":playwright: E2E Tests"
     key: "e2e"
     depends_on: "build"
     timeout_in_minutes: 30
     env:
       CI: "true"
+      COMPOSE_FILE: "docker-compose.yml:docker-compose.ci.yml:docker-compose.e2e.yml"
     commands:
-      # Fetch secrets and login to GHCR (runs on host)
+      # Pre-setup: Login to GHCR for pulling images
       - export GHCR_USERNAME=$$(buildkite-agent secret get GHCR_USERNAME)
       - export GHCR_TOKEN=$$(buildkite-agent secret get GHCR_TOKEN)
       - echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-      # Clean up any leftover containers/volumes from previous runs
-      - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
-      # Pull images on host
-      - docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest || echo "Could not pull phpfpm-dev, will build if needed"
-      - docker pull ghcr.io/ynotradio/site/postgres-seeded:latest || echo "Could not pull postgres-seeded, will build if needed"
-      - docker pull mysql:8.0 || true
-      - docker pull httpd:2.4 || true
-      - docker pull composer:2 || true
-      # Install composer dependencies on host using Docker
+      
+      # Clean up any leftover containers from previous runs
+      - docker compose down -v 2>/dev/null || true
+      
+      # Setup E2E environment files
+      - ./bin/setup-e2e-env.sh
+      
+      # Install composer dependencies
       - docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
-      # Setup E2E environment files on host using Node container
-      - docker run --rm -v "$$(pwd):/app" -w /app node:22-slim ./bin/setup-e2e-env.sh
-      # Start Docker services on host (so volume mounts work correctly)
-      - docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
-      # Wait for services (runs directly on host since it needs docker compose exec)
+      
+      # Start database services first
+      - docker compose up -d mysql postgres
       - ./bin/wait-for-docker-services.sh
-      # Initialize MySQL using Docker exec
+      
+      # Initialize MySQL
       - docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS ynotradio;"
       - docker compose exec -T mysql mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'ynotradio'@'%' IDENTIFIED BY 'ynotradio'; GRANT ALL PRIVILEGES ON ynotradio.* TO 'ynotradio'@'%'; FLUSH PRIVILEGES;"
-      # Run yarn install in Node container
-      - docker run --rm --network host -v "$$(pwd):/app" -w /app -e CI=true node:22-slim yarn install --frozen-lockfile
-      # Seed database (runs on host since it uses docker compose exec)
+      
+      # Seed legacy database
       - ./bin/seed-legacy.sh
-      # Start Payload production server in background, run Playwright tests, cleanup
+      
+      # Start Apache/PHP services
+      - docker compose up -d phpfpm apache
+      
+      # Start Payload service (docker-compose manages the process lifecycle)
+      - docker compose up -d payload
+      
+      # Wait for payload healthcheck to pass (up to 5 minutes)
       - |
-        docker run --rm \
-          --network host \
-          -v "$$(pwd):/app" \
-          -w /app \
-          -e CI=true \
-          -e NODE_ENV=development \
-          mcr.microsoft.com/playwright:v1.58.0-jammy \
-          /bin/bash -c '
-            set -e
-            
-            # Build Next.js/Payload for production (more stable than dev mode)
-            echo "--- :nextjs: Building Next.js/Payload..."
-            yarn --ignore-engines build 2>&1 | tail -20
-            
-            echo "--- :payload: Starting Payload in production mode..."
-            
-            # Start the production server in background
-            # Production mode is more stable than dev mode
-            yarn --ignore-engines start > /tmp/payload.log 2>&1 &
-            DEV_PID=$$!
-            
-            echo "Payload server started with PID $$DEV_PID"
-            
-            # Wait for Payload to be ready (up to 3 minutes)
-            echo "Waiting for Payload CMS to be ready..."
-            i=0
-            while [ $$i -lt 36 ]; do
-              i=$$((i + 1))
-              if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
-                echo "✅ Payload CMS is ready!"
-                break
-              fi
-              if [ $$i -eq 36 ]; then
-                echo "❌ Payload CMS failed to start after 3 minutes"
-                echo "=== Last 50 lines of Payload log ==="
-                tail -50 /tmp/payload.log || true
-                kill $$DEV_PID 2>/dev/null || true
-                exit 1
-              fi
-              echo "   Waiting for Payload... ($$i/36)"
-              sleep 5
-            done
-            
-            # Verify server is still running (wait longer to ensure stability)
-            echo "Verifying Payload server is stable..."
-            sleep 5
-            if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
-              echo "❌ Payload server stopped unexpectedly after initial ready"
-              echo "=== Server log ==="
-              cat /tmp/payload.log || true
-              exit 1
-            fi
-            
-            # Extra stability check - make sure it's still running after a few more seconds
-            echo "Waiting 10 more seconds to ensure server is stable..."
-            sleep 10
-            if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
-              echo "❌ Payload server stopped during stability check"
-              echo "=== Server log ==="
-              cat /tmp/payload.log || true
-              exit 1
-            fi
-            echo "✅ Payload server is stable and ready for tests"
-            
-            # Keep monitoring server in background
-            (
-              while true; do
-                sleep 5
-                if ! ps -p $$DEV_PID > /dev/null 2>&1; then
-                  echo "WARNING: Payload production server (PID $$DEV_PID) has exited!"
-                  break
-                fi
-              done
-            ) &
-            MONITOR_PID=$$!
-            
-            # Run Playwright tests
-            echo "--- :playwright: Running Playwright E2E tests..."
-            npx playwright test --reporter=list || TEST_EXIT_CODE=$$?
-            
-            # Show Payload logs if tests failed
-            if [ "$${TEST_EXIT_CODE:-0}" -ne 0 ]; then
-              echo "=== Payload production server log ==="
-              tail -100 /tmp/payload.log || true
-            fi
-            
-            # Stop monitoring and production server
-            echo "--- :stop_sign: Stopping Payload production server..."
-            kill $$MONITOR_PID 2>/dev/null || true
-            kill $$DEV_PID 2>/dev/null || true
-            
-            # Exit with test result
-            exit $${TEST_EXIT_CODE:-0}
-          '
+        echo "Waiting for Payload to be healthy..."
+        for i in $$(seq 1 60); do
+          STATUS=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+          if [ "$$STATUS" = "healthy" ]; then
+            echo "✅ Payload is healthy!"
+            break
+          fi
+          # Also check via HTTP directly
+          if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
+            echo "✅ Payload is responding!"
+            break
+          fi
+          if [ $$i -eq 60 ]; then
+            echo "❌ Payload failed to become healthy after 5 minutes"
+            docker compose logs payload --tail 100
+            exit 1
+          fi
+          echo "   Waiting for Payload... ($$i/60, status: $$STATUS)"
+          sleep 5
+        done
+      
+      # Run Playwright tests
+      - docker compose run --rm playwright
+      
+      # Show logs on failure
+      - |
+        if [ $$? -ne 0 ]; then
+          echo "=== Payload logs ==="
+          docker compose logs payload --tail 200
+        fi
+      
       # Cleanup
-      - docker compose -f docker-compose.yml -f docker-compose.ci.yml down -v 2>/dev/null || true
+      - docker compose down -v
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
