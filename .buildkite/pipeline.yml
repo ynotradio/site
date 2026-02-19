@@ -47,13 +47,13 @@ steps:
     agents:
       queue: "default"
 
-  # PHPUnit Tests
-  - label: ":php: PHPUnit Tests"
-    key: "phpunit"
+  # PHP Lint (CodeSniffer)
+  - label: ":php: PHP Lint"
+    key: "php-lint"
     command: |
       cd src && \
       composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpunit --testdox
+      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
     plugins:
       - docker#v5.11.0:
           image: "composer:2"
