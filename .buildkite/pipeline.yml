@@ -175,12 +175,15 @@ steps:
             # Start Payload dev server in background
             echo "--- :payload: Starting Payload dev server..."
             
-            # Use exec to replace shell with yarn, redirect output to file
-            # The & runs it in background
-            yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1 &
+            # Use nohup to prevent SIGHUP, close stdin to prevent TTY issues
+            # Redirect to a temp file and background the command
+            nohup yarn --ignore-engines dev </dev/null > /tmp/payload-dev.log 2>&1 &
             DEV_PID=$$!
             
             echo "Payload dev server started with PID $$DEV_PID"
+            
+            # Disown the process so it survives shell script completion
+            disown $$DEV_PID 2>/dev/null || true
             
             # Wait for Payload to be ready (up to 3 minutes)
             echo "Waiting for Payload CMS to be ready..."
@@ -202,14 +205,26 @@ steps:
               sleep 5
             done
             
-            # Verify server is still running
-            echo "Verifying Payload server is running..."
-            sleep 2
+            # Verify server is still running (wait longer to ensure stability)
+            echo "Verifying Payload server is stable..."
+            sleep 5
             if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
-              echo "❌ Payload server stopped unexpectedly"
-              tail -50 /tmp/payload-dev.log || true
+              echo "❌ Payload server stopped unexpectedly after initial ready"
+              echo "=== Server log ==="
+              cat /tmp/payload-dev.log || true
               exit 1
             fi
+            
+            # Extra stability check - make sure it's still running after a few more seconds
+            echo "Waiting 10 more seconds to ensure server is stable..."
+            sleep 10
+            if ! curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
+              echo "❌ Payload server stopped during stability check"
+              echo "=== Server log ==="
+              cat /tmp/payload-dev.log || true
+              exit 1
+            fi
+            echo "✅ Payload server is stable and ready for tests"
             
             # Keep monitoring server in background
             (
