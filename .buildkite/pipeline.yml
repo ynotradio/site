@@ -96,28 +96,10 @@ steps:
       - echo "--- Seeding Payload database..."
       - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
       
-      # Run Playwright using dedicated image, but with explicit network to reach services
+      # Run Playwright as a docker compose service (ensures proper networking)
       - echo "--- Running Playwright E2E tests..."
-      # Get the actual network name (docker compose adds project prefix)
-      - NETWORK_NAME=$$(docker network ls --filter name=app-tier --format "{{.Name}}" | head -1)
-      - echo "Using network - $${NETWORK_NAME}"
-      # Get container IPs for reliable connectivity
-      - PAYLOAD_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$(docker compose ps -q payload))
-      - APACHE_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$(docker compose ps -q apache))
-      - echo "Payload IP - $${PAYLOAD_IP}"
-      - echo "Apache IP - $${APACHE_IP}"
-      # Run Playwright with correct network and IP-based URLs
-      - |
-        docker run --rm \
-          --network="$${NETWORK_NAME}" \
-          -e CI=true \
-          -e PLAYWRIGHT_BASE_URL="http://$${PAYLOAD_IP}:3000" \
-          -e PLAYWRIGHT_LEGACY_URL="http://$${APACHE_IP}:80" \
-          -e SKIP_PAYLOAD_SEED=true \
-          -v "$$(pwd):/app" \
-          -w /app \
-          mcr.microsoft.com/playwright:v1.58.0-jammy \
-          bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list" || PLAYWRIGHT_EXIT=$$?
+      # Start playwright service which has depends_on: payload
+      - docker compose up --abort-on-container-exit --exit-code-from playwright playwright || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - |
