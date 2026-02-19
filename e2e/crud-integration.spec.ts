@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { captureScreenshot, checkForPhpErrors } from './utils/test-helpers';
 
+// Base URL for Legacy PHP site - uses env var in CI/Docker, localhost in local dev
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || 'http://localhost:8080';
+
 /**
  * E2E Integration Test: Legacy PHP site with MySQL database
  *
@@ -18,7 +21,7 @@ import { captureScreenshot, checkForPhpErrors } from './utils/test-helpers';
 test.describe('Legacy PHP Site Integration', () => {
   test('should load legacy PHP site without errors', async ({ page }, testInfo) => {
     await test.step('Load legacy PHP site', async () => {
-      const response = await page.goto('http://localhost:8080', {
+      const response = await page.goto(`${LEGACY_BASE_URL}`, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
@@ -40,7 +43,7 @@ test.describe('Legacy PHP Site Integration', () => {
 
   test('should connect to MySQL and display seeded data', async ({ page }, testInfo) => {
     await test.step('Verify database connectivity', async () => {
-      await page.goto('http://localhost:8080', {
+      await page.goto(`${LEGACY_BASE_URL}`, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
@@ -77,7 +80,7 @@ test.describe('Legacy PHP Site Integration', () => {
         consoleErrors.push(error.message);
       });
 
-      await page.goto('http://localhost:8080', {
+      await page.goto(`${LEGACY_BASE_URL}`, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });

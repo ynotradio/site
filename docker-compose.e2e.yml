@@ -34,11 +34,10 @@ services:
     networks:
       - app-tier
 
-  # Playwright test runner - uses host networking for localhost access
+  # Playwright test runner - uses app-tier network to reach Payload via hostname
   playwright:
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
     working_dir: /app
-    network_mode: host
     volumes:
       - .:/app
     environment:
@@ -46,6 +45,13 @@ services:
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-    # Note: depends_on doesn't work with network_mode: host
-    # The pipeline will wait for services before running this container
+      # Use Docker service hostname for Payload (not localhost)
+      - PLAYWRIGHT_BASE_URL=http://payload:3000
+      # Legacy PHP site (Apache) also on app-tier network
+      - PLAYWRIGHT_LEGACY_URL=http://apache:80
+    networks:
+      - app-tier
+    depends_on:
+      payload:
+        condition: service_healthy
     command: bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"

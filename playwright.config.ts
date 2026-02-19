@@ -45,7 +45,9 @@ export default defineConfig({
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:3000',
+    // In CI/Docker: use PLAYWRIGHT_BASE_URL (http://payload:3000)
+    // Locally: default to http://localhost:3000
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',

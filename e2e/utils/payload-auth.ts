@@ -1,5 +1,8 @@
 import { Page } from '@playwright/test';
 
+// Base URL for Payload - uses env var in CI/Docker, localhost in local dev
+const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+
 /**
  * Login to Payload CMS admin interface
  * @param page - Playwright page object
@@ -12,7 +15,7 @@ export async function loginToPayload(
   password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
 ): Promise<void> {
   // Navigate to Payload admin (it will redirect to login if not authenticated)
-  await page.goto('http://localhost:3000/admin', {
+  await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
     waitUntil: 'networkidle',
     timeout: 30000,
   });

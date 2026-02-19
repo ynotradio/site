@@ -13,6 +13,11 @@ import {
   clickPayloadPublish,
 } from './utils/payload-helpers';
 
+// Base URL for Payload - uses env var in CI/Docker, localhost in local dev
+const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+// Base URL for Legacy PHP site - uses env var in CI/Docker, localhost in local dev
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || 'http://localhost:8080';
+
 /**
  * E2E Integration Test: Payload CMS → Legacy PHP Site
  *
@@ -67,7 +72,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
     });
 
     await test.step('Verify concert appears on legacy PHP site', async () => {
-      const response = await page.goto('http://localhost:8080/concerts.php', {
+      const response = await page.goto(`${LEGACY_BASE_URL}/concerts.php`, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
@@ -90,7 +95,7 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
 
   test('should verify Payload admin UI loads correctly', async ({ page }, testInfo) => {
     await test.step('Verify dashboard loads (already authenticated)', async () => {
-      await page.goto('http://localhost:3000/admin', {
+      await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
         waitUntil: 'networkidle',
         timeout: 30000,
       });
