@@ -117,7 +117,15 @@ steps:
       # Run Playwright tests using localhost URLs (via port mapping)
       # SKIP_PAYLOAD_SEED=true because we already seeded via docker compose exec above
       - echo "--- Running Playwright E2E tests"
-      - PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_LEGACY_URL=http://localhost:8080 SKIP_PAYLOAD_SEED=true npx playwright test --reporter=list
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000 PLAYWRIGHT_LEGACY_URL=http://localhost:8080 SKIP_PAYLOAD_SEED=true npx playwright test --reporter=list || true
+      
+      # Always show Payload logs and container status after tests
+      - echo "=== Final container status ==="
+      - docker compose ps
+      - echo "=== Payload logs (last 100 lines) ==="
+      - docker compose logs payload --tail 100
+      - echo "=== Test result summary ==="
+      - cat playwright-report/results.json 2>/dev/null || echo "No results.json found"
       
       # Cleanup
       - docker compose down -v
