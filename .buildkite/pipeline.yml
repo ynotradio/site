@@ -42,15 +42,15 @@ steps:
       - ./bin/seed-legacy.sh
       
       # Start Payload service with logging
-      - echo "--- :payload: Starting Payload service..."
+      - echo "--- Starting Payload service..."
       - docker compose up -d payload
       - sleep 10
-      - echo "--- Initial Payload logs:"
+      - echo "--- Initial Payload logs"
       - docker compose logs payload --tail 30
       
       # Wait for payload healthcheck to pass (up to 5 minutes)
       - |
-        echo "--- :hourglass: Waiting for Payload to be healthy..."
+        echo "--- Waiting for Payload to be healthy..."
         for i in $$(seq 1 60); do
           # Check if container is still running
           CONTAINER_STATE=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"State":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
@@ -92,7 +92,7 @@ steps:
         done
       
       # Run Playwright tests
-      - echo "--- :playwright: Running Playwright E2E tests..."
+      - echo "--- Running Playwright E2E tests..."
       - docker compose run --rm playwright || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
