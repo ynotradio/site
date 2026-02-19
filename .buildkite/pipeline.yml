@@ -124,7 +124,7 @@ steps:
         PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries[0].value.IPAddress')
         echo "Payload container IP: $$PAYLOAD_IP"
         echo "--- Running Playwright E2E tests"
-        docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" playwright
+        docker compose --profile test run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="

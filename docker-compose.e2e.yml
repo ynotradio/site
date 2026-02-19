@@ -39,8 +39,8 @@ services:
   playwright:
     container_name: playwright
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Reset network_mode from base compose (was host mode)
-    network_mode: !reset null
+    # Override network_mode from base compose (was host mode) with bridge (empty = default)
+    network_mode: ""
     working_dir: /app
     volumes:
       - .:/app
@@ -51,10 +51,12 @@ services:
       - SKIP_PAYLOAD_SEED=true
       # PLAYWRIGHT_BASE_URL will be set dynamically in pipeline with payload IP
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
-    networks:
-      - app-tier
     depends_on:
       payload:
         condition: service_healthy
     # Install deps and run tests - has network access for npm
-    command: bash -c "yarn install --frozen-lockfile && echo 'Running Playwright tests with base URL: '$$PLAYWRIGHT_BASE_URL && npx playwright test --reporter=list"
+    command: >
+      bash -c "yarn install --frozen-lockfile && 
+               echo 'Running Playwright tests with base URL:' && 
+               echo $$PLAYWRIGHT_BASE_URL && 
+               npx playwright test --reporter=list"
