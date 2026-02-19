@@ -121,14 +121,10 @@ steps:
       # Get Payload container IP and run Playwright tests with it
       - echo "--- Running Playwright E2E tests via Docker container"
       - |
-        # Get IP by inspecting container's network settings
-        PAYLOAD_IP=$$(docker inspect payload -f '{{.NetworkSettings.Networks}}' | grep -oP 'IPAddress:\K[0-9.]+' | head -1)
-        if [ -z "$$PAYLOAD_IP" ]; then
-          # Fallback: try to get any IP from the container
-          PAYLOAD_IP=$$(docker inspect payload | grep '"IPAddress"' | head -1 | grep -oP '"IPAddress": "\K[^"]+')
-        fi
+        # Get IP using jq (installed on Buildkite agents)
+        PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries | .[0].value.IPAddress')
         echo "Payload IP: $$PAYLOAD_IP"
-        if [ -z "$$PAYLOAD_IP" ]; then
+        if [ -z "$$PAYLOAD_IP" ] || [ "$$PAYLOAD_IP" = "null" ]; then
           echo "ERROR: Could not get Payload IP, container may not be running"
           docker compose ps
           docker compose logs payload --tail 50
