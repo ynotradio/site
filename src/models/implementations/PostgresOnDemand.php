@@ -37,6 +37,7 @@ class PostgresOnDemand implements OnDemand {
             FROM ondemand od
             LEFT JOIN media m ON od.image_id = m.id
             WHERE od.id = :id
+              AND od._status = 'published'
         ");
         
         $stmt->execute(['id' => $id]);
@@ -82,6 +83,7 @@ class PostgresOnDemand implements OnDemand {
                 od.audio_url
             FROM ondemand od
             LEFT JOIN media m ON od.image_id = m.id
+            WHERE od._status = 'published'
             ORDER BY $orderBy
             LIMIT :limit OFFSET :offset
         ");
@@ -105,6 +107,7 @@ class PostgresOnDemand implements OnDemand {
                 headline,
                 date
             FROM ondemand
+            WHERE _status = 'published'
             ORDER BY headline ASC, date DESC
         ");
         
@@ -129,6 +132,7 @@ class PostgresOnDemand implements OnDemand {
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as num
             FROM ondemand
+            WHERE _status = 'published'
         ");
         
         $stmt->execute();
@@ -204,6 +208,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
             LEFT JOIN media m ON od.image_id = m.id
+            WHERE od._status = 'published'
             ORDER BY od.date DESC
         ");
         

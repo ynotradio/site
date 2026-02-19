@@ -10,8 +10,7 @@ import {
   navigateToPayloadCollectionCreate,
   fillPayloadRelationshipField,
   fillPayloadTextField,
-  clickPayloadSave,
-  waitForPayloadSave,
+  clickPayloadPublish,
 } from './utils/payload-helpers';
 
 /**
@@ -62,10 +61,9 @@ test.describe('Payload CMS Integration with Legacy PHP Site', () => {
       await captureScreenshot(page, testInfo, '02-Filled Concert Form');
     });
 
-    await test.step('Save the concert', async () => {
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'concerts');
-      await captureScreenshot(page, testInfo, '03-Concert Saved');
+    await test.step('Publish the concert', async () => {
+      await clickPayloadPublish(page, 'concerts');
+      await captureScreenshot(page, testInfo, '03-Concert Published');
     });
 
     await test.step('Verify concert appears on legacy PHP site', async () => {

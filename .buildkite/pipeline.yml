@@ -172,18 +172,28 @@ steps:
           /bin/bash -c '
             set -e
             
-            # Start Payload dev server in background
+            # Start Payload dev server in background using a wrapper
             echo "--- :payload: Starting Payload dev server..."
             
-            # Use nohup to prevent SIGHUP, close stdin to prevent TTY issues
-            # Redirect to a temp file and background the command
-            nohup yarn --ignore-engines dev </dev/null > /tmp/payload-dev.log 2>&1 &
+            # Create a PID file and log file
+            touch /tmp/payload-dev.log
+            
+            # Start the server using sh -c to ensure proper backgrounding
+            # This avoids issues with nohup and bash builtins
+            (
+              cd /app
+              yarn --ignore-engines dev > /tmp/payload-dev.log 2>&1
+              echo "Server exited at $(date)" >> /tmp/payload-dev.log
+            ) &
             DEV_PID=$$!
             
             echo "Payload dev server started with PID $$DEV_PID"
             
-            # Disown the process so it survives shell script completion
-            disown $$DEV_PID 2>/dev/null || true
+            # Verify the log file was created
+            if [ ! -f /tmp/payload-dev.log ]; then
+              echo "ERROR: Log file was not created"
+              exit 1
+            fi
             
             # Wait for Payload to be ready (up to 3 minutes)
             echo "Waiting for Payload CMS to be ready..."
