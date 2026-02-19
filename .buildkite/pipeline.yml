@@ -92,6 +92,9 @@ steps:
         done
       
       # Run Playwright tests
+      # Seed Payload database using the payload container (has network access to postgres)
+      - echo "--- Seeding Payload database..."
+      - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
       - echo "--- Running Playwright E2E tests..."
       - docker compose run --rm playwright || PLAYWRIGHT_EXIT=$$?
       

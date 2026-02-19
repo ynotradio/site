@@ -41,6 +41,8 @@ services:
     environment:
       - CI=true
       - NODE_ENV=development
+      # Skip seeding in global-setup since we seed via payload container
+      - SKIP_PAYLOAD_SEED=true
     # Note: depends_on doesn't work with network_mode: host
     # The pipeline will wait for services before running this container
     command: bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"
