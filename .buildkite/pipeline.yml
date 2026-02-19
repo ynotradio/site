@@ -117,8 +117,8 @@ steps:
       # Warm up Next.js by making several requests to trigger JS compilation
       - echo "--- Warming up Next.js compilation..."
       - for i in 1 2 3; do echo "Warm-up request $$i..."; curl -s -o /dev/null http://localhost:3000/admin; sleep 2; done
-      - echo "Checking for login form..."
-      - curl -s http://localhost:3000/admin 2>&1 | grep -i "email\|login" || echo "Warning: Login form not detected yet"
+      - echo "Page content check..."
+      - curl -s http://localhost:3000/admin | head -c 1000
       
       # Run Playwright tests using localhost URLs (via port mapping)
       # SKIP_PAYLOAD_SEED=true because we already seeded via docker compose exec above
