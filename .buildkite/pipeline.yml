@@ -123,20 +123,14 @@ steps:
       - |
         echo "--- Checking host environment..."
         which node && node --version || echo "No node found on host"
-        which yarn && yarn --version || echo "No yarn found on host"
         which npm && npm --version || echo "No npm found on host"
         
+        echo "--- Installing yarn via npm..."
+        npm install -g yarn
+        yarn --version
+        
         echo "--- Installing dependencies on host..."
-        # This project uses yarn.lock (no package-lock.json), so use npm install as fallback
-        if command -v yarn &> /dev/null; then
-          yarn install --frozen-lockfile --ignore-engines
-        elif command -v npm &> /dev/null; then
-          # npm ci requires package-lock.json which we don't have (using yarn.lock)
-          npm install
-        else
-          echo "ERROR: No package manager found"
-          exit 1
-        fi
+        yarn install --frozen-lockfile --ignore-engines
         
         echo "--- Installing Playwright browsers on host..."
         npx playwright install --with-deps chromium
