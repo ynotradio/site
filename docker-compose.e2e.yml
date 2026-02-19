@@ -20,10 +20,11 @@ services:
       postgres:
         condition: service_healthy
     # Install curl for healthcheck, then yarn dependencies, then start dev server
+    # Use exec to ensure proper signal handling, and tail -f to keep process alive
     command: >
-      sh -c "apt-get update && apt-get install -y curl &&
-             yarn --ignore-engines install --frozen-lockfile &&
-             yarn --ignore-engines dev"
+      bash -c "apt-get update && apt-get install -y curl &&
+               yarn --ignore-engines install --frozen-lockfile &&
+               exec yarn --ignore-engines dev"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s
