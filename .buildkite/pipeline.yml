@@ -127,11 +127,12 @@ steps:
         which npm && npm --version || echo "No npm found on host"
         
         echo "--- Installing dependencies on host..."
-        # Install deps using npm if yarn not available
+        # This project uses yarn.lock (no package-lock.json), so use npm install as fallback
         if command -v yarn &> /dev/null; then
           yarn install --frozen-lockfile --ignore-engines
         elif command -v npm &> /dev/null; then
-          npm ci
+          # npm ci requires package-lock.json which we don't have (using yarn.lock)
+          npm install
         else
           echo "ERROR: No package manager found"
           exit 1
