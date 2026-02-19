@@ -35,35 +35,26 @@ services:
     networks:
       - app-tier
 
-  # Playwright test runner - uses app-tier network to reach Payload via hostname
+  # Playwright test runner - shares network namespace with Payload container
+  # This allows Playwright to access Payload on localhost:3000
   playwright:
     container_name: playwright
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Reset network_mode from base compose file (conflicts with app-tier network)
-    network_mode: !reset null
+    # Share network namespace with payload - this makes localhost:3000 work
+    network_mode: "service:payload"
     working_dir: /app
     volumes:
       - .:/app
-    # Use Google DNS to work around Docker Compose DNS issues in DinD environments
-    # See: https://devops.stackexchange.com/a/14892
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    # Add extra_hosts as fallback for Docker service names
-    extra_hosts:
-      - "payload:host-gateway"
     environment:
       - CI=true
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # Use localhost since we're using host-gateway for payload
+      # Use localhost since we share network namespace with payload
       - PLAYWRIGHT_BASE_URL=http://localhost:3000
-      # Legacy PHP site (Apache) also on app-tier network
-      - PLAYWRIGHT_LEGACY_URL=http://apache:80
-    networks:
-      - app-tier
+      # Legacy PHP site won't be accessible with this approach
+      - PLAYWRIGHT_LEGACY_URL=http://localhost:80
     depends_on:
       payload:
         condition: service_healthy
-    command: bash -c "echo 'Testing DNS...' && (getent hosts payload || echo 'payload DNS failed') && (getent hosts apache || echo 'apache DNS failed') && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"
+    command: bash -c "echo 'Testing localhost:3000...' && curl -s http://localhost:3000/admin | head -c 100 && echo '' && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"
