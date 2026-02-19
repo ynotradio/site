@@ -118,14 +118,13 @@ steps:
       - echo "--- Testing Docker network connectivity"
       - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
       
-      # Get payload container IP for playwright to use
-      - echo "--- Getting Payload container IP"
-      - export PAYLOAD_IP=$$(docker inspect payload --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' | head -1)
-      - echo "Payload container IP: $$PAYLOAD_IP"
-      
-      # Run Playwright tests using docker compose run with the payload IP
-      - echo "--- Running Playwright E2E tests"
-      - docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" playwright
+      # Get payload container IP and run Playwright tests
+      - |
+        echo "--- Getting Payload container IP"
+        PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries[0].value.IPAddress')
+        echo "Payload container IP: $$PAYLOAD_IP"
+        echo "--- Running Playwright E2E tests"
+        docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
