@@ -19,12 +19,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Install curl for healthcheck, then yarn dependencies, then start dev server
-    # Use exec to ensure proper signal handling, and tail -f to keep process alive
+    # Install curl for healthcheck, build for production, and start in background
+    # Use sleep infinity to keep container alive while server runs
     command: >
       bash -c "apt-get update && apt-get install -y curl &&
                yarn --ignore-engines install --frozen-lockfile &&
-               exec yarn --ignore-engines dev"
+               yarn --ignore-engines build &&
+               yarn --ignore-engines start &
+               sleep infinity"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s
