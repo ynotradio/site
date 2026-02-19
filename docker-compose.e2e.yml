@@ -17,15 +17,20 @@ services:
     environment:
       - CI=true
       - NODE_ENV=development
+      # Override DATABASE_URI to use Docker service name instead of localhost
+      - DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev
+      - DATABASE_SSL=disable
     depends_on:
       postgres:
         condition: service_healthy
-    # Install curl for healthcheck, yarn deps, then start dev server with node directly
-    # Using node directly instead of yarn to avoid yarn exiting
+    # Install curl for healthcheck, yarn deps, seed the database, then start dev server
     command: >
       bash -c "apt-get update && apt-get install -y curl &&
                yarn --ignore-engines install --frozen-lockfile &&
-               node node_modules/.bin/next dev"
+               echo '🌱 Seeding Payload database...' &&
+               yarn --ignore-engines seed:payload &&
+               echo '✅ Seed complete, starting Next.js...' &&
+               yarn dev"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s

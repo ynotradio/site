@@ -20,20 +20,22 @@ export async function loginToPayload(
     timeout: 30000,
   });
 
-  // Check if we're on a "create first user" page (has confirm password field)
-  const isCreateUserPage = await page
+  // Check if we're on a "create first user" page (has "New Password" or "Confirm Password" field)
+  const hasNewPasswordField = await page
+    .getByLabel(/new password/i)
+    .isVisible()
+    .catch(() => false);
+  const hasConfirmPasswordField = await page
     .getByLabel(/confirm password/i)
     .isVisible()
     .catch(() => false);
+  const isCreateUserPage = hasNewPasswordField || hasConfirmPasswordField;
 
   if (isCreateUserPage) {
     // Creating first admin user
     await page.getByLabel(/email/i).fill(email);
-    // Use first() to get the first password field (not confirm)
-    await page
-      .getByLabel(/^password$/i)
-      .first()
-      .fill(password);
+    // Payload uses "New Password" for the first password field on create-first-user page
+    await page.getByLabel(/new password/i).fill(password);
     await page.getByLabel(/confirm password/i).fill(password);
 
     // Click create account button
