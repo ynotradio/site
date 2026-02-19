@@ -65,6 +65,14 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
+      use: {
+        // In CI, disable browser sandbox for container compatibility
+        launchOptions: process.env.CI
+          ? {
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          }
+          : {},
+      },
     },
 
     // Main test project - uses saved authentication state
@@ -74,6 +82,12 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // Use saved authentication state from setup project
         storageState: authFile,
+        // In CI, disable browser sandbox for container compatibility
+        launchOptions: process.env.CI
+          ? {
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+          }
+          : {},
       },
       // Don't run setup tests again, and depend on setup completing first
       testIgnore: /auth\.setup\.ts/,

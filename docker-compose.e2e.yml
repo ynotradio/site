@@ -25,13 +25,14 @@ services:
     command: >
       bash -c "apt-get update && apt-get install -y curl &&
                yarn --ignore-engines install --frozen-lockfile &&
-               node node_modules/.bin/next dev"
+               yarn build &&
+               yarn start"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s
       timeout: 10s
-      retries: 30
-      start_period: 120s
+      retries: 60
+      start_period: 300s
     networks:
       - app-tier
 
