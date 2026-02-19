@@ -19,14 +19,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Install curl for healthcheck, build for production, and start in background
-    # Use sleep infinity to keep container alive while server runs
+    # Install curl for healthcheck, yarn deps, then start dev server with node directly
+    # Using node directly instead of yarn to avoid yarn exiting
     command: >
       bash -c "apt-get update && apt-get install -y curl &&
                yarn --ignore-engines install --frozen-lockfile &&
-               yarn --ignore-engines build &&
-               yarn --ignore-engines start &
-               sleep infinity"
+               node node_modules/.bin/next dev"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
       interval: 10s
