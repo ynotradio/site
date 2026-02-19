@@ -120,17 +120,7 @@ steps:
       
       # Get Payload container IP and run Playwright tests with it
       - echo "--- Running Playwright E2E tests via Docker container"
-      - |
-        # Get IP using jq (installed on Buildkite agents)
-        PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries | .[0].value.IPAddress')
-        echo "Payload IP: $$PAYLOAD_IP"
-        if [ -z "$$PAYLOAD_IP" ] || [ "$$PAYLOAD_IP" = "null" ]; then
-          echo "ERROR: Could not get Payload IP, container may not be running"
-          docker compose ps
-          docker compose logs payload --tail 50
-          exit 1
-        fi
-        docker compose run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" -e PLAYWRIGHT_LEGACY_URL="http://apache:80" playwright
+      - docker compose up --exit-code-from playwright playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
