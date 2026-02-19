@@ -95,8 +95,15 @@ steps:
       # Seed Payload database using the payload container (has network access to postgres)
       - echo "--- Seeding Payload database..."
       - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
+      
+      # Run Playwright from the payload container (same network, can reach localhost)
+      # The payload container already has Node.js and yarn
+      - echo "--- Installing Playwright in payload container..."
+      - docker compose exec -T payload npx --yes playwright install --with-deps chromium
+      
       - echo "--- Running Playwright E2E tests..."
-      - docker compose run --rm playwright || PLAYWRIGHT_EXIT=$$?
+      # Tests run from payload container, use localhost since server is in same container
+      - docker compose exec -T -e PLAYWRIGHT_BASE_URL=http://localhost:3000 -e PLAYWRIGHT_LEGACY_URL=http://apache:80 payload npx playwright test --reporter=list || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - |
