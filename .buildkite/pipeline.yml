@@ -13,7 +13,7 @@ steps:
   # ESLint
   - label: ":eslint: ESLint"
     key: "eslint"
-    command: "npm ci --legacy-peer-deps && npm run lint"
+    command: "corepack enable && yarn install --immutable && yarn lint"
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
@@ -24,7 +24,7 @@ steps:
   # Vitest Unit Tests
   - label: ":test_tube: Vitest Tests"
     key: "vitest"
-    command: "npm ci --legacy-peer-deps && npm run test:coverage"
+    command: "corepack enable && yarn install --immutable && yarn test:coverage"
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
@@ -37,7 +37,7 @@ steps:
   # Storybook Build
   - label: ":storybook: Storybook Build"
     key: "storybook"
-    command: "npm ci --legacy-peer-deps && npm run build-storybook"
+    command: "corepack enable && yarn install --immutable && yarn build-storybook"
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
