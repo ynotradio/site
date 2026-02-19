@@ -23,8 +23,6 @@ steps:
             - CI=true
             - NODE_ENV=development
             - SKIP_PAYLOAD_SEED=true
-            - PLAYWRIGHT_BASE_URL=http://payload:3000
-            - PLAYWRIGHT_LEGACY_URL=http://apache:80
           # Mount checkout dir so playwright has access to code
           mount-checkout: true
           # Start dependent services (payload, postgres, mysql, apache, phpfpm)

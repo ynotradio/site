@@ -54,21 +54,20 @@ services:
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # PLAYWRIGHT_BASE_URL will be set dynamically in command
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     depends_on:
       payload:
         condition: service_healthy
     networks:
       - app-tier
-    # Install deps and run tests - resolve payload IP for Chromium compatibility
+    # Install deps and run tests - use the IP directly since DNS/Chromium issues
     command: >
       bash -c "echo 'Testing connectivity to payload...' &&
-               curl -v http://payload:3000/admin 2>&1 | head -20 &&
                PAYLOAD_IP=$$(getent hosts payload | awk '{ print $$1 }') &&
                echo \"Resolved payload IP: $$PAYLOAD_IP\" &&
                export PLAYWRIGHT_BASE_URL=\"http://$$PAYLOAD_IP:3000\" &&
                echo \"Using PLAYWRIGHT_BASE_URL=$$PLAYWRIGHT_BASE_URL\" &&
+               curl -sf http://$$PAYLOAD_IP:3000/admin > /dev/null && echo '✅ curl can reach Payload' &&
                yarn install --frozen-lockfile && 
                npx playwright test --reporter=list"
 

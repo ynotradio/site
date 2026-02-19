@@ -66,10 +66,16 @@ export default defineConfig({
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
       use: {
-        // In CI, disable browser sandbox for container compatibility
+        // In CI, disable browser sandbox and network isolation for container compatibility
         launchOptions: process.env.CI
           ? {
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-web-security',
+              '--disable-features=IsolateOrigins,site-per-process',
+            ],
           }
           : {},
       },
@@ -82,10 +88,16 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // Use saved authentication state from setup project
         storageState: authFile,
-        // In CI, disable browser sandbox for container compatibility
+        // In CI, disable browser sandbox and network isolation for container compatibility
         launchOptions: process.env.CI
           ? {
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-web-security',
+              '--disable-features=IsolateOrigins,site-per-process',
+            ],
           }
           : {},
       },
