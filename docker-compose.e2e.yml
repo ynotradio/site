@@ -44,13 +44,21 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+    # Use Google DNS to work around Docker Compose DNS issues in DinD environments
+    # See: https://devops.stackexchange.com/a/14892
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # Add extra_hosts as fallback for Docker service names
+    extra_hosts:
+      - "payload:host-gateway"
     environment:
       - CI=true
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # Use Docker service hostname for Payload (not localhost)
-      - PLAYWRIGHT_BASE_URL=http://payload:3000
+      # Use localhost since we're using host-gateway for payload
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000
       # Legacy PHP site (Apache) also on app-tier network
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     networks:
@@ -58,4 +66,4 @@ services:
     depends_on:
       payload:
         condition: service_healthy
-    command: bash -c "echo 'Testing DNS...' && (getent hosts payload && getent hosts apache) || (echo 'DNS check failed, continuing anyway...') && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"
+    command: bash -c "echo 'Testing DNS...' && (getent hosts payload || echo 'payload DNS failed') && (getent hosts apache || echo 'apache DNS failed') && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"

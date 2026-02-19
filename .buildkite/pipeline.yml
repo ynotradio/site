@@ -119,16 +119,8 @@ steps:
       - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
       
       # Get Payload container IP and run Playwright tests with it
-      - echo "--- Running Playwright E2E tests"
-      # Run playwright tests from inside the payload container (avoids Docker DNS issues)
-      # The payload container already has node, and we install playwright browsers on the fly
-      - |
-        docker compose exec -T payload bash -c '
-          # Install playwright and browsers
-          npx playwright install chromium --with-deps
-          # Run tests pointing to localhost (same container as the server)
-          PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test --reporter=list
-        '
+      - echo "--- Running Playwright E2E tests via Docker container"
+      - docker compose up --exit-code-from playwright playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
