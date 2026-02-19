@@ -98,8 +98,8 @@ steps:
       
       # Run Playwright as a docker compose service (ensures proper networking)
       - echo "--- Running Playwright E2E tests..."
-      # Start playwright service which has depends_on: payload
-      - docker compose up --abort-on-container-exit --exit-code-from playwright playwright || PLAYWRIGHT_EXIT=$$?
+      # Use --no-deps since payload and other services are already running
+      - docker compose run --rm playwright || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - |
