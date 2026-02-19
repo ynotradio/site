@@ -1,13 +1,20 @@
 # Buildkite E2E Testing Investigation
 
-**Status:** Blocked  
+**Status:** Blocked - Deferred to future work  
 **Date:** 2026-02-19  
 **Builds:** 50-105  
 **Branch:** `copilot/migrate-ci-to-buildkite`
 
-## Summary
+## Current State
 
-After 55+ builds attempting to get Playwright E2E tests running in Buildkite, we've hit a fundamental networking limitation with Docker-in-Docker (DinD) environments. Chromium browser cannot reach Docker container IPs from within the Buildkite managed agents.
+The Buildkite pipeline is now working for all non-E2E CI steps:
+
+- ✅ ESLint
+- ✅ Vitest Tests (with coverage)
+- ✅ Storybook Build
+- ✅ PHP Lint (CodeSniffer)
+
+E2E tests remain in GitHub Actions until the networking issue is resolved.
 
 ## Root Cause
 
