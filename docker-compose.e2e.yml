@@ -45,8 +45,6 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-      # Mount node_modules as a named volume to persist yarn install from prep step
-      - playwright_node_modules:/app/node_modules
     environment:
       - CI=true
       - NODE_ENV=development
@@ -59,8 +57,5 @@ services:
     depends_on:
       payload:
         condition: service_healthy
-    # Dependencies pre-installed in pipeline, just run tests
-    command: bash -c "echo 'Testing localhost:3000...' && curl -s http://localhost:3000/admin | head -c 100 && echo '' && echo 'Running Playwright tests...' && npx playwright test --reporter=list"
-
-volumes:
-  playwright_node_modules:
+    # Dependencies pre-installed in pipeline via host bind mount, just run tests
+    command: bash -c "echo 'Testing localhost:3000...' && curl -s http://localhost:3000/admin | head -c 100 && echo '' && echo 'node_modules check:' && ls -la node_modules/.bin/playwright 2>/dev/null || echo 'playwright binary not found' && echo 'Running Playwright tests...' && npx playwright test --reporter=list"
