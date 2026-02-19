@@ -96,14 +96,23 @@ steps:
       - echo "--- Seeding Payload database..."
       - docker compose exec -T payload yarn --ignore-engines seed:payload || echo "Seed failed, continuing..."
       
-      # Run Playwright from the payload container (same network, can reach localhost)
-      # The payload container already has Node.js and yarn
-      - echo "--- Installing Playwright in payload container..."
-      - docker compose exec -T payload npx --yes playwright install --with-deps chromium
-      
+      # Run Playwright using dedicated image, but with explicit network to reach services
       - echo "--- Running Playwright E2E tests..."
-      # Tests run from payload container, use localhost since server is in same container
-      - docker compose exec -T -e PLAYWRIGHT_BASE_URL=http://localhost:3000 -e PLAYWRIGHT_LEGACY_URL=http://apache:80 payload npx playwright test --reporter=list || PLAYWRIGHT_EXIT=$$?
+      # Get the network name from docker compose
+      - NETWORK_NAME=$$(docker compose config --format=json | jq -r '.networks | keys[0]')
+      - echo "Using network - $${NETWORK_NAME}"
+      # Run Playwright with correct network and environment
+      - |
+        docker run --rm \
+          --network="$${NETWORK_NAME}" \
+          -e CI=true \
+          -e PLAYWRIGHT_BASE_URL=http://payload:3000 \
+          -e PLAYWRIGHT_LEGACY_URL=http://apache:80 \
+          -e SKIP_PAYLOAD_SEED=true \
+          -v "$$(pwd):/app" \
+          -w /app \
+          mcr.microsoft.com/playwright:v1.58.0-jammy \
+          bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list" || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - |
