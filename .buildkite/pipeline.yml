@@ -1,5 +1,6 @@
 # Buildkite Pipeline for Y-Not Radio Site
 # This pipeline replaces GitHub Actions CI workflow
+# TEMPORARY: E2E-only mode for fast iteration
 
 env:
   NODE_VERSION: "22"
@@ -7,128 +8,9 @@ env:
   CI: "true"
 
 steps:
-  # Fast feedback - Quality checks run in parallel
-  - group: ":white_check_mark: Quality Checks"
-    key: "quality"
-    steps:
-      - label: ":eslint: ESLint"
-        key: "lint"
-        command: |
-          echo "--- :yarn: Installing dependencies"
-          yarn install --frozen-lockfile
-          
-          echo "--- :eslint: Running ESLint"
-          yarn lint
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22"
-              volumes:
-                - ".:/app"
-              workdir: "/app"
-              environment:
-                - "CI=true"
-        agents:
-          queue: "default"
-
-      - label: ":php: PHP_CodeSniffer"
-        key: "php-lint"
-        command: |
-          cd src
-          
-          echo "--- :composer: Installing Composer dependencies"
-          composer install --no-interaction --prefer-dist
-          
-          echo "--- :php: Running PHP_CodeSniffer"
-          vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
-        plugins:
-          - docker#v5.11.0:
-              image: "composer:2"
-              volumes:
-                - ".:/app"
-              workdir: "/app"
-        agents:
-          queue: "default"
-
-  # Test suite - Runs after quality checks
-  - group: ":test_tube: Tests"
-    key: "tests"
-    depends_on: "quality"
-    steps:
-      - label: ":vitest: Unit Tests + Coverage"
-        key: "test"
-        command: |
-          echo "--- :yarn: Installing dependencies"
-          yarn install --frozen-lockfile
-          
-          echo "--- :vitest: Running tests with coverage"
-          yarn test:coverage
-          
-          echo "--- :codecov: Uploading coverage to CodeCov"
-          # Note: CODECOV_TOKEN is not available inside Docker containers
-          # Codecov upload is skipped in containerized jobs
-          echo "Skipping CodeCov upload (not available in containerized jobs)"
-        artifact_paths:
-          - "coverage/**/*"
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22"
-              volumes:
-                - ".:/app"
-              workdir: "/app"
-              environment:
-                - "CI=true"
-        agents:
-          queue: "default"
-
-      - label: ":storybook: Storybook Build"
-        key: "storybook"
-        command: |
-          echo "--- :yarn: Installing dependencies"
-          yarn install --frozen-lockfile
-          
-          echo "--- :storybook: Building Storybook"
-          yarn build-storybook
-        artifact_paths:
-          - "storybook-static/**/*"
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22"
-              volumes:
-                - ".:/app"
-              workdir: "/app"
-              environment:
-                - "CI=true"
-        agents:
-          queue: "default"
-
-  # Next.js build - Runs after tests pass
-  - label: ":nextjs: Next.js Build"
-    key: "build"
-    depends_on: "tests"
-    command: |
-      echo "--- :yarn: Installing dependencies"
-      yarn install --frozen-lockfile
-      
-      echo "--- :nextjs: Building Next.js application"
-      yarn build
-    artifact_paths:
-      - ".next/**/*"
-    plugins:
-      - docker#v5.11.0:
-          image: "node:22"
-          volumes:
-            - ".:/app"
-          workdir: "/app"
-          environment:
-            - "CI=true"
-    agents:
-      queue: "default"
-
-  # E2E Tests - Uses docker-compose to orchestrate services
-  # The payload service is managed by docker-compose with a healthcheck
+  # E2E Tests - TEMPORARY: Running first for fast feedback
   - label: ":playwright: E2E Tests"
     key: "e2e"
-    depends_on: "build"
     timeout_in_minutes: 30
     env:
       CI: "true"
@@ -159,40 +41,66 @@ steps:
       # Seed legacy database
       - ./bin/seed-legacy.sh
       
-      # Start Payload service (docker-compose manages the process lifecycle)
+      # Start Payload service with logging
+      - echo "--- :payload: Starting Payload service..."
       - docker compose up -d payload
+      - sleep 10
+      - echo "--- Initial Payload logs:"
+      - docker compose logs payload --tail 30
       
       # Wait for payload healthcheck to pass (up to 5 minutes)
       - |
-        echo "Waiting for Payload to be healthy..."
+        echo "--- :hourglass: Waiting for Payload to be healthy..."
         for i in $$(seq 1 60); do
+          # Check if container is still running
+          CONTAINER_STATE=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"State":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
+          if [ "$$CONTAINER_STATE" != "running" ]; then
+            echo "❌ Payload container is not running (state: $$CONTAINER_STATE)"
+            echo "=== Payload logs ==="
+            docker compose logs payload --tail 200
+            exit 1
+          fi
+          
+          # Check health status
           STATUS=$$(docker compose ps payload --format json 2>/dev/null | grep -o '"Health":"[^"]*"' | cut -d'"' -f4 || echo "unknown")
           if [ "$$STATUS" = "healthy" ]; then
             echo "✅ Payload is healthy!"
             break
           fi
+          
           # Also check via HTTP directly
           if curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/admin 2>/dev/null | grep -q "200\|302"; then
             echo "✅ Payload is responding!"
             break
           fi
+          
           if [ $$i -eq 60 ]; then
             echo "❌ Payload failed to become healthy after 5 minutes"
-            docker compose logs payload --tail 100
+            echo "=== Payload logs ==="
+            docker compose logs payload --tail 200
             exit 1
           fi
-          echo "   Waiting for Payload... ($$i/60, status: $$STATUS)"
+          
+          # Every 10 iterations, show recent logs
+          if [ $$((i % 10)) -eq 0 ]; then
+            echo "--- Recent Payload logs:"
+            docker compose logs payload --tail 10
+          fi
+          
+          echo "   Waiting for Payload... ($$i/60, state: $$CONTAINER_STATE, health: $$STATUS)"
           sleep 5
         done
       
       # Run Playwright tests
-      - docker compose run --rm playwright
+      - echo "--- :playwright: Running Playwright E2E tests..."
+      - docker compose run --rm playwright || PLAYWRIGHT_EXIT=$$?
       
       # Show logs on failure
       - |
-        if [ $$? -ne 0 ]; then
+        if [ "$${PLAYWRIGHT_EXIT:-0}" -ne 0 ]; then
           echo "=== Payload logs ==="
           docker compose logs payload --tail 200
+          exit $${PLAYWRIGHT_EXIT}
         fi
       
       # Cleanup
