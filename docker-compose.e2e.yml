@@ -43,4 +43,4 @@ services:
       - NODE_ENV=development
     # Note: depends_on doesn't work with network_mode: host
     # The pipeline will wait for services before running this container
-    command: npx playwright test --reporter=list
+    command: bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"
