@@ -118,7 +118,11 @@ steps:
       - echo "--- Testing Docker network connectivity"
       - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
       
-      # Get Payload container IP and run Playwright tests with it
+      # Pre-install playwright dependencies using a temporary container with network access
+      - echo "--- Pre-installing Playwright dependencies"
+      - docker run --rm -v "$$(pwd):/app" -w /app mcr.microsoft.com/playwright:v1.58.0-jammy yarn install --frozen-lockfile
+      
+      # Run Playwright tests (dependencies already installed, uses shared network with payload)
       - echo "--- Running Playwright E2E tests via Docker container"
       - docker compose up --exit-code-from playwright playwright
       
