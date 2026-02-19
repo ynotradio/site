@@ -148,8 +148,8 @@ steps:
       # Install composer dependencies
       - docker run --rm -v "$$(pwd)/src:/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
       
-      # Start database services first
-      - docker compose up -d mysql postgres
+      # Start all backend services (databases, Apache, PHP)
+      - docker compose up -d mysql postgres phpfpm apache
       - ./bin/wait-for-docker-services.sh
       
       # Initialize MySQL
@@ -158,9 +158,6 @@ steps:
       
       # Seed legacy database
       - ./bin/seed-legacy.sh
-      
-      # Start Apache/PHP services
-      - docker compose up -d phpfpm apache
       
       # Start Payload service (docker-compose manages the process lifecycle)
       - docker compose up -d payload
