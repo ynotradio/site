@@ -56,4 +56,4 @@ services:
     depends_on:
       payload:
         condition: service_healthy
-    command: bash -c "echo 'Testing DNS resolution...' && getent hosts payload || echo 'DNS failed for payload' && getent hosts apache || echo 'DNS failed for apache' && echo 'Testing connectivity...' && curl -s http://payload:3000/admin | head -c 200 && echo '' && echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"
+    command: bash -c "echo 'Running Playwright tests...' && yarn install --frozen-lockfile && npx playwright test --reporter=list"
