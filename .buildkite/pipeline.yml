@@ -105,10 +105,14 @@ steps:
       - echo "--- Verifying payload is accessible"
       - curl -s http://localhost:3000/admin | head -c 500 || echo "Cannot reach payload on localhost:3000"
       
+      # Debug: Show networks and verify connectivity from within a container
+      - echo "--- Testing Docker network connectivity"
+      - docker compose exec -T payload curl -s http://localhost:3000/admin | head -c 200 || echo "Payload cannot curl itself"
+      
       # Run Playwright tests using Docker Playwright container on the same network as Payload
-      # The playwright service will use PLAYWRIGHT_BASE_URL=http://payload:3000 from docker-compose.e2e.yml
+      # Using docker compose up with exit-code-from to get proper exit code
       - echo "--- Running Playwright E2E tests via Docker container"
-      - docker compose run --rm playwright
+      - docker compose up --exit-code-from playwright playwright
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
