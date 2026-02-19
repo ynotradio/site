@@ -35,13 +35,12 @@ services:
     networks:
       - app-tier
 
-  # Playwright test runner - shares network namespace with Payload container
-  # This allows Playwright to access Payload on localhost:3000
+  # Playwright test runner - uses bridge network with explicit IP
   playwright:
     container_name: playwright
     image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Share network namespace with payload - this makes localhost:3000 work
-    network_mode: "service:payload"
+    # Reset network_mode from base compose (was host mode)
+    network_mode: !reset null
     working_dir: /app
     volumes:
       - .:/app
@@ -50,12 +49,12 @@ services:
       - NODE_ENV=development
       # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
-      # Use localhost since we share network namespace with payload
-      - PLAYWRIGHT_BASE_URL=http://localhost:3000
-      # Legacy PHP site won't be accessible with this approach
-      - PLAYWRIGHT_LEGACY_URL=http://localhost:80
+      # PLAYWRIGHT_BASE_URL will be set dynamically in pipeline with payload IP
+      - PLAYWRIGHT_LEGACY_URL=http://apache:80
+    networks:
+      - app-tier
     depends_on:
       payload:
         condition: service_healthy
-    # Dependencies pre-installed in pipeline via host bind mount, just run tests
-    command: bash -c "echo 'Testing localhost:3000...' && curl -s http://localhost:3000/admin | head -c 100 && echo '' && echo 'node_modules check:' && ls -la node_modules/.bin/playwright 2>/dev/null || echo 'playwright binary not found' && echo 'Running Playwright tests...' && npx playwright test --reporter=list"
+    # Install deps and run tests - has network access for npm
+    command: bash -c "yarn install --frozen-lockfile && echo 'Running Playwright tests with base URL: '$$PLAYWRIGHT_BASE_URL && npx playwright test --reporter=list"
