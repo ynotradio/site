@@ -50,13 +50,13 @@ steps:
   # PHPUnit Tests
   - label: ":php: PHPUnit Tests"
     key: "phpunit"
+    command: |
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpunit --testdox
     plugins:
-      - docker-compose#v5.7.0:
-          run: phpfpm
-          config:
-            - docker-compose.yml
-            - docker-compose.ci.yml
-          command: ["vendor/bin/phpunit", "--testdox"]
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
     agents:
       queue: "default"
-      docker: "true"
