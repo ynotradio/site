@@ -120,11 +120,22 @@ steps:
       
       # Get payload container IP and run Playwright tests
       - |
-        echo "--- Getting Payload container IP"
+        echo "--- Getting Payload container IP and network"
         PAYLOAD_IP=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | to_entries[0].value.IPAddress')
-        echo "Payload container IP: $$PAYLOAD_IP"
+        PAYLOAD_NETWORK=$$(docker inspect payload | jq -r '.[0].NetworkSettings.Networks | keys[0]')
+        echo "Payload container IP: $$PAYLOAD_IP (on network: $$PAYLOAD_NETWORK)"
         echo "--- Running Playwright E2E tests"
-        docker compose --profile test run --rm -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" playwright
+        # Run playwright container on the same network as payload
+        docker run --rm \
+          --network $$PAYLOAD_NETWORK \
+          -e CI=true \
+          -e NODE_ENV=development \
+          -e SKIP_PAYLOAD_SEED=true \
+          -e PLAYWRIGHT_BASE_URL="http://$$PAYLOAD_IP:3000" \
+          -v "$$(pwd):/app" \
+          -w /app \
+          mcr.microsoft.com/playwright:v1.58.0-jammy \
+          bash -c "yarn install --frozen-lockfile && npx playwright test --reporter=list"
       
       # Always show Payload logs and container status after tests
       - echo "=== Final container status ==="
