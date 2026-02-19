@@ -105,6 +105,10 @@ steps:
       - echo "--- Verifying payload is accessible"
       - curl -s http://localhost:3000/admin | head -c 500 || echo "Cannot reach payload on localhost:3000"
       
+      # Install Playwright browsers (required on host)
+      - echo "--- Installing Playwright browsers"
+      - npx playwright install --with-deps chromium
+      
       # Run Playwright tests using localhost URLs (via port mapping)
       # SKIP_PAYLOAD_SEED=true because we already seeded via docker compose exec above
       - echo "--- Running Playwright E2E tests"
