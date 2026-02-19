@@ -1,5 +1,8 @@
 # Buildkite Pipeline for Y-Not Radio Site
-# Uses docker-compose plugin for proper container networking
+# 
+# ARCHITECTURE: Run Playwright on the host (not in container) to avoid
+# Docker-in-Docker networking issues where Chromium cannot reach container IPs.
+# We manually start docker-compose services and run Playwright directly on host.
 
 env:
   NODE_VERSION: "22"
@@ -7,32 +10,45 @@ env:
   CI: "true"
 
 steps:
-  # E2E Tests - Using docker-compose plugin
+  # E2E Tests - Start services manually, run Playwright on host
   - label: ":playwright: E2E Tests"
     key: "e2e"
     timeout_in_minutes: 30
-    plugins:
-      # Run playwright service with all dependencies
-      - docker-compose#v5.7.0:
-          run: playwright
-          config:
-            - docker-compose.yml
-            - docker-compose.ci.yml
-            - docker-compose.e2e.yml
-          env:
-            - CI=true
-            - NODE_ENV=development
-            - SKIP_PAYLOAD_SEED=true
-          # Mount checkout dir so playwright has access to code
-          mount-checkout: true
-          # Start dependent services (payload, postgres, mysql, apache, phpfpm)
-          dependencies: true
-          # Pull images 
-          pull:
-            - playwright
+    commands:
+      - echo "--- Starting Docker Compose services"
+      - docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.e2e.yml up -d --wait
+      
+      - echo "--- Checking service health"
+      - docker compose ps
+      
+      - echo "--- Waiting for Payload CMS to be ready"
+      - |
+        for i in {1..60}; do
+          if curl -s --max-time 5 http://localhost:3000/admin > /dev/null 2>&1; then
+            echo "Payload is ready!"
+            break
+          fi
+          echo "Waiting for Payload... (attempt $$i/60)"
+          sleep 2
+        done
+      
+      - echo "--- Payload health check"
+      - curl -s http://localhost:3000/admin | head -20
+      
+      - echo "--- Installing Node.js dependencies"
+      - npm install --legacy-peer-deps
+      
+      - echo "--- Installing Playwright browsers"
+      - npx playwright install chromium --with-deps
+      
+      - echo "+++ Running E2E tests"
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000 npx playwright test --reporter=html
+    
     artifact_paths:
       - "playwright-report/**/*"
       - "test-results/**/*"
+    
+    # Run on agents with Docker enabled
     agents:
       queue: "default"
       docker: "true"
