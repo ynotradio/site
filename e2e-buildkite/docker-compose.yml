@@ -104,10 +104,10 @@ services:
     healthcheck:
       # Check that composer install finished AND php-fpm is running
       test: ["CMD-SHELL", "test -f /tmp/composer_done && php-fpm -t"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 30
-      start_period: 180s
+      retries: 60
+      start_period: 300s
 
   # === Apache for Legacy Site ===
   apache:

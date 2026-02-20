@@ -49,12 +49,13 @@ steps:
       fi
       
       # Wait for all services to be healthy
-      echo "⏳ Waiting for services to be healthy (this may take 5+ minutes)..."
-      for i in {1..120}; do
+      # PHP-FPM compiles extensions from source which takes 10+ minutes on first run
+      echo "⏳ Waiting for services to be healthy (this may take 10-15 minutes on first run)..."
+      for i in {1..180}; do
         PAYLOAD_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-payload-1 2>/dev/null || echo "none")
         APACHE_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-apache-1 2>/dev/null || echo "none")
         
-        echo "[$$i/120] Payload: $$PAYLOAD_HEALTH, Apache: $$APACHE_HEALTH"
+        echo "[$$i/180] Payload: $$PAYLOAD_HEALTH, Apache: $$APACHE_HEALTH"
         
         if [ "$$PAYLOAD_HEALTH" = "healthy" ] && [ "$$APACHE_HEALTH" = "healthy" ]; then
           echo "✅ All services healthy!"
@@ -69,7 +70,7 @@ steps:
           exit 1
         fi
         
-        if [ $$i -eq 120 ]; then
+        if [ $$i -eq 180 ]; then
           echo "⏰ Timeout waiting for services"
           docker compose logs 2>&1 | tail -200
           docker compose down
