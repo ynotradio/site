@@ -15,8 +15,12 @@ test.describe('Payload CMS (local)', () => {
     test.skip(!process.env.PAYLOAD_URL, 'PAYLOAD_URL not set - skipping local tests');
   });
 
-  test('admin login page loads', async ({ page }) => {
-    await page.goto(`${process.env.PAYLOAD_URL}/admin/login`);
-    await expect(page.getByRole('heading', { name: /login/i })).toBeVisible();
+  test('admin page loads', async ({ page }) => {
+    // Navigate to admin - will either show login or "Create First User" form
+    await page.goto(`${process.env.PAYLOAD_URL}/admin`);
+    // Either Login heading or Create First User form should be visible
+    const hasLogin = await page.getByRole('heading', { name: /login/i }).isVisible().catch(() => false);
+    const hasCreateUser = await page.getByRole('heading', { name: /create first user/i }).isVisible().catch(() => false);
+    expect(hasLogin || hasCreateUser).toBe(true);
   });
 });

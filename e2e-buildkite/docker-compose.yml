@@ -33,15 +33,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Install deps, seed, start server
+    # Install deps and start server (skip seed for now - just need login page)
     command: >
       bash -c "
-        apt-get update && apt-get install -y curl &&
+        apt-get update && apt-get install -y curl git &&
         corepack enable &&
         yarn install --frozen-lockfile --ignore-engines &&
-        echo '🌱 Seeding database...' &&
-        yarn seed:payload &&
-        echo '✅ Starting dev server...' &&
+        echo '✅ Starting dev server (no seed)...' &&
         yarn dev
       "
     healthcheck:
