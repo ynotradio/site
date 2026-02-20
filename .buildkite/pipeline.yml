@@ -129,7 +129,7 @@ steps:
           curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo '✅ Payload reachable via IP' || echo '❌ Payload unreachable'
           curl -sf http://$$APACHE_IP:80/ > /dev/null && echo '✅ Apache reachable via IP' || echo '❌ Apache unreachable'
           
-          npm install
+          npm install --legacy-peer-deps
           npx playwright test --reporter=list
         "
       
