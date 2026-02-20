@@ -18,28 +18,20 @@ test.describe('Payload CMS (local)', () => {
   test('admin page loads', async ({ page }) => {
     // Navigate to admin
     const url = `${process.env.PAYLOAD_URL}/admin`;
-    console.log('Navigating to:', url);
     const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-    console.log('Response status:', response?.status());
-    console.log('Final URL:', page.url());
     
-    // Wait a bit for JS to render
-    await page.waitForTimeout(5000);
-    
-    // Log the page content for debugging
-    const html = await page.content();
-    console.log('Page HTML length:', html.length);
-    console.log('First 500 chars:', html.substring(0, 500));
-    
-    // Screenshot for debugging
-    await page.screenshot({ path: 'payload-admin.png' });
-    
-    // Find any text on the page
-    const bodyText = await page.locator('body').textContent();
-    console.log('Body text:', bodyText?.substring(0, 200));
-    
-    // The test passes if we got a 200 response and some content
+    // Verify we got a successful response
     expect(response?.status()).toBe(200);
-    expect(html.length).toBeGreaterThan(100);
+    
+    // We should be redirected to create-first-user or login
+    const finalUrl = page.url();
+    expect(finalUrl).toMatch(/\/(create-first-user|login)/);
+    
+    // Wait for the form to be visible
+    await page.waitForSelector('form', { timeout: 10000 });
+    
+    // Verify we're on the Payload admin page
+    const hasPayloadTheme = await page.locator('html[data-theme]').count();
+    expect(hasPayloadTheme).toBeGreaterThan(0);
   });
 });
