@@ -121,6 +121,38 @@ steps:
         sleep 2
       done
       
+      # Seed MySQL database with schema and sample data
+      echo "🌱 Seeding MySQL database..."
+      # Create database
+      docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root -e "CREATE DATABASE IF NOT EXISTS ynot_site;"'
+      
+      # Import schema
+      if [ -f "../src/db/docker/ynot_db.sql" ]; then
+        docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root ynot_site' < ../src/db/docker/ynot_db.sql
+        echo "✅ Schema imported"
+      else
+        echo "⚠️ Schema file not found"
+      fi
+      
+      # Seed minimal data
+      docker compose exec -T mysql bash -c 'MYSQL_PWD=root mysql -u root ynot_site -e "
+        INSERT IGNORE INTO stories (start_date, end_date, headline, story, pic, pic_url, priority, deleted) VALUES
+        (\"2026-01-01\", \"2026-12-31\", \"Test Story\", \"Sample content\", \"\", \"\", 1, \"n\");
+        INSERT IGNORE INTO deejays (id, name, \`show\`, email, external_connect_text, external_connect_url, pic, sort, deleted) VALUES
+        (1, \"Test DJ\", \"Mondays\", \"test@test.com\", \"\", \"\", \"\", 1, \"no\");
+      "'
+      echo "✅ Sample data inserted"
+      
+      # Wait for PHP-FPM to be ready (composer install takes time)
+      echo "⏳ Waiting for PHP-FPM..."
+      for i in {1..60}; do
+        if docker compose exec -T phpfpm php -v > /dev/null 2>&1; then
+          echo "✅ PHP-FPM ready"
+          break
+        fi
+        sleep 3
+      done
+      
       # Wait for Apache
       echo "⏳ Waiting for Apache..."
       for i in {1..30}; do
