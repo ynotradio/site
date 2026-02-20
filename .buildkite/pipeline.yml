@@ -31,14 +31,51 @@ steps:
     timeout_in_minutes: 15
     command: |
       echo "🚀 Starting Payload services..."
-      cd e2e-buildkite && docker compose up -d --wait
+      cd e2e-buildkite
       
-      echo "🔍 Checking service connectivity..."
-      docker compose logs --tail=50
+      # Start without --wait so we can see logs
+      docker compose up -d
+      
+      # Wait for postgres to be healthy
+      echo "⏳ Waiting for postgres..."
+      for i in {1..30}; do
+        if docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev; then
+          echo "✅ Postgres ready"
+          break
+        fi
+        sleep 2
+      done
+      
+      # Show payload logs and wait for it
+      echo "📋 Tailing Payload logs (120s timeout)..."
+      timeout 120 docker compose logs -f payload &
+      LOG_PID=$$!
+      
+      # Wait for payload to be healthy or fail
+      for i in {1..60}; do
+        STATUS=$$(docker compose ps payload --format json | jq -r '.State // "unknown"')
+        HEALTH=$$(docker compose ps payload --format json | jq -r '.Health // "none"')
+        echo "[$i] Payload status: $$STATUS, health: $$HEALTH"
+        
+        if [ "$$STATUS" = "exited" ]; then
+          echo "❌ Payload exited!"
+          docker compose logs payload
+          kill $$LOG_PID 2>/dev/null || true
+          exit 1
+        fi
+        
+        if [ "$$HEALTH" = "healthy" ]; then
+          echo "✅ Payload healthy!"
+          kill $$LOG_PID 2>/dev/null || true
+          break
+        fi
+        
+        sleep 5
+      done
       
       echo "🧪 Running Playwright tests..."
       docker run --rm --network=e2e-buildkite_default \
-        -v "$(pwd)/..:/app" -w /app/e2e-buildkite \
+        -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
         -e CI=true \
         -e PAYLOAD_URL=http://payload:3000 \
         mcr.microsoft.com/playwright:v1.58.2-noble \
