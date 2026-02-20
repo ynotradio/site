@@ -79,7 +79,11 @@ steps:
         -e CI=true \
         -e PAYLOAD_URL=http://payload:3000 \
         mcr.microsoft.com/playwright:v1.58.2-noble \
-        bash -c "npm install && npx playwright test --reporter=list --grep='Payload'"
+        bash -c "
+          echo 'Testing connectivity inside Playwright container...'
+          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ curl payload:3000 works' || echo '❌ curl payload:3000 failed'
+          npm install && npx playwright test --reporter=list --grep='Payload'
+        "
       
       echo "🧹 Cleanup..."
       docker compose down
@@ -133,7 +137,11 @@ steps:
         -e CI=true \
         -e LEGACY_URL=http://apache:80 \
         mcr.microsoft.com/playwright:v1.58.2-noble \
-        bash -c "npm install && npx playwright test --reporter=list --grep='Legacy'"
+        bash -c "
+          echo 'Testing connectivity inside Playwright container...'
+          curl -sf http://apache:80/ > /dev/null && echo '✅ curl apache:80 works' || echo '❌ curl apache:80 failed'
+          npm install && npx playwright test --reporter=list --grep='Legacy'
+        "
       
       echo "🧹 Cleanup..."
       docker compose down
