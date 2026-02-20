@@ -120,14 +120,14 @@ steps:
         --add-host=apache:$$APACHE_IP \
         -v "$$(pwd)/..:/app" -w /app \
         -e CI=true \
-        -e PLAYWRIGHT_BASE_URL=http://payload:3000 \
-        -e PLAYWRIGHT_LEGACY_URL=http://apache:80 \
+        -e PLAYWRIGHT_BASE_URL=http://$$PAYLOAD_IP:3000 \
+        -e PLAYWRIGHT_LEGACY_URL=http://$$APACHE_IP:80 \
         -e SKIP_PAYLOAD_SEED=true \
         mcr.microsoft.com/playwright:v1.58.2-noble \
         bash -c "
           echo 'Testing connectivity inside Playwright container...'
-          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
-          curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
+          curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo '✅ Payload reachable via IP' || echo '❌ Payload unreachable'
+          curl -sf http://$$APACHE_IP:80/ > /dev/null && echo '✅ Apache reachable via IP' || echo '❌ Apache unreachable'
           
           npm install
           npx playwright test --reporter=list
