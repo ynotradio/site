@@ -1,7 +1,6 @@
 # Buildkite Pipeline for Y-Not Radio Site
 # 
-# ITERATION MODE: Only E2E tests while debugging Playwright in Buildkite
-# Other steps (ESLint, Vitest, Storybook, PHP Lint) temporarily disabled
+# E2E tests with Payload CMS and Legacy PHP site
 
 env:
   CI: "true"
@@ -24,7 +23,7 @@ steps:
     agents:
       queue: "default"
 
-  # Step 2: Payload CMS test (local services)
+  # Step 2: Payload CMS test
   - label: ":payload: E2E Tests (Payload CMS)"
     key: "e2e-payload"
     depends_on: "e2e-external"
@@ -33,10 +32,10 @@ steps:
       echo "🚀 Starting Payload services..."
       cd e2e-buildkite
       
-      # Start services
-      docker compose up -d
+      # Start only Payload-related services
+      docker compose up -d postgres payload
       
-      # Wait for postgres to be healthy
+      # Wait for postgres
       echo "⏳ Waiting for postgres..."
       for i in {1..30}; do
         if docker compose exec -T postgres pg_isready -U ynot_postgres_user -d ynot_payload_dev 2>/dev/null; then
@@ -46,20 +45,16 @@ steps:
         sleep 2
       done
       
-      # Wait for payload to be healthy, checking if it exits early
-      echo "⏳ Waiting for Payload to be healthy (max 5 min)..."
+      # Wait for payload
+      echo "⏳ Waiting for Payload to be healthy..."
       for i in {1..60}; do
-        # Check if container still exists
         if ! docker ps -q -f name=e2e-buildkite-payload-1 | grep -q .; then
           echo "❌ Payload container stopped!"
-          echo "=== PAYLOAD CONTAINER LOGS ==="
-          docker compose logs payload 2>&1 | tail -200
-          echo "=== END LOGS ==="
+          docker compose logs payload 2>&1 | tail -100
           docker compose down
           exit 1
         fi
         
-        # Check health
         HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-payload-1 2>/dev/null || echo "none")
         echo "[$i/60] Payload health: $$HEALTH"
         
@@ -70,9 +65,7 @@ steps:
         
         if [ $$i -eq 60 ]; then
           echo "⏰ Timeout waiting for Payload"
-          echo "=== PAYLOAD CONTAINER LOGS ==="
-          docker compose logs payload 2>&1 | tail -200
-          echo "=== END LOGS ==="
+          docker compose logs payload 2>&1 | tail -100
           docker compose down
           exit 1
         fi
@@ -80,25 +73,67 @@ steps:
         sleep 5
       done
       
-      # Verify connectivity from host
-      echo "🔍 Testing connectivity..."
-      curl -sf http://localhost:3000/admin/login > /dev/null && echo "✅ Payload reachable at localhost:3000" || {
-        echo "⚠️ localhost:3000 not reachable via curl"
-        docker compose logs payload | tail -50
-      }
-      
-      echo "🧪 Running Playwright tests..."
-      # Use hostname 'payload' instead of IP for better DNS reliability
+      echo "🧪 Running Payload tests..."
       docker run --rm --network=e2e-buildkite_default \
         -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
         -e CI=true \
         -e PAYLOAD_URL=http://payload:3000 \
         mcr.microsoft.com/playwright:v1.58.2-noble \
-        bash -c "
-          echo 'Testing connectivity inside Playwright container...'
-          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ curl payload:3000 works inside container' || echo '❌ curl payload:3000 failed'
-          npm install && npx playwright test --reporter=list --grep='local'
-        "
+        bash -c "npm install && npx playwright test --reporter=list --grep='Payload'"
+      
+      echo "🧹 Cleanup..."
+      docker compose down
+    artifact_paths:
+      - "e2e-buildkite/test-results/**/*"
+    agents:
+      queue: "default"
+
+  # Step 3: Legacy PHP site test
+  - label: ":php: E2E Tests (Legacy PHP Site)"
+    key: "e2e-legacy"
+    depends_on: "e2e-payload"
+    timeout_in_minutes: 15
+    command: |
+      echo "🚀 Starting Legacy PHP services..."
+      cd e2e-buildkite
+      
+      # Start MySQL, PHP-FPM, and Apache
+      docker compose up -d mysql phpfpm apache
+      
+      # Wait for MySQL
+      echo "⏳ Waiting for MySQL..."
+      for i in {1..30}; do
+        if docker compose exec -T mysql mysqladmin ping -h localhost -uroot -proot 2>/dev/null; then
+          echo "✅ MySQL ready"
+          break
+        fi
+        sleep 2
+      done
+      
+      # Wait for Apache
+      echo "⏳ Waiting for Apache..."
+      for i in {1..30}; do
+        if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
+          echo "✅ Apache ready"
+          break
+        fi
+        sleep 2
+      done
+      
+      # Check Apache status
+      if ! curl -sf http://localhost:8080/ > /dev/null 2>&1; then
+        echo "⚠️ Apache not responding, checking logs..."
+        docker compose logs apache 2>&1 | tail -50
+        docker compose logs phpfpm 2>&1 | tail -50
+      fi
+      
+      echo "🧪 Running Legacy PHP tests..."
+      docker run --rm --network=e2e-buildkite_default \
+        -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
+        -e CI=true \
+        -e LEGACY_URL=http://apache:80 \
+        mcr.microsoft.com/playwright:v1.58.2-noble \
+        bash -c "npm install && npx playwright test --reporter=list --grep='Legacy'"
       
       echo "🧹 Cleanup..."
       docker compose down

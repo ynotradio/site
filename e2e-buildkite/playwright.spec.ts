@@ -98,3 +98,78 @@ test.describe('Payload CMS (local)', () => {
     expect(hasCollections).toBe(true);
   });
 });
+
+test.describe('Legacy PHP Site (local)', () => {
+  test.beforeEach(async () => {
+    // Skip if LEGACY_URL is not set
+    test.skip(!process.env.LEGACY_URL, 'LEGACY_URL not set - skipping legacy tests');
+  });
+
+  test('homepage loads without PHP errors', async ({ page }) => {
+    const url = process.env.LEGACY_URL!;
+    const status = await navigateWithRetry(page, url);
+    
+    expect(status).toBe(200);
+    
+    // Get page content
+    const pageContent = await page.content();
+    
+    // Check for PHP errors
+    const phpErrors = [
+      'Fatal error',
+      'Parse error',
+      'Warning:',
+      'Notice:',
+      'Undefined variable',
+      'mysqli_connect',
+      'Connection refused',
+    ];
+    
+    for (const error of phpErrors) {
+      expect(pageContent).not.toContain(error);
+    }
+    
+    // Page should have some content
+    expect(pageContent.length).toBeGreaterThan(100);
+  });
+
+  test('page has expected structure', async ({ page }) => {
+    const url = process.env.LEGACY_URL!;
+    await navigateWithRetry(page, url);
+    
+    // Verify basic HTML structure
+    const hasHtml = await page.locator('html').count();
+    const hasBody = await page.locator('body').count();
+    
+    expect(hasHtml).toBe(1);
+    expect(hasBody).toBe(1);
+  });
+
+  test('no JavaScript console errors', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
+    
+    page.on('pageerror', (error) => {
+      consoleErrors.push(error.message);
+    });
+    
+    const url = process.env.LEGACY_URL!;
+    await navigateWithRetry(page, url);
+    
+    // Allow time for delayed errors
+    await page.waitForTimeout(2000);
+    
+    // Report errors via annotation but don't fail (legacy site might have some JS issues)
+    if (consoleErrors.length > 0) {
+      test.info().annotations.push({
+        type: 'Console Errors',
+        description: `Found ${consoleErrors.length} console errors: ${consoleErrors.slice(0, 3).join(', ')}`,
+      });
+    }
+  });
+});

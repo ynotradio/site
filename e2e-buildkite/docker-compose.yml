@@ -1,7 +1,8 @@
 # Buildkite E2E Docker Compose
-# Simple setup: Postgres → Payload → Playwright (external to compose)
+# Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright (external to compose)
 
 services:
+  # === PostgreSQL for Payload CMS ===
   postgres:
     image: postgres:16-alpine
     environment:
@@ -16,11 +17,27 @@ services:
       timeout: 3s
       retries: 10
 
+  # === MySQL for Legacy PHP Site ===
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ynot_site
+      MYSQL_USER: ynot_sql_user
+      MYSQL_PASSWORD: ynot_sql_pass
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # === Payload CMS ===
   payload:
     image: node:22-slim
     working_dir: /app
     volumes:
-      # Mount parent directory (repo root) since we're in e2e-buildkite/
       - ..:/app
     ports:
       - "3000:3000"
@@ -33,7 +50,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Install deps and start server (skip seed for now - just need login page)
     command: >
       bash -c "
         apt-get update && apt-get install -y curl git &&
@@ -48,3 +64,61 @@ services:
       timeout: 5s
       retries: 30
       start_period: 120s
+
+  # === PHP-FPM for Legacy Site ===
+  phpfpm:
+    image: php:7.4-fpm
+    working_dir: /app
+    volumes:
+      - ../src:/app
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_DATABASE=ynot_site
+      - MYSQL_USER=ynot_sql_user
+      - MYSQL_PASSWORD=ynot_sql_pass
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DATABASE=ynot_payload_dev
+      - POSTGRES_USER=ynot_postgres_user
+      - POSTGRES_PASSWORD=ynot_postgres_pass
+      - USE_POSTGRES_SCHEDULE=false
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y libpq-dev &&
+        docker-php-ext-install pdo pdo_pgsql pdo_mysql mysqli &&
+        echo 'clear_env = no' >> /usr/local/etc/php-fpm.d/www.conf &&
+        php-fpm
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # === Apache for Legacy Site ===
+  apache:
+    image: httpd:2.4
+    ports:
+      - "8080:80"
+    volumes:
+      - ../src:/app
+      - ../bin/docker/apache-vhost/httpd-vhost.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf
+    depends_on:
+      - phpfpm
+      - mysql
+    command: >
+      sh -c "
+        echo 'LoadModule proxy_module modules/mod_proxy.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule rewrite_module modules/mod_rewrite.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf &&
+        httpd-foreground
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
