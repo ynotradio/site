@@ -49,12 +49,12 @@ steps:
       fi
       
       # Wait for all services to be healthy
-      echo "⏳ Waiting for Payload to be healthy (this may take 2-3 minutes)..."
-      for i in {1..90}; do
+      echo "⏳ Waiting for services to be healthy (this may take 5+ minutes)..."
+      for i in {1..120}; do
         PAYLOAD_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-payload-1 2>/dev/null || echo "none")
         APACHE_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-apache-1 2>/dev/null || echo "none")
         
-        echo "[$i/90] Payload: $$PAYLOAD_HEALTH, Apache: $$APACHE_HEALTH"
+        echo "[$$i/120] Payload: $$PAYLOAD_HEALTH, Apache: $$APACHE_HEALTH"
         
         if [ "$$PAYLOAD_HEALTH" = "healthy" ] && [ "$$APACHE_HEALTH" = "healthy" ]; then
           echo "✅ All services healthy!"
@@ -69,7 +69,7 @@ steps:
           exit 1
         fi
         
-        if [ $$i -eq 90 ]; then
+        if [ $$i -eq 120 ]; then
           echo "⏰ Timeout waiting for services"
           docker compose logs 2>&1 | tail -200
           docker compose down
