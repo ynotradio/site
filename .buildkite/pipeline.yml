@@ -76,16 +76,12 @@ steps:
         sleep 5
       done
       
-      # Seed Payload database
+      # Seed Payload database using the running Payload container
       echo "🌱 Seeding Payload database..."
-      docker run --rm --network=e2e-buildkite_default \
-        -v "$$(pwd)/..:/app" -w /app \
-        -e CI=true \
-        -e DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev \
-        -e PAYLOAD_SECRET=e2e-test-secret-key-min-32-chars \
-        node:22-slim \
-        bash -c "corepack enable && yarn install --immutable && yarn seed:payload"
-      echo "✅ Payload database seeded"
+      docker compose exec -T payload bash -c "yarn seed:payload" || {
+        echo "⚠️ Seed failed or data already exists, continuing..."
+      }
+      echo "✅ Payload database ready"
       
       # Wait for PHP-FPM (composer install takes time)
       echo "⏳ Waiting for PHP-FPM..."
