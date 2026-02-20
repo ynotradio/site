@@ -48,9 +48,20 @@ steps:
         echo "✅ MySQL schema imported"
       fi
       
-      # Wait for Payload to be healthy
-      echo "⏳ Waiting for Payload to be healthy..."
+      # Wait for all services to be healthy
+      echo "⏳ Waiting for Payload to be healthy (this may take 2-3 minutes)..."
       for i in {1..90}; do
+        PAYLOAD_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-payload-1 2>/dev/null || echo "none")
+        APACHE_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-apache-1 2>/dev/null || echo "none")
+        
+        echo "[$i/90] Payload: $$PAYLOAD_HEALTH, Apache: $$APACHE_HEALTH"
+        
+        if [ "$$PAYLOAD_HEALTH" = "healthy" ] && [ "$$APACHE_HEALTH" = "healthy" ]; then
+          echo "✅ All services healthy!"
+          break
+        fi
+        
+        # Check for dead containers
         if ! docker ps -q -f name=e2e-buildkite-payload-1 | grep -q .; then
           echo "❌ Payload container stopped!"
           docker compose logs payload 2>&1 | tail -100
@@ -58,34 +69,14 @@ steps:
           exit 1
         fi
         
-        HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-payload-1 2>/dev/null || echo "none")
-        echo "[$i/90] Payload health: $$HEALTH"
-        
-        if [ "$$HEALTH" = "healthy" ]; then
-          echo "✅ Payload healthy!"
-          break
-        fi
-        
         if [ $$i -eq 90 ]; then
-          echo "⏰ Timeout waiting for Payload"
-          docker compose logs payload 2>&1 | tail -100
+          echo "⏰ Timeout waiting for services"
+          docker compose logs 2>&1 | tail -200
           docker compose down
           exit 1
         fi
         
         sleep 5
-      done
-      
-      # Wait for Apache to be healthy
-      echo "⏳ Waiting for Apache..."
-      for i in {1..30}; do
-        HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-apache-1 2>/dev/null || echo "none")
-        echo "[$i/30] Apache health: $$HEALTH"
-        if [ "$$HEALTH" = "healthy" ]; then
-          echo "✅ Apache healthy!"
-          break
-        fi
-        sleep 3
       done
       
       echo "🧪 Running Playwright E2E tests via docker compose..."
