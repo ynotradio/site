@@ -84,6 +84,10 @@ services:
       - POSTGRES_USER=ynot_postgres_user
       - POSTGRES_PASSWORD=ynot_postgres_pass
       - USE_POSTGRES_SCHEDULE=false
+      # Auth0 dummy config (prevents SDK init errors in E2E tests)
+      - AUTH0_DOMAIN=test.auth0.com
+      - AUTH0_CLIENT_ID=test-client-id
+      - AUTH0_CLIENT_SECRET=test-client-secret
     depends_on:
       mysql:
         condition: service_healthy
