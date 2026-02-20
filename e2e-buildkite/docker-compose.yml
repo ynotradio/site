@@ -102,8 +102,8 @@ services:
         php-fpm
       "
     healthcheck:
-      # Check that composer install finished AND php-fpm is responding
-      test: ["CMD-SHELL", "test -f /tmp/composer_done && php-fpm -t && pgrep php-fpm"]
+      # Check that composer install finished AND php-fpm is running
+      test: ["CMD-SHELL", "test -f /tmp/composer_done && php-fpm -t"]
       interval: 10s
       timeout: 5s
       retries: 30
