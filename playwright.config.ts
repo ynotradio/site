@@ -75,6 +75,10 @@ export default defineConfig({
               '--disable-dev-shm-usage',
               '--disable-web-security',
               '--disable-features=IsolateOrigins,site-per-process',
+              '--disable-gpu',
+              '--disable-software-rasterizer',
+              '--dns-prefetch-disable',
+              '--disable-background-networking',
             ],
           }
           : {},
@@ -97,6 +101,10 @@ export default defineConfig({
               '--disable-dev-shm-usage',
               '--disable-web-security',
               '--disable-features=IsolateOrigins,site-per-process',
+              '--disable-gpu',
+              '--disable-software-rasterizer',
+              '--dns-prefetch-disable',
+              '--disable-background-networking',
             ],
           }
           : {},

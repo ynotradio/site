@@ -4,6 +4,33 @@ import { Page } from '@playwright/test';
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 /**
+ * Navigate to a URL with retry logic for CI network flakiness
+ */
+async function navigateWithRetry(
+  page: Page,
+  url: string,
+  maxRetries = 5,
+): Promise<void> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      await page.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: 60000,
+      });
+      return; // Success
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed:`, e);
+      if (i < maxRetries - 1) {
+        await page.waitForTimeout(5000);
+      } else {
+        throw e;
+      }
+    }
+  }
+}
+
+/**
  * Login to Payload CMS admin interface
  * @param page - Playwright page object
  * @param email - Admin email (default from env or test default)
@@ -14,11 +41,8 @@ export async function loginToPayload(
   email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
   password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
 ): Promise<void> {
-  // Navigate to Payload admin (it will redirect to login if not authenticated)
-  await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
-    waitUntil: 'networkidle',
-    timeout: 30000,
-  });
+  // Navigate to Payload admin with retry logic (it will redirect to login if not authenticated)
+  await navigateWithRetry(page, `${PAYLOAD_BASE_URL}/admin`);
 
   // Check if we're on a "create first user" page (has "New Password" or "Confirm Password" field)
   const hasNewPasswordField = await page
