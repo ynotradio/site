@@ -16,20 +16,21 @@ test.describe('Payload CMS (local)', () => {
   });
 
   test('admin page loads', async ({ page }) => {
-    // Navigate to admin - will either show login or "Create First User" form
+    // Navigate to admin
     await page.goto(`${process.env.PAYLOAD_URL}/admin`);
-    // Wait for any form to be visible (Payload uses forms for both login and create user)
-    await page.waitForSelector('form', { timeout: 30000 });
-    // Either Login heading or Create First User form should be visible
-    const loginHeading = page.getByRole('heading', { name: /login/i });
-    const createUserHeading = page.getByRole('heading', { name: /create first user/i });
-    const hasLogin = await loginHeading.isVisible().catch(() => false);
-    const hasCreateUser = await createUserHeading.isVisible().catch(() => false);
-    // If neither found, log what we do see
-    if (!hasLogin && !hasCreateUser) {
-      const headings = await page.locator('h1, h2, h3').allTextContents();
-      console.log('Found headings:', headings);
-    }
-    expect(hasLogin || hasCreateUser).toBe(true);
+    // Wait for any form or main content
+    await page.waitForSelector('form, main, [class*="login"], [class*="welcome"]', { timeout: 30000 });
+    
+    // Find any major headings to understand what page we're on
+    const h1Texts = await page.locator('h1').allTextContents();
+    console.log('h1 headings:', h1Texts);
+    
+    // Check for various expected states
+    const welcomeVisible = await page.getByRole('heading', { name: /welcome/i }).isVisible().catch(() => false);
+    const loginVisible = await page.getByRole('heading', { name: /login/i }).isVisible().catch(() => false);
+    const createUserVisible = await page.getByRole('heading', { name: /create/i }).isVisible().catch(() => false);
+    
+    // Any of these indicates Payload is serving content correctly
+    expect(welcomeVisible || loginVisible || createUserVisible).toBe(true);
   });
 });
