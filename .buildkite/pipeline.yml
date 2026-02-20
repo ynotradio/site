@@ -7,15 +7,14 @@ env:
   CI: "true"
 
 steps:
-  # E2E Tests - Using official Playwright Docker image
-  # Following pattern from: https://github.com/buildkite/test-engine-client-examples
+  # Step 1: External site test (validates Playwright works)
   - label: ":playwright: E2E Tests (External Site)"
-    key: "e2e"
-    timeout_in_minutes: 10
+    key: "e2e-external"
+    timeout_in_minutes: 5
     command: |
       cd e2e-buildkite && \
       npm install && \
-      npx playwright test --reporter=list
+      npx playwright test --reporter=list --grep="external"
     plugins:
       - docker#v5.11.0:
           image: "mcr.microsoft.com/playwright:v1.58.2-noble"
@@ -25,17 +24,29 @@ steps:
     agents:
       queue: "default"
 
-  # PHP Unit Tests
-  - label: ":php: PHP Unit Tests"
-    key: "php-test"
+  # Step 2: Payload CMS test (local services)
+  - label: ":payload: E2E Tests (Payload CMS)"
+    key: "e2e-payload"
+    depends_on: "e2e-external"
+    timeout_in_minutes: 15
     command: |
-      docker-php-ext-install mysqli && \
-      cd src && \
-      composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpunit --testdox
-    plugins:
-      - docker#v5.11.0:
-          image: "composer:2"
-          propagate-environment: true
+      echo "🚀 Starting Payload services..."
+      cd e2e-buildkite && docker compose up -d --wait
+      
+      echo "🔍 Checking service connectivity..."
+      docker compose logs --tail=50
+      
+      echo "🧪 Running Playwright tests..."
+      docker run --rm --network=e2e-buildkite_default \
+        -v "$(pwd)/..:/app" -w /app/e2e-buildkite \
+        -e CI=true \
+        -e PAYLOAD_URL=http://payload:3000 \
+        mcr.microsoft.com/playwright:v1.58.2-noble \
+        bash -c "npm install && npx playwright test --reporter=list --grep='local'"
+      
+      echo "🧹 Cleanup..."
+      docker compose down
+    artifact_paths:
+      - "e2e-buildkite/test-results/**/*"
     agents:
       queue: "default"

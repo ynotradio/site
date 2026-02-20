@@ -1,0 +1,51 @@
+# Buildkite E2E Docker Compose
+# Simple setup: Postgres → Payload → Playwright (external to compose)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ynot_payload_dev
+      POSTGRES_USER: ynot_postgres_user
+      POSTGRES_PASSWORD: ynot_postgres_pass
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ynot_postgres_user -d ynot_payload_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  payload:
+    image: node:22-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - CI=true
+      - NODE_ENV=development
+      - DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev
+      - DATABASE_SSL=disable
+      - PAYLOAD_SECRET=testsecretkey1234567890
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Install deps, seed, start server
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y curl &&
+        corepack enable &&
+        yarn install --frozen-lockfile --ignore-engines &&
+        echo '🌱 Seeding database...' &&
+        yarn seed:payload &&
+        echo '✅ Starting dev server...' &&
+        yarn dev
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/admin/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
