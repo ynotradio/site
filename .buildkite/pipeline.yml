@@ -76,58 +76,27 @@ steps:
         sleep 5
       done
       
-      # Seed Payload database using the running Payload container
-      echo "🌱 Seeding Payload database..."
-      docker compose exec -T payload bash -c "yarn seed:payload" || {
-        echo "⚠️ Seed failed or data already exists, continuing..."
-      }
-      echo "✅ Payload database ready"
-      
-      # Wait for PHP-FPM (composer install takes time)
-      echo "⏳ Waiting for PHP-FPM..."
-      for i in {1..60}; do
-        if docker compose exec -T phpfpm php -v > /dev/null 2>&1; then
-          echo "✅ PHP-FPM ready"
+      # Wait for Apache to be healthy
+      echo "⏳ Waiting for Apache..."
+      for i in {1..30}; do
+        HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' e2e-buildkite-apache-1 2>/dev/null || echo "none")
+        echo "[$i/30] Apache health: $$HEALTH"
+        if [ "$$HEALTH" = "healthy" ]; then
+          echo "✅ Apache healthy!"
           break
         fi
         sleep 3
       done
       
-      # Wait for Apache
-      echo "⏳ Waiting for Apache..."
-      for i in {1..30}; do
-        if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
-          echo "✅ Apache ready"
-          break
-        fi
-        sleep 2
-      done
-      
-      # Test connectivity via localhost (ports are published to host)
-      echo "🔍 Testing service connectivity via localhost..."
-      curl -sf http://localhost:3000/admin/login > /dev/null && echo "✅ Payload reachable at localhost:3000" || echo "❌ Payload unreachable"
-      curl -sf http://localhost:8080/ > /dev/null && echo "✅ Apache reachable at localhost:8080" || echo "❌ Apache unreachable"
-      
-      echo "🧪 Running Playwright E2E tests..."
-      # Use docker-compose network and service names as hostnames
-      docker run --rm --network=e2e-buildkite_default \
-        -v "$$(pwd)/..:/app" -w /app \
-        -e CI=true \
-        -e PLAYWRIGHT_BASE_URL=http://payload:3000 \
-        -e PLAYWRIGHT_LEGACY_URL=http://apache:80 \
-        -e SKIP_PAYLOAD_SEED=true \
-        mcr.microsoft.com/playwright:v1.58.2-noble \
-        bash -c "
-          echo 'Testing connectivity via service names...'
-          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable via payload:3000' || echo '❌ Payload unreachable'
-          curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable via apache:80' || echo '❌ Apache unreachable'
-          
-          npm install --legacy-peer-deps
-          npx playwright test --reporter=list
-        "
+      echo "🧪 Running Playwright E2E tests via docker compose..."
+      # Run Playwright as a docker-compose service (proper network integration)
+      docker compose run --rm playwright
+      TEST_EXIT_CODE=$$?
       
       echo "🧹 Cleanup..."
       docker compose down
+      
+      exit $$TEST_EXIT_CODE
     artifact_paths:
       - "e2e/screenshots/**/*"
       - "test-results/**/*"
