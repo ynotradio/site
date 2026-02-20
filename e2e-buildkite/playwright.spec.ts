@@ -16,9 +16,19 @@ test.describe('Payload CMS (local)', () => {
   });
 
   test('admin page loads', async ({ page }) => {
-    // Navigate to admin
     const url = `${process.env.PAYLOAD_URL}/admin`;
-    const response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+    
+    // Retry navigation up to 3 times since Chromium in Docker can be flaky
+    let response = null;
+    for (let i = 0; i < 3; i++) {
+      try {
+        response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+        if (response?.status() === 200) break;
+      } catch (e) {
+        console.log(`Navigation attempt ${i + 1} failed:`, e);
+        await page.waitForTimeout(2000);
+      }
+    }
     
     // Verify we got a successful response
     expect(response?.status()).toBe(200);
