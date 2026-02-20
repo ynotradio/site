@@ -72,10 +72,13 @@ services:
     volumes:
       - ../src:/app
     environment:
-      - MYSQL_HOST=mysql
-      - MYSQL_DATABASE=ynot_site
-      - MYSQL_USER=ynot_sql_user
-      - MYSQL_PASSWORD=ynot_sql_pass
+      # MySQL connection (matches PHP $_ENV vars)
+      - DB_HOST=mysql
+      - DB_USER=ynot_sql_user
+      - DB_PASSWORD=ynot_sql_pass
+      - DB_NAME=ynot_site
+      - DB_PORT=3306
+      # PostgreSQL connection
       - POSTGRES_HOST=postgres
       - POSTGRES_DATABASE=ynot_payload_dev
       - POSTGRES_USER=ynot_postgres_user
