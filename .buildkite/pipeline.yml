@@ -73,8 +73,13 @@ steps:
         sleep 5
       done
       
+      # Get Payload container IP
+      PAYLOAD_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e2e-buildkite-payload-1)
+      echo "📍 Payload IP: $$PAYLOAD_IP"
+      
       echo "🧪 Running Payload tests..."
       docker run --rm --network=e2e-buildkite_default \
+        --add-host=payload:$$PAYLOAD_IP \
         -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
         -e CI=true \
         -e PAYLOAD_URL=http://payload:3000 \
@@ -82,6 +87,8 @@ steps:
         bash -c "
           echo 'Testing connectivity inside Playwright container...'
           curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ curl payload:3000 works' || echo '❌ curl payload:3000 failed'
+          echo 'Testing IP connectivity...'
+          curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo '✅ curl IP works' || echo '❌ curl IP failed'
           npm install && npx playwright test --reporter=list --grep='Payload'
         "
       
@@ -131,8 +138,13 @@ steps:
         docker compose logs phpfpm 2>&1 | tail -50
       fi
       
+      # Get Apache container IP
+      APACHE_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e2e-buildkite-apache-1)
+      echo "📍 Apache IP: $$APACHE_IP"
+      
       echo "🧪 Running Legacy PHP tests..."
       docker run --rm --network=e2e-buildkite_default \
+        --add-host=apache:$$APACHE_IP \
         -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
         -e CI=true \
         -e LEGACY_URL=http://apache:80 \
