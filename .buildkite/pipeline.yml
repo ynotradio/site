@@ -1,14 +1,92 @@
 # Buildkite Pipeline for Y-Not Radio Site
-# 
-# E2E tests with Payload CMS and Legacy PHP site
+#
+# CI pipeline with unit tests, linting, and E2E tests
 
 env:
+  NODE_VERSION: "22"
+  PHP_VERSION: "7.4"
   CI: "true"
 
 steps:
-  # Step 1: External site test (validates Playwright works)
+  # === Fast Unit Tests and Linting (run in parallel) ===
+  
+  # ESLint
+  - label: ":eslint: ESLint"
+    key: "eslint"
+    command: "corepack enable && yarn install --immutable && yarn lint"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
+  # Vitest Unit Tests
+  - label: ":test_tube: Vitest Tests"
+    key: "vitest"
+    command: "corepack enable && yarn install --immutable && yarn test:coverage"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "coverage/**/*"
+    agents:
+      queue: "default"
+
+  # Storybook Build
+  - label: ":storybook: Storybook Build"
+    key: "storybook"
+    command: "corepack enable && yarn install --immutable && yarn build-storybook"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "storybook-static/**/*"
+    agents:
+      queue: "default"
+
+  # PHP Lint (CodeSniffer)
+  - label: ":php: PHP Lint"
+    key: "php-lint"
+    command: |
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
+  # PHP Unit Tests
+  - label: ":php: PHP Unit Tests"
+    key: "php-test"
+    command: |
+      docker-php-ext-install mysqli && \
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpunit --testdox
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
+  # === E2E Tests (run after unit tests pass) ===
+
+  # E2E: External site test (validates Playwright works)
   - label: ":playwright: E2E Tests (External Site)"
     key: "e2e-external"
+    depends_on:
+      - "eslint"
+      - "vitest"
+      - "storybook"
+      - "php-lint"
+      - "php-test"
     timeout_in_minutes: 5
     command: |
       cd e2e-buildkite && \
@@ -23,7 +101,7 @@ steps:
     agents:
       queue: "default"
 
-  # Step 2: Payload CMS test
+  # E2E: Payload CMS test
   - label: ":payload: E2E Tests (Payload CMS)"
     key: "e2e-payload"
     depends_on: "e2e-external"
@@ -99,7 +177,7 @@ steps:
     agents:
       queue: "default"
 
-  # Step 3: Legacy PHP site test
+  # E2E: Legacy PHP site test
   - label: ":php: E2E Tests (Legacy PHP Site)"
     key: "e2e-legacy"
     depends_on: "e2e-payload"
