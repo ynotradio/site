@@ -242,4 +242,42 @@ class OnAirTest extends TestCase
 
         $this->assertSame('Judy G.', $result);
     }
+
+    // ---------------------------------------------------------------------------
+    // Timezone regression (issue #208)
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Regression test for issue #208: gmdate() vs date() timezone mismatch.
+     *
+     * The bug: on_air() used gmdate('Y-m-d') to fetch the schedule instead of
+     * date('Y-m-d'). When local time is EST and crosses UTC midnight (e.g. Jan 29
+     * at 19:26 EST = Jan 30 at 00:26 UTC), gmdate() returns the next calendar day.
+     * This caused on_air() to fetch Jan 30's schedule while checking Jan 29's time,
+     * so Judy G. (18:00-21:00 on Jan 30) appeared instead of Joey O. (15:00-21:00
+     * on Jan 29).
+     *
+     * on_air() was fixed to use date('Y-m-d') so that the schedule date and the
+     * current time always come from the same local timezone. This test documents
+     * the exact data scenario so the mismatch is immediately visible if the bug
+     * is ever reintroduced.
+     */
+    public function testIssue208TimezoneRegressionScenario(): void
+    {
+        // 7:26 PM EST — this is past UTC midnight, so gmdate() would return the next day
+        $timeAtBug = '19:26:00';
+
+        // Correct: Jan 29 schedule (local date) — Joey O. is on air 15:00-21:00
+        $localDateSchedule = [
+            ['start_time' => '15:00:00', 'end_time' => '21:00:00', 'host' => 'Joey O.'],
+        ];
+        $this->assertSame('Joey O.', find_current_slot($localDateSchedule, $timeAtBug));
+
+        // Bug scenario: Jan 30 schedule (UTC date) — Judy G. is on air 18:00-21:00.
+        // Passing the wrong date's schedule produces the wrong DJ, exactly as reported.
+        $utcDateSchedule = [
+            ['start_time' => '18:00:00', 'end_time' => '21:00:00', 'host' => 'Judy G.'],
+        ];
+        $this->assertSame('Judy G.', find_current_slot($utcDateSchedule, $timeAtBug));
+    }
 }
