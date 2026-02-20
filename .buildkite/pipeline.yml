@@ -103,31 +103,24 @@ steps:
         sleep 2
       done
       
-      # Get container IPs for Playwright
-      PAYLOAD_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e2e-buildkite-payload-1)
-      APACHE_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e2e-buildkite-apache-1)
-      echo "📍 Payload IP: $$PAYLOAD_IP"
-      echo "📍 Apache IP: $$APACHE_IP"
-      
-      # Test connectivity
-      echo "🔍 Testing service connectivity..."
-      curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo "✅ Payload reachable" || echo "❌ Payload unreachable"
-      curl -sf http://$$APACHE_IP:80/ > /dev/null && echo "✅ Apache reachable" || echo "❌ Apache unreachable"
+      # Test connectivity via localhost (ports are published to host)
+      echo "🔍 Testing service connectivity via localhost..."
+      curl -sf http://localhost:3000/admin/login > /dev/null && echo "✅ Payload reachable at localhost:3000" || echo "❌ Payload unreachable"
+      curl -sf http://localhost:8080/ > /dev/null && echo "✅ Apache reachable at localhost:8080" || echo "❌ Apache unreachable"
       
       echo "🧪 Running Playwright E2E tests..."
-      docker run --rm --network=e2e-buildkite_default \
-        --add-host=payload:$$PAYLOAD_IP \
-        --add-host=apache:$$APACHE_IP \
+      # Use host network so Chromium can reach published ports via localhost
+      docker run --rm --network=host \
         -v "$$(pwd)/..:/app" -w /app \
         -e CI=true \
-        -e PLAYWRIGHT_BASE_URL=http://$$PAYLOAD_IP:3000 \
-        -e PLAYWRIGHT_LEGACY_URL=http://$$APACHE_IP:80 \
+        -e PLAYWRIGHT_BASE_URL=http://localhost:3000 \
+        -e PLAYWRIGHT_LEGACY_URL=http://localhost:8080 \
         -e SKIP_PAYLOAD_SEED=true \
         mcr.microsoft.com/playwright:v1.58.2-noble \
         bash -c "
-          echo 'Testing connectivity inside Playwright container...'
-          curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo '✅ Payload reachable via IP' || echo '❌ Payload unreachable'
-          curl -sf http://$$APACHE_IP:80/ > /dev/null && echo '✅ Apache reachable via IP' || echo '❌ Apache unreachable'
+          echo 'Testing connectivity via localhost (host network mode)...'
+          curl -sf http://localhost:3000/admin/login > /dev/null && echo '✅ Payload reachable via localhost:3000' || echo '❌ Payload unreachable'
+          curl -sf http://localhost:8080/ > /dev/null && echo '✅ Apache reachable via localhost:8080' || echo '❌ Apache unreachable'
           
           npm install --legacy-peer-deps
           npx playwright test --reporter=list
