@@ -3,15 +3,16 @@
 import { test, expect, Page } from '@playwright/test';
 
 // Helper to navigate with retry logic for Docker networking flakiness
-async function navigateWithRetry(page: Page, url: string, maxRetries = 3): Promise<number | null> {
+async function navigateWithRetry(page: Page, url: string, maxRetries = 5): Promise<number | null> {
   let response = null;
   for (let i = 0; i < maxRetries; i++) {
     try {
       response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
       if (response?.status() === 200) return response.status();
     } catch (e) {
-      console.log(`Navigation attempt ${i + 1} failed:`, e);
-      await page.waitForTimeout(2000);
+      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed:`, e);
+      // Increase delay between retries
+      await page.waitForTimeout(5000);
     }
   }
   return response?.status() || null;
@@ -25,9 +26,11 @@ test.describe('playwright.dev (external)', () => {
 });
 
 test.describe('Payload CMS (local)', () => {
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ page }) => {
     // Skip if PAYLOAD_URL is not set
     test.skip(!process.env.PAYLOAD_URL, 'PAYLOAD_URL not set - skipping local tests');
+    // Allow server to stabilize between tests
+    await page.waitForTimeout(2000);
   });
 
   test('admin page loads and shows create-first-user form', async ({ page }) => {
@@ -100,9 +103,11 @@ test.describe('Payload CMS (local)', () => {
 });
 
 test.describe('Legacy PHP Site (local)', () => {
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ page }) => {
     // Skip if LEGACY_URL is not set
     test.skip(!process.env.LEGACY_URL, 'LEGACY_URL not set - skipping legacy tests');
+    // Allow server to stabilize between tests
+    await page.waitForTimeout(2000);
   });
 
   test('homepage loads without PHP errors', async ({ page }) => {
