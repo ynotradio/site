@@ -65,6 +65,7 @@ steps:
   - label: ":php: PHP Unit Tests"
     key: "php-test"
     command: |
+      docker-php-ext-install mysqli && \
       cd src && \
       composer install --no-interaction --prefer-dist && \
       vendor/bin/phpunit --testdox
