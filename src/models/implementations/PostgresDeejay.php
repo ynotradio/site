@@ -83,7 +83,9 @@ class PostgresDeejay implements Deejay {
             LEFT JOIN djs_rels dr ON d.id = dr.parent_id AND dr.path = 'person'
             LEFT JOIN people p ON dr.people_id = p.id
             LEFT JOIN media m ON d.photo_id = m.id
-            WHERE d.id = :id AND COALESCE(d.on_air, true) = true
+            WHERE d.id = :id 
+              AND COALESCE(d.on_air, true) = true
+              AND d._status = 'published'
             GROUP BY d.id, d.email, d.description, d.external_connect_text, 
                      d.external_connect_url, d.sort_order, m.filename, m.legacy_url
         ");
@@ -130,6 +132,7 @@ class PostgresDeejay implements Deejay {
             LEFT JOIN people p ON dr.people_id = p.id
             LEFT JOIN media m ON d.photo_id = m.id
             WHERE COALESCE(d.on_air, true) = true
+              AND d._status = 'published'
             GROUP BY d.id, d.email, d.description, d.external_connect_text, 
                      d.external_connect_url, d.sort_order, m.filename, m.legacy_url
             ORDER BY d.sort_order ASC

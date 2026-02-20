@@ -19,14 +19,24 @@ CLOUDINARY_API_SECRET="${CLOUDINARY_API_SECRET:-}"
 
 # Create .env.local with Payload CMS and PostgreSQL configuration
 # Note: Using unquoted EOF to allow variable expansion for Cloudinary vars
+# When running in Docker, localhost won't work for database connections
+# We detect CI/Docker mode and use service names accordingly
+if [ "${CI:-false}" = "true" ] || [ -n "${COMPOSE_FILE:-}" ]; then
+  POSTGRES_HOST_FOR_PAYLOAD="postgres"
+else
+  POSTGRES_HOST_FOR_PAYLOAD="localhost"
+fi
+
 cat > "$PROJECT_ROOT/.env.local" << EOF
 # Payload Core
 PAYLOAD_SECRET=dev-only-secret
 PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000
 PORT=3000
 
-# Configure for Payload CMS with local Docker Postgres
-DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@localhost:5432/ynot_payload_dev
+# Configure for Payload CMS with Docker Postgres
+# In CI/Docker: uses service name "postgres"
+# In local dev: uses "localhost"
+DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@${POSTGRES_HOST_FOR_PAYLOAD}:5432/ynot_payload_dev
 DATABASE_SSL=disable
 
 # Security

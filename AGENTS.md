@@ -274,6 +274,9 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 - Create "proof of work" documentation (action plans, checklists, summaries)
 - Repeat information that's in the code or tests
 - Explain every decision in prose
+- Create "quick reference" comparison guides for external tools (users can read official docs)
+- Create detailed timeline/phase plans for solo hobby projects (no team coordination needed)
+- Generate implementation summaries as proof of work (code speaks for itself)
 - Generate documentation as evidence you completed a task
 
 **PR Description Format:**

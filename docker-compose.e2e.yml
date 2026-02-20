@@ -1,0 +1,76 @@
+# docker-compose.e2e.yml
+# E2E testing services for Buildkite CI
+# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.e2e.yml up
+
+services:
+  # Payload CMS / Next.js server for E2E tests
+  payload:
+    container_name: payload
+    image: node:22-slim
+    working_dir: /app
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - CI=true
+      - NODE_ENV=development
+      # Override DATABASE_URI to use Docker service name instead of localhost
+      - DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev
+      - DATABASE_SSL=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Install curl for healthcheck, yarn deps, seed the database, then start dev server
+    command: >
+      bash -c "apt-get update && apt-get install -y curl &&
+               yarn --ignore-engines install --frozen-lockfile &&
+               echo '🌱 Seeding Payload database...' &&
+               yarn --ignore-engines seed:payload &&
+               echo '✅ Seed complete, starting Next.js...' &&
+               yarn dev"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+    networks:
+      - app-tier
+
+  # Playwright test runner - shares network with payload
+  playwright:
+    container_name: playwright
+    image: mcr.microsoft.com/playwright:v1.58.0-jammy
+    # Reset network_mode from base compose (host) to allow networks: to work
+    network_mode: !reset null
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - CI=true
+      - NODE_ENV=development
+      # Skip seeding in global-setup since we seed via payload container
+      - SKIP_PAYLOAD_SEED=true
+      - PLAYWRIGHT_LEGACY_URL=http://apache:80
+    depends_on:
+      payload:
+        condition: service_healthy
+    networks:
+      - app-tier
+    # Install deps and run tests - use the IP directly since DNS/Chromium issues
+    command: >
+      bash -c "echo 'Testing connectivity to payload...' &&
+               PAYLOAD_IP=$$(getent hosts payload | awk '{ print $$1 }') &&
+               echo \"Resolved payload IP: $$PAYLOAD_IP\" &&
+               export PLAYWRIGHT_BASE_URL=\"http://$$PAYLOAD_IP:3000\" &&
+               echo \"Using PLAYWRIGHT_BASE_URL=$$PLAYWRIGHT_BASE_URL\" &&
+               curl -sf http://$$PAYLOAD_IP:3000/admin > /dev/null && echo '✅ curl can reach Payload' &&
+               yarn install --frozen-lockfile && 
+               npx playwright test --reporter=list"
+
+networks:
+  app-tier:
+    driver: bridge

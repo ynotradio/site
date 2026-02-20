@@ -1,0 +1,23 @@
+#!/bin/bash
+# .buildkite/hooks/pre-command
+# Runs before each command in a step
+
+set -euo pipefail
+
+# Login to GHCR using Buildkite secrets
+echo "--- :docker: Logging into GHCR"
+GHCR_USERNAME=$(buildkite-agent secret get GHCR_USERNAME)
+GHCR_TOKEN=$(buildkite-agent secret get GHCR_TOKEN)
+
+if [[ -n "$GHCR_TOKEN" && -n "$GHCR_USERNAME" ]]; then
+  echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
+  echo "✅ Logged into GHCR"
+else
+  echo "⚠️ GHCR credentials not found, skipping login"
+fi
+
+# Setup E2E environment files if the script exists
+if [[ -f "./bin/setup-e2e-env.sh" ]]; then
+  echo "--- Setting up E2E environment"
+  ./bin/setup-e2e-env.sh
+fi

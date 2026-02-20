@@ -1,5 +1,10 @@
 import { Page, expect } from '@playwright/test';
 
+// Base URL for Payload - uses env var in CI/Docker, localhost in local dev
+const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+// Base URL for Legacy PHP site - uses env var in CI/Docker, localhost in local dev
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || 'http://localhost:8080';
+
 /**
  * Wait for Payload CMS save operation to complete
  * Checks for either URL change to detail page or success message
@@ -31,7 +36,7 @@ export async function navigateToPayloadCollection(
   page: Page,
   collectionName: string,
 ): Promise<void> {
-  await page.goto(`http://localhost:3000/admin/collections/${collectionName}`, {
+  await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/${collectionName}`, {
     waitUntil: 'networkidle',
     timeout: 30000,
   });
@@ -47,7 +52,7 @@ export async function navigateToPayloadCollectionCreate(
   page: Page,
   collectionName: string,
 ): Promise<void> {
-  await page.goto(`http://localhost:3000/admin/collections/${collectionName}/create`, {
+  await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/${collectionName}/create`, {
     waitUntil: 'networkidle',
     timeout: 30000,
   });
@@ -200,7 +205,7 @@ export async function navigateToLegacySiteWithPostgres(
 ): Promise<Response | null> {
   // The setup-e2e-env.sh already sets USE_POSTGRES_* env vars,
   // but we can also use the URL parameter as a fallback
-  const response = await page.goto(`http://localhost:8080/${phpPage}?ff=${featureFlag}`, {
+  const response = await page.goto(`${LEGACY_BASE_URL}/${phpPage}?ff=${featureFlag}`, {
     waitUntil: 'networkidle',
     timeout: 30000,
   });

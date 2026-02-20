@@ -1,0 +1,62 @@
+# Buildkite Pipeline for Y-Not Radio Site
+#
+# Note: E2E tests are temporarily excluded due to Docker-in-Docker networking
+# limitations with Chromium. See docs/buildkite-e2e-investigation.md for details.
+# E2E tests continue to run in GitHub Actions.
+
+env:
+  NODE_VERSION: "22"
+  PHP_VERSION: "7.4"
+  CI: "true"
+
+steps:
+  # ESLint
+  - label: ":eslint: ESLint"
+    key: "eslint"
+    command: "corepack enable && yarn install --immutable && yarn lint"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
+  # Vitest Unit Tests
+  - label: ":test_tube: Vitest Tests"
+    key: "vitest"
+    command: "corepack enable && yarn install --immutable && yarn test:coverage"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "coverage/**/*"
+    agents:
+      queue: "default"
+
+  # Storybook Build
+  - label: ":storybook: Storybook Build"
+    key: "storybook"
+    command: "corepack enable && yarn install --immutable && yarn build-storybook"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "storybook-static/**/*"
+    agents:
+      queue: "default"
+
+  # PHP Lint (CodeSniffer)
+  - label: ":php: PHP Lint"
+    key: "php-lint"
+    command: |
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"

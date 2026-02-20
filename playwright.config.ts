@@ -16,7 +16,8 @@ export default defineConfig({
   testDir: './e2e',
 
   // Maximum time one test can run for
-  timeout: 20 * 1000,
+  // Increased for CI where Payload compilation can be slow
+  timeout: process.env.CI ? 60 * 1000 : 20 * 1000,
 
   // Maximum time for test fixtures (beforeAll, afterAll)
   expect: {
@@ -44,7 +45,9 @@ export default defineConfig({
   // Shared settings for all the projects below
   use: {
     // Base URL to use in actions like `await page.goto('/')`
-    baseURL: 'http://localhost:3000',
+    // In CI/Docker: use PLAYWRIGHT_BASE_URL (http://payload:3000)
+    // Locally: default to http://localhost:3000
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000',
 
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -62,6 +65,20 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
+      use: {
+        // In CI, disable browser sandbox and network isolation for container compatibility
+        launchOptions: process.env.CI
+          ? {
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-web-security',
+              '--disable-features=IsolateOrigins,site-per-process',
+            ],
+          }
+          : {},
+      },
     },
 
     // Main test project - uses saved authentication state
@@ -71,6 +88,18 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         // Use saved authentication state from setup project
         storageState: authFile,
+        // In CI, disable browser sandbox and network isolation for container compatibility
+        launchOptions: process.env.CI
+          ? {
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-web-security',
+              '--disable-features=IsolateOrigins,site-per-process',
+            ],
+          }
+          : {},
       },
       // Don't run setup tests again, and depend on setup completing first
       testIgnore: /auth\.setup\.ts/,
@@ -86,12 +115,15 @@ export default defineConfig({
   // - In local dev: Containers are left running for faster re-runs
 
   // Web server configuration
-  webServer: {
-    command: 'yarn --ignore-engines dev',
-    url: 'http://localhost:3000/admin',
-    timeout: 180 * 1000, // 3 minutes for slow Payload initialization
-    reuseExistingServer: true, // Always reuse if already running (started by setup script)
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  // In CI, the dev server is started externally before Playwright runs
+  webServer: process.env.CI
+    ? undefined
+    : {
+      command: 'yarn --ignore-engines dev',
+      url: 'http://localhost:3000/admin',
+      timeout: 180 * 1000, // 3 minutes for slow Payload initialization
+      reuseExistingServer: true, // Always reuse if already running (started by setup script)
+      stdout: 'pipe',
+      stderr: 'pipe',
+    },
 });
