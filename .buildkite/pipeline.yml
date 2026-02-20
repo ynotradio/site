@@ -87,13 +87,23 @@ steps:
         docker compose logs payload | tail -50
       }
       
+      # Get Payload container IP for Playwright (since --network=host doesn't help in DinD)
+      PAYLOAD_IP=$$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' e2e-buildkite-payload-1)
+      echo "📍 Payload container IP: $$PAYLOAD_IP"
+      
       echo "🧪 Running Playwright tests..."
-      docker run --rm --network=host \
+      # Try with container network and direct IP
+      docker run --rm --network=e2e-buildkite_default \
         -v "$$(pwd)/..:/app" -w /app/e2e-buildkite \
         -e CI=true \
-        -e PAYLOAD_URL=http://localhost:3000 \
+        -e PAYLOAD_URL=http://$$PAYLOAD_IP:3000 \
         mcr.microsoft.com/playwright:v1.58.2-noble \
-        bash -c "npm install && npx playwright test --reporter=list --grep='local'"
+        bash -c "
+          echo 'Testing connectivity inside Playwright container...'
+          curl -sf http://$$PAYLOAD_IP:3000/admin/login > /dev/null && echo '✅ curl $$PAYLOAD_IP:3000 works inside container' || echo '❌ curl $$PAYLOAD_IP:3000 failed'
+          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ curl payload:3000 works inside container' || echo '❌ curl payload:3000 failed'
+          npm install && npx playwright test --reporter=list --grep='local'
+        "
       
       echo "🧹 Cleanup..."
       docker compose down
