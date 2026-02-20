@@ -18,7 +18,7 @@ steps:
       npx playwright test --reporter=list
     plugins:
       - docker#v5.11.0:
-          image: "mcr.microsoft.com/playwright:v1.48.1-noble"
+          image: "mcr.microsoft.com/playwright:v1.58.2-noble"
           propagate-environment: true
     artifact_paths:
       - "e2e-buildkite/test-results/**/*"
