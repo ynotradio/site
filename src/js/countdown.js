@@ -1,10 +1,13 @@
-$(document).ready(function() {
-  Madness.starttime = new Date();
-  Madness.endtime = new Date(Madness.starttime.getTime() + (1000*(($('#hr').text()*60*60)+($('#min').text()*60)+($('#sec').text()*1))));
-  Madness.timer = (Madness.endtime > Madness.starttime);
-  Madness.startTimer(Madness.endtime, Madness.timer);
-  Madness.updateScoreboard();
-});
+// Only run jQuery code in browser environment
+if (typeof $ !== 'undefined') {
+  $(document).ready(function() {
+    Madness.starttime = new Date();
+    Madness.endtime = new Date(Madness.starttime.getTime() + (1000*(($('#hr').text()*60*60)+($('#min').text()*60)+($('#sec').text()*1))));
+    Madness.timer = (Madness.endtime > Madness.starttime);
+    Madness.startTimer(Madness.endtime, Madness.timer);
+    Madness.updateScoreboard();
+  });
+}
 
 Madness = {
   startTimer: function(endtime, timer) {
@@ -47,3 +50,9 @@ Madness = {
     $(selector).load(partial);
   }
 };
+
+// Export for testing (Node.js environment)
+// In browser, this will be undefined and won't affect existing functionality
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { Madness };
+}
