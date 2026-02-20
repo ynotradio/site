@@ -109,18 +109,18 @@ steps:
       curl -sf http://localhost:8080/ > /dev/null && echo "✅ Apache reachable at localhost:8080" || echo "❌ Apache unreachable"
       
       echo "🧪 Running Playwright E2E tests..."
-      # Use host network so Chromium can reach published ports via localhost
-      docker run --rm --network=host \
+      # Use docker-compose network and service names as hostnames
+      docker run --rm --network=e2e-buildkite_default \
         -v "$$(pwd)/..:/app" -w /app \
         -e CI=true \
-        -e PLAYWRIGHT_BASE_URL=http://localhost:3000 \
-        -e PLAYWRIGHT_LEGACY_URL=http://localhost:8080 \
+        -e PLAYWRIGHT_BASE_URL=http://payload:3000 \
+        -e PLAYWRIGHT_LEGACY_URL=http://apache:80 \
         -e SKIP_PAYLOAD_SEED=true \
         mcr.microsoft.com/playwright:v1.58.2-noble \
         bash -c "
-          echo 'Testing connectivity via localhost (host network mode)...'
-          curl -sf http://localhost:3000/admin/login > /dev/null && echo '✅ Payload reachable via localhost:3000' || echo '❌ Payload unreachable'
-          curl -sf http://localhost:8080/ > /dev/null && echo '✅ Apache reachable via localhost:8080' || echo '❌ Apache unreachable'
+          echo 'Testing connectivity via service names...'
+          curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable via payload:3000' || echo '❌ Payload unreachable'
+          curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable via apache:80' || echo '❌ Apache unreachable'
           
           npm install --legacy-peer-deps
           npx playwright test --reporter=list
