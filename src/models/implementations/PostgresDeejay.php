@@ -19,9 +19,7 @@ class PostgresDeejay implements Deejay {
 
     /**
      * Get the Cloudinary URL with transformations for image optimization
-     * Matches the generateFileURL function in payload.config.ts but adds transformations
-     * 
-     * @param string $filename The Cloudinary public_id (e.g., "dev/uploads/1767550468130-a397b55e")
+     * @param string $filename The Cloudinary public_id
      * @return string The full Cloudinary URL with transformations
      */
     private function getCloudinaryImageUrl(string $filename): string {
@@ -31,25 +29,31 @@ class PostgresDeejay implements Deejay {
             return '';
         }
         
-        // Use c_fill (crop and fill), w_150 (width), h_150 (height), g_face (focus on face)
-        // q_auto (automatic quality), f_auto (automatic format like WebP when supported)
         $transformations = 'c_fill,w_150,h_150,g_face,q_auto,f_auto';
-        
         return "https://res.cloudinary.com/{$cloudName}/image/upload/{$transformations}/{$filename}";
     }
 
     /**
+     * Build SQL CASE expression for photo URL with Cloudinary transformations
+     * @return string The SQL CASE expression
+     */
+    private function buildPhotoUrlCase(): string {
+        $cloudinaryUrl = $this->getCloudinaryBaseUrl();
+        $transformations = 'c_fill,w_150,h_150,g_face,q_auto,f_auto';
+        
+        return "CASE 
+            WHEN m.filename IS NOT NULL AND m.filename != '' 
+            THEN '{$cloudinaryUrl}{$transformations}/' || m.filename
+            ELSE COALESCE(m.legacy_url, '')
+        END as pic";
+    }
+
+    /**
      * Get the Cloudinary base URL for constructing image URLs
-     * Matches the generateFileURL function in payload.config.ts
-     * 
      * @return string The Cloudinary base URL
      */
     private function getCloudinaryBaseUrl(): string {
-        $cloudName = getenv('CLOUDINARY_CLOUD_NAME');
-        if (!$cloudName) {
-            error_log('PostgresDeejay: CLOUDINARY_CLOUD_NAME environment variable not set');
-            return '';
-        }
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
         return "https://res.cloudinary.com/{$cloudName}/image/upload/";
     }
 
@@ -60,9 +64,7 @@ class PostgresDeejay implements Deejay {
      * @return array|null The deejay data or null if not found
      */
     public function getById(int $id): ?array {
-        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
-        // Cloudinary transformations: fill and crop to 150x150, focus on face, auto quality/format
-        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_150,h_150,g_face,q_auto,f_auto/";
+        $photoUrlCase = $this->buildPhotoUrlCase();
         
         $stmt = $this->db->prepare("
             SELECT 
@@ -72,11 +74,7 @@ class PostgresDeejay implements Deejay {
                 d.external_connect_text,
                 d.external_connect_url,
                 d.sort_order as sort,
-                CASE 
-                    WHEN m.filename IS NOT NULL AND m.filename != '' 
-                    THEN '$cloudinaryBase' || m.filename
-                    ELSE COALESCE(m.legacy_url, '')
-                END as pic,
+                {$photoUrlCase},
                 string_agg(p.name, ' & ' ORDER BY dr.order) as name,
                 'no' as deleted
             FROM djs d
@@ -108,9 +106,7 @@ class PostgresDeejay implements Deejay {
      * @return array Array of two arrays [left_column, right_column]
      */
     public function getAll(int $limit = 64): array {
-        $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
-        // Cloudinary transformations: fill and crop to 150x150, focus on face, auto quality/format
-        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_150,h_150,g_face,q_auto,f_auto/";
+        $photoUrlCase = $this->buildPhotoUrlCase();
         
         $stmt = $this->db->prepare("
             SELECT 
@@ -120,11 +116,7 @@ class PostgresDeejay implements Deejay {
                 d.external_connect_text,
                 d.external_connect_url,
                 d.sort_order as sort,
-                CASE 
-                    WHEN m.filename IS NOT NULL AND m.filename != '' 
-                    THEN '$cloudinaryBase' || m.filename
-                    ELSE COALESCE(m.legacy_url, '')
-                END as pic,
+                {$photoUrlCase},
                 string_agg(p.name, ' & ' ORDER BY dr.order) as name,
                 'no' as deleted
             FROM djs d
@@ -143,11 +135,17 @@ class PostgresDeejay implements Deejay {
         $stmt->execute();
         
         $results = $stmt->fetchAll();
-        
-        // Format all results
         $results = array_map([$this, 'formatResult'], $results);
         
-        // Split into left and right columns (odd/even split)
+        return $this->splitIntoColumns($results);
+    }
+
+    /**
+     * Split results into left and right columns for display
+     * @param array $results Formatted results
+     * @return array Array of two arrays [left_column, right_column]
+     */
+    private function splitIntoColumns(array $results): array {
         $left_column = [];
         $right_column = [];
         

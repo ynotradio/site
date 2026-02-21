@@ -1,7 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
 
-// Path to store authenticated session state
 const authFile = './e2e/.auth/payload-session.json';
+
+const ciBrowserArgs = [
+  '--no-sandbox',
+  '--disable-setuid-sandbox',
+  '--disable-dev-shm-usage',
+  '--disable-web-security',
+  '--disable-features=IsolateOrigins,site-per-process',
+];
+
+const getCILaunchOptions = () =>
+  process.env.CI ? { args: ciBrowserArgs } : {};
 
 /**
  * Playwright configuration for E2E tests
@@ -61,47 +71,21 @@ export default defineConfig({
 
   // Configure projects for major browsers
   projects: [
-    // Setup project - runs first to authenticate and save session
     {
       name: 'setup',
       testMatch: /auth\.setup\.ts/,
       use: {
-        // In CI, disable browser sandbox and network isolation for container compatibility
-        launchOptions: process.env.CI
-          ? {
-            args: [
-              '--no-sandbox',
-              '--disable-setuid-sandbox',
-              '--disable-dev-shm-usage',
-              '--disable-web-security',
-              '--disable-features=IsolateOrigins,site-per-process',
-            ],
-          }
-          : {},
+        launchOptions: getCILaunchOptions(),
       },
     },
 
-    // Main test project - uses saved authentication state
     {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        // Use saved authentication state from setup project
         storageState: authFile,
-        // In CI, disable browser sandbox and network isolation for container compatibility
-        launchOptions: process.env.CI
-          ? {
-            args: [
-              '--no-sandbox',
-              '--disable-setuid-sandbox',
-              '--disable-dev-shm-usage',
-              '--disable-web-security',
-              '--disable-features=IsolateOrigins,site-per-process',
-            ],
-          }
-          : {},
+        launchOptions: getCILaunchOptions(),
       },
-      // Don't run setup tests again, and depend on setup completing first
       testIgnore: /auth\.setup\.ts/,
       dependencies: ['setup'],
     },
