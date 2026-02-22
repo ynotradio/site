@@ -1,0 +1,18 @@
+name: Test Coverage Steps
+description: Run test coverage and upload results
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: yarn install --frozen-lockfile --ignore-engines | tee -a coverage-steps.log
+    
+    - name: Run coverage
+      shell: bash
+      run: yarn test:coverage | tee -a coverage-steps.log
+    
+    - name: Upload coverage
+      uses: actions/upload-artifact@v6
+      with:
+        name: coverage
+        path: coverage/
