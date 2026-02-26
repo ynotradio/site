@@ -123,6 +123,7 @@ services:
         condition: service_healthy
     command: >
       sh -c "
+        apt-get update && apt-get install -y curl &&
         echo 'LoadModule proxy_module modules/mod_proxy.so' >> /usr/local/apache2/conf/httpd.conf &&
         echo 'LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so' >> /usr/local/apache2/conf/httpd.conf &&
         echo 'LoadModule rewrite_module modules/mod_rewrite.so' >> /usr/local/apache2/conf/httpd.conf &&
@@ -130,11 +131,12 @@ services:
         httpd-foreground
       "
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost/ || exit 1"]
+      # Check Apache responds (allow 4xx/5xx from PHP - just need Apache to be up)
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost/ | grep -qE '^[2345]' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
-      start_period: 60s
+      start_period: 90s
 
   # === Playwright E2E Tests ===
   playwright:
