@@ -52,8 +52,20 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Dev mode: slower first startup but reliable
-    command: ["sh", "-c", "yarn payload:migrate && yarn dev"]
+    # Wait for Postgres connection, then run migrations and dev server
+    command: >
+      sh -c "
+        echo 'Testing Postgres connection...'
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          if node -e \"const net = require('net'); const s = net.connect(5432, 'postgres', () => { s.end(); process.exit(0); }); s.on('error', () => process.exit(1));\" 2>/dev/null; then
+            echo 'Postgres is ready!'
+            break
+          fi
+          echo 'Waiting for Postgres... attempt' \$i
+          sleep 3
+        done
+        yarn payload:migrate && yarn dev
+      "
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/login || exit 1"]
       interval: 15s
