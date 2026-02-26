@@ -74,6 +74,12 @@ services:
           echo "Waiting for Postgres... attempt $$i"
           sleep 3
         done
+        
+        # Fix esbuild binary mismatch in DinD environment
+        # The pre-built image may have different esbuild binary than host expects
+        echo 'Reinstalling esbuild to fix potential version mismatch...'
+        npm rebuild esbuild 2>/dev/null || yarn rebuild esbuild 2>/dev/null || true
+        
         yarn payload:migrate && yarn dev
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/login || exit 1"]
