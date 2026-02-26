@@ -1,21 +1,21 @@
 # Buildkite E2E Docker Compose
 # Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright
 #
-# Pre-built images (ghcr.io/ynotradio/site/*) are used when available.
-# Set GHCR_ORG env var to use pre-built images, otherwise builds locally.
+# Uses .env file for configuration. Override with .env.local or environment variables.
+# For pre-built GHCR images, set PAYLOAD_IMAGE, PHPFPM_IMAGE, etc.
 
 services:
   # === PostgreSQL for Payload CMS ===
   postgres:
-    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/postgres-seeded:latest}${GHCR_ORG:-postgres:16-alpine}
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
     environment:
-      POSTGRES_DB: ynot_payload_dev
-      POSTGRES_USER: ynot_postgres_user
-      POSTGRES_PASSWORD: ynot_postgres_pass
+      POSTGRES_DB: ${POSTGRES_DB:-ynot_payload_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-ynot_postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ynot_postgres_user -d ynot_payload_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ynot_postgres_user} -d ${POSTGRES_DB:-ynot_payload_dev}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -24,22 +24,21 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: ynot_site
-      MYSQL_USER: ynot_sql_user
-      MYSQL_PASSWORD: ynot_sql_pass
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev_root_password_not_secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ynot_site}
+      MYSQL_USER: ${MYSQL_USER:-ynot_sql_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-ynot_sql_user}", "-p${MYSQL_PASSWORD:-dev_mysql_password_not_secret}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   # === Payload CMS ===
-  # Uses pre-built image with node_modules when GHCR_ORG is set
   payload:
-    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/payload-dev:latest}${GHCR_ORG:-node:22-slim}
+    image: ${PAYLOAD_IMAGE:-node:22-slim}
     working_dir: /app
     volumes:
       - ..:/app
@@ -48,9 +47,9 @@ services:
     environment:
       - CI=true
       - NODE_ENV=development
-      - DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
       - DATABASE_SSL=disable
-      - PAYLOAD_SECRET=testsecretkey1234567890
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
     depends_on:
       postgres:
         condition: service_healthy
@@ -73,24 +72,23 @@ services:
       start_period: 120s
 
   # === PHP-FPM for Legacy Site ===
-  # Uses pre-built image with extensions already installed
   phpfpm:
-    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/phpfpm-dev:latest}${GHCR_ORG:-php:7.4-fpm}
+    image: ${PHPFPM_IMAGE:-php:7.4-fpm}
     working_dir: /app
     volumes:
       - ../src:/app
     environment:
       # MySQL connection (matches PHP $_ENV vars)
       - DB_HOST=mysql
-      - DB_USER=ynot_sql_user
-      - DB_PASSWORD=ynot_sql_pass
-      - DB_NAME=ynot_site
+      - DB_USER=${MYSQL_USER:-ynot_sql_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+      - DB_NAME=${MYSQL_DATABASE:-ynot_site}
       - DB_PORT=3306
       # PostgreSQL connection
       - POSTGRES_HOST=postgres
-      - POSTGRES_DATABASE=ynot_payload_dev
-      - POSTGRES_USER=ynot_postgres_user
-      - POSTGRES_PASSWORD=ynot_postgres_pass
+      - POSTGRES_DATABASE=${POSTGRES_DB:-ynot_payload_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
       - USE_POSTGRES_SCHEDULE=false
       # Auth0 dummy config (prevents SDK init errors in E2E tests)
       - AUTH0_DOMAIN=test.auth0.com
@@ -147,9 +145,8 @@ services:
       start_period: 60s
 
   # === Playwright E2E Tests ===
-  # Uses pre-built image with node_modules when GHCR_ORG is set
   playwright:
-    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/playwright:latest}${GHCR_ORG:-mcr.microsoft.com/playwright:v1.58.2-noble}
+    image: ${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.58.2-noble}
     working_dir: /app
     volumes:
       - ..:/app
