@@ -29,67 +29,63 @@ steps:
       
       # Wait for databases to be healthy
       echo "⏳ Waiting for databases..."
-      docker compose up -d --wait postgres mysql || {
-        echo "Database startup failed:"
-        docker compose logs postgres mysql
-        exit 1
-      }
+      for i in 1 2 3 4 5 6 7 8 9 10; do
+        sleep 3
+        PG=$$(docker compose ps postgres --format json | jq -r '.Health // "starting"')
+        MY=$$(docker compose ps mysql --format json | jq -r '.Health // "starting"')
+        echo "DB check $$i/10: postgres=$$PG mysql=$$MY"
+        if [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ]; then
+          break
+        fi
+      done
       
-      echo "📊 Database status:"
-      docker compose ps postgres mysql
+      # Start Payload in foreground to capture logs directly
+      echo "🚀 Starting Payload CMS (capturing output)..."
+      docker compose up payload 2>&1 &
+      COMPOSE_PID=$$!
       
-      # Now start Payload with visible logs (not detached initially)
-      echo "🚀 Starting Payload CMS (watching startup)..."
-      timeout 120 docker compose up payload 2>&1 | tee /tmp/payload-startup.log &
-      PAYLOAD_PID=$$!
-      
-      # Wait for Payload to be ready (check healthcheck status)
-      echo "⏳ Waiting for Payload to become healthy..."
-      for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-        sleep 10
-        STATUS=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        echo "Payload health check $$i/20: $$STATUS"
+      # Monitor for startup (with timeout)
+      echo "⏳ Monitoring Payload startup for 120s..."
+      for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24; do
+        sleep 5
         
-        if [ "$$STATUS" = "healthy" ]; then
+        # Check container state
+        STATE=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
+        HEALTH=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+        echo "Payload check $$i/24: state=$$STATE health=$$HEALTH"
+        
+        if [ "$$HEALTH" = "healthy" ]; then
           echo "✅ Payload is healthy!"
           break
         fi
         
-        # Check if container exited
-        STATE=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
         if [ "$$STATE" = "exited" ]; then
-          echo "❌ Payload container exited unexpectedly"
-          echo "📋 Container exit info:"
-          docker inspect e2e-buildkite-payload-1 --format '{{.State.ExitCode}} {{.State.Error}}' || true
-          echo "📋 Full container logs:"
-          cat /tmp/payload-startup.log
-          docker compose logs payload
+          echo "❌ Payload container exited!"
+          echo "📋 Container logs:"
+          docker compose logs payload --tail=100
           exit 1
         fi
       done
       
-      # Kill the foreground process (we'll run detached now)
-      kill $$PAYLOAD_PID 2>/dev/null || true
+      # Stop the foreground compose
+      kill $$COMPOSE_PID 2>/dev/null || true
       
-      # Start remaining services
-      echo "🚀 Starting remaining services..."
-      docker compose up -d phpfpm apache playwright
+      # Start remaining services for E2E
+      echo "🚀 Starting remaining services (phpfpm, apache)..."
+      docker compose up -d phpfpm apache
+      sleep 10
       
-      # Wait for Playwright to run
-      echo "⏳ Running E2E tests..."
-      docker compose logs -f playwright || {
-        echo "🔍 All container logs on failure:"
-        docker compose logs
-        exit 1
-      }
+      # Run Playwright tests
+      echo "🎭 Running Playwright E2E tests..."
+      docker compose run --rm playwright
+      TEST_EXIT=$$?
       
-      # Get exit code
-      EXIT_CODE=$$(docker compose ps playwright --format json | jq -r '.ExitCode // 0')
+      echo "📊 Test results: exit code $$TEST_EXIT"
       
       # Cleanup
       docker compose down -v
       
-      exit $$EXIT_CODE
+      exit $$TEST_EXIT
     env:
       GHCR_USERNAME: "${GHCR_USERNAME}"
       GHCR_TOKEN: "${GHCR_TOKEN}"
