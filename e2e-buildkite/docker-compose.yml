@@ -60,16 +60,17 @@ services:
       - |
         set -x
         echo '=== Payload container starting ==='
-        echo "NODE_ENV: $${NODE_ENV}"
         
         # Check node version
         node --version
         
         # WORKAROUND: esbuild version mismatch in Docker-in-Docker
-        # The image has esbuild 0.27.3 binary but DinD host has 0.27.2
-        # Reinstall tsx and esbuild to get matching binaries
+        # The image has esbuild 0.27.3 binary but DinD host has esbuild 0.27.2
+        # Solution: Delete cached esbuild binaries and reinstall just esbuild
         echo '=== Fixing esbuild version mismatch ==='
-        npm install -f esbuild@latest tsx@latest 2>&1 || echo 'npm install esbuild failed'
+        rm -rf node_modules/@esbuild
+        rm -rf node_modules/esbuild
+        npm install esbuild --ignore-scripts=false --prefer-online 2>&1 || true
         
         echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
