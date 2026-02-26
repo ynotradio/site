@@ -26,11 +26,15 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-ynot_site}
       MYSQL_USER: ${MYSQL_USER:-ynot_sql_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+    volumes:
+      # Seed database with schema on first start
+      - ../src/db/docker/ynot_db.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-ynot_sql_user}", "-p${MYSQL_PASSWORD:-dev_mysql_password_not_secret}"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER:-ynot_sql_user} -p${MYSQL_PASSWORD:-dev_mysql_password_not_secret} && mysql -u${MYSQL_USER:-ynot_sql_user} -p${MYSQL_PASSWORD:-dev_mysql_password_not_secret} ${MYSQL_DATABASE:-ynot_site} -e 'SELECT 1 FROM stories LIMIT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
 
   # === Payload CMS ===
   # TEMPORARILY DISABLED - Next.js dev server takes too long to compile
