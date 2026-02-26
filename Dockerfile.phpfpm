@@ -1,4 +1,4 @@
-# Pre-built PHP-FPM image with extensions and dependencies
+# Pre-built PHP-FPM image with extensions
 # Avoids 10+ minute compilation time on every CI run
 FROM php:7.4-fpm
 
@@ -11,16 +11,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
-# Copy composer files and install dependencies
-COPY src/composer.json src/composer.lock ./
-RUN composer install --no-interaction --no-dev --no-scripts --no-autoloader
-
-# Copy source code (this layer changes more frequently)
-COPY src/ ./
-
-# Generate autoloader with full source available
-RUN composer dump-autoload --no-interaction --optimize
 
 # Default command
 CMD ["php-fpm"]
