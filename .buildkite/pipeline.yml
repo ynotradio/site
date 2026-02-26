@@ -1,8 +1,7 @@
 # Buildkite Pipeline for Y-Not Radio Site
 #
-# Note: E2E tests are temporarily excluded due to Docker-in-Docker networking
-# limitations with Chromium. See docs/buildkite-e2e-investigation.md for details.
-# E2E tests continue to run in GitHub Actions.
+# Note: E2E tests are work in progress due to Docker-in-Docker networking
+# limitations with Chromium. See PR #258 for investigation details.
 
 env:
   NODE_VERSION: "22"
@@ -10,20 +9,49 @@ env:
   CI: "true"
 
 steps:
-  # Conditionally trigger Docker image builds when Dockerfiles change on main/master
-  - label: ":docker: Trigger Image Builds"
-    key: "trigger-image-builds"
-    branches: "main master"
+  # === E2E Integration Tests ===
+  # Verifies Payload CMS → Legacy PHP site integration
+  - label: ":playwright: E2E Tests"
+    key: "e2e"
+    timeout_in_minutes: 20
     command: |
-      # Check if any Dockerfiles changed
-      CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      cd e2e-buildkite
       
-      if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
-        echo "Dockerfile changes detected, triggering image build pipeline"
-        buildkite-agent pipeline upload .buildkite/build-images.yml
-      else
-        echo "No Dockerfile changes, skipping image builds"
+      # Source environment variables
+      if [ -f .env.example ]; then
+        export $$(cat .env.example | grep -v '^#' | xargs)
       fi
+      
+      # Start all services
+      echo "🚀 Starting services..."
+      docker compose up -d postgres mysql payload phpfpm apache
+      
+      # Wait for services to be healthy
+      echo "⏳ Waiting for services..."
+      for i in {1..60}; do
+        PAYLOAD=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // .State' || echo "unknown")
+        APACHE=$$(docker compose ps apache --format json 2>/dev/null | jq -r '.Health // .State' || echo "unknown")
+        echo "[$$i/60] Payload: $$PAYLOAD, Apache: $$APACHE"
+        
+        if [ "$$PAYLOAD" = "healthy" ] && [ "$$APACHE" = "healthy" ]; then
+          echo "✅ All services healthy!"
+          break
+        fi
+        sleep 10
+      done
+      
+      # Run tests with Playwright in host network mode
+      docker compose run --rm playwright
+      
+      # Cleanup
+      docker compose down -v
+    plugins:
+      - docker-compose#v5.5.0:
+          config: e2e-buildkite/docker-compose.yml
+          cli-version: 2
+    artifact_paths:
+      - "e2e-buildkite/test-results/**/*"
+      - "e2e-buildkite/playwright-report/**/*"
     agents:
       queue: "default"
 

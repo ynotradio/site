@@ -1,0 +1,168 @@
+# Buildkite E2E Docker Compose
+# Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright
+#
+# Uses .env file for configuration. Override with .env.local or environment variables.
+# For pre-built GHCR images, set PAYLOAD_IMAGE, PHPFPM_IMAGE, etc.
+
+services:
+  # === PostgreSQL for Payload CMS ===
+  postgres:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ynot_payload_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-ynot_postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ynot_postgres_user} -d ${POSTGRES_DB:-ynot_payload_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # === MySQL for Legacy PHP Site ===
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev_root_password_not_secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ynot_site}
+      MYSQL_USER: ${MYSQL_USER:-ynot_sql_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-ynot_sql_user}", "-p${MYSQL_PASSWORD:-dev_mysql_password_not_secret}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # === Payload CMS ===
+  payload:
+    image: ${PAYLOAD_IMAGE:-node:22-slim}
+    working_dir: /app
+    volumes:
+      - ..:/app
+    ports:
+      - "3000:3000"
+    environment:
+      - CI=true
+      - NODE_ENV=development
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
+      - DATABASE_SSL=disable
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        # If no node_modules (fallback image), install deps
+        if [ ! -d node_modules ]; then
+          apt-get update && apt-get install -y curl git &&
+          corepack enable &&
+          yarn install --frozen-lockfile --ignore-engines
+        fi
+        echo '✅ Starting dev server...' &&
+        yarn dev
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/admin/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 120s
+
+  # === PHP-FPM for Legacy Site ===
+  # Builds from Dockerfile.phpfpm which has extensions pre-compiled
+  phpfpm:
+    build:
+      context: ..
+      dockerfile: Dockerfile.phpfpm
+    working_dir: /app
+    volumes:
+      - ../src:/app
+    environment:
+      # MySQL connection (matches PHP $_ENV vars)
+      - DB_HOST=mysql
+      - DB_USER=${MYSQL_USER:-ynot_sql_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+      - DB_NAME=${MYSQL_DATABASE:-ynot_site}
+      - DB_PORT=3306
+      # PostgreSQL connection
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DATABASE=${POSTGRES_DB:-ynot_payload_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
+      - USE_POSTGRES_SCHEDULE=false
+      # Auth0 dummy config (prevents SDK init errors in E2E tests)
+      - AUTH0_DOMAIN=test.auth0.com
+      - AUTH0_CLIENT_ID=test-client-id
+      - AUTH0_CLIENT_SECRET=test-client-secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["sh", "-c", "composer install --no-interaction --no-dev && php-fpm"]
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # === Apache for Legacy Site ===
+  apache:
+    image: httpd:2.4
+    ports:
+      - "8080:80"
+    volumes:
+      - ../src:/app
+      - ../bin/docker/apache-vhost/httpd-vhost.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf
+    depends_on:
+      phpfpm:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "
+        apt-get update && apt-get install -y curl &&
+        echo 'LoadModule proxy_module modules/mod_proxy.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule rewrite_module modules/mod_rewrite.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf &&
+        httpd-foreground
+      "
+    healthcheck:
+      # Check Apache responds (allow 4xx/5xx from PHP - just need Apache to be up)
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost/ | grep -qE '^[2345]' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+
+  # === Playwright E2E Tests ===
+  playwright:
+    image: ${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.58.2-noble}
+    network_mode: "host"
+    working_dir: /app
+    volumes:
+      - ..:/app
+    environment:
+      - CI=true
+      # Use localhost since we're in host network mode
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000
+      - PLAYWRIGHT_LEGACY_URL=http://localhost:8080
+      - SKIP_PAYLOAD_SEED=true
+    # Note: depends_on doesn't work with network_mode: host, healthchecks handled in pipeline
+    command: >
+      bash -c "
+        echo '🔍 Testing connectivity from Playwright container (host network mode)...'
+        
+        # Test localhost connections
+        curl -sf http://localhost:3000/admin/login > /dev/null && echo '✅ Payload reachable at localhost:3000' || echo '❌ Payload unreachable'
+        curl -sf http://localhost:8080/ > /dev/null && echo '✅ Apache reachable at localhost:8080' || echo '❌ Apache unreachable'
+        
+        # Install deps if not using pre-built image
+        if [ ! -d node_modules ]; then
+          npm install --legacy-peer-deps
+        fi
+        npx playwright test --reporter=list
+      "
