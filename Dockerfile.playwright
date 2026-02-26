@@ -15,6 +15,9 @@ RUN npm install --legacy-peer-deps
 COPY playwright.config.ts ./
 COPY e2e/ ./e2e/
 
+# Copy e2e-buildkite tests (simplified tests for CI)
+COPY e2e-buildkite/ ./e2e-buildkite/
+
 # Set environment to test
 ENV CI=true
 ENV NODE_ENV=development

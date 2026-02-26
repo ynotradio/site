@@ -108,10 +108,7 @@ services:
   playwright:
     image: ${PLAYWRIGHT_IMAGE:-ghcr.io/ynotradio/site/playwright:latest}
     working_dir: /app
-    volumes:
-      # Only mount test files, not the whole repo (would overwrite pre-installed node_modules)
-      - ./playwright.config.ts:/app/playwright.config.ts:ro
-      - ./playwright.spec.ts:/app/playwright.spec.ts:ro
+    # No volume mounts needed - tests are pre-copied in the Docker image
     environment:
       - CI=true
       # Payload tests skipped (container disabled) - just test legacy site
@@ -127,6 +124,6 @@ services:
         # Test Docker network connections
         curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
-        # Run Playwright tests (files mounted into /app, deps pre-installed)
-        npx playwright test --reporter=list
+        # Run e2e-buildkite tests (simplified tests for CI, pre-copied into image)
+        npx playwright test --config=e2e-buildkite/playwright.config.ts e2e-buildkite/playwright.spec.ts --reporter=list
       "
