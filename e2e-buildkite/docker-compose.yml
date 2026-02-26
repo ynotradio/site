@@ -158,6 +158,7 @@ services:
     # No volume mounts needed - tests are pre-copied in the Docker image
     environment:
       - CI=true
+      # Use Docker's internal DNS for service names
       - PAYLOAD_URL=http://payload:3000
       - LEGACY_URL=http://apache:80
     depends_on:
@@ -165,8 +166,26 @@ services:
         condition: service_healthy
       apache:
         condition: service_healthy
+    # Ensure all services are on same network
+    # dns will be handled by Docker's internal resolver
     command: >
       bash -c "
+        echo '🔍 Setting up DNS for Chromium browser...'
+        
+        # Chromium uses its own DNS resolver, not the container's resolver
+        # Resolve service IPs and add to /etc/hosts so Chromium can find them
+        PAYLOAD_IP=$$(getent hosts payload | awk '{print $$1}')
+        APACHE_IP=$$(getent hosts apache | awk '{print $$1}')
+        
+        echo \"Resolved: payload=$$PAYLOAD_IP apache=$$APACHE_IP\"
+        
+        if [ -n \"$$PAYLOAD_IP\" ]; then
+          echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
+        fi
+        if [ -n \"$$APACHE_IP\" ]; then
+          echo \"$$APACHE_IP apache\" >> /etc/hosts
+        fi
+        
         echo '🔍 Testing connectivity from Playwright container...'
         
         # Test Docker network connections

@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Install dependencies (including dev deps for Playwright)
-RUN npm install --legacy-peer-deps
+RUN yarn install --frozen-lockfile
 
 # Copy test files and config
 COPY playwright.config.ts ./
