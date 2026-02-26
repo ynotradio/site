@@ -1,19 +1,17 @@
 # Buildkite E2E Docker Compose
 # Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright
 #
-# Uses .env file for configuration. Override with .env.local or environment variables.
-# For pre-built GHCR images, set PAYLOAD_IMAGE, PHPFPM_IMAGE, etc.
+# Uses pre-built GHCR images by default for fast CI.
+# Override with environment variables if needed.
 
 services:
   # === PostgreSQL for Payload CMS ===
   postgres:
-    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-ynot_payload_dev}
       POSTGRES_USER: ${POSTGRES_USER:-ynot_postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ynot_postgres_user} -d ${POSTGRES_DB:-ynot_payload_dev}"]
       interval: 5s
@@ -28,8 +26,6 @@ services:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-ynot_site}
       MYSQL_USER: ${MYSQL_USER:-ynot_sql_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
-    ports:
-      - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${MYSQL_USER:-ynot_sql_user}", "-p${MYSQL_PASSWORD:-dev_mysql_password_not_secret}"]
       interval: 5s
@@ -37,11 +33,10 @@ services:
       retries: 10
 
   # === Payload CMS ===
+  # Uses pre-built image with yarn deps installed
   payload:
-    image: ${PAYLOAD_IMAGE:-node:22-slim}
+    image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
     working_dir: /app
-    volumes:
-      - ..:/app
     ports:
       - "3000:3000"
     environment:
@@ -53,35 +48,23 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: >
-      bash -c "
-        # If no node_modules (fallback image), install deps
-        if [ ! -d node_modules ]; then
-          apt-get update && apt-get install -y curl git &&
-          corepack enable &&
-          yarn install --frozen-lockfile --ignore-engines
-        fi
-        echo '✅ Starting dev server...' &&
-        yarn dev
-      "
+    command: ["yarn", "dev"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/admin/login || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 120s
+      start_period: 60s
 
   # === PHP-FPM for Legacy Site ===
-  # Builds from Dockerfile.phpfpm which has extensions pre-compiled
+  # Uses pre-built image with extensions compiled
   phpfpm:
-    build:
-      context: ..
-      dockerfile: Dockerfile.phpfpm
+    image: ${PHPFPM_IMAGE:-ghcr.io/ynotradio/site/phpfpm-dev:latest}
     working_dir: /app
     volumes:
       - ../src:/app
     environment:
-      # MySQL connection (matches PHP $_ENV vars)
+      # MySQL connection
       - DB_HOST=mysql
       - DB_USER=${MYSQL_USER:-ynot_sql_user}
       - DB_PASSWORD=${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
@@ -93,7 +76,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
       - USE_POSTGRES_SCHEDULE=false
-      # Auth0 dummy config (prevents SDK init errors in E2E tests)
+      # Auth0 dummy config
       - AUTH0_DOMAIN=test.auth0.com
       - AUTH0_CLIENT_ID=test-client-id
       - AUTH0_CLIENT_SECRET=test-client-secret
@@ -106,7 +89,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 30
-      start_period: 60s
+      start_period: 30s
 
   # === Apache for Legacy Site ===
   apache:
@@ -131,38 +114,38 @@ services:
         httpd-foreground
       "
     healthcheck:
-      # Check Apache responds (allow 4xx/5xx from PHP - just need Apache to be up)
       test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost/ | grep -qE '^[2345]' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 20
-      start_period: 90s
+      start_period: 60s
 
   # === Playwright E2E Tests ===
+  # Uses pre-built image with npm deps installed
   playwright:
-    image: ${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.58.2-noble}
-    network_mode: "host"
+    image: ${PLAYWRIGHT_IMAGE:-ghcr.io/ynotradio/site/playwright:latest}
     working_dir: /app
     volumes:
       - ..:/app
     environment:
       - CI=true
-      # Use localhost since we're in host network mode
-      - PLAYWRIGHT_BASE_URL=http://localhost:3000
-      - PLAYWRIGHT_LEGACY_URL=http://localhost:8080
+      # Use container names - Playwright is on the same Docker network
+      - PAYLOAD_URL=http://payload:3000
+      - LEGACY_URL=http://apache:80
       - SKIP_PAYLOAD_SEED=true
-    # Note: depends_on doesn't work with network_mode: host, healthchecks handled in pipeline
+    depends_on:
+      payload:
+        condition: service_healthy
+      apache:
+        condition: service_healthy
     command: >
       bash -c "
-        echo '🔍 Testing connectivity from Playwright container (host network mode)...'
+        echo '🔍 Testing connectivity from Playwright container...'
         
-        # Test localhost connections
-        curl -sf http://localhost:3000/admin/login > /dev/null && echo '✅ Payload reachable at localhost:3000' || echo '❌ Payload unreachable'
-        curl -sf http://localhost:8080/ > /dev/null && echo '✅ Apache reachable at localhost:8080' || echo '❌ Apache unreachable'
+        # Test Docker network connections
+        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
+        curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
-        # Install deps if not using pre-built image
-        if [ ! -d node_modules ]; then
-          npm install --legacy-peer-deps
-        fi
-        npx playwright test --reporter=list
+        # Run Playwright tests
+        cd e2e-buildkite && npx playwright test --reporter=list
       "

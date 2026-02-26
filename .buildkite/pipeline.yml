@@ -1,11 +1,9 @@
 # Buildkite Pipeline for Y-Not Radio Site
 #
-# Note: E2E tests are work in progress due to Docker-in-Docker networking
-# limitations with Chromium. See PR #258 for investigation details.
+# ITERATION MODE: Only E2E tests while debugging Playwright in Buildkite
+# Other steps temporarily disabled for faster iteration.
 
 env:
-  NODE_VERSION: "22"
-  PHP_VERSION: "7.4"
   CI: "true"
 
 steps:
@@ -13,110 +11,41 @@ steps:
   # Verifies Payload CMS → Legacy PHP site integration
   - label: ":playwright: E2E Tests"
     key: "e2e"
-    timeout_in_minutes: 20
+    timeout_in_minutes: 15
     command: |
       cd e2e-buildkite
       
-      # Source environment variables
-      if [ -f .env.example ]; then
-        export $$(cat .env.example | grep -v '^#' | xargs)
-      fi
+      # Login to GHCR to pull pre-built images
+      echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       
-      # Start all services
+      # Pull images first (faster than waiting for compose to pull)
+      echo "📦 Pulling pre-built images..."
+      docker pull ghcr.io/ynotradio/site/payload-dev:latest &
+      docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
+      docker pull ghcr.io/ynotradio/site/playwright:latest &
+      wait
+      
+      # Start services (uses pre-built GHCR images by default)
       echo "🚀 Starting services..."
-      docker compose up -d postgres mysql payload phpfpm apache
+      docker compose up -d
       
-      # Wait for services to be healthy
-      echo "⏳ Waiting for services..."
-      for i in {1..60}; do
-        PAYLOAD=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // .State' || echo "unknown")
-        APACHE=$$(docker compose ps apache --format json 2>/dev/null | jq -r '.Health // .State' || echo "unknown")
-        echo "[$$i/60] Payload: $$PAYLOAD, Apache: $$APACHE"
-        
-        if [ "$$PAYLOAD" = "healthy" ] && [ "$$APACHE" = "healthy" ]; then
-          echo "✅ All services healthy!"
-          break
-        fi
-        sleep 10
-      done
+      # Wait for Playwright to run (it waits for depends_on services)
+      echo "⏳ Running E2E tests..."
+      docker compose logs -f playwright
       
-      # Run tests with Playwright in host network mode
-      docker compose run --rm playwright
+      # Get exit code
+      EXIT_CODE=$$(docker compose ps playwright --format json | jq -r '.ExitCode // 0')
       
       # Cleanup
       docker compose down -v
-    plugins:
-      - docker-compose#v5.5.0:
-          config: e2e-buildkite/docker-compose.yml
-          cli-version: 2
+      
+      exit $$EXIT_CODE
+    env:
+      GHCR_USERNAME: "${GHCR_USERNAME}"
+      GHCR_TOKEN: "${GHCR_TOKEN}"
     artifact_paths:
       - "e2e-buildkite/test-results/**/*"
       - "e2e-buildkite/playwright-report/**/*"
     agents:
       queue: "default"
-
-  # ESLint
-  - label: ":eslint: ESLint"
-    key: "eslint"
-    command: "corepack enable && yarn install --immutable && yarn lint"
-    plugins:
-      - docker#v5.11.0:
-          image: "node:22-slim"
-          propagate-environment: true
-    agents:
-      queue: "default"
-
-  # Vitest Unit Tests
-  - label: ":test_tube: Vitest Tests"
-    key: "vitest"
-    command: "corepack enable && yarn install --immutable && yarn test:coverage"
-    plugins:
-      - docker#v5.11.0:
-          image: "node:22-slim"
-          propagate-environment: true
-    artifact_paths:
-      - "coverage/**/*"
-    agents:
-      queue: "default"
-
-  # Storybook Build
-  - label: ":storybook: Storybook Build"
-    key: "storybook"
-    command: "corepack enable && yarn install --immutable && yarn build-storybook"
-    plugins:
-      - docker#v5.11.0:
-          image: "node:22-slim"
-          propagate-environment: true
-    artifact_paths:
-      - "storybook-static/**/*"
-    agents:
-      queue: "default"
-
-  # PHP Lint (CodeSniffer)
-  - label: ":php: PHP Lint"
-    key: "php-lint"
-    command: |
-      cd src && \
-      composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
-    plugins:
-      - docker#v5.11.0:
-          image: "composer:2"
-          propagate-environment: true
-    agents:
-      queue: "default"
-
-  # PHP Unit Tests
-  - label: ":php: PHP Unit Tests"
-    key: "php-test"
-    command: |
-      docker-php-ext-install mysqli && \
-      cd src && \
-      composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpunit --testdox
-    plugins:
-      - docker#v5.11.0:
-          image: "composer:2"
-          propagate-environment: true
-    agents:
-      queue: "default"
+      docker: "true"
