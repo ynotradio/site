@@ -64,7 +64,18 @@ services:
         # Check node version
         node --version
         
-        # Simply run without esbuild workarounds - we'll build the image locally instead
+        # WORKAROUND: DinD esbuild service version mismatch
+        # The Buildkite DinD environment has a shared esbuild service at v0.27.2
+        # but our node_modules has esbuild@0.27.3.
+        # Solution: Replace tsx's esbuild with esbuild-wasm which doesn't use native binaries
+        echo '=== Fixing esbuild for DinD ==='
+        cd node_modules/tsx/node_modules
+        rm -rf esbuild @esbuild
+        npm pack esbuild-wasm@0.27.3 2>&1
+        mkdir esbuild && tar -xzf esbuild-wasm-*.tgz -C esbuild --strip-components=1
+        rm -f esbuild-wasm-*.tgz
+        cd /app
+        
         echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
     healthcheck:
