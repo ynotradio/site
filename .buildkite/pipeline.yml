@@ -1,20 +1,15 @@
 # Buildkite Pipeline for Y-Not Radio Site
 #
-# ITERATION MODE: Only E2E tests while debugging Playwright in Buildkite
-# Other steps temporarily disabled for faster iteration.
-#
-# NOTE: Payload CMS tests are disabled due to cold start issues in DinD.
-# Payload E2E tests run in GitHub Actions instead. Only Legacy PHP tests here.
+# ITERATION MODE: Testing Payload CMS + Legacy PHP E2E
 
 env:
   CI: "true"
 
 steps:
   # === E2E Integration Tests ===
-  # Verifies Legacy PHP site works (Payload tests run in GitHub Actions)
-  - label: ":playwright: E2E Tests (Legacy PHP)"
+  - label: ":playwright: E2E Tests"
     key: "e2e"
-    timeout_in_minutes: 10
+    timeout_in_minutes: 15
     command: |
       cd e2e-buildkite
       
@@ -23,15 +18,64 @@ steps:
       
       # Pull images first (faster than waiting for compose to pull)
       echo "📦 Pulling pre-built images..."
+      docker pull ghcr.io/ynotradio/site/payload-dev:latest &
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
       docker pull ghcr.io/ynotradio/site/playwright:latest &
       wait
       
-      # Start services (uses pre-built GHCR images by default)
-      echo "🚀 Starting services..."
-      docker compose up -d mysql apache phpfpm playwright
+      # Start databases first
+      echo "🗄️ Starting databases..."
+      docker compose up -d postgres mysql
       
-      # Wait for Playwright to run (it waits for depends_on services)
+      # Wait for databases to be healthy
+      echo "⏳ Waiting for databases..."
+      docker compose up -d --wait postgres mysql || {
+        echo "Database startup failed:"
+        docker compose logs postgres mysql
+        exit 1
+      }
+      
+      echo "📊 Database status:"
+      docker compose ps postgres mysql
+      
+      # Now start Payload with visible logs (not detached initially)
+      echo "🚀 Starting Payload CMS (watching startup)..."
+      timeout 120 docker compose up payload 2>&1 | tee /tmp/payload-startup.log &
+      PAYLOAD_PID=$$!
+      
+      # Wait for Payload to be ready (check healthcheck status)
+      echo "⏳ Waiting for Payload to become healthy..."
+      for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+        sleep 10
+        STATUS=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+        echo "Payload health check $$i/20: $$STATUS"
+        
+        if [ "$$STATUS" = "healthy" ]; then
+          echo "✅ Payload is healthy!"
+          break
+        fi
+        
+        # Check if container exited
+        STATE=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
+        if [ "$$STATE" = "exited" ]; then
+          echo "❌ Payload container exited unexpectedly"
+          echo "📋 Container exit info:"
+          docker inspect e2e-buildkite-payload-1 --format '{{.State.ExitCode}} {{.State.Error}}' || true
+          echo "📋 Full container logs:"
+          cat /tmp/payload-startup.log
+          docker compose logs payload
+          exit 1
+        fi
+      done
+      
+      # Kill the foreground process (we'll run detached now)
+      kill $$PAYLOAD_PID 2>/dev/null || true
+      
+      # Start remaining services
+      echo "🚀 Starting remaining services..."
+      docker compose up -d phpfpm apache playwright
+      
+      # Wait for Playwright to run
       echo "⏳ Running E2E tests..."
       docker compose logs -f playwright || {
         echo "🔍 All container logs on failure:"
