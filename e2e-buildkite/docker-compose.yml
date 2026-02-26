@@ -148,17 +148,19 @@ services:
 
   # === Playwright E2E Tests ===
   # Uses pre-built image with npm deps installed
+  # NOTE: Payload tests are temporarily disabled due to cold start issues in Docker-in-Docker.
+  # Payload tests run in GitHub Actions instead. Only Legacy PHP tests run here.
   playwright:
     image: ${PLAYWRIGHT_IMAGE:-ghcr.io/ynotradio/site/playwright:latest}
     working_dir: /app
     # No volume mounts needed - tests are pre-copied in the Docker image
     environment:
       - CI=true
-      - PAYLOAD_URL=http://payload:3000
+      # PAYLOAD_URL intentionally not set - Payload tests skip in this environment
+      # - PAYLOAD_URL=http://payload:3000
       - LEGACY_URL=http://apache:80
     depends_on:
-      payload:
-        condition: service_healthy
+      # Payload dependency removed - only test Legacy PHP for now
       apache:
         condition: service_healthy
     command: >
@@ -166,7 +168,6 @@ services:
         echo '🔍 Testing connectivity from Playwright container...'
         
         # Test Docker network connections
-        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
         curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
         # Run e2e-buildkite tests (simplified tests for CI, pre-copied into image)
