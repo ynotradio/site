@@ -37,11 +37,28 @@ services:
       start_period: 60s
 
   # === Payload CMS ===
-  # TEMPORARILY DISABLED - Next.js dev server takes too long to compile
-  # TODO: Build production image or find workaround
-  # payload:
-  #   image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
-  #   ...
+  # Uses pre-built production image (Next.js pre-compiled)
+  payload:
+    image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
+    ports:
+      - "3000:3000"
+    environment:
+      - CI=true
+      - NODE_ENV=production
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
+      - DATABASE_SSL=disable
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Production mode: run migrations then start (fast - already compiled)
+    command: ["sh", "-c", "yarn payload:migrate && yarn start"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/login || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   # === PHP-FPM for Legacy Site ===
   # Uses pre-built image with extensions compiled
@@ -115,10 +132,11 @@ services:
     # No volume mounts needed - tests are pre-copied in the Docker image
     environment:
       - CI=true
-      # Payload tests skipped (container disabled) - just test legacy site
-      # - PAYLOAD_URL=http://payload:3000
+      - PAYLOAD_URL=http://payload:3000
       - LEGACY_URL=http://apache:80
     depends_on:
+      payload:
+        condition: service_healthy
       apache:
         condition: service_healthy
     command: >
@@ -126,6 +144,7 @@ services:
         echo '🔍 Testing connectivity from Playwright container...'
         
         # Test Docker network connections
+        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
         curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
         # Run e2e-buildkite tests (simplified tests for CI, pre-copied into image)

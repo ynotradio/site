@@ -15,8 +15,15 @@ COPY . .
 # Generate Payload types (if possible, don't fail if can't)
 RUN yarn payload:generate-types || echo "⚠️  Type generation skipped (needs database)"
 
+# Pre-build Next.js for fast startup in CI
+# This requires a DATABASE_URI at build time, so we use a dummy one
+ENV DATABASE_URI=postgresql://dummy:dummy@localhost:5432/dummy
+ENV PAYLOAD_SECRET=build-time-secret-not-used
+RUN yarn build || echo "⚠️  Build skipped (needs database for full build)"
+
 # Expose port
 EXPOSE 3000
 
-# Start Payload with migrations
-CMD ["sh", "-c", "yarn payload:migrate && yarn payload:dev"]
+# Default: run in production mode (fast startup)
+# Override with CMD ["yarn", "dev"] for development
+CMD ["sh", "-c", "yarn payload:migrate && yarn start"]
