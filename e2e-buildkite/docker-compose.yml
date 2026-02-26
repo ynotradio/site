@@ -157,6 +157,15 @@ services:
     command: >
       bash -c "
         echo '🔍 Testing connectivity from Playwright container...'
+        
+        # Resolve container IPs and add to /etc/hosts for Chromium
+        PAYLOAD_IP=$$(getent hosts payload | awk '{print $$1}')
+        APACHE_IP=$$(getent hosts apache | awk '{print $$1}')
+        echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
+        echo \"$$APACHE_IP apache\" >> /etc/hosts
+        echo '📝 Added to /etc/hosts:'
+        grep -E '(payload|apache)' /etc/hosts
+        
         curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
         curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
