@@ -144,10 +144,13 @@ services:
     working_dir: /app
     volumes:
       - ..:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - CI=true
-      - PLAYWRIGHT_BASE_URL=http://payload:3000
-      - PLAYWRIGHT_LEGACY_URL=http://apache:80
+      # Use host.docker.internal since Chromium can't access Docker network
+      - PLAYWRIGHT_BASE_URL=http://host.docker.internal:3000
+      - PLAYWRIGHT_LEGACY_URL=http://host.docker.internal:8080
       - SKIP_PAYLOAD_SEED=true
     depends_on:
       payload:
@@ -158,16 +161,9 @@ services:
       bash -c "
         echo '🔍 Testing connectivity from Playwright container...'
         
-        # Resolve container IPs and add to /etc/hosts for Chromium
-        PAYLOAD_IP=$$(getent hosts payload | awk '{print $$1}')
-        APACHE_IP=$$(getent hosts apache | awk '{print $$1}')
-        echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
-        echo \"$$APACHE_IP apache\" >> /etc/hosts
-        echo '📝 Added to /etc/hosts:'
-        grep -E '(payload|apache)' /etc/hosts
-        
-        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
-        curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
+        # Test with host.docker.internal (for Chromium)
+        curl -sf http://host.docker.internal:3000/admin/login > /dev/null && echo '✅ Payload reachable via host.docker.internal:3000' || echo '❌ Payload unreachable'
+        curl -sf http://host.docker.internal:8080/ > /dev/null && echo '✅ Apache reachable via host.docker.internal:8080' || echo '❌ Apache unreachable'
         
         # Install deps if not using pre-built image
         if [ ! -d node_modules ]; then
