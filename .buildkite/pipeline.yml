@@ -9,19 +9,27 @@ steps:
   # === E2E Integration Tests ===
   - label: ":playwright: E2E Tests"
     key: "e2e"
-    timeout_in_minutes: 15
+    timeout_in_minutes: 20
     command: |
       cd e2e-buildkite
       
       # Login to GHCR to pull pre-built images
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       
-      # Pull images first (faster than waiting for compose to pull)
+      # Pull non-problematic images from GHCR
       echo "📦 Pulling pre-built images..."
-      docker pull ghcr.io/ynotradio/site/payload-dev:latest &
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
       docker pull ghcr.io/ynotradio/site/playwright:latest &
+      
+      # Build Payload image locally to avoid native binary mismatches in DinD
+      # The pre-built GHCR image has esbuild binaries that don't match the DinD host
+      echo "🔨 Building Payload image locally (to match DinD host binaries)..."
+      docker build -t payload-local -f ../Dockerfile.payload .. &
+      
       wait
+      
+      # Tag local image for compose
+      docker tag payload-local ghcr.io/ynotradio/site/payload-dev:latest
       
       # Start databases first
       echo "🗄️ Starting databases..."

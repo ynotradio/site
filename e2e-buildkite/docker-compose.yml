@@ -64,14 +64,7 @@ services:
         # Check node version
         node --version
         
-        # WORKAROUND: esbuild version mismatch in Docker-in-Docker
-        # The image has esbuild 0.27.3 binary but DinD host has esbuild 0.27.2
-        # Solution: Delete cached esbuild binaries and reinstall just esbuild
-        echo '=== Fixing esbuild version mismatch ==='
-        rm -rf node_modules/@esbuild
-        rm -rf node_modules/esbuild
-        yarn add esbuild --ignore-scripts=false 2>&1 || true
-        
+        # Simply run without esbuild workarounds - we'll build the image locally instead
         echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
     healthcheck:
