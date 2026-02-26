@@ -16,20 +16,20 @@ steps:
       # Login to GHCR to pull pre-built images
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       
-      # Pull non-problematic images from GHCR
-      echo "📦 Pulling pre-built images..."
+      # Pull non-problematic images from GHCR in background
+      echo "📦 Pulling pre-built images in background..."
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
+      PULL_PID1=$$!
       docker pull ghcr.io/ynotradio/site/playwright:latest &
+      PULL_PID2=$$!
       
       # Build Payload image locally to avoid native binary mismatches in DinD
       # The pre-built GHCR image has esbuild binaries that don't match the DinD host
       echo "🔨 Building Payload image locally (to match DinD host binaries)..."
-      docker build -t payload-local -f ../Dockerfile.payload .. &
+      docker build -t ghcr.io/ynotradio/site/payload-dev:latest -f ../Dockerfile.payload ..
       
-      wait
-      
-      # Tag local image for compose
-      docker tag payload-local ghcr.io/ynotradio/site/payload-dev:latest
+      # Wait for pulls to complete
+      wait $$PULL_PID1 $$PULL_PID2
       
       # Start databases first
       echo "🗄️ Starting databases..."
