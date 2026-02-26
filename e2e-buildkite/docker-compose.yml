@@ -141,29 +141,24 @@ services:
   # === Playwright E2E Tests ===
   playwright:
     image: ${PLAYWRIGHT_IMAGE:-mcr.microsoft.com/playwright:v1.58.2-noble}
+    network_mode: "host"
     working_dir: /app
     volumes:
       - ..:/app
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment:
       - CI=true
-      # Use host.docker.internal since Chromium can't access Docker network
-      - PLAYWRIGHT_BASE_URL=http://host.docker.internal:3000
-      - PLAYWRIGHT_LEGACY_URL=http://host.docker.internal:8080
+      # Use localhost since we're in host network mode
+      - PLAYWRIGHT_BASE_URL=http://localhost:3000
+      - PLAYWRIGHT_LEGACY_URL=http://localhost:8080
       - SKIP_PAYLOAD_SEED=true
-    depends_on:
-      payload:
-        condition: service_healthy
-      apache:
-        condition: service_healthy
+    # Note: depends_on doesn't work with network_mode: host, healthchecks handled in pipeline
     command: >
       bash -c "
-        echo '🔍 Testing connectivity from Playwright container...'
+        echo '🔍 Testing connectivity from Playwright container (host network mode)...'
         
-        # Test with host.docker.internal (for Chromium)
-        curl -sf http://host.docker.internal:3000/admin/login > /dev/null && echo '✅ Payload reachable via host.docker.internal:3000' || echo '❌ Payload unreachable'
-        curl -sf http://host.docker.internal:8080/ > /dev/null && echo '✅ Apache reachable via host.docker.internal:8080' || echo '❌ Apache unreachable'
+        # Test localhost connections
+        curl -sf http://localhost:3000/admin/login > /dev/null && echo '✅ Payload reachable at localhost:3000' || echo '❌ Payload unreachable'
+        curl -sf http://localhost:8080/ > /dev/null && echo '✅ Apache reachable at localhost:8080' || echo '❌ Apache unreachable'
         
         # Install deps if not using pre-built image
         if [ ! -d node_modules ]; then
