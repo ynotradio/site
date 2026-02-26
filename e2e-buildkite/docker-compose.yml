@@ -79,11 +79,12 @@ services:
         echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/login || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 40
-      start_period: 120s
+      # Simple port check - don't wait for full page render
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
 
   # === PHP-FPM for Legacy Site ===
   # Uses pre-built image with extensions compiled

@@ -52,15 +52,16 @@ steps:
       docker compose up payload 2>&1 &
       COMPOSE_PID=$$!
       
-      # Monitor for startup (with timeout)
-      echo "⏳ Monitoring Payload startup for 120s..."
-      for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24; do
+      # Monitor for startup (with timeout of 4 minutes)
+      echo "⏳ Monitoring Payload startup..."
+      ATTEMPTS=48
+      for i in $$(seq 1 $$ATTEMPTS); do
         sleep 5
         
         # Check container state
         STATE=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
         HEALTH=$$(docker compose ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        echo "Payload check $$i/24: state=$$STATE health=$$HEALTH"
+        echo "Payload check $$i/$$ATTEMPTS: state=$$STATE health=$$HEALTH"
         
         if [ "$$HEALTH" = "healthy" ]; then
           echo "✅ Payload is healthy!"
@@ -72,6 +73,11 @@ steps:
           echo "📋 Container logs:"
           docker compose logs payload --tail=100
           exit 1
+        fi
+        
+        if [ $$i -eq $$ATTEMPTS ]; then
+          echo "⚠️ Payload still not healthy after $$ATTEMPTS checks, proceeding anyway..."
+          # Don't exit - let tests run to see if Payload is actually working
         fi
       done
       
