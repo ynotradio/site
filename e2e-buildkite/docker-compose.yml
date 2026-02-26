@@ -52,34 +52,32 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Wait for Postgres connection, then run migrations and dev server
-    # Create wait script inline to avoid shell escaping issues
-    # Note: $$ is needed to escape $ in Docker Compose YAML
+    # Debug startup and run migrations + dev server
+    # Note: depends_on: postgres: service_healthy ensures postgres is ready
     command:
       - sh
       - -c
       - |
-        echo 'Waiting for Postgres to be ready...'
-        cat > /tmp/wait.js << 'EOF'
-        const net = require("net");
-        const sock = net.connect(5432, "postgres", () => { sock.end(); process.exit(0); });
-        sock.on("error", () => process.exit(1));
-        setTimeout(() => process.exit(1), 3000);
-        EOF
-        for i in 1 2 3 4 5 6 7 8 9 10; do
-          if node /tmp/wait.js 2>/dev/null; then
-            echo 'Postgres is ready!'
-            break
-          fi
-          echo "Waiting for Postgres... attempt $$i"
-          sleep 3
-        done
+        set -x
+        echo '=== Payload container starting ==='
+        echo "NODE_ENV: $${NODE_ENV}"
+        echo "DATABASE_URI: $${DATABASE_URI}"
         
-        # Fix esbuild binary mismatch in DinD environment
-        # The pre-built image may have different esbuild binary than host expects
-        echo 'Reinstalling esbuild to fix potential version mismatch...'
-        npm rebuild esbuild 2>/dev/null || yarn rebuild esbuild 2>/dev/null || true
+        # Check node version
+        node --version
         
+        # Check if node_modules exists and has esbuild
+        ls -la node_modules/.bin/ | head -10 || echo 'No node_modules/.bin'
+        
+        # Try running yarn to verify environment
+        yarn --version
+        
+        # Fix esbuild binary mismatch (common in DinD)
+        echo '=== Rebuilding native modules ==='
+        npm rebuild 2>&1 || echo 'npm rebuild failed, trying yarn...'
+        yarn rebuild 2>&1 || echo 'yarn rebuild also failed'
+        
+        echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/login || exit 1"]
