@@ -5,6 +5,8 @@
 
 env:
   CI: "true"
+  # Use pre-built GHCR images for faster startup (built by build-images.yml)
+  GHCR_ORG: "ynotradio/site"
 
 steps:
   # === E2E Integration Tests ===
@@ -16,6 +18,11 @@ steps:
     command: |
       echo "🚀 Starting all services for E2E integration tests..."
       cd e2e-buildkite
+      
+      # Login to GHCR to pull pre-built images
+      if [ -n "$$GHCR_TOKEN" ]; then
+        echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+      fi
       
       # Start all services: PostgreSQL, MySQL, Payload, PHP-FPM, Apache
       docker compose up -d postgres mysql payload phpfpm apache
@@ -89,6 +96,9 @@ steps:
       docker compose down
       
       exit $$TEST_EXIT_CODE
+    env:
+      GHCR_USERNAME: "${GHCR_USERNAME}"
+      GHCR_TOKEN: "${GHCR_TOKEN}"
     artifact_paths:
       - "e2e/screenshots/**/*"
       - "test-results/**/*"
