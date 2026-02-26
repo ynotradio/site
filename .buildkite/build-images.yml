@@ -1,20 +1,69 @@
 # Buildkite Pipeline for Building Docker Images
 # This pipeline replaces the GitHub Actions build-agent-images.yml workflow
 # 
-# Trigger: Manual or on push to main/master when relevant files change
+# Trigger: Automatically on main/master when Dockerfiles change, or manually
 # Purpose: Build and push pre-built Docker images to GHCR for faster CI/agent testing
+#
+# To set up: Create a new Buildkite pipeline using this file with trigger:
+#   - Branch filter: main master
+#   - Or call via trigger step from main pipeline
 
 env:
   GHCR_REGISTRY: "ghcr.io"
   GHCR_ORG: "ynotradio/site"
 
 steps:
+  # Check which Dockerfiles changed to conditionally build only affected images
+  - label: ":mag: Detect Dockerfile Changes"
+    key: "detect-changes"
+    command: |
+      echo "--- Detecting changed Dockerfiles"
+      
+      # Get changed files between this commit and its parent
+      CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      # Check each Dockerfile and set metadata
+      if echo "$$CHANGED_FILES" | grep -q "Dockerfile.payload\|package.json\|yarn.lock"; then
+        echo "Payload Dockerfile or deps changed"
+        buildkite-agent meta-data set "build-payload" "true"
+      fi
+      
+      if echo "$$CHANGED_FILES" | grep -q "bin/docker/phpfpm/Dockerfile\|composer.json"; then
+        echo "PHP-FPM Dockerfile or deps changed"
+        buildkite-agent meta-data set "build-phpfpm" "true"
+      fi
+      
+      if echo "$$CHANGED_FILES" | grep -q "bin/docker/postgres/Dockerfile"; then
+        echo "Postgres Dockerfile changed"
+        buildkite-agent meta-data set "build-postgres" "true"
+      fi
+      
+      if echo "$$CHANGED_FILES" | grep -q "Dockerfile.playwright\|package.json\|yarn.lock"; then
+        echo "Playwright Dockerfile or deps changed"
+        buildkite-agent meta-data set "build-playwright" "true"
+      fi
+      
+      # Also allow manual trigger to rebuild all
+      if [ "$${BUILDKITE_SOURCE}" = "ui" ] || [ "$${BUILDKITE_SOURCE}" = "trigger" ]; then
+        echo "Manual trigger - building all images"
+        buildkite-agent meta-data set "build-payload" "true"
+        buildkite-agent meta-data set "build-phpfpm" "true"
+        buildkite-agent meta-data set "build-postgres" "true"
+        buildkite-agent meta-data set "build-playwright" "true"
+      fi
+      
+      echo "--- Change detection complete"
+    agents:
+      queue: "default"
+
+  - wait
+
   - group: ":docker: Build Docker Images"
     key: "build-images"
     steps:
       - label: ":package: Build Payload Dev Image"
         key: "build-payload"
-        branches: "main master"
+        if: build.meta_data("build-payload") == "true"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -42,7 +91,7 @@ steps:
 
       - label: ":php: Build PHP-FPM Dev Image"
         key: "build-phpfpm"
-        branches: "main master"
+        if: build.meta_data("build-phpfpm") == "true"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -70,7 +119,7 @@ steps:
 
       - label: ":postgres: Build Postgres Seeded Image"
         key: "build-postgres"
-        branches: "main master"
+        if: build.meta_data("build-postgres") == "true"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -98,7 +147,7 @@ steps:
 
       - label: ":playwright: Build Playwright Image"
         key: "build-playwright"
-        branches: "main master"
+        if: build.meta_data("build-playwright") == "true"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin

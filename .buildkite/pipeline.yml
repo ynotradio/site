@@ -10,6 +10,23 @@ env:
   CI: "true"
 
 steps:
+  # Conditionally trigger Docker image builds when Dockerfiles change on main/master
+  - label: ":docker: Trigger Image Builds"
+    key: "trigger-image-builds"
+    branches: "main master"
+    command: |
+      # Check if any Dockerfiles changed
+      CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
+        echo "Dockerfile changes detected, triggering image build pipeline"
+        buildkite-agent pipeline upload .buildkite/build-images.yml
+      else
+        echo "No Dockerfile changes, skipping image builds"
+      fi
+    agents:
+      queue: "default"
+
   # ESLint
   - label: ":eslint: ESLint"
     key: "eslint"
