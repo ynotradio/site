@@ -95,3 +95,31 @@ steps:
         agents:
           queue: "default"
           docker: "true"
+
+      - label: ":playwright: Build Playwright Image"
+        key: "build-playwright"
+        branches: "main master"
+        command: |
+          echo "--- :docker: Logging into GHCR"
+          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+          
+          # Create short commit SHA (first 7 characters)
+          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
+          
+          echo "--- :docker: Building Playwright image with pre-installed deps"
+          docker build \
+            -f Dockerfile.playwright \
+            -t ghcr.io/$${GHCR_ORG}/playwright:$$SHORT_COMMIT \
+            -t ghcr.io/$${GHCR_ORG}/playwright:latest \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
+          
+          echo "--- :docker: Pushing Playwright image to GHCR"
+          docker push ghcr.io/$${GHCR_ORG}/playwright:$$SHORT_COMMIT
+          docker push ghcr.io/$${GHCR_ORG}/playwright:latest
+        env:
+          GHCR_USERNAME: "${GHCR_USERNAME}"
+          GHCR_TOKEN: "${GHCR_TOKEN}"
+        agents:
+          queue: "default"
+          docker: "true"

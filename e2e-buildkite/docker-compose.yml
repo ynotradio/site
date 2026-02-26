@@ -1,10 +1,13 @@
 # Buildkite E2E Docker Compose
 # Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright
+#
+# Pre-built images (ghcr.io/ynotradio/site/*) are used when available.
+# Set GHCR_ORG env var to use pre-built images, otherwise builds locally.
 
 services:
   # === PostgreSQL for Payload CMS ===
   postgres:
-    image: postgres:16-alpine
+    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/postgres-seeded:latest}${GHCR_ORG:-postgres:16-alpine}
     environment:
       POSTGRES_DB: ynot_payload_dev
       POSTGRES_USER: ynot_postgres_user
@@ -34,8 +37,9 @@ services:
       retries: 10
 
   # === Payload CMS ===
+  # Uses pre-built image with node_modules when GHCR_ORG is set
   payload:
-    image: node:22-slim
+    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/payload-dev:latest}${GHCR_ORG:-node:22-slim}
     working_dir: /app
     volumes:
       - ..:/app
@@ -52,10 +56,13 @@ services:
         condition: service_healthy
     command: >
       bash -c "
-        apt-get update && apt-get install -y curl git &&
-        corepack enable &&
-        yarn install --frozen-lockfile --ignore-engines &&
-        echo '✅ Starting dev server (no seed)...' &&
+        # If no node_modules (fallback image), install deps
+        if [ ! -d node_modules ]; then
+          apt-get update && apt-get install -y curl git &&
+          corepack enable &&
+          yarn install --frozen-lockfile --ignore-engines
+        fi
+        echo '✅ Starting dev server...' &&
         yarn dev
       "
     healthcheck:
@@ -66,12 +73,12 @@ services:
       start_period: 120s
 
   # === PHP-FPM for Legacy Site ===
-  # Uses pre-built image with extensions + composer deps already installed
+  # Uses pre-built image with extensions already installed
   phpfpm:
-    build:
-      context: ..
-      dockerfile: Dockerfile.phpfpm
+    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/phpfpm-dev:latest}${GHCR_ORG:-php:7.4-fpm}
     working_dir: /app
+    volumes:
+      - ../src:/app
     environment:
       # MySQL connection (matches PHP $_ENV vars)
       - DB_HOST=mysql
@@ -92,12 +99,24 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+    command: >
+      bash -c "
+        # Install extensions if using fallback image
+        if ! php -m | grep -q mysqli; then
+          apt-get update && apt-get install -y libpq-dev unzip curl &&
+          docker-php-ext-install pdo pdo_pgsql pdo_mysql mysqli &&
+          echo 'clear_env = no' >> /usr/local/etc/php-fpm.d/www.conf &&
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+        fi
+        composer install --no-interaction --no-dev &&
+        php-fpm
+      "
     healthcheck:
       test: ["CMD-SHELL", "php-fpm -t"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 300s
 
   # === Apache for Legacy Site ===
   apache:
@@ -128,8 +147,9 @@ services:
       start_period: 60s
 
   # === Playwright E2E Tests ===
+  # Uses pre-built image with node_modules when GHCR_ORG is set
   playwright:
-    image: mcr.microsoft.com/playwright:v1.58.2-noble
+    image: ${GHCR_ORG:+ghcr.io/${GHCR_ORG}/playwright:latest}${GHCR_ORG:-mcr.microsoft.com/playwright:v1.58.2-noble}
     working_dir: /app
     volumes:
       - ..:/app
@@ -149,6 +169,9 @@ services:
         curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
         curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
         
-        npm install --legacy-peer-deps
+        # Install deps if not using pre-built image
+        if [ ! -d node_modules ]; then
+          npm install --legacy-peer-deps
+        fi
         npx playwright test --reporter=list
       "
