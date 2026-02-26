@@ -70,7 +70,7 @@ services:
         echo '=== Fixing esbuild version mismatch ==='
         rm -rf node_modules/@esbuild
         rm -rf node_modules/esbuild
-        npm install esbuild --ignore-scripts=false --prefer-online 2>&1 || true
+        yarn add esbuild --ignore-scripts=false 2>&1 || true
         
         echo '=== Starting Payload ==='
         yarn payload:migrate && yarn dev
