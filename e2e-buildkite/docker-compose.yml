@@ -54,6 +54,7 @@ services:
         condition: service_healthy
     # Wait for Postgres connection, then run migrations and dev server
     # Create wait script inline to avoid shell escaping issues
+    # Note: $$ is needed to escape $ in Docker Compose YAML
     command:
       - sh
       - -c
@@ -70,7 +71,7 @@ services:
             echo 'Postgres is ready!'
             break
           fi
-          echo "Waiting for Postgres... attempt $i"
+          echo "Waiting for Postgres... attempt $$i"
           sleep 3
         done
         yarn payload:migrate && yarn dev

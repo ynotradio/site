@@ -29,9 +29,22 @@ steps:
       echo "🚀 Starting services..."
       docker compose up -d
       
+      # Wait a bit then show container status
+      sleep 5
+      echo "📊 Container status after 5s:"
+      docker compose ps -a
+      
+      # Show payload logs to debug startup issues
+      echo "📋 Payload container logs:"
+      docker compose logs payload || echo "No payload logs yet"
+      
       # Wait for Playwright to run (it waits for depends_on services)
       echo "⏳ Running E2E tests..."
-      docker compose logs -f playwright
+      docker compose logs -f playwright || {
+        echo "🔍 All container logs on failure:"
+        docker compose logs
+        exit 1
+      }
       
       # Get exit code
       EXIT_CODE=$$(docker compose ps playwright --format json | jq -r '.ExitCode // 0')
