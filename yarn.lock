@@ -1935,15 +1935,15 @@
     "@storybook/global" "^5.0.0"
     axe-core "^4.2.0"
 
-"@storybook/addon-docs@^10.2.3":
-  version "10.2.9"
-  resolved "https://registry.yarnpkg.com/@storybook/addon-docs/-/addon-docs-10.2.9.tgz#38203f949a33571a42205813412f01c36f40c149"
-  integrity sha512-rPUSyymt6IDI8PbZVEXPnqOysstp+mKeZiPRxcKIklecDhLUiy5Yc2PQneYY//Gp7Z/CEe54tJHr+WpFgtLPYg==
+"@storybook/addon-docs@^10.2.10":
+  version "10.2.10"
+  resolved "https://registry.yarnpkg.com/@storybook/addon-docs/-/addon-docs-10.2.10.tgz#22d1a8dae3b04d5e9e1e131ae7f97a8ab722e83d"
+  integrity sha512-2wIYtdvZIzPbQ5194M5Igpy8faNbQ135nuO5ZaZ2VuttqGr+IJcGnDP42zYwbAsGs28G8ohpkbSgIzVyJWUhPQ==
   dependencies:
     "@mdx-js/react" "^3.0.0"
-    "@storybook/csf-plugin" "10.2.9"
+    "@storybook/csf-plugin" "10.2.10"
     "@storybook/icons" "^2.0.1"
-    "@storybook/react-dom-shim" "10.2.9"
+    "@storybook/react-dom-shim" "10.2.10"
     react "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
     react-dom "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
     ts-dedent "^2.0.0"
@@ -1968,6 +1968,13 @@
   dependencies:
     "@storybook/csf-plugin" "10.2.9"
     ts-dedent "^2.0.0"
+
+"@storybook/csf-plugin@10.2.10":
+  version "10.2.10"
+  resolved "https://registry.yarnpkg.com/@storybook/csf-plugin/-/csf-plugin-10.2.10.tgz#038cd8e41884f2f437502504d02b8c0a24ed0b39"
+  integrity sha512-aFvgaNDAnKMjuyhPK5ialT22pPqMN0XfPBNPeeNVPYztngkdKBa8WFqF/umDd47HxAjebq+vn6uId1xHyOHH3g==
+  dependencies:
+    unplugin "^2.3.5"
 
 "@storybook/csf-plugin@10.2.9":
   version "10.2.9"
@@ -1996,6 +2003,11 @@
     "@storybook/react-vite" "10.2.9"
     styled-jsx "5.1.6"
     vite-plugin-storybook-nextjs "^3.1.9"
+
+"@storybook/react-dom-shim@10.2.10":
+  version "10.2.10"
+  resolved "https://registry.yarnpkg.com/@storybook/react-dom-shim/-/react-dom-shim-10.2.10.tgz#ce1b439573fa01fc4fd461cff22bda23abf39a4a"
+  integrity sha512-TmBrhyLHn8B8rvDHKk5uW5BqzO1M1T+fqFNWg88NIAJOoyX4Uc90FIJjDuN1OJmWKGwB5vLmPwaKBYsTe1yS+w==
 
 "@storybook/react-dom-shim@10.2.9":
   version "10.2.9"
