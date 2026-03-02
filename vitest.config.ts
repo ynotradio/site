@@ -9,12 +9,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: [
-        'bin/migrations/shared/**/*.ts',
-        'src/js/common_functions.js',
-        'src/js/countdown.js',
-        'src/js/yr_end_poll.js',
-      ],
+      include: ['bin/migrations/shared/**/*.ts', 'src/js/countdown.js', 'src/js/yr_end_poll.js'],
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',

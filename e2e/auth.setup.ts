@@ -1,5 +1,6 @@
 import { test as setup } from '@playwright/test';
 import path from 'path';
+import { mkdir } from 'fs/promises';
 import { loginToPayload } from './utils/payload-auth';
 
 /**
@@ -11,9 +12,14 @@ import { loginToPayload } from './utils/payload-auth';
  * @see https://playwright.dev/docs/auth
  */
 
-const authFile = path.join(__dirname, '.auth/payload-session.json');
+// In CI, use /tmp since e2e directory is mounted read-only
+const authDir = process.env.CI ? '/tmp/.auth' : path.join(__dirname, '.auth');
+const authFile = path.join(authDir, 'payload-session.json');
 
 setup('authenticate with Payload CMS', async ({ page }) => {
+  // Ensure auth directory exists
+  await mkdir(authDir, { recursive: true });
+
   // Log in to Payload CMS
   await loginToPayload(page);
 

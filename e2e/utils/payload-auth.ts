@@ -4,7 +4,27 @@ import { Page } from '@playwright/test';
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 /**
+ * Navigate with retry logic for Docker networking flakiness
+ * Ported from old e2e-buildkite setup that worked reliably
+ */
+async function navigateWithRetry(page: Page, url: string, maxRetries = 5): Promise<number | null> {
+  let response = null;
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+      if (response?.status() === 200) return response.status();
+    } catch {
+      // eslint-disable-next-line no-await-in-loop
+      await page.waitForTimeout(5000);
+    }
+  }
+  return response?.status() || null;
+}
+
+/**
  * Login to Payload CMS admin interface
+ * Uses CSS selectors that worked reliably in old e2e-buildkite setup
  * @param page - Playwright page object
  * @param email - Admin email (default from env or test default)
  * @param password - Admin password (default from env or test default)
@@ -14,54 +34,37 @@ export async function loginToPayload(
   email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
   password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
 ): Promise<void> {
-  // Navigate to Payload admin (it will redirect to login if not authenticated)
-  await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
-    waitUntil: 'networkidle',
-    timeout: 30000,
-  });
+  // Navigate to Payload admin with retry logic (ported from old setup)
+  const url = `${PAYLOAD_BASE_URL}/admin`;
+  await navigateWithRetry(page, url);
 
-  // Check if we're on a "create first user" page (has "New Password" or "Confirm Password" field)
-  const hasNewPasswordField = await page
-    .getByLabel(/new password/i)
-    .isVisible()
-    .catch(() => false);
-  const hasConfirmPasswordField = await page
-    .getByLabel(/confirm password/i)
-    .isVisible()
-    .catch(() => false);
-  const isCreateUserPage = hasNewPasswordField || hasConfirmPasswordField;
+  // Check if we're on a "create first user" page (URL-based check like old tests)
+  const isCreateUserPage = page.url().includes('create-first-user');
 
   if (isCreateUserPage) {
-    // Creating first admin user
-    await page.getByLabel(/email/i).fill(email);
-    // Payload uses "New Password" for the first password field on create-first-user page
-    await page.getByLabel(/new password/i).fill(password);
-    await page.getByLabel(/confirm password/i).fill(password);
+    // Wait for create-first-user form (like old tests)
+    await page.waitForURL(/create-first-user/, { timeout: 30000 });
 
-    // Click create account button
-    const createButton = page.getByRole('button', { name: /create/i });
-    await createButton.waitFor({ state: 'visible', timeout: 10000 });
-    await Promise.all([page.waitForNavigation({ timeout: 30000 }), createButton.click()]);
+    // Use CSS selectors that worked in old e2e-buildkite setup
+    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="password"]', password);
+    await page.fill('input[name="confirm-password"]', password);
+
+    // Submit the form and wait for URL change (not waitForNavigation)
+    await page.click('button[type="submit"]');
+
+    // Should redirect to dashboard after creating user
+    await page.waitForURL(/\/admin(?!\/create-first-user)/, { timeout: 30000 });
   } else {
-    // Regular login
-    await page.getByLabel(/email/i).fill(email);
-    // Use first() in case there are multiple password-related fields
-    await page
-      .getByLabel(/password/i)
-      .first()
-      .fill(password);
+    // Regular login - use CSS selectors
+    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="password"]', password);
 
-    // The Payload login button says "Login" (one word)
-    const submitButton = page
-      .getByRole('button', { name: 'Login' })
-      .or(page.locator('button:has-text("Login")'))
-      .or(page.locator('button[type="submit"]'));
+    // Submit and wait for URL change
+    await page.click('button[type="submit"]');
 
-    // Wait for button to be ready and click
-    await submitButton.waitFor({ state: 'visible', timeout: 10000 });
-
-    // Click and wait for navigation to complete
-    await Promise.all([page.waitForNavigation({ timeout: 10000 }), submitButton.click()]);
+    // Wait for redirect away from login page
+    await page.waitForURL(/\/admin(?!\/login)/, { timeout: 30000 });
   }
 
   // Verify we're on the admin dashboard (not login page)
