@@ -10,6 +10,11 @@ vi.mock('payload', () => ({
   getPayload: vi.fn(),
 }));
 
+// Mock payload.config (needed for getPayloadClient dynamic import)
+vi.mock('../../../payload.config', () => ({
+  default: {},
+}));
+
 // Mock logger
 vi.mock('./logger', () => ({
   createLogger: () => ({
@@ -39,6 +44,7 @@ describe('payloadClient', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
     const musicbrainz = await import('./musicbrainz');
     mockGetArtistMbid = musicbrainz.getArtistMbid as Mock;
 
@@ -47,6 +53,62 @@ describe('payloadClient', () => {
       create: vi.fn(),
       update: vi.fn(),
     };
+  });
+
+  describe('getPayloadClient', () => {
+    it('should throw when prod NEON database URL is missing', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      vi.stubEnv('NEON_PROD_DATABASE_URL', '');
+
+      await expect(getPayloadClient('prod-neon')).rejects.toThrow(
+        'Database URI not found for target "prod-neon"',
+      );
+    });
+
+    it('should throw when local-postgres database URLs are all missing', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      vi.stubEnv('NEON_DEV_DATABASE_URL', '');
+      vi.stubEnv('DATABASE_URI', '');
+
+      await expect(getPayloadClient('local-postgres')).rejects.toThrow(
+        'Database URI not found for target "local-postgres"',
+      );
+    });
+
+    it('should connect with NEON_PROD_DATABASE_URL for prod-neon target', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      const { getPayload } = await import('payload');
+      vi.stubEnv('NEON_PROD_DATABASE_URL', 'postgresql://prod-test');
+      (getPayload as Mock).mockResolvedValueOnce(mockPayload);
+
+      const result = await getPayloadClient('prod-neon');
+
+      expect(result).toBe(mockPayload);
+      expect(process.env.DATABASE_URI).toBe('postgresql://prod-test');
+    });
+
+    it('should connect with NEON_DEV_DATABASE_URL for local-postgres target', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      const { getPayload } = await import('payload');
+      vi.stubEnv('NEON_DEV_DATABASE_URL', 'postgresql://dev-test');
+      (getPayload as Mock).mockResolvedValueOnce(mockPayload);
+
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockPayload);
+    });
+
+    it('should fall back to DATABASE_URI when NEON_DEV_DATABASE_URL is missing', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      const { getPayload } = await import('payload');
+      vi.stubEnv('NEON_DEV_DATABASE_URL', '');
+      vi.stubEnv('DATABASE_URI', 'postgresql://fallback-test');
+      (getPayload as Mock).mockResolvedValueOnce(mockPayload);
+
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockPayload);
+    });
   });
 
   describe('findOrCreateArtist', () => {
@@ -67,6 +129,19 @@ describe('payloadClient', () => {
         },
         limit: 1,
       });
+    });
+
+    it('should return existing artist ID without updating when MusicBrainz ID already set', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'existing-with-mbid', musicbrainzId: 'existing-mbid-value' }],
+      });
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
+
+      expect(artistId).toBe('existing-with-mbid');
+      expect(mockPayload.update).not.toHaveBeenCalled();
     });
 
     it('should create new artist when not found', async () => {
@@ -253,6 +328,110 @@ describe('payloadClient', () => {
 
       expect(artistId).toBe('new-artist-no-mbid');
       expect(mockPayload.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle name conflict (race condition) by finding existing artist', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // Initial find by name — not found
+        .mockResolvedValueOnce({ docs: [{ id: 'race-artist-99' }] }); // Retry find — found
+      mockGetArtistMbid.mockResolvedValueOnce(null);
+
+      const nameError = {
+        status: 400,
+        data: { errors: [{ path: 'name', message: 'Value must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(nameError);
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
+
+      expect(artistId).toBe('race-artist-99');
+    });
+
+    it('should rethrow name-conflict error when retry find also returns empty', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] }); // All finds return empty
+      mockGetArtistMbid.mockResolvedValueOnce(null);
+
+      const nameError = {
+        status: 400,
+        data: { errors: [{ path: 'name', message: 'Value must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(nameError);
+
+      await expect(
+        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
+      ).rejects.toEqual(nameError);
+    });
+
+    it('should find artist by slug after MBID retry also hits slug conflict', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // Initial find by name
+        .mockResolvedValueOnce({ docs: [{ id: 'slug-artist-77' }] }); // Slug find after MBID retry
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError) // First create fails with MBID conflict
+        .mockRejectedValueOnce(slugError); // Retry create fails with slug conflict
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Test Artist');
+
+      expect(artistId).toBe('slug-artist-77');
+    });
+
+    it('should rethrow when MBID retry slug conflict finds no existing artist', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] }); // All finds return empty
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError)
+        .mockRejectedValueOnce(slugError);
+
+      await expect(
+        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
+      ).rejects.toEqual(slugError);
+    });
+
+    it('should rethrow MBID retry non-slug error', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      const dbError = { status: 500, message: 'Database error' };
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError)
+        .mockRejectedValueOnce(dbError);
+
+      await expect(
+        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
+      ).rejects.toEqual(dbError);
     });
   });
 
@@ -468,6 +647,23 @@ describe('payloadClient', () => {
         findOrCreateVenue(mockPayload as Payload, 'Venue Name'),
       ).rejects.toThrow('Network failure');
     });
+
+    it('should rethrow slug error when no existing venue found by slug', async () => {
+      const { findOrCreateVenue } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // name lookup — not found
+        .mockResolvedValueOnce({ docs: [] }); // slug lookup — also not found
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+
+      await expect(
+        findOrCreateVenue(mockPayload as Payload, 'Test Venue'),
+      ).rejects.toEqual(slugError);
+    });
   });
 
   describe('findOrCreatePerson', () => {
@@ -559,6 +755,23 @@ describe('payloadClient', () => {
       await expect(
         findOrCreatePerson(mockPayload as Payload, 'Fail Person'),
       ).rejects.toMatchObject({ status: 500 });
+    });
+
+    it('should rethrow slug error when no existing person found by slug', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // name lookup — not found
+        .mockResolvedValueOnce({ docs: [] }); // slug lookup — also not found
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+
+      await expect(
+        findOrCreatePerson(mockPayload as Payload, 'Test Person'),
+      ).rejects.toEqual(slugError);
     });
   });
 
@@ -664,6 +877,24 @@ describe('payloadClient', () => {
         findOrCreateRecord(mockPayload as Payload, 'Bad Album', 3),
       ).rejects.toMatchObject({ status: 500 });
     });
+
+    it('should rethrow slug error when no existing record found by slug', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // legacyId lookup — not found
+        .mockResolvedValueOnce({ docs: [] }) // title+artist lookup — not found
+        .mockResolvedValueOnce({ docs: [] }); // slug lookup — also not found
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+
+      await expect(
+        findOrCreateRecord(mockPayload as Payload, 'Test Album', 3, 10),
+      ).rejects.toEqual(slugError);
+    });
   });
 
   describe('findOrCreateSong (slug error path)', () => {
@@ -692,6 +923,23 @@ describe('payloadClient', () => {
       await expect(
         findOrCreateSong(mockPayload as Payload, 'Failing Song'),
       ).rejects.toMatchObject({ status: 500 });
+    });
+
+    it('should rethrow slug error when no existing song found by slug', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // title lookup — not found
+        .mockResolvedValueOnce({ docs: [] }); // slug lookup — also not found
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+
+      await expect(
+        findOrCreateSong(mockPayload as Payload, 'Unique Song'),
+      ).rejects.toEqual(slugError);
     });
   });
 });

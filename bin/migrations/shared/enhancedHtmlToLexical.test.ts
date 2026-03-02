@@ -234,6 +234,13 @@ describe('enhancedHtmlToLexical', () => {
       const result = convertHtmlToLexicalEnhanced(html);
       expect(result.root.children[0].children[0].text).toContain('Centered');
     });
+
+    it('should extract text from unknown HTML elements', () => {
+      const html = '<span>Span element text</span>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      expect(result.root.children[0].type).toBe('paragraph');
+      expect(result.root.children[0].children[0].text).toContain('Span element text');
+    });
   });
 
   describe('Complex HTML', () => {

@@ -122,6 +122,73 @@ describe('convertHtmlToLexical', () => {
     expect(hasLink).toBe(true);
   });
 
+  it('should preserve absolute URLs in links', () => {
+    const result = convertHtmlToLexical('<p><a href="https://external.com/page">External</a></p>');
+    const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.url).toBe('https://external.com/page');
+  });
+
+  it('should convert root-relative URLs to absolute in links', () => {
+    const result = convertHtmlToLexical('<p><a href="/ondemand.php?id=42">On Demand</a></p>');
+    const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.url).toContain('ynotradio.net');
+    expect(linkNode.fields.url).toContain('/ondemand.php?id=42');
+  });
+
+  it('should convert protocol-relative URLs to https in links', () => {
+    const result = convertHtmlToLexical('<p><a href="//cdn.example.com/file.js">CDN</a></p>');
+    const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.url).toBe('https://cdn.example.com/file.js');
+  });
+
+  it('should set newTab=true for target="_blank" links', () => {
+    const result = convertHtmlToLexical('<p><a href="https://example.com" target="_blank">Link</a></p>');
+    const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should set newTab=true for target="_new" links', () => {
+    const result = convertHtmlToLexical('<p><a href="https://example.com" target="_new">Link</a></p>');
+    const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should not create a link node when anchor has no href', () => {
+    const result = convertHtmlToLexical('<p><a target="_blank">text without href</a></p>');
+    const hasLink = result.root.children[0].children.some((n: any) => n.type === 'link');
+    expect(hasLink).toBe(false);
+  });
+
+  it('should handle bold text that contains nested HTML', () => {
+    const result = convertHtmlToLexical('<p><b><a href="https://example.com">linked bold</a></b></p>');
+    // The nested content should be parsed recursively
+    const children = result.root.children[0].children;
+    expect(children.length).toBeGreaterThan(0);
+  });
+
+  it('should handle trailing text after inline elements with leading space', () => {
+    const result = convertHtmlToLexical('<p><b>Bold</b> trailing text</p>');
+    const allText = result.root.children[0].children
+      .map((c: any) => c.text || '')
+      .join('');
+    expect(allText).toContain('Bold');
+    expect(allText).toContain('trailing text');
+  });
+
+  it('should handle space between adjacent inline elements', () => {
+    const result = convertHtmlToLexical('<p><b>Bold</b> <em>italic</em></p>');
+    const allText = result.root.children[0].children
+      .map((c: any) => c.text || '')
+      .join('');
+    expect(allText).toContain('Bold');
+    expect(allText).toContain('italic');
+  });
+
   it('should set correct structure properties', () => {
     const result = convertHtmlToLexical('test');
     expect(result.root.type).toBe('root');
