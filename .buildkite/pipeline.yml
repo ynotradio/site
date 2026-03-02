@@ -108,16 +108,34 @@ steps:
       docker build -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload . &
       wait
       
-      # Start all services
-      docker compose -f docker-compose.e2e.yml up -d
+      # Start databases (detached is OK for these)
+      docker compose -f docker-compose.e2e.yml up -d postgres mysql
       
-      # Wait for services to be healthy (healthchecks handle the logic)
-      echo "⏳ Waiting for services..."
+      # Start Payload in FOREGROUND (backgrounded) to enable TTY attachment
+      # tty: true in docker-compose only works with attached mode
+      docker compose -f docker-compose.e2e.yml up payload 2>&1 &
+      COMPOSE_PID=$$!
+      
+      # Wait for Payload to be healthy
+      echo "⏳ Waiting for Payload..."
       for i in $$(seq 1 60); do
         PAYLOAD=$$(docker compose -f docker-compose.e2e.yml ps payload --format json | jq -r '.Health // "starting"')
+        echo "Check $$i/60: payload=$$PAYLOAD"
+        [ "$$PAYLOAD" = "healthy" ] && break
+        sleep 5
+      done
+      
+      # Kill the foreground compose (container keeps running)
+      kill $$COMPOSE_PID 2>/dev/null || true
+      
+      # Start remaining services
+      docker compose -f docker-compose.e2e.yml up -d phpfpm apache
+      
+      # Wait for Apache to be healthy
+      for i in $$(seq 1 30); do
         APACHE=$$(docker compose -f docker-compose.e2e.yml ps apache --format json | jq -r '.Health // "starting"')
-        echo "Check $$i/60: payload=$$PAYLOAD apache=$$APACHE"
-        [ "$$PAYLOAD" = "healthy" ] && [ "$$APACHE" = "healthy" ] && break
+        echo "Apache check $$i/30: apache=$$APACHE"
+        [ "$$APACHE" = "healthy" ] && break
         sleep 5
       done
       
