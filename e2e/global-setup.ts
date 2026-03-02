@@ -1,106 +1,51 @@
-/* eslint-disable no-console, complexity */
-import { readFileSync } from 'fs';
-import { join } from 'path';
+/* eslint-disable no-console */
 import { execSync } from 'child_process';
+import { join } from 'path';
 
 /**
- * Global setup for E2E tests
- * Ensures test environment is ready before Playwright starts
+ * Playwright Global Setup
  *
- * SIMPLIFIED VERSION - Just checks services, skips seeding
+ * CI: Skip all checks (services started externally by Buildkite)
+ * Local: Start Docker services if not running
  */
 async function globalSetup() {
   console.log('\n🚀 Playwright Global Setup...\n');
 
+  if (process.env.CI) {
+    console.log('⏭️  CI mode: Services started externally\n');
+    return;
+  }
+
   const projectRoot = join(__dirname, '..');
 
+  // Check if Docker services are running
   try {
-    // Check if .env.local exists
-    const envPath = join(projectRoot, '.env.local');
-    try {
-      readFileSync(envPath);
-      console.log('✅ .env.local exists\n');
-    } catch (error) {
-      console.warn('⚠️  .env.local not found');
-      console.warn('   Run: yarn setup:e2e\n');
+    const postgresStatus = execSync('docker compose ps postgres --format "{{.Status}}"', {
+      cwd: projectRoot,
+      encoding: 'utf-8',
+    }).trim();
+
+    if (postgresStatus.includes('Up') && postgresStatus.includes('healthy')) {
+      console.log('✅ Docker services are running\n');
+      return;
     }
-
-    // In CI/Buildkite, services are started externally before Playwright runs
-    // Skip Docker checks since Docker CLI isn't available in the Playwright container
-    if (process.env.CI) {
-      console.log('⏭️  CI mode: Skipping Docker service checks (services started externally)\n');
-    } else {
-      // Check if Docker services are running and healthy (local dev only)
-      console.log('🐳 Checking Docker services...');
-      try {
-        // Check if all required services are running
-        const postgresStatus = execSync('docker compose ps postgres --format "{{.Status}}"', {
-          cwd: projectRoot,
-          encoding: 'utf-8',
-        }).trim();
-
-        const apacheStatus = execSync('docker compose ps apache --format "{{.Status}}"', {
-          cwd: projectRoot,
-          encoding: 'utf-8',
-        }).trim();
-
-        if (
-          postgresStatus.includes('Up')
-          && postgresStatus.includes('healthy')
-          && apacheStatus.includes('Up')
-        ) {
-          console.log('✅ Docker services are running and healthy\n');
-        } else {
-          throw new Error('Services not all running');
-        }
-      } catch {
-        console.log('⚠️  Docker services not running or unhealthy');
-        console.log('   Starting services...\n');
-
-        execSync('docker compose up -d postgres mysql phpfpm apache', {
-          cwd: projectRoot,
-          stdio: 'inherit',
-        });
-
-        // Wait for services to be healthy
-        console.log('⏳ Waiting for services to be healthy...');
-        execSync('./bin/wait-for-docker-services.sh', {
-          cwd: projectRoot,
-          stdio: 'inherit',
-        });
-      }
-    }
-
-    console.log('✅ Global setup complete!\n');
-
-    // Seed databases in CI, skip in local dev (assume data exists)
-    // Also skip if SKIP_PAYLOAD_SEED is set (seeded externally)
-    if (process.env.CI && !process.env.SKIP_PAYLOAD_SEED) {
-      console.log('🌱 Setting up Payload database (CI mode)...\n');
-
-      try {
-        // Seed the database (migrations happen automatically when Payload starts)
-        console.log('🌱 Seeding Payload database...');
-        execSync('yarn --ignore-engines seed:payload', {
-          cwd: projectRoot,
-          stdio: 'inherit',
-          timeout: 60000,
-        });
-        console.log('✅ Payload database ready\n');
-      } catch (error) {
-        console.error('❌ Failed to setup Payload database:', error);
-        throw error;
-      }
-    } else if (process.env.SKIP_PAYLOAD_SEED) {
-      console.log('⏭️  Skipping database seeding - SKIP_PAYLOAD_SEED is set\n');
-    } else {
-      console.log('⏭️  Skipping database seeding - assuming data already exists');
-      console.log('   To re-seed manually: yarn seed:payload\n');
-    }
-  } catch (error) {
-    console.error('❌ Error during global setup:', error);
-    throw error;
+  } catch {
+    // Services not running
   }
+
+  console.log('⚠️  Starting Docker services...\n');
+  execSync('docker compose up -d postgres mysql phpfpm apache', {
+    cwd: projectRoot,
+    stdio: 'inherit',
+  });
+
+  console.log('⏳ Waiting for services to be healthy...');
+  execSync('./bin/wait-for-docker-services.sh', {
+    cwd: projectRoot,
+    stdio: 'inherit',
+  });
+
+  console.log('✅ Global setup complete!\n');
 }
 
 export default globalSetup;
