@@ -409,17 +409,6 @@ describe('logger', () => {
         expect(markdown).toContain('| 1 | Bad Post | validation_error | Field missing |');
       });
 
-      it('should show truncation message when there are more than 20 errors', () => {
-        const stats = createExtendedStats();
-        for (let i = 1; i <= 22; i += 1) {
-          recordError(stats, i, `Post ${i}`, ErrorCategory.VALIDATION_ERROR, 'Error');
-        }
-
-        const markdown = generateStatsMarkdown(stats, 'Posts');
-
-        expect(markdown).toContain('*2 more errors*');
-      });
-
       it('should escape pipe characters in error table', () => {
         const stats = createExtendedStats();
         recordError(

@@ -1,76 +1,220 @@
 # docker-compose.e2e.yml
 # E2E testing services for Buildkite CI
-# Usage: docker compose -f docker-compose.yml -f docker-compose.ci.yml -f docker-compose.e2e.yml up
+# Full setup: Postgres + MySQL → Payload + Legacy PHP → Playwright
+#
+# Uses pre-built GHCR images by default for fast CI.
+# Override with environment variables if needed.
 
 services:
-  # Payload CMS / Next.js server for E2E tests
+  # === PostgreSQL for Payload CMS ===
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ynot_payload_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-ynot_postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ynot_postgres_user} -d ${POSTGRES_DB:-ynot_payload_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # === MySQL for Legacy PHP Site ===
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-dev_root_password_not_secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ynot_site}
+      MYSQL_USER: ${MYSQL_USER:-ynot_sql_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+    volumes:
+      # Seed database with schema on first start
+      - ./src/db/docker/ynot_db.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u${MYSQL_USER:-ynot_sql_user} -p${MYSQL_PASSWORD:-dev_mysql_password_not_secret} && mysql -u${MYSQL_USER:-ynot_sql_user} -p${MYSQL_PASSWORD:-dev_mysql_password_not_secret} ${MYSQL_DATABASE:-ynot_site} -e 'SELECT 1 FROM stories LIMIT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  # === Payload CMS ===
+  # Uses pre-built image with deps installed
+  # Note: First startup is slow (Next.js dev compilation) but works reliably
   payload:
-    container_name: payload
-    image: node:22-slim
-    working_dir: /app
+    image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
+    # CRITICAL: Next.js dev server requires TTY to stay running
+    # Without these, it detects non-interactive stdin and exits with code 0
     tty: true
     stdin_open: true
-    volumes:
-      - .:/app
     ports:
       - "3000:3000"
     environment:
+      # Use CI=true - the OLD working setup used this and it worked fine
       - CI=true
       - NODE_ENV=development
-      # Override DATABASE_URI to use Docker service name instead of localhost
-      - DATABASE_URI=postgresql://ynot_postgres_user:ynot_postgres_pass@postgres:5432/ynot_payload_dev
+      - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
       - DATABASE_SSL=disable
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
     depends_on:
       postgres:
         condition: service_healthy
-    # Install curl for healthcheck, yarn deps, seed the database, then start dev server
-    command: >
-      bash -c "apt-get update && apt-get install -y curl &&
-               yarn --ignore-engines install --frozen-lockfile &&
-               echo '🌱 Seeding Payload database...' &&
-               yarn --ignore-engines seed:payload &&
-               echo '✅ Seed complete, starting Next.js...' &&
-               yarn dev"
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/admin || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 30
-      start_period: 120s
-    networks:
-      - app-tier
+    # Debug startup and run migrations + dev server
+    # Note: depends_on: postgres: service_healthy ensures postgres is ready
+    command:
+      - sh
+      - -c
+      - |
+        set -x
+        echo '=== Payload container starting ==='
 
-  # Playwright test runner - shares network with payload
-  playwright:
-    container_name: playwright
-    image: mcr.microsoft.com/playwright:v1.58.0-jammy
-    # Reset network_mode from base compose (host) to allow networks: to work
-    network_mode: !reset null
+        # Check node version
+        node --version
+
+        # WORKAROUND: DinD esbuild service version mismatch
+        # The Buildkite DinD environment has a shared esbuild service at v0.27.2
+        # but our node_modules has esbuild@0.27.3.
+        # Solution: Replace tsx's esbuild with esbuild-wasm which doesn't use native binaries
+        echo '=== Fixing esbuild for DinD ==='
+        cd node_modules/tsx/node_modules
+        rm -rf esbuild @esbuild
+        npm pack esbuild-wasm@0.27.3 2>&1
+        mkdir esbuild && tar -xzf esbuild-wasm-*.tgz -C esbuild --strip-components=1
+        rm -f esbuild-wasm-*.tgz
+        cd /app
+
+        echo '=== Starting Payload ==='
+        yarn payload:migrate
+        
+        # Start Next.js dev server
+        # Note: tty: true and stdin_open: true in service config are CRITICAL
+        # Without them, Next.js dev server exits immediately with code 0
+        
+        # Keep restart loop as safety net in case server exits for other reasons
+        while true; do
+          echo "Starting Next.js dev server..."
+          yarn dev --port 3000 2>&1 || true
+          echo "Next.js exited (code $?), restarting in 2 seconds..."
+          sleep 2
+        done
+    healthcheck:
+      # Simple port check - don't wait for full page render
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 60
+      start_period: 30s
+
+  # === PHP-FPM for Legacy Site ===
+  # Uses pre-built image with extensions compiled
+  phpfpm:
+    image: ${PHPFPM_IMAGE:-ghcr.io/ynotradio/site/phpfpm-dev:latest}
     working_dir: /app
     volumes:
-      - .:/app
+      - ./src:/app
+    environment:
+      # MySQL connection
+      - DB_HOST=mysql
+      - DB_USER=${MYSQL_USER:-ynot_sql_user}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-dev_mysql_password_not_secret}
+      - DB_NAME=${MYSQL_DATABASE:-ynot_site}
+      - DB_PORT=3306
+      # PostgreSQL connection
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DATABASE=${POSTGRES_DB:-ynot_payload_dev}
+      - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
+      - USE_POSTGRES_SCHEDULE=false
+      # Auth0 dummy config
+      - AUTH0_DOMAIN=test.auth0.com
+      - AUTH0_CLIENT_ID=test-client-id
+      - AUTH0_CLIENT_SECRET=test-client-secret
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: ["sh", "-c", "composer install --no-interaction --no-dev && php-fpm"]
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # === Apache for Legacy Site ===
+  apache:
+    image: httpd:2.4
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/app
+      - ./bin/docker/apache-vhost/httpd-vhost.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf
+    depends_on:
+      phpfpm:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    command: >
+      sh -c "
+        apt-get update && apt-get install -y curl &&
+        echo 'LoadModule proxy_module modules/mod_proxy.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule proxy_fcgi_module modules/mod_proxy_fcgi.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'LoadModule rewrite_module modules/mod_rewrite.so' >> /usr/local/apache2/conf/httpd.conf &&
+        echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf &&
+        httpd-foreground
+      "
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null -w '%{http_code}' http://localhost/ | grep -qE '^[2345]' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # === Playwright E2E Tests ===
+  # Uses pre-built image with npm deps installed
+  playwright:
+    image: ${PLAYWRIGHT_IMAGE:-ghcr.io/ynotradio/site/playwright:latest}
+    working_dir: /app
+    # Mount local e2e directory to use latest test files
+    # The pre-built image has deps installed, but we use local tests
+    volumes:
+      - ./e2e:/app/e2e:ro
+      - ./playwright.config.ts:/app/playwright.config.ts:ro
     environment:
       - CI=true
-      - NODE_ENV=development
-      # Skip seeding in global-setup since we seed via payload container
       - SKIP_PAYLOAD_SEED=true
+      # Use Docker's internal DNS for service names
+      - PLAYWRIGHT_BASE_URL=http://payload:3000
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     depends_on:
       payload:
         condition: service_healthy
-    networks:
-      - app-tier
-    # Install deps and run tests - use the IP directly since DNS/Chromium issues
+      apache:
+        condition: service_healthy
+    # Ensure all services are on same network
+    # dns will be handled by Docker's internal resolver
     command: >
-      bash -c "echo 'Testing connectivity to payload...' &&
-               PAYLOAD_IP=$$(getent hosts payload | awk '{ print $$1 }') &&
-               echo \"Resolved payload IP: $$PAYLOAD_IP\" &&
-               export PLAYWRIGHT_BASE_URL=\"http://$$PAYLOAD_IP:3000\" &&
-               echo \"Using PLAYWRIGHT_BASE_URL=$$PLAYWRIGHT_BASE_URL\" &&
-               curl -sf http://$$PAYLOAD_IP:3000/admin > /dev/null && echo '✅ curl can reach Payload' &&
-               yarn install --frozen-lockfile && 
-               npx playwright test --reporter=list"
+      bash -c "
+        echo '🔍 Setting up DNS for Chromium browser...'
 
-networks:
-  app-tier:
-    driver: bridge
+        # Chromium uses its own DNS resolver, not the container's resolver
+        # Resolve service IPs and add to /etc/hosts so Chromium can find them
+        PAYLOAD_IP=$$(getent hosts payload | awk '{print $$1}')
+        APACHE_IP=$$(getent hosts apache | awk '{print $$1}')
+
+        echo \"Resolved: payload=$$PAYLOAD_IP apache=$$APACHE_IP\"
+
+        if [ -n \"$$PAYLOAD_IP\" ]; then
+          echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
+        fi
+        if [ -n \"$$APACHE_IP\" ]; then
+          echo \"$$APACHE_IP apache\" >> /etc/hosts
+        fi
+
+        echo '🔍 Testing connectivity from Playwright container...'
+
+        # Test Docker network connections
+        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
+        curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
+
+        # Run e2e tests using the main playwright config
+        npx playwright test --reporter=list
+      "

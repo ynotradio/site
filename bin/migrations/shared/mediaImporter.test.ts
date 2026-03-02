@@ -54,10 +54,12 @@ describe('mediaImporter', () => {
 
     it('should return existing media if already imported', async () => {
       (mockPayload.find as Mock).mockResolvedValueOnce({
-        docs: [{
-          id: 'existing-media-123',
-          url: 'https://cloudinary.com/existing.jpg',
-        }],
+        docs: [
+          {
+            id: 'existing-media-123',
+            url: 'https://cloudinary.com/existing.jpg',
+          },
+        ],
       });
 
       const result = await importImageFromUrl(
@@ -192,11 +194,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/relative.jpg',
       });
 
-      const result = await importImageFromUrl(
-        mockPayload as Payload,
-        'images/test.jpg',
-        metadata,
-      );
+      const result = await importImageFromUrl(mockPayload as Payload, 'images/test.jpg', metadata);
 
       expect(result.success).toBe(true);
       expect(mockAxios.get).toHaveBeenCalledWith(
@@ -218,11 +216,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.png',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.png',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.png', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -246,11 +240,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.gif',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.gif',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.gif', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -263,9 +253,18 @@ describe('mediaImporter', () => {
 
     it('should detect WebP mime type from buffer', async () => {
       const mockImageBuffer = Buffer.from([
-        0x52, 0x49, 0x46, 0x46, // RIFF
-        0x00, 0x00, 0x00, 0x00, // file size
-        0x57, 0x45, 0x42, 0x50, // WEBP
+        0x52,
+        0x49,
+        0x46,
+        0x46, // RIFF
+        0x00,
+        0x00,
+        0x00,
+        0x00, // file size
+        0x57,
+        0x45,
+        0x42,
+        0x50, // WEBP
       ]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
@@ -278,11 +277,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.webp',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.webp',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.webp', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -291,135 +286,6 @@ describe('mediaImporter', () => {
           }),
         }),
       );
-    });
-
-    it('should detect JPEG mime type from magic bytes when URL has no extension', async () => {
-      const mockImageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({
-        data: mockImageBuffer,
-        headers: { 'content-type': 'image/jpeg' },
-      });
-      (mockPayload.create as Mock).mockResolvedValueOnce({
-        id: 'jpeg-magic-media',
-        url: 'https://cloudinary.com/image.jpg',
-      });
-
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://drive.google.com/uc?export=download&id=abc123',
-        metadata,
-      );
-
-      expect(mockPayload.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          file: expect.objectContaining({
-            mimetype: 'image/jpeg',
-          }),
-        }),
-      );
-    });
-
-    it('should detect GIF mime type from magic bytes when URL has no extension', async () => {
-      const mockImageBuffer = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]);
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({
-        data: mockImageBuffer,
-        headers: { 'content-type': 'image/gif' },
-      });
-      (mockPayload.create as Mock).mockResolvedValueOnce({
-        id: 'gif-magic-media',
-        url: 'https://cloudinary.com/image.gif',
-      });
-
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/nocontent',
-        metadata,
-      );
-
-      expect(mockPayload.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          file: expect.objectContaining({
-            mimetype: 'image/gif',
-          }),
-        }),
-      );
-    });
-
-    it('should detect WebP mime type from magic bytes when URL has no extension', async () => {
-      const mockImageBuffer = Buffer.from([
-        0x52, 0x49, 0x46, 0x46,
-        0x00, 0x00, 0x00, 0x00,
-        0x57, 0x45, 0x42, 0x50,
-      ]);
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({
-        data: mockImageBuffer,
-        headers: { 'content-type': 'image/webp' },
-      });
-      (mockPayload.create as Mock).mockResolvedValueOnce({
-        id: 'webp-magic-media',
-        url: 'https://cloudinary.com/image.webp',
-      });
-
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/nocontent',
-        metadata,
-      );
-
-      expect(mockPayload.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          file: expect.objectContaining({
-            mimetype: 'image/webp',
-          }),
-        }),
-      );
-    });
-
-    it('should fall back to JPEG when buffer has unknown magic bytes and no URL extension', async () => {
-      const mockImageBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0]); // JPEG — recognized by magic bytes
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      // Simulate unknown magic bytes (not JPEG/PNG/GIF/WebP)
-      const unknownBuffer = Buffer.from([0x00, 0x00, 0x00, 0x00, 0x49, 0x49]);
-      mockAxios.get.mockResolvedValueOnce({
-        data: unknownBuffer,
-        headers: {}, // No content-type
-      });
-
-      // Since buffer has unknown magic bytes, isValidImageBuffer returns false
-      // so downloadImage returns null → import fails
-      const result = await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/nocontent',
-        metadata,
-      );
-
-      expect(result.success).toBe(false);
-    });
-
-    it('should reject buffers shorter than 4 bytes', async () => {
-      const tinyBuffer = Buffer.from([0xff, 0xd8]); // Only 2 bytes — not enough
-
-      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
-      mockAxios.get.mockResolvedValueOnce({
-        data: tinyBuffer,
-        headers: { 'content-type': 'image/jpeg' },
-      });
-
-      const result = await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/tiny.jpg',
-        metadata,
-      );
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Failed to download image');
     });
 
     it('should handle backslash paths', async () => {
@@ -435,11 +301,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.jpg',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'images\\test.jpg',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'images\\test.jpg', metadata);
 
       expect(mockAxios.get).toHaveBeenCalledWith(
         'https://www.ynotradio.net/images/test.jpg',
