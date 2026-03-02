@@ -1,13 +1,15 @@
-// Google Analytics
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-2140137-3']);
-_gaq.push(['_trackPageview']);
+// Google Analytics (only in browser environment)
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && document.getElementsByTagName('script')[0]) {
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-2140137-3']);
+  _gaq.push(['_trackPageview']);
 
-(function () {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+  (function () {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+}
 
 // ymail.php specific functions
 function setDays() {
@@ -40,12 +42,21 @@ function checkForm() {
   return true;
 }
 
-$('#top11_write_in').live('click', function () {
-  if ($('#top11_write_in:checked').length == 0) {
-    $('#write_in_value').attr('disabled', true);
-    $('#write_in_value').val('');
-  } else {
-    $('#write_in_value').attr('disabled', false);
-  }
-});
+// Only run jQuery code in browser environment
+if (typeof $ !== 'undefined') {
+  $('#top11_write_in').live('click', function () {
+    if ($('#top11_write_in:checked').length == 0) {
+      $('#write_in_value').attr('disabled', true);
+      $('#write_in_value').val('');
+    } else {
+      $('#write_in_value').attr('disabled', false);
+    }
+  });
+}
+
+// Export for testing (Node.js environment)
+// In browser, this will be undefined and won't affect existing functionality
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { setDays, checkForm };
+}
 
