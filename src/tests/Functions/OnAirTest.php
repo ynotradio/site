@@ -280,4 +280,238 @@ class OnAirTest extends TestCase
         ];
         $this->assertSame('Judy G.', find_current_slot($utcDateSchedule, $timeAtBug));
     }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Midnight boundaries
+    // ---------------------------------------------------------------------------
+
+    /**
+     * A show that uses 24:00:00 as end time should handle times near midnight.
+     * Note: find_current_slot uses string comparison, so 24:00:00 > 23:59:59.
+     */
+    public function testShowEndingAtMidnight24Hour(): void
+    {
+        $schedule = [
+            ['start_time' => '22:00:00', 'end_time' => '24:00:00', 'host' => 'Late Night DJ'],
+        ];
+
+        $this->assertSame('Late Night DJ', find_current_slot($schedule, '23:00:00'));
+        $this->assertSame('Late Night DJ', find_current_slot($schedule, '23:59:59'));
+        // At exactly 24:00:00, the show has ended (end time exclusive)
+        $this->assertSame('', find_current_slot($schedule, '24:00:00'));
+    }
+
+    /**
+     * A show starting at midnight (00:00:00) should match times at and after midnight.
+     */
+    public function testShowStartingAtMidnight(): void
+    {
+        $schedule = [
+            ['start_time' => '00:00:00', 'end_time' => '02:00:00', 'host' => 'Early Bird DJ'],
+        ];
+
+        $this->assertSame('Early Bird DJ', find_current_slot($schedule, '00:00:00'));
+        $this->assertSame('Early Bird DJ', find_current_slot($schedule, '01:30:00'));
+        $this->assertSame('', find_current_slot($schedule, '02:00:00'));
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: All-day and long shows
+    // ---------------------------------------------------------------------------
+
+    /**
+     * An all-day show covering 00:00:00 to 24:00:00 should match any time.
+     */
+    public function testAllDayShow(): void
+    {
+        $schedule = [
+            ['start_time' => '00:00:00', 'end_time' => '24:00:00', 'host' => 'All Day DJ'],
+        ];
+
+        $this->assertSame('All Day DJ', find_current_slot($schedule, '00:00:00'));
+        $this->assertSame('All Day DJ', find_current_slot($schedule, '12:00:00'));
+        $this->assertSame('All Day DJ', find_current_slot($schedule, '23:59:59'));
+    }
+
+    /**
+     * A show running nearly all day (00:00 to 23:59) should cover almost all times.
+     */
+    public function testNearlyAllDayShow(): void
+    {
+        $schedule = [
+            ['start_time' => '00:00:00', 'end_time' => '23:59:00', 'host' => 'Marathon DJ'],
+        ];
+
+        $this->assertSame('Marathon DJ', find_current_slot($schedule, '06:00:00'));
+        $this->assertSame('Marathon DJ', find_current_slot($schedule, '23:58:59'));
+        // At 23:59:00, the show has ended
+        $this->assertSame('', find_current_slot($schedule, '23:59:00'));
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Overlapping shows
+    // ---------------------------------------------------------------------------
+
+    /**
+     * When two shows overlap, the first matching slot is returned (first in array).
+     * This documents current behavior to catch any changes during migration.
+     */
+    public function testOverlappingShowsReturnsFirstMatch(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '14:00:00', 'host' => 'First DJ'],
+            ['start_time' => '12:00:00', 'end_time' => '16:00:00', 'host' => 'Second DJ'],
+        ];
+
+        // At 13:00, both shows are active — first one wins
+        $this->assertSame('First DJ', find_current_slot($schedule, '13:00:00'));
+        // At 15:00, only Second DJ is active
+        $this->assertSame('Second DJ', find_current_slot($schedule, '15:00:00'));
+    }
+
+    /**
+     * Completely nested shows: a short show entirely within a longer show.
+     */
+    public function testNestedShowsReturnsFirstMatch(): void
+    {
+        $schedule = [
+            ['start_time' => '09:00:00', 'end_time' => '17:00:00', 'host' => 'Day Show DJ'],
+            ['start_time' => '12:00:00', 'end_time' => '13:00:00', 'host' => 'Lunch Break DJ'],
+        ];
+
+        // At noon, both are active — first one wins
+        $this->assertSame('Day Show DJ', find_current_slot($schedule, '12:30:00'));
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Special characters in DJ names
+    // ---------------------------------------------------------------------------
+
+    /**
+     * DJ names with accented characters are preserved correctly.
+     */
+    public function testAccentedCharactersInDjName(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => 'José García'],
+        ];
+
+        $result = find_current_slot($schedule, '11:00:00');
+
+        $this->assertSame('José García', $result);
+    }
+
+    /**
+     * DJ names with ampersands and special punctuation are preserved.
+     */
+    public function testAmpersandAndSpecialPunctuationInDjName(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => 'Mike & Jenny'],
+        ];
+
+        $result = find_current_slot($schedule, '11:00:00');
+
+        $this->assertSame('Mike & Jenny', $result);
+    }
+
+    /**
+     * DJ names with quotes and apostrophes are preserved.
+     */
+    public function testQuotesAndApostrophesInDjName(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => "DJ O'Brien \"The Boss\""],
+        ];
+
+        $result = find_current_slot($schedule, '11:00:00');
+
+        $this->assertSame("DJ O'Brien \"The Boss\"", $result);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Empty or null name handling
+    // ---------------------------------------------------------------------------
+
+    /**
+     * A show with an empty host name returns empty string.
+     */
+    public function testEmptyHostNameReturnsEmptyString(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => ''],
+        ];
+
+        $result = find_current_slot($schedule, '11:00:00');
+
+        $this->assertSame('', $result);
+    }
+
+    /**
+     * A show with whitespace-only host name returns whitespace (no trimming).
+     * Documents current behavior to catch changes during migration.
+     */
+    public function testWhitespaceOnlyHostNameReturnsWhitespace(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => '   '],
+        ];
+
+        $result = find_current_slot($schedule, '11:00:00');
+
+        $this->assertSame('   ', $result);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Very short shows
+    // ---------------------------------------------------------------------------
+
+    /**
+     * A one-minute show should still match during that minute.
+     */
+    public function testOneMinuteShow(): void
+    {
+        $schedule = [
+            ['start_time' => '12:00:00', 'end_time' => '12:01:00', 'host' => 'Flash DJ'],
+        ];
+
+        $this->assertSame('Flash DJ', find_current_slot($schedule, '12:00:00'));
+        $this->assertSame('Flash DJ', find_current_slot($schedule, '12:00:30'));
+        $this->assertSame('', find_current_slot($schedule, '12:01:00'));
+    }
+
+    /**
+     * A one-second show should match only during that exact second window.
+     */
+    public function testOneSecondShow(): void
+    {
+        $schedule = [
+            ['start_time' => '12:00:00', 'end_time' => '12:00:01', 'host' => 'Instant DJ'],
+        ];
+
+        $this->assertSame('Instant DJ', find_current_slot($schedule, '12:00:00'));
+        $this->assertSame('', find_current_slot($schedule, '12:00:01'));
+    }
+
+    // ---------------------------------------------------------------------------
+    // Edge cases: Back-to-back shows
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Shows scheduled back-to-back with no gap should transition cleanly.
+     * When one show ends, the next begins at the same time.
+     */
+    public function testBackToBackShows(): void
+    {
+        $schedule = [
+            ['start_time' => '10:00:00', 'end_time' => '12:00:00', 'host' => 'Morning DJ'],
+            ['start_time' => '12:00:00', 'end_time' => '14:00:00', 'host' => 'Afternoon DJ'],
+            ['start_time' => '14:00:00', 'end_time' => '16:00:00', 'host' => 'Evening DJ'],
+        ];
+
+        $this->assertSame('Morning DJ', find_current_slot($schedule, '11:59:59'));
+        $this->assertSame('Afternoon DJ', find_current_slot($schedule, '12:00:00'));
+        $this->assertSame('Afternoon DJ', find_current_slot($schedule, '13:59:59'));
+        $this->assertSame('Evening DJ', find_current_slot($schedule, '14:00:00'));
+    }
 }
