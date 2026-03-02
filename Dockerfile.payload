@@ -18,5 +18,7 @@ RUN yarn payload:generate-types || echo "⚠️  Type generation skipped (needs 
 # Expose port
 EXPOSE 3000
 
-# Start Payload with migrations
-CMD ["sh", "-c", "yarn payload:migrate && yarn payload:dev"]
+# Use dev mode - production build requires database connection
+# The first startup will be slow while Next.js compiles, but subsequent
+# requests are fast. Consider using a cached .next directory if needed.
+CMD ["sh", "-c", "yarn payload:migrate && yarn dev"]

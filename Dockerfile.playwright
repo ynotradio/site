@@ -9,11 +9,14 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Install dependencies (including dev deps for Playwright)
-RUN npm install --legacy-peer-deps
+RUN yarn install --frozen-lockfile
 
 # Copy test files and config
 COPY playwright.config.ts ./
 COPY e2e/ ./e2e/
+
+# Copy e2e-buildkite tests (simplified tests for CI)
+COPY e2e-buildkite/ ./e2e-buildkite/
 
 # Set environment to test
 ENV CI=true
