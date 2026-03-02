@@ -11,6 +11,7 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'html'],
       include: [
         'bin/migrations/shared/**/*.ts',
+        'src/js/common_functions.js',
         'src/js/countdown.js',
         'src/js/yr_end_poll.js',
       ],
