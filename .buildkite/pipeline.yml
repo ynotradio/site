@@ -9,91 +9,88 @@ env:
   CI: "true"
 
 steps:
-  # === TEMPORARILY SKIPPED FOR E2E ITERATION ===
-  # Uncomment these steps after E2E simplification is complete
+  # Conditionally trigger Docker image builds when Dockerfiles change on main/master
+  - label: ":docker: Trigger Image Builds"
+    key: "trigger-image-builds"
+    branches: "main master"
+    command: |
+      # Check if any Dockerfiles changed
+      CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
+        echo "Dockerfile changes detected, triggering image build pipeline"
+        buildkite-agent pipeline upload .buildkite/build-images.yml
+      else
+        echo "No Dockerfile changes, skipping image builds"
+      fi
+    agents:
+      queue: "default"
 
-  # # Conditionally trigger Docker image builds when Dockerfiles change on main/master
-  # - label: ":docker: Trigger Image Builds"
-  #   key: "trigger-image-builds"
-  #   branches: "main master"
-  #   command: |
-  #     # Check if any Dockerfiles changed
-  #     CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
-  #     
-  #     if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
-  #       echo "Dockerfile changes detected, triggering image build pipeline"
-  #       buildkite-agent pipeline upload .buildkite/build-images.yml
-  #     else
-  #       echo "No Dockerfile changes, skipping image builds"
-  #     fi
-  #   agents:
-  #     queue: "default"
+  # ESLint
+  - label: ":eslint: ESLint"
+    key: "eslint"
+    command: "corepack enable && yarn install --immutable && yarn lint"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
-  # # ESLint
-  # - label: ":eslint: ESLint"
-  #   key: "eslint"
-  #   command: "corepack enable && yarn install --immutable && yarn lint"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
+  # Vitest Unit Tests
+  - label: ":test_tube: Vitest Tests"
+    key: "vitest"
+    command: "corepack enable && yarn install --immutable && yarn test:coverage"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "coverage/**/*"
+    agents:
+      queue: "default"
 
-  # # Vitest Unit Tests
-  # - label: ":test_tube: Vitest Tests"
-  #   key: "vitest"
-  #   command: "corepack enable && yarn install --immutable && yarn test:coverage"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   artifact_paths:
-  #     - "coverage/**/*"
-  #   agents:
-  #     queue: "default"
+  # Storybook Build
+  - label: ":storybook: Storybook Build"
+    key: "storybook"
+    command: "corepack enable && yarn install --immutable && yarn build-storybook"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "storybook-static/**/*"
+    agents:
+      queue: "default"
 
-  # # Storybook Build
-  # - label: ":storybook: Storybook Build"
-  #   key: "storybook"
-  #   command: "corepack enable && yarn install --immutable && yarn build-storybook"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   artifact_paths:
-  #     - "storybook-static/**/*"
-  #   agents:
-  #     queue: "default"
+  # PHP Lint (CodeSniffer)
+  - label: ":php: PHP Lint"
+    key: "php-lint"
+    command: |
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
-  # # PHP Lint (CodeSniffer)
-  # - label: ":php: PHP Lint"
-  #   key: "php-lint"
-  #   command: |
-  #     cd src && \
-  #     composer install --no-interaction --prefer-dist && \
-  #     vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "composer:2"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
-
-  # # PHP Unit Tests
-  # - label: ":php: PHP Unit Tests"
-  #   key: "php-test"
-  #   command: |
-  #     docker-php-ext-install mysqli && \
-  #     cd src && \
-  #     composer install --no-interaction --prefer-dist && \
-  #     vendor/bin/phpunit --testdox
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "composer:2"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
+  # PHP Unit Tests
+  - label: ":php: PHP Unit Tests"
+    key: "php-test"
+    command: |
+      docker-php-ext-install mysqli && \
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpunit --testdox
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
   # === E2E Integration Tests ===
   - label: ":playwright: E2E Tests"
