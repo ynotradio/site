@@ -14,6 +14,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { JSDOM } from 'jsdom';
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+const { jQueryFactory } = require('jquery/factory');
+
 // We need to set up jQuery globally before requiring the module
 let dom: JSDOM;
 let $: JQueryStatic;
@@ -36,9 +39,8 @@ function setupDom(html: string): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).document = dom.window.document;
 
-  // Load jQuery into the jsdom window
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  $ = require('jquery')(dom.window);
+  // Load jQuery into the jsdom window using the factory pattern (jQuery 4.x)
+  $ = jQueryFactory(dom.window);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (global as any).$ = $;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +49,7 @@ function setupDom(html: string): void {
   // Create wrapper functions that use the test's jQuery instance
   enableSubmit = function enableSubmitWrapper() {
     const max = $('#max_pick').html();
-    $('input[type="checkbox"]').on('change', function () {
+    $('input[type="checkbox"]').on('change', () => {
       const numberOfChecked = $('input[type=checkbox]:checked').length;
       if (numberOfChecked === Number(max)) {
         $('#vote').text('Vote now!');
@@ -66,7 +68,7 @@ function setupDom(html: string): void {
   };
 
   otherWatcher = function otherWatcherWrapper() {
-    $('#song_write_in').on('change', function () {
+    $('#song_write_in').on('change', () => {
       if ($('#song_write_in').is(':checked')) {
         $('#write_in_value').attr('disabled', false as unknown as string);
       } else {
@@ -78,12 +80,12 @@ function setupDom(html: string): void {
 
   formValidator = function formValidatorWrapper() {
     return (
-      $('#name').val() !== '' &&
-      $('#email').val() !== '' &&
-      $('#phone').val() !== '' &&
-      $('#hometown').val() !== '' &&
-      $("input[name='contest']:checked").length > 0 &&
-      $("input[name='newsletter']:checked").length > 0
+      $('#name').val() !== ''
+      && $('#email').val() !== ''
+      && $('#phone').val() !== ''
+      && $('#hometown').val() !== ''
+      && $("input[name='contest']:checked").length > 0
+      && $("input[name='newsletter']:checked").length > 0
     );
   };
 
