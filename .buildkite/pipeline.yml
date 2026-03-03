@@ -9,140 +9,155 @@ env:
   CI: "true"
 
 steps:
-  # === TEMPORARILY SKIPPED FOR E2E ITERATION ===
-  # Uncomment these steps after E2E simplification is complete
+  # Conditionally trigger Docker image builds when Dockerfiles change on main/master
+  - label: ":docker: Trigger Image Builds"
+    key: "trigger-image-builds"
+    branches: "main master"
+    command: |
+      # Check if any Dockerfiles changed
+      CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+      
+      if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
+        echo "Dockerfile changes detected, triggering image build pipeline"
+        buildkite-agent pipeline upload .buildkite/build-images.yml
+      else
+        echo "No Dockerfile changes, skipping image builds"
+      fi
+    agents:
+      queue: "default"
 
-  # # Conditionally trigger Docker image builds when Dockerfiles change on main/master
-  # - label: ":docker: Trigger Image Builds"
-  #   key: "trigger-image-builds"
-  #   branches: "main master"
-  #   command: |
-  #     # Check if any Dockerfiles changed
-  #     CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
-  #     
-  #     if echo "$$CHANGED_FILES" | grep -qE "Dockerfile\.|bin/docker/.*/Dockerfile"; then
-  #       echo "Dockerfile changes detected, triggering image build pipeline"
-  #       buildkite-agent pipeline upload .buildkite/build-images.yml
-  #     else
-  #       echo "No Dockerfile changes, skipping image builds"
-  #     fi
-  #   agents:
-  #     queue: "default"
+  # ESLint
+  - label: ":eslint: ESLint"
+    key: "eslint"
+    command: "corepack enable && yarn install --immutable && yarn lint"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
-  # # ESLint
-  # - label: ":eslint: ESLint"
-  #   key: "eslint"
-  #   command: "corepack enable && yarn install --immutable && yarn lint"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
+  # Vitest Unit Tests
+  - label: ":test_tube: Vitest Tests"
+    key: "vitest"
+    command: "corepack enable && yarn install --immutable && yarn test:coverage"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "coverage/**/*"
+    agents:
+      queue: "default"
 
-  # # Vitest Unit Tests
-  # - label: ":test_tube: Vitest Tests"
-  #   key: "vitest"
-  #   command: "corepack enable && yarn install --immutable && yarn test:coverage"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   artifact_paths:
-  #     - "coverage/**/*"
-  #   agents:
-  #     queue: "default"
+  # Storybook Build
+  - label: ":storybook: Storybook Build"
+    key: "storybook"
+    command: "corepack enable && yarn install --immutable && yarn build-storybook"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+    artifact_paths:
+      - "storybook-static/**/*"
+    agents:
+      queue: "default"
 
-  # # Storybook Build
-  # - label: ":storybook: Storybook Build"
-  #   key: "storybook"
-  #   command: "corepack enable && yarn install --immutable && yarn build-storybook"
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "node:22-slim"
-  #         propagate-environment: true
-  #   artifact_paths:
-  #     - "storybook-static/**/*"
-  #   agents:
-  #     queue: "default"
+  # PHP Lint (CodeSniffer)
+  - label: ":php: PHP Lint"
+    key: "php-lint"
+    command: |
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
-  # # PHP Lint (CodeSniffer)
-  # - label: ":php: PHP Lint"
-  #   key: "php-lint"
-  #   command: |
-  #     cd src && \
-  #     composer install --no-interaction --prefer-dist && \
-  #     vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "composer:2"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
-
-  # # PHP Unit Tests
-  # - label: ":php: PHP Unit Tests"
-  #   key: "php-test"
-  #   command: |
-  #     docker-php-ext-install mysqli && \
-  #     cd src && \
-  #     composer install --no-interaction --prefer-dist && \
-  #     vendor/bin/phpunit --testdox
-  #   plugins:
-  #     - docker#v5.11.0:
-  #         image: "composer:2"
-  #         propagate-environment: true
-  #   agents:
-  #     queue: "default"
+  # PHP Unit Tests
+  - label: ":php: PHP Unit Tests"
+    key: "php-test"
+    command: |
+      docker-php-ext-install mysqli && \
+      cd src && \
+      composer install --no-interaction --prefer-dist && \
+      vendor/bin/phpunit --testdox
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
 
   # === E2E Integration Tests ===
   - label: ":playwright: E2E Tests"
     key: "e2e"
-    timeout_in_minutes: 15
+    timeout_in_minutes: 20
     command: |
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       
       # Pull images in parallel, build Payload locally (esbuild binary mismatch in DinD)
+      echo "📦 Building and pulling images..."
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
       docker pull ghcr.io/ynotradio/site/playwright:latest &
-      docker build -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload . &
+      docker build -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
       wait
       
-      # Start databases (detached is OK for these)
+      # Start databases first
+      echo "🗄️ Starting databases..."
       docker compose -f docker-compose.e2e.yml up -d postgres mysql
       
-      # Start Payload in FOREGROUND (backgrounded) to enable TTY attachment
-      # tty: true in docker-compose only works with attached mode
+      # Wait for databases to be healthy
+      echo "⏳ Waiting for databases..."
+      for i in 1 2 3 4 5 6 7 8 9 10; do
+        sleep 3
+        PG=$$(docker compose -f docker-compose.e2e.yml ps postgres --format json | jq -r '.Health // "starting"')
+        MY=$$(docker compose -f docker-compose.e2e.yml ps mysql --format json | jq -r '.Health // "starting"')
+        echo "DB check $$i/10: postgres=$$PG mysql=$$MY"
+        [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ] && break
+      done
+      
+      # Start Payload in FOREGROUND mode (key to keeping TTY alive)
+      # The foreground compose maintains the stdin connection that prevents exit
+      echo "🚀 Starting Payload CMS (foreground mode)..."
       docker compose -f docker-compose.e2e.yml up payload 2>&1 &
       COMPOSE_PID=$$!
       
-      # Wait for services to be healthy
-      echo "⏳ Waiting for services..."
-      for i in $$(seq 1 60); do
-        PAYLOAD=$$(docker compose -f docker-compose.e2e.yml ps payload --format json | jq -r '.Health // "starting"')
-        echo "Check $$i/60: payload=$$PAYLOAD"
-        [ "$$PAYLOAD" = "healthy" ] && break
+      # Monitor Payload startup
+      echo "⏳ Monitoring Payload startup..."
+      for i in $$(seq 1 48); do
         sleep 5
+        STATE=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
+        HEALTH=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+        echo "Payload check $$i/48: state=$$STATE health=$$HEALTH"
+        
+        [ "$$HEALTH" = "healthy" ] && echo "✅ Payload is healthy!" && break
+        
+        if [ "$$STATE" = "exited" ]; then
+          echo "❌ Payload container exited!"
+          docker compose -f docker-compose.e2e.yml logs payload --tail=100
+          exit 1
+        fi
       done
       
-      # Kill the foreground compose (container keeps running)
+      # The foreground compose process can be terminated - container keeps running
+      # via the restart loop in docker-compose.e2e.yml
       kill $$COMPOSE_PID 2>/dev/null || true
       
       # Start remaining services
+      echo "🚀 Starting remaining services..."
       docker compose -f docker-compose.e2e.yml up -d phpfpm apache
-      
-      # Wait for Apache to be healthy
-      for i in $$(seq 1 30); do
-        APACHE=$$(docker compose -f docker-compose.e2e.yml ps apache --format json | jq -r '.Health // "starting"')
-        echo "Apache check $$i/30: apache=$$APACHE"
-        [ "$$APACHE" = "healthy" ] && break
-        sleep 5
-      done
+      sleep 10
       
       # Run tests
+      echo "🎭 Running Playwright E2E tests..."
       docker compose -f docker-compose.e2e.yml run --rm playwright
       TEST_EXIT=$$?
       
+      echo "📊 Test results: exit code $$TEST_EXIT"
       docker compose -f docker-compose.e2e.yml down -v
       exit $$TEST_EXIT
     env:
