@@ -23,7 +23,7 @@
  * to the results page. Tests accommodate both states.
  */
 import { test, expect, Page } from '@playwright/test';
-import { checkForPhpErrors, captureScreenshot } from './utils/test-helpers';
+import { checkForPhpErrors, captureScreenshot, navigateWithRetry } from './utils/test-helpers';
 
 // Legacy PHP site runs on port 8080
 const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
@@ -46,30 +46,6 @@ export const POLL_CATEGORIES = [
   { name: 'worst_movies', displayName: 'Worst Movies', maxPicks: 2 },
   { name: 'unnecessary_sequels', displayName: 'Unnecessary Sequels', maxPicks: 2 },
 ] as const;
-
-/**
- * Helper to navigate with retry logic for Docker networking flakiness
- */
-async function navigateWithRetry(
-  page: Page,
-  url: string,
-  maxRetries = 3,
-): Promise<{ status: number | null; finalUrl: string }> {
-  let response = null;
-  for (let i = 0; i < maxRetries; i += 1) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-      return { status: response?.status() || null, finalUrl: page.url() };
-    } catch {
-      // eslint-disable-next-line no-console
-      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed, retrying...`);
-      // eslint-disable-next-line no-await-in-loop
-      await page.waitForTimeout(2000);
-    }
-  }
-  return { status: response?.status() || null, finalUrl: page.url() };
-}
 
 /**
  * Check if poll is currently active (not redirecting)
@@ -116,8 +92,8 @@ test.describe('Year End Poll', () => {
       const errors = checkForPhpErrors(pageContent);
       expect(errors).toHaveLength(0);
 
-      // Should have some content related to staff picks
-      expect(pageContent).toMatch(/staff|picks|year|end/i);
+      // Should display the Y-Not Staff Favorites heading
+      await expect(page.getByRole('heading', { name: /Y-Not Staff Favorites/i })).toBeVisible();
     });
   });
 
@@ -133,46 +109,66 @@ test.describe('Year End Poll', () => {
 
       await captureScreenshot(page, testInfo, 'poll-dashboard');
 
-      // Check that poll category links exist
-      const pollLinks = page.locator('a.poll');
-      const linkCount = await pollLinks.count();
-
-      // Should have 12 poll category links
-      expect(linkCount).toBeGreaterThanOrEqual(12);
+      // Verify specific poll category links appear on the dashboard
+      await expect(page.getByRole('link', { name: 'songs' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'albums' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'artists' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'concerts' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'new artists' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'philly artists' })).toBeVisible();
+      await expect(page.getByRole('link', { name: /most anticipated/i })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'tv dramas' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'tv comedies' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'best movies' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'worst movies' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'unnecessary sequels' })).toBeVisible();
     });
 
-    test('clicking a poll category shows voting form', async ({ page }, testInfo) => {
-      // Navigate to a specific poll category
+    test('albums voting form is visible when category selected', async ({ page }, testInfo) => {
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
 
       await captureScreenshot(page, testInfo, 'poll-albums-form');
 
-      // Should have a form for voting
       const form = page.locator('form[name*="year_end"]');
       await expect(form).toBeVisible({ timeout: 10000 });
+    });
 
-      // Should have checkboxes for voting
+    test('albums voting form has checkbox options', async ({ page }) => {
+      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
+
       const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
       const checkboxCount = await checkboxes.count();
       expect(checkboxCount).toBeGreaterThan(0);
+    });
 
-      // Should have a submit button (initially disabled)
+    test('albums voting form shows seeded artist and album names', async ({ page }) => {
+      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
+
+      // Verify specific seeded entries appear as options (seeded in bin/seed-legacy.sh)
+      await expect(page.getByText('Franz Ferdinand')).toBeVisible();
+      await expect(page.getByText('The Human Fear')).toBeVisible();
+      await expect(page.getByText('Wet Leg')).toBeVisible();
+    });
+
+    test('albums voting form has submit button initially disabled', async ({ page }) => {
+      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
+
       const submitButton = page.locator('#vote');
       await expect(submitButton).toBeVisible();
+      await expect(submitButton).toBeDisabled();
     });
 
     test('checkbox selection respects max picks limit', async ({ page }, testInfo) => {
-      // Test with albums (max 10 picks) - easier to test limit
+      // Test with artists (max 5 picks)
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=artists`);
 
       await captureScreenshot(page, testInfo, 'poll-artists-before-selection');
 
-      // Get all checkboxes
       const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
       const checkboxCount = await checkboxes.count();
 
       // Should have options to choose from
-      expect(checkboxCount).toBeGreaterThan(5);
+      expect(checkboxCount).toBeGreaterThan(0);
 
       // Select up to the max (5 for artists)
       for (let i = 0; i < Math.min(5, checkboxCount); i += 1) {
@@ -193,32 +189,34 @@ test.describe('Year End Poll', () => {
       expect(checkedCount).toBe(5);
     });
 
-    test('submit button shows remaining picks count', async ({ page }) => {
+    test('submit button initially shows full pick count', async ({ page }) => {
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=concerts`);
 
-      // Get submit button
       const submitButton = page.locator('#vote');
       await expect(submitButton).toBeVisible();
 
-      // Initially should show "Pick X more!"
-      const buttonText = await submitButton.textContent();
-      expect(buttonText).toMatch(/Pick \d+ more/i);
+      // Initially should show "Pick 2 more!" for concerts (maxPicks=2)
+      await expect(submitButton).toHaveText(/Pick 2 more!/i);
+    });
 
-      // Select one checkbox
+    test('submit button decrements count after selecting a checkbox', async ({ page }) => {
+      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=concerts`);
+
       const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
       await checkboxes.first().check();
 
-      // Button text should update
-      const updatedText = await submitButton.textContent();
-      expect(updatedText).toMatch(/Pick \d+ more|Submit/i);
+      // After 1 selection out of 2 for concerts, should show "Pick 1 more!"
+      const submitButton = page.locator('#vote');
+      await expect(submitButton).toHaveText(/Pick 1 more!/i);
     });
 
     test('write-in field is disabled until checkbox is checked', async ({ page }) => {
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=songs`);
 
-      // Find write-in checkbox and field
-      const writeInCheckbox = page.locator('#song_write_in');
-      const writeInField = page.locator('#write_in_value');
+      // Target write-in elements via the control group that contains "Other (please specify)"
+      const writeInArea = page.locator('.control-group:has(.form-other)');
+      const writeInCheckbox = writeInArea.locator('input[type="checkbox"]');
+      const writeInField = writeInArea.locator('input[type="text"]');
 
       // Check if elements exist (some polls may not have write-in)
       const hasWriteIn = (await writeInCheckbox.count()) > 0;
@@ -234,23 +232,20 @@ test.describe('Year End Poll', () => {
       await expect(writeInField).toBeEnabled();
     });
 
-    test('poll categories show completed state after voting', async ({ page }) => {
-      // Note: This test verifies the visual state but doesn't actually vote
-      // (voting requires IP tracking and would affect subsequent tests)
+    test('completed poll links point back to dashboard', async ({ page }) => {
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
 
-      // Check for 'completed' class on any poll links (if user has voted)
+      // All 12 poll category links should be present
+      const allPollLinks = page.locator('a.poll');
+      await expect(allPollLinks).toHaveCount(12);
+
+      // Any completed poll links should redirect back to the dashboard (not re-open the form)
       const completedPolls = page.locator('a.poll.completed');
       const completedCount = await completedPolls.count();
 
-      // Log voting status (informational, not a pass/fail condition)
-      // eslint-disable-next-line no-console
-      console.log(`User has completed ${completedCount} of 12 polls`);
-
-      // Verify structure: completed polls should link back to dashboard
-      if (completedCount > 0) {
-        const firstCompleted = completedPolls.first();
-        const href = await firstCompleted.getAttribute('href');
+      for (let i = 0; i < completedCount; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const href = await completedPolls.nth(i).getAttribute('href');
         expect(href).toBe('yearendpoll.php');
       }
     });
@@ -262,7 +257,7 @@ test.describe('Year End Poll', () => {
       test.skip(!active, 'Poll is currently closed/redirecting');
     });
 
-    test('contest form requires all fields', async ({ page }, testInfo) => {
+    test('contest form fields are present', async ({ page }, testInfo) => {
       // Navigate to poll page (contest form appears after completing enough polls)
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
 
@@ -278,10 +273,10 @@ test.describe('Year End Poll', () => {
         test.skip(true, 'Contest form requires completing polls first');
       }
 
-      // Verify form fields exist
-      await expect(page.locator('input[name="name"]')).toBeVisible();
-      await expect(page.locator('input[name="email"]')).toBeVisible();
-      await expect(page.locator('input[name="phone"]')).toBeVisible();
+      // Verify form fields exist by their label names
+      await expect(page.getByLabel('Name')).toBeVisible();
+      await expect(page.getByLabel('Email Address')).toBeVisible();
+      await expect(page.getByLabel('Phone #')).toBeVisible();
     });
   });
 

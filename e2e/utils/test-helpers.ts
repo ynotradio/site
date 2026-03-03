@@ -1,6 +1,34 @@
 import { Page, TestInfo } from '@playwright/test';
 
 /**
+ * Navigate to a URL with retry logic for Docker networking flakiness
+ * @param page - Playwright page object
+ * @param url - URL to navigate to
+ * @param maxRetries - Maximum number of retry attempts (default: 3)
+ * @returns Object with HTTP status code and final URL after any redirects
+ */
+export async function navigateWithRetry(
+  page: Page,
+  url: string,
+  maxRetries = 3,
+): Promise<{ status: number | null; finalUrl: string }> {
+  let response = null;
+  for (let i = 0; i < maxRetries; i += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+      return { status: response?.status() || null, finalUrl: page.url() };
+    } catch {
+      // eslint-disable-next-line no-console
+      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed, retrying...`);
+      // eslint-disable-next-line no-await-in-loop
+      await page.waitForTimeout(2000);
+    }
+  }
+  return { status: response?.status() || null, finalUrl: page.url() };
+}
+
+/**
  * Take a screenshot and attach it to the test report
  * @param page - Playwright page object
  * @param testInfo - Test info object for attaching artifacts
