@@ -13,10 +13,11 @@ import { useShowCloner } from './hooks/useShowCloner';
 import { useDateRanges } from './hooks/useDateRanges';
 import { groupShowsByDate, getShowsInRange } from './utils';
 
-
 export const ShowClonerClient: React.FC = () => {
   const { setStepNav } = useStepNav();
-  const { shows, loading, error: loadError, loadShows } = useShows();
+  const {
+    shows, loading, error: loadError, loadShows,
+  } = useShows();
   const {
     sourceStartDate,
     sourceEndDate,
@@ -26,7 +27,9 @@ export const ShowClonerClient: React.FC = () => {
     setSourceEndDate,
     setTargetStartDate,
   } = useDateRanges();
-  const { cloning, error, successMessage, cloneShows, clearMessages } = useShowCloner(
+  const {
+    cloning, error, successMessage, cloneShows, clearMessages,
+  } = useShowCloner(
     shows,
     loadShows,
   );
@@ -47,8 +50,9 @@ export const ShowClonerClient: React.FC = () => {
     loadShows();
   }, [loadShows]);
 
-  const selectedRangeShows =
-    sourceStartDate && sourceEndDate ? getShowsInRange(shows, sourceStartDate, sourceEndDate) : [];
+  const selectedRangeShows = sourceStartDate && sourceEndDate
+    ? getShowsInRange(shows, sourceStartDate, sourceEndDate)
+    : [];
 
   const selectedRangeDateGroups = groupShowsByDate(selectedRangeShows);
 

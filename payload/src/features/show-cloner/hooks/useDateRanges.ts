@@ -32,10 +32,9 @@ export const useDateRanges = () => {
   const [sourceEndDate, setSourceEndDate] = useState<string>(formatDateForInput(lastWeekSunday));
   const [targetStartDate, setTargetStartDate] = useState<string>(formatDateForInput(nextMonday));
 
-  const targetEndDate =
-    sourceStartDate && sourceEndDate && targetStartDate
-      ? addDays(targetStartDate, getDaysDifference(sourceStartDate, sourceEndDate))
-      : '';
+  const targetEndDate = sourceStartDate && sourceEndDate && targetStartDate
+    ? addDays(targetStartDate, getDaysDifference(sourceStartDate, sourceEndDate))
+    : '';
 
   return {
     sourceStartDate,
