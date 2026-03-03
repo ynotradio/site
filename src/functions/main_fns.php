@@ -157,6 +157,27 @@ function active_ad_count(){
   return $info['total'];
 }
 
+/**
+ * Find the on-air DJ for a given time from a schedule array.
+ * Pure function for testability.
+ *
+ * Guards against regressions from issue #208 (gmdate/date mismatch causing
+ * wrong DJ to be shown) and the earlier "going missing" bug.
+ *
+ * @param array  $schedule    Array of schedule slots, each with 'start_time', 'end_time', and 'host'
+ * @param string $currentTime Current time in 'H:i:s' format
+ * @return string Display name of the on-air DJ, or '' if none found
+ */
+function find_current_slot(array $schedule, string $currentTime): string {
+  foreach ($schedule as $slot) {
+    if ($currentTime >= $slot['start_time'] && $currentTime < $slot['end_time']) {
+      $display_name = str_replace(['<br>', '<i>', '</i>'], [' ', '', ''], $slot['host']);
+      return substr($display_name, 0, 35);
+    }
+  }
+  return '';
+}
+
 function on_air(){
   require_once __DIR__ . '/../models/ScheduleFactory.php';
   require_once __DIR__ . '/../models/FeatureManager.php';
@@ -171,15 +192,7 @@ function on_air(){
     $todaySchedule = $scheduleModel->getByDate(date('Y-m-d'));
     
     // Find current time slot
-    $currentTime = date('H:i:s');
-    foreach ($todaySchedule as $slot) {
-      if ($currentTime >= $slot['start_time'] && $currentTime < $slot['end_time']) {
-        $display_name = str_replace("<br>", " ", $slot['host']);
-        $display_name = str_replace("<i>", "", $display_name);
-        $display_name = str_replace("</i>", "", $display_name);
-        return substr($display_name, 0, 35);
-      }
-    }
+    return find_current_slot($todaySchedule, date('H:i:s'));
   } catch (Exception $e) {
     error_log("Error getting on-air DJ: " . $e->getMessage());
   }

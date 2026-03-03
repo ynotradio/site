@@ -1,8 +1,11 @@
 # Buildkite Pipeline for Building Docker Images
 # This pipeline replaces the GitHub Actions build-agent-images.yml workflow
 # 
-# Trigger: Manual or on push to main/master when relevant files change
+# Trigger: Automatically on main/master when Dockerfiles change (via pipeline.yml)
 # Purpose: Build and push pre-built Docker images to GHCR for faster CI/agent testing
+#
+# Note: This pipeline builds ALL images when triggered. The main pipeline.yml
+# decides whether to trigger based on Dockerfile changes.
 
 env:
   GHCR_REGISTRY: "ghcr.io"
@@ -14,7 +17,6 @@ steps:
     steps:
       - label: ":package: Build Payload Dev Image"
         key: "build-payload"
-        branches: "main master"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -42,7 +44,6 @@ steps:
 
       - label: ":php: Build PHP-FPM Dev Image"
         key: "build-phpfpm"
-        branches: "main master"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -70,7 +71,6 @@ steps:
 
       - label: ":postgres: Build Postgres Seeded Image"
         key: "build-postgres"
-        branches: "main master"
         command: |
           echo "--- :docker: Logging into GHCR"
           echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
@@ -89,6 +89,33 @@ steps:
           echo "--- :docker: Pushing Postgres image to GHCR"
           docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:latest
+        env:
+          GHCR_USERNAME: "${GHCR_USERNAME}"
+          GHCR_TOKEN: "${GHCR_TOKEN}"
+        agents:
+          queue: "default"
+          docker: "true"
+
+      - label: ":playwright: Build Playwright Image"
+        key: "build-playwright"
+        command: |
+          echo "--- :docker: Logging into GHCR"
+          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
+          
+          # Create short commit SHA (first 7 characters)
+          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
+          
+          echo "--- :docker: Building Playwright image with pre-installed deps"
+          docker build \
+            -f Dockerfile.playwright \
+            -t ghcr.io/$${GHCR_ORG}/playwright:$$SHORT_COMMIT \
+            -t ghcr.io/$${GHCR_ORG}/playwright:latest \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            .
+          
+          echo "--- :docker: Pushing Playwright image to GHCR"
+          docker push ghcr.io/$${GHCR_ORG}/playwright:$$SHORT_COMMIT
+          docker push ghcr.io/$${GHCR_ORG}/playwright:latest
         env:
           GHCR_USERNAME: "${GHCR_USERNAME}"
           GHCR_TOKEN: "${GHCR_TOKEN}"

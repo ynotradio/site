@@ -90,7 +90,10 @@ describe('convertHtmlToLexical', () => {
     const result = convertHtmlToLexical(html);
     // Combine all text nodes to check the full text
     const fullText = result.root.children[0].children
-      .map((child: any) => child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''))
+      .map(
+        (child: any) =>
+          child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''),
+      )
       .join('');
     // Should have spaces between parts
     expect(fullText).toContain('of');
@@ -104,7 +107,10 @@ describe('convertHtmlToLexical', () => {
     const html = '<p>Check out the <em>latest episode</em> of <strong>The Show</strong>!</p>';
     const result = convertHtmlToLexical(html);
     const fullText = result.root.children[0].children
-      .map((child: any) => child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''))
+      .map(
+        (child: any) =>
+          child.text || (child.children ? child.children.map((c: any) => c.text).join('') : ''),
+      )
       .join('');
     expect(fullText).toBe('Check out the latest episode of The Show!');
   });
@@ -116,8 +122,8 @@ describe('convertHtmlToLexical', () => {
     expect(result.root.children.length).toBeGreaterThan(0);
     expect(result.root.children[0].type).toBe('paragraph');
     // Should have processed the link
-    const hasLink = result.root.children.some(
-      (para: any) => para.children?.some((child: any) => child.type === 'link'),
+    const hasLink = result.root.children.some((para: any) =>
+      para.children?.some((child: any) => child.type === 'link'),
     );
     expect(hasLink).toBe(true);
   });
@@ -239,9 +245,9 @@ describe('stripHtmlTags', () => {
   });
 
   it('should handle complex HTML', () => {
-    expect(stripHtmlTags('<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>')).toBe(
-      'Title Paragraph with link',
-    );
+    expect(
+      stripHtmlTags('<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>'),
+    ).toBe('Title Paragraph with link');
   });
 
   it('should handle font tags common in legacy content', () => {

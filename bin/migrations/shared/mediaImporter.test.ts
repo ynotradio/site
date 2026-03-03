@@ -54,10 +54,12 @@ describe('mediaImporter', () => {
 
     it('should return existing media if already imported', async () => {
       (mockPayload.find as Mock).mockResolvedValueOnce({
-        docs: [{
-          id: 'existing-media-123',
-          url: 'https://cloudinary.com/existing.jpg',
-        }],
+        docs: [
+          {
+            id: 'existing-media-123',
+            url: 'https://cloudinary.com/existing.jpg',
+          },
+        ],
       });
 
       const result = await importImageFromUrl(
@@ -192,11 +194,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/relative.jpg',
       });
 
-      const result = await importImageFromUrl(
-        mockPayload as Payload,
-        'images/test.jpg',
-        metadata,
-      );
+      const result = await importImageFromUrl(mockPayload as Payload, 'images/test.jpg', metadata);
 
       expect(result.success).toBe(true);
       expect(mockAxios.get).toHaveBeenCalledWith(
@@ -218,11 +216,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.png',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.png',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.png', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -246,11 +240,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.gif',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.gif',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.gif', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -263,9 +253,18 @@ describe('mediaImporter', () => {
 
     it('should detect WebP mime type from buffer', async () => {
       const mockImageBuffer = Buffer.from([
-        0x52, 0x49, 0x46, 0x46, // RIFF
-        0x00, 0x00, 0x00, 0x00, // file size
-        0x57, 0x45, 0x42, 0x50, // WEBP
+        0x52,
+        0x49,
+        0x46,
+        0x46, // RIFF
+        0x00,
+        0x00,
+        0x00,
+        0x00, // file size
+        0x57,
+        0x45,
+        0x42,
+        0x50, // WEBP
       ]);
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
@@ -278,11 +277,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.webp',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'https://example.com/test.webp',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'https://example.com/test.webp', metadata);
 
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -306,11 +301,7 @@ describe('mediaImporter', () => {
         url: 'https://cloudinary.com/test.jpg',
       });
 
-      await importImageFromUrl(
-        mockPayload as Payload,
-        'images\\test.jpg',
-        metadata,
-      );
+      await importImageFromUrl(mockPayload as Payload, 'images\\test.jpg', metadata);
 
       expect(mockAxios.get).toHaveBeenCalledWith(
         'https://www.ynotradio.net/images/test.jpg',

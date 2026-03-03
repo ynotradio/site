@@ -45,7 +45,27 @@ function verifyLoginSuccess(page: Page): void {
 }
 
 /**
+ * Navigate with retry logic for Docker networking flakiness
+ * Ported from old e2e-buildkite setup that worked reliably
+ */
+async function navigateWithRetry(page: Page, url: string, maxRetries = 5): Promise<number | null> {
+  let response = null;
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+      if (response?.status() === 200) return response.status();
+    } catch {
+      // eslint-disable-next-line no-await-in-loop
+      await page.waitForTimeout(5000);
+    }
+  }
+  return response?.status() || null;
+}
+
+/**
  * Login to Payload CMS admin interface
+ * Uses CSS selectors that worked reliably in old e2e-buildkite setup
  * @param page - Playwright page object
  * @param email - Admin email (default from env or test default)
  * @param password - Admin password (default from env or test default)

@@ -57,9 +57,13 @@ describe('enhancedHtmlToLexical', () => {
     });
 
     it('should handle combined formatting', () => {
-      const result = convertHtmlToLexicalEnhanced('<p><strong><em>Bold and italic</em></strong></p>');
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><strong><em>Bold and italic</em></strong></p>',
+      );
       // Nested formatting may result in separate nodes, check that both bold and italic exist
-      const hasFormattedText = result.root.children[0].children.some((n: any) => n.format > 0 && n.text && n.text.includes('Bold'));
+      const hasFormattedText = result.root.children[0].children.some(
+        (n: any) => n.format > 0 && n.text && n.text.includes('Bold'),
+      );
       expect(hasFormattedText).toBe(true);
     });
 
@@ -78,21 +82,27 @@ describe('enhancedHtmlToLexical', () => {
     });
 
     it('should convert root-relative URLs to absolute URLs', () => {
-      const result = convertHtmlToLexicalEnhanced('<p><a href="/ondemand.php?id=176">On Demand</a></p>');
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><a href="/ondemand.php?id=176">On Demand</a></p>',
+      );
       const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
       expect(linkNode).toBeDefined();
       expect(linkNode.fields.url).toBe('https://www.ynotradio.net/ondemand.php?id=176');
     });
 
     it('should keep absolute URLs unchanged', () => {
-      const result = convertHtmlToLexicalEnhanced('<p><a href="https://external.com/page">External</a></p>');
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><a href="https://external.com/page">External</a></p>',
+      );
       const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
       expect(linkNode).toBeDefined();
       expect(linkNode.fields.url).toBe('https://external.com/page');
     });
 
     it('should handle protocol-relative URLs', () => {
-      const result = convertHtmlToLexicalEnhanced('<p><a href="//cdn.example.com/file.js">CDN</a></p>');
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><a href="//cdn.example.com/file.js">CDN</a></p>',
+      );
       const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
       expect(linkNode).toBeDefined();
       expect(linkNode.fields.url).toBe('https://cdn.example.com/file.js');
@@ -154,7 +164,9 @@ describe('enhancedHtmlToLexical', () => {
     });
 
     it('should handle image with width and height', () => {
-      const result = convertHtmlToLexicalEnhanced('<img src="/img.jpg" width="800" height="600" />');
+      const result = convertHtmlToLexicalEnhanced(
+        '<img src="/img.jpg" width="800" height="600" />',
+      );
       const imageNode = result.root.children[0];
       expect(imageNode.width).toBe(800);
       expect(imageNode.height).toBe(600);

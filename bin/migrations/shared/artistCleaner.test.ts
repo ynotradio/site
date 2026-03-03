@@ -67,9 +67,9 @@ describe('shouldPreserveAsCustomTitle', () => {
   });
 
   it('should detect night numbers', () => {
-    expect(
-      shouldPreserveAsCustomTitle('Strand of Oaks (Full Band): Winter Classic Night 2'),
-    ).toBe(true);
+    expect(shouldPreserveAsCustomTitle('Strand of Oaks (Full Band): Winter Classic Night 2')).toBe(
+      true,
+    );
     expect(shouldPreserveAsCustomTitle('Artist (Night 1)')).toBe(true);
   });
 
@@ -186,17 +186,11 @@ describe('parseArtistNames', () => {
       'TOY SOLDIERS',
       'Paper Masques',
     ]);
-    expect(parseArtistNames('Cheers Elephant w/ Springs')).toEqual([
-      'Cheers Elephant',
-      'Springs',
-    ]);
+    expect(parseArtistNames('Cheers Elephant w/ Springs')).toEqual(['Cheers Elephant', 'Springs']);
   });
 
   it('should handle "(of Band)" pattern', () => {
-    expect(parseArtistNames('J. Mascis (of Dinosaur Jr.)')).toEqual([
-      'J. Mascis',
-      'Dinosaur Jr.',
-    ]);
+    expect(parseArtistNames('J. Mascis (of Dinosaur Jr.)')).toEqual(['J. Mascis', 'Dinosaur Jr.']);
     expect(parseArtistNames('Artist (from The Band)')).toEqual(['Artist', 'The Band']);
   });
 
@@ -243,9 +237,9 @@ describe('extractArtistsFromTitle', () => {
   });
 
   it('should handle Winter Classic format', () => {
-    expect(
-      extractArtistsFromTitle('Strand of Oaks (Full Band): Winter Classic Night 2'),
-    ).toEqual(['Strand of Oaks']);
+    expect(extractArtistsFromTitle('Strand of Oaks (Full Band): Winter Classic Night 2')).toEqual([
+      'Strand of Oaks',
+    ]);
   });
 
   it('should handle multiple artists in title', () => {
@@ -275,9 +269,10 @@ describe('extractArtistsFromEventString', () => {
   });
 
   it('should handle "and more..." in event strings', () => {
-    expect(
-      extractArtistsFromEventString('Festival ft. Artist1, Artist2, and more...'),
-    ).toEqual(['Artist1', 'Artist2']);
+    expect(extractArtistsFromEventString('Festival ft. Artist1, Artist2, and more...')).toEqual([
+      'Artist1',
+      'Artist2',
+    ]);
   });
 
   it('should parse normally if no "ft." found', () => {
@@ -305,9 +300,7 @@ describe('processArtistString', () => {
   });
 
   it('should handle event names', () => {
-    const result = processArtistString(
-      '<i>Frantic City Festival</i> ft. Yo La Tengo, Snail Mail',
-    );
+    const result = processArtistString('<i>Frantic City Festival</i> ft. Yo La Tengo, Snail Mail');
     expect(result.customTitle).toBe('Frantic City Festival ft. Yo La Tengo, Snail Mail');
     expect(result.artistNames).toEqual(['Yo La Tengo', 'Snail Mail']);
   });
@@ -343,9 +336,7 @@ describe('processArtistString', () => {
   });
 
   it('should preserve Winter Classic format', () => {
-    const result = processArtistString(
-      'Strand of Oaks (Full Band): Winter Classic Night 2',
-    );
+    const result = processArtistString('Strand of Oaks (Full Band): Winter Classic Night 2');
     expect(result.customTitle).toBe('Strand of Oaks (Full Band): Winter Classic Night 2');
     expect(result.artistNames).toEqual(['Strand of Oaks']);
   });

@@ -205,9 +205,9 @@ describe('payloadClient', () => {
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(otherError);
 
-      await expect(
-        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
-      ).rejects.toEqual(otherError);
+      await expect(findOrCreateArtist(mockPayload as Payload, 'Test Artist')).rejects.toEqual(
+        otherError,
+      );
     });
 
     it('should rethrow error if slug validation fails and no existing artist found', async () => {
@@ -227,9 +227,9 @@ describe('payloadClient', () => {
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
 
-      await expect(
-        findOrCreateArtist(mockPayload as Payload, 'Test Artist'),
-      ).rejects.toEqual(slugError);
+      await expect(findOrCreateArtist(mockPayload as Payload, 'Test Artist')).rejects.toEqual(
+        slugError,
+      );
     });
 
     it('should handle MusicBrainz ID duplicate by retrying without MBID', async () => {
@@ -406,9 +406,9 @@ describe('payloadClient', () => {
     it('should throw error for empty title', async () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
-      await expect(
-        findOrCreateSong(mockPayload as Payload, ''),
-      ).rejects.toThrow('Song title is required');
+      await expect(findOrCreateSong(mockPayload as Payload, '')).rejects.toThrow(
+        'Song title is required',
+      );
     });
   });
 
