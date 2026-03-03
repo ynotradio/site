@@ -83,6 +83,90 @@ INSERT INTO cdotw (artist, title, label, review, cd_pic_url, band, reviewer, dat
 'This is a sample review for testing purposes. <b>Sample Artist</b> delivers an incredible performance on their latest album <em>Great Album</em>. The production is crisp, the songwriting is mature, and the energy is infectious. Standout tracks include "Hit Single" and "Deep Cut". Highly recommended!', 
 'https://i.imgur.com/album1.jpg', 'https://sampleartist.com', 'Test Reviewer', CURDATE(), 'no');
 
+-- Seed Year End Poll tables with controlled test fixtures
+-- Clear voting tracking tables for a clean test state
+DELETE FROM year_end_ips;
+DELETE FROM year_end_song_votes;
+DELETE FROM year_end_write_ins;
+DELETE FROM year_end_contestants;
+
+-- Seed poll option tables with a small, predictable dataset
+DELETE FROM year_end_songs;
+INSERT INTO year_end_songs (artist, title, votes) VALUES
+('Franz Ferdinand', 'Audacious', 0),
+('Wet Leg', 'Oh No', 0),
+('HAIM', 'Lost Track', 0),
+('The Beths', 'Knucklehead', 0),
+('Pulp', 'Spike Island', 0);
+
+DELETE FROM year_end_albums;
+INSERT INTO year_end_albums (artist, title, votes) VALUES
+('Franz Ferdinand', 'The Human Fear', 0),
+('Wet Leg', 'moisturizer', 0),
+('HAIM', 'I Quit', 0),
+('The Beths', 'Straight Line Was a Lie', 0),
+('Pulp', 'More', 0);
+
+DELETE FROM year_end_artists;
+INSERT INTO year_end_artists (artist, votes) VALUES
+('Franz Ferdinand', 0),
+('Wet Leg', 0),
+('HAIM', 0),
+('The Beths', 0),
+('Pulp', 0);
+
+DELETE FROM year_end_concerts;
+INSERT INTO year_end_concerts (concert, votes) VALUES
+('Franz Ferdinand @ The Fillmore', 0),
+('Wet Leg @ Franklin Music Hall', 0),
+('HAIM @ Mann Center', 0);
+
+DELETE FROM year_end_new_artists;
+INSERT INTO year_end_new_artists (artist, votes) VALUES
+('Lambrini Girls', 0),
+('Rocket', 0),
+('Wisp', 0);
+
+DELETE FROM year_end_philly_artists;
+INSERT INTO year_end_philly_artists (artist, votes) VALUES
+('Kurt Vile', 0),
+('Mannequin Pussy', 0),
+('Tisburys, The', 0);
+
+DELETE FROM year_end_most_anticipated_albums;
+INSERT INTO year_end_most_anticipated_albums (artist, votes) VALUES
+('LCD Soundsystem', 0),
+('Radiohead', 0);
+
+DELETE FROM year_end_tv_dramas;
+INSERT INTO year_end_tv_dramas (title, votes) VALUES
+('Severance', 0),
+('Andor', 0),
+('The Bear', 0);
+
+DELETE FROM year_end_tv_comedies;
+INSERT INTO year_end_tv_comedies (title, votes) VALUES
+('Abbott Elementary', 0),
+('Only Murders in the Building', 0),
+('Hacks', 0);
+
+DELETE FROM year_end_best_movies;
+INSERT INTO year_end_best_movies (title, votes) VALUES
+('Sinners', 0),
+('Superman', 0),
+('The Naked Gun', 0);
+
+DELETE FROM year_end_worst_movies;
+INSERT INTO year_end_worst_movies (title, votes) VALUES
+('Snow White', 0),
+('A Minecraft Movie', 0);
+
+DELETE FROM year_end_unnecessary_sequels;
+INSERT INTO year_end_unnecessary_sequels (title, votes) VALUES
+('Freakier Friday', 0),
+('Happy Gilmore 2', 0),
+('Five Nights at Freddy''s 2', 0);
+
 EOF
 
 # Import the seed data
@@ -101,6 +185,8 @@ echo "   Stories: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root
 echo "   DJs: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM deejays")"
 echo "   Concerts: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM concerts")"
 echo "   CD of the Week: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM cdotw")"
+echo "   Year End Songs: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM year_end_songs")"
+echo "   Year End Albums: $(docker compose exec -T -e MYSQL_PWD=root mysql mysql -u root ynot_site -N -e "SELECT COUNT(*) FROM year_end_albums")"
 echo ""
 echo "🌐 View at: http://localhost:8080"
 echo "🗄️  PHPMyAdmin: http://localhost:8181"

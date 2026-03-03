@@ -31,7 +31,7 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
 
   test('page loads without PHP errors', async ({ page }, testInfo) => {
     const url = `${LEGACY_BASE_URL}/top11.php`;
-    const status = await navigateWithRetry(page, url);
+    const { status } = await navigateWithRetry(page, url);
 
     expect(status).toBe(200);
 
@@ -79,9 +79,7 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     await expect(knobImage).toBeVisible();
 
     // Should display the weekly countdown message text
-    await expect(
-      page.getByText(/Y-Not Radio counts down the Top 11/i),
-    ).toBeVisible();
+    await expect(page.getByText(/Y-Not Radio counts down the Top 11/i)).toBeVisible();
 
     await captureScreenshot(page, testInfo, '03-Top11-Message-Section');
   });
@@ -104,7 +102,10 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
 
     const loginButton = page.getByRole('link', { name: /log in to vote/i });
     const showsLoginPrompt = await loginButton.isVisible().catch(() => false);
-    test.skip(!showsLoginPrompt, 'Login prompt is not visible; voting may be closed or user is already logged in');
+    test.skip(
+      !showsLoginPrompt,
+      'Login prompt is not visible; voting may be closed or user is already logged in',
+    );
 
     await expect(loginButton).toBeVisible();
     await captureScreenshot(page, testInfo, '04b-Top11-Login-Required');
@@ -117,20 +118,24 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
 
     const alreadyVotedMessage = page.getByText(/you've already voted/i);
     const hasAlreadyVoted = await alreadyVotedMessage.isVisible().catch(() => false);
-    test.skip(!hasAlreadyVoted, 'Already-voted message is not visible; user has not voted or voting is closed');
+    test.skip(
+      !hasAlreadyVoted,
+      'Already-voted message is not visible; user has not voted or voting is closed',
+    );
 
     await expect(alreadyVotedMessage).toBeVisible();
     await captureScreenshot(page, testInfo, '04c-Top11-Already-Voted');
   });
 
-  test('shows voting form when user is logged in and has not voted', async ({
-    page,
-  }, testInfo) => {
+  test('shows voting form when user is logged in and has not voted', async ({ page }, testInfo) => {
     await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
 
     const votingForm = page.locator('form[name="top11"]');
     const hasVotingForm = await votingForm.isVisible().catch(() => false);
-    test.skip(!hasVotingForm, 'Voting form is not visible; voting may be closed or user is not logged in');
+    test.skip(
+      !hasVotingForm,
+      'Voting form is not visible; voting may be closed or user is not logged in',
+    );
 
     await expect(votingForm).toBeVisible();
     await captureScreenshot(page, testInfo, '04d-Top11-Voting-Form');
@@ -144,7 +149,10 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const isFormVisible = await votingForm.isVisible().catch(() => false);
 
     if (!isFormVisible) {
-      test.skip(!isFormVisible, 'Voting form is not visible; voting closed or user is not logged in');
+      test.skip(
+        !isFormVisible,
+        'Voting form is not visible; voting closed or user is not logged in',
+      );
       return;
     }
 
@@ -155,7 +163,9 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     expect(checkboxCount).toBeGreaterThan(0);
 
     // Write-in section - find fields by the "Other (please specify)" label text
-    const writeInContainer = page.locator('.controls').filter({ hasText: 'Other (please specify)' });
+    const writeInContainer = page
+      .locator('.controls')
+      .filter({ hasText: 'Other (please specify)' });
     await expect(writeInContainer.locator('input[type="checkbox"]')).toBeVisible();
     await expect(writeInContainer.locator('input[type="text"]')).toBeVisible();
 
@@ -176,7 +186,10 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const isLoginVisible = await loginButton.isVisible().catch(() => false);
 
     if (!isLoginVisible) {
-      test.skip(!isLoginVisible, 'Login button not visible; voting closed or user is already logged in');
+      test.skip(
+        !isLoginVisible,
+        'Login button not visible; voting closed or user is already logged in',
+      );
       return;
     }
 

@@ -5,19 +5,21 @@ import { Page, TestInfo } from '@playwright/test';
  * @param page - Playwright page object
  * @param url - URL to navigate to
  * @param maxRetries - Maximum number of retry attempts (default: 5)
- * @returns HTTP status code or null if all retries fail
+ * @returns Object with HTTP status code and final URL after any redirects
  */
 export async function navigateWithRetry(
   page: Page,
   url: string,
   maxRetries = 5,
-): Promise<number | null> {
+): Promise<{ status: number | null; finalUrl: string }> {
   let response = null;
   for (let i = 0; i < maxRetries; i += 1) {
     try {
       // eslint-disable-next-line no-await-in-loop
       response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-      if (response?.status() === 200) return response.status();
+      if (response?.status() === 200) {
+        return { status: response.status(), finalUrl: page.url() };
+      }
     } catch {
       // eslint-disable-next-line no-console
       console.log(`Navigation attempt ${i + 1}/${maxRetries} failed, retrying...`);
@@ -25,7 +27,7 @@ export async function navigateWithRetry(
       await page.waitForTimeout(5000);
     }
   }
-  return response?.status() || null;
+  return { status: response?.status() || null, finalUrl: page.url() };
 }
 
 /**
@@ -120,11 +122,7 @@ function getOrdinalSuffix(day: number): string {
  * @param fieldId - ID of the date field (e.g., 'field-date')
  * @param date - Date object to set
  */
-export async function fillPayloadDateField(
-  page: Page,
-  fieldId: string,
-  date: Date,
-): Promise<void> {
+export async function fillPayloadDateField(page: Page, fieldId: string, date: Date): Promise<void> {
   // Click on the date field to open date picker
   const dateField = page.locator(`#${fieldId}`).getByRole('textbox');
   await dateField.waitFor({ state: 'visible', timeout: 30000 });
