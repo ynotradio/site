@@ -2,33 +2,6 @@ import { Page } from '@playwright/test';
 
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
-/**
- * Login to Payload CMS admin interface
- * @param page - Playwright page object
- * @param email - Admin email (default from env or test default)
- * @param password - Admin password (default from env or test default)
- */
-export async function loginToPayload(
-  page: Page,
-  email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
-  password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
-): Promise<void> {
-  await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
-    waitUntil: 'networkidle',
-    timeout: 30000,
-  });
-
-  const isCreateUserPage = await checkIfCreateUserPage(page);
-
-  if (isCreateUserPage) {
-    await createFirstUser(page, email, password);
-  } else {
-    await performLogin(page, email, password);
-  }
-
-  verifyLoginSuccess(page);
-}
-
 async function checkIfCreateUserPage(page: Page): Promise<boolean> {
   const hasNewPasswordField = await page
     .getByLabel(/new password/i)
@@ -69,4 +42,31 @@ function verifyLoginSuccess(page: Page): void {
   if (currentUrl.includes('/login') || currentUrl.includes('/create-first-user')) {
     throw new Error(`Login failed - still on login/create page: ${currentUrl}`);
   }
+}
+
+/**
+ * Login to Payload CMS admin interface
+ * @param page - Playwright page object
+ * @param email - Admin email (default from env or test default)
+ * @param password - Admin password (default from env or test default)
+ */
+export async function loginToPayload(
+  page: Page,
+  email: string = process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+  password: string = process.env.PAYLOAD_DEV_PASSWORD || 'password',
+): Promise<void> {
+  await page.goto(`${PAYLOAD_BASE_URL}/admin`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+
+  const isCreateUserPage = await checkIfCreateUserPage(page);
+
+  if (isCreateUserPage) {
+    await createFirstUser(page, email, password);
+  } else {
+    await performLogin(page, email, password);
+  }
+
+  verifyLoginSuccess(page);
 }
