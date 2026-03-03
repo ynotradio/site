@@ -1,11 +1,18 @@
 <?php
 
-header("Location: pages.php?page=top225of2025");
-exit;
+// Allow E2E tests to force the poll open via environment variable
+$forcePollOpen = getenv('FORCE_YEAR_END_POLL_OPEN') === 'true';
+
+if (!$forcePollOpen) {
+    header("Location: pages.php?page=top225of2025");
+    exit;
+}
 
 $page_file = "yearendpoll.php";
 $page_title = "Year End Poll";
-$poll_end_datetime = strtotime("12/23/25 11:59pm EST");
+$poll_end_datetime = $forcePollOpen
+    ? strtotime("+1 year")
+    : strtotime("12/23/25 11:59pm EST");
 
 require_once "functions/main_fns.php";
 require_once "controllers/YearEndPollController.php";

@@ -67,6 +67,9 @@ USE_POSTGRES_CDOFTHEWEEK=true
 USE_POSTGRES_SCHEDULE=true
 USE_POSTGRES_CUSTOMTEXT=true
 
+# Force seasonal features open for E2E testing
+FORCE_YEAR_END_POLL_OPEN=true
+
 # Configure for legacy PHP site with MySQL (inside Docker network)
 DB_HOST=mysql
 DB_PORT=3306
