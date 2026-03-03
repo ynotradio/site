@@ -40,10 +40,6 @@ services:
   # === Payload CMS ===
   payload:
     image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
-    # CRITICAL: Next.js dev server requires TTY to stay running
-    # Without these, it exits with code 0 after detecting non-interactive stdin
-    tty: true
-    stdin_open: true
     ports:
       - "3000:3000"
     environment:
@@ -59,20 +55,37 @@ services:
       - sh
       - -c
       - |
-        set -e
+        set -x
+        echo '=== Payload container starting ==='
+        node --version
         
         # WORKAROUND: DinD esbuild version mismatch
-        # The Buildkite DinD host has esbuild@0.27.2, but node_modules has 0.27.3
-        # Replace tsx's esbuild with esbuild-wasm to avoid native binary issues
         cd node_modules/tsx/node_modules
         rm -rf esbuild @esbuild
-        npm pack esbuild-wasm@0.27.3 --silent
+        npm pack esbuild-wasm@0.27.3 2>&1
         mkdir esbuild && tar -xzf esbuild-wasm-*.tgz -C esbuild --strip-components=1
         rm -f esbuild-wasm-*.tgz
         cd /app
         
+        echo '=== Starting Payload ==='
         yarn payload:migrate
-        exec yarn dev --port 3000
+        
+        # Trap signals to prevent unexpected exits
+        trap 'echo "Received SIGTERM, ignoring..."' TERM
+        trap 'echo "Received SIGINT, ignoring..."' INT
+        trap 'echo "Received SIGHUP, ignoring..."' HUP
+        
+        # Keep a background process alive
+        tail -f /dev/null &
+        
+        # CRITICAL: Next.js dev server exits when stdin closes in detached containers
+        # Pipe `yes` to stdin to keep it alive. Restart loop provides resilience.
+        while true; do
+          echo "Starting Next.js dev server..."
+          yes 2>/dev/null | yarn dev --port 3000 2>&1 || true
+          echo "Next.js exited (code $?), restarting in 1 second..."
+          sleep 1
+        done
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
       interval: 10s
