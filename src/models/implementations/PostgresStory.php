@@ -38,7 +38,7 @@ class PostgresStory implements Story {
                 p.content,
                 p.priority,
                 COALESCE(m.url, p.image_url, '') as pic,
-                '' as pic_url,
+                COALESCE(p.link_url, '') as pic_url,
                 'n' as deleted
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
@@ -71,7 +71,7 @@ class PostgresStory implements Story {
                 p.content,
                 p.priority,
                 COALESCE(m.url, p.image_url, '') as pic,
-                '' as pic_url,
+                COALESCE(p.link_url, '') as pic_url,
                 'n' as deleted
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id
@@ -193,7 +193,7 @@ class PostgresStory implements Story {
                 p.content,
                 p.priority,
                 COALESCE(m.url, p.image_url, '') as pic,
-                '' as pic_url,
+                COALESCE(p.link_url, '') as pic_url,
                 'n' as deleted
             FROM posts p
             LEFT JOIN media m ON p.image_id = m.id

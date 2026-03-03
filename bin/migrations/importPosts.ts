@@ -203,7 +203,8 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
         endDate: post.end_date,
         content,
         image: imageId,
-        imageUrl: post.image_url, // Store original URL as fallback
+        imageUrl: post.image_url, // Store original image URL as fallback
+        linkUrl: post.link_url, // Store link URL for story image click target
         priority: post.priority || 0,
         legacyId: post.id,
         migratedAt: new Date().toISOString(),

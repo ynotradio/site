@@ -48,6 +48,7 @@ export interface Post {
   end_date: string;
   content: string;
   image_url: string;
+  link_url: string; // Link URL when clicking the story image
   priority: number;
   deleted: string;
   source: 'story' | 'custom_text'; // Track which table it came from
@@ -61,7 +62,8 @@ export interface Story {
   start_date: string;
   end_date: string;
   story: string; // Note: field name is 'story', not 'content'
-  pic_url: string;
+  pic: string; // Image source path (e.g., 'imgs/quarantine.jpg')
+  pic_url: string; // Link URL when clicking the image (e.g., 'top11.php')
   priority: number;
   deleted: string;
 }
@@ -255,7 +257,8 @@ export async function getActivePosts(
         start_date: story.start_date,
         end_date: story.end_date,
         content: story.story, // Map 'story' field to 'content'
-        image_url: story.pic_url, // Map 'pic_url' to 'image_url'
+        image_url: story.pic, // Map 'pic' (image source) to 'image_url'
+        link_url: story.pic_url, // Map 'pic_url' (click target) to 'link_url'
         priority: story.priority,
         deleted: story.deleted,
         source: 'story',
@@ -287,6 +290,7 @@ export async function getActivePosts(
         end_date: '2099-12-31', // Default end date for custom texts (always visible)
         content: customText.html, // Map 'html' field to 'content'
         image_url: '', // Custom texts don't have images
+        link_url: '', // Custom texts don't have link URLs
         priority: 0, // Default priority
         deleted: customText.status === 'deleted' ? 'y' : 'n',
         source: 'custom_text',
