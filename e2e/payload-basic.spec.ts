@@ -4,29 +4,11 @@
  * These tests are modeled after the old e2e-buildkite tests that worked reliably.
  * Tests are resilient to database state (may or may not have users).
  */
-import { test, expect, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { navigateWithRetry } from './utils/test-helpers';
 
 // Base URL for Payload - uses env var in CI/Docker, localhost in local dev
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
-
-// Helper to navigate with retry logic for Docker networking flakiness
-async function navigateWithRetry(page: Page, url: string, maxRetries = 5): Promise<number | null> {
-  let response = null;
-  for (let i = 0; i < maxRetries; i += 1) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-      if (response?.status() === 200) return response.status();
-    } catch {
-      // eslint-disable-next-line no-console
-      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed, retrying...`);
-      // Increase delay between retries
-      // eslint-disable-next-line no-await-in-loop
-      await page.waitForTimeout(5000);
-    }
-  }
-  return response?.status() || null;
-}
 
 test.describe('Payload CMS Basic Tests', () => {
   test.beforeEach(async ({ page }) => {

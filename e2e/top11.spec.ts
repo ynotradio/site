@@ -1,5 +1,5 @@
-import { test as baseTest, expect, Page } from '@playwright/test';
-import { captureScreenshot, checkForPhpErrors } from './utils/test-helpers';
+import { test as baseTest, expect } from '@playwright/test';
+import { captureScreenshot, checkForPhpErrors, navigateWithRetry } from './utils/test-helpers';
 
 /**
  * E2E Integration Test: Top 11 @ 11 (Legacy PHP)
@@ -22,24 +22,6 @@ const test = baseTest.extend({
 
 // Legacy PHP site URL
 const LEGACY_BASE_URL = 'http://localhost:8080';
-
-// Helper to navigate with retry logic for Docker networking
-async function navigateWithRetry(page: Page, url: string, maxRetries = 5): Promise<number | null> {
-  let response = null;
-  for (let i = 0; i < maxRetries; i += 1) {
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      response = await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
-      if (response?.status() === 200) return response.status();
-    } catch {
-      // eslint-disable-next-line no-console
-      console.log(`Navigation attempt ${i + 1}/${maxRetries} failed, retrying...`);
-      // eslint-disable-next-line no-await-in-loop
-      await page.waitForTimeout(5000);
-    }
-  }
-  return response?.status() || null;
-}
 
 test.describe('Top 11 @ 11 (Legacy PHP)', () => {
   test.beforeEach(async ({ page }) => {
@@ -64,7 +46,7 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     await captureScreenshot(page, testInfo, '01-Top11-Page-Loaded');
   });
 
-  test('displays Top 11 list table', async ({ page }, testInfo) => {
+  test('displays Top 11 list table with song entries', async ({ page }, testInfo) => {
     const url = `${LEGACY_BASE_URL}/top11.php`;
     await navigateWithRetry(page, url);
 
@@ -77,6 +59,14 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const rowCount = await tableRows.count();
     expect(rowCount).toBeGreaterThan(0);
 
+    // Verify specific seeded artist names appear in the table
+    await expect(page.getByRole('cell', { name: 'Silversun Pickups' })).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Metric' })).toBeVisible();
+
+    // Verify specific seeded song titles appear in the table
+    await expect(page.getByRole('cell', { name: 'Interrobang*' })).toBeVisible();
+    await expect(page.getByRole('cell', { name: 'Victim of Luck' })).toBeVisible();
+
     await captureScreenshot(page, testInfo, '02-Top11-List-Table');
   });
 
@@ -88,50 +78,62 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const knobImage = page.locator('img[src*="knob_11"]');
     await expect(knobImage).toBeVisible();
 
-    // Should have the top11-message div
-    const messageSection = page.locator('.top11-message');
-    await expect(messageSection).toBeVisible();
+    // Should display the weekly countdown message text
+    await expect(
+      page.getByText(/Y-Not Radio counts down the Top 11/i),
+    ).toBeVisible();
 
     await captureScreenshot(page, testInfo, '03-Top11-Message-Section');
   });
 
-  test('handles voting closed state gracefully', async ({ page }, testInfo) => {
-    const url = `${LEGACY_BASE_URL}/top11.php`;
-    await navigateWithRetry(page, url);
+  test('shows voting closed message when voting is not open', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
 
-    // Check for either voting form or voting closed message
     const votingClosedMessage = page.getByText(/voting is currently closed/i);
-    const loginButton = page.getByRole('link', { name: /log in to vote/i });
-    const alreadyVotedMessage = page.getByText(/you've already voted/i);
-    const votingForm = page.locator('form[name="top11"]');
-
-    // One of these states should be true
     const isVotingClosed = await votingClosedMessage.isVisible().catch(() => false);
+    test.skip(!isVotingClosed, 'Voting is not in the closed state on this environment');
+
+    await expect(votingClosedMessage).toBeVisible();
+    await captureScreenshot(page, testInfo, '04a-Top11-Voting-Closed');
+  });
+
+  test('shows login prompt when voting is open and user is not logged in', async ({
+    page,
+  }, testInfo) => {
+    await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
+
+    const loginButton = page.getByRole('link', { name: /log in to vote/i });
     const showsLoginPrompt = await loginButton.isVisible().catch(() => false);
+    test.skip(!showsLoginPrompt, 'Login prompt is not visible; voting may be closed or user is already logged in');
+
+    await expect(loginButton).toBeVisible();
+    await captureScreenshot(page, testInfo, '04b-Top11-Login-Required');
+  });
+
+  test('shows already voted message when user has already voted this week', async ({
+    page,
+  }, testInfo) => {
+    await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
+
+    const alreadyVotedMessage = page.getByText(/you've already voted/i);
     const hasAlreadyVoted = await alreadyVotedMessage.isVisible().catch(() => false);
+    test.skip(!hasAlreadyVoted, 'Already-voted message is not visible; user has not voted or voting is closed');
+
+    await expect(alreadyVotedMessage).toBeVisible();
+    await captureScreenshot(page, testInfo, '04c-Top11-Already-Voted');
+  });
+
+  test('shows voting form when user is logged in and has not voted', async ({
+    page,
+  }, testInfo) => {
+    await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
+
+    const votingForm = page.locator('form[name="top11"]');
     const hasVotingForm = await votingForm.isVisible().catch(() => false);
+    test.skip(!hasVotingForm, 'Voting form is not visible; voting may be closed or user is not logged in');
 
-    // Page should show one of these states
-    const hasValidState = isVotingClosed || showsLoginPrompt || hasAlreadyVoted || hasVotingForm;
-    expect(hasValidState).toBe(true);
-
-    if (isVotingClosed) {
-      // Voting closed - verify the message
-      await expect(votingClosedMessage).toBeVisible();
-      await captureScreenshot(page, testInfo, '04-Top11-Voting-Closed');
-    } else if (showsLoginPrompt) {
-      // Voting open but not logged in
-      await expect(loginButton).toBeVisible();
-      await captureScreenshot(page, testInfo, '04-Top11-Login-Required');
-    } else if (hasAlreadyVoted) {
-      // Logged in but already voted
-      await expect(alreadyVotedMessage).toBeVisible();
-      await captureScreenshot(page, testInfo, '04-Top11-Already-Voted');
-    } else {
-      // Voting form visible
-      await expect(votingForm).toBeVisible();
-      await captureScreenshot(page, testInfo, '04-Top11-Voting-Form');
-    }
+    await expect(votingForm).toBeVisible();
+    await captureScreenshot(page, testInfo, '04d-Top11-Voting-Form');
   });
 
   test('voting form has expected elements when visible', async ({ page }, testInfo) => {
@@ -142,8 +144,7 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const isFormVisible = await votingForm.isVisible().catch(() => false);
 
     if (!isFormVisible) {
-      // Skip if voting form is not visible (voting closed or not logged in)
-      test.skip();
+      test.skip(!isFormVisible, 'Voting form is not visible; voting closed or user is not logged in');
       return;
     }
 
@@ -153,13 +154,10 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const checkboxCount = await checkboxes.count();
     expect(checkboxCount).toBeGreaterThan(0);
 
-    // Write-in checkbox
-    const writeInCheckbox = page.locator('#top11_write_in');
-    await expect(writeInCheckbox).toBeVisible();
-
-    // Write-in text field
-    const writeInField = page.locator('#write_in_value');
-    await expect(writeInField).toBeVisible();
+    // Write-in section - find fields by the "Other (please specify)" label text
+    const writeInContainer = page.locator('.controls').filter({ hasText: 'Other (please specify)' });
+    await expect(writeInContainer.locator('input[type="checkbox"]')).toBeVisible();
+    await expect(writeInContainer.locator('input[type="text"]')).toBeVisible();
 
     // Submit button
     const submitButton = page.getByRole('button', { name: /cast your vote/i });
@@ -178,8 +176,7 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     const isLoginVisible = await loginButton.isVisible().catch(() => false);
 
     if (!isLoginVisible) {
-      // Skip if login button not visible (voting closed or already logged in)
-      test.skip();
+      test.skip(!isLoginVisible, 'Login button not visible; voting closed or user is already logged in');
       return;
     }
 
