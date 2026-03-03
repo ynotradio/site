@@ -38,18 +38,11 @@ services:
       start_period: 60s
 
   # === Payload CMS ===
-  # Uses pre-built image with deps installed
-  # Note: First startup is slow (Next.js dev compilation) but works reliably
   payload:
     image: ${PAYLOAD_IMAGE:-ghcr.io/ynotradio/site/payload-dev:latest}
-    # CRITICAL: Next.js dev server requires TTY to stay running
-    # Without these, it detects non-interactive stdin and exits with code 0
-    tty: true
-    stdin_open: true
     ports:
       - "3000:3000"
     environment:
-      # Use CI=true - the OLD working setup used this and it worked fine
       - CI=true
       - NODE_ENV=development
       - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
@@ -58,46 +51,42 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Debug startup and run migrations + dev server
-    # Note: depends_on: postgres: service_healthy ensures postgres is ready
     command:
       - sh
       - -c
       - |
         set -x
         echo '=== Payload container starting ==='
-
-        # Check node version
         node --version
-
-        # WORKAROUND: DinD esbuild service version mismatch
-        # The Buildkite DinD environment has a shared esbuild service at v0.27.2
-        # but our node_modules has esbuild@0.27.3.
-        # Solution: Replace tsx's esbuild with esbuild-wasm which doesn't use native binaries
-        echo '=== Fixing esbuild for DinD ==='
+        
+        # WORKAROUND: DinD esbuild version mismatch
         cd node_modules/tsx/node_modules
         rm -rf esbuild @esbuild
         npm pack esbuild-wasm@0.27.3 2>&1
         mkdir esbuild && tar -xzf esbuild-wasm-*.tgz -C esbuild --strip-components=1
         rm -f esbuild-wasm-*.tgz
         cd /app
-
+        
         echo '=== Starting Payload ==='
         yarn payload:migrate
         
-        # Start Next.js dev server
-        # Note: tty: true and stdin_open: true in service config are CRITICAL
-        # Without them, Next.js dev server exits immediately with code 0
+        # Trap signals to prevent unexpected exits
+        trap 'echo "Received SIGTERM, ignoring..."' TERM
+        trap 'echo "Received SIGINT, ignoring..."' INT
+        trap 'echo "Received SIGHUP, ignoring..."' HUP
         
-        # Keep restart loop as safety net in case server exits for other reasons
+        # Keep a background process alive
+        tail -f /dev/null &
+        
+        # CRITICAL: Next.js dev server exits when stdin closes in detached containers
+        # Pipe `yes` to stdin to keep it alive. Restart loop provides resilience.
         while true; do
           echo "Starting Next.js dev server..."
-          yarn dev --port 3000 2>&1 || true
-          echo "Next.js exited (code $?), restarting in 2 seconds..."
-          sleep 2
+          yes 2>/dev/null | yarn dev --port 3000 2>&1 || true
+          echo "Next.js exited (code $?), restarting in 1 second..."
+          sleep 1
         done
     healthcheck:
-      # Simple port check - don't wait for full page render
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
       interval: 10s
       timeout: 5s
@@ -173,15 +162,12 @@ services:
   playwright:
     image: ${PLAYWRIGHT_IMAGE:-ghcr.io/ynotradio/site/playwright:latest}
     working_dir: /app
-    # Mount local e2e directory to use latest test files
-    # The pre-built image has deps installed, but we use local tests
     volumes:
       - ./e2e:/app/e2e:ro
       - ./playwright.config.ts:/app/playwright.config.ts:ro
     environment:
       - CI=true
       - SKIP_PAYLOAD_SEED=true
-      # Use Docker's internal DNS for service names
       - PLAYWRIGHT_BASE_URL=http://payload:3000
       - PLAYWRIGHT_LEGACY_URL=http://apache:80
     depends_on:
@@ -189,32 +175,12 @@ services:
         condition: service_healthy
       apache:
         condition: service_healthy
-    # Ensure all services are on same network
-    # dns will be handled by Docker's internal resolver
+    # Chromium uses its own DNS resolver, so we add service IPs to /etc/hosts
     command: >
       bash -c "
-        echo '🔍 Setting up DNS for Chromium browser...'
-
-        # Chromium uses its own DNS resolver, not the container's resolver
-        # Resolve service IPs and add to /etc/hosts so Chromium can find them
         PAYLOAD_IP=$$(getent hosts payload | awk '{print $$1}')
         APACHE_IP=$$(getent hosts apache | awk '{print $$1}')
-
-        echo \"Resolved: payload=$$PAYLOAD_IP apache=$$APACHE_IP\"
-
-        if [ -n \"$$PAYLOAD_IP\" ]; then
-          echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
-        fi
-        if [ -n \"$$APACHE_IP\" ]; then
-          echo \"$$APACHE_IP apache\" >> /etc/hosts
-        fi
-
-        echo '🔍 Testing connectivity from Playwright container...'
-
-        # Test Docker network connections
-        curl -sf http://payload:3000/admin/login > /dev/null && echo '✅ Payload reachable' || echo '❌ Payload unreachable'
-        curl -sf http://apache:80/ > /dev/null && echo '✅ Apache reachable' || echo '❌ Apache unreachable'
-
-        # Run e2e tests using the main playwright config
+        [ -n \"$$PAYLOAD_IP\" ] && echo \"$$PAYLOAD_IP payload\" >> /etc/hosts
+        [ -n \"$$APACHE_IP\" ] && echo \"$$APACHE_IP apache\" >> /etc/hosts
         npx playwright test --reporter=list
       "

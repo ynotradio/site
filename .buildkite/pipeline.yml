@@ -97,23 +97,14 @@ steps:
     key: "e2e"
     timeout_in_minutes: 20
     command: |
-      # Login to GHCR to pull pre-built images
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       
-      # Pull non-problematic images from GHCR in background
-      echo "📦 Pulling pre-built images in background..."
+      # Pull images in parallel, build Payload locally (esbuild binary mismatch in DinD)
+      echo "📦 Building and pulling images..."
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
-      PULL_PID1=$$!
       docker pull ghcr.io/ynotradio/site/playwright:latest &
-      PULL_PID2=$$!
-      
-      # Build Payload image locally to avoid native binary mismatches in DinD
-      # The pre-built GHCR image has esbuild binaries that don't match the DinD host
-      echo "🔨 Building Payload image locally (to match DinD host binaries)..."
       docker build -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
-      
-      # Wait for pulls to complete
-      wait $$PULL_PID1 $$PULL_PID2
+      wait
       
       # Start databases first
       echo "🗄️ Starting databases..."
@@ -126,64 +117,48 @@ steps:
         PG=$$(docker compose -f docker-compose.e2e.yml ps postgres --format json | jq -r '.Health // "starting"')
         MY=$$(docker compose -f docker-compose.e2e.yml ps mysql --format json | jq -r '.Health // "starting"')
         echo "DB check $$i/10: postgres=$$PG mysql=$$MY"
-        if [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ]; then
-          break
-        fi
+        [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ] && break
       done
       
-      # Start Payload in foreground to capture logs directly
-      # This approach worked in the old e2e-buildkite setup
-      echo "🚀 Starting Payload CMS (capturing output)..."
+      # Start Payload in FOREGROUND mode (key to keeping TTY alive)
+      # The foreground compose maintains the stdin connection that prevents exit
+      echo "🚀 Starting Payload CMS (foreground mode)..."
       docker compose -f docker-compose.e2e.yml up payload 2>&1 &
       COMPOSE_PID=$$!
       
-      # Monitor for startup (with timeout of 4 minutes)
+      # Monitor Payload startup
       echo "⏳ Monitoring Payload startup..."
-      ATTEMPTS=48
-      for i in $$(seq 1 $$ATTEMPTS); do
+      for i in $$(seq 1 48); do
         sleep 5
-        
-        # Check container state
         STATE=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
         HEALTH=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        echo "Payload check $$i/$$ATTEMPTS: state=$$STATE health=$$HEALTH"
+        echo "Payload check $$i/48: state=$$STATE health=$$HEALTH"
         
-        if [ "$$HEALTH" = "healthy" ]; then
-          echo "✅ Payload is healthy!"
-          break
-        fi
+        [ "$$HEALTH" = "healthy" ] && echo "✅ Payload is healthy!" && break
         
         if [ "$$STATE" = "exited" ]; then
           echo "❌ Payload container exited!"
-          echo "📋 Container logs:"
           docker compose -f docker-compose.e2e.yml logs payload --tail=100
           exit 1
         fi
-        
-        if [ $$i -eq $$ATTEMPTS ]; then
-          echo "⚠️ Payload still not healthy after $$ATTEMPTS checks, proceeding anyway..."
-          # Don't exit - let tests run to see if Payload is actually working
-        fi
       done
       
-      # Stop the foreground compose (container keeps running)
+      # The foreground compose process can be terminated - container keeps running
+      # via the restart loop in docker-compose.e2e.yml
       kill $$COMPOSE_PID 2>/dev/null || true
       
-      # Start remaining services for E2E
-      echo "🚀 Starting remaining services (phpfpm, apache)..."
+      # Start remaining services
+      echo "🚀 Starting remaining services..."
       docker compose -f docker-compose.e2e.yml up -d phpfpm apache
       sleep 10
       
-      # Run Playwright tests
+      # Run tests
       echo "🎭 Running Playwright E2E tests..."
       docker compose -f docker-compose.e2e.yml run --rm playwright
       TEST_EXIT=$$?
       
       echo "📊 Test results: exit code $$TEST_EXIT"
-      
-      # Cleanup
       docker compose -f docker-compose.e2e.yml down -v
-      
       exit $$TEST_EXIT
     env:
       GHCR_USERNAME: "${GHCR_USERNAME}"
