@@ -46,7 +46,7 @@ describe('setDays', () => {
 
     // Clear module cache and re-require to pick up new globals
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
     ({ setDays } = require('../../src/js/common_functions.js'));
   });
 
@@ -134,7 +134,7 @@ describe('setDays', () => {
 
     // Clear cache and re-import
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
     const freshModule = require('../../src/js/common_functions.js');
 
     // Should not throw an error
@@ -176,7 +176,7 @@ describe('checkForm', () => {
 
     // Clear module cache and re-require to pick up new globals
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
-    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
     ({ checkForm } = require('../../src/js/common_functions.js'));
   });
 
