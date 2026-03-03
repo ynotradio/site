@@ -207,7 +207,7 @@ When modifying code, actively look for and remove dead code:
 
 **Pre-push verification workflow**:
 1. Run `yarn lint` - must exit 0
-2. Run `yarn test` - must exit 0  
+2. Run `yarn test` - must exit 0
 3. Run `yarn build` - must exit 0
 4. Run `yarn test:e2e` if you changed UI/API
 5. Only push after ALL checks pass locally
@@ -278,6 +278,7 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 - Create detailed timeline/phase plans for solo hobby projects (no team coordination needed)
 - Generate implementation summaries as proof of work (code speaks for itself)
 - Generate documentation as evidence you completed a task
+- Ask for permission to write to /tmp directories outside of this repository. This is never necessary. The repo has a gitignored ./tmp directory for throwaway files.
 
 **PR Description Format:**
 

@@ -50,7 +50,7 @@ export const ShowClonerClient: React.FC = () => {
     loadShows();
   }, [loadShows]);
 
-  const selectedRangeShows = sourceStartDate && sourceEndDate
+  const selectedRangeShows = (sourceStartDate && sourceEndDate)
     ? getShowsInRange(shows, sourceStartDate, sourceEndDate)
     : [];
 
