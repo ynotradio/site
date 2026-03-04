@@ -13,16 +13,18 @@
 
 // Patch @next/env before Payload imports it — fixes ESM/CJS default export mismatch
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const nextEnv = require('@next/env');
-if (!nextEnv.default) {
-  nextEnv.default = nextEnv;
-}
-
 import type { Payload } from 'payload';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
 import type { PostgresTarget } from './shared/payloadClient';
+
+// eslint-disable-next-line import/no-extraneous-dependencies, @typescript-eslint/no-require-imports
+const nextEnv = require('@next/env');
+
+if (!nextEnv.default) {
+  nextEnv.default = nextEnv;
+}
 
 const logger = createLogger('MediaBackfill');
 
@@ -78,6 +80,16 @@ async function backfillPostMedia(
     return false;
   }
 
+  // Re-read the media record to get the correct Cloudinary URL.
+  // The cloud storage afterChange hook updates filename/url asynchronously
+  // after payload.create returns, so the initial result may have stale values.
+  const media = await payload.findByID({
+    collection: 'media',
+    id: imageResult.mediaId,
+  });
+  const mediaUrl = (media as Record<string, unknown>).url as string;
+  const cloudinaryUrl = mediaUrl || imageResult.cloudinaryUrl;
+
   await payload.update({
     collection: 'posts',
     id: postId,
@@ -86,9 +98,7 @@ async function backfillPostMedia(
     },
   });
 
-  logger.info(
-    `✓ Post ${postId}: media ${imageResult.mediaId} (${imageResult.cloudinaryUrl})`,
-  );
+  logger.info(`✓ Post ${postId}: media ${imageResult.mediaId} (${cloudinaryUrl})`);
   return true;
 }
 
@@ -119,10 +129,7 @@ async function main(): Promise<void> {
 
     // Filter to specific IDs if provided
     if (options.ids) {
-      where.and = [
-        ...(where.and as Array<Record<string, unknown>>),
-        { id: { in: options.ids } },
-      ];
+      where.and = [...(where.and as Array<Record<string, unknown>>), { id: { in: options.ids } }];
     }
 
     const posts = await payload.find({
