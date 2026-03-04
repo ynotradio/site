@@ -42,7 +42,7 @@ class PostgresConcert implements Concert {
             LEFT JOIN concerts_rels cr ON c.id = cr.parent_id AND cr.path = 'artists'
             LEFT JOIN artists a ON cr.artists_id = a.id
             LEFT JOIN LATERAL (
-                SELECT ar.id, ar.website
+                SELECT ar.id, ar.website, ar.photo_id
                 FROM concerts_rels crr
                 JOIN artists ar ON crr.artists_id = ar.id
                 WHERE crr.parent_id = c.id AND crr.path = 'artists'

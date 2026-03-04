@@ -51,10 +51,14 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
       // eslint-disable-next-line no-param-reassign
       data.cloudinaryPublicId = uploadResult.public_id;
 
-      // Important: The filename field should contain just the public_id
-      // The plugin's generateFileURL will construct the full URL
       // eslint-disable-next-line no-param-reassign
       data.filename = uploadResult.public_id;
+
+      // Return metadata so the afterChange hook persists it to the DB
+      return {
+        filename: uploadResult.public_id,
+        cloudinaryPublicId: uploadResult.public_id,
+      };
     },
 
     handleDelete: async ({ doc, filename }) => {

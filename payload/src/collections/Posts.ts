@@ -117,6 +117,13 @@ export const Posts: CollectionConfig = {
       },
     },
     {
+      name: 'linkUrl',
+      type: 'text',
+      admin: {
+        description: 'Link URL when clicking the story image (legacy pic_url)',
+      },
+    },
+    {
       name: 'priority',
       type: 'number',
       defaultValue: 0,

@@ -80,7 +80,8 @@ class PostgresOnDemand implements OnDemand {
                 od.headline,
                 od.description as note,
                 '' as songs,
-                od.audio_url
+                od.audio_url,
+                od.source
             FROM ondemand od
             LEFT JOIN media m ON od.image_id = m.id
             WHERE od._status = 'published'

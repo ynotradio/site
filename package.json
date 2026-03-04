@@ -128,7 +128,7 @@
   "lint-staged": {
     "!(*.test).{ts,tsx}": [
       "prettier --write",
-      "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*'"
+      "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*' --ignore-pattern 'payload/migrations/*'"
     ],
     "*.test.{ts,tsx}": [
       "prettier --write"
