@@ -11,9 +11,9 @@
  *   DB_HOST=localhost tsx bin/migrations/fixPostsImageUrls.ts
  */
 
+import pg from 'pg';
 import { connectToDatabase } from './database';
 import { logSummary } from './shared/logger';
-import pg from 'pg';
 
 const { Client } = pg;
 
@@ -25,7 +25,12 @@ interface FixStats {
 }
 
 async function main() {
-  const stats: FixStats = { total: 0, success: 0, skipped: 0, errors: 0 };
+  const stats: FixStats = {
+    total: 0,
+    success: 0,
+    skipped: 0,
+    errors: 0,
+  };
 
   // Connect to MySQL (source of truth for pic/pic_url)
   console.log('Connecting to MySQL...');
