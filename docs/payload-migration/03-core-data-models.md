@@ -8,37 +8,39 @@
 
 **Last Updated:** January 4, 2026
 
-| Priority | Collection | PostgreSQL Table | Status | Notes |
-|----------|-----------|------------------|--------|-------|
-| 1 | People | `people` | ✅ Complete | Base collection for individuals |
-| 2 | DJs | `djs` | ✅ Complete | References People collection, supports multi-person DJs |
-| 3 | Artists | `artists` | ✅ Complete | Musicians/bands with MusicBrainz integration |
-| 4 | Venues | `venues` | ✅ Complete | Concert locations |
-| 5 | Media | `media` | ✅ Complete | Upload collection with Cloudinary integration |
-| 6 | Ads | `ads` | ✅ Complete | Sponsor/advertisement data |
-| 7 | Concerts | `concerts` | ✅ Complete | References Artists and Venues |
-| 8 | Songs | `songs` | ✅ Complete | Music catalog with MusicBrainz integration |
-| 9 | Records | `records` | ✅ Complete | Albums (used by CD of the Week) with MusicBrainz |
-| 10 | CdOfTheWeek | `cd_of_the_week` | ✅ Complete | Album reviews referencing Records |
-| 11 | OnDemand | `on_demand` | ✅ Complete | Audio content referencing Artists/DJs |
-| 12 | Shows | `shows` | ✅ Complete | Schedule entries referencing DJs |
-| 13 | Posts | `posts` | ✅ Complete | Content blocks (unified Story + CustomText) |
-| 14 | Users | `users` | ✅ Complete | Authentication and admin access |
-| 15 | YearEndPollResults | `year_end_poll_results` | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
-| 16 | Top11Contests | `top11_contests` | 🔲 Todo | Weekly contest config |
-| 17 | Top11Results | `top11_results` | 🔲 Todo | Published weekly results |
-| 18 | Top11Votes | `top11_votes` | 🔲 Todo | User votes (PostgreSQL native, not NoSQL) |
-| 19 | YearEndPolls | `year_end_polls` | 🔲 Todo | Annual poll config |
-| 20 | YearEndPollCategories | `year_end_poll_categories` | 🔲 Todo | Poll categories |
-| 21 | YearEndPollVotes | `year_end_poll_votes` | 🔲 Todo | User votes (PostgreSQL native) |
-| 22 | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo | Tournament config |
-| 23 | ModernRockMadnessGroups | `modern_rock_madness_groups` | 🔲 Todo | Tournament participants |
-| 24 | ModernRockMadnessMatches | `modern_rock_madness_matches` | 🔲 Todo | Bracket matchups |
-| 25 | ModernRockMadnessVotes | `modern_rock_madness_votes` | 🔲 Todo | User votes (PostgreSQL native) |
+| Priority | Collection                   | PostgreSQL Table                  | Status      | Notes                                                                                  |
+| -------- | ---------------------------- | --------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| 1        | People                       | `people`                          | ✅ Complete | Base collection for individuals                                                        |
+| 2        | DJs                          | `djs`                             | ✅ Complete | References People collection, supports multi-person DJs                                |
+| 3        | Artists                      | `artists`                         | ✅ Complete | Musicians/bands with MusicBrainz integration                                           |
+| 4        | Venues                       | `venues`                          | ✅ Complete | Concert locations                                                                      |
+| 5        | Media                        | `media`                           | ✅ Complete | Upload collection with Cloudinary integration                                          |
+| 6        | Ads                          | `ads`                             | ✅ Complete | Sponsor/advertisement data                                                             |
+| 7        | Concerts                     | `concerts`                        | ✅ Complete | References Artists and Venues                                                          |
+| 8        | Songs                        | `songs`                           | ✅ Complete | Music catalog with MusicBrainz integration                                             |
+| 9        | Records                      | `records`                         | ✅ Complete | Albums (used by CD of the Week) with MusicBrainz                                       |
+| 10       | CdOfTheWeek                  | `cd_of_the_week`                  | ✅ Complete | Album reviews referencing Records                                                      |
+| 11       | OnDemand                     | `on_demand`                       | ✅ Complete | Audio content referencing Artists/DJs                                                  |
+| 12       | Shows                        | `shows`                           | ✅ Complete | Schedule entries referencing DJs                                                       |
+| 13       | Posts                        | `posts`                           | ✅ Complete | Content blocks (unified Story + CustomText)                                            |
+| 14       | Users                        | `users`                           | ✅ Complete | Authentication and admin access                                                        |
+| 15       | YearEndPollResults           | `year_end_poll_results`           | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
+| 16       | Top11Contests                | `top11_contests`                  | 🔲 Todo     | Weekly contest config                                                                  |
+| 17       | Top11Results                 | `top11_results`                   | 🔲 Todo     | Published weekly results                                                               |
+| 18       | Top11Votes                   | `top11_votes`                     | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
+| 19       | YearEndPolls                 | `year_end_polls`                  | 🔲 Todo     | Annual poll config                                                                     |
+| 20       | YearEndPollCategories        | `year_end_poll_categories`        | 🔲 Todo     | Poll categories                                                                        |
+| 21       | YearEndPollVotes             | `year_end_poll_votes`             | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
+| 22       | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo     | Tournament config                                                                      |
+| 23       | ModernRockMadnessGroups      | `modern_rock_madness_groups`      | 🔲 Todo     | Tournament participants                                                                |
+| 24       | ModernRockMadnessMatches     | `modern_rock_madness_matches`     | 🔲 Todo     | Bracket matchups                                                                       |
+| 25       | ModernRockMadnessVotes       | `modern_rock_madness_votes`       | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
+| 26       | MadnessMatchEvents           | `madness_match_events`            | 🔲 Todo     | Audit log for match admin actions (overtime, rematch, admin vote)                      |
 
 ### Summary
+
 - **Completed:** 15 collections (all core content types + Year End Poll Results)
-- **Remaining:** 10 collections (voting/tournament systems)
+- **Remaining:** 11 collections (voting/tournament systems + audit log)
 
 ---
 
@@ -52,6 +54,7 @@ Unlike the Sanity migration (which stores votes in a separate Neon database), th
 - **Development**: One connection string
 
 **Example: Top 11 Votes Table**
+
 ```sql
 CREATE TABLE top11_votes (
   id SERIAL PRIMARY KEY,
@@ -285,13 +288,13 @@ CREATE TABLE top11_result_placements (
 
 ## Legend
 
-| Status | Meaning |
-|--------|---------|
-| ✅ Done | Collection created and migration complete |
-| 🔲 Todo | Not started |
-| 🚧 In Progress | Work has begun |
-| ⚠️ Blocked | Waiting on dependency |
-| ⏸️ Later | Deferred to future PR |
+| Status         | Meaning                                   |
+| -------------- | ----------------------------------------- |
+| ✅ Done        | Collection created and migration complete |
+| 🔲 Todo        | Not started                               |
+| 🚧 In Progress | Work has begun                            |
+| ⚠️ Blocked     | Waiting on dependency                     |
+| ⏸️ Later       | Deferred to future PR                     |
 
 ---
 
