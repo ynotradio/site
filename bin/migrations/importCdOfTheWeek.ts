@@ -104,6 +104,12 @@ async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<bo
  */
 async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promise<boolean> {
   try {
+    // Skip entries with empty titles (placeholder entries that were never completed)
+    if (!item.title || item.title.trim() === '') {
+      logger.debug(`CD of the Week ${item.id} has no title, skipping`);
+      return false;
+    }
+
     // Check if already imported
     if (await cdOfTheWeekExists(payload, item.id)) {
       logger.debug(`CD of the Week ${item.id} already exists, skipping`);
@@ -174,43 +180,57 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
     }
 
     // Find or create record (album)
-    let recordId: string | number;
-    const existingRecord = await payload.find({
+    // First try to find by title only (handles artist ID mismatches)
+    let recordId: string | number | undefined;
+    const existingByTitle = await payload.find({
       collection: 'records',
       where: {
-        and: [
-          {
-            title: {
-              equals: item.title,
-            },
-          },
-          {
-            artist: {
-              equals: artistId,
-            },
-          },
-        ],
+        title: {
+          equals: item.title,
+        },
       },
       limit: 1,
     });
 
-    if (existingRecord.docs.length > 0) {
-      recordId = existingRecord.docs[0].id;
+    if (existingByTitle.docs.length > 0) {
+      recordId = existingByTitle.docs[0].id;
+      logger.debug(`Found existing record by title: "${item.title}" (id: ${recordId})`);
     } else {
-      // Create new record
-      const newRecord = await payload.create({
-        collection: 'records',
-        data: {
-          title: item.title,
-          artist: artistId as any,
-          label: item.label || undefined,
-          coverImage: coverImageId,
-          musicbrainzId: releaseMbid || undefined,
-          legacyId: item.id,
-          migratedAt: new Date().toISOString(),
-        },
-      });
-      recordId = newRecord.id;
+      // No existing record, create new one
+      try {
+        const newRecord = await payload.create({
+          collection: 'records',
+          data: {
+            title: item.title,
+            artist: artistId as any,
+            label: item.label || undefined,
+            coverImage: coverImageId,
+            musicbrainzId: releaseMbid || undefined,
+            legacyId: item.id,
+            migratedAt: new Date().toISOString(),
+          },
+        });
+        recordId = newRecord.id;
+        logger.debug(`Created new record: "${item.title}" (id: ${recordId})`);
+      } catch (recordError: any) {
+        // Record creation failed, try to find by title again (race condition)
+        logger.debug(`Record creation failed for "${item.title}", retrying find`);
+        const retryFind = await payload.find({
+          collection: 'records',
+          where: { title: { equals: item.title } },
+          limit: 1,
+        });
+        if (retryFind.docs.length > 0) {
+          recordId = retryFind.docs[0].id;
+          logger.debug(`Found record after retry: "${item.title}" (id: ${recordId})`);
+        } else {
+          throw recordError;
+        }
+      }
+    }
+
+    if (!recordId) {
+      throw new Error(`Failed to find or create record for "${item.title}"`);
     }
 
     // Convert HTML review to Lexical format
@@ -226,7 +246,9 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
         logger.debug(`Using default review for CD ${item.id} (original was empty)`);
       }
     } catch (error) {
-      logger.error(`Failed to convert review for CD ${item.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error(
+        `Failed to convert review for CD ${item.id}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       logger.debug(`Review content preview: ${item.review?.substring(0, 200) || 'null'}`);
       review = convertHtmlToLexical('<p>No review provided.</p>');
     }

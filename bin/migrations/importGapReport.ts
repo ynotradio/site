@@ -183,7 +183,7 @@ const COLLECTIONS: CollectionConfig[] = [
     payloadCollection: 'ondemand',
     idField: 'id',
     identifierField: 'headline',
-    deletedFilter: "deleted = 'n'",
+    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
     legacyIdField: 'legacyId',
   },
   {
@@ -192,7 +192,7 @@ const COLLECTIONS: CollectionConfig[] = [
     payloadCollection: 'cdoftheweek',
     idField: 'id',
     identifierField: 'title',
-    deletedFilter: "deleted = 'n'",
+    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
     legacyIdField: 'legacyId',
   },
   {
