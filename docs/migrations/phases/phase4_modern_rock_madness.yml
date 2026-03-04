@@ -189,11 +189,11 @@ match_management:
       - vote_count_after
 
   audit_log:
-    # A new Payload collection: MadnessMatchEvents
+    # A new Payload collection: ModernRockMadnessEvents
     # Append-only event log for all admin actions on matches.
     # Payload auto-tracks createdAt and the authenticated user,
     # so "who did it and when" comes for free.
-    collection: MadnessMatchEvents
+    collection: ModernRockMadnessEvents
     description: >
       Append-only log of admin actions on matches. Each record captures
       a single event (overtime extension, rematch, admin vote, match close).
@@ -233,5 +233,5 @@ match_management:
 # 6. Sponsor relationships need to be preserved
 # 7. Match management features (overtime, rematch, admin vote) are currently
 #    handled manually in PHPMyAdmin and need proper admin UI in Payload
-# 8. Audit log (MadnessMatchEvents) is new — no legacy data to migrate, but
+# 8. Audit log (ModernRockMadnessEvents) is new — no legacy data to migrate, but
 #    the collection must be created alongside the matches collection
