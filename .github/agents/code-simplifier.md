@@ -58,14 +58,7 @@ For each changed file:
 - Remove unnecessary comments
 - Avoid nested ternaries (use if/else or switch)
 
-**ESLint rules you MUST NOT violate** (Airbnb base config enforces these):
-
-- **No `continue` statements** (`no-continue` rule) — use `if/else` nesting instead
-- **Switch must have `default` case** (`default-case` rule) — always add `default: break;`
-- **No nested ternaries** (`no-nested-ternary` rule) — use `if/else` blocks
-- **No `++`/`--`** (`no-plusplus`) — use `+= 1` / `-= 1`
-
-Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-quality-standards/) BEFORE making any changes — it contains project-specific patterns and prohibited patterns.
+Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-quality-standards/) BEFORE making any changes — it contains project-specific patterns.
 
 **Preserve**:
 
