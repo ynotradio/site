@@ -87,14 +87,15 @@ Check what's been completed:
 3. Review plan from Phase 1 discussion
 4. Check for open test PRs to avoid duplicates
 5. Select ONE under-tested area (prioritize 0% coverage files)
-6. Create tests following patterns in existing `.test.tsx` files
-7. Add `.stories.tsx` if component is user-facing
-8. **Validate locally BEFORE pushing**: `yarn test && yarn lint` - must exit 0
-9. Create PR: `[test-coverage-improver] Add tests for [component]`
-   - Labels: `automation`, `testing`
-   - Draft: true
-   - Brief description: what was tested, verification status
-10. Comment on discussion with progress update
+6. **Read the source file carefully** before writing tests — understand actual function signatures, return values, and edge case behavior
+7. Create tests following patterns in existing `.test.tsx` files
+8. Add `.stories.tsx` if component is user-facing
+9. **Validate locally BEFORE pushing**: `yarn test && yarn lint` - must exit 0
+10. Create PR: `[test-coverage-improver] Add tests for [component]`
+    - Labels: `automation`, `testing`
+    - Draft: true
+    - Brief description: what was tested, verification status
+11. Comment on discussion with progress update
 
 **Important**: Write meaningful tests that validate functionality. Your tests speak for themselves - no proof-of-work summaries.
 
@@ -106,6 +107,7 @@ See existing test files for examples. Key requirements from [`.claude/skills/tes
 - All user-facing components need both `.test.tsx` and `.stories.tsx`
 - Use `@testing-library/react` for component testing
 - Mock external dependencies appropriately
+- **Test expectations must match actual source behavior** — read the source before writing assertions
 
 ## Exit Conditions
 

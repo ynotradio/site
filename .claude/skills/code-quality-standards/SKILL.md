@@ -358,6 +358,66 @@ import { Button } from '@/components/ui/Button';
 <Component name={obj.name} id={obj.id} />
 ```
 
+### ESLint-Enforced Rules (Airbnb Base)
+
+These rules come from `airbnb-base` and **will cause CI failures** if violated:
+
+```typescript
+// ❌ Bad: continue statement (no-continue rule)
+for (const item of items) {
+  if (!item.valid) continue;
+  processItem(item);
+}
+
+// ✅ Good: Use if/else to avoid continue
+for (const item of items) {
+  if (item.valid) {
+    processItem(item);
+  }
+}
+
+// ❌ Bad: switch without default case (default-case rule)
+switch (action) {
+  case 'add':
+    doAdd();
+    break;
+  case 'remove':
+    doRemove();
+    break;
+  // Missing default!
+}
+
+// ✅ Good: Always include default case
+switch (action) {
+  case 'add':
+    doAdd();
+    break;
+  case 'remove':
+    doRemove();
+    break;
+  default:
+    break;
+}
+
+// ❌ Bad: Nested ternary (no-nested-ternary rule)
+const value = a ? b ? 'yes' : 'maybe' : 'no';
+
+// ✅ Good: if/else for complex conditions
+let value: string;
+if (a) {
+  value = b ? 'yes' : 'maybe';
+} else {
+  value = 'no';
+}
+```
+
+**Key prohibited patterns** (enforced by Airbnb ESLint):
+- `continue` in loops → use `if/else` nesting instead
+- `switch` without `default` → always add `default: break;`
+- Nested ternaries → use `if/else` blocks
+- `++`/`--` operators → use `+= 1` / `-= 1`
+- `console.log` in production code (warnings in some configs)
+
 ## Performance Best Practices
 
 ### Code Splitting

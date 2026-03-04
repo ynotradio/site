@@ -257,7 +257,7 @@ export async function searchRecordings(
  * Format duration in milliseconds to MM:SS
  */
 export function formatDuration(ms?: number): string {
-  if (!ms) return '';
+  if (ms === undefined) return '';
   const seconds = Math.floor(ms / 1000);
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
