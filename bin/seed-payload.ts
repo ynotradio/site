@@ -468,6 +468,232 @@ async function seed() {
 
     console.log('   ✅ Created 2 shows');
 
+    // Create Modern Rock Madness tournament data
+    console.log('🏆 Creating Modern Rock Madness tournament...');
+
+    const tournament = await payload.create({
+      collection: 'madness-tournaments',
+      data: {
+        name: 'Modern Rock Madness 2025',
+        year: 2025,
+        startDate: '2025-03-24T00:00:00.000Z',
+        status: 'active',
+        bracketPdfUrl: 'https://od.lk/d/219145587_ruE6q/MRM2025Bracket.pdf',
+        bannerImageUrl: 'https://i.imgur.com/QfqMVsE.png',
+      },
+    });
+
+    console.log(`   ✅ Created tournament: ${tournament.name}`);
+
+    // Create 8 sample bands (enough for a mini-bracket)
+    console.log('🎸 Creating MRM bands...');
+
+    const tournamentId = typeof tournament.id === 'number' ? tournament.id : parseInt(tournament.id, 10);
+
+    const bandNames = [
+      {
+        name: 'Japanese Breakfast',
+        abbr: 'JBrekie',
+        seed: 1,
+        placement: 1,
+      },
+      {
+        name: 'Fontaines D.C.',
+        abbr: 'FDC',
+        seed: 16,
+        placement: 2,
+      },
+      {
+        name: 'Alvvays',
+        abbr: 'Alvvays',
+        seed: 8,
+        placement: 3,
+      },
+      {
+        name: 'Wet Leg',
+        abbr: 'WetLeg',
+        seed: 9,
+        placement: 4,
+      },
+      {
+        name: 'Turnstile',
+        abbr: 'Trnstl',
+        seed: 4,
+        placement: 5,
+      },
+      {
+        name: 'Beach House',
+        abbr: 'BchHse',
+        seed: 13,
+        placement: 6,
+      },
+      {
+        name: 'Slowdive',
+        abbr: 'Slwdve',
+        seed: 5,
+        placement: 7,
+      },
+      {
+        name: 'Mannequin Pussy',
+        abbr: 'ManPsy',
+        seed: 12,
+        placement: 8,
+      },
+    ];
+
+    const bandIds: number[] = [];
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < bandNames.length; i += 1) {
+      const band = await payload.create({
+        collection: 'madness-bands',
+        data: {
+          tournament: tournamentId,
+          name: bandNames[i].name,
+          abbreviation: bandNames[i].abbr,
+          seed: bandNames[i].seed,
+          placement: bandNames[i].placement,
+          url: `https://example.com/${bandNames[i].abbr.toLowerCase()}`,
+          imageUrl: `https://placehold.co/200x200?text=${encodeURIComponent(bandNames[i].abbr)}`,
+        },
+      });
+      bandIds.push(typeof band.id === 'number' ? band.id : parseInt(band.id, 10));
+    }
+    /* eslint-enable no-await-in-loop */
+
+    console.log(`   ✅ Created ${bandIds.length} bands`);
+
+    // Create 4 Round 1 matches + 2 Round 2 matches + 1 Sweet 16 match (7 total)
+    console.log('⚔️  Creating MRM matches...');
+
+    const matchStartBase = new Date('2025-03-24T14:00:00.000Z');
+
+    const matchConfigs = [
+      // Round 1 matches (1v16, 8v9, 4v13, 5v12)
+      {
+        num: 1,
+        round: '1',
+        region: 1,
+        b1: 0,
+        b2: 1,
+        hoursOffset: 0,
+      },
+      {
+        num: 2,
+        round: '1',
+        region: 1,
+        b1: 2,
+        b2: 3,
+        hoursOffset: 1,
+      },
+      {
+        num: 3,
+        round: '1',
+        region: 1,
+        b1: 4,
+        b2: 5,
+        hoursOffset: 2,
+      },
+      {
+        num: 4,
+        round: '1',
+        region: 1,
+        b1: 6,
+        b2: 7,
+        hoursOffset: 3,
+      },
+      // Round 2 matches (winners of 1v2, 3v4)
+      {
+        num: 33,
+        round: '2',
+        region: 1,
+        b1: null,
+        b2: null,
+        hoursOffset: 48,
+      },
+      {
+        num: 34,
+        round: '2',
+        region: 1,
+        b1: null,
+        b2: null,
+        hoursOffset: 49,
+      },
+      // Sweet 16 match (winners of 33v34)
+      {
+        num: 49,
+        round: '3',
+        region: 1,
+        b1: null,
+        b2: null,
+        hoursOffset: 96,
+      },
+    ];
+
+    const matchIds: Record<number, number> = {};
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < matchConfigs.length; i += 1) {
+      const mc = matchConfigs[i];
+      const start = new Date(matchStartBase.getTime() + mc.hoursOffset * 60 * 60 * 1000);
+      const end = new Date(start.getTime() + 30 * 60 * 1000); // 30 min matches
+
+      const matchData: Record<string, unknown> = {
+        tournament: tournamentId,
+        matchNumber: mc.num,
+        round: mc.round,
+        region: mc.region,
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        band1Votes: 0,
+        band2Votes: 0,
+        showScore: false,
+      };
+
+      if (mc.b1 !== null) matchData.band1 = bandIds[mc.b1];
+      if (mc.b2 !== null) matchData.band2 = bandIds[mc.b2];
+
+      const match = await payload.create({
+        collection: 'madness-matches',
+        data: matchData,
+      });
+      matchIds[mc.num] = typeof match.id === 'number' ? match.id : parseInt(match.id, 10);
+    }
+    /* eslint-enable no-await-in-loop */
+
+    // Link matches with nextMatch (bracket flow)
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[1],
+      data: { nextMatch: matchIds[33] },
+    });
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[2],
+      data: { nextMatch: matchIds[33] },
+    });
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[3],
+      data: { nextMatch: matchIds[34] },
+    });
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[4],
+      data: { nextMatch: matchIds[34] },
+    });
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[33],
+      data: { nextMatch: matchIds[49] },
+    });
+    await payload.update({
+      collection: 'madness-matches',
+      id: matchIds[34],
+      data: { nextMatch: matchIds[49] },
+    });
+
+    console.log(`   ✅ Created ${matchConfigs.length} matches with bracket flow`);
+
     console.log('\n✅ Database seeded successfully!\n');
     console.log('📊 Summary:');
     console.log('   Users: 1 (admin)');
@@ -479,6 +705,9 @@ async function seed() {
     console.log('   Concerts: 3');
     console.log('   Posts: 3');
     console.log('   Shows: 2');
+    console.log('   MRM Tournament: 1');
+    console.log('   MRM Bands: 8');
+    console.log('   MRM Matches: 7');
     console.log('\n🌐 View at: http://localhost:3000/admin');
     console.log(
       `   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`,
