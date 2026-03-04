@@ -35,7 +35,7 @@
 | 23       | ModernRockMadnessGroups      | `modern_rock_madness_groups`      | 🔲 Todo     | Tournament participants                                                                |
 | 24       | ModernRockMadnessMatches     | `modern_rock_madness_matches`     | 🔲 Todo     | Bracket matchups                                                                       |
 | 25       | ModernRockMadnessVotes       | `modern_rock_madness_votes`       | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
-| 26       | MadnessMatchEvents           | `madness_match_events`            | 🔲 Todo     | Audit log for match admin actions (overtime, rematch, admin vote)                      |
+| 26       | ModernRockMadnessEvents      | `modern_rock_madness_events`      | 🔲 Todo     | Audit log for match admin actions (overtime, rematch, admin vote)                      |
 
 ### Summary
 
