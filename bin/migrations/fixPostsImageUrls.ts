@@ -56,7 +56,6 @@ async function main() {
       const pic = (story.pic || '').trim();
       const picUrl = (story.pic_url || '').trim();
 
-      // Find matching post in Neon by legacy_id
       const existing = await pgClient.query(
         'SELECT id, image_url, link_url FROM posts WHERE legacy_id = $1',
         [story.id],
@@ -64,25 +63,26 @@ async function main() {
 
       if (existing.rows.length === 0) {
         stats.skipped++;
-      } else {
-        const post = existing.rows[0];
-        const needsUpdate = post.image_url !== pic || post.link_url !== picUrl;
-
-        if (!needsUpdate) {
-          stats.skipped++;
-        } else {
-          // Update the post with correct values
-          await pgClient.query('UPDATE posts SET image_url = $1, link_url = $2 WHERE id = $3', [
-            pic,
-            picUrl,
-            post.id,
-          ]);
-          console.log(
-            `Updated post ${post.id} (legacy ${story.id}): image_url="${pic.substring(0, 40)}", link_url="${picUrl.substring(0, 40)}"`,
-          );
-          stats.success++;
-        }
+        continue;
       }
+
+      const post = existing.rows[0];
+      const needsUpdate = post.image_url !== pic || post.link_url !== picUrl;
+
+      if (!needsUpdate) {
+        stats.skipped++;
+        continue;
+      }
+
+      await pgClient.query('UPDATE posts SET image_url = $1, link_url = $2 WHERE id = $3', [
+        pic,
+        picUrl,
+        post.id,
+      ]);
+      console.log(
+        `Updated post ${post.id} (legacy ${story.id}): image_url="${pic.substring(0, 40)}", link_url="${picUrl.substring(0, 40)}"`,
+      );
+      stats.success++;
     } catch (error) {
       console.error(`Error fixing story ${story.id}: ${error}`);
       stats.errors++;
