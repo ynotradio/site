@@ -77,14 +77,25 @@ class SqlTop11ExtendedTest extends TestCase
 
     /**
      * Test getSong returns song data when found
-     * 
-     * Note: Skipped due to PHP 8.3 mysqli read-only property limitations.
-     * The getSong() method checks $result->num_rows which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testGetSongReturnsData(): void
     {
-        $this->markTestSkipped('Cannot mock read-only num_rows property in PHP 8.3 - deferred to integration tests');
+        $songId = 5;
+        $song = ['id' => 5, 'artist' => 'The Beatles', 'song' => 'Hey Jude'];
+
+        $mockResult = $this->createMock(\mysqli_result::class);
+        $mockResult->method('fetch_assoc')
+            ->willReturn($song);
+
+        $mockStmt = $this->createMock(\mysqli_stmt::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('get_result')->willReturn($mockResult);
+
+        $this->mockDb->method('prepare')
+            ->willReturn($mockStmt);
+
+        $result = $this->top11->getSong($songId);
+        $this->assertSame($song, $result);
     }
 
     /**

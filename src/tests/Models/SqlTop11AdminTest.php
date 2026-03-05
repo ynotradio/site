@@ -34,26 +34,36 @@ class SqlTop11AdminTest extends TestCase
 
     /**
      * Test pickWinner returns random contestant
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The pickWinner() method checks $result->num_rows which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testPickWinnerReturnsRandomContestant(): void
     {
-        $this->markTestSkipped('Cannot mock read-only num_rows property in PHP 8.4 - deferred to integration tests');
+        $contestant = ['id' => 1, 'firstname' => 'Jane', 'lastname' => 'Smith', 'email' => 'jane@example.com'];
+
+        $mockResult = $this->createMock(\mysqli_result::class);
+        $mockResult->method('fetch_assoc')
+            ->willReturn($contestant);
+
+        $this->mockDb->method('query')
+            ->willReturn($mockResult);
+
+        $result = $this->top11->pickWinner();
+        $this->assertSame($contestant, $result);
     }
 
     /**
      * Test pickWinner throws exception when no contestants
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The pickWinner() method checks $result->num_rows which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testPickWinnerThrowsExceptionWhenNoContestants(): void
     {
-        $this->markTestSkipped('Cannot mock read-only num_rows property in PHP 8.4 - deferred to integration tests');
+        $mockResult = $this->createMock(\mysqli_result::class);
+        $mockResult->method('fetch_assoc')
+            ->willReturn(null);
+
+        $this->mockDb->method('query')
+            ->willReturn($mockResult);
+
+        $this->expectException(\Exception::class);
+        $this->top11->pickWinner();
     }
 
     /**
@@ -203,14 +213,31 @@ class SqlTop11AdminTest extends TestCase
 
     /**
      * Test recordUserVote returns false when execute fails
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The recordUserVote() method accesses $stmt->errno which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testRecordUserVoteReturnsFalseOnExecuteFailure(): void
     {
-        $this->markTestSkipped('Cannot mock read-only errno property in PHP 8.4 - deferred to integration tests');
+        $userEmail = 'voter@example.com';
+        $auth0Id = 'auth0|123456';
+        $currentPeriod = '2024-01-15';
+
+        $mockPeriodResult = $this->createMock(\mysqli_result::class);
+        $mockPeriodResult->method('fetch_assoc')
+            ->willReturn(['artist' => $currentPeriod]);
+
+        $mockStmt = $this->createMock(\mysqli_stmt::class);
+        $mockStmt->method('bind_param');
+        $mockStmt->method('execute')->willReturn(false);
+
+        $this->mockDb->method('query')
+            ->with("SELECT artist FROM top11 WHERE placement = 99")
+            ->willReturn($mockPeriodResult);
+
+        $this->mockDb->method('prepare')
+            ->with("INSERT INTO top11_user_votes (user_email, voting_period, user_auth0_id) VALUES (?, ?, ?)")
+            ->willReturn($mockStmt);
+
+        $result = $this->top11->recordUserVote($userEmail, $auth0Id);
+        $this->assertFalse($result);
     }
 
     /**
@@ -239,62 +266,101 @@ class SqlTop11AdminTest extends TestCase
 
     /**
      * Test getAll throws exception on query failure
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The getAll() method accesses $this->db->error which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testGetAllThrowsExceptionOnFailure(): void
     {
-        $this->markTestSkipped('Cannot mock read-only error property in PHP 8.4 - deferred to integration tests');
+        $this->mockDb->method('query')
+            ->willReturn(false);
+
+        $this->expectException(\Exception::class);
+        $this->top11->getAll();
     }
 
     /**
      * Test addSong inserts new song and returns ID
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The addSong() method accesses $this->db->insert_id which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testAddSongInsertsNewSong(): void
     {
-        $this->markTestSkipped('Cannot mock read-only insert_id property in PHP 8.4 - deferred to integration tests');
+        $artist = 'The Beatles';
+        $song = 'Hey Jude';
+        $expectedId = 42;
+
+        $mockStmt = $this->createMock(\mysqli_stmt::class);
+        $mockStmt->expects($this->once())
+            ->method('bind_param')
+            ->with('ss', $artist, $song);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+
+        $this->mockDb->method('prepare')
+            ->with("INSERT INTO top11songs (artist, song, value, deleted) VALUES (?, ?, 0, 'n')")
+            ->willReturn($mockStmt);
+
+        $top11 = $this->getMockBuilder(\YNotRadio\Models\Implementations\SqlTop11::class)
+            ->setConstructorArgs([$this->mockDb])
+            ->onlyMethods(['getLastInsertId'])
+            ->getMock();
+        $top11->method('getLastInsertId')->willReturn($expectedId);
+
+        $result = $top11->addSong($artist, $song);
+        $this->assertSame($expectedId, $result);
     }
 
     /**
      * Test addSong throws exception on failure
-     * 
-     * Note: Skipped due to PHP 8.4 mysqli read-only property limitations.
-     * The addSong() method accesses $stmt->error which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testAddSongThrowsExceptionOnFailure(): void
     {
-        $this->markTestSkipped('Cannot mock read-only error property in PHP 8.4 - deferred to integration tests');
+        $mockStmt = $this->createMock(\mysqli_stmt::class);
+        $mockStmt->method('bind_param');
+        $mockStmt->method('execute')->willReturn(false);
+
+        $this->mockDb->method('prepare')
+            ->willReturn($mockStmt);
+
+        $this->expectException(\Exception::class);
+        $this->top11->addSong('Artist', 'Song');
     }
 
     /**
      * Test getContestantCount returns formatted count
-     * 
-     * Note: Skipped due to PHP 8.3 mysqli read-only property limitations.
-     * The getContestantCount() method accesses $result->num_rows which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testGetContestantCountReturnsFormattedCount(): void
     {
-        $this->markTestSkipped('Cannot mock read-only num_rows property in PHP 8.3 - deferred to integration tests');
+        $mockResult = $this->createMock(\mysqli_result::class);
+        $mockResult->method('fetch_assoc')
+            ->willReturn(['total' => 5]);
+
+        $this->mockDb->method('query')
+            ->with("SELECT COUNT(*) as total FROM top11contest WHERE display = 'yes' AND contest = 'yes'")
+            ->willReturn($mockResult);
+
+        $result = $this->top11->getContestantCount();
+        $this->assertSame('(5 total entries)', $result);
     }
 
     /**
      * Test getById returns specific entry
-     * 
-     * Note: Skipped due to PHP 8.3 mysqli read-only property limitations.
-     * The getById() method checks $result->num_rows which cannot be mocked.
-     * This method is better tested via integration tests.
      */
     public function testGetByIdReturnsSpecificEntry(): void
     {
-        $this->markTestSkipped('Cannot mock read-only num_rows property in PHP 8.3 - deferred to integration tests');
+        $id = 5;
+        $entry = ['placement' => 5, 'artist' => 'Test Artist', 'song' => 'Test Song'];
+
+        $mockResult = $this->createMock(\mysqli_result::class);
+        $mockResult->method('fetch_assoc')
+            ->willReturn($entry);
+
+        $mockStmt = $this->createMock(\mysqli_stmt::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('get_result')->willReturn($mockResult);
+
+        $this->mockDb->method('prepare')
+            ->willReturn($mockStmt);
+
+        $result = $this->top11->getById($id);
+        $this->assertSame($entry, $result);
     }
 
     /**
