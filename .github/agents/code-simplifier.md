@@ -58,13 +58,13 @@ For each changed file:
 - Remove unnecessary comments
 - Avoid nested ternaries (use if/else or switch)
 
+Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-quality-standards/) BEFORE making any changes — it contains project-specific patterns.
+
 **Preserve**:
 
 - Exact functionality - never change what code does
 - All tests passing
 - Build success
-
-Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-quality-standards/) for project-specific patterns.
 
 ### 3. Validate
 

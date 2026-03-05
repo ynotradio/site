@@ -358,6 +358,8 @@ import { Button } from '@/components/ui/Button';
 <Component name={obj.name} id={obj.id} />
 ```
 
+> **Verify compliance by running `yarn lint` before pushing.** The project's `.eslintrc.json` (Airbnb base) is the authoritative source of all prohibited patterns. If `yarn lint` exits 0, the code is compliant.
+
 ## Performance Best Practices
 
 ### Code Splitting

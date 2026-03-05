@@ -49,18 +49,14 @@ function parseArgs(): BackfillOptions {
     const flag = args[i];
     const value = args[i + 1];
 
-    if (!value) continue;
-
-    switch (flag) {
-      case '--to':
+    if (value) {
+      if (flag === '--to') {
         options.to = value as PostgresTarget;
-        break;
-      case '--limit':
+      } else if (flag === '--limit') {
         options.limit = parseInt(value, 10);
-        break;
-      case '--ids':
+      } else if (flag === '--ids') {
         options.ids = value.split(',').map((id) => parseInt(id.trim(), 10));
-        break;
+      }
     }
   }
 
@@ -153,21 +149,20 @@ async function main(): Promise<void> {
       const imageUrl = (post as Record<string, unknown>).imageUrl as string;
       const headline = (post as Record<string, unknown>).headline as string;
 
-      if (!imageUrl) {
+      if (imageUrl) {
+        try {
+          const success = await backfillPostMedia(payload, post.id as number, imageUrl, headline);
+          stats[success ? 'success' : 'errors'] += 1;
+        } catch (error) {
+          logger.error(`Error processing post ${post.id}: ${error}`);
+          stats.errors += 1;
+        }
+
+        if ((i + 1) % 10 === 0) {
+          logger.info(`Progress: ${i + 1}/${stats.total}`);
+        }
+      } else {
         stats.skipped += 1;
-        continue;
-      }
-
-      try {
-        const success = await backfillPostMedia(payload, post.id as number, imageUrl, headline);
-        stats[success ? 'success' : 'errors'] += 1;
-      } catch (error) {
-        logger.error(`Error processing post ${post.id}: ${error}`);
-        stats.errors += 1;
-      }
-
-      if ((i + 1) % 10 === 0) {
-        logger.info(`Progress: ${i + 1}/${stats.total}`);
       }
     }
 
