@@ -1,5 +1,5 @@
 // WORKAROUND: @next/env ESM/CJS interop fix
-// Tracking issue: https://github.com/ynotradio/site/issues/PENDING
+// Tracking issue: https://github.com/ynotradio/site/issues/323
 //
 // Problem:
 //   Payload's loadEnv.js does `import nextEnvImport from '@next/env'` (ESM default
