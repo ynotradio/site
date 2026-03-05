@@ -33,3 +33,16 @@ export const hasRole = (user: unknown, roles: string | string[]): boolean => {
 
   return userRoles.some((role: string) => checkRoles.includes(role));
 };
+
+/**
+ * Payload field `admin.condition` callback that shows a field only for admin users.
+ * Hides the field from editors, DJs, and readonly users.
+ *
+ * Usage:
+ *   admin: { condition: adminOnlyCondition }
+ */
+export const adminOnlyCondition = (
+  _data: Record<string, unknown>,
+  _siblingData: Record<string, unknown>,
+  { user }: { user: unknown },
+): boolean => hasRole(user, 'admin');

@@ -72,7 +72,12 @@ export default buildConfig({
           prefillOnly: true,
         }
         : false,
+    css: path.resolve(dirname, 'payload/src/admin.css'),
     components: {
+      graphics: {
+        Logo: '/payload/src/components/branding/Logo#Logo',
+        Icon: '/payload/src/components/branding/Icon#Icon',
+      },
       beforeDashboard: [],
       afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
       views: {
