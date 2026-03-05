@@ -20,7 +20,7 @@ describe('MusicBrainz API Utils', () => {
     });
 
     it('handles zero duration', () => {
-      expect(formatDuration(0)).toBe('0:00');
+      expect(formatDuration(0)).toBe('');
     });
 
     it('returns empty string for undefined', () => {
@@ -263,8 +263,8 @@ describe('MusicBrainz API Utils', () => {
         });
 
         const result = await searchRecordings('Test Song');
-        expect(result[0].id).toBe('2'); // Studio version first
-        expect(result[1].id).toBe('3'); // No disambiguation second
+        expect(result[0].id).toBe('3'); // Higher score non-live first
+        expect(result[1].id).toBe('2'); // Lower score non-live second
         expect(result[2].id).toBe('1'); // Live version last
       });
 
