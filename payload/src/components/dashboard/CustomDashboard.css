@@ -15,7 +15,7 @@
 }
 
 .dashboard-subtitle {
-  color: #666;
+  color: var(--theme-elevation-600, #666);
   margin-bottom: 2rem;
 }
 
@@ -38,8 +38,8 @@
 .primary-card {
   display: block;
   padding: 1.5rem;
-  background-color: white;
-  border: 2px solid #e0e0e0;
+  background-color: var(--theme-elevation-0, white);
+  border: 2px solid var(--theme-elevation-200, #e0e0e0);
   border-radius: 8px;
   text-decoration: none;
   color: inherit;
@@ -48,7 +48,7 @@
 }
 
 .primary-card:hover {
-  border-color: #3b82f6;
+  border-color: var(--theme-primary-500, #3b82f6);
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -65,7 +65,7 @@
 
 .primary-card-description {
   font-size: 0.875rem;
-  color: #666;
+  color: var(--theme-elevation-600, #666);
 }
 
 .secondary-grid {
@@ -77,8 +77,8 @@
 .secondary-card {
   display: block;
   padding: 1rem;
-  background-color: #f9fafb;
-  border: 1px solid #e5e7eb;
+  background-color: var(--theme-elevation-50, #f9fafb);
+  border: 1px solid var(--theme-elevation-200, #e5e7eb);
   border-radius: 6px;
   text-decoration: none;
   color: inherit;
@@ -87,8 +87,8 @@
 }
 
 .secondary-card:hover {
-  background-color: #f3f4f6;
-  border-color: #9ca3af;
+  background-color: var(--theme-elevation-100, #f3f4f6);
+  border-color: var(--theme-elevation-400, #9ca3af);
 }
 
 .secondary-card-label {
@@ -99,5 +99,5 @@
 
 .secondary-card-group {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--theme-elevation-400, #9ca3af);
 }
