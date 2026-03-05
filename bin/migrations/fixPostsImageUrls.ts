@@ -56,7 +56,6 @@ async function main() {
       const pic = (story.pic || '').trim();
       const picUrl = (story.pic_url || '').trim();
 
-      // Find matching post in Neon by legacy_id
       const existing = await pgClient.query(
         'SELECT id, image_url, link_url FROM posts WHERE legacy_id = $1',
         [story.id],
@@ -71,7 +70,6 @@ async function main() {
         if (!needsUpdate) {
           stats.skipped++;
         } else {
-          // Update the post with correct values
           await pgClient.query('UPDATE posts SET image_url = $1, link_url = $2 WHERE id = $3', [
             pic,
             picUrl,

@@ -202,8 +202,19 @@ function runImportScript(
 ): Promise<ImportResult> {
   return new Promise((resolve) => {
     // Pass --to directly to individual import scripts
-    const args = ['tsx', script, '--to', to, '--start-id', startId.toString()];
-    const child = spawn('yarn', args, { stdio: 'pipe' });
+    // Use preload fix for @next/env ESM/CJS interop issue with Payload
+    const args = [
+      '--import',
+      './bin/preload-nextenv-fix.mjs',
+      '--import',
+      'tsx',
+      script,
+      '--to',
+      to,
+      '--start-id',
+      startId.toString(),
+    ];
+    const child = spawn('node', args, { stdio: 'pipe' });
 
     let output = '';
     const skipReasons: string[] = [];

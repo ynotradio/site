@@ -1,6 +1,7 @@
 ---
 # Phase 4 Migration - Modern Rock Madness
 # Created: June 23, 2025
+# Updated: March 4, 2026 — added match management features (overtime, rematch, admin vote, audit log)
 #
 # This phase focuses on the Modern Rock Madness feature, which is a complex interactive feature
 
@@ -118,10 +119,119 @@ models:
       mrm_matches_flow:
         # Schema to be analyzed
 
-# Migration Challenges:
+# ---------------------------------------------------------------------------
+# Match Management Features (new for Payload migration)
+#
+# The legacy system handles these scenarios manually via PHPMyAdmin.
+# In Payload, these become first-class admin actions with an audit trail.
+# ---------------------------------------------------------------------------
+
+match_management:
+
+  overtime:
+    # When a match ends in a tie, admins can extend the end_time to allow
+    # more public votes. This is NOT a separate state — the match record's
+    # end_time is simply pushed forward.
+    description: >
+      Extend the end_time of an existing match when it ends in a tie.
+      The match keeps its ID, bracket position, all existing votes, and
+      all voter lockouts (guests who already voted cannot vote again).
+    rules:
+      - Admin sets a new end_time to any value they choose (commonly +30 or +60 min)
+      - Can be extended multiple times on the same match
+      - Existing votes and IP-based voter lockouts are preserved
+      - Show a warning if the new end_time would overlap with the next scheduled match
+    audit_event: overtime_extended
+    audit_captures:
+      - previous_end_time
+      - new_end_time
+
+  rematch:
+    # A do-over: same two bands, same bracket slot, but votes are reset to
+    # zero and new start/end times are set. Voters from the original match
+    # CAN vote again because vote history is cleared for this match.
+    description: >
+      Reset a match for a fresh vote between the same two contestants.
+      The match record is mutable — votes are zeroed out and new times
+      are set. The audit log captures a snapshot of the pre-reset state
+      so historical attempts are preserved.
+    rules:
+      - Same match ID and bracket position are reused
+      - band1_votes and band2_votes are reset to 0
+      - winner_id is reset to 0
+      - New start_time and end_time are set
+      - Vote history (mrm_votes) for this match is cleared so previous voters can participate again
+    audit_event: rematch
+    audit_captures:
+      - previous_start_time
+      - previous_end_time
+      - previous_band1_votes
+      - previous_band2_votes
+
+  admin_vote:
+    # The control panel (/cp) already has manual vote buttons. This brings
+    # that capability into Payload. Admin votes increment the same vote
+    # counter as public votes — there is no separate admin vote tally.
+    description: >
+      Admin manually increments the vote count for one band. Used for:
+      (1) recording SMS/offline votes from listeners,
+      (2) correcting ballot stuffing,
+      (3) breaking a tie to avoid another overtime or rematch.
+    rules:
+      - Increments the same band1_votes or band2_votes counter as public votes
+      - No reason prompt required (low-friction for station operators)
+      - Available in the Payload admin UI for the MRM section
+    audit_event: admin_vote
+    audit_captures:
+      - band_number (1 or 2)
+      - band_id
+      - vote_count_before
+      - vote_count_after
+
+  audit_log:
+    # A new Payload collection: ModernRockMadnessEvents
+    # Append-only event log for all admin actions on matches.
+    # Payload auto-tracks createdAt and the authenticated user,
+    # so "who did it and when" comes for free.
+    collection: ModernRockMadnessEvents
+    description: >
+      Append-only log of admin actions on matches. Each record captures
+      a single event (overtime extension, rematch, admin vote, match close).
+      Uses Payload's built-in createdAt/updatedAt and user tracking.
+    fields:
+      match:
+        type: relationship
+        relationTo: ModernRockMadnessMatches
+        required: true
+      eventType:
+        type: select
+        options:
+          - overtime_extended
+          - rematch
+          - admin_vote
+          - match_closed
+        required: true
+      snapshot:
+        type: json
+        description: >
+          JSON object capturing relevant state at the time of the event.
+          Contents vary by event type (see audit_captures above).
+    notes:
+      - Collection is read-only in the admin UI (no editing or deleting events)
+      - Events are created programmatically by match management actions
+      - Provides the history that the mutable match record does not preserve
+
+# ---------------------------------------------------------------------------
+# Migration Challenges
+# ---------------------------------------------------------------------------
+
 # 1. This is a complex tournament/bracket system with multiple related tables
 # 2. Voting history and tournament progression need to be preserved
 # 3. Time-sensitive data (start/end times) needs proper handling across time zones
 # 4. Complex business logic in ModernRockMadnessFactory.php and ModernRockMadnessAdminFactory.php
 # 5. User interaction history should be maintained
 # 6. Sponsor relationships need to be preserved
+# 7. Match management features (overtime, rematch, admin vote) are currently
+#    handled manually in PHPMyAdmin and need proper admin UI in Payload
+# 8. Audit log (ModernRockMadnessEvents) is new — no legacy data to migrate, but
+#    the collection must be created alongside the matches collection
