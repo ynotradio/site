@@ -1,1 +1,43 @@
-/* Add your custom Payload admin styles here */
+/*
+ * Y-Not Radio admin theme
+ * Applies subtle brand colors to the Payload admin UI
+ */
+
+/* Brand accent color for links, buttons, highlights */
+:root {
+  --theme-elevation-0: #ffffff;
+  --theme-elevation-50: #f8f8f8;
+  --theme-elevation-100: #f0f0f0;
+  --theme-elevation-150: #e8e8e8;
+  --theme-elevation-200: #e0e0e0;
+}
+
+/* Red brand accent on interactive elements in light mode */
+html[data-theme='light'] {
+  --theme-text: #111111;
+}
+
+/* Tint the admin nav and primary action buttons with brand red */
+.nav a.nav__link--active,
+.nav a.nav__link:hover {
+  color: #cc2200;
+}
+
+/* Save / primary buttons */
+.btn.btn--style-primary,
+.form-submit .btn--style-primary {
+  background-color: #cc2200;
+  border-color: #aa1a00;
+}
+
+.btn.btn--style-primary:hover,
+.form-submit .btn--style-primary:hover {
+  background-color: #aa1a00;
+  border-color: #881500;
+}
+
+/* Dashboard custom card hover uses brand color */
+.primary-card:hover {
+  border-color: #cc2200 !important;
+}
+

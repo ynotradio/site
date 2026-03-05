@@ -72,7 +72,6 @@ export default buildConfig({
           prefillOnly: true,
         }
         : false,
-    css: path.resolve(dirname, 'payload/src/admin.css'),
     components: {
       graphics: {
         Logo: '/payload/src/components/branding/Logo#Logo',
