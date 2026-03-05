@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Black circle background -->
+  <circle cx="256" cy="256" r="256" fill="#111111"/>
+  <!-- Outer white ring -->
+  <circle cx="256" cy="256" r="246" fill="none" stroke="white" stroke-width="10"/>
+  <!-- Inner white ring (creates the orb depth effect) -->
+  <circle cx="256" cy="256" r="224" fill="none" stroke="white" stroke-width="5"/>
+  <!-- YNOT text -->
+  <text
+    x="256" y="223"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="152"
+    fill="white"
+    letter-spacing="-3">YNOT</text>
+  <!-- RADIO.NET text -->
+  <text
+    x="256" y="340"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="68"
+    fill="white">RADIO.NET</text>
+</svg>

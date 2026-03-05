@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Black squircle background -->
+  <rect x="0" y="0" width="512" height="512" rx="115" ry="115" fill="#111111"/>
+  <!-- Y - large top -->
+  <text
+    x="256" y="155"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="185"
+    fill="white">Y</text>
+  <!-- NOT - medium middle -->
+  <text
+    x="256" y="300"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="130"
+    fill="white">NOT</text>
+  <!-- RADIO - small bottom -->
+  <text
+    x="256" y="415"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="78"
+    fill="white">RADIO</text>
+</svg>

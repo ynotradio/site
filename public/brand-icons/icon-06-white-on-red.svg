@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Red squircle background -->
+  <rect x="0" y="0" width="512" height="512" rx="115" ry="115" fill="#BB0000"/>
+  <!-- Y - white, large -->
+  <text
+    x="256" y="198"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="220"
+    fill="white">Y</text>
+  <!-- NOT - white, medium -->
+  <text
+    x="256" y="368"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="160"
+    fill="white">NOT</text>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Black square background (sharp corners — like original brand feel) -->
+  <rect x="0" y="0" width="512" height="512" fill="#111111"/>
+  <!-- Outer oval ring (natural 2:1 proportions, not stretched) -->
+  <ellipse cx="256" cy="256" rx="242" ry="136" fill="#111111" stroke="white" stroke-width="10"/>
+  <!-- Inner oval ring (concentric — creates depth like original) -->
+  <ellipse cx="256" cy="256" rx="220" ry="118" fill="none" stroke="white" stroke-width="5"/>
+  <!-- Y only — large, centered in the orb -->
+  <text
+    x="256" y="256"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="Impact, 'Arial Black', 'Franklin Gothic Heavy', sans-serif"
+    font-style="italic"
+    font-weight="900"
+    font-size="190"
+    fill="white">Y</text>
+</svg>
