@@ -39,25 +39,28 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
             overwrite: false,
           },
           (error, result) => {
-            if (error) reject(error);
-            else if (result) resolve(result);
-            else reject(new Error('Upload failed without error'));
+            if (error) {
+              reject(error);
+            } else if (result) {
+              resolve(result);
+            } else {
+              reject(new Error('Upload failed without error'));
+            }
           },
         );
         uploadStream.end(file.buffer);
       });
 
-      // Store Cloudinary public_id for deletion and reference
-      // eslint-disable-next-line no-param-reassign
-      data.cloudinaryPublicId = uploadResult.public_id;
+      const publicId = uploadResult.public_id;
 
       // eslint-disable-next-line no-param-reassign
-      data.filename = uploadResult.public_id;
+      data.cloudinaryPublicId = publicId;
+      // eslint-disable-next-line no-param-reassign
+      data.filename = publicId;
 
-      // Return metadata so the afterChange hook persists it to the DB
       return {
-        filename: uploadResult.public_id,
-        cloudinaryPublicId: uploadResult.public_id,
+        filename: publicId,
+        cloudinaryPublicId: publicId,
       };
     },
 

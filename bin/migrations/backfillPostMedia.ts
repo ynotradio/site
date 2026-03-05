@@ -45,16 +45,18 @@ function parseArgs(): BackfillOptions {
   const args = process.argv.slice(2);
   const options: BackfillOptions = { to: 'prod-neon' };
 
-  for (let i = 0; i < args.length; i += 1) {
-    if (args[i] === '--to' && args[i + 1]) {
-      options.to = args[i + 1] as PostgresTarget;
-      i += 1;
-    } else if (args[i] === '--limit' && args[i + 1]) {
-      options.limit = parseInt(args[i + 1], 10);
-      i += 1;
-    } else if (args[i] === '--ids' && args[i + 1]) {
-      options.ids = args[i + 1].split(',').map((id) => parseInt(id.trim(), 10));
-      i += 1;
+  for (let i = 0; i < args.length; i += 2) {
+    const flag = args[i];
+    const value = args[i + 1];
+
+    if (value) {
+      if (flag === '--to') {
+        options.to = value as PostgresTarget;
+      } else if (flag === '--limit') {
+        options.limit = parseInt(value, 10);
+      } else if (flag === '--ids') {
+        options.ids = value.split(',').map((id) => parseInt(id.trim(), 10));
+      }
     }
   }
 
@@ -147,24 +149,20 @@ async function main(): Promise<void> {
       const imageUrl = (post as Record<string, unknown>).imageUrl as string;
       const headline = (post as Record<string, unknown>).headline as string;
 
-      if (!imageUrl) {
-        stats.skipped += 1;
-      } else {
+      if (imageUrl) {
         try {
           const success = await backfillPostMedia(payload, post.id as number, imageUrl, headline);
-          if (success) {
-            stats.success += 1;
-          } else {
-            stats.errors += 1;
-          }
+          stats[success ? 'success' : 'errors'] += 1;
         } catch (error) {
           logger.error(`Error processing post ${post.id}: ${error}`);
           stats.errors += 1;
         }
-      }
 
-      if ((i + 1) % 10 === 0) {
-        logger.info(`Progress: ${i + 1}/${stats.total}`);
+        if ((i + 1) % 10 === 0) {
+          logger.info(`Progress: ${i + 1}/${stats.total}`);
+        }
+      } else {
+        stats.skipped += 1;
       }
     }
 

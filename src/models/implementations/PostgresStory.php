@@ -98,19 +98,18 @@ class PostgresStory implements Story {
         $results = array_map([$this, 'formatResult'], $results);
         
         // Split into odd and even arrays (for two-column layout)
-        $odd_results = array();
-        $even_results = array();
+        $odd_results = [];
+        $even_results = [];
         
-        $resultCount = count($results);
-        for ($i = 0; $i < $resultCount; $i++) {
-            if ($i % 2 === 1) {
-                $even_results[] = $results[$i];
+        foreach ($results as $i => $result) {
+            if ($i % 2 === 0) {
+                $odd_results[] = $result;
             } else {
-                $odd_results[] = $results[$i];
+                $even_results[] = $result;
             }
         }
         
-        return array($odd_results, $even_results);
+        return [$odd_results, $even_results];
     }
 
     /**
@@ -371,30 +370,19 @@ class PostgresStory implements Story {
      * @return bool True if URL is valid and safe
      */
     private function isValidUrl(string $url): bool {
-        // Allow relative URLs
-        if (substr($url, 0, 1) === '/') {
+        $firstChar = substr($url, 0, 1);
+        
+        if ($firstChar === '/' || $firstChar === '#') {
             return true;
         }
         
-        // Allow anchors
-        if (substr($url, 0, 1) === '#') {
-            return true;
-        }
-        
-        // Parse the URL
         $parsed = parse_url($url);
         
-        if ($parsed === false) {
-            return false;
+        if ($parsed === false || !isset($parsed['scheme'])) {
+            return $parsed !== false;
         }
         
-        // If there's a scheme, it must be http or https
-        if (isset($parsed['scheme'])) {
-            $scheme = strtolower($parsed['scheme']);
-            return $scheme === 'http' || $scheme === 'https';
-        }
-        
-        // No scheme means relative URL - allowed
-        return true;
+        $scheme = strtolower($parsed['scheme']);
+        return $scheme === 'http' || $scheme === 'https';
     }
 }
