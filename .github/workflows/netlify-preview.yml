@@ -1,0 +1,136 @@
+name: Netlify Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'payload/**'
+      - 'payload.config.ts'
+      - 'app/**'
+      - 'netlify/**'
+      - 'netlify.toml'
+      - 'next.config.mjs'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  pull-requests: write
+
+jobs:
+  post-preview-url:
+    name: Post Netlify Preview URL
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for Netlify deploy and post preview URL
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        with:
+          script: |
+            const netlifyToken = process.env.NETLIFY_AUTH_TOKEN;
+            const siteId = process.env.NETLIFY_SITE_ID;
+
+            if (!netlifyToken || !siteId) {
+              core.warning(
+                'NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID secret not configured — skipping preview comment.'
+              );
+              return;
+            }
+
+            const prNumber = context.payload.pull_request.number;
+            const headSha = context.payload.pull_request.head.sha;
+            const { owner, repo } = context.repo;
+            const branch = `deploy-preview-${prNumber}`;
+            const marker = '<!-- netlify-preview-bot -->';
+
+            const maxAttempts = 30;       // 30 × 20 s = 10 min
+            const pollIntervalMs = 20_000;
+
+            core.info(`Waiting for Netlify deploy on branch "${branch}" (commit ${headSha.slice(0, 7)})…`);
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              core.info(`Attempt ${attempt}/${maxAttempts}`);
+
+              const response = await fetch(
+                `https://api.netlify.com/api/v1/sites/${siteId}/deploys?branch=${branch}&per_page=5`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${netlifyToken}`,
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              if (!response.ok) {
+                throw new Error(
+                  `Netlify API error: ${response.status} ${response.statusText}`
+                );
+              }
+
+              const deploys = await response.json();
+
+              // Find the deploy that matches this commit
+              const deploy = deploys.find(d => d.commit_ref === headSha);
+
+              if (deploy) {
+                core.info(`Found deploy ${deploy.id} — state: ${deploy.state}`);
+
+                if (deploy.state === 'ready') {
+                  const previewUrl = deploy.deploy_url;
+
+                  const body = [
+                    marker,
+                    '## 🚀 Netlify Preview Ready',
+                    '',
+                    `**Preview URL:** ${previewUrl}`,
+                    '',
+                    `**Commit:** \`${headSha.slice(0, 7)}\` | **Deploy ID:** \`${deploy.id}\``,
+                  ].join('\n');
+
+                  const { data: comments } = await github.rest.issues.listComments({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                  });
+
+                  const existing = comments.find(
+                    c => c.user?.type === 'Bot' && c.body?.includes(marker)
+                  );
+
+                  if (existing) {
+                    await github.rest.issues.updateComment({
+                      owner,
+                      repo,
+                      comment_id: existing.id,
+                      body,
+                    });
+                    core.info('Updated existing Netlify preview comment.');
+                  } else {
+                    await github.rest.issues.createComment({
+                      owner,
+                      repo,
+                      issue_number: prNumber,
+                      body,
+                    });
+                    core.info('Posted Netlify preview comment.');
+                  }
+
+                  return;
+                }
+
+                if (deploy.state === 'error') {
+                  core.setFailed(
+                    `Netlify deploy failed: ${deploy.error_message ?? 'unknown error'}`
+                  );
+                  return;
+                }
+              }
+
+              if (attempt < maxAttempts) {
+                core.info(`Deploy not yet ready — waiting ${pollIntervalMs / 1000}s…`);
+                await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+              }
+            }
+
+            core.warning('Netlify deploy did not complete within the 10-minute timeout.');
