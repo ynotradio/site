@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole } from '../utils/auth';
+import { generateMusicDisplayName } from './hooks/displayNameHooks';
 
 export const Records: CollectionConfig = {
   slug: 'records',
@@ -29,36 +30,7 @@ export const Records: CollectionConfig = {
         hidden: true,
       },
       hooks: {
-        afterRead: [
-          async ({ data, req }) => {
-            if (!data) return 'Untitled';
-
-            let artistName = '';
-            if (data.artist) {
-              // Artist may be populated or just an ID
-              if (typeof data.artist === 'object' && data.artist.name) {
-                artistName = data.artist.name;
-              } else if (data.artist) {
-                try {
-                  const artist = await req.payload.findByID({
-                    collection: 'artists',
-                    id: typeof data.artist === 'object' ? data.artist.id : data.artist,
-                  });
-                  if (artist) {
-                    artistName = artist.name;
-                  }
-                } catch {
-                  // Silently handle errors
-                }
-              }
-            }
-
-            if (artistName && data.title) {
-              return `${artistName} - ${data.title}`;
-            }
-            return data.title || `Record #${data.id || 'New'}`;
-          },
-        ],
+        afterRead: [generateMusicDisplayName('Record')],
       },
     },
     {
