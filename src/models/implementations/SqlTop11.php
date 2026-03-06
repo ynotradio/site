@@ -36,11 +36,11 @@ class SqlTop11 implements Top11
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if (!$result || $result->num_rows === 0) {
+        if (!$result) {
             return null;
         }
 
-        return $result->fetch_assoc();
+        return $result->fetch_assoc() ?: null;
     }
 
     /**
@@ -52,7 +52,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving Top11 data: ' . $this->db->error);
+            throw new \Exception('Error retrieving Top11 data');
         }
 
         $entries = [];
@@ -72,7 +72,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving Top11 status: ' . $this->db->error);
+            throw new \Exception('Error retrieving Top11 status');
         }
 
         $info = $result->fetch_assoc();
@@ -138,7 +138,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving Top11 message: ' . $this->db->error);
+            throw new \Exception('Error retrieving Top11 message');
         }
 
         return $result->fetch_assoc();
@@ -154,9 +154,21 @@ class SqlTop11 implements Top11
         $stmt->bind_param("ss", $artist, $song);
 
         if (!$stmt->execute()) {
-            throw new \Exception('Error adding Top11 song: ' . $stmt->error);
+            throw new \Exception('Error adding Top11 song');
         }
 
+        return $this->getLastInsertId();
+    }
+
+    /**
+     * Get the last inserted row ID
+     *
+     * Extracted into a protected method so it can be overridden in tests,
+     * since mysqli::$insert_id is a read-only property in PHP 8.3+ that
+     * cannot be set on mock objects.
+     */
+    protected function getLastInsertId(): int
+    {
         return $this->db->insert_id;
     }
 
@@ -193,11 +205,11 @@ class SqlTop11 implements Top11
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if (!$result || $result->num_rows === 0) {
+        if (!$result) {
             return null;
         }
 
-        return $result->fetch_assoc();
+        return $result->fetch_assoc() ?: null;
     }
 
     /**
@@ -209,7 +221,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving Top11 songs: ' . $this->db->error);
+            throw new \Exception('Error retrieving Top11 songs');
         }
 
         $songs = [];
@@ -251,7 +263,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving Top11 contestants: ' . $this->db->error);
+            throw new \Exception('Error retrieving Top11 contestants');
         }
 
         $contestants = [];
@@ -267,14 +279,15 @@ class SqlTop11 implements Top11
      */
     public function getContestantCount(): string
     {
-        $query = "SELECT * FROM top11contest WHERE display = 'yes' AND contest = 'yes'";
+        $query = "SELECT COUNT(*) as total FROM top11contest WHERE display = 'yes' AND contest = 'yes'";
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error counting Top11 contestants: ' . $this->db->error);
+            throw new \Exception('Error counting Top11 contestants');
         }
 
-        return "(" . $result->num_rows . " total entries)";
+        $row = $result->fetch_assoc();
+        return "(" . ($row['total'] ?? 0) . " total entries)";
     }
 
     /**
@@ -285,11 +298,16 @@ class SqlTop11 implements Top11
         $query = "SELECT * FROM top11contest WHERE display = 'yes' AND contest = 'yes' ORDER BY RAND() LIMIT 1";
         $result = $this->db->query($query);
 
-        if (!$result || $result->num_rows === 0) {
-            throw new \Exception('Error selecting a Top11 winner: ' . $this->db->error);
+        if (!$result) {
+            throw new \Exception('Error selecting a Top11 winner');
         }
 
-        return $result->fetch_assoc();
+        $winner = $result->fetch_assoc();
+        if ($winner === null) {
+            throw new \Exception('Error selecting a Top11 winner: no contestants available');
+        }
+
+        return $winner;
     }
 
     /**
@@ -301,7 +319,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving newsletter signups: ' . $this->db->error);
+            throw new \Exception('Error retrieving newsletter signups');
         }
 
         $signups = [];
@@ -332,7 +350,7 @@ class SqlTop11 implements Top11
         $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \Exception('Error retrieving write-in votes: ' . $this->db->error);
+            throw new \Exception('Error retrieving write-in votes');
         }
 
         $writeIns = [];
@@ -411,21 +429,13 @@ class SqlTop11 implements Top11
 
             if (!$stmt) {
                 // Table likely doesn't exist yet, return false
-                error_log("Error preparing user vote record: " . $this->db->error);
+                error_log("Error preparing user vote record");
                 return false;
             }
 
             $stmt->bind_param("sss", $userEmail, $currentPeriod, $auth0Id);
 
-            $result = $stmt->execute();
-
-            // Check for duplicate entry error (MySQL error code 1062)
-            if (!$result && $stmt->errno === 1062) {
-                error_log("Duplicate vote attempt detected for user: " . $userEmail . " in period: " . $currentPeriod);
-                return false;
-            }
-
-            return $result;
+            return $stmt->execute();
         } catch (\Exception $e) {
             error_log("Error recording user vote: " . $e->getMessage());
             return false;
@@ -444,7 +454,7 @@ class SqlTop11 implements Top11
 
         if (!$result) {
             // Fallback to 'current' if we can't get the date
-            error_log("Error retrieving voting period date: " . $this->db->error);
+            error_log("Error retrieving voting period date");
             return 'current';
         }
 

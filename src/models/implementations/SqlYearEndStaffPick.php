@@ -13,28 +13,29 @@ class SqlYearEndStaffPick implements YearEndStaffPick {
     }
 
     public function getById(int $id): ?array {
-        $id = mysqli_real_escape_string($this->db, $id);
-        $query = "SELECT * FROM year_end_staff_picks WHERE deleted = 'n' AND id = $id";
-        $result = mysqli_query($this->db, $query);
+        $query = "SELECT * FROM year_end_staff_picks WHERE deleted = 'n' AND id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
 
         if (!$result) {
-            throw new \RuntimeException("Error fetching staff pick by ID: " . mysqli_error($this->db));
+            throw new \RuntimeException("Error fetching staff pick by ID");
         }
 
-        $data = mysqli_fetch_assoc($result);
-        return $data ?: null;
+        return $result->fetch_assoc() ?: null;
     }
 
     public function getAll(): array {
         $query = "SELECT * FROM year_end_staff_picks WHERE deleted = 'n' ORDER BY order_id";
-        $result = mysqli_query($this->db, $query);
+        $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \RuntimeException("Error fetching staff picks: " . mysqli_error($this->db));
+            throw new \RuntimeException("Error fetching staff picks");
         }
 
         $staffPicks = [];
-        while ($row = mysqli_fetch_assoc($result)) {
+        while ($row = $result->fetch_assoc()) {
             $staffPicks[] = $row;
         }
 
@@ -43,52 +44,59 @@ class SqlYearEndStaffPick implements YearEndStaffPick {
 
     public function getCount(): int {
         $query = "SELECT order_id FROM year_end_staff_picks WHERE deleted = 'n' ORDER BY order_id DESC LIMIT 1";
-        $result = mysqli_query($this->db, $query);
+        $result = $this->db->query($query);
 
         if (!$result) {
-            throw new \RuntimeException("Error fetching staff pick count: " . mysqli_error($this->db));
+            throw new \RuntimeException("Error fetching staff pick count");
         }
 
-        $row = mysqli_fetch_assoc($result);
+        $row = $result->fetch_assoc();
         return $row ? (int)$row['order_id'] : 0;
     }
 
     public function add(array $data): int {
-        $order = mysqli_real_escape_string($this->db, $data['order_id']);
-        $html = mysqli_real_escape_string($this->db, $data['html']);
+        $query = "INSERT INTO year_end_staff_picks (order_id, html, deleted) VALUES (?, ?, 'n')";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('is', $data['order_id'], $data['html']);
 
-        $insert = "INSERT INTO year_end_staff_picks VALUES (id, '$order', '$html', 'n')";
-        $result = mysqli_query($this->db, $insert);
-
-        if (!$result) {
-            throw new \RuntimeException("Error adding staff pick: " . mysqli_error($this->db));
+        if (!$stmt->execute()) {
+            throw new \RuntimeException("Error adding staff pick");
         }
 
-        return mysqli_insert_id($this->db);
+        return $this->getLastInsertId();
+    }
+
+    /**
+     * Get the last inserted row ID
+     *
+     * Extracted into a protected method so it can be overridden in tests,
+     * since mysqli::$insert_id is a read-only property in PHP 8.3+ that
+     * cannot be set on mock objects.
+     */
+    protected function getLastInsertId(): int
+    {
+        return $this->db->insert_id;
     }
 
     public function update(int $id, array $data): bool {
-        $id = mysqli_real_escape_string($this->db, $id);
-        $order = mysqli_real_escape_string($this->db, $data['order_id']);
-        $html = mysqli_real_escape_string($this->db, $data['html']);
+        $query = "UPDATE year_end_staff_picks SET order_id = ?, html = ? WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('isi', $data['order_id'], $data['html'], $id);
 
-        $update = "UPDATE year_end_staff_picks SET order_id = '$order', html = '$html' WHERE id = $id";
-        $result = mysqli_query($this->db, $update);
-
-        if (!$result) {
-            throw new \RuntimeException("Error updating staff pick: " . mysqli_error($this->db));
+        if (!$stmt->execute()) {
+            throw new \RuntimeException("Error updating staff pick");
         }
 
         return true;
     }
 
     public function delete(int $id): bool {
-        $id = mysqli_real_escape_string($this->db, $id);
-        $update = "UPDATE year_end_staff_picks SET deleted = 'y' WHERE id = $id";
-        $result = mysqli_query($this->db, $update);
+        $query = "UPDATE year_end_staff_picks SET deleted = 'y' WHERE id = ?";
+        $stmt = $this->db->prepare($query);
+        $stmt->bind_param('i', $id);
 
-        if (!$result) {
-            throw new \RuntimeException("Error deleting staff pick: " . mysqli_error($this->db));
+        if (!$stmt->execute()) {
+            throw new \RuntimeException("Error deleting staff pick");
         }
 
         return true;
