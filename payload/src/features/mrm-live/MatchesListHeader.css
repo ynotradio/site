@@ -1,0 +1,20 @@
+.matches-list-header {
+  margin-bottom: 12px;
+}
+
+.matches-list-header__link {
+  display: inline-block;
+  padding: 6px 14px;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.4px;
+  transition: opacity 0.2s;
+}
+
+.matches-list-header__link:hover {
+  opacity: 0.85;
+}

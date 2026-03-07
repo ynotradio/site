@@ -102,6 +102,22 @@ export default buildConfig({
             title: 'Show Cloner',
           },
         },
+        MRMLive: {
+          Component: '/payload/src/features/mrm-live#LiveMatchTool',
+          path: '/mrm-live',
+          exact: true,
+          meta: {
+            title: 'Live Match Dashboard',
+          },
+        },
+        MRMBracket: {
+          Component: '/payload/src/features/mrm-bracket#BracketTool',
+          path: '/mrm-bracket',
+          exact: true,
+          meta: {
+            title: 'Bracket Overview',
+          },
+        },
       },
     },
     importMap: {

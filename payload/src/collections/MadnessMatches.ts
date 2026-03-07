@@ -12,6 +12,9 @@ export const MadnessMatches: CollectionConfig = {
     defaultColumns: ['matchNumber', 'round', 'region', 'band1', 'band2', 'startTime', 'winner'],
     group: 'Modern Rock Madness',
     description: 'Tournament bracket matchups (63 matches per tournament).',
+    components: {
+      beforeList: ['/payload/src/features/mrm-live/MatchesListHeader#MatchesListHeader'],
+    },
   },
   access: {
     read: () => true,

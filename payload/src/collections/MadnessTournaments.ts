@@ -12,6 +12,9 @@ export const MadnessTournaments: CollectionConfig = {
     defaultColumns: ['name', 'year', 'status', 'startDate', 'updatedAt'],
     group: 'Modern Rock Madness',
     description: 'Annual Modern Rock Madness tournament configuration.',
+    components: {
+      beforeList: ['/payload/src/features/mrm-bracket/TournamentsListHeader#TournamentsListHeader'],
+    },
   },
   access: {
     read: () => true,
