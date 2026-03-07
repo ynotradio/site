@@ -11,6 +11,7 @@ export const Shows: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
+    defaultSort: 'date',
     group: 'Radio',
     description: 'Radio show schedule and history.',
 

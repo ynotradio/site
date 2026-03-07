@@ -14,7 +14,8 @@ export const DJs: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', 'updatedAt'],
+    defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', '_status', 'updatedAt'],
+    defaultSort: 'sortOrder',
     group: 'Radio',
     description: 'DJ profiles. Filter by "onAir" to see active DJs.',
 

@@ -12,6 +12,7 @@ export const Records: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
+    defaultSort: '-releaseDate',
     group: 'Music',
     description: 'Album/record catalog.',
   },

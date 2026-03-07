@@ -14,7 +14,8 @@ export const Posts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', 'updatedAt'],
+    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', '_status', 'updatedAt'],
+    defaultSort: '-priority',
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
 
