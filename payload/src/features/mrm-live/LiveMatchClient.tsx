@@ -165,7 +165,8 @@ export const LiveMatchClient: React.FC = () => {
   const fetchCurrentMatch = useCallback(async () => {
     try {
       const now = new Date().toISOString();
-      const url = `/api/madness-matches?where[startTime][less_than_equal]=${encodeURIComponent(now)}&sort=-startTime&limit=1&depth=1`;
+      // Filter by active tournament to avoid surfacing matches from old tournaments
+      const url = `/api/madness-matches?where[tournament.status][equals]=active&where[startTime][less_than_equal]=${encodeURIComponent(now)}&sort=-startTime&limit=1&depth=1`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch match');
       const data: MatchApiResponse = await res.json();

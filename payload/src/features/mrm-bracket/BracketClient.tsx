@@ -72,7 +72,7 @@ export const BracketClient: React.FC = () => {
 
       if (activeTournament) {
         const mRes = await fetch(
-          `/api/madness-matches?where[tournament][equals]=${activeTournament.id}&limit=100&sort=matchNumber&depth=1`,
+          `/api/madness-matches?where[tournament][equals]=${activeTournament.id}&limit=200&sort=matchNumber&depth=1`,
         );
         if (!mRes.ok) throw new Error('Failed to fetch matches');
         const mData: MatchesApiResponse = await mRes.json();
@@ -95,7 +95,9 @@ export const BracketClient: React.FC = () => {
   if (loading) return <Gutter><LoadingSpinner /></Gutter>;
 
   const rounds = groupByRound(matches);
-  const roundKeys = Array.from(rounds.keys()).sort((a, b) => Number(a) - Number(b));
+  const roundKeys = Array.from(rounds.keys()).sort(
+    (a, b) => parseInt(a, 10) - parseInt(b, 10),
+  );
 
   return (
     <Gutter>

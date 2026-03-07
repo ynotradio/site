@@ -68,8 +68,9 @@ export const useMatchActions = (
     if (!match) return;
     const { band1, band2 } = match;
     if (!band1 || !band2 || typeof band1 === 'string' || typeof band2 === 'string') return;
-    const winnerId = match.band1Votes >= match.band2Votes ? band1.id : band2.id;
     await withSaving('Close match', async () => {
+      if (match.band1Votes === match.band2Votes) throw new Error('Cannot close a tied match');
+      const winnerId = match.band1Votes > match.band2Votes ? band1.id : band2.id;
       const res = await fetch(`/api/madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -86,8 +87,9 @@ export const useMatchActions = (
 
   const handleExtendOvertime = useCallback(async () => {
     if (!match) return;
+    // Extend from the current endTime, not from now, so chained extensions accumulate correctly
     const newEnd = new Date(
-      new Date().getTime() + OVERTIME_MINUTES * 60 * 1000,
+      new Date(match.endTime).getTime() + OVERTIME_MINUTES * 60 * 1000,
     ).toISOString();
     await withSaving('Extend overtime', async () => {
       const res = await fetch(`/api/madness-matches/${match.id}`, {

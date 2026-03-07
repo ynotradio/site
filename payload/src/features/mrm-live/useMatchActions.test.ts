@@ -95,7 +95,7 @@ describe('useMatchActions', () => {
     expect(result.current.successMessage).toBe('Close match succeeded.');
   });
 
-  it('handleExtendOvertime patches endTime and logs event', async () => {
+  it('handleExtendOvertime extends from match endTime (not from now)', async () => {
     const patchCalls: Array<{ url: string; body: object }> = [];
     global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
       if (opts?.method === 'PATCH' || opts?.method === 'POST') {
@@ -104,7 +104,8 @@ describe('useMatchActions', () => {
       return { ok: true, json: async () => ({}) };
     });
     const onComplete = vi.fn().mockResolvedValue(undefined);
-    const match = makeMatch();
+    const endTime = new Date(Date.now() - 60_000).toISOString(); // ended 1 min ago
+    const match = makeMatch({ endTime });
     const { result } = renderHook(() => useMatchActions(match, onComplete));
 
     await act(async () => {
@@ -112,8 +113,28 @@ describe('useMatchActions', () => {
     });
 
     expect(result.current.successMessage).toBe('Extend overtime succeeded.');
+    const patchCall = patchCalls.find(({ body }) => 'endTime' in body);
+    // New endTime should be 15 min after the old endTime, not 15 min after now
+    const expectedEnd = new Date(
+      new Date(endTime).getTime() + 15 * 60 * 1000,
+    ).toISOString();
+    expect(patchCall?.body).toMatchObject({ endTime: expectedEnd });
     const eventCall = patchCalls.find(({ body }) => 'eventType' in body);
     expect(eventCall?.body).toMatchObject({ eventType: 'overtime_extended' });
+  });
+
+  it('handleCloseMatch throws if match is tied', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ band1Votes: 1000, band2Votes: 1000 });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    // The error is caught by withSaving and surfaced in error state
+    expect(result.current.error).toBe('Close match failed. Please try again.');
   });
 
   it('sets error state when PATCH fails', async () => {
