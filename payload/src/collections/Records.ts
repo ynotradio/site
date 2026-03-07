@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
 
 export const Records: CollectionConfig = {
@@ -100,6 +100,7 @@ export const Records: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Original MySQL ID for migration tracking',
+        condition: adminOnlyCondition,
       },
     },
     {
@@ -109,6 +110,7 @@ export const Records: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Timestamp of migration from MySQL',
+        condition: adminOnlyCondition,
       },
     },
   ],

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hasRole } from './auth';
+import { hasRole, adminOnlyCondition } from './auth';
 
 describe('Auth Utils', () => {
   describe('hasRole', () => {
@@ -79,6 +79,41 @@ describe('Auth Utils', () => {
       const user = { id: '1', email: 'test@example.com', role: 'Admin' };
       expect(hasRole(user, 'admin')).toBe(false);
       expect(hasRole(user, 'Admin')).toBe(true);
+    });
+  });
+
+  describe('adminOnlyCondition', () => {
+    const emptyData = {};
+
+    it('returns true for admin users', () => {
+      const user = { id: '1', email: 'admin@example.com', role: 'admin' };
+      expect(adminOnlyCondition(emptyData, emptyData, { user })).toBe(true);
+    });
+
+    it('returns false for editor users', () => {
+      const user = { id: '2', email: 'editor@example.com', role: 'editor' };
+      expect(adminOnlyCondition(emptyData, emptyData, { user })).toBe(false);
+    });
+
+    it('returns false for dj users', () => {
+      const user = { id: '3', email: 'dj@example.com', role: 'dj' };
+      expect(adminOnlyCondition(emptyData, emptyData, { user })).toBe(false);
+    });
+
+    it('returns false for readonly users', () => {
+      const user = { id: '4', email: 'readonly@example.com', role: 'readonly' };
+      expect(adminOnlyCondition(emptyData, emptyData, { user })).toBe(false);
+    });
+
+    it('returns false when user is null', () => {
+      expect(adminOnlyCondition(emptyData, emptyData, { user: null })).toBe(false);
+    });
+
+    it('ignores data and siblingData arguments', () => {
+      const adminUser = { id: '1', role: 'admin' };
+      const data = { someField: 'value' };
+      const siblingData = { otherField: 'value' };
+      expect(adminOnlyCondition(data, siblingData, { user: adminUser })).toBe(true);
     });
   });
 });

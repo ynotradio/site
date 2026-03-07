@@ -27,6 +27,7 @@
   font-size: 1.5rem;
   margin-bottom: 1rem;
   font-weight: 600;
+  display: inline-block;
 }
 
 .primary-grid {
@@ -36,15 +37,13 @@
 }
 
 .primary-card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   padding: 1.5rem;
   background-color: var(--theme-elevation-0, white);
   border: 2px solid var(--theme-elevation-200, #e0e0e0);
   border-radius: 8px;
-  text-decoration: none;
-  color: inherit;
   transition: all 0.2s;
-  cursor: pointer;
 }
 
 .primary-card:hover {
@@ -66,12 +65,78 @@
 .primary-card-description {
   font-size: 0.875rem;
   color: var(--theme-elevation-600, #666);
+  flex: 1;
+}
+
+.primary-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--theme-elevation-200, #e0e0e0);
+}
+
+.primary-card-action {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--theme-elevation-600, #666);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.primary-card-action:hover {
+  color: var(--theme-text, #111);
+  background-color: var(--theme-elevation-100, #f0f0f0);
+}
+
+.primary-card-action--add {
+  color: #cc2200;
+}
+
+.primary-card-action--add:hover {
+  background-color: #cc2200;
+  color: white;
+}
+
+/* Accordion toggle for secondary section */
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+}
+
+.section-toggle:hover {
+  opacity: 0.8;
+}
+
+.section-toggle .section-title {
+  margin-bottom: 0;
+}
+
+.section-toggle-chevron {
+  font-size: 3.25rem;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.section-toggle-chevron--open {
+  transform: rotate(90deg);
 }
 
 .secondary-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 1rem;
+  margin-top: 1rem;
 }
 
 .secondary-card {

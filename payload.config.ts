@@ -73,6 +73,11 @@ export default buildConfig({
         }
         : false,
     components: {
+      graphics: {
+        Logo: '/payload/src/components/branding/Logo#Logo',
+        Icon: '/payload/src/components/branding/Icon#Icon',
+      },
+      providers: ['/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed'],
       beforeDashboard: [],
       afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
       views: {

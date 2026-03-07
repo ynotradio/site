@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
 
 export const Posts: CollectionConfig = {
@@ -114,6 +114,7 @@ export const Posts: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Legacy image URL (for migration)',
+        condition: adminOnlyCondition,
       },
     },
     {
@@ -139,6 +140,7 @@ export const Posts: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Original MySQL ID for migration tracking',
+        condition: adminOnlyCondition,
       },
     },
     {
@@ -148,6 +150,7 @@ export const Posts: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Timestamp of migration from MySQL',
+        condition: adminOnlyCondition,
       },
     },
   ],

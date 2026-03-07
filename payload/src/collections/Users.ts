@@ -26,6 +26,7 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
     group: 'People',
     description: 'User accounts and access management.',
+    hidden: ({ user }) => !hasRole(user, 'admin'),
   },
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours

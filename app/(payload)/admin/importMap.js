@@ -1,4 +1,4 @@
-import { SlugField as SlugField_3817bf644402e67bfe6577f60ef982de } from '@payloadcms/ui'
+import { SlugField as SlugField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -29,13 +29,16 @@ import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { Icon as Icon_b60ecf12ac563c9d63b2827d1268ac0d } from '../../../payload/src/components/branding/Icon'
+import { Logo as Logo_7d5c0eb777646cee89558767757b099d } from '../../../payload/src/components/branding/Logo'
 import { CustomDashboard as CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a } from '../../../payload/src/components/dashboard/CustomDashboard'
+import { NavDefaultClosed as NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631 } from '../../../payload/src/components/providers/NavDefaultClosed'
 import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
 import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } from '../../../payload/src/features/show-cloner'
-import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
+import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
-  "@payloadcms/ui#SlugField": SlugField_3817bf644402e67bfe6577f60ef982de,
+  "@payloadcms/next/client#SlugField": SlugField_2b8867833a34864a02ddf429b0728a40,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -66,8 +69,11 @@ export const importMap = {
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/payload/src/components/branding/Icon#Icon": Icon_b60ecf12ac563c9d63b2827d1268ac0d,
+  "/payload/src/components/branding/Logo#Logo": Logo_7d5c0eb777646cee89558767757b099d,
   "/payload/src/components/dashboard/CustomDashboard#CustomDashboard": CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a,
+  "/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed": NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631,
   "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
-  "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a
+  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

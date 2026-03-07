@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateDJDisplayName } from './hooks/displayNameHooks';
 
 export const DJs: CollectionConfig = {
@@ -114,6 +114,7 @@ export const DJs: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Original MySQL ID for migration tracking',
+        condition: adminOnlyCondition,
       },
     },
     {
@@ -123,6 +124,7 @@ export const DJs: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Timestamp of migration from MySQL',
+        condition: adminOnlyCondition,
       },
     },
   ],
