@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { CustomDashboard } from './CustomDashboard';
 
 // Mock the Payload UI hook
@@ -31,150 +31,275 @@ describe('CustomDashboard', () => {
     } as any);
   });
 
-  it('renders the dashboard title', () => {
-    render(<CustomDashboard />);
-    expect(screen.getByText('Y-Not Radio CMS')).toBeInTheDocument();
+  describe('header', () => {
+    it('renders the dashboard title', () => {
+      render(<CustomDashboard />);
+      expect(screen.getByText('YNotRadio.net Admin')).toBeInTheDocument();
+    });
   });
 
-  it('renders the welcome message', () => {
-    render(<CustomDashboard />);
-    expect(
-      screen.getByText('Welcome to the Y-Not Radio content management system'),
-    ).toBeInTheDocument();
+  describe('primary collections', () => {
+    it('renders all 7 primary collection cards', () => {
+      render(<CustomDashboard />);
+
+      expect(screen.getByText('Posts')).toBeInTheDocument();
+      expect(screen.getByText('New Music')).toBeInTheDocument();
+      expect(screen.getByText('CD of the Week')).toBeInTheDocument();
+      expect(screen.getByText('Concerts')).toBeInTheDocument();
+      expect(screen.getByText('On Demand')).toBeInTheDocument();
+      expect(screen.getByText('Shows')).toBeInTheDocument();
+      expect(screen.getByText('DJs')).toBeInTheDocument();
+    });
+
+    it('renders primary collection descriptions', () => {
+      render(<CustomDashboard />);
+
+      expect(screen.getByText('Front page features and custom pages')).toBeInTheDocument();
+      expect(screen.getByText('Songs featured on the New Music page')).toBeInTheDocument();
+      expect(screen.getByText('Weekly album reviews')).toBeInTheDocument();
+      expect(screen.getByText('Upcoming concert listings')).toBeInTheDocument();
+      expect(screen.getByText('On-demand recordings and archives')).toBeInTheDocument();
+      expect(screen.getByText('Radio show schedule and information')).toBeInTheDocument();
+      expect(screen.getByText('DJ profiles and information')).toBeInTheDocument();
+    });
+
+    it('renders primary collection icons', () => {
+      render(<CustomDashboard />);
+
+      expect(screen.getByText('📰')).toBeInTheDocument();
+      expect(screen.getByText('🎵')).toBeInTheDocument();
+      expect(screen.getByText('💿')).toBeInTheDocument();
+      expect(screen.getByText('🎸')).toBeInTheDocument();
+      expect(screen.getByText('🎧')).toBeInTheDocument();
+      expect(screen.getByText('📻')).toBeInTheDocument();
+      expect(screen.getByText('🎙️')).toBeInTheDocument();
+    });
+
+    it('applies correct CSS classes to primary cards', () => {
+      const { container } = render(<CustomDashboard />);
+      const primaryCards = container.querySelectorAll('.primary-card');
+      expect(primaryCards).toHaveLength(7);
+    });
   });
 
-  it('renders all primary collection cards', () => {
-    render(<CustomDashboard />);
+  describe('action links', () => {
+    it('renders View All and Add New links for each primary collection', () => {
+      render(<CustomDashboard />);
 
-    expect(screen.getByText('Posts')).toBeInTheDocument();
-    expect(screen.getByText('New Music')).toBeInTheDocument();
-    expect(screen.getByText('CD of the Week')).toBeInTheDocument();
-    expect(screen.getByText('Concerts')).toBeInTheDocument();
-    expect(screen.getByText('On Demand')).toBeInTheDocument();
-    expect(screen.getByText('Shows')).toBeInTheDocument();
-    expect(screen.getByText('DJs')).toBeInTheDocument();
+      expect(screen.getAllByText('View All')).toHaveLength(7);
+      expect(screen.getAllByText('+ Add New')).toHaveLength(7);
+    });
+
+    it('generates correct View All href for each collection', () => {
+      render(<CustomDashboard />);
+
+      const viewAllLinks = screen.getAllByText('View All');
+      const expectedSlugs = [
+        'posts',
+        'songs',
+        'cdoftheweek',
+        'concerts',
+        'ondemand',
+        'shows',
+        'djs',
+      ];
+
+      viewAllLinks.forEach((link, i) => {
+        expect(link.closest('a')).toHaveAttribute('href', `/admin/collections/${expectedSlugs[i]}`);
+      });
+    });
+
+    it('generates correct Add New href for each collection', () => {
+      render(<CustomDashboard />);
+
+      const addNewLinks = screen.getAllByText('+ Add New');
+      const expectedSlugs = [
+        'posts',
+        'songs',
+        'cdoftheweek',
+        'concerts',
+        'ondemand',
+        'shows',
+        'djs',
+      ];
+
+      addNewLinks.forEach((link, i) => {
+        expect(link.closest('a')).toHaveAttribute(
+          'href',
+          `/admin/collections/${expectedSlugs[i]}/create`,
+        );
+      });
+    });
+
+    it('applies the --add modifier class on Add New links', () => {
+      render(<CustomDashboard />);
+
+      const addNewLinks = screen.getAllByText('+ Add New');
+      addNewLinks.forEach((link) => {
+        expect(link.closest('a')).toHaveClass('primary-card-action--add');
+      });
+    });
+
+    it('uses custom admin route from config for both link types', () => {
+      vi.mocked(useConfig).mockReturnValue({
+        config: { routes: { admin: '/custom-admin' } },
+      } as any);
+
+      render(<CustomDashboard />);
+
+      const viewAll = screen.getAllByText('View All')[0].closest('a');
+      expect(viewAll).toHaveAttribute('href', '/custom-admin/collections/posts');
+
+      const addNew = screen.getAllByText('+ Add New')[0].closest('a');
+      expect(addNew).toHaveAttribute('href', '/custom-admin/collections/posts/create');
+    });
+
+    it('falls back to /admin when config is missing', () => {
+      vi.mocked(useConfig).mockReturnValue({ config: undefined } as any);
+
+      render(<CustomDashboard />);
+
+      const viewAll = screen.getAllByText('View All')[0].closest('a');
+      expect(viewAll).toHaveAttribute('href', '/admin/collections/posts');
+    });
   });
 
-  it('renders primary collection descriptions', () => {
-    render(<CustomDashboard />);
+  describe('secondary collections accordion', () => {
+    it('is collapsed by default', () => {
+      render(<CustomDashboard />);
 
-    expect(screen.getByText('Front page features and custom pages')).toBeInTheDocument();
-    expect(screen.getByText('Songs featured on the New Music page')).toBeInTheDocument();
-    expect(screen.getByText('Weekly album reviews')).toBeInTheDocument();
-    expect(screen.getByText('Radio show schedule and information')).toBeInTheDocument();
+      expect(screen.queryByText('Records')).not.toBeInTheDocument();
+      expect(screen.queryByText('Artists')).not.toBeInTheDocument();
+      expect(screen.queryByText('Venues')).not.toBeInTheDocument();
+      expect(screen.queryByText('Advertisements')).not.toBeInTheDocument();
+      expect(screen.queryByText('Media Files')).not.toBeInTheDocument();
+    });
+
+    it('has a toggle button with aria-expanded="false" by default', () => {
+      render(<CustomDashboard />);
+
+      const toggle = screen.getByRole('button', { name: /Supporting Content/i });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('expands when toggle is clicked', () => {
+      render(<CustomDashboard />);
+
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+
+      expect(screen.getByText('Records')).toBeInTheDocument();
+      expect(screen.getByText('Artists')).toBeInTheDocument();
+      const peopleElements = screen.getAllByText('People');
+      expect(peopleElements.length).toBeGreaterThan(0);
+      expect(screen.getByText('Venues')).toBeInTheDocument();
+      expect(screen.getByText('Advertisements')).toBeInTheDocument();
+      expect(screen.getByText('Media Files')).toBeInTheDocument();
+    });
+
+    it('collapses again when toggle is clicked a second time', () => {
+      render(<CustomDashboard />);
+
+      const toggle = screen.getByRole('button', { name: /Supporting Content/i });
+      fireEvent.click(toggle);
+      expect(screen.getByText('Records')).toBeInTheDocument();
+
+      fireEvent.click(toggle);
+      expect(screen.queryByText('Records')).not.toBeInTheDocument();
+    });
+
+    it('updates aria-expanded when toggled', () => {
+      render(<CustomDashboard />);
+
+      const toggle = screen.getByRole('button', { name: /Supporting Content/i });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+      fireEvent.click(toggle);
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('renders chevron with open class when expanded', () => {
+      const { container } = render(<CustomDashboard />);
+
+      const chevron = container.querySelector('.section-toggle-chevron');
+      expect(chevron).not.toHaveClass('section-toggle-chevron--open');
+
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+      expect(chevron).toHaveClass('section-toggle-chevron--open');
+    });
+
+    it('renders correct secondary collection groups when expanded', () => {
+      render(<CustomDashboard />);
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+
+      const musicGroups = screen.getAllByText('Music');
+      expect(musicGroups.length).toBeGreaterThan(0);
+      expect(screen.getByText('Events')).toBeInTheDocument();
+      expect(screen.getByText('Marketing')).toBeInTheDocument();
+      expect(screen.getByText('Content')).toBeInTheDocument();
+    });
+
+    it('generates correct links for secondary collections when expanded', () => {
+      render(<CustomDashboard />);
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+
+      expect(screen.getByText('Records').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/records',
+      );
+      expect(screen.getByText('Artists').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/artists',
+      );
+      expect(screen.getByText('Venues').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/venues',
+      );
+      expect(screen.getByText('Advertisements').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/ads',
+      );
+      expect(screen.getByText('Media Files').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/media',
+      );
+    });
+
+    it('applies correct CSS classes to secondary cards when expanded', () => {
+      const { container } = render(<CustomDashboard />);
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+
+      const secondaryCards = container.querySelectorAll('.secondary-card');
+      expect(secondaryCards).toHaveLength(6);
+    });
+
+    it('does not render Year End Polls (temporarily hidden)', () => {
+      render(<CustomDashboard />);
+      fireEvent.click(screen.getByRole('button', { name: /Supporting Content/i }));
+
+      expect(screen.queryByText('Year End Polls')).not.toBeInTheDocument();
+      expect(screen.queryByText('Polls & Contests')).not.toBeInTheDocument();
+    });
   });
 
-  it('renders primary collection icons', () => {
-    render(<CustomDashboard />);
+  describe('section headings', () => {
+    it('renders the Daily Content heading', () => {
+      render(<CustomDashboard />);
+      expect(screen.getByText('Daily Content')).toBeInTheDocument();
+    });
 
-    expect(screen.getByText('📰')).toBeInTheDocument();
-    expect(screen.getByText('🎵')).toBeInTheDocument();
-    expect(screen.getByText('💿')).toBeInTheDocument();
-    expect(screen.getByText('🎸')).toBeInTheDocument();
-    expect(screen.getByText('🎧')).toBeInTheDocument();
-    expect(screen.getByText('📻')).toBeInTheDocument();
-    expect(screen.getByText('🎙️')).toBeInTheDocument();
+    it('renders the Supporting Content heading', () => {
+      render(<CustomDashboard />);
+      expect(screen.getByText('Supporting Content')).toBeInTheDocument();
+    });
   });
 
-  it('renders all secondary collection cards', () => {
-    render(<CustomDashboard />);
-
-    expect(screen.getByText('Records')).toBeInTheDocument();
-    expect(screen.getByText('Artists')).toBeInTheDocument();
-    // "People" appears as both label and group, use more specific query
-    const peopleElements = screen.getAllByText('People');
-    expect(peopleElements.length).toBeGreaterThan(0);
-    expect(screen.getByText('Venues')).toBeInTheDocument();
-    expect(screen.getByText('Advertisements')).toBeInTheDocument();
-    expect(screen.getByText('Media Files')).toBeInTheDocument();
-    // Year End Polls temporarily hidden
-    expect(screen.queryByText('Year End Polls')).not.toBeInTheDocument();
-  });
-
-  it('renders secondary collection groups', () => {
-    render(<CustomDashboard />);
-
-    // There are multiple "Music" groups, check for at least one
-    const musicGroups = screen.getAllByText('Music');
-    expect(musicGroups.length).toBeGreaterThan(0);
-
-    expect(screen.getByText('Events')).toBeInTheDocument();
-    expect(screen.getByText('Marketing')).toBeInTheDocument();
-    expect(screen.getByText('Content')).toBeInTheDocument();
-    // Polls & Contests group temporarily hidden
-    expect(screen.queryByText('Polls & Contests')).not.toBeInTheDocument();
-  });
-
-  it('renders section headings', () => {
-    render(<CustomDashboard />);
-
-    expect(screen.getByText('Main Content Areas')).toBeInTheDocument();
-    expect(screen.getByText('Supporting Content')).toBeInTheDocument();
-  });
-
-  it('generates correct links for primary collections', () => {
-    render(<CustomDashboard />);
-
-    const postsLink = screen.getByText('Posts').closest('a');
-    expect(postsLink).toHaveAttribute('href', '/admin/collections/posts');
-
-    const songsLink = screen.getByText('New Music').closest('a');
-    expect(songsLink).toHaveAttribute('href', '/admin/collections/songs');
-  });
-
-  it('generates correct links for secondary collections', () => {
-    render(<CustomDashboard />);
-
-    const recordsLink = screen.getByText('Records').closest('a');
-    expect(recordsLink).toHaveAttribute('href', '/admin/collections/records');
-
-    const artistsLink = screen.getByText('Artists').closest('a');
-    expect(artistsLink).toHaveAttribute('href', '/admin/collections/artists');
-  });
-
-  it('uses custom admin route from config', () => {
-    vi.mocked(useConfig).mockReturnValue({
-      config: {
-        routes: {
-          admin: '/custom-admin',
-        },
-      },
-    } as any);
-
-    render(<CustomDashboard />);
-
-    const postsLink = screen.getByText('Posts').closest('a');
-    expect(postsLink).toHaveAttribute('href', '/custom-admin/collections/posts');
-  });
-
-  it('falls back to /admin when config is missing', () => {
-    vi.mocked(useConfig).mockReturnValue({
-      config: undefined,
-    } as any);
-
-    render(<CustomDashboard />);
-
-    const postsLink = screen.getByText('Posts').closest('a');
-    expect(postsLink).toHaveAttribute('href', '/admin/collections/posts');
-  });
-
-  it('applies correct CSS classes to primary cards', () => {
-    const { container } = render(<CustomDashboard />);
-
-    const primaryCards = container.querySelectorAll('.primary-card');
-    expect(primaryCards.length).toBe(7); // 7 primary collections
-  });
-
-  it('applies correct CSS classes to secondary cards', () => {
-    const { container } = render(<CustomDashboard />);
-
-    const secondaryCards = container.querySelectorAll('.secondary-card');
-    expect(secondaryCards.length).toBe(6); // 6 secondary collections (Year End Polls hidden)
-  });
-
-  it('applies dashboard container class', () => {
-    const { container } = render(<CustomDashboard />);
-
-    expect(container.querySelector('.dashboard-container')).toBeInTheDocument();
+  describe('layout', () => {
+    it('applies dashboard container class', () => {
+      const { container } = render(<CustomDashboard />);
+      expect(container.querySelector('.dashboard-container')).toBeInTheDocument();
+    });
   });
 });

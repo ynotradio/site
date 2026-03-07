@@ -32,6 +32,7 @@ import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { Icon as Icon_b60ecf12ac563c9d63b2827d1268ac0d } from '../../../payload/src/components/branding/Icon'
 import { Logo as Logo_7d5c0eb777646cee89558767757b099d } from '../../../payload/src/components/branding/Logo'
 import { CustomDashboard as CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a } from '../../../payload/src/components/dashboard/CustomDashboard'
+import { NavDefaultClosed as NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631 } from '../../../payload/src/components/providers/NavDefaultClosed'
 import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
 import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } from '../../../payload/src/features/show-cloner'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
@@ -71,6 +72,7 @@ export const importMap = {
   "/payload/src/components/branding/Icon#Icon": Icon_b60ecf12ac563c9d63b2827d1268ac0d,
   "/payload/src/components/branding/Logo#Logo": Logo_7d5c0eb777646cee89558767757b099d,
   "/payload/src/components/dashboard/CustomDashboard#CustomDashboard": CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a,
+  "/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed": NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631,
   "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1

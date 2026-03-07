@@ -14,69 +14,59 @@ export default meta;
 type Story = StoryObj<typeof CustomDashboard>;
 
 /**
- * Default dashboard view showing all collections organized into primary and secondary groups
+ * Default dashboard view with primary cards (View All / Add New links)
+ * and a collapsed Supporting Content accordion.
  */
 export const Default: Story = {};
 
 /**
  * Dashboard emphasizes the two-tier organization:
- * - Primary collections (large cards with icons and descriptions)
- * - Secondary collections (compact cards with group labels)
+ * - Primary collections (large cards with action links)
+ * - Secondary collections (collapsible accordion, hidden by default)
  */
 export const TwoTierLayout: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'The dashboard uses a two-tier layout to prioritize content. Primary collections correspond to top-level user pages and feature prominent cards with icons. Secondary collections are supporting content shown in a more compact format.',
+          'The dashboard uses a two-tier layout to prioritize content. Primary collections feature prominent cards with View All and Add New action links. Secondary collections are hidden behind a collapsible accordion.',
       },
     },
   },
 };
 
 /**
- * Primary collections section featuring the 6 main content areas
+ * Primary collections section featuring the 7 main content areas
+ * with View All and + Add New action links on each card.
  */
 export const PrimaryCollections: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'Primary collections include: Stories (Home Page), New Music, CD of the Week, Concerts, On Demand, and DJs. Each has an emoji icon and descriptive text.',
+          'Primary collections include: Posts, New Music, CD of the Week, Concerts, On Demand, Shows, and DJs. Each card has an emoji icon, descriptive text, and View All / Add New action links.',
       },
     },
   },
 };
 
 /**
- * Secondary collections section with 8 supporting content types
+ * Secondary collections section — collapsed by default.
+ * Click the ▸ chevron to expand.
  */
 export const SecondaryCollections: Story = {
   parameters: {
     docs: {
       description: {
         story:
-          'Secondary collections are grouped by category (Music, Events, Radio, etc.) and displayed in a compact grid format for easy access to supporting content.',
+          'Secondary collections (Records, Artists, People, Venues, Ads, Media) are grouped behind a collapsible accordion that starts collapsed to reduce visual noise.',
       },
     },
   },
 };
 
 /**
- * Dashboard with custom admin route
- */
-export const CustomAdminRoute: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story: 'Dashboard adapts to custom admin routes configured in Payload CMS.',
-      },
-    },
-  },
-};
-
-/**
- * Responsive behavior - the dashboard grid adjusts for different screen sizes
+ * Responsive behavior — the dashboard grid adjusts for different screen sizes
  */
 export const ResponsiveLayout: Story = {
   parameters: {
@@ -87,34 +77,6 @@ export const ResponsiveLayout: Story = {
       description: {
         story:
           'The dashboard uses CSS Grid with auto-fill for responsive behavior. Cards automatically reflow based on available space.',
-      },
-    },
-  },
-};
-
-/**
- * Focus on the primary cards design
- */
-export const PrimaryCardDesign: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Primary cards feature: large emoji icons (2.5rem), title in 1.25rem, and descriptive text in 0.875rem. Hover states provide visual feedback.',
-      },
-    },
-  },
-};
-
-/**
- * Focus on the secondary cards design
- */
-export const SecondaryCardDesign: Story = {
-  parameters: {
-    docs: {
-      description: {
-        story:
-          'Secondary cards are more compact with just a label and group indicator, optimized for quick scanning and access.',
       },
     },
   },
