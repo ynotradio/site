@@ -10,7 +10,7 @@ export const Records: CollectionConfig = {
     plural: 'Records',
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
     group: 'Music',
     description: 'Album/record catalog.',

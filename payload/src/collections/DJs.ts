@@ -100,7 +100,7 @@ export const DJs: CollectionConfig = {
           type: 'checkbox',
           defaultValue: true,
           admin: {
-            description: 'Currently on air?',
+            description: 'Actively scheduled for on-air shifts',
             width: '25%',
           },
         },
@@ -108,7 +108,7 @@ export const DJs: CollectionConfig = {
           name: 'sortOrder',
           type: 'number',
           admin: {
-            description: 'Display order (lower = first)',
+            description: 'Display order — use the DJ Sort Order tool (/admin/dj-order) to reorder visually',
             width: '25%',
           },
         },

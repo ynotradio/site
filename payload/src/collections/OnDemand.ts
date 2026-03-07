@@ -85,7 +85,17 @@ export const OnDemand: CollectionConfig = {
       relationTo: 'songs',
       hasMany: true,
       admin: {
-        description: 'Songs performed in this on-demand recording',
+        description: 'Songs performed in this on-demand recording (filtered to selected artists when artists are chosen above)',
+      },
+      filterOptions: ({ data }) => {
+        const artists = data?.artists;
+        if (Array.isArray(artists) && artists.length > 0) {
+          const artistIds = artists.map((a: string | { id: string }) =>
+            typeof a === 'object' ? a.id : a,
+          );
+          return { artist: { in: artistIds } };
+        }
+        return true;
       },
     },
     {

@@ -10,7 +10,7 @@ export const Songs: CollectionConfig = {
     plural: 'Songs',
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
     description:
