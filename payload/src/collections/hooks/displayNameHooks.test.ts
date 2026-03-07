@@ -1,16 +1,134 @@
 /**
- * Unit tests for collection displayName virtual field hooks
+ * Unit tests for collection displayName hooks
  *
- * Tests the afterRead hook logic for generating displayName virtual fields for Songs and Records.
- * These displayNames are used in relationship dropdowns to show "Artist - Title" format.
+ * Tests hooks for generating displayName fields across collections (DJs, Songs, Records).
+ * These displayNames are used in relationship dropdowns and admin UI titles.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Payload } from 'payload';
+import { generateDJDisplayName, generateMusicDisplayName } from './displayNameHooks';
 
 // Helper to create a mock request object
 const createMockReq = (payload: Partial<Payload>) => ({
   payload: payload as Payload,
+});
+
+describe('DJs displayName beforeChange hook', () => {
+  let mockPayload: Partial<Payload>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPayload = {
+      find: vi.fn(),
+    };
+  });
+
+  it('should generate displayName from single person', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [{ id: 1, name: 'John Doe' }],
+    });
+
+    const result = await generateDJDisplayName({
+      data: { person: [1] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('John Doe');
+    expect(mockPayload.find).toHaveBeenCalledWith({
+      collection: 'people',
+      where: { id: { in: [1] } },
+      limit: 1,
+    });
+  });
+
+  it('should generate displayName from multiple people', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [
+        { id: 1, name: 'John Doe' },
+        { id: 2, name: 'Jane Smith' },
+      ],
+    });
+
+    const result = await generateDJDisplayName({
+      data: { person: [1, 2] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('John Doe, Jane Smith');
+  });
+
+  it('should handle person objects instead of IDs', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [{ id: 1, name: 'John Doe' }],
+    });
+
+    const result = await generateDJDisplayName({
+      data: { person: [{ id: 1 }] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('John Doe');
+  });
+
+  it('should generate fallback displayName when no person', async () => {
+    const result = await generateDJDisplayName({
+      data: { id: 123 },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('DJ #123');
+    expect(mockPayload.find).not.toHaveBeenCalled();
+  });
+
+  it('should generate fallback displayName for new DJ', async () => {
+    const result = await generateDJDisplayName({
+      data: {},
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('DJ #New');
+  });
+
+  it('should handle person fetch error gracefully', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
+
+    const result = await generateDJDisplayName({
+      data: { person: [1] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('DJ #New');
+    expect(consoleErrorSpy).toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should not log error in production', async () => {
+    const originalEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
+
+    await generateDJDisplayName({
+      data: { person: [1] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+
+    consoleErrorSpy.mockRestore();
+    process.env.NODE_ENV = originalEnv;
+  });
 });
 
 describe('Songs displayName virtual field afterRead hook', () => {
@@ -23,37 +141,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
     };
   });
 
-  // Simulates the afterRead hook logic from Songs.ts virtual field
-  function getAfterReadHook() {
-    return async ({ data, req }: { data: Record<string, unknown> | null; req: { payload: Payload } }) => {
-      if (!data) return 'Untitled';
-
-      let artistName = '';
-      if (data.artist) {
-        // Artist may be populated or just an ID
-        if (typeof data.artist === 'object' && (data.artist as { name?: string }).name) {
-          artistName = (data.artist as { name: string }).name;
-        } else if (data.artist) {
-          try {
-            const artist = await req.payload.findByID({
-              collection: 'artists',
-              id: typeof data.artist === 'object' ? (data.artist as { id: number }).id : data.artist as number,
-            });
-            if (artist) {
-              artistName = (artist as { name: string }).name;
-            }
-          } catch {
-            // Silently handle errors
-          }
-        }
-      }
-
-      if (artistName && data.title) {
-        return `${artistName} - ${data.title}`;
-      }
-      return data.title || `Song #${data.id || 'New'}`;
-    };
-  }
+  const songHook = generateMusicDisplayName('Song');
 
   it('should generate displayName with artist and title', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -61,8 +149,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
       name: 'The Beatles',
     });
 
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: { artist: 1, title: 'Hey Jude' },
       req: createMockReq(mockPayload),
     });
@@ -71,8 +158,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   });
 
   it('should use populated artist name without additional query', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: { artist: { id: 1, name: 'The Beatles' }, title: 'Hey Jude' },
       req: createMockReq(mockPayload),
     });
@@ -82,8 +168,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   });
 
   it('should generate displayName with only title when no artist', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: { title: 'Untitled Song' },
       req: createMockReq(mockPayload),
     });
@@ -93,8 +178,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   });
 
   it('should generate fallback displayName when no title', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: { id: 123 },
       req: createMockReq(mockPayload),
     });
@@ -103,8 +187,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   });
 
   it('should generate fallback displayName for new song', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: {},
       req: createMockReq(mockPayload),
     });
@@ -115,8 +198,7 @@ describe('Songs displayName virtual field afterRead hook', () => {
   it('should handle artist fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await songHook({
       data: { artist: 1, title: 'Test Song' },
       req: createMockReq(mockPayload),
     });
@@ -136,37 +218,7 @@ describe('Records displayName virtual field afterRead hook', () => {
     };
   });
 
-  // Simulates the afterRead hook logic from Records.ts virtual field
-  function getAfterReadHook() {
-    return async ({ data, req }: { data: Record<string, unknown> | null; req: { payload: Payload } }) => {
-      if (!data) return 'Untitled';
-
-      let artistName = '';
-      if (data.artist) {
-        // Artist may be populated or just an ID
-        if (typeof data.artist === 'object' && (data.artist as { name?: string }).name) {
-          artistName = (data.artist as { name: string }).name;
-        } else if (data.artist) {
-          try {
-            const artist = await req.payload.findByID({
-              collection: 'artists',
-              id: typeof data.artist === 'object' ? (data.artist as { id: number }).id : data.artist as number,
-            });
-            if (artist) {
-              artistName = (artist as { name: string }).name;
-            }
-          } catch {
-            // Silently handle errors
-          }
-        }
-      }
-
-      if (artistName && data.title) {
-        return `${artistName} - ${data.title}`;
-      }
-      return data.title || `Record #${data.id || 'New'}`;
-    };
-  }
+  const recordHook = generateMusicDisplayName('Record');
 
   it('should generate displayName with artist and title', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
@@ -174,8 +226,7 @@ describe('Records displayName virtual field afterRead hook', () => {
       name: 'Pink Floyd',
     });
 
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: { artist: 1, title: 'The Dark Side of the Moon' },
       req: createMockReq(mockPayload),
     });
@@ -184,8 +235,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   });
 
   it('should use populated artist name without additional query', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: { artist: { id: 1, name: 'Pink Floyd' }, title: 'The Dark Side of the Moon' },
       req: createMockReq(mockPayload),
     });
@@ -195,8 +245,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   });
 
   it('should generate displayName with only title when no artist', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: { title: 'Various Artists Compilation' },
       req: createMockReq(mockPayload),
     });
@@ -206,8 +255,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   });
 
   it('should generate fallback displayName when no title', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: { id: 456 },
       req: createMockReq(mockPayload),
     });
@@ -216,8 +264,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   });
 
   it('should generate fallback displayName for new record', async () => {
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: {},
       req: createMockReq(mockPayload),
     });
@@ -228,8 +275,7 @@ describe('Records displayName virtual field afterRead hook', () => {
   it('should handle artist fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
-    const hook = getAfterReadHook();
-    const result = await hook({
+    const result = await recordHook({
       data: { artist: 1, title: 'Test Album' },
       req: createMockReq(mockPayload),
     });
