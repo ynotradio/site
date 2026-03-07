@@ -74,13 +74,13 @@ export const ActiveTournament: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-tournaments/,
+        url: /\/api\/modern-rock-madness-tournaments/,
         method: 'GET',
         status: 200,
         response: { docs: [TOURNAMENT], totalDocs: 1 },
       },
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: { docs: SAMPLE_MATCHES, totalDocs: SAMPLE_MATCHES.length },
@@ -93,13 +93,13 @@ export const NoTournament: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-tournaments/,
+        url: /\/api\/modern-rock-madness-tournaments/,
         method: 'GET',
         status: 200,
         response: { docs: [], totalDocs: 0 },
       },
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: { docs: [], totalDocs: 0 },
@@ -112,13 +112,13 @@ export const NoMatches: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-tournaments/,
+        url: /\/api\/modern-rock-madness-tournaments/,
         method: 'GET',
         status: 200,
         response: { docs: [TOURNAMENT], totalDocs: 1 },
       },
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: { docs: [], totalDocs: 0 },

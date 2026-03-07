@@ -1,61 +1,73 @@
 import { describe, expect, it } from 'vitest';
-import { MadnessVotes } from './MadnessVotes';
+import { ModernRockMadnessVotes } from './MadnessVotes';
 
-describe('MadnessVotes', () => {
+describe('ModernRockMadnessVotes', () => {
   it('has the correct slug', () => {
-    expect(MadnessVotes.slug).toBe('madness-votes');
+    expect(ModernRockMadnessVotes.slug).toBe('modern-rock-madness-votes');
   });
 
   it('is grouped under Modern Rock Madness', () => {
-    expect(MadnessVotes.admin?.group).toBe('Modern Rock Madness');
+    expect(ModernRockMadnessVotes.admin?.group).toBe('Modern Rock Madness');
   });
 
   it('has required fields', () => {
-    const fields = MadnessVotes.fields as Array<{ name: string; required?: boolean }>;
+    const fields = ModernRockMadnessVotes.fields as Array<{ name: string; required?: boolean }>;
     const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('match');
-    expect(requiredNames).toContain('band');
-    expect(requiredNames).toContain('voterIp');
+    expect(requiredNames).toContain('group');
+    expect(requiredNames).toContain('userId');
   });
 
-  it('has match as a relationship to madness-matches', () => {
-    const fields = MadnessVotes.fields as Array<{
+  it('has match as a relationship to modern-rock-madness-matches', () => {
+    const fields = ModernRockMadnessVotes.fields as Array<{
       name: string;
       type: string;
       relationTo?: string;
     }>;
     const matchField = fields.find((f) => f.name === 'match');
     expect(matchField?.type).toBe('relationship');
-    expect(matchField?.relationTo).toBe('madness-matches');
+    expect(matchField?.relationTo).toBe('modern-rock-madness-matches');
   });
 
-  it('has band as a relationship to madness-bands', () => {
-    const fields = MadnessVotes.fields as Array<{
+  it('has group as a relationship to modern-rock-madness-groups', () => {
+    const fields = ModernRockMadnessVotes.fields as Array<{
       name: string;
       type: string;
       relationTo?: string;
     }>;
-    const bandField = fields.find((f) => f.name === 'band');
-    expect(bandField?.type).toBe('relationship');
-    expect(bandField?.relationTo).toBe('madness-bands');
+    const groupField = fields.find((f) => f.name === 'group');
+    expect(groupField?.type).toBe('relationship');
+    expect(groupField?.relationTo).toBe('modern-rock-madness-groups');
   });
 
-  it('has voterIp indexed for duplicate checking', () => {
-    const fields = MadnessVotes.fields as Array<{ name: string; index?: boolean }>;
-    const ipField = fields.find((f) => f.name === 'voterIp');
-    expect(ipField?.index).toBe(true);
+  it('has userId indexed for duplicate prevention', () => {
+    const fields = ModernRockMadnessVotes.fields as Array<{ name: string; index?: boolean }>;
+    const userIdField = fields.find((f) => f.name === 'userId');
+    expect(userIdField?.index).toBe(true);
+  });
+
+  it('does not collect IP addresses (Auth0 handles duplicate prevention)', () => {
+    const fields = ModernRockMadnessVotes.fields as Array<{ name: string }>;
+    const names = fields.map((f) => f.name);
+    expect(names).not.toContain('voterIp');
+  });
+
+  it('has no legacyId or migratedAt fields', () => {
+    const fields = ModernRockMadnessVotes.fields as Array<{ name: string }>;
+    const names = fields.map((f) => f.name);
+    expect(names).not.toContain('legacyId');
+    expect(names).not.toContain('migratedAt');
   });
 
   it('restricts read access to admin and editor roles', () => {
-    const readFn = MadnessVotes.access?.read;
+    const readFn = ModernRockMadnessVotes.access?.read;
     expect(typeof readFn).toBe('function');
-    // No user → should not allow read
-    expect((readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
-      false,
-    );
+    expect(
+      (readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } }),
+    ).toBe(false);
   });
 
   it('has timestamps enabled', () => {
-    expect(MadnessVotes.timestamps).toBe(true);
+    expect(ModernRockMadnessVotes.timestamps).toBe(true);
   });
 });

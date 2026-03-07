@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MadnessMatches } from './MadnessMatches';
+import { ModernRockMadnessMatches } from './MadnessMatches';
 
 /**
  * Flatten row-type fields into a flat array for easier testing.
@@ -7,28 +7,29 @@ import { MadnessMatches } from './MadnessMatches';
  */
 const flattenRowFields = (
   fields: readonly Record<string, unknown>[],
-): Array<Record<string, unknown>> => fields.reduce<Array<Record<string, unknown>>>((result, field) => {
-  if (field.type === 'row' && Array.isArray(field.fields)) {
-    return [...result, ...(field.fields as Array<Record<string, unknown>>)];
-  }
-  return [...result, field];
-}, []);
+): Array<Record<string, unknown>> =>
+  fields.reduce<Array<Record<string, unknown>>>((result, field) => {
+    if (field.type === 'row' && Array.isArray(field.fields)) {
+      return [...result, ...(field.fields as Array<Record<string, unknown>>)];
+    }
+    return [...result, field];
+  }, []);
 
-describe('MadnessMatches', () => {
+describe('ModernRockMadnessMatches', () => {
   it('has the correct slug', () => {
-    expect(MadnessMatches.slug).toBe('madness-matches');
+    expect(ModernRockMadnessMatches.slug).toBe('modern-rock-madness-matches');
   });
 
   it('uses matchNumber as admin title', () => {
-    expect(MadnessMatches.admin?.useAsTitle).toBe('matchNumber');
+    expect(ModernRockMadnessMatches.admin?.useAsTitle).toBe('matchNumber');
   });
 
   it('is grouped under Modern Rock Madness', () => {
-    expect(MadnessMatches.admin?.group).toBe('Modern Rock Madness');
+    expect(ModernRockMadnessMatches.admin?.group).toBe('Modern Rock Madness');
   });
 
-  it('has tournament as a required relationship', () => {
-    const fields = MadnessMatches.fields as Array<{
+  it('has tournament as a required relationship to modern-rock-madness-tournaments', () => {
+    const fields = ModernRockMadnessMatches.fields as Array<{
       name?: string;
       type: string;
       relationTo?: string;
@@ -36,22 +37,22 @@ describe('MadnessMatches', () => {
     }>;
     const tournamentField = fields.find((f) => f.name === 'tournament');
     expect(tournamentField?.type).toBe('relationship');
-    expect(tournamentField?.relationTo).toBe('madness-tournaments');
+    expect(tournamentField?.relationTo).toBe('modern-rock-madness-tournaments');
     expect(tournamentField?.required).toBe(true);
   });
 
-  it('has band1 and band2 as relationships to madness-bands', () => {
-    const allFields = flattenRowFields(MadnessMatches.fields);
+  it('has band1 and band2 as relationships to modern-rock-madness-groups', () => {
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
     const band1 = allFields.find((f: { name?: string }) => f.name === 'band1');
     const band2 = allFields.find((f: { name?: string }) => f.name === 'band2');
     expect(band1?.type).toBe('relationship');
-    expect(band1?.relationTo).toBe('madness-bands');
+    expect(band1?.relationTo).toBe('modern-rock-madness-groups');
     expect(band2?.type).toBe('relationship');
-    expect(band2?.relationTo).toBe('madness-bands');
+    expect(band2?.relationTo).toBe('modern-rock-madness-groups');
   });
 
   it('has vote count fields with default value of 0', () => {
-    const allFields = flattenRowFields(MadnessMatches.fields);
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
     const band1Votes = allFields.find((f: { name?: string }) => f.name === 'band1Votes');
     const band2Votes = allFields.find((f: { name?: string }) => f.name === 'band2Votes');
     expect(band1Votes?.defaultValue).toBe(0);
@@ -59,7 +60,7 @@ describe('MadnessMatches', () => {
   });
 
   it('has startTime and endTime as date fields with dayAndTime picker', () => {
-    const allFields = flattenRowFields(MadnessMatches.fields);
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
     const startTime = allFields.find((f: { name?: string }) => f.name === 'startTime');
     const endTime = allFields.find((f: { name?: string }) => f.name === 'endTime');
     expect(startTime?.type).toBe('date');
@@ -69,18 +70,18 @@ describe('MadnessMatches', () => {
   });
 
   it('has nextMatch as a self-referencing relationship', () => {
-    const fields = MadnessMatches.fields as Array<{
+    const fields = ModernRockMadnessMatches.fields as Array<{
       name?: string;
       type: string;
       relationTo?: string;
     }>;
     const nextMatch = fields.find((f) => f.name === 'nextMatch');
     expect(nextMatch?.type).toBe('relationship');
-    expect(nextMatch?.relationTo).toBe('madness-matches');
+    expect(nextMatch?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has 6 round options covering the full tournament', () => {
-    const fields = MadnessMatches.fields as Array<{
+    const fields = ModernRockMadnessMatches.fields as Array<{
       name?: string;
       options?: Array<{ value: string }>;
     }>;
@@ -88,24 +89,31 @@ describe('MadnessMatches', () => {
     expect(roundField?.options).toHaveLength(6);
   });
 
-  it('has winner as a relationship to madness-bands', () => {
-    const fields = MadnessMatches.fields as Array<{
+  it('has winner as a relationship to modern-rock-madness-groups', () => {
+    const fields = ModernRockMadnessMatches.fields as Array<{
       name?: string;
       type: string;
       relationTo?: string;
     }>;
     const winner = fields.find((f) => f.name === 'winner');
     expect(winner?.type).toBe('relationship');
-    expect(winner?.relationTo).toBe('madness-bands');
+    expect(winner?.relationTo).toBe('modern-rock-madness-groups');
+  });
+
+  it('has no legacyId or migratedAt fields', () => {
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const names = allFields.map((f: { name?: string }) => f.name);
+    expect(names).not.toContain('legacyId');
+    expect(names).not.toContain('migratedAt');
   });
 
   it('has public read access', () => {
-    const readFn = MadnessMatches.access?.read;
+    const readFn = ModernRockMadnessMatches.access?.read;
     expect(typeof readFn).toBe('function');
     expect((readFn as () => boolean)()).toBe(true);
   });
 
   it('has timestamps enabled', () => {
-    expect(MadnessMatches.timestamps).toBe(true);
+    expect(ModernRockMadnessMatches.timestamps).toBe(true);
   });
 });

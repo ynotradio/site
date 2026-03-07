@@ -49,7 +49,7 @@ export const LiveMatch: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: baseMatchResponse({}),
@@ -62,7 +62,7 @@ export const OvertimeTied: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: baseMatchResponse({
@@ -80,7 +80,7 @@ export const CloseableMatch: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: baseMatchResponse({
@@ -98,7 +98,7 @@ export const ClosedWithWinner: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: baseMatchResponse({
@@ -117,7 +117,7 @@ export const NoActiveMatch: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 200,
         response: { docs: [], totalDocs: 0 },
@@ -130,7 +130,7 @@ export const ApiError: Story = {
   parameters: {
     mockData: [
       {
-        url: /\/api\/madness-matches/,
+        url: /\/api\/modern-rock-madness-matches/,
         method: 'GET',
         status: 500,
         response: { error: 'Internal Server Error' },

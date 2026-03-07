@@ -1,35 +1,38 @@
 import { describe, expect, it } from 'vitest';
-import { MadnessMatchEvents } from './MadnessMatchEvents';
+import { ModernRockMadnessMatchEvents } from './MadnessMatchEvents';
 
-describe('MadnessMatchEvents', () => {
+describe('ModernRockMadnessMatchEvents', () => {
   it('has the correct slug', () => {
-    expect(MadnessMatchEvents.slug).toBe('madness-match-events');
+    expect(ModernRockMadnessMatchEvents.slug).toBe('modern-rock-madness-match-events');
   });
 
   it('is grouped under Modern Rock Madness', () => {
-    expect(MadnessMatchEvents.admin?.group).toBe('Modern Rock Madness');
+    expect(ModernRockMadnessMatchEvents.admin?.group).toBe('Modern Rock Madness');
   });
 
   it('has required fields', () => {
-    const fields = MadnessMatchEvents.fields as Array<{ name: string; required?: boolean }>;
+    const fields = ModernRockMadnessMatchEvents.fields as Array<{
+      name: string;
+      required?: boolean;
+    }>;
     const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('match');
     expect(requiredNames).toContain('eventType');
   });
 
-  it('has match as a relationship to madness-matches', () => {
-    const fields = MadnessMatchEvents.fields as Array<{
+  it('has match as a relationship to modern-rock-madness-matches', () => {
+    const fields = ModernRockMadnessMatchEvents.fields as Array<{
       name: string;
       type: string;
       relationTo?: string;
     }>;
     const matchField = fields.find((f) => f.name === 'match');
     expect(matchField?.type).toBe('relationship');
-    expect(matchField?.relationTo).toBe('madness-matches');
+    expect(matchField?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has 4 event type options', () => {
-    const fields = MadnessMatchEvents.fields as Array<{
+    const fields = ModernRockMadnessMatchEvents.fields as Array<{
       name: string;
       options?: Array<{ value: string }>;
     }>;
@@ -43,14 +46,14 @@ describe('MadnessMatchEvents', () => {
   });
 
   it('has snapshot as a JSON field', () => {
-    const fields = MadnessMatchEvents.fields as Array<{ name: string; type: string }>;
+    const fields = ModernRockMadnessMatchEvents.fields as Array<{ name: string; type: string }>;
     const snapshotField = fields.find((f) => f.name === 'snapshot');
     expect(snapshotField?.type).toBe('json');
   });
 
   it('is append-only (no update or delete)', () => {
-    const updateFn = MadnessMatchEvents.access?.update;
-    const deleteFn = MadnessMatchEvents.access?.delete;
+    const updateFn = ModernRockMadnessMatchEvents.access?.update;
+    const deleteFn = ModernRockMadnessMatchEvents.access?.delete;
     expect(typeof updateFn).toBe('function');
     expect(typeof deleteFn).toBe('function');
     expect((updateFn as () => boolean)()).toBe(false);
@@ -58,14 +61,14 @@ describe('MadnessMatchEvents', () => {
   });
 
   it('restricts read access to admin and editor roles', () => {
-    const readFn = MadnessMatchEvents.access?.read;
+    const readFn = ModernRockMadnessMatchEvents.access?.read;
     expect(typeof readFn).toBe('function');
-    expect((readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
-      false,
-    );
+    expect(
+      (readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } }),
+    ).toBe(false);
   });
 
   it('has timestamps enabled', () => {
-    expect(MadnessMatchEvents.timestamps).toBe(true);
+    expect(ModernRockMadnessMatchEvents.timestamps).toBe(true);
   });
 });

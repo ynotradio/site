@@ -131,7 +131,7 @@ describe('LiveMatchClient', () => {
 
     const { calls } = (global.fetch as ReturnType<typeof vi.fn>).mock;
     const patchCall = calls.find(
-      ([url, opts]: [string, RequestInit]) => String(url).includes('/api/madness-matches/') && opts?.method === 'PATCH',
+      ([url, opts]: [string, RequestInit]) => String(url).includes('/api/modern-rock-madness-matches/') && opts?.method === 'PATCH',
     );
     expect(patchCall).toBeDefined();
   });

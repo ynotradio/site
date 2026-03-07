@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
-export const MadnessMatches: CollectionConfig = {
-  slug: 'madness-matches',
+export const ModernRockMadnessMatches: CollectionConfig = {
+  slug: 'modern-rock-madness-matches',
   labels: {
     singular: 'Match',
     plural: 'Matches',
@@ -26,7 +26,7 @@ export const MadnessMatches: CollectionConfig = {
     {
       name: 'tournament',
       type: 'relationship',
-      relationTo: 'madness-tournaments',
+      relationTo: 'modern-rock-madness-tournaments',
       required: true,
       index: true,
       admin: {
@@ -71,18 +71,18 @@ export const MadnessMatches: CollectionConfig = {
         {
           name: 'band1',
           type: 'relationship',
-          relationTo: 'madness-bands',
+          relationTo: 'modern-rock-madness-groups',
           admin: {
-            description: 'First band (top seed in bracket)',
+            description: 'First group (top seed in bracket)',
             width: '50%',
           },
         },
         {
           name: 'band2',
           type: 'relationship',
-          relationTo: 'madness-bands',
+          relationTo: 'modern-rock-madness-groups',
           admin: {
-            description: 'Second band (bottom seed in bracket)',
+            description: 'Second group (bottom seed in bracket)',
             width: '50%',
           },
         },
@@ -96,7 +96,7 @@ export const MadnessMatches: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           admin: {
-            description: 'Band 1 vote count',
+            description: 'Group 1 vote count',
             width: '50%',
           },
         },
@@ -105,7 +105,7 @@ export const MadnessMatches: CollectionConfig = {
           type: 'number',
           defaultValue: 0,
           admin: {
-            description: 'Band 2 vote count',
+            description: 'Group 2 vote count',
             width: '50%',
           },
         },
@@ -143,7 +143,7 @@ export const MadnessMatches: CollectionConfig = {
     {
       name: 'winner',
       type: 'relationship',
-      relationTo: 'madness-bands',
+      relationTo: 'modern-rock-madness-groups',
       admin: {
         description: 'Match winner (set when match is closed)',
       },
@@ -159,7 +159,7 @@ export const MadnessMatches: CollectionConfig = {
     {
       name: 'nextMatch',
       type: 'relationship',
-      relationTo: 'madness-matches',
+      relationTo: 'modern-rock-madness-matches',
       admin: {
         description: 'Next match the winner advances to (replaces mrm_matches_flow table)',
       },
@@ -178,25 +178,9 @@ export const MadnessMatches: CollectionConfig = {
         description: 'Match sponsor message',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL match ID for migration tracking',
-      },
-    },
-    {
-      name: 'migratedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Timestamp of migration from MySQL',
-      },
-    },
   ],
   timestamps: true,
 };
+
+/** @deprecated Use ModernRockMadnessMatches */
+export const MadnessMatches = ModernRockMadnessMatches;

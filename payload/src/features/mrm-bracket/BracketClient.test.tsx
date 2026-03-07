@@ -108,7 +108,7 @@ describe('BracketClient', () => {
     render(<BracketClient />);
     await waitFor(() => {
       const link = screen.getByRole('link', { name: /Match 1/ });
-      expect(link).toHaveAttribute('href', '/admin/collections/madness-matches/m1');
+      expect(link).toHaveAttribute('href', '/admin/collections/modern-rock-madness-matches/m1');
     });
   });
 

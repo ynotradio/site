@@ -474,15 +474,13 @@ async function seed() {
     console.log('🏆 Creating Modern Rock Madness 2025 tournament (64 bands, 63 matches)...');
 
     const tournament = await payload.create({
-      collection: 'madness-tournaments',
+      collection: 'modern-rock-madness-tournaments',
       data: {
         name: 'Modern Rock Madness 2025',
         year: 2025,
         startDate: '2025-03-24T00:00:00.000Z',
         status: 'complete',
         bracketPdfUrl: 'https://od.lk/d/219145587_ruE6q/MRM2025Bracket.pdf',
-        bannerImageUrl: 'https://i.imgur.com/QfqMVsE.png',
-        legacyId: 1,
       },
     });
 
@@ -490,94 +488,92 @@ async function seed() {
 
     const tournamentId = typeof tournament.id === 'number' ? tournament.id : parseInt(tournament.id, 10);
 
-    // ── 64 bands from ynot_db.sql `mrm_bands` ────────────────────────────────
-    // Columns: legacyId, name, url, imageUrl, placement (1–64), seed (1–16),
-    //          abbreviation, sponsor
+    // ── 64 groups from ynot_db.sql `mrm_bands` ───────────────────────────────
+    // Artists can be linked after migration; name is used as display override.
+    // Columns: id (legacy), name, url, placement (1–64), seed (1–16), abbreviation, sponsor
     const mrmBands = [
-      { id: 1,  name: 'Japanese Breakfast',           url: 'http://japanesebreakfast.rocks/',            imageUrl: 'https://i.imgur.com/YRxbZcx.jpeg',         placement: 1,  seed: 1,  abbreviation: 'JBrekie', sponsor: 'Dave Mooney' },
-      { id: 2,  name: 'Charly Bliss',                 url: 'https://charlybliss.os.fan/',                imageUrl: 'https://i.imgur.com/AAoZTzd.jpg',           placement: 2,  seed: 16, abbreviation: 'ChlyBls', sponsor: 'Wendy Kessler' },
-      { id: 3,  name: 'The Wombats',                  url: 'https://www.thewombats.co.uk/',              imageUrl: 'https://www.metro951.com/wp-content/uploads/2022/04/The-Wombats11-e1649266186620.jpeg', placement: 3, seed: 8, abbreviation: 'Wombats', sponsor: 'David Cohen' },
-      { id: 4,  name: 'Japandroids',                  url: 'https://japandroids.com/',                   imageUrl: 'https://music-b26f.kxcdn.com/wp-content/uploads/bfi_thumb/Japandroids-6kxwxm7m6w172defyju16abe3gl8ts2b1bta4wcdlev.jpg', placement: 4, seed: 9, abbreviation: 'Jpndrds', sponsor: 'Vincent Smith' },
-      { id: 5,  name: 'The Clash',                    url: 'https://www.theclash.com/',                  imageUrl: 'https://www.artevarese.com/wp-content/uploads/The-Clash-2-300x169.jpg',               placement: 5,  seed: 5,  abbreviation: 'Clash',   sponsor: 'Vincent Smith' },
-      { id: 6,  name: 'Cake',                         url: 'https://www.cakemusic.com/',                 imageUrl: 'https://riffmagazine.com/wp-content/uploads/2021/03/CAKE-band-photo-1541795462-343x240.jpg', placement: 6, seed: 12, abbreviation: 'Cake', sponsor: 'Orlan Santos' },
-      { id: 7,  name: 'CHVRCHES',                     url: 'http://www.chvrch.es/',                      imageUrl: 'https://northerntransmissions.com/wp-content/uploads/2021/09/unnamed-2021-09-15T080553.328.jpg', placement: 7, seed: 4, abbreviation: 'CHVRCHS', sponsor: 'Marisa Lumino' },
-      { id: 8,  name: 'Sylvan Esso',                  url: 'https://www.sylvanesso.com/',                imageUrl: 'https://www.billboard.com/wp-content/uploads/2022/03/Sylvan-Esso-cr-Shervin-Lainez-press-2022-billboard-1548.jpg?w=942&h=623&crop=1&resize=942%2C623', placement: 8, seed: 13, abbreviation: 'SlvnEso', sponsor: 'David Cohen' },
-      { id: 9,  name: 'The Linda Lindas',             url: 'https://www.thelindalindas.com/',            imageUrl: 'https://www.rollingstone.com/wp-content/uploads/2024/10/The-Linda-Lindas-No-Obligation.jpg?w=1581&h=1054&crop=1', placement: 9, seed: 6, abbreviation: 'Lindas', sponsor: 'Brian Osborn' },
-      { id: 10, name: 'Ben Folds (Five)',              url: 'https://www.benfolds.com/',                  imageUrl: 'https://www.aso.org/assets/img/ev_BenFolds-2-ffcb9ee76b.jpg',                          placement: 10, seed: 11, abbreviation: 'BenFlds', sponsor: 'Thomas Rife' },
-      { id: 11, name: 'Beastie Boys',                 url: 'http://beastieboys.com/',                    imageUrl: 'https://i.imgur.com/weHmBgc.jpg?1',                                                    placement: 11, seed: 3,  abbreviation: 'Beastie', sponsor: 'Jennifer Kondracki' },
-      { id: 12, name: 'Daft Punk',                    url: 'https://daftpunk.com/',                      imageUrl: 'https://i.imgur.com/ZdtCGEG.jpg?1',                                                    placement: 12, seed: 14, abbreviation: 'DaftPnk', sponsor: 'Andrew Dippell' },
-      { id: 13, name: 'The War on Drugs',             url: 'http://www.thewarondrugs.net/home',          imageUrl: 'https://i.imgur.com/2x2yi56.jpg?1',                                                    placement: 13, seed: 7,  abbreviation: 'WrOnDrg', sponsor: 'Jason Rohde' },
-      { id: 14, name: 'Interpol',                     url: 'https://www.interpolnyc.com/',               imageUrl: 'https://i.imgur.com/D12WdVU.jpg',                                                      placement: 14, seed: 10, abbreviation: 'Interpl', sponsor: 'Dave Mazzone' },
-      { id: 15, name: 'Radiohead / The Smile',        url: 'https://radiohead.com/',                     imageUrl: 'https://thewilddetectives.com/wp-content/uploads/2016/06/RadioHead.jpg',               placement: 15, seed: 2,  abbreviation: 'Rdohead', sponsor: 'Mary Holman' },
-      { id: 16, name: 'Nada Surf',                    url: 'https://www.nadasurf.com/',                  imageUrl: 'https://nadasurf.com/wp-content/uploads/2024/09/Nada_Surf-499x300.jpg',                placement: 16, seed: 15, abbreviation: 'NadaSrf', sponsor: 'Jennifer Kondracki' },
-      { id: 17, name: 'Fontaines D.C.',               url: 'https://fontainesdc.com/',                   imageUrl: 'https://i.imgur.com/LcHPHyE.jpg',                                                      placement: 17, seed: 1,  abbreviation: 'FntnsDC', sponsor: 'Jim McAndrew' },
-      { id: 18, name: 'Caroline Rose',                url: 'https://www.carolinerosemusic.com/',         imageUrl: 'https://i.imgur.com/2YHOrqZ.jpg',                                                      placement: 18, seed: 16, abbreviation: 'ClnRose', sponsor: 'Scott Hemmons' },
-      { id: 19, name: 'Kurt Vile',                    url: 'https://www.kurtvile.com/',                  imageUrl: 'https://s1.ticketm.net/dam/a/4de/38e4be92-594e-47a3-8c1a-b270fba184de_RETINA_PORTRAIT_3_2.jpg', placement: 19, seed: 8, abbreviation: 'KrtVile', sponsor: 'Andrew Gribbin' },
-      { id: 20, name: 'Alvvays',                      url: 'https://alvvays.com/',                       imageUrl: 'https://www.rollingstone.com/wp-content/uploads/2022/07/Untitled-5.jpg?w=411&h=274&crop=1', placement: 20, seed: 9, abbreviation: 'Alvvays', sponsor: 'Gordon Lung' },
-      { id: 21, name: 'Beabadoobee',                  url: 'https://www.beabadoobee.com/',               imageUrl: 'https://i.imgur.com/QEhVHH8.jpg',                                                      placement: 21, seed: 5,  abbreviation: 'Bbadbee', sponsor: 'Michael Cunningham' },
-      { id: 22, name: 'The Strokes',                  url: 'http://www.thestrokes.com',                  imageUrl: 'https://www.binaural.es/wp-content/uploads/2022/10/strokes.jpg',                       placement: 22, seed: 12, abbreviation: 'Strokes', sponsor: 'Steve Hrobsky' },
-      { id: 23, name: 'Against Me! / Laura Jane Grace', url: 'https://www.laurajanegrace.com/',          imageUrl: 'https://i.imgur.com/QDrFP4E.jpg',                                                      placement: 23, seed: 4,  abbreviation: 'AgnstMe', sponsor: 'Richard Crespo' },
-      { id: 24, name: 'Car Seat Headrest',            url: 'https://carseatheadrest.com/',               imageUrl: 'https://s1.ticketm.net/dam/a/6b2/061fce8a-02ad-457e-895e-c1ff39bc16b2_RETINA_PORTRAIT_3_2.jpg', placement: 24, seed: 13, abbreviation: 'CSHR', sponsor: 'Michael Ferry' },
-      { id: 25, name: 'Spoon',                        url: 'http://www.spoontheband.com',                imageUrl: 'https://i.imgur.com/uG6h0cb.jpg?1',                                                    placement: 25, seed: 6,  abbreviation: 'Spoon',   sponsor: 'David & Pat Schaeffer' },
-      { id: 26, name: 'Arctic Monkeys',               url: 'http://www.arcticmonkeys.com',               imageUrl: 'https://i.imgur.com/kuX21d6.jpg?1',                                                    placement: 26, seed: 11, abbreviation: 'ArcMnky', sponsor: 'Eric Rusack' },
-      { id: 27, name: 'Yeah Yeah Yeahs',              url: 'http://www.yeahyeahyeahs.com/',              imageUrl: 'https://s1.ticketm.net/dam/a/394/14495553-529e-42d7-897c-1f74b2a44394_RETINA_PORTRAIT_3_2.jpg', placement: 27, seed: 3, abbreviation: 'YYYs', sponsor: 'Steve Quirk' },
-      { id: 28, name: 'Foo Fighters',                 url: 'https://foofighters.com/',                   imageUrl: 'https://musicnews.socast.io/media/orig/foo-fighters-011223-lt.jpg',                     placement: 28, seed: 14, abbreviation: 'FooFtrs', sponsor: 'Meredith Drumheller' },
-      { id: 29, name: 'Nine Inch Nails',              url: 'https://www.nin.com/',                       imageUrl: 'https://thevinylfactory.com/wp-content/uploads/2016/12/nin.jpg',                        placement: 29, seed: 7,  abbreviation: 'NIN',     sponsor: 'Image360 of the Main Line (David Friedenberg)' },
-      { id: 30, name: 'Beach Bunny',                  url: 'https://www.beachbunnymusic.com/',           imageUrl: 'https://s1.ticketm.net/dam/a/0f5/e0a225b5-a028-4966-b4d3-3a0ad7c920f5_RETINA_PORTRAIT_3_2.jpg', placement: 30, seed: 10, abbreviation: 'BchBnny', sponsor: 'Karen Isaacman' },
-      { id: 31, name: 'The Cure',                     url: 'https://www.thecure.com/',                   imageUrl: 'https://s1.ticketm.net/dam/a/57a/b87786e3-f337-4b46-a275-5bfbc630a57a_RETINA_PORTRAIT_3_2.jpg', placement: 31, seed: 2, abbreviation: 'Cure', sponsor: 'Dennis Beach' },
-      { id: 32, name: 'Bloc Party',                   url: 'https://blocparty.com/',                     imageUrl: 'https://consequence.net/wp-content/uploads/2025/02/Bloc-Party-2025-Tour.jpg?quality=80', placement: 32, seed: 15, abbreviation: 'BlcPrty', sponsor: 'Joe Tittermary' },
-      { id: 33, name: 'Jack White / White Stripes',   url: 'http://www.jackwhiteiii.com',                imageUrl: 'https://s1.ticketm.net/dam/a/b4a/d2da6558-039f-4061-bebe-a7eaf2ceeb4a_RETINA_PORTRAIT_3_2.jpg', placement: 33, seed: 1, abbreviation: 'JackWht', sponsor: 'Damian Petrone' },
-      { id: 34, name: 'Sheer Mag',                    url: 'https://www.sheer-mag.com/',                 imageUrl: 'https://thefader-res.cloudinary.com/private_images/w_840,c_limit,f_auto,q_auto:best/SheerMag_PlayingFavorites_Natalie_Piserchio_bclovx/sheer-mag-playing-favorites-2024-tour-dates.jpg', placement: 34, seed: 16, abbreviation: 'SherMag', sponsor: 'Liz Whelan' },
-      { id: 35, name: 'IDLES',                        url: 'https://www.idlesband.com/',                 imageUrl: 'https://images.discovery-prod.axs.com/2023/11/idles-tickets_05-11-24_17_655d4e1b94ca5.jpg', placement: 35, seed: 8, abbreviation: 'IDLES', sponsor: 'Thomas Rife' },
-      { id: 36, name: 'The National',                 url: 'https://americanmary.com/',                  imageUrl: 'https://i.imgur.com/vZXT6dx.jpg',                                                      placement: 36, seed: 9,  abbreviation: 'Nationl', sponsor: 'Steve Hrobsky' },
-      { id: 37, name: 'Garbage',                      url: 'http://www.garbage.com',                     imageUrl: 'https://themusicuniverse.com/wp-content/uploads/2025/03/garbage.jpg',                   placement: 37, seed: 5,  abbreviation: 'Garbage', sponsor: 'David Johnson' },
-      { id: 38, name: 'Franz Ferdinand',              url: 'https://franzferdinand.com/',                imageUrl: 'https://www.dominomusic.com/res/We8j/600_/Franz-Ferdinand-PC-Press-06-300dpi-H.jpg',    placement: 38, seed: 12, abbreviation: 'FrnzFrd', sponsor: 'Daniel Rowan' },
-      { id: 39, name: 'Death Cab For Cutie',          url: 'https://www.deathcabforcutie.com/',          imageUrl: 'https://www.rollingstone.com/wp-content/uploads/2020/12/Death-Cab-for-Cutie-Credit-Eliot-Lee-Hazel-EP-1.jpg?resize=1800,1200&w=450', placement: 39, seed: 4, abbreviation: 'DCfC', sponsor: 'Bill Syrros' },
-      { id: 40, name: 'Mitski',                       url: 'https://mitski.com/',                        imageUrl: 'https://i.imgur.com/lKCGiNK.jpg?1',                                                    placement: 40, seed: 13, abbreviation: 'Mitski',  sponsor: 'Eric Rusack' },
-      { id: 41, name: 'The Beths',                    url: 'https://thebeths.com/',                      imageUrl: 'https://f4.bcbits.com/img/0029549410_23.jpg',                                           placement: 41, seed: 6,  abbreviation: 'Beths',   sponsor: 'Martin Falasco' },
-      { id: 42, name: 'The New Pornographers',        url: 'https://thenewpornographers.com/',           imageUrl: 'https://i.imgur.com/gpiBPYJ.jpg',                                                      placement: 42, seed: 11, abbreviation: 'NewPrno', sponsor: 'Jakey Greenberg' },
-      { id: 43, name: 'Vampire Weekend',              url: 'http://www.vampireweekend.com',              imageUrl: 'https://i.imgur.com/VHadWap.jpeg',                                                     placement: 43, seed: 3,  abbreviation: 'VmprWkd', sponsor: 'Michael Lebovitz' },
-      { id: 44, name: 'Ramones',                      url: 'https://www.ramones.com/',                   imageUrl: 'https://www.biografiasyvidas.com/biografia/r/fotos/ramones_2.jpg',                      placement: 44, seed: 14, abbreviation: 'Ramones', sponsor: 'Brandon Pinzini' },
-      { id: 45, name: 'TV On The Radio',              url: 'https://tvontheradio.com/',                  imageUrl: 'https://i.imgur.com/UdJtLPf.jpg',                                                      placement: 45, seed: 7,  abbreviation: 'TVOTR',   sponsor: 'George White' },
-      { id: 46, name: 'Talking Heads / David Byrne',  url: 'http://davidbyrne.com/',                     imageUrl: 'https://i.imgur.com/5G6QifW.jpg',                                                      placement: 46, seed: 10, abbreviation: 'TlkgHds', sponsor: 'Terry Lautin' },
-      { id: 47, name: 'R.E.M.',                       url: 'https://remhq.com/',                         imageUrl: 'https://i.imgur.com/PvYrocX.jpg',                                                      placement: 47, seed: 2,  abbreviation: 'REM',     sponsor: 'Image360 of the Main Line (David Friedenberg)' },
-      { id: 48, name: 'The Hives',                    url: 'https://www.thehives.com/',                  imageUrl: 'https://s.yimg.com/ny/api/res/1.2/NocHV0I9v0bTcfAaRQcB4w--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyNDI7aD04Mjg-/https://media.zenfs.com/en/aol_spin_digital_media_252/046a4b6090527de51d9d416b0f25ca31', placement: 48, seed: 15, abbreviation: 'Hives', sponsor: 'Meredith Drumheller' },
-      { id: 49, name: 'St. Vincent',                  url: 'http://www.ilovestvincent.com/',             imageUrl: 'https://s1.ticketm.net/dam/a/ed6/68adb13c-389b-4575-8d68-16dd2bfebed6_RETINA_PORTRAIT_3_2.jpg', placement: 49, seed: 1, abbreviation: 'StVnct', sponsor: 'Lisa Wetherby' },
-      { id: 50, name: 'Yard Act',                     url: 'https://www.yardactors.com/',                imageUrl: 'https://s1.ticketm.net/dam/a/730/5b04c9ed-0405-4ac0-8903-e7493f836730_RETINA_PORTRAIT_3_2.jpg', placement: 50, seed: 16, abbreviation: 'YardAct', sponsor: 'Gregory Itts' },
-      { id: 51, name: 'Metric',                       url: 'http://www.ilovemetric.com',                 imageUrl: 'https://i.imgur.com/UuOs5nh.jpg?1',                                                    placement: 51, seed: 8,  abbreviation: 'Metric',  sponsor: 'Danielle Nutt' },
-      { id: 52, name: 'Guster',                       url: 'https://www.guster.com/',                    imageUrl: 'https://i.imgur.com/knvNwJI.jpg',                                                      placement: 52, seed: 9,  abbreviation: 'Guster',  sponsor: 'Michele Gurz' },
-      { id: 53, name: 'Waxahatchee',                  url: 'https://www.waxahatchee.com/',               imageUrl: 'https://i.imgur.com/ZGeTVwG.jpg',                                                      placement: 53, seed: 5,  abbreviation: 'Wxhtche', sponsor: 'Madge & Joe Rassman' },
-      { id: 54, name: 'Tame Impala',                  url: 'https://official.tameimpala.com/',           imageUrl: 'https://i.imgur.com/E5YUne2.jpg?1',                                                    placement: 54, seed: 12, abbreviation: 'TmImpla', sponsor: 'Jeffrey Seltzer' },
-      { id: 55, name: 'Beck',                         url: 'http://www.beck.com',                        imageUrl: 'https://i.imgur.com/tg7cgpx.jpg?1',                                                    placement: 55, seed: 4,  abbreviation: 'Beck',    sponsor: 'Wendy Kessler' },
-      { id: 56, name: 'Nirvana',                      url: 'https://www.nirvana.com/',                   imageUrl: 'https://townsquare.media/site/366/files/2014/11/Nirvana.jpg?w=780&q=75',                placement: 56, seed: 13, abbreviation: 'Nirvana', sponsor: 'David Soto' },
-      { id: 57, name: 'Silversun Pickups',            url: 'https://silversunpickups.com/',              imageUrl: 'https://i.imgur.com/fVt6a31.jpg?1',                                                    placement: 57, seed: 6,  abbreviation: 'SSPU',    sponsor: 'Bruce Grant' },
-      { id: 58, name: 'The Vaccines',                 url: 'https://www.thevaccines.com/',               imageUrl: 'https://images.squarespace-cdn.com/content/v1/5b0dd7581aef1d319395b854/edbba1a1-eeac-4aea-8650-de6b23fccd38/The+Vaccines+Credit+WRENNE+EVANS+LEAD+1.jpeg?format=2500w', placement: 58, seed: 11, abbreviation: 'Vaccins', sponsor: 'Jeanne Martin' },
-      { id: 59, name: 'LCD Soundsystem',              url: 'http://lcdsoundsystem.com/main/.',           imageUrl: 'https://i.imgur.com/cLn6mi9.jpg?1',                                                    placement: 59, seed: 3,  abbreviation: 'LCDSyst', sponsor: 'Liz Whelan' },
-      { id: 60, name: 'Future Islands',               url: 'https://www.future-islands.com/',            imageUrl: 'https://i.imgur.com/Dx5Xa9h.jpg',                                                      placement: 60, seed: 14, abbreviation: 'FtrIsld', sponsor: 'Patrick Raimondo' },
-      { id: 61, name: 'Gorillaz / Blur',              url: 'https://www.gorillaz.com/',                  imageUrl: 'https://www.nme.com/wp-content/uploads/2020/10/Gorillaz-Press-696x442.jpg',            placement: 61, seed: 7,  abbreviation: 'Gorllaz', sponsor: 'Michael Clarke' },
-      { id: 62, name: 'The Decemberists',             url: 'https://www.decemberists.com/',              imageUrl: 'https://i.imgur.com/y1o6zcO.jpeg',                                                     placement: 62, seed: 10, abbreviation: 'Dcmbrst', sponsor: 'Danielle Nutt' },
-      { id: 63, name: 'Mannequin Pussy',              url: 'https://mannequinpussy.com/',                imageUrl: 'https://i.imgur.com/lTlW8rb.jpg?1',                                                    placement: 63, seed: 2,  abbreviation: 'MnqnPsy', sponsor: 'George White' },
-      { id: 64, name: 'Speedy Ortiz',                 url: 'https://www.speedyortiz.com/',               imageUrl: 'https://images.squarespace-cdn.com/content/v1/61631bed8f757b7efbf4b1a6/4257c52b-12e5-4ab8-82c9-7ac49e0c2b20/Speedy+Ortiz+by+Shervin+Lainez.jpg?format=2500w', placement: 64, seed: 15, abbreviation: 'SpdyOtz', sponsor: 'Jeffrey Seltzer' },
+      { id: 1,  name: 'Japanese Breakfast',           url: 'http://japanesebreakfast.rocks/',            placement: 1,  seed: 1,  abbreviation: 'JBrekie', sponsor: 'Dave Mooney' },
+      { id: 2,  name: 'Charly Bliss',                 url: 'https://charlybliss.os.fan/',                placement: 2,  seed: 16, abbreviation: 'ChlyBls', sponsor: 'Wendy Kessler' },
+      { id: 3,  name: 'The Wombats',                  url: 'https://www.thewombats.co.uk/', placement: 3, seed: 8, abbreviation: 'Wombats', sponsor: 'David Cohen' },
+      { id: 4,  name: 'Japandroids',                  url: 'https://japandroids.com/', placement: 4, seed: 9, abbreviation: 'Jpndrds', sponsor: 'Vincent Smith' },
+      { id: 5,  name: 'The Clash',                    url: 'https://www.theclash.com/',               placement: 5,  seed: 5,  abbreviation: 'Clash',   sponsor: 'Vincent Smith' },
+      { id: 6,  name: 'Cake',                         url: 'https://www.cakemusic.com/', placement: 6, seed: 12, abbreviation: 'Cake', sponsor: 'Orlan Santos' },
+      { id: 7,  name: 'CHVRCHES',                     url: 'http://www.chvrch.es/', placement: 7, seed: 4, abbreviation: 'CHVRCHS', sponsor: 'Marisa Lumino' },
+      { id: 8,  name: 'Sylvan Esso',                  url: 'https://www.sylvanesso.com/', placement: 8, seed: 13, abbreviation: 'SlvnEso', sponsor: 'David Cohen' },
+      { id: 9,  name: 'The Linda Lindas',             url: 'https://www.thelindalindas.com/', placement: 9, seed: 6, abbreviation: 'Lindas', sponsor: 'Brian Osborn' },
+      { id: 10, name: 'Ben Folds (Five)',              url: 'https://www.benfolds.com/',                          placement: 10, seed: 11, abbreviation: 'BenFlds', sponsor: 'Thomas Rife' },
+      { id: 11, name: 'Beastie Boys',                 url: 'http://beastieboys.com/',                                                    placement: 11, seed: 3,  abbreviation: 'Beastie', sponsor: 'Jennifer Kondracki' },
+      { id: 12, name: 'Daft Punk',                    url: 'https://daftpunk.com/',                                                    placement: 12, seed: 14, abbreviation: 'DaftPnk', sponsor: 'Andrew Dippell' },
+      { id: 13, name: 'The War on Drugs',             url: 'http://www.thewarondrugs.net/home',                                                    placement: 13, seed: 7,  abbreviation: 'WrOnDrg', sponsor: 'Jason Rohde' },
+      { id: 14, name: 'Interpol',                     url: 'https://www.interpolnyc.com/',                                                      placement: 14, seed: 10, abbreviation: 'Interpl', sponsor: 'Dave Mazzone' },
+      { id: 15, name: 'Radiohead / The Smile',        url: 'https://radiohead.com/',               placement: 15, seed: 2,  abbreviation: 'Rdohead', sponsor: 'Mary Holman' },
+      { id: 16, name: 'Nada Surf',                    url: 'https://www.nadasurf.com/',                placement: 16, seed: 15, abbreviation: 'NadaSrf', sponsor: 'Jennifer Kondracki' },
+      { id: 17, name: 'Fontaines D.C.',               url: 'https://fontainesdc.com/',                                                      placement: 17, seed: 1,  abbreviation: 'FntnsDC', sponsor: 'Jim McAndrew' },
+      { id: 18, name: 'Caroline Rose',                url: 'https://www.carolinerosemusic.com/',                                                      placement: 18, seed: 16, abbreviation: 'ClnRose', sponsor: 'Scott Hemmons' },
+      { id: 19, name: 'Kurt Vile',                    url: 'https://www.kurtvile.com/', placement: 19, seed: 8, abbreviation: 'KrtVile', sponsor: 'Andrew Gribbin' },
+      { id: 20, name: 'Alvvays',                      url: 'https://alvvays.com/', placement: 20, seed: 9, abbreviation: 'Alvvays', sponsor: 'Gordon Lung' },
+      { id: 21, name: 'Beabadoobee',                  url: 'https://www.beabadoobee.com/',                                                      placement: 21, seed: 5,  abbreviation: 'Bbadbee', sponsor: 'Michael Cunningham' },
+      { id: 22, name: 'The Strokes',                  url: 'http://www.thestrokes.com',                       placement: 22, seed: 12, abbreviation: 'Strokes', sponsor: 'Steve Hrobsky' },
+      { id: 23, name: 'Against Me! / Laura Jane Grace', url: 'https://www.laurajanegrace.com/',                                                      placement: 23, seed: 4,  abbreviation: 'AgnstMe', sponsor: 'Richard Crespo' },
+      { id: 24, name: 'Car Seat Headrest',            url: 'https://carseatheadrest.com/', placement: 24, seed: 13, abbreviation: 'CSHR', sponsor: 'Michael Ferry' },
+      { id: 25, name: 'Spoon',                        url: 'http://www.spoontheband.com',                                                    placement: 25, seed: 6,  abbreviation: 'Spoon',   sponsor: 'David & Pat Schaeffer' },
+      { id: 26, name: 'Arctic Monkeys',               url: 'http://www.arcticmonkeys.com',                                                    placement: 26, seed: 11, abbreviation: 'ArcMnky', sponsor: 'Eric Rusack' },
+      { id: 27, name: 'Yeah Yeah Yeahs',              url: 'http://www.yeahyeahyeahs.com/', placement: 27, seed: 3, abbreviation: 'YYYs', sponsor: 'Steve Quirk' },
+      { id: 28, name: 'Foo Fighters',                 url: 'https://foofighters.com/',                     placement: 28, seed: 14, abbreviation: 'FooFtrs', sponsor: 'Meredith Drumheller' },
+      { id: 29, name: 'Nine Inch Nails',              url: 'https://www.nin.com/',                        placement: 29, seed: 7,  abbreviation: 'NIN',     sponsor: 'Image360 of the Main Line (David Friedenberg)' },
+      { id: 30, name: 'Beach Bunny',                  url: 'https://www.beachbunnymusic.com/', placement: 30, seed: 10, abbreviation: 'BchBnny', sponsor: 'Karen Isaacman' },
+      { id: 31, name: 'The Cure',                     url: 'https://www.thecure.com/', placement: 31, seed: 2, abbreviation: 'Cure', sponsor: 'Dennis Beach' },
+      { id: 32, name: 'Bloc Party',                   url: 'https://blocparty.com/', placement: 32, seed: 15, abbreviation: 'BlcPrty', sponsor: 'Joe Tittermary' },
+      { id: 33, name: 'Jack White / White Stripes',   url: 'http://www.jackwhiteiii.com', placement: 33, seed: 1, abbreviation: 'JackWht', sponsor: 'Damian Petrone' },
+      { id: 34, name: 'Sheer Mag',                    url: 'https://www.sheer-mag.com/', placement: 34, seed: 16, abbreviation: 'SherMag', sponsor: 'Liz Whelan' },
+      { id: 35, name: 'IDLES',                        url: 'https://www.idlesband.com/', placement: 35, seed: 8, abbreviation: 'IDLES', sponsor: 'Thomas Rife' },
+      { id: 36, name: 'The National',                 url: 'https://americanmary.com/',                                                      placement: 36, seed: 9,  abbreviation: 'Nationl', sponsor: 'Steve Hrobsky' },
+      { id: 37, name: 'Garbage',                      url: 'http://www.garbage.com',                   placement: 37, seed: 5,  abbreviation: 'Garbage', sponsor: 'David Johnson' },
+      { id: 38, name: 'Franz Ferdinand',              url: 'https://franzferdinand.com/',    placement: 38, seed: 12, abbreviation: 'FrnzFrd', sponsor: 'Daniel Rowan' },
+      { id: 39, name: 'Death Cab For Cutie',          url: 'https://www.deathcabforcutie.com/', placement: 39, seed: 4, abbreviation: 'DCfC', sponsor: 'Bill Syrros' },
+      { id: 40, name: 'Mitski',                       url: 'https://mitski.com/',                                                    placement: 40, seed: 13, abbreviation: 'Mitski',  sponsor: 'Eric Rusack' },
+      { id: 41, name: 'The Beths',                    url: 'https://thebeths.com/',                                           placement: 41, seed: 6,  abbreviation: 'Beths',   sponsor: 'Martin Falasco' },
+      { id: 42, name: 'The New Pornographers',        url: 'https://thenewpornographers.com/',                                                      placement: 42, seed: 11, abbreviation: 'NewPrno', sponsor: 'Jakey Greenberg' },
+      { id: 43, name: 'Vampire Weekend',              url: 'http://www.vampireweekend.com',                                                     placement: 43, seed: 3,  abbreviation: 'VmprWkd', sponsor: 'Michael Lebovitz' },
+      { id: 44, name: 'Ramones',                      url: 'https://www.ramones.com/',                      placement: 44, seed: 14, abbreviation: 'Ramones', sponsor: 'Brandon Pinzini' },
+      { id: 45, name: 'TV On The Radio',              url: 'https://tvontheradio.com/',                                                      placement: 45, seed: 7,  abbreviation: 'TVOTR',   sponsor: 'George White' },
+      { id: 46, name: 'Talking Heads / David Byrne',  url: 'http://davidbyrne.com/',                                                      placement: 46, seed: 10, abbreviation: 'TlkgHds', sponsor: 'Terry Lautin' },
+      { id: 47, name: 'R.E.M.',                       url: 'https://remhq.com/',                                                      placement: 47, seed: 2,  abbreviation: 'REM',     sponsor: 'Image360 of the Main Line (David Friedenberg)' },
+      { id: 48, name: 'The Hives',                    url: 'https://www.thehives.com/', placement: 48, seed: 15, abbreviation: 'Hives', sponsor: 'Meredith Drumheller' },
+      { id: 49, name: 'St. Vincent',                  url: 'http://www.ilovestvincent.com/', placement: 49, seed: 1, abbreviation: 'StVnct', sponsor: 'Lisa Wetherby' },
+      { id: 50, name: 'Yard Act',                     url: 'https://www.yardactors.com/', placement: 50, seed: 16, abbreviation: 'YardAct', sponsor: 'Gregory Itts' },
+      { id: 51, name: 'Metric',                       url: 'http://www.ilovemetric.com',                                                    placement: 51, seed: 8,  abbreviation: 'Metric',  sponsor: 'Danielle Nutt' },
+      { id: 52, name: 'Guster',                       url: 'https://www.guster.com/',                                                      placement: 52, seed: 9,  abbreviation: 'Guster',  sponsor: 'Michele Gurz' },
+      { id: 53, name: 'Waxahatchee',                  url: 'https://www.waxahatchee.com/',                                                      placement: 53, seed: 5,  abbreviation: 'Wxhtche', sponsor: 'Madge & Joe Rassman' },
+      { id: 54, name: 'Tame Impala',                  url: 'https://official.tameimpala.com/',                                                    placement: 54, seed: 12, abbreviation: 'TmImpla', sponsor: 'Jeffrey Seltzer' },
+      { id: 55, name: 'Beck',                         url: 'http://www.beck.com',                                                    placement: 55, seed: 4,  abbreviation: 'Beck',    sponsor: 'Wendy Kessler' },
+      { id: 56, name: 'Nirvana',                      url: 'https://www.nirvana.com/',                placement: 56, seed: 13, abbreviation: 'Nirvana', sponsor: 'David Soto' },
+      { id: 57, name: 'Silversun Pickups',            url: 'https://silversunpickups.com/',                                                    placement: 57, seed: 6,  abbreviation: 'SSPU',    sponsor: 'Bruce Grant' },
+      { id: 58, name: 'The Vaccines',                 url: 'https://www.thevaccines.com/', placement: 58, seed: 11, abbreviation: 'Vaccins', sponsor: 'Jeanne Martin' },
+      { id: 59, name: 'LCD Soundsystem',              url: 'http://lcdsoundsystem.com/main/.',                                                    placement: 59, seed: 3,  abbreviation: 'LCDSyst', sponsor: 'Liz Whelan' },
+      { id: 60, name: 'Future Islands',               url: 'https://www.future-islands.com/',                                                      placement: 60, seed: 14, abbreviation: 'FtrIsld', sponsor: 'Patrick Raimondo' },
+      { id: 61, name: 'Gorillaz / Blur',              url: 'https://www.gorillaz.com/',            placement: 61, seed: 7,  abbreviation: 'Gorllaz', sponsor: 'Michael Clarke' },
+      { id: 62, name: 'The Decemberists',             url: 'https://www.decemberists.com/',                                                     placement: 62, seed: 10, abbreviation: 'Dcmbrst', sponsor: 'Danielle Nutt' },
+      { id: 63, name: 'Mannequin Pussy',              url: 'https://mannequinpussy.com/',                                                    placement: 63, seed: 2,  abbreviation: 'MnqnPsy', sponsor: 'George White' },
+      { id: 64, name: 'Speedy Ortiz',                 url: 'https://www.speedyortiz.com/', placement: 64, seed: 15, abbreviation: 'SpdyOtz', sponsor: 'Jeffrey Seltzer' },
     ];
 
-    console.log('🎸 Creating 64 MRM bands...');
-    const bandIdMap = new Map<number, number>(); // legacyId → Payload id
+    console.log('🎸 Creating 64 MRM groups...');
+    const bandIdMap = new Map<number, number>(); // legacy seed id → Payload id
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < mrmBands.length; i += 1) {
       const b = mrmBands[i];
       const created = await payload.create({
-        collection: 'madness-bands',
+        collection: 'modern-rock-madness-groups',
         data: {
           tournament: tournamentId,
           name: b.name,
           url: b.url,
-          imageUrl: b.imageUrl,
           placement: b.placement,
           seed: b.seed,
           abbreviation: b.abbreviation,
           sponsor: b.sponsor,
-          legacyId: b.id,
         },
       });
       bandIdMap.set(b.id, typeof created.id === 'number' ? created.id : parseInt(created.id, 10));
@@ -597,7 +593,7 @@ async function seed() {
     };
 
     // ── 63 matches from ynot_db.sql `mrm_matches` ────────────────────────────
-    // Columns: legacyId, region, band1LegacyId, band1Votes, band2LegacyId,
+    // Columns: matchNum, region, group1LegacyId, group1Votes, group2LegacyId,
     //          band2Votes, startTime, endTime, winnerLegacyId
     // All matches are complete (showScore=true, winner set).
     const mrmMatchRows: [number, number, number, number, number, number, string, string, number][] = [
@@ -677,13 +673,13 @@ async function seed() {
     ];
 
     console.log('⚔️  Creating 63 MRM matches...');
-    const matchIdMap = new Map<number, number>(); // legacyId → Payload id
+    const matchIdMap = new Map<number, number>(); // match number → Payload id
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < mrmMatchRows.length; i += 1) {
       const [mId, region, b1, b1v, b2, b2v, start, end, winner] = mrmMatchRows[i];
       const created = await payload.create({
-        collection: 'madness-matches',
+        collection: 'modern-rock-madness-matches',
         data: {
           tournament: tournamentId,
           matchNumber: mId,
@@ -697,7 +693,6 @@ async function seed() {
           endTime: end,
           winner: bandIdMap.get(winner),
           showScore: true,
-          legacyId: mId,
         },
       });
       matchIdMap.set(mId, typeof created.id === 'number' ? created.id : parseInt(created.id, 10));
@@ -723,7 +718,7 @@ async function seed() {
     for (let i = 0; i < mrmFlow.length; i += 1) {
       const [fromId, toId] = mrmFlow[i];
       await payload.update({
-        collection: 'madness-matches',
+        collection: 'modern-rock-madness-matches',
         id: matchIdMap.get(fromId) as number,
         data: { nextMatch: matchIdMap.get(toId) },
       });

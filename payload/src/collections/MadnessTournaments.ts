@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
-export const MadnessTournaments: CollectionConfig = {
-  slug: 'madness-tournaments',
+export const ModernRockMadnessTournaments: CollectionConfig = {
+  slug: 'modern-rock-madness-tournaments',
   labels: {
     singular: 'Tournament',
     plural: 'Tournaments',
@@ -75,31 +75,16 @@ export const MadnessTournaments: CollectionConfig = {
       },
     },
     {
-      name: 'bannerImageUrl',
-      type: 'text',
+      name: 'bannerImage',
+      type: 'upload',
+      relationTo: 'media',
       admin: {
-        description: 'URL to the tournament banner image',
-      },
-    },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-      },
-    },
-    {
-      name: 'migratedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Timestamp of migration from MySQL',
+        description: 'Tournament banner image',
       },
     },
   ],
   timestamps: true,
 };
+
+/** @deprecated Use ModernRockMadnessTournaments */
+export const MadnessTournaments = ModernRockMadnessTournaments;

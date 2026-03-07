@@ -13,7 +13,7 @@ interface MatchActions {
 }
 
 const logEvent = async (matchId: string, eventType: string, snapshot: object) => {
-  await fetch('/api/madness-match-events', {
+  await fetch('/api/modern-rock-madness-match-events', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ match: matchId, eventType, snapshot }),
@@ -50,7 +50,7 @@ export const useMatchActions = (
     const votesField = bandKey === 'band1' ? 'band1Votes' : 'band2Votes';
     const newCount = match[votesField] + 1;
     await withSaving('Manual vote', async () => {
-      const res = await fetch(`/api/madness-matches/${match.id}`, {
+      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [votesField]: newCount }),
@@ -73,7 +73,7 @@ export const useMatchActions = (
       const winnerId = match.band1Votes > match.band2Votes ? band1.id : band2.id;
 
       // Close the match: set winner and enable public score display
-      const res = await fetch(`/api/madness-matches/${match.id}`, {
+      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ winner: winnerId, showScore: true }),
@@ -90,7 +90,7 @@ export const useMatchActions = (
           openSlot = 'band2';
         }
         if (openSlot) {
-          const advRes = await fetch(`/api/madness-matches/${nextMatchRef.id}`, {
+          const advRes = await fetch(`/api/modern-rock-madness-matches/${nextMatchRef.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ [openSlot]: winnerId }),
@@ -120,7 +120,7 @@ export const useMatchActions = (
       new Date(match.endTime).getTime() + OVERTIME_MINUTES * 60 * 1000,
     ).toISOString();
     await withSaving('Extend overtime', async () => {
-      const res = await fetch(`/api/madness-matches/${match.id}`, {
+      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ endTime: newEnd }),

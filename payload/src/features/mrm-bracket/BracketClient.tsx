@@ -6,7 +6,7 @@ import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
 import type {
   BracketMatch,
-  MadnessTournamentSummary,
+  MrmTournamentSummary,
   MatchesApiResponse,
   TournamentApiResponse,
 } from './types';
@@ -47,7 +47,7 @@ const groupByRound = (matches: BracketMatch[]): Map<string, BracketMatch[]> => {
 };
 
 export const BracketClient: React.FC = () => {
-  const [tournament, setTournament] = useState<MadnessTournamentSummary | null>(null);
+  const [tournament, setTournament] = useState<MrmTournamentSummary | null>(null);
   const [matches, setMatches] = useState<BracketMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +55,7 @@ export const BracketClient: React.FC = () => {
 
   useEffect(() => {
     setStepNav([
-      { label: 'Modern Rock Madness', url: '/admin/collections/madness-tournaments' },
+      { label: 'Modern Rock Madness', url: '/admin/collections/modern-rock-madness-tournaments' },
       { label: 'Bracket Overview' },
     ]);
   }, [setStepNav]);
@@ -63,7 +63,7 @@ export const BracketClient: React.FC = () => {
   const fetchBracket = useCallback(async () => {
     try {
       const tRes = await fetch(
-        '/api/madness-tournaments?where[status][equals]=active&limit=1',
+        '/api/modern-rock-madness-tournaments?where[status][equals]=active&limit=1',
       );
       if (!tRes.ok) throw new Error('Failed to fetch tournament');
       const tData: TournamentApiResponse = await tRes.json();
@@ -72,7 +72,7 @@ export const BracketClient: React.FC = () => {
 
       if (activeTournament) {
         const mRes = await fetch(
-          `/api/madness-matches?where[tournament][equals]=${activeTournament.id}&limit=200&sort=matchNumber&depth=1`,
+          `/api/modern-rock-madness-matches?where[tournament][equals]=${activeTournament.id}&limit=200&sort=matchNumber&depth=1`,
         );
         if (!mRes.ok) throw new Error('Failed to fetch matches');
         const mData: MatchesApiResponse = await mRes.json();
@@ -138,7 +138,7 @@ export const BracketClient: React.FC = () => {
                 return (
                   <a
                     key={match.id}
-                    href={`/admin/collections/madness-matches/${match.id}`}
+                    href={`/admin/collections/modern-rock-madness-matches/${match.id}`}
                     className={`bracket-client__match bracket-client__match--${status}`}
                     aria-label={`Match ${match.matchNumber}: ${getBandLabel(match.band1)} vs ${getBandLabel(match.band2)}`}
                   >

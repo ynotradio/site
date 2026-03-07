@@ -1,17 +1,16 @@
-export interface MadnessBandSummary {
+export interface MrmGroupSummary {
   id: string;
   name: string;
   abbreviation?: string;
   seed: number;
   placement: number;
-  imageUrl?: string;
 }
 
 export interface NextMatchRef {
   id: string;
   matchNumber: number;
-  band1?: MadnessBandSummary | null;
-  band2?: MadnessBandSummary | null;
+  band1?: MrmGroupSummary | null;
+  band2?: MrmGroupSummary | null;
 }
 
 export interface LiveMatch {
@@ -19,13 +18,13 @@ export interface LiveMatch {
   matchNumber: number;
   round: string;
   region?: number;
-  band1?: MadnessBandSummary | null;
-  band2?: MadnessBandSummary | null;
+  band1?: MrmGroupSummary | null;
+  band2?: MrmGroupSummary | null;
   band1Votes: number;
   band2Votes: number;
   startTime: string;
   endTime: string;
-  winner?: MadnessBandSummary | null;
+  winner?: MrmGroupSummary | null;
   showScore: boolean;
   nextMatch?: NextMatchRef | string | null;
   sponsor?: string;
@@ -38,3 +37,6 @@ export interface MatchApiResponse {
 }
 
 export type MatchStatus = 'upcoming' | 'live' | 'overtime' | 'closed';
+
+/** @deprecated use MrmGroupSummary */
+export type MadnessBandSummary = MrmGroupSummary;

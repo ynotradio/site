@@ -1,17 +1,18 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
-export const MadnessBands: CollectionConfig = {
-  slug: 'madness-bands',
+export const ModernRockMadnessGroups: CollectionConfig = {
+  slug: 'modern-rock-madness-groups',
   labels: {
-    singular: 'Band',
-    plural: 'Bands',
+    singular: 'Group',
+    plural: 'Groups',
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'seed', 'placement', 'tournament', 'sponsor'],
+    defaultColumns: ['name', 'artists', 'seed', 'placement', 'tournament'],
     group: 'Modern Rock Madness',
-    description: 'Tournament participants (64 bands per tournament).',
+    description:
+      'Tournament participants. Each group can represent one or more artists (e.g., a supergroup).',
   },
   access: {
     read: () => true,
@@ -23,19 +24,35 @@ export const MadnessBands: CollectionConfig = {
     {
       name: 'tournament',
       type: 'relationship',
-      relationTo: 'madness-tournaments',
+      relationTo: 'modern-rock-madness-tournaments',
       required: true,
       index: true,
       admin: {
-        description: 'Tournament this band belongs to',
+        description: 'Tournament this group belongs to',
+      },
+    },
+    {
+      name: 'artists',
+      type: 'relationship',
+      relationTo: 'artists',
+      hasMany: true,
+      admin: {
+        description: 'Artist(s) competing as this group (e.g., Jack White + White Stripes → one group). Name and image below override artist record values when set.',
       },
     },
     {
       name: 'name',
       type: 'text',
-      required: true,
       admin: {
-        description: 'Band name',
+        description: 'Optional display name override. Useful for supergroups (e.g., "Jack White / White Stripes"). If blank, the name from the primary artist record is used.',
+      },
+    },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description: 'Optional image override. If blank, the primary artist photo is used.',
       },
     },
     {
@@ -50,14 +67,7 @@ export const MadnessBands: CollectionConfig = {
       name: 'url',
       type: 'text',
       admin: {
-        description: 'Band website URL',
-      },
-    },
-    {
-      name: 'imageUrl',
-      type: 'text',
-      admin: {
-        description: 'Band image URL',
+        description: 'Group or primary artist website URL',
       },
     },
     {
@@ -81,28 +91,12 @@ export const MadnessBands: CollectionConfig = {
       name: 'sponsor',
       type: 'text',
       admin: {
-        description: 'Band sponsor name',
-      },
-    },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-      },
-    },
-    {
-      name: 'migratedAt',
-      type: 'date',
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Timestamp of migration from MySQL',
+        description: 'Group sponsor name',
       },
     },
   ],
   timestamps: true,
 };
+
+/** @deprecated Use ModernRockMadnessGroups */
+export const MadnessBands = ModernRockMadnessGroups;

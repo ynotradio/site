@@ -31,11 +31,11 @@
 | 19       | YearEndPolls                 | `year_end_polls`                  | 🔲 Todo     | Annual poll config                                                                     |
 | 20       | YearEndPollCategories        | `year_end_poll_categories`        | 🔲 Todo     | Poll categories                                                                        |
 | 21       | YearEndPollVotes             | `year_end_poll_votes`             | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
-| 22       | ModernRockMadnessTournaments | `madness-tournaments`             | ✅ Complete | Tournament config (slug: madness-tournaments)                                          |
-| 23       | ModernRockMadnessGroups      | `madness-bands`                   | ✅ Complete | Tournament participants — implemented as `madness-bands` (name/seed/placement/sponsor) |
-| 24       | ModernRockMadnessMatches     | `madness-matches`                 | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
-| 25       | ModernRockMadnessVotes       | `madness-votes`                   | ✅ Complete | User votes (PostgreSQL via Payload)                                                    |
-| 26       | ModernRockMadnessEvents      | `madness-match-events`            | ✅ Complete | Audit log; event types: overtime_extended, rematch, admin_vote, match_closed           |
+| 22       | ModernRockMadnessTournaments | `modern-rock-madness-tournaments` | ✅ Complete | Tournament config                                                                      |
+| 23       | ModernRockMadnessGroups      | `modern-rock-madness-groups`      | ✅ Complete | Tournament participants — groups of one or more artists; optional name/image overrides |
+| 24       | ModernRockMadnessMatches     | `modern-rock-madness-matches`     | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
+| 25       | ModernRockMadnessVotes       | `modern-rock-madness-votes`       | ✅ Complete | Auth0-authenticated user votes; `userId` used for duplicate prevention                 |
+| 26       | ModernRockMadnessMatchEvents | `modern-rock-madness-match-events`| ✅ Complete | Audit log; event types: overtime_extended, rematch, admin_vote, match_closed           |
 
 ### Summary
 

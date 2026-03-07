@@ -22,11 +22,11 @@ import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
-import { MadnessTournaments } from './payload/src/collections/MadnessTournaments';
-import { MadnessBands } from './payload/src/collections/MadnessBands';
-import { MadnessMatches } from './payload/src/collections/MadnessMatches';
-import { MadnessVotes } from './payload/src/collections/MadnessVotes';
-import { MadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
+import { ModernRockMadnessTournaments } from './payload/src/collections/MadnessTournaments';
+import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands';
+import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
+import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
+import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -149,11 +149,11 @@ export default buildConfig({
     Posts,
     CdOfTheWeek,
     YearEndPollResults,
-    MadnessTournaments,
-    MadnessBands,
-    MadnessMatches,
-    MadnessVotes,
-    MadnessMatchEvents,
+    ModernRockMadnessTournaments,
+    ModernRockMadnessGroups,
+    ModernRockMadnessMatches,
+    ModernRockMadnessVotes,
+    ModernRockMadnessMatchEvents,
   ],
   plugins: [
     cloudStoragePlugin({

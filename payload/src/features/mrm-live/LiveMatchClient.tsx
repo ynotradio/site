@@ -77,7 +77,7 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
       <span className="live-match-client__round">
         Round {match.round} · Match #{match.matchNumber}
       </span>
-      <a href={`/admin/collections/madness-matches/${match.id}`} className="live-match-client__edit-link">
+      <a href={`/admin/collections/modern-rock-madness-matches/${match.id}`} className="live-match-client__edit-link">
         Edit Match →
       </a>
     </div>
@@ -157,7 +157,7 @@ export const LiveMatchClient: React.FC = () => {
 
   useEffect(() => {
     setStepNav([
-      { label: 'Modern Rock Madness', url: '/admin/collections/madness-matches' },
+      { label: 'Modern Rock Madness', url: '/admin/collections/modern-rock-madness-matches' },
       { label: 'Live Match' },
     ]);
   }, [setStepNav]);
@@ -166,7 +166,7 @@ export const LiveMatchClient: React.FC = () => {
     try {
       const now = new Date().toISOString();
       // depth=2 to populate nextMatch.band1/band2 for bracket progression
-      const url = `/api/madness-matches?where[tournament.status][equals]=active&where[startTime][less_than_equal]=${encodeURIComponent(now)}&sort=-startTime&limit=1&depth=2`;
+      const url = `/api/modern-rock-madness-matches?where[tournament.status][equals]=active&where[startTime][less_than_equal]=${encodeURIComponent(now)}&sort=-startTime&limit=1&depth=2`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Failed to fetch match');
       const data: MatchApiResponse = await res.json();

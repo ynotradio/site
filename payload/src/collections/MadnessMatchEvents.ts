@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
-export const MadnessMatchEvents: CollectionConfig = {
-  slug: 'madness-match-events',
+export const ModernRockMadnessMatchEvents: CollectionConfig = {
+  slug: 'modern-rock-madness-match-events',
   labels: {
     singular: 'Match Event',
     plural: 'Match Events',
@@ -23,7 +23,7 @@ export const MadnessMatchEvents: CollectionConfig = {
     {
       name: 'match',
       type: 'relationship',
-      relationTo: 'madness-matches',
+      relationTo: 'modern-rock-madness-matches',
       required: true,
       index: true,
       admin: {
@@ -56,3 +56,6 @@ export const MadnessMatchEvents: CollectionConfig = {
   ],
   timestamps: true,
 };
+
+/** @deprecated Use ModernRockMadnessMatchEvents */
+export const MadnessMatchEvents = ModernRockMadnessMatchEvents;

@@ -1,4 +1,4 @@
-export interface MadnessTournamentSummary {
+export interface MrmTournamentSummary {
   id: string;
   name: string;
   year: number;
@@ -6,7 +6,7 @@ export interface MadnessTournamentSummary {
   startDate: string;
 }
 
-export interface MadnessBandSummary {
+export interface MrmGroupSummary {
   id: string;
   name: string;
   abbreviation?: string;
@@ -19,17 +19,17 @@ export interface BracketMatch {
   matchNumber: number;
   round: string;
   region?: number;
-  band1?: MadnessBandSummary | null;
-  band2?: MadnessBandSummary | null;
+  band1?: MrmGroupSummary | null;
+  band2?: MrmGroupSummary | null;
   band1Votes: number;
   band2Votes: number;
   startTime: string;
   endTime: string;
-  winner?: MadnessBandSummary | null;
+  winner?: MrmGroupSummary | null;
 }
 
 export interface TournamentApiResponse {
-  docs: MadnessTournamentSummary[];
+  docs: MrmTournamentSummary[];
   totalDocs: number;
 }
 
@@ -46,3 +46,9 @@ export const ROUND_LABELS: Record<string, string> = {
   5: 'Final 4 (4→2)',
   6: 'Championship',
 };
+
+/** @deprecated use MrmTournamentSummary */
+export type MadnessTournamentSummary = MrmTournamentSummary;
+
+/** @deprecated use MrmGroupSummary */
+export type MadnessBandSummary = MrmGroupSummary;
