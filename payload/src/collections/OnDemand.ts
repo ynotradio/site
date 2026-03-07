@@ -89,18 +89,31 @@ export const OnDemand: CollectionConfig = {
       },
     },
     {
-      name: 'audioUrl',
-      type: 'text',
-      admin: {
-        description: 'Audio stream identifier (e.g., OpenDrive ID)',
-      },
-    },
-    {
-      name: 'source',
-      type: 'text',
-      admin: {
-        description: 'Source platform (e.g., opendrive)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'audioUrl',
+          type: 'text',
+          admin: {
+            description: 'Audio stream identifier (e.g., OpenDrive file ID)',
+            placeholder: 'file-id or URL',
+            width: '70%',
+          },
+        },
+        {
+          name: 'source',
+          type: 'select',
+          options: [
+            { label: 'OpenDrive', value: 'opendrive' },
+            { label: 'SoundCloud', value: 'soundcloud' },
+            { label: 'Other', value: 'other' },
+          ],
+          admin: {
+            description: 'Audio source platform',
+            width: '30%',
+          },
+        },
+      ],
     },
     {
       name: 'legacyId',

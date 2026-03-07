@@ -53,21 +53,28 @@ export const Records: CollectionConfig = {
       },
     },
     {
-      name: 'label',
-      type: 'text',
-      admin: {
-        description: 'Record label',
-      },
-    },
-    {
-      name: 'releaseDate',
-      type: 'date',
-      admin: {
-        description: 'Date the album was released',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          admin: {
+            description: 'Record label',
+            width: '60%',
+          },
         },
-      },
+        {
+          name: 'releaseDate',
+          type: 'date',
+          admin: {
+            description: 'Release date',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '40%',
+          },
+        },
+      ],
     },
     {
       name: 'coverImage',

@@ -44,6 +44,7 @@ export const Posts: CollectionConfig = {
       unique: true,
       index: true,
       admin: {
+        position: 'sidebar',
         description: 'URL-friendly slug (auto-generated from headline if not provided)',
       },
       hooks: {
@@ -66,26 +67,33 @@ export const Posts: CollectionConfig = {
       },
     },
     {
-      name: 'startDate',
-      type: 'date',
-      required: true,
-      admin: {
-        description: 'When the post should start displaying',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'startDate',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'Start displaying',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '50%',
+          },
         },
-      },
-    },
-    {
-      name: 'endDate',
-      type: 'date',
-      required: true,
-      admin: {
-        description: 'When the post should stop displaying',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+        {
+          name: 'endDate',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'Stop displaying',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '50%',
+          },
         },
-      },
+      ],
     },
     {
       name: 'content',
@@ -122,6 +130,7 @@ export const Posts: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Link URL when clicking the story image (legacy pic_url)',
+        placeholder: 'https://',
       },
     },
     {
@@ -129,7 +138,8 @@ export const Posts: CollectionConfig = {
       type: 'number',
       defaultValue: 0,
       admin: {
-        description: 'Display priority (higher numbers appear first)',
+        position: 'sidebar',
+        description: 'Display priority (higher = first)',
       },
     },
     {

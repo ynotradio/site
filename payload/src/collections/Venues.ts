@@ -29,25 +29,33 @@ export const Venues: CollectionConfig = {
     },
     slugField(),
     {
-      name: 'address',
-      type: 'text',
-      admin: {
-        description: 'Street address',
-      },
-    },
-    {
-      name: 'city',
-      type: 'text',
-      index: true,
-      admin: {
-        description: 'City name',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'address',
+          type: 'text',
+          admin: {
+            description: 'Street address',
+            width: '60%',
+          },
+        },
+        {
+          name: 'city',
+          type: 'text',
+          index: true,
+          admin: {
+            description: 'City',
+            width: '40%',
+          },
+        },
+      ],
     },
     {
       name: 'website',
       type: 'text',
       admin: {
         description: 'Venue website URL',
+        placeholder: 'https://',
       },
     },
 

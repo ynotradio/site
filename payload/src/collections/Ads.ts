@@ -32,26 +32,33 @@ export const Ads: CollectionConfig = {
       },
     },
     {
-      name: 'startDate',
-      type: 'date',
-      required: true,
-      admin: {
-        description: 'When the ad should start displaying',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'startDate',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'Start displaying',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '50%',
+          },
         },
-      },
-    },
-    {
-      name: 'endDate',
-      type: 'date',
-      required: true,
-      admin: {
-        description: 'When the ad should stop displaying',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+        {
+          name: 'endDate',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'Stop displaying',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '50%',
+          },
         },
-      },
+      ],
     },
     {
       name: 'image',
@@ -77,6 +84,7 @@ export const Ads: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'URL where ad should link to',
+        placeholder: 'https://',
       },
     },
     {
@@ -84,7 +92,8 @@ export const Ads: CollectionConfig = {
       type: 'number',
       defaultValue: 0,
       admin: {
-        description: 'Display priority (higher numbers appear first)',
+        position: 'sidebar',
+        description: 'Display priority (higher = first)',
       },
     },
     {

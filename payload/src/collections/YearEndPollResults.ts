@@ -301,14 +301,44 @@ export const YearEndPollResults: CollectionConfig = {
       },
     },
     {
-      name: 'year',
-      type: 'number',
-      required: true,
-      min: 2000,
-      max: 2100,
-      admin: {
-        description: 'The year this poll covers',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'year',
+          type: 'number',
+          required: true,
+          min: 2000,
+          max: 2100,
+          admin: {
+            description: 'Year this poll covers',
+            placeholder: '2025',
+            width: '20%',
+          },
+        },
+        {
+          name: 'pageType',
+          type: 'select',
+          required: true,
+          options: [
+            {
+              label: 'Countdown (Top N Songs/Albums)',
+              value: 'countdown',
+            },
+            {
+              label: 'Poll Results (Multiple Categories)',
+              value: 'poll-results',
+            },
+            {
+              label: 'Staff Picks (DJ Curated)',
+              value: 'staff-picks',
+            },
+          ],
+          admin: {
+            description: 'Type of results page',
+            width: '80%',
+          },
+        },
+      ],
     },
     {
       name: 'slug',
@@ -316,35 +346,15 @@ export const YearEndPollResults: CollectionConfig = {
       required: true,
       unique: true,
       admin: {
-        description: 'URL-friendly identifier (e.g., "top225of2025")',
-      },
-    },
-    {
-      name: 'pageType',
-      type: 'select',
-      required: true,
-      options: [
-        {
-          label: 'Countdown (Top N Songs/Albums)',
-          value: 'countdown',
-        },
-        {
-          label: 'Poll Results (Multiple Categories)',
-          value: 'poll-results',
-        },
-        {
-          label: 'Staff Picks (DJ Curated)',
-          value: 'staff-picks',
-        },
-      ],
-      admin: {
-        description: 'Type of results page',
+        position: 'sidebar',
+        description: 'URL identifier (e.g., "top225of2025")',
       },
     },
     {
       name: 'publishedAt',
       type: 'date',
       admin: {
+        position: 'sidebar',
         description: 'When the results were/will be published',
         date: {
           displayFormat: 'yyyy-MM-dd',

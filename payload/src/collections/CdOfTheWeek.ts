@@ -34,32 +34,39 @@ export const CdOfTheWeek: CollectionConfig = {
       },
     },
     {
+      type: 'row',
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Review date',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '40%',
+          },
+        },
+        {
+          name: 'reviewer',
+          type: 'relationship',
+          relationTo: 'people',
+          admin: {
+            description: 'Reviewer',
+            width: '60%',
+          },
+        },
+      ],
+    },
+    {
       name: 'review',
       type: 'richText',
       editor: lexicalEditor(),
       required: true,
       admin: {
         description: 'Album review content',
-      },
-    },
-    {
-      name: 'reviewer',
-      type: 'relationship',
-      relationTo: 'people',
-      admin: {
-        description: 'Person who reviewed this album',
-      },
-    },
-    {
-      name: 'date',
-      type: 'date',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Date of the review',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
-        },
       },
     },
     {

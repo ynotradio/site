@@ -53,6 +53,7 @@ export const Artists: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Official website URL',
+        placeholder: 'https://',
       },
     },
     {

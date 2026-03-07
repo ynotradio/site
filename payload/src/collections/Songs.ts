@@ -57,6 +57,7 @@ export const Songs: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'URL for streaming the song',
+        placeholder: 'https://',
       },
     },
     {
@@ -74,7 +75,8 @@ export const Songs: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Should this song be featured on the New Music page?',
+        position: 'sidebar',
+        description: 'Feature on the New Music page?',
       },
     },
     {
