@@ -31,16 +31,16 @@
 | 19       | YearEndPolls                 | `year_end_polls`                  | 🔲 Todo     | Annual poll config                                                                     |
 | 20       | YearEndPollCategories        | `year_end_poll_categories`        | 🔲 Todo     | Poll categories                                                                        |
 | 21       | YearEndPollVotes             | `year_end_poll_votes`             | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
-| 22       | ModernRockMadnessTournaments | `modern_rock_madness_tournaments` | 🔲 Todo     | Tournament config                                                                      |
-| 23       | ModernRockMadnessGroups      | `modern_rock_madness_groups`      | 🔲 Todo     | Tournament participants                                                                |
-| 24       | ModernRockMadnessMatches     | `modern_rock_madness_matches`     | 🔲 Todo     | Bracket matchups                                                                       |
-| 25       | ModernRockMadnessVotes       | `modern_rock_madness_votes`       | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
-| 26       | ModernRockMadnessEvents      | `modern_rock_madness_events`      | 🔲 Todo     | Audit log for match admin actions (overtime, rematch, admin vote)                      |
+| 22       | ModernRockMadnessTournaments | `madness-tournaments`             | ✅ Complete | Tournament config (slug: madness-tournaments)                                          |
+| 23       | ModernRockMadnessGroups      | `madness-bands`                   | ✅ Complete | Tournament participants — implemented as `madness-bands` (name/seed/placement/sponsor) |
+| 24       | ModernRockMadnessMatches     | `madness-matches`                 | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
+| 25       | ModernRockMadnessVotes       | `madness-votes`                   | ✅ Complete | User votes (PostgreSQL via Payload)                                                    |
+| 26       | ModernRockMadnessEvents      | `madness-match-events`            | ✅ Complete | Audit log; event types: overtime_extended, rematch, admin_vote, match_closed           |
 
 ### Summary
 
-- **Completed:** 15 collections (all core content types + Year End Poll Results)
-- **Remaining:** 11 collections (voting/tournament systems + audit log)
+- **Completed:** 20 collections (all core content types + Year End Poll Results + all 5 MRM collections)
+- **Remaining:** 6 collections (Top 11 voting system + Year End Poll voting system)
 
 ---
 

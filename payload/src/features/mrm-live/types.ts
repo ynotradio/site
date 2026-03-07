@@ -7,6 +7,13 @@ export interface MadnessBandSummary {
   imageUrl?: string;
 }
 
+export interface NextMatchRef {
+  id: string;
+  matchNumber: number;
+  band1?: MadnessBandSummary | null;
+  band2?: MadnessBandSummary | null;
+}
+
 export interface LiveMatch {
   id: string;
   matchNumber: number;
@@ -20,6 +27,7 @@ export interface LiveMatch {
   endTime: string;
   winner?: MadnessBandSummary | null;
   showScore: boolean;
+  nextMatch?: NextMatchRef | string | null;
   sponsor?: string;
   sponsorMessage?: string;
 }

@@ -1,7 +1,7 @@
 # Project Status - Y-Not Radio Site Migration
 
-**Last Updated:** January 6, 2026  
-**Current Phase:** Payload CMS Migration - Fresh Database Initialization
+**Last Updated:** March 7, 2026  
+**Current Phase:** Payload CMS Migration - MRM Admin Interfaces Complete
 
 ---
 
@@ -62,11 +62,16 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] Test coverage reporting
 - [x] Comprehensive test files for migration scripts
 
-#### Schema Finalization (January 2026)
-- [x] Removed legacy migration tracking fields (legacyId, migratedAt) from Artists, Venues, YearEndPollResults
-- [x] Updated CdOfTheWeek reviewer to use People relationship
-- [x] Cleared all Payload migrations for fresh database start
-- [x] Prepared SQL DROP statements for clean database reset
+#### Modern Rock Madness Collections (March 2026)
+- [x] MadnessTournaments (`madness-tournaments`) — annual tournament config
+- [x] MadnessBands (`madness-bands`) — tournament participants (name/seed/placement/sponsor)
+- [x] MadnessMatches (`madness-matches`) — bracket matchups with `nextMatch` progression field
+- [x] MadnessVotes (`madness-votes`) — individual vote records
+- [x] MadnessMatchEvents (`madness-match-events`) — audit log (overtime, admin_vote, match_closed, rematch)
+
+#### MRM Admin Interfaces (March 2026)
+- [x] Live Match Dashboard (`/admin/mrm-live`) — auto-polling vote display, Manual Vote/Close/Extend actions, bracket progression on close, audit logging
+- [x] Bracket Overview (`/admin/mrm-bracket`) — full bracket grouped by round, click-to-edit cards
 
 ---
 
@@ -95,10 +100,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [ ] YearEndPolls (annual poll configuration)
 - [ ] YearEndPollCategories (poll categories)
 - [ ] YearEndPollVotes (user votes)
-- [ ] ModernRockMadnessTournaments (tournament config)
-- [ ] ModernRockMadnessGroups (tournament participants)
-- [ ] ModernRockMadnessMatches (bracket matchups)
-- [ ] ModernRockMadnessVotes (user votes)
+- [ ] ModernRockMadnessGroups → implemented as `madness-bands` ✅ (complete, see above)
 
 #### Migration Scripts
 - [ ] Import Top 11 historical data
@@ -114,6 +116,10 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 ---
 
 ## Recent Achievements
+
+### March 2026
+- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression (winner advances to the next-round slot on close). Added Bracket Overview (`/admin/mrm-bracket`) showing all rounds in one scrollable view.
+- **MRM Collections**: Created all 5 Modern Rock Madness Payload collections (Tournaments, Bands, Matches, Votes, MatchEvents). Audit trail records every admin action with event type and snapshot.
 
 ### December 2025 - January 2026
 - **MusicBrainz Integration**: Implemented custom Payload field components for searching and selecting MusicBrainz entities (artists, releases, recordings) directly from the admin UI

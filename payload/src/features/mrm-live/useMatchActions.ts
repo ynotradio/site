@@ -71,16 +71,44 @@ export const useMatchActions = (
     await withSaving('Close match', async () => {
       if (match.band1Votes === match.band2Votes) throw new Error('Cannot close a tied match');
       const winnerId = match.band1Votes > match.band2Votes ? band1.id : band2.id;
+
+      // Close the match: set winner and enable public score display
       const res = await fetch(`/api/madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ winner: winnerId }),
+        body: JSON.stringify({ winner: winnerId, showScore: true }),
       });
       if (!res.ok) throw new Error('PATCH failed');
+
+      // Bracket progression: advance winner to the open slot in the next match
+      const nextMatchRef = match.nextMatch;
+      if (nextMatchRef && typeof nextMatchRef !== 'string') {
+        let openSlot: 'band1' | 'band2' | null = null;
+        if (!nextMatchRef.band1) {
+          openSlot = 'band1';
+        } else if (!nextMatchRef.band2) {
+          openSlot = 'band2';
+        }
+        if (openSlot) {
+          const advRes = await fetch(`/api/madness-matches/${nextMatchRef.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [openSlot]: winnerId }),
+          });
+          if (!advRes.ok) {
+            // eslint-disable-next-line no-console
+            console.error(
+              `Bracket progression PATCH failed for nextMatch ${nextMatchRef.id}: HTTP ${advRes.status}`,
+            );
+          }
+        }
+      }
+
       await logEvent(match.id, 'match_closed', {
         band1Votes: match.band1Votes,
         band2Votes: match.band2Votes,
         winnerId,
+        nextMatchId: nextMatchRef && typeof nextMatchRef !== 'string' ? nextMatchRef.id : null,
       });
     });
   }, [match, withSaving]);
