@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { generateDJDisplayName } from './hooks/displayNameHooks';
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
@@ -22,49 +23,7 @@ export const DJs: CollectionConfig = {
     },
   },
   hooks: {
-    beforeChange: [
-      async ({ data, req }) => {
-        // Generate display name from person relationship
-        // eslint-disable-next-line no-param-reassign
-        const updatedData = data;
-
-        if (
-          updatedData.person
-          && Array.isArray(updatedData.person)
-          && updatedData.person.length > 0
-        ) {
-          const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
-
-          try {
-            const people = await req.payload.find({
-              collection: 'people',
-              where: {
-                id: {
-                  in: personIds,
-                },
-              },
-              limit: personIds.length,
-            });
-
-            if (people.docs.length > 0) {
-              updatedData.displayName = people.docs.map((p: any) => p.name).join(', ');
-            }
-          } catch (error) {
-            // Error fetching person names for DJ
-            if (process.env.NODE_ENV !== 'production') {
-              // eslint-disable-next-line no-console
-              console.error('Error fetching person names for DJ:', error);
-            }
-          }
-        }
-
-        if (!updatedData.displayName) {
-          updatedData.displayName = `DJ #${updatedData.id || 'New'}`;
-        }
-
-        return updatedData;
-      },
-    ],
+    beforeChange: [generateDJDisplayName],
   },
   access: {
     read: () => true, // Public read access
