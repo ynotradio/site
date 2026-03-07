@@ -90,9 +90,7 @@ export const OnDemand: CollectionConfig = {
       filterOptions: ({ data }) => {
         const artists = data?.artists;
         if (Array.isArray(artists) && artists.length > 0) {
-          const artistIds = artists.map((a: string | { id: string }) =>
-            typeof a === 'object' ? a.id : a,
-          );
+          const artistIds = artists.map((a: string | { id: string }) => (typeof a === 'object' ? a.id : a));
           return { artist: { in: artistIds } };
         }
         return true;
