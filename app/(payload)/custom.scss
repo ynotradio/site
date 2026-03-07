@@ -3,17 +3,13 @@
  * Applies subtle brand colors to the Payload admin UI
  */
 
-/* Brand accent color for links, buttons, highlights */
-:root {
+/* Light mode overrides only — don't break dark mode */
+html[data-theme='light'] {
   --theme-elevation-0: #ffffff;
   --theme-elevation-50: #f8f8f8;
   --theme-elevation-100: #f0f0f0;
   --theme-elevation-150: #e8e8e8;
   --theme-elevation-200: #e0e0e0;
-}
-
-/* Red brand accent on interactive elements in light mode */
-html[data-theme='light'] {
   --theme-text: #111111;
 }
 
