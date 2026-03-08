@@ -18,7 +18,10 @@ fi
 
 # Generate a short-lived token from the Buildkite GitHub App
 echo "--- :github: Generating GitHub App token"
-GITHUB_TOKEN=$(buildkite-agent github-app token --scopes "pull_requests:write")
+if ! GITHUB_TOKEN=$(buildkite-agent github-app token --scopes "pull_requests:write"); then
+  echo "⚠️ Failed to generate GitHub App token — is the Buildkite GitHub App installed with PR write permissions?"
+  exit 0
+fi
 
 # Extract owner/repo from the Buildkite repo URL
 # Handles: https://github.com/owner/repo.git, git@github.com:owner/repo.git
