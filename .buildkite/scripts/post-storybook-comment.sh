@@ -49,18 +49,20 @@ The Storybook build artifacts are attached to the Buildkite build.
 
 </details>"
 
-# Look for an existing Storybook comment to update
+# Look for an existing Storybook comment to update (best-effort; if this
+# fails we'll just create a new comment instead of updating).
 echo "--- :github: Posting Storybook comment to PR #${PR_NUMBER}"
-EXISTING_COMMENT_ID=$(curl -sf \
+EXISTING_COMMENT_ID=$(curl -sSf \
   -H "Authorization: token ${GITHUB_TOKEN}" \
   -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/${REPO_SLUG}/issues/${PR_NUMBER}/comments?per_page=100" \
   | jq -r ".[] | select(.body | startswith(\"${COMMENT_MARKER}\")) | .id" \
-  | head -n1)
+  | head -n1 \
+  || true)
 
 if [[ -n "${EXISTING_COMMENT_ID}" ]]; then
   # Update the existing comment
-  curl -sf \
+  curl -sSf \
     -X PATCH \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     -H "Accept: application/vnd.github+json" \
@@ -69,7 +71,7 @@ if [[ -n "${EXISTING_COMMENT_ID}" ]]; then
   echo "✅ Updated existing Storybook comment (ID: ${EXISTING_COMMENT_ID})"
 else
   # Create a new comment
-  curl -sf \
+  curl -sSf \
     -X POST \
     -H "Authorization: token ${GITHUB_TOKEN}" \
     -H "Accept: application/vnd.github+json" \
