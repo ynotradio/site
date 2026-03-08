@@ -1,7 +1,11 @@
 #!/bin/bash
 # Posts or updates a GitHub PR comment with a link to the Storybook build artifacts.
-# Uses the Buildkite GitHub App (already installed with PR write permissions)
-# to generate a short-lived token — no separate GITHUB_TOKEN secret required.
+# Uses a GitHub token stored as a Buildkite secret (GITHUB_PR_TOKEN) to authenticate.
+#
+# Setup: Store a fine-grained GitHub PAT with pull_requests:write permission
+# as a Buildkite secret named GITHUB_PR_TOKEN:
+#   buildkite-agent secret set GITHUB_PR_TOKEN <your-token>
+# Or add it in the Buildkite UI under Pipeline Settings → Secrets.
 #
 # Requires: BUILDKITE_PULL_REQUEST, BUILDKITE_REPO, BUILDKITE_BUILD_URL,
 #           BUILDKITE_COMMIT, BUILDKITE_BUILD_NUMBER
@@ -16,10 +20,27 @@ if [[ "${BUILDKITE_PULL_REQUEST:-false}" == "false" ]]; then
   exit 0
 fi
 
-# Generate a short-lived token from the Buildkite GitHub App
-echo "--- :github: Generating GitHub App token"
-if ! GITHUB_TOKEN=$(buildkite-agent github-app token --scopes "pull_requests:write"); then
-  echo "⚠️ Failed to generate GitHub App token — is the Buildkite GitHub App installed with PR write permissions?"
+# Obtain a GitHub token — try Buildkite secrets first, then environment variable
+echo "--- :github: Obtaining GitHub token"
+GITHUB_TOKEN=""
+
+# Method 1: Buildkite secret (preferred)
+if command -v buildkite-agent &>/dev/null; then
+  GITHUB_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
+fi
+
+# Method 2: Environment variable fallback
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  GITHUB_TOKEN="${GITHUB_PR_TOKEN:-}"
+fi
+
+if [[ -z "${GITHUB_TOKEN}" ]]; then
+  echo "⚠️ No GitHub token found. To enable Storybook PR comments:"
+  echo "   Store a fine-grained PAT (with pull_requests:write on this repo)"
+  echo "   as a Buildkite secret named GITHUB_PR_TOKEN."
+  echo ""
+  echo "   Via CLI:  buildkite-agent secret set GITHUB_PR_TOKEN <token>"
+  echo "   Via UI:   Pipeline Settings → Secrets → Add Secret"
   exit 0
 fi
 

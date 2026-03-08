@@ -17,6 +17,10 @@ Configure in Buildkite UI:
 GHCR_USERNAME=<github-username>
 GHCR_TOKEN=<github-token-with-packages-write>
 
+# GitHub PR Comments (Storybook preview links)
+# Fine-grained PAT scoped to ynotradio/site with pull_requests:write
+GITHUB_PR_TOKEN=<github-pat-with-pr-write>
+
 # Databases
 NEON_PROD_DATABASE_URL=<production-url>
 NEON_DEV_DATABASE_URL=<development-url>
