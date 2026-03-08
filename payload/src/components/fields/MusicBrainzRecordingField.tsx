@@ -12,7 +12,11 @@ import React, {
 } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useField, useFormFields } from '@payloadcms/ui';
-import { searchRecordings, formatDuration, type MusicBrainzRecording } from '../../utils/musicbrainz-api';
+import {
+  searchRecordings,
+  formatDuration,
+  type MusicBrainzRecording,
+} from '../../utils/musicbrainz-api';
 
 import './MusicBrainzField.css';
 
@@ -31,14 +35,6 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
   const titleField = useFormFields(([fields]) => fields?.title);
   const artistField = useFormFields(([fields]) => fields?.artist);
   const songTitle = (titleField?.value as string | undefined) || '';
-
-  // Handle artist - could be an object with name or just a string reference
-  let artistName = '';
-  if (artistField?.value) {
-    if (typeof artistField.value === 'object' && 'name' in artistField.value) {
-      artistName = artistField.value.name as string;
-    }
-  }
 
   const [searchResults, setSearchResults] = useState<MusicBrainzRecording[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -61,6 +57,74 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     }
   }, [value, songTitle]);
 
+  const resolveArtistName = useCallback(async (): Promise<string> => {
+    const rawArtist = artistField?.value;
+
+    if (!rawArtist) {
+      return '';
+    }
+
+    if (
+      typeof rawArtist === 'object'
+      && 'name' in rawArtist
+      && typeof rawArtist.name === 'string'
+      && rawArtist.name.trim()
+    ) {
+      return rawArtist.name.trim();
+    }
+
+    let artistId = '';
+
+    if (typeof rawArtist === 'string' || typeof rawArtist === 'number') {
+      artistId = String(rawArtist);
+    } else if (
+      typeof rawArtist === 'object'
+      && 'id' in rawArtist
+      && typeof rawArtist.id === 'string'
+    ) {
+      artistId = rawArtist.id;
+    } else if (typeof rawArtist === 'object' && 'value' in rawArtist) {
+      const relationValue = rawArtist.value;
+
+      if (typeof relationValue === 'string' || typeof relationValue === 'number') {
+        artistId = String(relationValue);
+      } else if (
+        typeof relationValue === 'object'
+        && relationValue
+        && 'id' in relationValue
+        && typeof relationValue.id === 'string'
+      ) {
+        artistId = relationValue.id;
+      }
+
+      if (
+        typeof relationValue === 'object'
+        && relationValue
+        && 'name' in relationValue
+        && typeof relationValue.name === 'string'
+        && relationValue.name.trim()
+      ) {
+        return relationValue.name.trim();
+      }
+    }
+
+    if (!artistId) {
+      return '';
+    }
+
+    try {
+      const response = await fetch(`/api/artists/${artistId}?depth=0`);
+      if (!response.ok) {
+        return '';
+      }
+
+      const artistData = (await response.json()) as { name?: string };
+      return artistData.name?.trim() || '';
+    } catch {
+      return '';
+    }
+  }, [artistField?.value]);
+
   const searchMusicBrainz = useCallback(async () => {
     if (!songTitle?.trim()) {
       setError('Please enter a song title first');
@@ -72,7 +136,9 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     setShowResults(true);
 
     try {
-      // Include artist name if available for better results
+      // Include artist name if available for better results.
+      // Relationship fields are commonly stored as IDs, so resolve when needed.
+      const artistName = await resolveArtistName();
       const results = await searchRecordings(songTitle, artistName || undefined);
       setSearchResults(results);
       if (results.length === 0) {
@@ -84,14 +150,17 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     } finally {
       setIsSearching(false);
     }
-  }, [songTitle, artistName]);
+  }, [songTitle, resolveArtistName]);
 
-  const handleSelectRecording = useCallback((recording: MusicBrainzRecording) => {
-    setSelectedRecording(recording);
-    setValue(recording.id);
-    setShowResults(false);
-    setSearchResults([]);
-  }, [setValue]);
+  const handleSelectRecording = useCallback(
+    (recording: MusicBrainzRecording) => {
+      setSelectedRecording(recording);
+      setValue(recording.id);
+      setShowResults(false);
+      setSearchResults([]);
+    },
+    [setValue],
+  );
 
   const handleClear = useCallback(() => {
     setSelectedRecording(null);
@@ -137,9 +206,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
               )}
             </div>
             {selectedRecording['artist-credit'] && (
-              <div className="musicbrainz-artist">
-                by {getArtistName(selectedRecording)}
-              </div>
+              <div className="musicbrainz-artist">by {getArtistName(selectedRecording)}</div>
             )}
             {selectedRecording.disambiguation && (
               <div className="musicbrainz-disambiguation">{selectedRecording.disambiguation}</div>
@@ -157,11 +224,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
             >
               View on MusicBrainz
             </a>
-            <button
-              type="button"
-              className="musicbrainz-clear-btn"
-              onClick={handleClear}
-            >
+            <button type="button" className="musicbrainz-clear-btn" onClick={handleClear}>
               Clear
             </button>
           </div>
@@ -171,7 +234,9 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
           <div className="musicbrainz-search-prompt">
             <div className="musicbrainz-search-text">
               {songTitle ? (
-                <>Search for <strong>"{songTitle}"</strong> on MusicBrainz</>
+                <>
+                  Search for <strong>"{songTitle}"</strong> on MusicBrainz
+                </>
               ) : (
                 'Enter song title first'
               )}
@@ -190,9 +255,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
             <div className="musicbrainz-results-wrapper">
               {isSearching && <div className="musicbrainz-loading">Searching...</div>}
 
-              {!isSearching && error && (
-                <div className="musicbrainz-error">{error}</div>
-              )}
+              {!isSearching && error && <div className="musicbrainz-error">{error}</div>}
 
               {!isSearching && !error && searchResults.length > 0 && (
                 <>
@@ -212,9 +275,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
                           {formatRecordingInfo(recording)}
                         </div>
                         {recording.score && (
-                          <div className="musicbrainz-result-score">
-                            Match: {recording.score}%
-                          </div>
+                          <div className="musicbrainz-result-score">Match: {recording.score}%</div>
                         )}
                       </button>
                     ))}

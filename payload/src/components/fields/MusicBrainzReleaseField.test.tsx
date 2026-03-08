@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MusicBrainzReleaseField } from './MusicBrainzReleaseField';
 import * as musicbrainzApi from '../../utils/musicbrainz-api';
@@ -38,6 +38,10 @@ describe('MusicBrainzReleaseField', () => {
       if (call % 2 === 0) return { value: 'Test Album' } as any;
       return { value: { name: 'Test Artist' } } as any;
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('renders the search button', () => {
@@ -105,6 +109,34 @@ describe('MusicBrainzReleaseField', () => {
 
     await waitFor(() => {
       expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', 'Test Artist');
+    });
+  });
+
+  it('resolves artist name when relationship value is an ID', async () => {
+    let callCount = 0;
+    vi.mocked(useFormFields).mockImplementation(() => {
+      const call = callCount;
+      callCount += 1;
+      if (call % 2 === 0) return { value: 'Test Album' } as any;
+      return { value: 'artist-123' } as any;
+    });
+
+    const artistLookupMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ name: 'Resolved Artist' }),
+    });
+    vi.stubGlobal('fetch', artistLookupMock);
+
+    vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+
+    const searchButton = screen.getByText('Search MusicBrainz');
+    fireEvent.click(searchButton);
+
+    await waitFor(() => {
+      expect(artistLookupMock).toHaveBeenCalledWith('/api/artists/artist-123?depth=0');
+      expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', 'Resolved Artist');
     });
   });
 
