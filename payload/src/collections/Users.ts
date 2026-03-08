@@ -62,6 +62,7 @@ export const Users: CollectionConfig = {
       type: 'select',
       required: true,
       defaultValue: 'editor',
+      saveToJWT: true,
       options: [
         { label: 'Administrator', value: 'admin' },
         { label: 'Editor', value: 'editor' },
