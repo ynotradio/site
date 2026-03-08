@@ -320,6 +320,7 @@ async function seed() {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         priority: 1,
+        showOnFrontPage: true,
         _status: 'published',
       },
     });
@@ -347,6 +348,7 @@ async function seed() {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         priority: 2,
+        showOnFrontPage: true,
         _status: 'published',
       },
     });
@@ -374,6 +376,7 @@ async function seed() {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         priority: 3,
+        showOnFrontPage: true,
         _status: 'published',
       },
     });

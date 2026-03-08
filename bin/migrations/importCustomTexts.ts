@@ -164,6 +164,7 @@ async function importCustomText(
         slug,
         startDate: '2000-01-01T00:00:00.000Z', // Always visible content
         endDate: '2099-12-31T23:59:59.999Z', // Far future date
+        showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
         status: 'published',
         legacyId,
       },

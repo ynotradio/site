@@ -12,6 +12,8 @@ use PDOStatement;
  * 
  * Tests PostgreSQL story operations using PDO:
  * - getById: Retrieve story by ID
+ * - getAll: Retrieve active stories filtered by show_on_front_page
+ * - getAllActive: Retrieve all active stories filtered by show_on_front_page
  */
 class PostgresStoryTest extends TestCase
 {
@@ -83,5 +85,54 @@ class PostgresStoryTest extends TestCase
 
         $result = $this->story->getById(999);
         $this->assertNull($result);
+    }
+
+    /**
+     * Test getAll query includes show_on_front_page filter
+     */
+    public function testGetAllFiltersByShowOnFrontPage(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+        $mockStmt->expects($this->once())
+            ->method('fetchAll')
+            ->willReturn([]);
+
+        $this->mockDb->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function (string $query) {
+                return str_contains($query, 'show_on_front_page = true');
+            }))
+            ->willReturn($mockStmt);
+
+        $result = $this->story->getAll();
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result); // Returns [odd, even] arrays
+    }
+
+    /**
+     * Test getAllActive query includes show_on_front_page filter
+     */
+    public function testGetAllActiveFiltersByShowOnFrontPage(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+        $mockStmt->expects($this->once())
+            ->method('fetchAll')
+            ->willReturn([]);
+
+        $this->mockDb->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function (string $query) {
+                return str_contains($query, 'show_on_front_page = true');
+            }))
+            ->willReturn($mockStmt);
+
+        $result = $this->story->getAllActive();
+        $this->assertIsArray($result);
     }
 }

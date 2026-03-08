@@ -206,6 +206,7 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
         imageUrl: post.image_url, // Store original image URL as fallback
         linkUrl: post.link_url, // Store link URL for story image click target
         priority: post.priority || 0,
+        showOnFrontPage: post.source === 'story', // Stories appear on front page, custom texts don't
         legacyId: post.id,
         migratedAt: new Date().toISOString(),
         _status: 'published', // Set status to published so posts are immediately visible

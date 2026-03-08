@@ -14,7 +14,7 @@ export const Posts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', '_status', 'updatedAt'],
+    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', 'showOnFrontPage', '_status', 'updatedAt'],
     defaultSort: '-priority',
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
@@ -132,6 +132,15 @@ export const Posts: CollectionConfig = {
       admin: {
         description: 'Link URL when clicking the story image (legacy pic_url)',
         placeholder: 'https://',
+      },
+    },
+    {
+      name: 'showOnFrontPage',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Whether this post appears on the front page. Disable for standalone pages (e.g. custom text pages).',
       },
     },
     {
