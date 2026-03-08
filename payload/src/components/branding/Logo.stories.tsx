@@ -14,7 +14,7 @@ export default meta;
 type Story = StoryObj<typeof Logo>;
 
 /**
- * The Y-Not Radio CMS logo shown on the Payload admin login screen and header.
+ * The Y-Not Radio oval logo shown on the Payload admin login screen and header.
  */
 export const Default: Story = {};
 
