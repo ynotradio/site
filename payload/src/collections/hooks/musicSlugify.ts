@@ -62,9 +62,15 @@ export const musicSlugify: Slugify = async ({ data, req }) => {
   const artistName = await resolveArtistName(data, req.payload);
   const titleSlug = slugifyText(String(title));
 
+  // If the title cannot be slugified into a non-empty string, do not generate a slug
+  if (!titleSlug) return undefined;
+
   if (artistName) {
     const artistSlug = slugifyText(artistName);
-    return `${artistSlug}--${titleSlug}`;
+    // Only prepend artist segment if it slugifies to a non-empty value
+    if (artistSlug) {
+      return `${artistSlug}--${titleSlug}`;
+    }
   }
 
   return titleSlug;
