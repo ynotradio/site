@@ -69,8 +69,6 @@ steps:
     depends_on: "storybook"
     if: build.pull_request.id != null
     command: ".buildkite/scripts/post-storybook-comment.sh"
-    env:
-      GITHUB_TOKEN: "${GITHUB_TOKEN}"
     agents:
       queue: "default"
 

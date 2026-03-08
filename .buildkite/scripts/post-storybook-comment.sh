@@ -1,6 +1,9 @@
 #!/bin/bash
 # Posts or updates a GitHub PR comment with a link to the Storybook build artifacts.
-# Requires: GITHUB_TOKEN, BUILDKITE_PULL_REQUEST, BUILDKITE_REPO, BUILDKITE_BUILD_URL,
+# Uses the Buildkite GitHub App (already installed with PR write permissions)
+# to generate a short-lived token — no separate GITHUB_TOKEN secret required.
+#
+# Requires: BUILDKITE_PULL_REQUEST, BUILDKITE_REPO, BUILDKITE_BUILD_URL,
 #           BUILDKITE_COMMIT, BUILDKITE_BUILD_NUMBER
 
 set -euo pipefail
@@ -13,11 +16,9 @@ if [[ "${BUILDKITE_PULL_REQUEST:-false}" == "false" ]]; then
   exit 0
 fi
 
-# Require a GitHub token
-if [[ -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "⚠️ GITHUB_TOKEN not set, skipping Storybook PR comment"
-  exit 0
-fi
+# Generate a short-lived token from the Buildkite GitHub App
+echo "--- :github: Generating GitHub App token"
+GITHUB_TOKEN=$(buildkite-agent github-app token --scopes "pull_requests:write")
 
 # Extract owner/repo from the Buildkite repo URL
 # Handles: https://github.com/owner/repo.git, git@github.com:owner/repo.git

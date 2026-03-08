@@ -26,9 +26,6 @@ CLOUDINARY_CLOUD_NAME=<cloud-name>
 CLOUDINARY_API_KEY=<api-key>
 CLOUDINARY_API_SECRET=<api-secret>
 
-# GitHub API (for PR comments, e.g. Storybook preview links)
-GITHUB_TOKEN=<github-token-with-repo-or-pull-requests-write>
-
 # CodeCov (optional)
 CODECOV_TOKEN=<codecov-token>
 ```
