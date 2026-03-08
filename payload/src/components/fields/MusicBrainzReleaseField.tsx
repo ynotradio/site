@@ -32,14 +32,6 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
   const artistField = useFormFields(([fields]) => fields?.artist);
   const albumTitle = (titleField?.value as string | undefined) || '';
 
-  // Handle artist - could be an object with name or just a string reference
-  let artistName = '';
-  if (artistField?.value) {
-    if (typeof artistField.value === 'object' && 'name' in artistField.value) {
-      artistName = artistField.value.name as string;
-    }
-  }
-
   const [searchResults, setSearchResults] = useState<MusicBrainzRelease[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [showResults, setShowResults] = useState(false);
@@ -61,6 +53,74 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     }
   }, [value, albumTitle]);
 
+  const resolveArtistName = useCallback(async (): Promise<string> => {
+    const rawArtist = artistField?.value;
+
+    if (!rawArtist) {
+      return '';
+    }
+
+    if (
+      typeof rawArtist === 'object'
+      && 'name' in rawArtist
+      && typeof rawArtist.name === 'string'
+      && rawArtist.name.trim()
+    ) {
+      return rawArtist.name.trim();
+    }
+
+    let artistId = '';
+
+    if (typeof rawArtist === 'string' || typeof rawArtist === 'number') {
+      artistId = String(rawArtist);
+    } else if (
+      typeof rawArtist === 'object'
+      && 'id' in rawArtist
+      && typeof rawArtist.id === 'string'
+    ) {
+      artistId = rawArtist.id;
+    } else if (typeof rawArtist === 'object' && 'value' in rawArtist) {
+      const relationValue = rawArtist.value;
+
+      if (typeof relationValue === 'string' || typeof relationValue === 'number') {
+        artistId = String(relationValue);
+      } else if (
+        typeof relationValue === 'object'
+        && relationValue
+        && 'id' in relationValue
+        && typeof relationValue.id === 'string'
+      ) {
+        artistId = relationValue.id;
+      }
+
+      if (
+        typeof relationValue === 'object'
+        && relationValue
+        && 'name' in relationValue
+        && typeof relationValue.name === 'string'
+        && relationValue.name.trim()
+      ) {
+        return relationValue.name.trim();
+      }
+    }
+
+    if (!artistId) {
+      return '';
+    }
+
+    try {
+      const response = await fetch(`/api/artists/${artistId}?depth=0`);
+      if (!response.ok) {
+        return '';
+      }
+
+      const artistData = (await response.json()) as { name?: string };
+      return artistData.name?.trim() || '';
+    } catch {
+      return '';
+    }
+  }, [artistField?.value]);
+
   const searchMusicBrainz = useCallback(async () => {
     if (!albumTitle?.trim()) {
       setError('Please enter an album title first');
@@ -72,7 +132,9 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     setShowResults(true);
 
     try {
-      // Include artist name if available for better results
+      // Include artist name if available for better results.
+      // Relationship fields are commonly stored as IDs, so resolve when needed.
+      const artistName = await resolveArtistName();
       const results = await searchReleases(albumTitle, artistName || undefined);
       setSearchResults(results);
       if (results.length === 0) {
@@ -84,14 +146,17 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     } finally {
       setIsSearching(false);
     }
-  }, [albumTitle, artistName]);
+  }, [albumTitle, resolveArtistName]);
 
-  const handleSelectRelease = useCallback((release: MusicBrainzRelease) => {
-    setSelectedRelease(release);
-    setValue(release.id);
-    setShowResults(false);
-    setSearchResults([]);
-  }, [setValue]);
+  const handleSelectRelease = useCallback(
+    (release: MusicBrainzRelease) => {
+      setSelectedRelease(release);
+      setValue(release.id);
+      setShowResults(false);
+      setSearchResults([]);
+    },
+    [setValue],
+  );
 
   const handleClear = useCallback(() => {
     setSelectedRelease(null);
@@ -141,9 +206,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
               )}
             </div>
             {selectedRelease['artist-credit'] && (
-              <div className="musicbrainz-artist">
-                by {getArtistName(selectedRelease)}
-              </div>
+              <div className="musicbrainz-artist">by {getArtistName(selectedRelease)}</div>
             )}
             {selectedRelease.disambiguation && (
               <div className="musicbrainz-disambiguation">{selectedRelease.disambiguation}</div>
@@ -152,9 +215,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
               MBID: <code>{value}</code>
             </div>
             {selectedRelease.date && (
-              <div className="musicbrainz-dates">
-                Released: {selectedRelease.date}
-              </div>
+              <div className="musicbrainz-dates">Released: {selectedRelease.date}</div>
             )}
           </div>
           <div className="musicbrainz-selected-actions">
@@ -166,11 +227,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
             >
               View on MusicBrainz
             </a>
-            <button
-              type="button"
-              className="musicbrainz-clear-btn"
-              onClick={handleClear}
-            >
+            <button type="button" className="musicbrainz-clear-btn" onClick={handleClear}>
               Clear
             </button>
           </div>
@@ -180,7 +237,9 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
           <div className="musicbrainz-search-prompt">
             <div className="musicbrainz-search-text">
               {albumTitle ? (
-                <>Search for <strong>"{albumTitle}"</strong> on MusicBrainz</>
+                <>
+                  Search for <strong>"{albumTitle}"</strong> on MusicBrainz
+                </>
               ) : (
                 'Enter album title first'
               )}
@@ -199,9 +258,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
             <div className="musicbrainz-results-wrapper">
               {isSearching && <div className="musicbrainz-loading">Searching...</div>}
 
-              {!isSearching && error && (
-                <div className="musicbrainz-error">{error}</div>
-              )}
+              {!isSearching && error && <div className="musicbrainz-error">{error}</div>}
 
               {!isSearching && !error && searchResults.length > 0 && (
                 <>
@@ -221,9 +278,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
                           {formatReleaseInfo(release)}
                         </div>
                         {release.score && (
-                          <div className="musicbrainz-result-score">
-                            Match: {release.score}%
-                          </div>
+                          <div className="musicbrainz-result-score">Match: {release.score}%</div>
                         )}
                       </button>
                     ))}
