@@ -11,6 +11,7 @@ export const Venues: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'city', 'updatedAt'],
+    defaultSort: 'name',
     group: 'Events',
     description: 'Concert venues and locations.',
   },

@@ -13,7 +13,8 @@ export const CdOfTheWeek: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'date',
-    defaultColumns: ['date', 'record', 'reviewer', 'updatedAt'],
+    defaultColumns: ['date', 'record', 'reviewer', '_status', 'updatedAt'],
+    defaultSort: '-date',
     group: 'Music',
     description: 'Weekly album reviews featured as CD of the Week.',
   },

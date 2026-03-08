@@ -13,7 +13,8 @@ export const OnDemand: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'image', 'date', 'updatedAt'],
+    defaultColumns: ['headline', 'image', 'date', 'djs', '_status', 'updatedAt'],
+    defaultSort: '-date',
     group: 'Radio',
     description: 'On-demand recordings and show archives.',
   },

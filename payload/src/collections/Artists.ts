@@ -12,6 +12,7 @@ export const Artists: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
+    defaultSort: 'name',
     group: 'Music',
     description: 'Artists and bands in the music catalog.',
   },
