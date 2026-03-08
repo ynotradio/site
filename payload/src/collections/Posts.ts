@@ -143,6 +143,15 @@ export const Posts: CollectionConfig = {
       },
     },
     {
+      name: 'showOnFrontPage',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Whether this post appears on the front page. Disable for standalone pages (e.g. custom text pages).',
+      },
+    },
+    {
       name: 'priority',
       type: 'number',
       defaultValue: 0,
