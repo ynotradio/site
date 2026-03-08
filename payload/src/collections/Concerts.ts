@@ -13,10 +13,10 @@ export const Concerts: CollectionConfig = {
   admin: {
     useAsTitle: 'title',
     defaultColumns: ['artists', 'date', 'venue', 'featured', '_status', 'updatedAt'],
-    defaultSort: 'date',
     group: 'Events',
     description: 'Concert listings. Filter by "featured" to see homepage concerts.',
   },
+  defaultSort: 'date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),

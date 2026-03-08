@@ -14,10 +14,10 @@ export const OnDemand: CollectionConfig = {
   admin: {
     useAsTitle: 'headline',
     defaultColumns: ['headline', 'image', 'date', 'djs', '_status', 'updatedAt'],
-    defaultSort: '-date',
     group: 'Radio',
     description: 'On-demand recordings and show archives.',
   },
+  defaultSort: '-date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -86,7 +86,8 @@ export const OnDemand: CollectionConfig = {
       relationTo: 'songs',
       hasMany: true,
       admin: {
-        description: 'Songs performed in this on-demand recording (filtered to selected artists when artists are chosen above)',
+        description:
+          'Songs performed in this on-demand recording (filtered to selected artists when artists are chosen above)',
       },
       filterOptions: ({ data }) => {
         const artists = data?.artists;

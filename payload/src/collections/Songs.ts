@@ -12,11 +12,11 @@ export const Songs: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
-    defaultSort: '-releaseDate',
     group: 'Music',
     description:
       'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
   },
+  defaultSort: '-releaseDate',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
