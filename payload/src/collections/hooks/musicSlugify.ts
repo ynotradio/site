@@ -7,7 +7,8 @@
  * Also provides a hook for CdOfTheWeek to inherit the slug from its associated record.
  */
 
-import type { CollectionBeforeChangeHook, Payload, Slugify } from 'payload';
+import type { CollectionBeforeChangeHook, Payload } from 'payload';
+import type { Slugify } from 'payload/shared';
 
 /**
  * Slugify a single text value (lowercases, removes special chars, replaces spaces with hyphens)
@@ -24,10 +25,7 @@ export function slugifyText(text: string): string {
 /**
  * Resolve the artist name from data, handling both populated objects and IDs.
  */
-async function resolveArtistName(
-  data: Record<string, unknown>,
-  payload: Payload,
-): Promise<string> {
+async function resolveArtistName(data: Record<string, unknown>, payload: Payload): Promise<string> {
   const artist = data?.artist;
   if (!artist) return '';
 
@@ -84,9 +82,7 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
 
   if (!updatedData.record) return updatedData;
 
-  const recordId = typeof updatedData.record === 'object'
-    ? updatedData.record.id
-    : updatedData.record;
+  const recordId = typeof updatedData.record === 'object' ? updatedData.record.id : updatedData.record;
 
   try {
     const record = await req.payload.findByID({

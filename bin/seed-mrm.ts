@@ -3,42 +3,39 @@ import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
 
 /**
- * Seed Payload database with sample data for testing
+ * Seed Modern Rock Madness data into Payload database
  *
- * Usage: yarn tsx bin/seed-payload.ts
+ * Usage: yarn seed:mrm
  *
- * Creates sample data for:
- * - People (DJs, Artists)
- * - Venues
- * - Concerts
- * - Posts (stories)
- * - Shows
- * - Songs, Records, Artists
+ * Creates a complete MRM 2025 tournament:
+ * - 1 tournament (Modern Rock Madness 2025)
+ * - 64 groups (bands)
+ * - 63 matches (full bracket with results)
+ * - 62 nextMatch bracket links
+ *
+ * Idempotent: skips if a tournament already exists.
+ * Does NOT require other seed data (people, venues, etc.).
  */
 
-async function seed() {
-  console.log('🌱 Seeding Payload database with sample data...\n');
+async function seedMrm() {
+  console.log('🏆 Seeding Modern Rock Madness data...\n');
 
   const payload = await getPayloadHMR({ config });
 
   try {
-    // Check if already seeded (skip if People collection has data)
-    const existingPeople = await payload.find({
-      collection: 'people',
+    // Check if MRM data already exists
+    const existingTournaments = await payload.find({
+      collection: 'modern-rock-madness-tournaments',
       limit: 1,
     });
 
-    if (existingPeople.docs.length > 0) {
-      console.log('⏭️  Database already has data. Skipping seed.');
-      console.log('   To re-seed, first clear existing data or drop the database.');
+    if (existingTournaments.docs.length > 0) {
+      console.log('⏭️  MRM tournament data already exists. Skipping seed.');
+      console.log('   To re-seed, first delete existing MRM data.');
       process.exit(0);
     }
 
-    console.log('🗑️  Database is empty, proceeding with seed...');
-
-    // Create admin user for development
-    console.log('👤 Creating admin user...');
-
+    // Ensure admin user exists (required for Payload operations)
     const existingAdmin = await payload.find({
       collection: 'users',
       where: {
@@ -50,429 +47,20 @@ async function seed() {
     });
 
     if (existingAdmin.docs.length === 0) {
+      console.log('👤 Creating admin user...');
       await payload.create({
         collection: 'users',
         data: {
           email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
           password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
           role: 'admin',
-          _verified: true, // Skip email verification for dev/test environments
+          _verified: true,
         },
       });
-      console.log(
-        `   ✅ Created admin user: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'}`,
-      );
-    } else {
-      console.log('   ⏭️  Admin user already exists');
+      console.log('   ✅ Admin user created');
     }
 
-    // Create sample People (DJs and Artists)
-    console.log('👤 Creating sample people...');
-
-    const dj1 = await payload.create({
-      collection: 'people',
-      data: {
-        name: 'Josh T. Landow',
-        slug: 'josh-t-landow',
-        email: 'josh@ynotradio.net',
-        role: 'dj',
-        bio: 'Host of Top 11 @ 11 and Future Fridays',
-        website: 'http://www.facebook.com/josh.t.landow.1',
-        priority: 1,
-        active: true,
-      },
-    });
-
-    const dj2 = await payload.create({
-      collection: 'people',
-      data: {
-        name: 'Test DJ',
-        slug: 'test-dj',
-        email: 'test@ynotradio.net',
-        role: 'dj',
-        bio: 'Sample DJ for testing',
-        priority: 2,
-        active: true,
-      },
-    });
-
-    const artist1 = await payload.create({
-      collection: 'people',
-      data: {
-        name: 'Sample Artist',
-        slug: 'sample-artist',
-        role: 'artist',
-        bio: 'Indie rock artist from Philadelphia',
-        website: 'https://sampleartist.com',
-        active: true,
-      },
-    });
-
-    console.log(`   ✅ Created ${dj1.name}, ${dj2.name}, ${artist1.name}`);
-
-    // Create sample Venues
-    console.log('🏢 Creating sample venues...');
-
-    const venue1 = await payload.create({
-      collection: 'venues',
-      data: {
-        name: 'The Foundry',
-        slug: 'the-foundry',
-        city: 'Philadelphia',
-        state: 'PA',
-        website: 'https://www.thefoundry.com',
-      },
-    });
-
-    const venue2 = await payload.create({
-      collection: 'venues',
-      data: {
-        name: 'Union Transfer',
-        slug: 'union-transfer',
-        city: 'Philadelphia',
-        state: 'PA',
-        website: 'https://www.utphilly.com',
-      },
-    });
-
-    const venue3 = await payload.create({
-      collection: 'venues',
-      data: {
-        name: 'World Cafe Live',
-        slug: 'world-cafe-live',
-        city: 'Philadelphia',
-        state: 'PA',
-        website: 'https://www.worldcafelive.com',
-      },
-    });
-
-    console.log(`   ✅ Created ${venue1.name}, ${venue2.name}, ${venue3.name}`);
-
-    // Create sample Artists (for music collections)
-    console.log('🎸 Creating sample artists...');
-
-    const musicArtist1 = await payload.create({
-      collection: 'artists',
-      data: {
-        name: 'Sample Band',
-        slug: 'sample-band',
-        website: 'https://sampleband.com',
-        spotifyUrl: 'https://open.spotify.com/artist/example',
-      },
-    });
-
-    const musicArtist2 = await payload.create({
-      collection: 'artists',
-      data: {
-        name: 'Test Group',
-        slug: 'test-group',
-        website: 'https://testgroup.com',
-      },
-    });
-
-    console.log(`   ✅ Created ${musicArtist1.name}, ${musicArtist2.name}`);
-
-    // Create sample Records
-    console.log('💿 Creating sample records...');
-
-    const record1 = await payload.create({
-      collection: 'records',
-      data: {
-        title: 'Great Album',
-        artist: musicArtist1.id,
-        releaseYear: 2025,
-        label: 'Independent Records',
-        spotifyUrl: 'https://open.spotify.com/album/example1',
-      },
-    });
-
-    const record2 = await payload.create({
-      collection: 'records',
-      data: {
-        title: 'Awesome LP',
-        artist: musicArtist2.id,
-        releaseYear: 2026,
-        label: 'Test Label',
-      },
-    });
-
-    console.log(`   ✅ Created "${record1.title}", "${record2.title}"`);
-
-    // Create sample Songs
-    console.log('🎵 Creating sample songs...');
-
-    const song1 = await payload.create({
-      collection: 'songs',
-      data: {
-        title: 'Hit Single',
-        artist: musicArtist1.id,
-        record: record1.id,
-        spotifyUrl: 'https://open.spotify.com/track/example1',
-      },
-    });
-
-    const song2 = await payload.create({
-      collection: 'songs',
-      data: {
-        title: 'Deep Cut',
-        artist: musicArtist1.id,
-        record: record1.id,
-      },
-    });
-
-    const song3 = await payload.create({
-      collection: 'songs',
-      data: {
-        title: 'Radio Friendly',
-        artist: musicArtist2.id,
-        record: record2.id,
-      },
-    });
-
-    console.log(`   ✅ Created "${song1.title}", "${song2.title}", "${song3.title}"`);
-
-    // Create sample Concerts
-    console.log('🎤 Creating sample concerts...');
-
-    const futureDate1 = new Date();
-    futureDate1.setDate(futureDate1.getDate() + 30);
-
-    const futureDate2 = new Date();
-    futureDate2.setDate(futureDate2.getDate() + 45);
-
-    const futureDate3 = new Date();
-    futureDate3.setDate(futureDate3.getDate() + 60);
-
-    await payload.create({
-      collection: 'concerts',
-      data: {
-        date: futureDate1.toISOString(),
-        artists: [
-          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
-        ],
-        venue: typeof venue1.id === 'number' ? venue1.id : parseInt(venue1.id, 10),
-        ticketUrl: 'https://ticketmaster.com/example1',
-        featured: true,
-      },
-    });
-
-    await payload.create({
-      collection: 'concerts',
-      data: {
-        date: futureDate2.toISOString(),
-        artists: [
-          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
-        ],
-        venue: typeof venue2.id === 'number' ? venue2.id : parseInt(venue2.id, 10),
-        ticketUrl: 'https://ticketmaster.com/example2',
-        featured: false,
-      },
-    });
-
-    await payload.create({
-      collection: 'concerts',
-      data: {
-        date: futureDate3.toISOString(),
-        artists: [
-          typeof musicArtist1.id === 'number' ? musicArtist1.id : parseInt(musicArtist1.id, 10),
-          typeof musicArtist2.id === 'number' ? musicArtist2.id : parseInt(musicArtist2.id, 10),
-        ],
-        venue: typeof venue3.id === 'number' ? venue3.id : parseInt(venue3.id, 10),
-        ticketUrl: 'https://worldcafelive.com/events',
-        featured: true,
-      },
-    });
-
-    console.log('   ✅ Created 3 concerts');
-
-    // Create sample Posts (stories)
-    console.log('📝 Creating sample posts...');
-
-    const startDate = new Date();
-    const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 90); // Active for 90 days
-
-    const post1 = await payload.create({
-      collection: 'posts',
-      data: {
-        headline: 'Welcome to Y-Not Radio',
-        content: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    text: 'Y-Not Radio is an independent online radio station playing the best in indie rock, alternative, and college radio. Tune in 24/7 for new music discoveries and deep cuts from your favorite artists.',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        priority: 1,
-        showOnFrontPage: true,
-        _status: 'published',
-      },
-    });
-
-    const post2 = await payload.create({
-      collection: 'posts',
-      data: {
-        headline: 'New Music Friday',
-        content: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    text: 'Check out the latest releases from Sample Band and Test Group. New albums spinning all day!',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        priority: 2,
-        showOnFrontPage: true,
-        _status: 'published',
-      },
-    });
-
-    const post3 = await payload.create({
-      collection: 'posts',
-      data: {
-        headline: 'Win Concert Tickets',
-        content: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    text: 'Enter for your chance to win tickets to see Sample Band at The Foundry next month!',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-        priority: 3,
-        showOnFrontPage: true,
-        _status: 'published',
-      },
-    });
-
-    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}"`);
-
-    // Create sample DJs first (for Shows)
-    console.log('🎧 Creating sample DJs...');
-
-    const djRecord1 = await payload.create({
-      collection: 'djs',
-      data: {
-        person: [typeof dj1.id === 'number' ? dj1.id : parseInt(dj1.id, 10)],
-        description: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    text: 'Host of Top 11 @ 11 and Future Fridays',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        onAir: true,
-      },
-    });
-
-    const djRecord2 = await payload.create({
-      collection: 'djs',
-      data: {
-        person: [typeof dj2.id === 'number' ? dj2.id : parseInt(dj2.id, 10)],
-        description: {
-          root: {
-            type: 'root',
-            children: [
-              {
-                type: 'paragraph',
-                children: [
-                  {
-                    type: 'text',
-                    text: 'Indie rock DJ playing the best new and classic alternative music',
-                  },
-                ],
-              },
-            ],
-          },
-        },
-        onAir: true,
-      },
-    });
-
-    console.log('   ✅ Created 2 DJ records');
-
-    // Create sample Shows
-    console.log('📻 Creating sample shows...');
-
-    const showDate1 = new Date();
-    showDate1.setDate(showDate1.getDate() + 7);
-
-    const showDate2 = new Date();
-    showDate2.setDate(showDate2.getDate() + 8);
-
-    await payload.create({
-      collection: 'shows',
-      data: {
-        date: showDate1.toISOString(),
-        day: 'friday',
-        startTime: '11:00',
-        endTime: '13:00',
-        host: typeof djRecord1.id === 'number' ? djRecord1.id : parseInt(djRecord1.id, 10),
-        note: 'Top 11 @ 11 countdown show',
-      },
-    });
-
-    await payload.create({
-      collection: 'shows',
-      data: {
-        date: showDate2.toISOString(),
-        day: 'monday',
-        startTime: '13:00',
-        endTime: '17:00',
-        host: typeof djRecord2.id === 'number' ? djRecord2.id : parseInt(djRecord2.id, 10),
-        note: 'Indie Rock Hour',
-      },
-    });
-
-    console.log('   ✅ Created 2 shows');
-
-    // ── Modern Rock Madness 2025 ─────────────────────────────────────────────
-    // Full 64-band, 63-match tournament sourced from ynot_db.sql (mrm_bands,
-    // mrm_matches, mrm_matches_flow). R.E.M. defeated Yeah Yeah Yeahs 27–26
-    // in the Championship to claim the 2025 crown.
-    // ─────────────────────────────────────────────────────────────────────────
-    console.log('🏆 Creating Modern Rock Madness 2025 tournament (64 bands, 63 matches)...');
-
+    // ── Tournament ──────────────────────────────────────────────────────────
     const tournament = await payload.create({
       collection: 'modern-rock-madness-tournaments',
       data: {
@@ -488,9 +76,7 @@ async function seed() {
 
     const tournamentId = typeof tournament.id === 'number' ? tournament.id : parseInt(tournament.id, 10);
 
-    // ── 64 groups from ynot_db.sql `mrm_bands` ───────────────────────────────
-    // Artists can be linked after migration; name is used as display override.
-    // Columns: id (legacy), name, url, placement (1–64), seed (1–16), abbreviation, sponsor
+    // ── 64 groups from ynot_db.sql `mrm_bands` ─────────────────────────────
     const mrmBands = [
       {
         id: 1,
@@ -1071,7 +657,7 @@ async function seed() {
     ];
 
     console.log('🎸 Creating 64 MRM groups...');
-    const bandIdMap = new Map<number, number>(); // legacy seed id → Payload id
+    const bandIdMap = new Map<number, number>();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < mrmBands.length; i += 1) {
@@ -1092,9 +678,9 @@ async function seed() {
     }
     /* eslint-enable no-await-in-loop */
 
-    console.log(`   ✅ Created ${mrmBands.length} bands`);
+    console.log(`   ✅ Created ${mrmBands.length} groups`);
 
-    // ── Helper: map legacy match number to Payload round select value ─────────
+    // ── Helper: map match number to round ────────────────────────────────────
     const getMatchRound = (matchNum: number): string => {
       if (matchNum <= 32) return '1'; // Round 1  (64→32)
       if (matchNum <= 48) return '2'; // Round 2  (32→16)
@@ -1104,10 +690,9 @@ async function seed() {
       return '6'; // Championship
     };
 
-    // ── 63 matches from ynot_db.sql `mrm_matches` ────────────────────────────
+    // ── 63 matches from ynot_db.sql `mrm_matches` ──────────────────────────
     // Columns: matchNum, region, group1LegacyId, group1Votes, group2LegacyId,
     //          band2Votes, startTime, endTime, winnerLegacyId
-    // All matches are complete (showScore=true, winner set).
     type MatchRow = [number, number, number, number, number, number, string, string, number];
     const mrmMatchRows: MatchRow[] = [
       // Round 1 — Region 1 (Mar 24)
@@ -1186,7 +771,7 @@ async function seed() {
     ];
 
     console.log('⚔️  Creating 63 MRM matches...');
-    const matchIdMap = new Map<number, number>(); // match number → Payload id
+    const matchIdMap = new Map<number, number>();
 
     /* eslint-disable no-await-in-loop */
     for (let i = 0; i < mrmMatchRows.length; i += 1) {
@@ -1214,8 +799,7 @@ async function seed() {
 
     console.log('   ✅ Created 63 matches');
 
-    // ── Wire nextMatch from ynot_db.sql `mrm_matches_flow` ────────────────────
-    // Each pair is [fromLegacyMatchId, toLegacyMatchId]
+    // ── Wire nextMatch bracket links ────────────────────────────────────────
     const mrmFlow: [number, number][] = [
       [1, 33],
       [2, 33],
@@ -1294,30 +878,20 @@ async function seed() {
 
     console.log(`   ✅ Wired ${mrmFlow.length} nextMatch bracket links`);
 
-    console.log('\n✅ Database seeded successfully!\n');
+    console.log('\n✅ Modern Rock Madness seeded successfully!\n');
     console.log('📊 Summary:');
-    console.log('   Users: 1 (admin)');
-    console.log('   People: 3');
-    console.log('   Venues: 3');
-    console.log('   Artists: 2');
-    console.log('   Records: 2');
-    console.log('   Songs: 3');
-    console.log('   Concerts: 3');
-    console.log('   Posts: 3');
-    console.log('   Shows: 2');
     console.log('   MRM Tournament: 1 (Modern Rock Madness 2025, complete)');
-    console.log('   MRM Bands: 64 (all 4 regions, from ynot_db.sql)');
+    console.log('   MRM Groups: 64 (all 4 regions)');
     console.log('   MRM Matches: 63 (full bracket + nextMatch wired)');
-    console.log('\n🌐 View at: http://localhost:3000/admin');
     console.log(
-      `   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`,
+      '\n🌐 View at: http://localhost:3000/admin/collections/modern-rock-madness-tournaments',
     );
 
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error seeding database:', error);
+    console.error('❌ Error seeding MRM data:', error);
     process.exit(1);
   }
 }
 
-seed();
+seedMrm();

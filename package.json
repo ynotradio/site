@@ -35,6 +35,7 @@
     "payload:migrate": "tsx --import ./bin/preload-nextenv-fix.mjs node_modules/.bin/payload migrate --forceAcceptWarning",
     "payload:migrate:create": "tsx --import ./bin/preload-nextenv-fix.mjs node_modules/.bin/payload migrate:create",
     "payload:migrate:status": "tsx --import ./bin/preload-nextenv-fix.mjs node_modules/.bin/payload migrate:status",
+    "seed:mrm": "tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm.ts",
     "seed:payload": "tsx bin/seed-payload.ts",
     "seed:legacy": "./bin/seed-legacy.sh",
     "seed": "yarn seed:payload && yarn seed:legacy",
@@ -131,7 +132,8 @@
       "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*' --ignore-pattern 'payload/migrations/*'"
     ],
     "*.test.{ts,tsx}": [
-      "prettier --write"
+      "prettier --write",
+      "eslint --fix --max-warnings=0 --ignore-pattern 'bin/check-test-story-files.ts' --ignore-pattern '.storybook/*' --ignore-pattern 'payload/migrations/*'"
     ],
     "*.{json,md}": [
       "prettier --write"
