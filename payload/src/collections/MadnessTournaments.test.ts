@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessTournaments } from './MadnessTournaments';
+import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 describe('ModernRockMadnessTournaments', () => {
   it('has the correct slug', () => {
@@ -72,5 +73,9 @@ describe('ModernRockMadnessTournaments', () => {
 
   it('has timestamps enabled', () => {
     expect(ModernRockMadnessTournaments.timestamps).toBe(true);
+  });
+
+  it('has scaffoldTournamentMatches as an afterChange hook', () => {
+    expect(ModernRockMadnessTournaments.hooks?.afterChange).toContain(scaffoldTournamentMatches);
   });
 });

@@ -1,11 +1,15 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
+import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 export const ModernRockMadnessTournaments: CollectionConfig = {
   slug: 'modern-rock-madness-tournaments',
   labels: {
     singular: 'Tournament',
     plural: 'Tournaments',
+  },
+  hooks: {
+    afterChange: [scaffoldTournamentMatches],
   },
   admin: {
     useAsTitle: 'name',
