@@ -16,6 +16,11 @@ else
   echo "⚠️ GHCR credentials not found, skipping login"
 fi
 
+# Export Netlify and GitHub tokens for storybook deploy
+NETLIFY_AUTH_TOKEN=$(buildkite-agent secret get NETLIFY_AUTH_TOKEN 2>/dev/null || true)
+GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
+export NETLIFY_AUTH_TOKEN GITHUB_PR_TOKEN
+
 # Setup E2E environment files if the script exists
 if [[ -f "./bin/setup-e2e-env.sh" ]]; then
   echo "--- Setting up E2E environment"
