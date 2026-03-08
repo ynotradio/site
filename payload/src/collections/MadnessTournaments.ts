@@ -14,6 +14,17 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     description: 'Annual Modern Rock Madness tournament configuration.',
     components: {
       beforeList: ['/payload/src/features/mrm-bracket/TournamentsListHeader#TournamentsListHeader'],
+      views: {
+        edit: {
+          bracket: {
+            Component: '/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab',
+            tab: {
+              label: 'Bracket',
+              href: '/bracket',
+            },
+          },
+        },
+      },
     },
   },
   access: {
