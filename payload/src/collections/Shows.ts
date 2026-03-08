@@ -11,7 +11,6 @@ export const Shows: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
-    defaultSort: 'date',
     group: 'Radio',
     description: 'Radio show schedule and history.',
 
@@ -19,6 +18,7 @@ export const Shows: CollectionConfig = {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },
   },
+  defaultSort: 'date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),

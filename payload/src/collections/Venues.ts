@@ -11,10 +11,10 @@ export const Venues: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'city', 'updatedAt'],
-    defaultSort: 'name',
     group: 'Events',
     description: 'Concert venues and locations.',
   },
+  defaultSort: 'name',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -59,7 +59,6 @@ export const Venues: CollectionConfig = {
         placeholder: 'https://',
       },
     },
-
   ],
   timestamps: true,
 };

@@ -14,14 +14,22 @@ export const Posts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'headline',
-    defaultColumns: ['headline', 'image', 'startDate', 'endDate', 'priority', '_status', 'updatedAt'],
-    defaultSort: '-priority',
+    defaultColumns: [
+      'headline',
+      'image',
+      'startDate',
+      'endDate',
+      'priority',
+      '_status',
+      'updatedAt',
+    ],
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
 
     description:
       'Stories appearing on the front page. Use date range to filter currently active posts.',
   },
+  defaultSort: '-priority',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
