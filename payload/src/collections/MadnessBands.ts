@@ -37,14 +37,16 @@ export const ModernRockMadnessGroups: CollectionConfig = {
       relationTo: 'artists',
       hasMany: true,
       admin: {
-        description: 'Artist(s) competing as this group (e.g., Jack White + White Stripes → one group). Name and image below override artist record values when set.',
+        description:
+          'Artist(s) competing as this group (e.g., Jack White + White Stripes → one group). Name and image below override artist record values when set.',
       },
     },
     {
       name: 'name',
       type: 'text',
       admin: {
-        description: 'Optional display name override. Useful for supergroups (e.g., "Jack White / White Stripes"). If blank, the name from the primary artist record is used.',
+        description:
+          'Optional display name override. Useful for supergroups (e.g., "Jack White / White Stripes"). If blank, the name from the primary artist record is used.',
       },
     },
     {

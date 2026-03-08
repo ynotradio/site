@@ -8,34 +8,34 @@
 
 **Last Updated:** January 4, 2026
 
-| Priority | Collection                   | PostgreSQL Table                  | Status      | Notes                                                                                  |
-| -------- | ---------------------------- | --------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
-| 1        | People                       | `people`                          | ✅ Complete | Base collection for individuals                                                        |
-| 2        | DJs                          | `djs`                             | ✅ Complete | References People collection, supports multi-person DJs                                |
-| 3        | Artists                      | `artists`                         | ✅ Complete | Musicians/bands with MusicBrainz integration                                           |
-| 4        | Venues                       | `venues`                          | ✅ Complete | Concert locations                                                                      |
-| 5        | Media                        | `media`                           | ✅ Complete | Upload collection with Cloudinary integration                                          |
-| 6        | Ads                          | `ads`                             | ✅ Complete | Sponsor/advertisement data                                                             |
-| 7        | Concerts                     | `concerts`                        | ✅ Complete | References Artists and Venues                                                          |
-| 8        | Songs                        | `songs`                           | ✅ Complete | Music catalog with MusicBrainz integration                                             |
-| 9        | Records                      | `records`                         | ✅ Complete | Albums (used by CD of the Week) with MusicBrainz                                       |
-| 10       | CdOfTheWeek                  | `cd_of_the_week`                  | ✅ Complete | Album reviews referencing Records                                                      |
-| 11       | OnDemand                     | `on_demand`                       | ✅ Complete | Audio content referencing Artists/DJs                                                  |
-| 12       | Shows                        | `shows`                           | ✅ Complete | Schedule entries referencing DJs                                                       |
-| 13       | Posts                        | `posts`                           | ✅ Complete | Content blocks (unified Story + CustomText)                                            |
-| 14       | Users                        | `users`                           | ✅ Complete | Authentication and admin access                                                        |
-| 15       | YearEndPollResults           | `year_end_poll_results`           | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
-| 16       | Top11Contests                | `top11_contests`                  | 🔲 Todo     | Weekly contest config                                                                  |
-| 17       | Top11Results                 | `top11_results`                   | 🔲 Todo     | Published weekly results                                                               |
-| 18       | Top11Votes                   | `top11_votes`                     | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
-| 19       | YearEndPolls                 | `year_end_polls`                  | 🔲 Todo     | Annual poll config                                                                     |
-| 20       | YearEndPollCategories        | `year_end_poll_categories`        | 🔲 Todo     | Poll categories                                                                        |
-| 21       | YearEndPollVotes             | `year_end_poll_votes`             | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
-| 22       | ModernRockMadnessTournaments | `modern-rock-madness-tournaments` | ✅ Complete | Tournament config                                                                      |
-| 23       | ModernRockMadnessGroups      | `modern-rock-madness-groups`      | ✅ Complete | Tournament participants — groups of one or more artists; optional name/image overrides |
-| 24       | ModernRockMadnessMatches     | `modern-rock-madness-matches`     | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
-| 25       | ModernRockMadnessVotes       | `modern-rock-madness-votes`       | ✅ Complete | Auth0-authenticated user votes; `userId` used for duplicate prevention                 |
-| 26       | ModernRockMadnessMatchEvents | `modern-rock-madness-match-events`| ✅ Complete | Audit log; event types: overtime_extended, rematch, admin_vote, match_closed           |
+| Priority | Collection                   | PostgreSQL Table                   | Status      | Notes                                                                                  |
+| -------- | ---------------------------- | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| 1        | People                       | `people`                           | ✅ Complete | Base collection for individuals                                                        |
+| 2        | DJs                          | `djs`                              | ✅ Complete | References People collection, supports multi-person DJs                                |
+| 3        | Artists                      | `artists`                          | ✅ Complete | Musicians/bands with MusicBrainz integration                                           |
+| 4        | Venues                       | `venues`                           | ✅ Complete | Concert locations                                                                      |
+| 5        | Media                        | `media`                            | ✅ Complete | Upload collection with Cloudinary integration                                          |
+| 6        | Ads                          | `ads`                              | ✅ Complete | Sponsor/advertisement data                                                             |
+| 7        | Concerts                     | `concerts`                         | ✅ Complete | References Artists and Venues                                                          |
+| 8        | Songs                        | `songs`                            | ✅ Complete | Music catalog with MusicBrainz integration                                             |
+| 9        | Records                      | `records`                          | ✅ Complete | Albums (used by CD of the Week) with MusicBrainz                                       |
+| 10       | CdOfTheWeek                  | `cd_of_the_week`                   | ✅ Complete | Album reviews referencing Records                                                      |
+| 11       | OnDemand                     | `on_demand`                        | ✅ Complete | Audio content referencing Artists/DJs                                                  |
+| 12       | Shows                        | `shows`                            | ✅ Complete | Schedule entries referencing DJs                                                       |
+| 13       | Posts                        | `posts`                            | ✅ Complete | Content blocks (unified Story + CustomText)                                            |
+| 14       | Users                        | `users`                            | ✅ Complete | Authentication and admin access                                                        |
+| 15       | YearEndPollResults           | `year_end_poll_results`            | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
+| 16       | Top11Contests                | `top11_contests`                   | 🔲 Todo     | Weekly contest config                                                                  |
+| 17       | Top11Results                 | `top11_results`                    | 🔲 Todo     | Published weekly results                                                               |
+| 18       | Top11Votes                   | `top11_votes`                      | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
+| 19       | YearEndPolls                 | `year_end_polls`                   | 🔲 Todo     | Annual poll config                                                                     |
+| 20       | YearEndPollCategories        | `year_end_poll_categories`         | 🔲 Todo     | Poll categories                                                                        |
+| 21       | YearEndPollVotes             | `year_end_poll_votes`              | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
+| 22       | ModernRockMadnessTournaments | `modern-rock-madness-tournaments`  | ✅ Complete | Tournament config                                                                      |
+| 23       | ModernRockMadnessGroups      | `modern-rock-madness-groups`       | ✅ Complete | Tournament participants — groups of one or more artists; optional name/image overrides |
+| 24       | ModernRockMadnessMatches     | `modern-rock-madness-matches`      | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
+| 25       | ModernRockMadnessVotes       | `modern-rock-madness-votes`        | ✅ Complete | Auth0-authenticated user votes; `userId` used for duplicate prevention                 |
+| 26       | ModernRockMadnessMatchEvents | `modern-rock-madness-match-events` | ✅ Complete | Audit log; event types: overtime_extended, rematch, admin_vote, match_closed           |
 
 ### Summary
 

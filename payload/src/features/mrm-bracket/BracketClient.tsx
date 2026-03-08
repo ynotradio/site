@@ -92,12 +92,16 @@ export const BracketClient: React.FC = () => {
     fetchBracket();
   }, [fetchBracket]);
 
-  if (loading) return <Gutter><LoadingSpinner /></Gutter>;
+  if (loading) {
+    return (
+      <Gutter>
+        <LoadingSpinner />
+      </Gutter>
+    );
+  }
 
   const rounds = groupByRound(matches);
-  const roundKeys = Array.from(rounds.keys()).sort(
-    (a, b) => parseInt(a, 10) - parseInt(b, 10),
-  );
+  const roundKeys = Array.from(rounds.keys()).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
 
   return (
     <Gutter>
@@ -107,14 +111,12 @@ export const BracketClient: React.FC = () => {
             {tournament ? `${tournament.name} — Bracket` : 'Bracket Overview'}
           </h1>
           <p className="bracket-client__description">
-            All {matches.length} matches across {roundKeys.length} rounds.
-            Click any match to edit it.
+            All {matches.length} matches across {roundKeys.length} rounds. Click any match to edit
+            it.
           </p>
         </div>
 
-        {error && (
-          <div className="bracket-client__alert bracket-client__alert--error">{error}</div>
-        )}
+        {error && <div className="bracket-client__alert bracket-client__alert--error">{error}</div>}
 
         {!tournament && !error && (
           <EmptyState message="No active tournament found. Set a tournament status to 'active' to view its bracket." />
@@ -148,7 +150,10 @@ export const BracketClient: React.FC = () => {
                     >
                       {getBandLabel(match.band1)}
                       {band1Id && winnerId === band1Id && (
-                        <span className="bracket-client__trophy" aria-hidden="true"> 🏆</span>
+                        <span className="bracket-client__trophy" aria-hidden="true">
+                          {' '}
+                          🏆
+                        </span>
                       )}
                     </div>
                     <div className="bracket-client__vs">vs</div>
@@ -157,7 +162,10 @@ export const BracketClient: React.FC = () => {
                     >
                       {getBandLabel(match.band2)}
                       {band2Id && winnerId === band2Id && (
-                        <span className="bracket-client__trophy" aria-hidden="true"> 🏆</span>
+                        <span className="bracket-client__trophy" aria-hidden="true">
+                          {' '}
+                          🏆
+                        </span>
                       )}
                     </div>
                     {status !== 'upcoming' && (

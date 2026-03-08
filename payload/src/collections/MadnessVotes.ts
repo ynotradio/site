@@ -10,7 +10,8 @@ export const ModernRockMadnessVotes: CollectionConfig = {
   admin: {
     defaultColumns: ['match', 'group', 'userId', 'createdAt'],
     group: 'Modern Rock Madness',
-    description: 'Individual vote records for tournament matches. Every voter is authenticated via Auth0.',
+    description:
+      'Individual vote records for tournament matches. Every voter is authenticated via Auth0.',
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),
@@ -44,7 +45,8 @@ export const ModernRockMadnessVotes: CollectionConfig = {
       required: true,
       index: true,
       admin: {
-        description: 'Auth0 user ID (sub claim). Used as the unique voter identifier for duplicate prevention.',
+        description:
+          'Auth0 user ID (sub claim). Used as the unique voter identifier for duplicate prevention.',
       },
     },
   ],

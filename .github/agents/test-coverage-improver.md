@@ -15,7 +15,7 @@ network:
   allowed:
     - defaults
     - node
-    - "telemetry.individual.githubcopilot.com"
+    - 'telemetry.individual.githubcopilot.com'
 
 safe-outputs:
   create-pull-request:

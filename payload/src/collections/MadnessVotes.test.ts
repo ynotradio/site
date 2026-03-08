@@ -62,9 +62,9 @@ describe('ModernRockMadnessVotes', () => {
   it('restricts read access to admin and editor roles', () => {
     const readFn = ModernRockMadnessVotes.access?.read;
     expect(typeof readFn).toBe('function');
-    expect(
-      (readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } }),
-    ).toBe(false);
+    expect((readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
+      false,
+    );
   });
 
   it('has timestamps enabled', () => {

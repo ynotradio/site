@@ -115,9 +115,7 @@ describe('useMatchActions', () => {
     expect(result.current.successMessage).toBe('Extend overtime succeeded.');
     const patchCall = patchCalls.find(({ body }) => 'endTime' in body);
     // New endTime should be 15 min after the old endTime, not 15 min after now
-    const expectedEnd = new Date(
-      new Date(endTime).getTime() + 15 * 60 * 1000,
-    ).toISOString();
+    const expectedEnd = new Date(new Date(endTime).getTime() + 15 * 60 * 1000).toISOString();
     expect(patchCall?.body).toMatchObject({ endTime: expectedEnd });
     const eventCall = patchCalls.find(({ body }) => 'eventType' in body);
     expect(eventCall?.body).toMatchObject({ eventType: 'overtime_extended' });

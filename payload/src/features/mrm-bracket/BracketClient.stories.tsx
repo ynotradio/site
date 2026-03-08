@@ -32,32 +32,51 @@ const makeMatch = (
   endTime: FUTURE(120),
   winner: null,
   band1: {
-    id: `b-${band1Name}`, name: band1Name, seed: band1Seed, placement: matchNumber * 2 - 1,
+    id: `b-${band1Name}`,
+    name: band1Name,
+    seed: band1Seed,
+    placement: matchNumber * 2 - 1,
   },
   band2: {
-    id: `b-${band2Name}`, name: band2Name, seed: band2Seed, placement: matchNumber * 2,
+    id: `b-${band2Name}`,
+    name: band2Name,
+    seed: band2Seed,
+    placement: matchNumber * 2,
   },
   ...overrides,
 });
 
 const SAMPLE_MATCHES = [
   makeMatch('m1', 1, '1', 'Radiohead', 1, 'Smashing Pumpkins', 16, {
-    band1Votes: 1823, band2Votes: 942, startTime: PAST(120), endTime: FUTURE(60),
+    band1Votes: 1823,
+    band2Votes: 942,
+    startTime: PAST(120),
+    endTime: FUTURE(60),
   }),
-  makeMatch('m2', 2, '1', 'Nirvana', 2, 'Alice in Chains', 15, { startTime: FUTURE(90), endTime: FUTURE(150) }),
+  makeMatch('m2', 2, '1', 'Nirvana', 2, 'Alice in Chains', 15, {
+    startTime: FUTURE(90),
+    endTime: FUTURE(150),
+  }),
   makeMatch('m3', 3, '1', 'Pearl Jam', 3, 'Soundgarden', 14, { startTime: FUTURE(180) }),
   makeMatch('m4', 4, '1', 'Foo Fighters', 4, 'Weezer', 13, { startTime: FUTURE(270) }),
   makeMatch('m33', 33, '2', 'Radiohead', 1, '(TBD)', 2, {
     band2: null,
     startTime: FUTURE(2000),
     winner: {
-      id: 'b-Radiohead', name: 'Radiohead', seed: 1, placement: 1,
+      id: 'b-Radiohead',
+      name: 'Radiohead',
+      seed: 1,
+      placement: 1,
     },
     band1Votes: 2100,
     band2Votes: 950,
     endTime: PAST(30),
   }),
-  makeMatch('m49', 49, '3', '(TBD)', 1, '(TBD)', 1, { band1: null, band2: null, startTime: FUTURE(5000) }),
+  makeMatch('m49', 49, '3', '(TBD)', 1, '(TBD)', 1, {
+    band1: null,
+    band2: null,
+    startTime: FUTURE(5000),
+  }),
 ];
 
 const meta: Meta<typeof BracketClient> = {

@@ -28,41 +28,47 @@ export const useMatchActions = (
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const withSaving = useCallback(async (label: string, action: () => Promise<void>) => {
-    setSaving(true);
-    setError(null);
-    setSuccessMessage(null);
-    try {
-      await action();
-      setSuccessMessage(`${label} succeeded.`);
-      await onComplete();
-    } catch (err) {
-      setError(`${label} failed. Please try again.`);
-      // eslint-disable-next-line no-console
-      console.error(`useMatchActions ${label} error:`, err);
-    } finally {
-      setSaving(false);
-    }
-  }, [onComplete]);
+  const withSaving = useCallback(
+    async (label: string, action: () => Promise<void>) => {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage(null);
+      try {
+        await action();
+        setSuccessMessage(`${label} succeeded.`);
+        await onComplete();
+      } catch (err) {
+        setError(`${label} failed. Please try again.`);
+        // eslint-disable-next-line no-console
+        console.error(`useMatchActions ${label} error:`, err);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [onComplete],
+  );
 
-  const handleManualVote = useCallback(async (bandKey: 'band1' | 'band2') => {
-    if (!match) return;
-    const votesField = bandKey === 'band1' ? 'band1Votes' : 'band2Votes';
-    const newCount = match[votesField] + 1;
-    await withSaving('Manual vote', async () => {
-      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [votesField]: newCount }),
+  const handleManualVote = useCallback(
+    async (bandKey: 'band1' | 'band2') => {
+      if (!match) return;
+      const votesField = bandKey === 'band1' ? 'band1Votes' : 'band2Votes';
+      const newCount = match[votesField] + 1;
+      await withSaving('Manual vote', async () => {
+        const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [votesField]: newCount }),
+        });
+        if (!res.ok) throw new Error('PATCH failed');
+        await logEvent(match.id, 'admin_vote', {
+          bandKey,
+          band1Votes: match.band1Votes,
+          band2Votes: match.band2Votes,
+        });
       });
-      if (!res.ok) throw new Error('PATCH failed');
-      await logEvent(match.id, 'admin_vote', {
-        bandKey,
-        band1Votes: match.band1Votes,
-        band2Votes: match.band2Votes,
-      });
-    });
-  }, [match, withSaving]);
+    },
+    [match, withSaving],
+  );
 
   const handleCloseMatch = useCallback(async () => {
     if (!match) return;

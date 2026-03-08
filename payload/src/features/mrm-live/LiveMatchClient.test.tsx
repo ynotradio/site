@@ -16,9 +16,7 @@ vi.mock('../shared/LoadingSpinner', () => ({
 }));
 
 vi.mock('../shared/EmptyState', () => ({
-  EmptyState: ({ message }: { message: string }) => (
-    <div data-testid="empty-state">{message}</div>
-  ),
+  EmptyState: ({ message }: { message: string }) => <div data-testid="empty-state">{message}</div>,
 }));
 
 const ACTIVE_MATCH = {
@@ -180,7 +178,11 @@ describe('LiveMatchClient', () => {
   });
 
   it('shows sponsor information when present', async () => {
-    const matchWithSponsor = { ...ACTIVE_MATCH, sponsor: 'Acme Corp', sponsorMessage: 'Best music!' };
+    const matchWithSponsor = {
+      ...ACTIVE_MATCH,
+      sponsor: 'Acme Corp',
+      sponsorMessage: 'Best music!',
+    };
     mockFetch([matchWithSponsor]);
     render(<LiveMatchClient />);
     await waitFor(() => {
@@ -195,9 +197,13 @@ describe('LiveMatchClient', () => {
     await waitFor(() => screen.getByText('Radiohead'));
 
     const callsBefore = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.length;
-    act(() => { vi.advanceTimersByTime(5001); });
+    act(() => {
+      vi.advanceTimersByTime(5001);
+    });
     await waitFor(() => {
-      expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(callsBefore);
+      expect((global.fetch as ReturnType<typeof vi.fn>).mock.calls.length).toBeGreaterThan(
+        callsBefore,
+      );
     });
     vi.useRealTimers();
   });

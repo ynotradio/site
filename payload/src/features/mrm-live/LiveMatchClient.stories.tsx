@@ -6,10 +6,18 @@ const PAST = (min: number) => new Date(NOW.getTime() - min * 60_000).toISOString
 const FUTURE = (min: number) => new Date(NOW.getTime() + min * 60_000).toISOString();
 
 const BAND1 = {
-  id: 'b1', name: 'Radiohead', abbreviation: 'RH', seed: 1, placement: 1,
+  id: 'b1',
+  name: 'Radiohead',
+  abbreviation: 'RH',
+  seed: 1,
+  placement: 1,
 };
 const BAND2 = {
-  id: 'b2', name: 'Nirvana', abbreviation: 'NIR', seed: 1, placement: 2,
+  id: 'b2',
+  name: 'Nirvana',
+  abbreviation: 'NIR',
+  seed: 1,
+  placement: 2,
 };
 
 const meta: Meta<typeof LiveMatchClient> = {

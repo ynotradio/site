@@ -15,9 +15,7 @@ vi.mock('../shared/LoadingSpinner', () => ({
 }));
 
 vi.mock('../shared/EmptyState', () => ({
-  EmptyState: ({ message }: { message: string }) => (
-    <div data-testid="empty-state">{message}</div>
-  ),
+  EmptyState: ({ message }: { message: string }) => <div data-testid="empty-state">{message}</div>,
 }));
 
 const TOURNAMENT = {
@@ -28,12 +26,7 @@ const TOURNAMENT = {
   startDate: '2025-03-01',
 };
 
-const makeMatch = (
-  id: string,
-  matchNumber: number,
-  round: string,
-  overrides: object = {},
-) => ({
+const makeMatch = (id: string, matchNumber: number, round: string, overrides: object = {}) => ({
   id,
   matchNumber,
   round,
@@ -113,11 +106,7 @@ describe('BracketClient', () => {
   });
 
   it('groups matches by round correctly', async () => {
-    const matches = [
-      makeMatch('m1', 1, '1'),
-      makeMatch('m2', 2, '1'),
-      makeMatch('m3', 33, '2'),
-    ];
+    const matches = [makeMatch('m1', 1, '1'), makeMatch('m2', 2, '1'), makeMatch('m3', 33, '2')];
     mockFetch([TOURNAMENT], matches);
     render(<BracketClient />);
     await waitFor(() => {

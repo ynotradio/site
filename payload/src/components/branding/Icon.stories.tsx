@@ -24,9 +24,14 @@ export const Default: Story = {};
 export const InNavContext: Story = {
   decorators: [
     (Story) => (
-      <nav style={{
-        display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'sans-serif', fontSize: 14,
-      }}
+      <nav
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          fontFamily: 'sans-serif',
+          fontSize: 14,
+        }}
       >
         <span style={{ width: 'auto', height: 18, display: 'inline-flex' }}>
           <Story />

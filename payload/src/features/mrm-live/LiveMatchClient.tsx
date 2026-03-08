@@ -77,7 +77,10 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
       <span className="live-match-client__round">
         Round {match.round} · Match #{match.matchNumber}
       </span>
-      <a href={`/admin/collections/modern-rock-madness-matches/${match.id}`} className="live-match-client__edit-link">
+      <a
+        href={`/admin/collections/modern-rock-madness-matches/${match.id}`}
+        className="live-match-client__edit-link"
+      >
         Edit Match →
       </a>
     </div>
@@ -91,7 +94,10 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
         const won = isWinner(match, bandKey);
         const seed = getBandSeed(band);
         return (
-          <div key={bandKey} className={`live-match-client__band ${won ? 'live-match-client__band--winner' : ''}`}>
+          <div
+            key={bandKey}
+            className={`live-match-client__band ${won ? 'live-match-client__band--winner' : ''}`}
+          >
             <div className="live-match-client__band-name">
               {seed !== null && <span className="live-match-client__seed">#{seed}</span>}
               {getBandName(band)}
@@ -102,7 +108,11 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
               <span className="live-match-client__vote-pct">{pct}%</span>
             </div>
             <div className="live-match-client__bar-track">
-              <div className="live-match-client__bar-fill" style={{ width: `${pct}%` }} aria-label={`${pct}% of votes`} />
+              <div
+                className="live-match-client__bar-fill"
+                style={{ width: `${pct}%` }}
+                aria-label={`${pct}% of votes`}
+              />
             </div>
             {canVote && (
               <button
@@ -122,12 +132,22 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
 
     <div className="live-match-client__actions">
       {canClose && (
-        <button type="button" className="live-match-client__action-btn live-match-client__action-btn--danger" onClick={onClose} disabled={saving}>
+        <button
+          type="button"
+          className="live-match-client__action-btn live-match-client__action-btn--danger"
+          onClick={onClose}
+          disabled={saving}
+        >
           {saving ? 'Closing…' : 'Close Match'}
         </button>
       )}
       {canExtend && (
-        <button type="button" className="live-match-client__action-btn live-match-client__action-btn--warning" onClick={onExtend} disabled={saving}>
+        <button
+          type="button"
+          className="live-match-client__action-btn live-match-client__action-btn--warning"
+          onClick={onExtend}
+          disabled={saving}
+        >
           {saving ? 'Extending…' : 'Extend Overtime (+15 min)'}
         </button>
       )}
@@ -135,9 +155,7 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
 
     {match.sponsor && (
       <div className="live-match-client__sponsor">
-        <strong>Sponsor:</strong>
-        {' '}
-        {match.sponsor}
+        <strong>Sponsor:</strong> {match.sponsor}
         {match.sponsorMessage && <p>{match.sponsorMessage}</p>}
       </div>
     )}
@@ -181,7 +199,9 @@ export const LiveMatchClient: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => { fetchCurrentMatch(); }, [fetchCurrentMatch]);
+  useEffect(() => {
+    fetchCurrentMatch();
+  }, [fetchCurrentMatch]);
   useEffect(() => {
     const timer = setInterval(fetchCurrentMatch, POLL_INTERVAL_MS);
     return () => clearInterval(timer);
@@ -198,7 +218,13 @@ export const LiveMatchClient: React.FC = () => {
 
   const error = fetchError ?? actionError;
 
-  if (loading) return <Gutter><LoadingSpinner /></Gutter>;
+  if (loading) {
+    return (
+      <Gutter>
+        <LoadingSpinner />
+      </Gutter>
+    );
+  }
 
   const status = match ? getMatchStatus(match) : null;
   const isTied = !!(match && match.band1Votes === match.band2Votes && !match.winner);
@@ -209,13 +235,19 @@ export const LiveMatchClient: React.FC = () => {
         <div className="live-match-client__header">
           <h1 className="live-match-client__title">Live Match</h1>
           <p className="live-match-client__description">
-            Monitor vote counts and manage the current match in real time.
-            Vote counts refresh every {POLL_INTERVAL_MS / 1000} seconds.
+            Monitor vote counts and manage the current match in real time. Vote counts refresh every{' '}
+            {POLL_INTERVAL_MS / 1000} seconds.
           </p>
         </div>
 
-        {error && <div className="live-match-client__alert live-match-client__alert--error">{error}</div>}
-        {successMessage && <div className="live-match-client__alert live-match-client__alert--success">{successMessage}</div>}
+        {error && (
+          <div className="live-match-client__alert live-match-client__alert--error">{error}</div>
+        )}
+        {successMessage && (
+          <div className="live-match-client__alert live-match-client__alert--success">
+            {successMessage}
+          </div>
+        )}
 
         {!match ? (
           <EmptyState message="No match has started yet for the active tournament." />

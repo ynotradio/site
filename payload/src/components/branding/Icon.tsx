@@ -9,11 +9,7 @@ import './Icon.css';
  */
 export const Icon: React.FC = () => (
   <div className="ynot-icon" aria-label="Y-Not Radio">
-    <img
-      src="/ynot-logo.svg"
-      alt="Y-Not Radio"
-      className="ynot-icon__image"
-    />
+    <img src="/ynot-logo.svg" alt="Y-Not Radio" className="ynot-icon__image" />
   </div>
 );
 

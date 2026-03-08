@@ -9,11 +9,7 @@ import './Logo.css';
  */
 export const Logo: React.FC = () => (
   <div className="ynot-logo">
-    <img
-      src="/ynot-logo.svg"
-      alt="Y-Not Radio"
-      className="ynot-logo__image"
-    />
+    <img src="/ynot-logo.svg" alt="Y-Not Radio" className="ynot-logo__image" />
   </div>
 );
 
