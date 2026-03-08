@@ -57,11 +57,14 @@ describe('musicbrainz-bulk-match-utils', () => {
 
     it('should parse combined flags', () => {
       const result = parseArgs([
-        'node', 'script',
-        '--collection', 'songs',
+        'node',
+        'script',
+        '--collection',
+        'songs',
         '--fix',
         '--verify',
-        '--limit', '10',
+        '--limit',
+        '10',
       ]);
       expect(result).toEqual({
         collection: 'songs',
@@ -72,28 +75,27 @@ describe('musicbrainz-bulk-match-utils', () => {
     });
 
     it('should throw for invalid collection', () => {
-      expect(() => parseArgs(['node', 'script', '--collection', 'invalid']))
-        .toThrow('Invalid collection "invalid"');
+      expect(() => parseArgs(['node', 'script', '--collection', 'invalid'])).toThrow(
+        'Invalid collection "invalid"',
+      );
     });
 
     it('should throw for invalid limit', () => {
-      expect(() => parseArgs(['node', 'script', '--limit', 'abc']))
-        .toThrow('Invalid limit "abc"');
+      expect(() => parseArgs(['node', 'script', '--limit', 'abc'])).toThrow('Invalid limit "abc"');
     });
 
     it('should throw for zero limit', () => {
-      expect(() => parseArgs(['node', 'script', '--limit', '0']))
-        .toThrow('Invalid limit "0"');
+      expect(() => parseArgs(['node', 'script', '--limit', '0'])).toThrow('Invalid limit "0"');
     });
 
     it('should throw for negative limit', () => {
-      expect(() => parseArgs(['node', 'script', '--limit', '-5']))
-        .toThrow('Invalid limit "-5"');
+      expect(() => parseArgs(['node', 'script', '--limit', '-5'])).toThrow('Invalid limit "-5"');
     });
 
     it('should throw for unknown arguments', () => {
-      expect(() => parseArgs(['node', 'script', '--unknown']))
-        .toThrow('Unknown argument: --unknown');
+      expect(() => parseArgs(['node', 'script', '--unknown'])).toThrow(
+        'Unknown argument: --unknown',
+      );
     });
   });
 
@@ -130,6 +132,7 @@ describe('musicbrainz-bulk-match-utils', () => {
         matched: 0,
         mismatched: 0,
         notFound: 0,
+        verified: 0,
         updated: 0,
         results: [],
       });
@@ -173,10 +176,11 @@ describe('musicbrainz-bulk-match-utils', () => {
       expect(report.notFound).toBe(1);
     });
 
-    it('should return skipped when existing MBID matches during verification', () => {
+    it('should return verified when existing MBID matches during verification', () => {
       const report = emptyReport('artists');
       const status = classifyMatch('same-mbid', 'same-mbid', true, report);
-      expect(status).toBe('skipped');
+      expect(status).toBe('verified');
+      expect(report.verified).toBe(1);
     });
   });
 
@@ -214,6 +218,7 @@ describe('musicbrainz-bulk-match-utils', () => {
         matched: 20,
         mismatched: 2,
         notFound: 8,
+        verified: 0,
         updated: 0,
         results: [],
       };

@@ -293,13 +293,13 @@ export async function getReleaseMbid(
     // Respect rate limiting
     await waitForRateLimit();
 
-    // Build search query - always include artist if available
-    const queryParts = [albumTitle];
+    // Build search query using field-specific Lucene syntax for precision
+    const queryParts = [`release:"${albumTitle}"`];
     if (artistName?.trim()) {
-      queryParts.push(`artist:${artistName}`);
+      queryParts.push(`artist:"${artistName}"`);
     }
     const query = encodeURIComponent(queryParts.join(' AND '));
-    const url = `https://musicbrainz.org/ws/2/release?query=${query}&fmt=json&limit=5`;
+    const url = `https://musicbrainz.org/ws/2/release?query=${query}&fmt=json&limit=10`;
 
     // Make request with required User-Agent
     const response = await fetch(url, {
@@ -321,14 +321,14 @@ export async function getReleaseMbid(
         .filter((release) => {
           // Filter out obvious live recordings
           const isLive = release.title?.toLowerCase().includes('live');
-          return !isLive && release.score >= 85;
+          return !isLive && release.score >= 75;
         })
         .sort((a, b) => {
           // Prefer official studio albums
           const aIsCompilation = a.title?.toLowerCase().includes('compilation')
-                                  || a.title?.toLowerCase().includes('greatest hits');
+            || a.title?.toLowerCase().includes('greatest hits');
           const bIsCompilation = b.title?.toLowerCase().includes('compilation')
-                                  || b.title?.toLowerCase().includes('greatest hits');
+            || b.title?.toLowerCase().includes('greatest hits');
 
           if (aIsCompilation !== bIsCompilation) {
             return aIsCompilation ? 1 : -1;

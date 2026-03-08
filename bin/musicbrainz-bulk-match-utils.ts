@@ -24,7 +24,7 @@ export interface MatchResult {
   name: string;
   currentMbid: string | null;
   foundMbid: string | null;
-  status: 'missing' | 'matched' | 'mismatch' | 'not-found' | 'skipped';
+  status: 'missing' | 'matched' | 'mismatch' | 'not-found' | 'skipped' | 'verified';
   updated: boolean;
 }
 
@@ -36,6 +36,7 @@ export interface CollectionReport {
   matched: number;
   mismatched: number;
   notFound: number;
+  verified: number;
   updated: number;
   results: MatchResult[];
 }
@@ -128,6 +129,7 @@ export function emptyReport(collection: string): CollectionReport {
     matched: 0,
     mismatched: 0,
     notFound: 0,
+    verified: 0,
     updated: 0,
     results: [],
   };
@@ -166,6 +168,10 @@ export function classifyMatch(
     counters.notFound += 1;
     return 'not-found';
   }
+  if (currentMbid && foundMbid && currentMbid === foundMbid) {
+    counters.verified += 1;
+    return 'verified';
+  }
   return 'skipped';
 }
 
@@ -181,12 +187,16 @@ export function printReport(report: CollectionReport): void {
   console.log(`  Processed:       ${report.processed}`);
   console.log(`  Missing MBID:    ${report.missing}`);
   console.log(`  Matched:         ${report.matched}`);
+  console.log(`  Verified:        ${report.verified}`);
   console.log(`  Mismatched:      ${report.mismatched}`);
   console.log(`  Not found:       ${report.notFound}`);
   console.log(`  Updated:         ${report.updated}`);
 
   const actionable = report.results.filter(
-    (r) => r.status === 'matched' || r.status === 'mismatch' || r.status === 'not-found',
+    (r) => r.status === 'matched'
+      || r.status === 'mismatch'
+      || r.status === 'not-found'
+      || r.status === 'verified',
   );
 
   if (actionable.length > 0) {
@@ -194,6 +204,7 @@ export function printReport(report: CollectionReport): void {
     for (const r of actionable) {
       let icon = '❌';
       if (r.status === 'matched') icon = '✅';
+      else if (r.status === 'verified') icon = '✔️';
       else if (r.status === 'mismatch') icon = '⚠️';
       const updateTag = r.updated ? ' [UPDATED]' : '';
       console.log(`    ${icon} ${r.name}`);

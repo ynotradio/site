@@ -14,14 +14,9 @@
  *   yarn musicbrainz:match --fix --collection songs # Fix missing song MBIDs
  */
 
-import { getPayloadHMR } from '@payloadcms/next/utilities';
+import { getPayload, type Payload } from 'payload';
 import config from '@payload-config';
-import type { Payload } from 'payload';
-import {
-  getArtistMbid,
-  getReleaseMbid,
-  getRecordingMbid,
-} from './migrations/shared/musicbrainz';
+import { getArtistMbid, getReleaseMbid, getRecordingMbid } from './migrations/shared/musicbrainz';
 import {
   parseArgs,
   getArtistName,
@@ -39,23 +34,16 @@ import {
 
 const PAGE_SIZE = 100;
 
-async function processArtists(
-  payload: Payload,
-  options: CliOptions,
-): Promise<CollectionReport> {
+async function processArtists(payload: Payload, options: CliOptions): Promise<CollectionReport> {
   const report = emptyReport('artists');
 
-  const where: Record<string, unknown> = options.verify
-    ? {}
-    : { musicbrainzId: { exists: false } };
+  const where: Record<string, unknown> = options.verify ? {} : { musicbrainzId: { exists: false } };
 
   let page = 1;
   let hasMore = true;
 
   while (hasMore) {
-    const limit = options.limit
-      ? Math.min(PAGE_SIZE, options.limit - report.processed)
-      : PAGE_SIZE;
+    const limit = options.limit ? Math.min(PAGE_SIZE, options.limit - report.processed) : PAGE_SIZE;
     if (limit <= 0) break;
 
     const result = await payload.find({
@@ -69,11 +57,16 @@ async function processArtists(
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { name } = (doc as { name: string });
+      const { name } = doc as { name: string };
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
 
       const matchResult: MatchResult = {
-        id: doc.id, name, currentMbid, foundMbid: null, status: 'skipped', updated: false,
+        id: doc.id,
+        name,
+        currentMbid,
+        foundMbid: null,
+        status: 'skipped',
+        updated: false,
       };
 
       if (currentMbid && !options.verify) {
@@ -106,23 +99,16 @@ async function processArtists(
   return report;
 }
 
-async function processRecords(
-  payload: Payload,
-  options: CliOptions,
-): Promise<CollectionReport> {
+async function processRecords(payload: Payload, options: CliOptions): Promise<CollectionReport> {
   const report = emptyReport('records');
 
-  const where: Record<string, unknown> = options.verify
-    ? {}
-    : { musicbrainzId: { exists: false } };
+  const where: Record<string, unknown> = options.verify ? {} : { musicbrainzId: { exists: false } };
 
   let page = 1;
   let hasMore = true;
 
   while (hasMore) {
-    const limit = options.limit
-      ? Math.min(PAGE_SIZE, options.limit - report.processed)
-      : PAGE_SIZE;
+    const limit = options.limit ? Math.min(PAGE_SIZE, options.limit - report.processed) : PAGE_SIZE;
     if (limit <= 0) break;
 
     const result = await payload.find({
@@ -137,13 +123,18 @@ async function processRecords(
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { title } = (doc as { title: string });
+      const { title } = doc as { title: string };
       const artistName = getArtistName((doc as { artist?: unknown }).artist);
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
       const displayLabel = artistName ? `${artistName} — ${title}` : title;
 
       const matchResult: MatchResult = {
-        id: doc.id, name: displayLabel, currentMbid, foundMbid: null, status: 'skipped', updated: false,
+        id: doc.id,
+        name: displayLabel,
+        currentMbid,
+        foundMbid: null,
+        status: 'skipped',
+        updated: false,
       };
 
       if (currentMbid && !options.verify) {
@@ -176,23 +167,16 @@ async function processRecords(
   return report;
 }
 
-async function processSongs(
-  payload: Payload,
-  options: CliOptions,
-): Promise<CollectionReport> {
+async function processSongs(payload: Payload, options: CliOptions): Promise<CollectionReport> {
   const report = emptyReport('songs');
 
-  const where: Record<string, unknown> = options.verify
-    ? {}
-    : { musicbrainzId: { exists: false } };
+  const where: Record<string, unknown> = options.verify ? {} : { musicbrainzId: { exists: false } };
 
   let page = 1;
   let hasMore = true;
 
   while (hasMore) {
-    const limit = options.limit
-      ? Math.min(PAGE_SIZE, options.limit - report.processed)
-      : PAGE_SIZE;
+    const limit = options.limit ? Math.min(PAGE_SIZE, options.limit - report.processed) : PAGE_SIZE;
     if (limit <= 0) break;
 
     const result = await payload.find({
@@ -207,13 +191,18 @@ async function processSongs(
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { title } = (doc as { title: string });
+      const { title } = doc as { title: string };
       const artistName = getArtistName((doc as { artist?: unknown }).artist);
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
       const displayLabel = artistName ? `${artistName} — ${title}` : title;
 
       const matchResult: MatchResult = {
-        id: doc.id, name: displayLabel, currentMbid, foundMbid: null, status: 'skipped', updated: false,
+        id: doc.id,
+        name: displayLabel,
+        currentMbid,
+        foundMbid: null,
+        status: 'skipped',
+        updated: false,
       };
 
       if (currentMbid && !options.verify) {
@@ -261,12 +250,12 @@ async function main() {
     console.log(`   Limit: ${options.limit} per collection`);
   }
 
-  const payload = await getPayloadHMR({ config });
+  const payload = await getPayload({ config });
   const reports: CollectionReport[] = [];
 
   const collections = options.collection === 'all'
-    ? ['artists', 'records', 'songs'] as const
-    : [options.collection] as const;
+    ? (['artists', 'records', 'songs'] as const)
+    : ([options.collection] as const);
 
   for (const collection of collections) {
     console.log(`\n⏳ Processing ${collection}...`);
@@ -297,12 +286,19 @@ async function main() {
         processed: acc.processed + r.processed,
         missing: acc.missing + r.missing,
         matched: acc.matched + r.matched,
+        verified: acc.verified + r.verified,
         mismatched: acc.mismatched + r.mismatched,
         notFound: acc.notFound + r.notFound,
         updated: acc.updated + r.updated,
       }),
       {
-        processed: 0, missing: 0, matched: 0, mismatched: 0, notFound: 0, updated: 0,
+        processed: 0,
+        missing: 0,
+        matched: 0,
+        verified: 0,
+        mismatched: 0,
+        notFound: 0,
+        updated: 0,
       },
     );
 
@@ -312,6 +308,7 @@ async function main() {
     console.log(`  Processed:    ${totals.processed}`);
     console.log(`  Missing MBID: ${totals.missing}`);
     console.log(`  Matched:      ${totals.matched}`);
+    console.log(`  Verified:     ${totals.verified}`);
     console.log(`  Mismatched:   ${totals.mismatched}`);
     console.log(`  Not found:    ${totals.notFound}`);
     console.log(`  Updated:      ${totals.updated}`);
