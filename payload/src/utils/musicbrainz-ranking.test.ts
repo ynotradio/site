@@ -144,6 +144,27 @@ describe('MusicBrainz result re-ranking', () => {
       expect(result[0].id).toBe('1');
       expect(result[1].id).toBe('2');
     });
+
+    it('handles releases with no artist-credit gracefully', async () => {
+      const mockReleases = [
+        { id: '1', title: 'Test', score: 100 },
+        {
+          id: '2',
+          title: 'Test',
+          score: 90,
+          'artist-credit': [{ name: 'Target Artist', artist: { id: 'a1', name: 'Target Artist' } }],
+        },
+      ];
+
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ releases: mockReleases }),
+      });
+
+      const result = await searchReleases('Test', 'Target Artist');
+      expect(result[0].id).toBe('2'); // Artist match wins over missing credits
+      expect(result[1].id).toBe('1');
+    });
   });
 
   describe('searchRecordings artist weighting', () => {
