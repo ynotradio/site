@@ -5,7 +5,8 @@
 }
 
 .ynot-icon__image {
-  max-height: 25px;
+  display: block;
+  height: 18px;
   width: auto;
   object-fit: contain;
 }
