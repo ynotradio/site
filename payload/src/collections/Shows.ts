@@ -27,33 +27,42 @@ export const Shows: CollectionConfig = {
   },
   fields: [
     {
-      name: 'date',
-      type: 'date',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Show date',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'date',
+          type: 'date',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Show date',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '40%',
+          },
         },
-      },
-    },
-
-    {
-      name: 'startTime',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Start time (HH:MM format)',
-      },
-    },
-    {
-      name: 'endTime',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'End time (HH:MM format)',
-      },
+        {
+          name: 'startTime',
+          type: 'text',
+          required: true,
+          admin: {
+            description: 'Start time',
+            placeholder: 'HH:MM',
+            width: '30%',
+          },
+        },
+        {
+          name: 'endTime',
+          type: 'text',
+          required: true,
+          admin: {
+            description: 'End time',
+            placeholder: 'HH:MM',
+            width: '30%',
+          },
+        },
+      ],
     },
     {
       name: 'name',

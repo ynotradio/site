@@ -10,7 +10,7 @@ export const Records: CollectionConfig = {
     plural: 'Records',
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
     defaultSort: '-releaseDate',
     group: 'Music',
@@ -22,16 +22,16 @@ export const Records: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
+  hooks: {
+    beforeChange: [generateMusicDisplayName('Record')],
+  },
   fields: [
     {
       name: 'displayName',
       type: 'text',
-      virtual: true,
       admin: {
-        hidden: true,
-      },
-      hooks: {
-        afterRead: [generateMusicDisplayName('Record')],
+        readOnly: true,
+        description: 'Auto-generated from artist and title',
       },
     },
     {
@@ -54,21 +54,28 @@ export const Records: CollectionConfig = {
       },
     },
     {
-      name: 'label',
-      type: 'text',
-      admin: {
-        description: 'Record label',
-      },
-    },
-    {
-      name: 'releaseDate',
-      type: 'date',
-      admin: {
-        description: 'Date the album was released',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          admin: {
+            description: 'Record label',
+            width: '60%',
+          },
         },
-      },
+        {
+          name: 'releaseDate',
+          type: 'date',
+          admin: {
+            description: 'Release date',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '40%',
+          },
+        },
+      ],
     },
     {
       name: 'coverImage',

@@ -5,7 +5,7 @@
  * display names for relationships and admin UI titles.
  */
 
-import type { FieldHook, CollectionBeforeChangeHook } from 'payload';
+import type { CollectionBeforeChangeHook } from 'payload';
 
 /**
  * DJ beforeChange hook: Generates displayName from person relationship
@@ -15,11 +15,7 @@ import type { FieldHook, CollectionBeforeChangeHook } from 'payload';
 export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, req }) => {
   const updatedData = data;
 
-  if (
-    updatedData.person
-    && Array.isArray(updatedData.person)
-    && updatedData.person.length > 0
-  ) {
+  if (updatedData.person && Array.isArray(updatedData.person) && updatedData.person.length > 0) {
     const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
 
     try {
@@ -52,23 +48,22 @@ export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, 
 };
 
 /**
- * Song/Record afterRead hook: Generates displayName from artist + title
+ * Song/Record beforeChange hook: Generates displayName from artist + title
  *
- * Returns "Artist - Title" format, falling back to just title or "Song/Record #<id>"
+ * Stores "Artist - Title" format, falling back to just title or "Song/Record #<id>"
  */
-export const generateMusicDisplayName = (entityType: 'Song' | 'Record'): FieldHook => async ({ data, req }) => {
-  if (!data) return 'Untitled';
-
+export const generateMusicDisplayName = (entityType: 'Song' | 'Record'): CollectionBeforeChangeHook => async ({ data, req }) => {
+  const updatedData = data;
   let artistName = '';
-  if (data.artist) {
-    // Artist may be populated or just an ID
-    if (typeof data.artist === 'object' && data.artist.name) {
-      artistName = data.artist.name;
-    } else if (data.artist) {
+
+  if (updatedData.artist) {
+    if (typeof updatedData.artist === 'object' && updatedData.artist.name) {
+      artistName = updatedData.artist.name;
+    } else {
       try {
         const artist = await req.payload.findByID({
           collection: 'artists',
-          id: typeof data.artist === 'object' ? data.artist.id : data.artist,
+          id: typeof updatedData.artist === 'object' ? updatedData.artist.id : updatedData.artist,
         });
         if (artist) {
           artistName = artist.name;
@@ -79,8 +74,11 @@ export const generateMusicDisplayName = (entityType: 'Song' | 'Record'): FieldHo
     }
   }
 
-  if (artistName && data.title) {
-    return `${artistName} - ${data.title}`;
+  if (artistName && updatedData.title) {
+    updatedData.displayName = `${artistName} - ${updatedData.title}`;
+  } else {
+    updatedData.displayName = updatedData.title || `${entityType} #${updatedData.id || 'New'}`;
   }
-  return data.title || `${entityType} #${data.id || 'New'}`;
+
+  return updatedData;
 };

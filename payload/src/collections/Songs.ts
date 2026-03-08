@@ -10,7 +10,7 @@ export const Songs: CollectionConfig = {
     plural: 'Songs',
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     defaultSort: '-releaseDate',
     group: 'Music',
@@ -23,16 +23,16 @@ export const Songs: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
+  hooks: {
+    beforeChange: [generateMusicDisplayName('Song')],
+  },
   fields: [
     {
       name: 'displayName',
       type: 'text',
-      virtual: true,
       admin: {
-        hidden: true,
-      },
-      hooks: {
-        afterRead: [generateMusicDisplayName('Song')],
+        readOnly: true,
+        description: 'Auto-generated from artist and title',
       },
     },
     {
@@ -58,6 +58,7 @@ export const Songs: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'URL for streaming the song',
+        placeholder: 'https://',
       },
     },
     {
@@ -75,7 +76,8 @@ export const Songs: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Should this song be featured on the New Music page?',
+        position: 'sidebar',
+        description: 'Feature on the New Music page?',
       },
     },
     {

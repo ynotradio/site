@@ -79,6 +79,7 @@ export const DJs: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'URL for external link',
+        placeholder: 'https://',
       },
     },
     {
@@ -93,19 +94,26 @@ export const DJs: CollectionConfig = {
       },
     },
     {
-      name: 'onAir',
-      type: 'checkbox',
-      defaultValue: true,
-      admin: {
-        description: 'Is this DJ currently on air?',
-      },
-    },
-    {
-      name: 'sortOrder',
-      type: 'number',
-      admin: {
-        description: 'Display order (lower numbers appear first)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'onAir',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            description: 'Actively scheduled for on-air shifts',
+            width: '25%',
+          },
+        },
+        {
+          name: 'sortOrder',
+          type: 'number',
+          admin: {
+            description: 'Display order — use the DJ Sort Order tool (/admin/dj-order) to reorder visually',
+            width: '25%',
+          },
+        },
+      ],
     },
     {
       name: 'legacyId',

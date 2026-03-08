@@ -74,6 +74,7 @@ export const Concerts: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'URL to purchase tickets',
+        placeholder: 'https://',
       },
     },
     {
@@ -81,7 +82,8 @@ export const Concerts: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       admin: {
-        description: 'Should this concert be featured on the homepage?',
+        position: 'sidebar',
+        description: 'Feature on the homepage?',
       },
     },
     {
