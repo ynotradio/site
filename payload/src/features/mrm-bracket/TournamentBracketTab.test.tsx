@@ -37,7 +37,7 @@ const makeMatch = (
   endTime: new Date(Date.now() + 120_000).toISOString(),
   winner: null,
   band1: { id: 'b1', name: 'Radiohead', seed: 1, placement: 1 },
-  band2: { id: 'b2', name: 'Nirvana', seed: 1, placement: 2 },
+  band2: { id: 'b2', name: 'Nirvana', seed: 2, placement: 2 },
   ...overrides,
 });
 
@@ -101,7 +101,7 @@ describe('TournamentBracketTab', () => {
     render(<TournamentBracketTab />);
     await waitFor(() => {
       expect(screen.getByText(/#1 Radiohead/)).toBeInTheDocument();
-      expect(screen.getByText(/#1 Nirvana/)).toBeInTheDocument();
+      expect(screen.getByText(/#2 Nirvana/)).toBeInTheDocument();
     });
   });
 

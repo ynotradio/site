@@ -34,13 +34,13 @@
 /* Responsive CSS grid for match cards */
 .bracket-tab__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 6px;
 }
 
 @media (min-width: 768px) {
   .bracket-tab__grid {
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
   }
 }
 
