@@ -473,14 +473,10 @@ export async function findOrCreateRecord(
 
   // Try to create new record
   try {
-    // Generate slug from title
-    const slug = generateSlug(title);
-
     const newRecord = await payload.create({
       collection: 'records',
       data: {
         title,
-        slug,
         artist: artistId as any,
         legacyId,
         migratedAt: new Date().toISOString(),
@@ -497,8 +493,15 @@ export async function findOrCreateRecord(
     if (isSlugError) {
       logger.debug(`Slug validation failed for record: ${title}, searching by slug...`);
 
-      // Generate the slug that would be created and search for it
-      const slug = generateSlug(title);
+      // Look up artist name to generate the correct artist--title slug
+      let artistName = '';
+      try {
+        const artist = await payload.findByID({ collection: 'artists', id: artistId });
+        artistName = artist?.name || '';
+      } catch { /* ignore */ }
+
+      const titleSlug = generateSlug(title);
+      const slug = artistName ? `${generateSlug(artistName)}--${titleSlug}` : titleSlug;
 
       const existingBySlug = await payload.find({
         collection: 'records',
@@ -609,11 +612,8 @@ export async function findOrCreateSong(
 
   // Try to create new song
   try {
-    const slug = generateSlug(cleanTitle);
-
     const songData: any = {
       title: cleanTitle,
-      slug,
     };
 
     if (artistId) {
@@ -635,7 +635,17 @@ export async function findOrCreateSong(
     if (isSlugError) {
       logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
 
-      const slug = generateSlug(cleanTitle);
+      // Look up artist name to generate the correct artist--title slug
+      let artistName = '';
+      if (artistId) {
+        try {
+          const artist = await payload.findByID({ collection: 'artists', id: artistId });
+          artistName = artist?.name || '';
+        } catch { /* ignore */ }
+      }
+
+      const titleSlug = generateSlug(cleanTitle);
+      const slug = artistName ? `${generateSlug(artistName)}--${titleSlug}` : titleSlug;
 
       const existingBySlug = await payload.find({
         collection: 'songs',

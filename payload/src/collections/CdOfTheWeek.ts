@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { setCdOfTheWeekSlugFromRecord } from './hooks/musicSlugify';
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
@@ -24,6 +25,9 @@ export const CdOfTheWeek: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
+  hooks: {
+    beforeChange: [setCdOfTheWeekSlugFromRecord],
+  },
   fields: [
     {
       name: 'record',
@@ -32,6 +36,17 @@ export const CdOfTheWeek: CollectionConfig = {
       required: true,
       admin: {
         description: 'Album being reviewed',
+      },
+    },
+    {
+      name: 'slug',
+      type: 'text',
+      unique: true,
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Auto-generated from the associated record slug',
       },
     },
     {

@@ -379,7 +379,6 @@ describe('payloadClient', () => {
         collection: 'songs',
         data: {
           title: 'New Song',
-          slug: 'new-song',
           artist: 42,
         },
       });
@@ -398,7 +397,6 @@ describe('payloadClient', () => {
         collection: 'songs',
         data: {
           title: 'Orphan Song',
-          slug: 'orphan-song',
         },
       });
     });

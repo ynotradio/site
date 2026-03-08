@@ -17,6 +17,7 @@ vi.mock('./shared/payloadClient', () => ({
 
 vi.mock('./shared/importUtils', () => ({
   generateSlug: vi.fn((text) => text.toLowerCase().replace(/\s+/g, '-')),
+  stripHtmlTags: vi.fn((text) => text),
 }));
 
 vi.mock('./shared/logger', () => ({
@@ -124,11 +125,9 @@ describe('importMusic', () => {
     it('should import new song and create artist', async () => {
       const { importMusic } = await import('./importMusic');
       const { findOrCreateArtist } = await import('./shared/payloadClient');
-      const { generateSlug } = await import('./shared/importUtils');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
       (findOrCreateArtist as Mock).mockResolvedValue('artist-id-123');
-      (generateSlug as Mock).mockReturnValue('the-national-bloodbuzz-ohio');
       (mockPayload.create as Mock).mockResolvedValue({ id: 'song-id-456' });
 
       const music = {
@@ -144,12 +143,10 @@ describe('importMusic', () => {
 
       expect(result).toBe(true);
       expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National');
-      expect(generateSlug).toHaveBeenCalledWith('The National Bloodbuzz Ohio');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
         data: {
           title: 'Bloodbuzz Ohio',
-          slug: 'the-national-bloodbuzz-ohio',
           artist: 'artist-id-123',
           streamUrl: 'https://example.com/song.mp3',
           releaseDate: '2024-01-15',
