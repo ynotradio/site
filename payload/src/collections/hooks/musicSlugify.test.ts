@@ -21,7 +21,7 @@ describe('slugifyText', () => {
   });
 
   it('should remove special characters', () => {
-    expect(slugifyText('Rock & Roll! (Yeah)')).toBe('rock--roll-yeah');
+    expect(slugifyText('Rock & Roll! (Yeah)')).toBe('rock-roll-yeah');
   });
 
   it('should handle already slugified text', () => {

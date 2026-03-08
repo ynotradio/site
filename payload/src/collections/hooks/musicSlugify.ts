@@ -7,40 +7,45 @@
  * Also provides a hook for CdOfTheWeek to inherit the slug from its associated record.
  */
 
-import type { CollectionBeforeChangeHook, Slugify } from 'payload';
+import type { CollectionBeforeChangeHook, Payload, Slugify } from 'payload';
 
 /**
  * Slugify a single text value (lowercases, removes special chars, replaces spaces with hyphens)
  */
 export function slugifyText(text: string): string {
   return text
-    .replace(/ /g, '-')
-    .replace(/[^\w-]+/g, '')
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[^\w\s-]+/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
 }
 
 /**
  * Resolve the artist name from data, handling both populated objects and IDs.
  */
 async function resolveArtistName(
-  data: Record<string, any>,
-  req: { payload: any },
+  data: Record<string, unknown>,
+  payload: Payload,
 ): Promise<string> {
-  if (!data?.artist) return '';
+  const artist = data?.artist;
+  if (!artist) return '';
 
   // Handle populated artist object
-  if (typeof data.artist === 'object' && data.artist.name) {
-    return data.artist.name;
+  if (typeof artist === 'object' && artist !== null && 'name' in artist) {
+    return String((artist as { name: unknown }).name || '');
   }
 
   // Look up artist by ID
-  const artistId = typeof data.artist === 'object' ? data.artist.id : data.artist;
+  const artistId = typeof artist === 'object' && artist !== null && 'id' in artist
+    ? (artist as { id: unknown }).id
+    : artist;
   try {
-    const artist = await req.payload.findByID({
+    const found = await payload.findByID({
       collection: 'artists',
-      id: artistId,
+      id: artistId as number,
     });
-    return artist?.name || '';
+    return found?.name || '';
   } catch {
     return '';
   }
@@ -54,8 +59,8 @@ export const musicSlugify: Slugify = async ({ data, req }) => {
   const title = data?.title;
   if (!title) return undefined;
 
-  const artistName = await resolveArtistName(data, req);
-  const titleSlug = slugifyText(title);
+  const artistName = await resolveArtistName(data, req.payload);
+  const titleSlug = slugifyText(String(title));
 
   if (artistName) {
     const artistSlug = slugifyText(artistName);
