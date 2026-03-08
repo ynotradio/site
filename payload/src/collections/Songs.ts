@@ -22,16 +22,16 @@ export const Songs: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
+  hooks: {
+    beforeChange: [generateMusicDisplayName('Song')],
+  },
   fields: [
     {
       name: 'displayName',
       type: 'text',
-      virtual: true,
       admin: {
-        hidden: true,
-      },
-      hooks: {
-        afterRead: [generateMusicDisplayName('Song')],
+        readOnly: true,
+        description: 'Auto-generated from artist and title',
       },
     },
     {

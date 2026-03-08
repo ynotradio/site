@@ -131,7 +131,7 @@ describe('DJs displayName beforeChange hook', () => {
   });
 });
 
-describe('Songs displayName virtual field afterRead hook', () => {
+describe('Songs displayName beforeChange hook', () => {
   let mockPayload: Partial<Payload>;
 
   beforeEach(() => {
@@ -152,18 +152,20 @@ describe('Songs displayName virtual field afterRead hook', () => {
     const result = await songHook({
       data: { artist: 1, title: 'Hey Jude' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('The Beatles - Hey Jude');
+    expect(result.displayName).toBe('The Beatles - Hey Jude');
   });
 
   it('should use populated artist name without additional query', async () => {
     const result = await songHook({
       data: { artist: { id: 1, name: 'The Beatles' }, title: 'Hey Jude' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('The Beatles - Hey Jude');
+    expect(result.displayName).toBe('The Beatles - Hey Jude');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
@@ -171,9 +173,10 @@ describe('Songs displayName virtual field afterRead hook', () => {
     const result = await songHook({
       data: { title: 'Untitled Song' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Untitled Song');
+    expect(result.displayName).toBe('Untitled Song');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
@@ -181,18 +184,20 @@ describe('Songs displayName virtual field afterRead hook', () => {
     const result = await songHook({
       data: { id: 123 },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Song #123');
+    expect(result.displayName).toBe('Song #123');
   });
 
   it('should generate fallback displayName for new song', async () => {
     const result = await songHook({
       data: {},
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Song #New');
+    expect(result.displayName).toBe('Song #New');
   });
 
   it('should handle artist fetch error gracefully', async () => {
@@ -201,14 +206,14 @@ describe('Songs displayName virtual field afterRead hook', () => {
     const result = await songHook({
       data: { artist: 1, title: 'Test Song' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    // Should still return displayName using just the title
-    expect(result).toBe('Test Song');
+    expect(result.displayName).toBe('Test Song');
   });
 });
 
-describe('Records displayName virtual field afterRead hook', () => {
+describe('Records displayName beforeChange hook', () => {
   let mockPayload: Partial<Payload>;
 
   beforeEach(() => {
@@ -229,18 +234,20 @@ describe('Records displayName virtual field afterRead hook', () => {
     const result = await recordHook({
       data: { artist: 1, title: 'The Dark Side of the Moon' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Pink Floyd - The Dark Side of the Moon');
+    expect(result.displayName).toBe('Pink Floyd - The Dark Side of the Moon');
   });
 
   it('should use populated artist name without additional query', async () => {
     const result = await recordHook({
       data: { artist: { id: 1, name: 'Pink Floyd' }, title: 'The Dark Side of the Moon' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Pink Floyd - The Dark Side of the Moon');
+    expect(result.displayName).toBe('Pink Floyd - The Dark Side of the Moon');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
@@ -248,9 +255,10 @@ describe('Records displayName virtual field afterRead hook', () => {
     const result = await recordHook({
       data: { title: 'Various Artists Compilation' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Various Artists Compilation');
+    expect(result.displayName).toBe('Various Artists Compilation');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
@@ -258,18 +266,20 @@ describe('Records displayName virtual field afterRead hook', () => {
     const result = await recordHook({
       data: { id: 456 },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Record #456');
+    expect(result.displayName).toBe('Record #456');
   });
 
   it('should generate fallback displayName for new record', async () => {
     const result = await recordHook({
       data: {},
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    expect(result).toBe('Record #New');
+    expect(result.displayName).toBe('Record #New');
   });
 
   it('should handle artist fetch error gracefully', async () => {
@@ -278,9 +288,9 @@ describe('Records displayName virtual field afterRead hook', () => {
     const result = await recordHook({
       data: { artist: 1, title: 'Test Album' },
       req: createMockReq(mockPayload),
+      operation: 'create',
     });
 
-    // Should still return displayName using just the title
-    expect(result).toBe('Test Album');
+    expect(result.displayName).toBe('Test Album');
   });
 });
