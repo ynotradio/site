@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   generateSlug,
+  generateMusicSlug,
   convertHtmlToLexical,
   getStatusFromDeleted,
   stripHtmlTags,
@@ -42,6 +43,24 @@ describe('generateSlug', () => {
 
   it('should preserve alphanumeric and hyphens', () => {
     expect(generateSlug('test-123-abc')).toBe('test-123-abc');
+  });
+});
+
+describe('generateMusicSlug', () => {
+  it('should generate artist--title slug', () => {
+    expect(generateMusicSlug('The Beatles', 'Hey Jude')).toBe('the-beatles--hey-jude');
+  });
+
+  it('should fall back to title-only when artist is empty', () => {
+    expect(generateMusicSlug('', 'Untitled Song')).toBe('untitled-song');
+  });
+
+  it('should handle special characters in artist and title', () => {
+    expect(generateMusicSlug("Guns N' Roses", 'Sweet Child O\' Mine')).toBe('guns-n-roses--sweet-child-o-mine');
+  });
+
+  it('should fall back to title-only when artist slugifies to empty', () => {
+    expect(generateMusicSlug('!!!', 'Good Title')).toBe('good-title');
   });
 });
 

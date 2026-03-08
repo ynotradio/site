@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
+import { musicSlugify } from './hooks/musicSlugify';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
@@ -46,7 +47,7 @@ export const Songs: CollectionConfig = {
         description: 'Song title',
       },
     },
-    slugField(),
+    slugField({ slugify: musicSlugify }),
     {
       name: 'artist',
       type: 'relationship',

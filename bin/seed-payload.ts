@@ -179,7 +179,6 @@ async function seed() {
       collection: 'records',
       data: {
         title: 'Great Album',
-        slug: 'great-album',
         artist: musicArtist1.id,
         releaseYear: 2025,
         label: 'Independent Records',
@@ -191,7 +190,6 @@ async function seed() {
       collection: 'records',
       data: {
         title: 'Awesome LP',
-        slug: 'awesome-lp',
         artist: musicArtist2.id,
         releaseYear: 2026,
         label: 'Test Label',
@@ -207,7 +205,6 @@ async function seed() {
       collection: 'songs',
       data: {
         title: 'Hit Single',
-        slug: 'hit-single',
         artist: musicArtist1.id,
         record: record1.id,
         spotifyUrl: 'https://open.spotify.com/track/example1',
@@ -218,7 +215,6 @@ async function seed() {
       collection: 'songs',
       data: {
         title: 'Deep Cut',
-        slug: 'deep-cut',
         artist: musicArtist1.id,
         record: record1.id,
       },
@@ -228,7 +224,6 @@ async function seed() {
       collection: 'songs',
       data: {
         title: 'Radio Friendly',
-        slug: 'radio-friendly',
         artist: musicArtist2.id,
         record: record2.id,
       },

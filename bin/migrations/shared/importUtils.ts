@@ -43,6 +43,21 @@ export function generateSlug(text: string): string {
 }
 
 /**
+ * Generate an "artist--title" format slug used for music collections.
+ * Falls back to title-only slug if artist name is empty.
+ */
+export function generateMusicSlug(artistName: string, title: string): string {
+  const titleSlug = generateSlug(title);
+  if (artistName) {
+    const artistSlug = generateSlug(artistName);
+    if (artistSlug) {
+      return `${artistSlug}--${titleSlug}`;
+    }
+  }
+  return titleSlug;
+}
+
+/**
  * Parse inline HTML elements recursively
  * Handles nested tags like <b><a href="...">text</a></b>
  */
