@@ -150,7 +150,20 @@ export async function searchArtists(
 }
 
 /**
+ * Check if any artist credit matches the target artist name (case-insensitive)
+ */
+function artistCreditMatches(
+  artistCredits: Array<{ name: string }> | undefined,
+  targetArtist: string,
+): boolean {
+  if (!artistCredits || !targetArtist.trim()) return false;
+  const normalized = targetArtist.toLowerCase().trim();
+  return artistCredits.some((ac) => ac.name.toLowerCase().trim() === normalized);
+}
+
+/**
  * Search for releases (albums) by title and optional artist
+ * Results are re-ranked to prioritize artist matches and Album type
  */
 export async function searchReleases(
   title: string,
@@ -185,7 +198,28 @@ export async function searchReleases(
     }
 
     const data: MusicBrainzReleaseSearchResponse = await response.json();
-    return data.releases || [];
+    const releases = data.releases || [];
+
+    // Re-rank results to prioritize artist matches and Album type
+    if (artistName?.trim()) {
+      return releases.sort((a, b) => {
+        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+
+        // Artist matches come first
+        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
+
+        // Within same artist match tier, prefer Album type
+        const aIsAlbum = a['release-group']?.['primary-type'] === 'Album' ? 1 : 0;
+        const bIsAlbum = b['release-group']?.['primary-type'] === 'Album' ? 1 : 0;
+        if (aIsAlbum !== bIsAlbum) return bIsAlbum - aIsAlbum;
+
+        // Then by MusicBrainz score
+        return (b.score || 0) - (a.score || 0);
+      });
+    }
+
+    return releases;
   } catch (error) {
     return [];
   }
@@ -194,6 +228,7 @@ export async function searchReleases(
 /**
  * Search for recordings (songs) by title and optional artist
  * Filters out live and video recordings to prioritize studio versions
+ * Results are re-ranked to prioritize artist matches
  */
 export async function searchRecordings(
   title: string,
@@ -234,16 +269,19 @@ export async function searchRecordings(
     const data: MusicBrainzRecordingSearchResponse = await response.json();
     const recordings = data.recordings || [];
 
-    // Sort to prioritize non-live versions
-    // MusicBrainz marks live recordings in the disambiguation field
+    // Sort to prioritize artist matches and non-live versions
     return recordings.sort((a, b) => {
-      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
-      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      // Artist matches come first (when artist name is provided)
+      if (artistName?.trim()) {
+        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
+      }
 
       // Live recordings go to the bottom
-      if (aIsLive !== bIsLive) {
-        return aIsLive - bIsLive;
-      }
+      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      if (aIsLive !== bIsLive) return aIsLive - bIsLive;
 
       // Otherwise maintain original score order
       return (b.score || 0) - (a.score || 0);
