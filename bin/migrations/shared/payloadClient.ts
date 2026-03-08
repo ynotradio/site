@@ -9,7 +9,7 @@ import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
-import { generateSlug, stripHtmlTags } from './importUtils';
+import { generateSlug, generateMusicSlug, stripHtmlTags } from './importUtils';
 
 const logger = createLogger('PayloadClient');
 
@@ -500,8 +500,7 @@ export async function findOrCreateRecord(
         artistName = artist?.name || '';
       } catch { /* ignore */ }
 
-      const titleSlug = generateSlug(title);
-      const slug = artistName ? `${generateSlug(artistName)}--${titleSlug}` : titleSlug;
+      const slug = generateMusicSlug(artistName, title);
 
       const existingBySlug = await payload.find({
         collection: 'records',
@@ -644,8 +643,7 @@ export async function findOrCreateSong(
         } catch { /* ignore */ }
       }
 
-      const titleSlug = generateSlug(cleanTitle);
-      const slug = artistName ? `${generateSlug(artistName)}--${titleSlug}` : titleSlug;
+      const slug = generateMusicSlug(artistName, cleanTitle);
 
       const existingBySlug = await payload.find({
         collection: 'songs',
