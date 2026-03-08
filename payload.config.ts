@@ -22,6 +22,11 @@ import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
+import { ModernRockMadnessTournaments } from './payload/src/collections/MadnessTournaments';
+import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands';
+import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
+import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
+import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -97,6 +102,22 @@ export default buildConfig({
             title: 'Show Cloner',
           },
         },
+        MRMLive: {
+          Component: '/payload/src/features/mrm-live#LiveMatchTool',
+          path: '/mrm-live',
+          exact: true,
+          meta: {
+            title: 'Live Match Dashboard',
+          },
+        },
+        MRMBracket: {
+          Component: '/payload/src/features/mrm-bracket#BracketTool',
+          path: '/mrm-bracket',
+          exact: true,
+          meta: {
+            title: 'Bracket Overview',
+          },
+        },
       },
     },
     importMap: {
@@ -128,6 +149,11 @@ export default buildConfig({
     Posts,
     CdOfTheWeek,
     YearEndPollResults,
+    ModernRockMadnessTournaments,
+    ModernRockMadnessGroups,
+    ModernRockMadnessMatches,
+    ModernRockMadnessVotes,
+    ModernRockMadnessMatchEvents,
   ],
   plugins: [
     cloudStoragePlugin({

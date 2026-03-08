@@ -5,13 +5,11 @@ import './Logo.css';
 
 /**
  * Y-Not Radio logo for the Payload admin login screen and header.
- * Displays the station name with brand styling.
+ * Renders the oval Y-Not Radio logo at display size.
  */
 export const Logo: React.FC = () => (
   <div className="ynot-logo">
-    <span className="ynot-logo__ynot">Y-Not</span>
-    <span className="ynot-logo__radio">Radio</span>
-    <span className="ynot-logo__cms">CMS</span>
+    <img src="/ynot-logo.svg" alt="Y-Not Radio" className="ynot-logo__image" />
   </div>
 );
 

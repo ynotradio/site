@@ -11,6 +11,12 @@ permissions:
   issues: read
   pull-requests: read
 
+network:
+  allowed:
+    - defaults
+    - node
+    - 'telemetry.individual.githubcopilot.com'
+
 safe-outputs:
   create-pull-request:
     draft: false

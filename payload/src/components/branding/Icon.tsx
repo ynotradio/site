@@ -5,11 +5,11 @@ import './Icon.css';
 
 /**
  * Y-Not Radio icon for the Payload admin navigation and favicon area.
- * A compact "YN" monogram with Y-Not Radio brand colors.
+ * Renders the oval Y-Not Radio logo at icon size.
  */
 export const Icon: React.FC = () => (
   <div className="ynot-icon" aria-label="Y-Not Radio">
-    <span className="ynot-icon__text">YN</span>
+    <img src="/ynot-logo.svg" alt="Y-Not Radio" className="ynot-icon__image" />
   </div>
 );
 

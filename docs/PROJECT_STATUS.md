@@ -1,7 +1,7 @@
 # Project Status - Y-Not Radio Site Migration
 
-**Last Updated:** January 6, 2026  
-**Current Phase:** Payload CMS Migration - Fresh Database Initialization
+**Last Updated:** March 7, 2026  
+**Current Phase:** Payload CMS Migration - MRM Admin Interfaces Complete
 
 ---
 
@@ -16,6 +16,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 ### ✅ Completed
 
 #### Infrastructure Setup (2025)
+
 - [x] Payload CMS installed and configured
 - [x] PostgreSQL (Neon) connection established
 - [x] Netlify deployment configured
@@ -23,6 +24,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] GitHub Actions CI/CD pipeline
 
 #### Payload Collections Created (2025)
+
 - [x] Users (authentication)
 - [x] Media (image uploads with Cloudinary)
 - [x] People (individuals - DJs, musicians)
@@ -39,6 +41,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] Ads (sponsor advertisements)
 
 #### Migration Scripts Created (2025)
+
 - [x] `importDJs.ts` - DJ data import with MusicBrainz integration
 - [x] `importConcerts.ts` - Concert data import
 - [x] `importMusic.ts` - Songs and Records import
@@ -50,29 +53,39 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] `mediaImporter.ts` - Shared utility for image migration
 
 #### Custom Features Implemented (2025)
+
 - [x] MusicBrainz custom field components (Artist, Release, Recording search)
 - [x] PostgreSQL Concert read model with feature flag support
 - [x] Multi-person DJ support (e.g., "M.J. & Patria")
 - [x] Hierarchical navigation system for Payload
 
 #### Testing Infrastructure (2025)
+
 - [x] Vitest test suite configured
 - [x] ESLint + TypeScript linting
 - [x] Storybook for UI component development
 - [x] Test coverage reporting
 - [x] Comprehensive test files for migration scripts
 
-#### Schema Finalization (January 2026)
-- [x] Removed legacy migration tracking fields (legacyId, migratedAt) from Artists, Venues, YearEndPollResults
-- [x] Updated CdOfTheWeek reviewer to use People relationship
-- [x] Cleared all Payload migrations for fresh database start
-- [x] Prepared SQL DROP statements for clean database reset
+#### Modern Rock Madness Collections (March 2026)
+
+- [x] MadnessTournaments (`madness-tournaments`) — annual tournament config
+- [x] MadnessBands (`madness-bands`) — tournament participants (name/seed/placement/sponsor)
+- [x] MadnessMatches (`madness-matches`) — bracket matchups with `nextMatch` progression field
+- [x] MadnessVotes (`madness-votes`) — individual vote records
+- [x] MadnessMatchEvents (`madness-match-events`) — audit log (overtime, admin_vote, match_closed, rematch)
+
+#### MRM Admin Interfaces (March 2026)
+
+- [x] Live Match Dashboard (`/admin/mrm-live`) — auto-polling vote display, Manual Vote/Close/Extend actions, bracket progression on close, audit logging
+- [x] Bracket Overview (`/admin/mrm-bracket`) — full bracket grouped by round, click-to-edit cards
 
 ---
 
 ### 🚧 In Progress
 
 #### Data Migration
+
 - [ ] Run DJ import against production MySQL data
 - [ ] Run concert import against production data
 - [ ] Import DJ photos from legacy URLs to Cloudinary
@@ -80,6 +93,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [ ] Validate data integrity after imports
 
 #### Frontend Integration
+
 - [ ] Update PHP pages to read from Payload API (feature-flagged)
 - [ ] Test concert page with PostgreSQL read model
 - [ ] Gradual rollout of Payload-powered pages
@@ -89,23 +103,23 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 ### 📋 Planned
 
 #### Additional Collections
+
 - [ ] Top11Contests (weekly contest configuration)
 - [ ] Top11Results (published weekly results)
 - [ ] Top11Votes (user voting data)
 - [ ] YearEndPolls (annual poll configuration)
 - [ ] YearEndPollCategories (poll categories)
 - [ ] YearEndPollVotes (user votes)
-- [ ] ModernRockMadnessTournaments (tournament config)
-- [ ] ModernRockMadnessGroups (tournament participants)
-- [ ] ModernRockMadnessMatches (bracket matchups)
-- [ ] ModernRockMadnessVotes (user votes)
+- [ ] ModernRockMadnessGroups → implemented as `madness-bands` ✅ (complete, see above)
 
 #### Migration Scripts
+
 - [ ] Import Top 11 historical data
 - [ ] Import Year End Poll historical data
 - [ ] Import Modern Rock Madness historical data
 
 #### Frontend Cutover
+
 - [ ] Feature flag all legacy PHP pages
 - [ ] Build Next.js frontend components
 - [ ] Responsive redesign of public site
@@ -115,13 +129,20 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 ## Recent Achievements
 
+### March 2026
+
+- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression (winner advances to the next-round slot on close). Added Bracket Overview (`/admin/mrm-bracket`) showing all rounds in one scrollable view.
+- **MRM Collections**: Created all 5 Modern Rock Madness Payload collections (Tournaments, Bands, Matches, Votes, MatchEvents). Audit trail records every admin action with event type and snapshot.
+
 ### December 2025 - January 2026
+
 - **MusicBrainz Integration**: Implemented custom Payload field components for searching and selecting MusicBrainz entities (artists, releases, recordings) directly from the admin UI
 - **PostgreSQL Read Model**: Created PostgreSQL-backed concert model that reads from Payload's database while maintaining MySQL compatibility via feature flags
 - **Multi-Person DJ Support**: Enhanced DJ collection and import script to handle DJs like "M.J. & Patria" by creating multiple Person records
 - **Migration Script Testing**: Added comprehensive test coverage for all data import scripts
 
 ### November 2025
+
 - **Collection Schema Design**: Finalized all core Payload collection schemas with proper relationships
 - **Cloudinary Setup**: Integrated Cloudinary for scalable media storage
 - **Import Utilities**: Built shared utilities for idempotent data imports with MusicBrainz lookup
@@ -149,17 +170,20 @@ After recent schema changes (removed legacy fields, updated relationships), we r
 ## Next Agent Tasks
 
 ### High Priority
+
 1. **Database Reset**: Drop all Payload tables in Neon and restart app for clean schema
 2. **DJ Photo Import**: Update `importDJs.ts` to download photos from legacy URLs (imgur, box.com, local paths) and upload to Cloudinary
 3. **Production Data Import**: Execute all import scripts against production MySQL database
 4. **Data Validation Script**: Create utility to compare MySQL vs PostgreSQL record counts and verify relationships
 
 ### Medium Priority
+
 4. **Top 11 Collections**: Create collections and migration scripts for Top 11 contests
 5. **Feature Flag Testing**: Test PostgreSQL concert read model in production with feature flag
 6. **API Documentation**: Document Payload REST/GraphQL endpoints for frontend consumption
 
 ### Low Priority
+
 7. **Modern Rock Madness Collections**: Create collections for tournament system
 8. **Year End Poll Collections**: Create collections for annual polls
 9. **Frontend Components**: Begin building Next.js components for new site design

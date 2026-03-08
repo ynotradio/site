@@ -37,3 +37,9 @@ html[data-theme='light'] {
   border-color: #cc2200 !important;
 }
 
+/* Widen the step-nav icon container to fit the oval Y-Not Radio logo */
+.step-nav__home {
+  width: auto;
+  height: 18px;
+}
+
