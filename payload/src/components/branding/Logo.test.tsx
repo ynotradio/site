@@ -13,7 +13,7 @@ describe('Logo', () => {
   it('uses the correct logo source', () => {
     render(<Logo />);
     const img = screen.getByAltText('Y-Not Radio');
-    expect(img).toHaveAttribute('src', '/ynot-logo.svg');
+    expect(img).toHaveAttribute('src', '/ynot-logo.png');
   });
 
   it('applies the logo container class', () => {
