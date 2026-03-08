@@ -162,12 +162,37 @@ function artistCreditMatches(
 }
 
 /**
- * Search for releases (albums) by title and optional artist
- * Results are re-ranked to prioritize artist matches and Album type
+ * Default release type ranking (lower = better).
+ * Types not listed get DEFAULT_TYPE_RANK.
+ */
+const RELEASE_TYPE_RANKS: Record<string, number> = {
+  Album: 1,
+  EP: 2,
+  Single: 3,
+  Broadcast: 4,
+  Compilation: 5,
+  Soundtrack: 5,
+};
+const DEFAULT_TYPE_RANK = 4;
+
+/**
+ * Get a numeric rank for a release type (lower = better).
+ * The preferredType always gets rank 0 (top).
+ */
+function releaseTypeRank(type: string | undefined, preferredType: string): number {
+  if (!type) return DEFAULT_TYPE_RANK;
+  if (type === preferredType) return 0;
+  return RELEASE_TYPE_RANKS[type] ?? DEFAULT_TYPE_RANK;
+}
+
+/**
+ * Search for releases (albums/singles/EPs) by title and optional artist
+ * Results are re-ranked to prioritize artist matches and the preferred release type
  */
 export async function searchReleases(
   title: string,
   artistName?: string,
+  preferredType: string = 'Album',
   limit: number = 10,
 ): Promise<MusicBrainzRelease[]> {
   if (!title.trim()) {
@@ -200,7 +225,7 @@ export async function searchReleases(
     const data: MusicBrainzReleaseSearchResponse = await response.json();
     const releases = data.releases || [];
 
-    // Re-rank results to prioritize artist matches and Album type
+    // Re-rank results to prioritize artist matches and preferred release type
     if (artistName?.trim()) {
       return releases.sort((a, b) => {
         const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
@@ -209,10 +234,10 @@ export async function searchReleases(
         // Artist matches come first
         if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
 
-        // Within same artist match tier, prefer Album type
-        const aIsAlbum = a['release-group']?.['primary-type'] === 'Album' ? 1 : 0;
-        const bIsAlbum = b['release-group']?.['primary-type'] === 'Album' ? 1 : 0;
-        if (aIsAlbum !== bIsAlbum) return bIsAlbum - aIsAlbum;
+        // Within same artist match tier, rank by release type
+        const aTypeRank = releaseTypeRank(a['release-group']?.['primary-type'], preferredType);
+        const bTypeRank = releaseTypeRank(b['release-group']?.['primary-type'], preferredType);
+        if (aTypeRank !== bTypeRank) return aTypeRank - bTypeRank;
 
         // Then by MusicBrainz score
         return (b.score || 0) - (a.score || 0);
