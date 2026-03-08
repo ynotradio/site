@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   parseArgs,
   getArtistName,
+  repairEncoding,
   emptyReport,
   classifyMatch,
   type MatchResult,
@@ -118,6 +119,42 @@ describe('musicbrainz-bulk-match-utils', () => {
 
     it('should return null for an object without name', () => {
       expect(getArtistName({ id: '1' })).toBeNull();
+    });
+  });
+
+  describe('repairEncoding', () => {
+    it('should return ASCII text unchanged', () => {
+      expect(repairEncoding('Radiohead')).toBe('Radiohead');
+    });
+
+    it('should return already-valid UTF-8 unchanged', () => {
+      expect(repairEncoding('Poliça')).toBe('Poliça');
+    });
+
+    it('should repair Latin-1 mojibake for ç', () => {
+      // "PoliÃ§a" is "Poliça" with UTF-8 bytes decoded as Latin-1
+      expect(repairEncoding('PoliÃ§a')).toBe('Poliça');
+    });
+
+    it('should repair Latin-1 mojibake for ó', () => {
+      expect(repairEncoding('LiberaciÃ³n')).toBe('Liberación');
+    });
+
+    it('should repair Latin-1 mojibake for é', () => {
+      expect(repairEncoding('cafÃ©')).toBe('café');
+    });
+
+    it('should repair Latin-1 mojibake for ñ', () => {
+      expect(repairEncoding('EspaÃ±a')).toBe('España');
+    });
+
+    it('should return empty string unchanged', () => {
+      expect(repairEncoding('')).toBe('');
+    });
+
+    it('should not corrupt text with legitimate high chars that are not mojibake', () => {
+      // Single high byte that does not form valid UTF-8 should be returned as-is
+      expect(repairEncoding('100\u00A2')).toBe('100\u00A2');
     });
   });
 

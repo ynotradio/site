@@ -20,6 +20,7 @@ import { getArtistMbid, getReleaseMbid, getRecordingMbid } from './migrations/sh
 import {
   parseArgs,
   getArtistName,
+  repairEncoding,
   emptyReport,
   classifyMatch,
   printReport,
@@ -57,12 +58,15 @@ async function processArtists(payload: Payload, options: CliOptions): Promise<Co
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { name } = doc as { name: string };
+      const rawName = (doc as { name: string }).name;
+      const name = repairEncoding(rawName);
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
+      const wasRepaired = name !== rawName;
+      const displayName = wasRepaired ? `${name} (was: ${rawName})` : name;
 
       const matchResult: MatchResult = {
         id: doc.id,
-        name,
+        name: displayName,
         currentMbid,
         foundMbid: null,
         status: 'skipped',
@@ -123,14 +127,19 @@ async function processRecords(payload: Payload, options: CliOptions): Promise<Co
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { title } = doc as { title: string };
-      const artistName = getArtistName((doc as { artist?: unknown }).artist);
+      const rawTitle = (doc as { title: string }).title;
+      const rawArtistName = getArtistName((doc as { artist?: unknown }).artist);
+      const title = repairEncoding(rawTitle);
+      const artistName = rawArtistName ? repairEncoding(rawArtistName) : null;
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
+
+      const wasRepaired = title !== rawTitle || artistName !== rawArtistName;
       const displayLabel = artistName ? `${artistName} — ${title}` : title;
+      const displayName = wasRepaired ? `${displayLabel} (repaired encoding)` : displayLabel;
 
       const matchResult: MatchResult = {
         id: doc.id,
-        name: displayLabel,
+        name: displayName,
         currentMbid,
         foundMbid: null,
         status: 'skipped',
@@ -140,7 +149,11 @@ async function processRecords(payload: Payload, options: CliOptions): Promise<Co
       if (currentMbid && !options.verify) {
         matchResult.status = 'skipped';
       } else {
-        const foundMbid = await getReleaseMbid(title, artistName || undefined);
+        // Try with artist first, then fallback to title-only search
+        let foundMbid = await getReleaseMbid(title, artistName || undefined);
+        if (!foundMbid && artistName) {
+          foundMbid = await getReleaseMbid(title);
+        }
         matchResult.foundMbid = foundMbid;
         matchResult.status = classifyMatch(currentMbid, foundMbid, options.verify, report);
 
@@ -191,14 +204,19 @@ async function processSongs(payload: Payload, options: CliOptions): Promise<Coll
     report.total = result.totalDocs;
 
     for (const doc of result.docs) {
-      const { title } = doc as { title: string };
-      const artistName = getArtistName((doc as { artist?: unknown }).artist);
+      const rawTitle = (doc as { title: string }).title;
+      const rawArtistName = getArtistName((doc as { artist?: unknown }).artist);
+      const title = repairEncoding(rawTitle);
+      const artistName = rawArtistName ? repairEncoding(rawArtistName) : null;
       const currentMbid = (doc as { musicbrainzId?: string }).musicbrainzId || null;
+
+      const wasRepaired = title !== rawTitle || artistName !== rawArtistName;
       const displayLabel = artistName ? `${artistName} — ${title}` : title;
+      const displayName = wasRepaired ? `${displayLabel} (repaired encoding)` : displayLabel;
 
       const matchResult: MatchResult = {
         id: doc.id,
-        name: displayLabel,
+        name: displayName,
         currentMbid,
         foundMbid: null,
         status: 'skipped',
@@ -208,7 +226,11 @@ async function processSongs(payload: Payload, options: CliOptions): Promise<Coll
       if (currentMbid && !options.verify) {
         matchResult.status = 'skipped';
       } else {
-        const foundMbid = await getRecordingMbid(title, artistName || undefined);
+        // Try with artist first, then fallback to title-only search
+        let foundMbid = await getRecordingMbid(title, artistName || undefined);
+        if (!foundMbid && artistName) {
+          foundMbid = await getRecordingMbid(title);
+        }
         matchResult.foundMbid = foundMbid;
         matchResult.status = classifyMatch(currentMbid, foundMbid, options.verify, report);
 

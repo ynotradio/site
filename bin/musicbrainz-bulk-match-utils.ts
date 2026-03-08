@@ -100,6 +100,39 @@ Options:
 }
 
 // ---------------------------------------------------------------------------
+// Encoding repair
+// ---------------------------------------------------------------------------
+
+/**
+ * Detect and repair mojibake — text where UTF-8 bytes were decoded as Latin-1.
+ *
+ * Example: "PoliÃ§a" → "Poliça", "LiberaciÃ³n" → "Liberación"
+ *
+ * Works by re-interpreting the string's char codes as Latin-1 bytes, then
+ * decoding those bytes as UTF-8. Returns the original if repair fails or
+ * produces no improvement.
+ */
+export function repairEncoding(text: string): string {
+  // Quick check: if no characters above U+007F, nothing to repair
+  if (!/[\u0080-\u00ff]/.test(text)) return text;
+
+  try {
+    // Treat each char code as a Latin-1 byte value
+    const bytes = Buffer.from(text, 'latin1');
+    const repaired = bytes.toString('utf8');
+
+    // Repair is valid if it decoded cleanly (no replacement chars) and is shorter
+    // (multi-byte mojibake sequences collapse into single characters)
+    if (!repaired.includes('\uFFFD') && repaired.length < text.length) {
+      return repaired;
+    }
+  } catch {
+    // Decoding failed — return original
+  }
+  return text;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
