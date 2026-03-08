@@ -36,10 +36,13 @@ export const useStepNav = () => {
   };
 };
 
+// Pre-populated document cache for useListRelationships
+let mockRelationshipDocuments: Record<string, Record<string, unknown>> = {};
+
 // Mock useListRelationships hook (for ThumbnailCell and relationship data)
 export const useListRelationships = () => {
   return {
-    documents: {},
+    documents: mockRelationshipDocuments,
     getRelationships: () => {
       // No-op in Storybook
     },
@@ -76,4 +79,9 @@ export const setMockFormFields = (fields: Record<string, any>) => {
 export const resetMocks = () => {
   mockFieldValue = '';
   mockFormFieldsValue = {};
+  mockRelationshipDocuments = {};
+};
+
+export const setMockDocuments = (docs: Record<string, Record<string, unknown>>) => {
+  mockRelationshipDocuments = docs;
 };

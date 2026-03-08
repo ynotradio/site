@@ -1,11 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { DJOrderClient } from './DJOrderClient';
 
-// Mock Payload UI hook
-const mockUseStepNav = () => ({
-  setStepNav: () => {},
-});
-
 const meta = {
   title: 'Features/DJOrder/DJOrderClient',
   component: DJOrderClient,
@@ -46,18 +41,6 @@ const meta = {
     ],
   },
   tags: ['autodocs'],
-  decorators: [
-    (Story) => {
-      // Mock the useStepNav hook
-      if (typeof window !== 'undefined') {
-        const win = window as unknown as {
-          mockUseStepNav: typeof mockUseStepNav;
-        };
-        win.mockUseStepNav = mockUseStepNav;
-      }
-      return <Story />;
-    },
-  ],
 } satisfies Meta<typeof DJOrderClient>;
 
 export default meta;
