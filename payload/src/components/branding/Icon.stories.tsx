@@ -14,6 +14,6 @@ export default meta;
 type Story = StoryObj<typeof Icon>;
 
 /**
- * The Y-Not Radio "YN" icon shown in the Payload admin navigation bar.
+ * The Y-Not Radio oval logo icon shown in the Payload admin navigation bar.
  */
 export const Default: Story = {};

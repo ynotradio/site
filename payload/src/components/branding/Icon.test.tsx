@@ -4,9 +4,16 @@ import { render, screen } from '@testing-library/react';
 import { Icon } from './Icon';
 
 describe('Icon', () => {
-  it('renders the YN monogram text', () => {
+  it('renders the Y-Not Radio icon image', () => {
     render(<Icon />);
-    expect(screen.getByText('YN')).toBeInTheDocument();
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toBeInTheDocument();
+  });
+
+  it('uses the correct logo source', () => {
+    render(<Icon />);
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toHaveAttribute('src', '/ynot-logo.svg');
   });
 
   it('has an accessible label', () => {
@@ -19,8 +26,8 @@ describe('Icon', () => {
     expect(container.querySelector('.ynot-icon')).toBeInTheDocument();
   });
 
-  it('applies the text class to the monogram', () => {
+  it('applies the image class', () => {
     const { container } = render(<Icon />);
-    expect(container.querySelector('.ynot-icon__text')).toBeInTheDocument();
+    expect(container.querySelector('.ynot-icon__image')).toBeInTheDocument();
   });
 });

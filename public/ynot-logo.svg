@@ -1,0 +1,11 @@
+<svg viewBox="0 0 300 148" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Y-Not Radio">
+  <!-- Outer oval -->
+  <ellipse cx="150" cy="74" rx="148" ry="72" fill="#1a1a1a"/>
+  <!-- White double border -->
+  <ellipse cx="150" cy="74" rx="139" ry="63" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <ellipse cx="150" cy="74" rx="132" ry="56" fill="none" stroke="#fff" stroke-width="1.5"/>
+  <!-- YNOT text -->
+  <text x="148" y="82" text-anchor="middle" font-family="'Arial Black','Impact',sans-serif" font-weight="900" font-size="68" fill="#fff" font-style="italic" letter-spacing="-2">YNOT</text>
+  <!-- RADIO.NET text -->
+  <text x="155" y="114" text-anchor="middle" font-family="'Arial Black','Impact',sans-serif" font-weight="900" font-size="30" fill="#fff" letter-spacing="3">RADIO.NET</text>
+</svg>

@@ -4,19 +4,16 @@ import { render, screen } from '@testing-library/react';
 import { Logo } from './Logo';
 
 describe('Logo', () => {
-  it('renders the Y-Not branding text', () => {
+  it('renders the Y-Not Radio logo image', () => {
     render(<Logo />);
-    expect(screen.getByText('Y-Not')).toBeInTheDocument();
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toBeInTheDocument();
   });
 
-  it('renders the Radio text', () => {
+  it('uses the correct logo source', () => {
     render(<Logo />);
-    expect(screen.getByText('Radio')).toBeInTheDocument();
-  });
-
-  it('renders the CMS suffix', () => {
-    render(<Logo />);
-    expect(screen.getByText('CMS')).toBeInTheDocument();
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toHaveAttribute('src', '/ynot-logo.svg');
   });
 
   it('applies the logo container class', () => {
@@ -24,18 +21,8 @@ describe('Logo', () => {
     expect(container.querySelector('.ynot-logo')).toBeInTheDocument();
   });
 
-  it('applies brand color class to Y-Not text', () => {
+  it('applies the image class', () => {
     const { container } = render(<Logo />);
-    expect(container.querySelector('.ynot-logo__ynot')).toBeInTheDocument();
-  });
-
-  it('applies radio class', () => {
-    const { container } = render(<Logo />);
-    expect(container.querySelector('.ynot-logo__radio')).toBeInTheDocument();
-  });
-
-  it('applies cms class', () => {
-    const { container } = render(<Logo />);
-    expect(container.querySelector('.ynot-logo__cms')).toBeInTheDocument();
+    expect(container.querySelector('.ynot-logo__image')).toBeInTheDocument();
   });
 });
