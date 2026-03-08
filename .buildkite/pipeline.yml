@@ -50,25 +50,21 @@ steps:
     agents:
       queue: "default"
 
-  # Storybook Build
-  - label: ":storybook: Storybook Build"
+  # Storybook Build + Deploy Preview (deploys to Netlify via API, posts PR comment)
+  - label: ":storybook: Storybook Build & Deploy"
     key: "storybook"
-    command: "corepack enable && yarn install --immutable && yarn build-storybook"
+    command: |
+      corepack enable && yarn install --immutable && yarn build-storybook
+      if [ "$${BUILDKITE_PULL_REQUEST:-false}" != "false" ]; then
+        node .buildkite/scripts/deploy-storybook.mjs storybook-static
+      fi
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
           propagate-environment: true
-    artifact_paths:
-      - "storybook-static/**/*"
-    agents:
-      queue: "default"
-
-  # Post Storybook link to GitHub PR
-  - label: ":github: Storybook PR Comment"
-    key: "storybook-comment"
-    depends_on: "storybook"
-    if: build.pull_request.id != null
-    command: ".buildkite/scripts/post-storybook-comment.sh"
+          environment:
+            - "NETLIFY_AUTH_TOKEN"
+            - "GITHUB_PR_TOKEN"
     agents:
       queue: "default"
 
