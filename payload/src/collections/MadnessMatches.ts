@@ -18,6 +18,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
         edit: {
           controls: {
             Component: '/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab',
+            path: '/controls',
             tab: {
               label: 'Match Controls',
               href: '/controls',

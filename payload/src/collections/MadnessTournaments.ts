@@ -17,7 +17,9 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
       views: {
         edit: {
           bracket: {
-            Component: '/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab',
+            Component:
+              '/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab',
+            path: '/bracket',
             tab: {
               label: 'Bracket',
               href: '/bracket',
