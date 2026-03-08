@@ -63,6 +63,17 @@ steps:
     agents:
       queue: "default"
 
+  # Post Storybook link to GitHub PR
+  - label: ":github: Storybook PR Comment"
+    key: "storybook-comment"
+    depends_on: "storybook"
+    if: build.pull_request.id != null
+    command: ".buildkite/scripts/post-storybook-comment.sh"
+    env:
+      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+    agents:
+      queue: "default"
+
   # PHP Lint (CodeSniffer)
   - label: ":php: PHP Lint"
     key: "php-lint"
