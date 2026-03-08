@@ -61,7 +61,7 @@ const FetchMockProvider: React.FC<{
     };
   }, [mockData]);
 
-  return React.createElement(React.Fragment, null, children);
+  return children as React.ReactElement;
 };
 
 const preview: Preview = {

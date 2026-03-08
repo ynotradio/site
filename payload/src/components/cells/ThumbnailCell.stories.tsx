@@ -68,7 +68,7 @@ export default meta;
 type Story = StoryObj<typeof ThumbnailCell>;
 
 // Shared field stub — the component reads field.relationTo for the document lookup
-const uploadField = { relationTo: 'media' } as any;
+const uploadField: { relationTo: string } = { relationTo: 'media' };
 
 /**
  * Default state showing a thumbnail with image and filename
