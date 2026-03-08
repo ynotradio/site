@@ -87,7 +87,9 @@ async function generateMusicSlug(
 }
 
 /**
- * Generate slug for CdOfTheWeek (copies from associated record).
+ * Generate slug for CdOfTheWeek (derives from associated record's artist + title).
+ * Computes the expected slug rather than copying the record's current slug,
+ * so it works correctly even when record slugs haven't been regenerated yet.
  */
 async function generateCdOfTheWeekSlug(
   payload: Payload,
@@ -104,8 +106,12 @@ async function generateCdOfTheWeekSlug(
     const found = await payload.findByID({
       collection: 'records',
       id: recordId as number,
+      depth: 1,
     });
-    return (found?.slug as string) || null;
+    if (!found) return null;
+
+    // Compute the correct slug from the record's data (same as generateMusicSlug)
+    return await generateMusicSlug(payload, found as unknown as Record<string, unknown>);
   } catch {
     return null;
   }
@@ -203,7 +209,9 @@ function parseArgs(): CliOptions {
           process.exit(1);
         }
         if (!VALID_COLLECTIONS.includes(args[i])) {
-          console.error(`Error: Unknown collection "${args[i]}". Valid: ${VALID_COLLECTIONS.join(', ')}`);
+          console.error(
+            `Error: Unknown collection "${args[i]}". Valid: ${VALID_COLLECTIONS.join(', ')}`,
+          );
           process.exit(1);
         }
         collections.push(args[i]);
@@ -261,7 +269,10 @@ async function regenerateCollection(
   dryRun: boolean,
 ): Promise<RegenerateStats> {
   const stats: RegenerateStats = {
-    total: 0, updated: 0, skipped: 0, errors: 0,
+    total: 0,
+    updated: 0,
+    skipped: 0,
+    errors: 0,
   };
 
   let page = 1;
