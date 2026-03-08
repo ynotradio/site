@@ -44,7 +44,6 @@
     "import:gap-report": "tsx bin/migrations/importGapReport.ts",
     "musicbrainz:match": "tsx --import ./bin/preload-nextenv-fix.mjs bin/musicbrainz-bulk-match.ts",
     "regenerate-slugs": "tsx --import ./bin/preload-nextenv-fix.mjs bin/regenerate-slugs.ts",
-    "neon-db:copy": "tsx bin/copy-neon-db.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "validate-stories": "node scripts/validate-stories.mjs"
