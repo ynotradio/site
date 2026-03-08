@@ -13,6 +13,8 @@ export const Logo: React.FC = () => (
       src="/ynot-logo.svg"
       alt="Y-Not Radio"
       className="ynot-logo__image"
+      width={250}
+      height={123}
     />
   </div>
 );
