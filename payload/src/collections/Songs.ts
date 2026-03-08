@@ -31,8 +31,10 @@ export const Songs: CollectionConfig = {
       name: 'displayName',
       type: 'text',
       admin: {
+        position: 'sidebar',
         readOnly: true,
         description: 'Auto-generated from artist and title',
+        condition: adminOnlyCondition,
       },
     },
     {
