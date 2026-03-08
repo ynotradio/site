@@ -150,11 +150,49 @@ export async function searchArtists(
 }
 
 /**
- * Search for releases (albums) by title and optional artist
+ * Check if any artist credit matches the target artist name (case-insensitive)
+ */
+function artistCreditMatches(
+  artistCredits: Array<{ name: string }> | undefined,
+  targetArtist: string,
+): boolean {
+  if (!artistCredits || !targetArtist.trim()) return false;
+  const normalized = targetArtist.toLowerCase().trim();
+  return artistCredits.some((ac) => ac.name.toLowerCase().trim() === normalized);
+}
+
+/**
+ * Default release type ranking (lower = better).
+ * Types not listed get DEFAULT_TYPE_RANK.
+ */
+const RELEASE_TYPE_RANKS: Record<string, number> = {
+  Album: 1,
+  EP: 2,
+  Single: 3,
+  Broadcast: 4,
+  Compilation: 5,
+  Soundtrack: 5,
+};
+const DEFAULT_TYPE_RANK = 4;
+
+/**
+ * Get a numeric rank for a release type (lower = better).
+ * The preferredType always gets rank 0 (top).
+ */
+function releaseTypeRank(type: string | undefined, preferredType: string): number {
+  if (!type) return DEFAULT_TYPE_RANK;
+  if (type === preferredType) return 0;
+  return RELEASE_TYPE_RANKS[type] ?? DEFAULT_TYPE_RANK;
+}
+
+/**
+ * Search for releases (albums/singles/EPs) by title and optional artist
+ * Results are re-ranked to prioritize artist matches and the preferred release type
  */
 export async function searchReleases(
   title: string,
   artistName?: string,
+  preferredType: string = 'Album',
   limit: number = 10,
 ): Promise<MusicBrainzRelease[]> {
   if (!title.trim()) {
@@ -185,7 +223,28 @@ export async function searchReleases(
     }
 
     const data: MusicBrainzReleaseSearchResponse = await response.json();
-    return data.releases || [];
+    const releases = data.releases || [];
+
+    // Re-rank results to prioritize artist matches and preferred release type
+    if (artistName?.trim()) {
+      return releases.sort((a, b) => {
+        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+
+        // Artist matches come first
+        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
+
+        // Within same artist match tier, rank by release type
+        const aTypeRank = releaseTypeRank(a['release-group']?.['primary-type'], preferredType);
+        const bTypeRank = releaseTypeRank(b['release-group']?.['primary-type'], preferredType);
+        if (aTypeRank !== bTypeRank) return aTypeRank - bTypeRank;
+
+        // Then by MusicBrainz score
+        return (b.score || 0) - (a.score || 0);
+      });
+    }
+
+    return releases;
   } catch (error) {
     return [];
   }
@@ -194,6 +253,7 @@ export async function searchReleases(
 /**
  * Search for recordings (songs) by title and optional artist
  * Filters out live and video recordings to prioritize studio versions
+ * Results are re-ranked to prioritize artist matches
  */
 export async function searchRecordings(
   title: string,
@@ -234,16 +294,19 @@ export async function searchRecordings(
     const data: MusicBrainzRecordingSearchResponse = await response.json();
     const recordings = data.recordings || [];
 
-    // Sort to prioritize non-live versions
-    // MusicBrainz marks live recordings in the disambiguation field
+    // Sort to prioritize artist matches and non-live versions
     return recordings.sort((a, b) => {
-      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
-      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      // Artist matches come first (when artist name is provided)
+      if (artistName?.trim()) {
+        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
+      }
 
       // Live recordings go to the bottom
-      if (aIsLive !== bIsLive) {
-        return aIsLive - bIsLive;
-      }
+      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+      if (aIsLive !== bIsLive) return aIsLive - bIsLive;
 
       // Otherwise maintain original score order
       return (b.score || 0) - (a.score || 0);

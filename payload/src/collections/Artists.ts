@@ -12,10 +12,10 @@ export const Artists: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
-    defaultSort: 'name',
     group: 'Music',
     description: 'Artists and bands in the music catalog.',
   },
+  defaultSort: 'name',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -78,7 +78,6 @@ export const Artists: CollectionConfig = {
         },
       },
     },
-
   ],
   timestamps: true,
 };

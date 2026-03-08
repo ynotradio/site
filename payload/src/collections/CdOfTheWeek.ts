@@ -14,10 +14,10 @@ export const CdOfTheWeek: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', '_status', 'updatedAt'],
-    defaultSort: '-date',
     group: 'Music',
     description: 'Weekly album reviews featured as CD of the Week.',
   },
+  defaultSort: '-date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),

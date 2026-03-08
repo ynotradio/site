@@ -12,10 +12,10 @@ export const Records: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
-    defaultSort: '-releaseDate',
     group: 'Music',
     description: 'Album/record catalog.',
   },
+  defaultSort: '-releaseDate',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -30,8 +30,10 @@ export const Records: CollectionConfig = {
       name: 'displayName',
       type: 'text',
       admin: {
+        position: 'sidebar',
         readOnly: true,
         description: 'Auto-generated from artist and title',
+        condition: adminOnlyCondition,
       },
     },
     {

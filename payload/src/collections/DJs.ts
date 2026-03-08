@@ -15,7 +15,6 @@ export const DJs: CollectionConfig = {
   admin: {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', '_status', 'updatedAt'],
-    defaultSort: 'sortOrder',
     group: 'Radio',
     description: 'DJ profiles. Filter by "onAir" to see active DJs.',
 
@@ -23,6 +22,7 @@ export const DJs: CollectionConfig = {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
     },
   },
+  defaultSort: 'sortOrder',
   hooks: {
     beforeChange: [generateDJDisplayName],
   },
@@ -109,7 +109,8 @@ export const DJs: CollectionConfig = {
           name: 'sortOrder',
           type: 'number',
           admin: {
-            description: 'Display order — use the DJ Sort Order tool (/admin/dj-order) to reorder visually',
+            description:
+              'Display order — use the DJ Sort Order tool (/admin/dj-order) to reorder visually',
             width: '25%',
           },
         },

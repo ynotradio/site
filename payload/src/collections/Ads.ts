@@ -13,10 +13,10 @@ export const Ads: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'image', 'startDate', 'endDate', 'priority', '_status', 'updatedAt'],
-    defaultSort: '-priority',
     group: 'Marketing',
     description: 'Advertisement and sponsor management.',
   },
+  defaultSort: '-priority',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
