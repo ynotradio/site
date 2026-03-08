@@ -13,7 +13,7 @@ describe('Icon', () => {
   it('uses the correct logo source', () => {
     render(<Icon />);
     const img = screen.getByAltText('Y-Not Radio');
-    expect(img).toHaveAttribute('src', '/ynot-logo.png');
+    expect(img).toHaveAttribute('src', '/ynot-logo.svg');
   });
 
   it('has an accessible label', () => {
