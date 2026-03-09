@@ -151,24 +151,24 @@ describe('generateBracketDefinitions', () => {
     expect(r1Days).toContain('2025-03-27');
   });
 
-  it('round 2 starts on day+7 (following Monday)', () => {
+  it('round 2 starts on day+6 (following Monday)', () => {
     const m33 = defs.find((d) => d.matchNumber === 33)!;
-    expect(new Date(m33.startTime).toISOString().slice(0, 10)).toBe('2025-03-31');
+    expect(new Date(m33.startTime).toISOString().slice(0, 10)).toBe('2025-03-30');
   });
 
-  it('championship is on day+11', () => {
+  it('championship is on day+10', () => {
     const m63 = defs.find((d) => d.matchNumber === 63)!;
-    expect(new Date(m63.startTime).toISOString().slice(0, 10)).toBe('2025-04-04');
+    expect(new Date(m63.startTime).toISOString().slice(0, 10)).toBe('2025-04-03');
   });
 
   // ── Schedule: time slots ──────────────────────────────────────────────
-  it('standard day matches use afternoon/evening blocks', () => {
-    // Match 1 should start at 14:00, match 5 at 17:00
+  it('standard day matches use morning/afternoon blocks', () => {
+    // Match 1 should start at 10:00, match 5 at 13:00
     const m1 = defs.find((d) => d.matchNumber === 1)!;
     const m5 = defs.find((d) => d.matchNumber === 5)!;
-    expect(new Date(m1.startTime).getUTCHours()).toBe(14);
+    expect(new Date(m1.startTime).getUTCHours()).toBe(10);
     expect(new Date(m1.startTime).getUTCMinutes()).toBe(0);
-    expect(new Date(m5.startTime).getUTCHours()).toBe(17);
+    expect(new Date(m5.startTime).getUTCHours()).toBe(13);
     expect(new Date(m5.startTime).getUTCMinutes()).toBe(0);
   });
 
@@ -210,7 +210,7 @@ describe('generateBracketDefinitions', () => {
   // ── Schedule: 8-slot daily pattern ────────────────────────────────────
   it('has 8 standard time slots per full day', () => {
     expect(STANDARD_SLOTS).toHaveLength(8);
-    expect(STANDARD_SLOTS[0]).toEqual({ hour: 14, minute: 0 });
-    expect(STANDARD_SLOTS[7]).toEqual({ hour: 18, minute: 30 });
+    expect(STANDARD_SLOTS[0]).toEqual({ hour: 10, minute: 0 });
+    expect(STANDARD_SLOTS[7]).toEqual({ hour: 14, minute: 30 });
   });
 });

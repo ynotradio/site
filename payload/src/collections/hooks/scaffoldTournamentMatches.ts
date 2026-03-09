@@ -24,7 +24,7 @@
  *   Week 2 Thu:       Elusive 8 afternoon + Final 4 evening (6 matches)
  *   Week 2 Fri:       Championship (1 match)
  *
- * Daily slots: 14:00, 14:30, 15:00, 15:30 | 17:00, 17:30, 18:00, 18:30
+ * Daily slots: 10:00, 10:30, 11:00, 11:30 | 13:00, 13:30, 14:00, 14:30
  * Durations:   R1-R4 = 30 min, Final 4 = 60 min, Championship = 120 min
  */
 
@@ -84,18 +84,18 @@ export const TOTAL_MATCHES = 63;
 
 /**
  * Standard 8-match-day time slots (30 min each).
- *   Afternoon block: 14:00, 14:30, 15:00, 15:30
- *   Evening block:   17:00, 17:30, 18:00, 18:30
+ *   Morning block:    10:00, 10:30, 11:00, 11:30
+ *   Afternoon block:  13:00, 13:30, 14:00, 14:30
  */
 export const STANDARD_SLOTS: { hour: number; minute: number }[] = [
+  { hour: 10, minute: 0 },
+  { hour: 10, minute: 30 },
+  { hour: 11, minute: 0 },
+  { hour: 11, minute: 30 },
+  { hour: 13, minute: 0 },
+  { hour: 13, minute: 30 },
   { hour: 14, minute: 0 },
   { hour: 14, minute: 30 },
-  { hour: 15, minute: 0 },
-  { hour: 15, minute: 30 },
-  { hour: 17, minute: 0 },
-  { hour: 17, minute: 30 },
-  { hour: 18, minute: 0 },
-  { hour: 18, minute: 30 },
 ];
 
 interface MatchSlot {
@@ -133,34 +133,34 @@ export const buildScheduleSlots = (): MatchSlot[] => {
   addStandardDay(25, 3); // Region 4
 
   // ── Week 2: Round 2 (Mon–Tue) ──────────────────────────────────────
-  addStandardDay(33, 7); // Regions 1-2
-  addStandardDay(41, 8); // Regions 3-4
+  addStandardDay(33, 6); // Regions 1-2
+  addStandardDay(41, 7); // Regions 3-4
 
   // ── Week 2: Sweet 16 (Wed) ─────────────────────────────────────────
-  addStandardDay(49, 9);
+  addStandardDay(49, 8);
 
-  // ── Week 2: Elusive 8 (Thu afternoon, 4 × 30 min) ─────────────────
+  // ── Week 2: Elusive 8 (Thu morning, 4 × 30 min) ───────────────────
   STANDARD_SLOTS.slice(0, 4).forEach(({ hour, minute }, i) => {
     slots.push({
       matchNumber: 57 + i,
-      dayOffset: 10,
+      dayOffset: 9,
       hour,
       minute,
       durationMinutes: 30,
     });
   });
 
-  // ── Week 2: Final 4 (Thu evening, 2 × 60 min) ─────────────────────
+  // ── Week 2: Final 4 (Thu afternoon, 2 × 60 min) ───────────────────
   slots.push({
-    matchNumber: 61, dayOffset: 10, hour: 18, minute: 0, durationMinutes: 60,
+    matchNumber: 61, dayOffset: 9, hour: 14, minute: 0, durationMinutes: 60,
   });
   slots.push({
-    matchNumber: 62, dayOffset: 10, hour: 19, minute: 0, durationMinutes: 60,
+    matchNumber: 62, dayOffset: 9, hour: 15, minute: 0, durationMinutes: 60,
   });
 
   // ── Week 2: Championship (Fri, 1 × 120 min) ───────────────────────
   slots.push({
-    matchNumber: 63, dayOffset: 11, hour: 17, minute: 0, durationMinutes: 120,
+    matchNumber: 63, dayOffset: 10, hour: 13, minute: 0, durationMinutes: 120,
   });
 
   return slots;
@@ -206,7 +206,7 @@ const buildTime = (baseDate: Date, dayOffset: number, hour: number, minute: numb
  *
  * @param startDate – ISO-8601 date string for the tournament start (should be
  *   a Monday). The schedule follows the historical 2-week pattern:
- *   - 8 matches/day with 30-min slots in afternoon (14:00) and evening (17:00) blocks
+ *   - 8 matches/day with 30-min slots in morning (10:00) and afternoon (13:00) blocks
  *   - Final 4 matches are 60 min, Championship is 120 min
  */
 export const generateBracketDefinitions = (startDate: string): MatchDefinition[] => {
