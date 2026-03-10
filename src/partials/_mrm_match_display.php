@@ -44,90 +44,32 @@ $timer_attr = $is_current_match ? 'id="mrm_timer"' : '';
 $has_voted = $controller->hasVoted($match_id);
 ?>
 
-<div class="mrm-match">
-    <table class="mrm-match-table" <?php echo $timer_attr; ?>>
-        <tr>
-            <th colspan="3" class="center">
-                <?php if ($is_current_match): ?>
-                    <div class="match-timer">
-                        Time Remaining:
-                        <span class="countdown-value" id="hours">--</span>:<span class="countdown-value" id="minutes">--</span>:<span class="countdown-value" id="seconds">--</span>
-                    </div>
-                    <?php // Add hidden countdown values for JavaScript
-                    if ($is_current_match):
-                        $end_time = new DateTime($match['end_time']);
-                        $now = new DateTime();
-                        $interval = $now->diff($end_time);
-                        echo '<div class="hidden" id="hr">' . $interval->h . '</div>';
-                        echo '<div class="hidden" id="min">' . $interval->i . '</div>';
-                        echo '<div class="hidden" id="sec">' . $interval->s . '</div>';
-                    endif;
-                    ?>
-                <?php else: ?>
-                    vs
-                <?php endif; ?>
-            </th>
-        </tr>
-        
-        <tr>
-            <td class="center band-cell">
-                <div class="band-name"><?php echo htmlspecialchars($band1['name']); ?></div>
-                <div class="band-image">
-                    <img src="<?php echo htmlspecialchars($band1['pic_url']); ?>" alt="<?php echo htmlspecialchars($band1['name']); ?>">
-                </div>
-                <?php if ($show_results): ?>
-                    <div class="vote-percentage"><?php echo $band1_percentage; ?></div>
-                <?php endif; ?>
-                
-                <?php if ($match_status === 'running' && !$has_voted): ?>
-                    <div class="vote-button">
-                        <?php echo $controller->renderVoteForm($match_id, 1); ?>
-                    </div>
-                <?php endif; ?>
-            </td>
-            
-            <td class="center vs-cell">VS</td>
-            
-            <td class="center band-cell">
-                <div class="band-name"><?php echo htmlspecialchars($band2['name']); ?></div>
-                <div class="band-image">
-                    <img src="<?php echo htmlspecialchars($band2['pic_url']); ?>" alt="<?php echo htmlspecialchars($band2['name']); ?>">
-                </div>
-                <?php if ($show_results): ?>
-                    <div class="vote-percentage"><?php echo $band2_percentage; ?></div>
-                <?php endif; ?>
-                
-                <?php if ($match_status === 'running' && !$has_voted): ?>
-                    <div class="vote-button">
-                        <?php echo $controller->renderVoteForm($match_id, 2); ?>
-                    </div>
-                <?php endif; ?>
-            </td>
-        </tr>
-        
-        <?php if ($match_status !== 'running'): ?>
-            <tr>
-                <td colspan="3" class="voting-message center">
-                    <?php 
-                    if ($match_status === 'early') {
-                        echo 'Voting has not started yet';
-                    } elseif ($match_status === 'over' && $controller->isMatchTied($match)) {
-                        echo 'Match is over and tied - vote for the winner';
-                    } elseif ($match_status === 'over') {
-                        echo 'Voting is now over';
-                    }
-                    ?>
-                </td>
-            </tr>
-        <?php endif; ?>
-        
-        <?php if ($match['sponsor']): ?>
-            <tr>
-                <td colspan="3" class="sponsor-info center">
-                    <strong>Match sponsored by: <?php echo htmlspecialchars($match['sponsor']); ?></strong>
-                    <div><?php echo htmlspecialchars($match['sponsor_msg'] ?? ''); ?></div>
-                </td>
-            </tr>
-        <?php endif; ?>
-    </table>
-</div>
+<mrm-match-card
+    match-id="<?php echo htmlspecialchars($match['id']); ?>"
+    status="<?php echo htmlspecialchars($match_status); ?>"
+    band1-name="<?php echo htmlspecialchars($band1['name']); ?>"
+    band1-image="<?php echo htmlspecialchars($band1['pic_url']); ?>"
+    band2-name="<?php echo htmlspecialchars($band2['name']); ?>"
+    band2-image="<?php echo htmlspecialchars($band2['pic_url']); ?>"
+    <?php if ($show_results): ?>
+        band1-pct="<?php echo $band1_percentage; ?>"
+        band2-pct="<?php echo $band2_percentage; ?>"
+        show-results
+    <?php endif; ?>
+    <?php if ($has_voted): ?>has-voted<?php endif; ?>
+    <?php if ($match['sponsor']): ?>
+        sponsor="<?php echo htmlspecialchars($match['sponsor']); ?>"
+        sponsor-msg="<?php echo htmlspecialchars($match['sponsor_msg'] ?? ''); ?>"
+    <?php endif; ?>
+></mrm-match-card>
+
+<?php if ($is_current_match): ?>
+    <div class="hidden" id="hr"><?php
+        $end_time = new DateTime($match['end_time']);
+        $now = new DateTime();
+        $interval = $now->diff($end_time);
+        echo $interval->h;
+    ?></div>
+    <div class="hidden" id="min"><?php echo $interval->i; ?></div>
+    <div class="hidden" id="sec"><?php echo $interval->s; ?></div>
+<?php endif; ?>

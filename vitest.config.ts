@@ -9,7 +9,15 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
-      include: ['bin/migrations/shared/**/*.ts', 'src/js/countdown.js', 'src/js/yr_end_poll.js'],
+      include: [
+        'bin/migrations/shared/**/*.ts',
+        'src/js/countdown.js',
+        'src/js/yr_end_poll.js',
+        'src/js/admin-madness.js',
+        'src/js/components/MrmBracketMatch.js',
+        'src/js/components/MrmScoreboard.js',
+        'src/js/components/MrmMatchCard.js',
+      ],
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',

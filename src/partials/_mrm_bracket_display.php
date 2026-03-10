@@ -55,24 +55,19 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 $winner1_class = $controller->getWinnerClass($match['band1_id'], $match['id']);
                 $winner2_class = $controller->getWinnerClass($match['band2_id'], $match['id']);
             ?>
-            <div class="match<?php echo $side . $is_live; ?>" id="match<?php echo $match['id']; ?>">
-                <dl>
-                    <dt class="band1<?php echo $winner1_class; ?>">
-                        <span class="seed"><?php echo $band1['seed']; ?></span>
-                        <span class="band_abbr"><?php echo $band1['abbr']; ?></span>
-                        <?php if ($match['show_score']): ?>
-                            <span class="percentage"><?php echo $controller->mrmModel->calculateVotePercentage($match['band1_votes'], $match['band2_votes']); ?></span>
-                        <?php endif; ?>
-                    </dt>
-                    <dt class="band2<?php echo $winner2_class; ?>">
-                        <span class="seed"><?php echo $band2['seed']; ?></span>
-                        <span class="band_abbr"><?php echo $band2['abbr']; ?></span>
-                        <?php if ($match['show_score']): ?>
-                            <span class="percentage"><?php echo $controller->mrmModel->calculateVotePercentage($match['band2_votes'], $match['band1_votes']); ?></span>
-                        <?php endif; ?>
-                    </dt>
-                </dl>
-            </div>
+            <mrm-bracket-match
+                id="match<?php echo $match['id']; ?>"
+                match-id="<?php echo $match['id']; ?>"
+                band1-seed="<?php echo htmlspecialchars($band1['seed']); ?>"
+                band1-name="<?php echo htmlspecialchars($band1['abbr']); ?>"
+                <?php if ($match['show_score']): ?>band1-pct="<?php echo $controller->mrmModel->calculateVotePercentage($match['band1_votes'], $match['band2_votes']); ?>"<?php endif; ?>
+                band2-seed="<?php echo htmlspecialchars($band2['seed']); ?>"
+                band2-name="<?php echo htmlspecialchars($band2['abbr']); ?>"
+                <?php if ($match['show_score']): ?>band2-pct="<?php echo $controller->mrmModel->calculateVotePercentage($match['band2_votes'], $match['band1_votes']); ?>"<?php endif; ?>
+                <?php echo $winner1_class ? 'winner="1"' : ''; ?><?php echo $winner2_class ? 'winner="2"' : ''; ?>
+                <?php echo $is_live ? 'live' : ''; ?>
+                <?php echo trim($side) ? 'side="' . trim($side) . '"' : ''; ?>
+            ></mrm-bracket-match>
             
             <?php
                 // Close round div at specific match indices

@@ -54,13 +54,20 @@ if ($page_file != "logout.php") {
       <script src="<?php echo $base_path; ?>js/picker.time.js"></script>
       <script src="<?php echo $base_path; ?>js/legacy.js"></script>
       <script src="<?php echo $base_path; ?>js/init.js"></script>
+      <?php if ($page_file == "madness.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/MrmBracketMatch.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/MrmScoreboard.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/MrmMatchCard.js\"></script>";
+}
+
+?>
       <?php if ($page_file == "madness.php" || $page_file == "mrm_manage_matches.php") {
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js\"></script>";
 }
 
 ?>
       <?php if ($page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin_madness.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin-madness.js\"></script>";
 }
 
 ?>
