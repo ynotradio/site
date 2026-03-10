@@ -11,10 +11,6 @@
 
 // Side-effect imports register each element via customElements.define().
 // Safe to import multiple times – each file guards against double-registration.
-
-// eslint-disable-next-line no-unused-vars
-const _bracket = require('./MrmBracketMatch.js');
-// eslint-disable-next-line no-unused-vars
-const _scoreboard = require('./MrmScoreboard.js');
-// eslint-disable-next-line no-unused-vars
-const _card = require('./MrmMatchCard.js');
+require('./MrmBracketMatch.js');
+require('./MrmScoreboard.js');
+require('./MrmMatchCard.js');
