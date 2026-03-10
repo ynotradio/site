@@ -30,7 +30,9 @@ import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad091374
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { TournamentsListHeader as TournamentsListHeader_a4181b52e2e920040aaf339682405409 } from '../../../payload/src/features/mrm-bracket/TournamentsListHeader'
+import { TournamentBracketTab as TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27 } from '../../../payload/src/features/mrm-bracket/TournamentBracketTab'
 import { MatchesListHeader as MatchesListHeader_4669cd1c0f0f0c2e580357e1f3eae3e7 } from '../../../payload/src/features/mrm-live/MatchesListHeader'
+import { MatchControlsTab as MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953 } from '../../../payload/src/features/mrm-live/MatchControlsTab'
 import { Icon as Icon_b60ecf12ac563c9d63b2827d1268ac0d } from '../../../payload/src/components/branding/Icon'
 import { Logo as Logo_7d5c0eb777646cee89558767757b099d } from '../../../payload/src/components/branding/Logo'
 import { CustomDashboard as CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a } from '../../../payload/src/components/dashboard/CustomDashboard'
@@ -74,7 +76,9 @@ export const importMap = {
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/mrm-bracket/TournamentsListHeader#TournamentsListHeader": TournamentsListHeader_a4181b52e2e920040aaf339682405409,
+  "/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab": TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27,
   "/payload/src/features/mrm-live/MatchesListHeader#MatchesListHeader": MatchesListHeader_4669cd1c0f0f0c2e580357e1f3eae3e7,
+  "/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab": MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953,
   "/payload/src/components/branding/Icon#Icon": Icon_b60ecf12ac563c9d63b2827d1268ac0d,
   "/payload/src/components/branding/Logo#Logo": Logo_7d5c0eb777646cee89558767757b099d,
   "/payload/src/components/dashboard/CustomDashboard#CustomDashboard": CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a,
