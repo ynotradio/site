@@ -4,6 +4,9 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 // eslint-disable-next-line import/extensions
 import './MrmMatchCard.js';
 
+/* Import the PHP site's madness.css for page-level MRM styles. */
+import '../../style/madness.css';
+
 interface MatchCardProps {
   matchId?: string;
   status?: 'running' | 'early' | 'over';

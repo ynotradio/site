@@ -5,6 +5,9 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 // eslint-disable-next-line import/extensions
 import './MrmBracketMatch.js';
 
+/* Import the PHP site's madness.css so light-DOM class names are styled. */
+import '../../style/madness.css';
+
 /**
  * Thin React wrapper so Storybook can render the custom element declaratively.
  * In production PHP pages, the element is used directly in HTML with

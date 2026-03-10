@@ -94,14 +94,20 @@ class MrmScoreboard extends HTMLElement {
     const band1Pct = parseFloat(this.getAttribute('band1-pct')) || 0;
     const band2Pct = parseFloat(this.getAttribute('band2-pct')) || 0;
 
+    // When both percentages are zero (no votes yet), display as a 50/50 tie
+    // so the bar fills completely with both gradients, matching PHP behavior.
+    const noVotes = band1Pct === 0 && band2Pct === 0;
+    const band1Width = noVotes ? 50 : band1Pct;
+    const band2Width = noVotes ? 50 : band2Pct;
+
     const band1Label = this.getAttribute('band1-label') ?? '';
     const band2Label = this.getAttribute('band2-label') ?? '';
 
     root.querySelector('[data-slot="band1-label"]').textContent = band1Label;
     root.querySelector('[data-slot="band2-label"]').textContent = band2Label;
 
-    root.querySelector('.band1-bar').style.flexBasis = `${band1Pct}%`;
-    root.querySelector('.band2-bar').style.flexBasis = `${band2Pct}%`;
+    root.querySelector('.band1-bar').style.flexBasis = `${band1Width}%`;
+    root.querySelector('.band2-bar').style.flexBasis = `${band2Width}%`;
 
     // Accessible label
     root.querySelector('.scoreboard').setAttribute(

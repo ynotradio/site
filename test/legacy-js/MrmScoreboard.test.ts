@@ -62,12 +62,12 @@ describe('MrmScoreboard', () => {
     expect(scoreboard.getAttribute('aria-label')).toBe('Score: 52% vs 48%');
   });
 
-  it('defaults to 0% when pct attributes are missing', () => {
+  it('shows 50/50 bars when pct attributes are missing (no votes)', () => {
     const el = createElement({});
 
     const root = el.shadowRoot;
-    expect(root.querySelector('.band1-bar').style.flexBasis).toBe('0%');
-    expect(root.querySelector('.band2-bar').style.flexBasis).toBe('0%');
+    expect(root.querySelector('.band1-bar').style.flexBasis).toBe('50%');
+    expect(root.querySelector('.band2-bar').style.flexBasis).toBe('50%');
   });
 
   it('updates dynamically when attributes change', () => {
@@ -90,14 +90,29 @@ describe('MrmScoreboard', () => {
     expect(root.querySelector('[data-slot="band2-label"]').textContent).toBe('25%');
   });
 
-  it('handles non-numeric pct gracefully (treats as 0)', () => {
+  it('shows 50/50 bars when both pct are explicitly zero (no votes yet)', () => {
+    const el = createElement({
+      'band1-pct': '0',
+      'band2-pct': '0',
+      'band1-label': '0%',
+      'band2-label': '0%',
+    });
+
+    const root = el.shadowRoot;
+    expect(root.querySelector('.band1-bar').style.flexBasis).toBe('50%');
+    expect(root.querySelector('.band2-bar').style.flexBasis).toBe('50%');
+    expect(root.querySelector('[data-slot="band1-label"]').textContent).toBe('0%');
+    expect(root.querySelector('[data-slot="band2-label"]').textContent).toBe('0%');
+  });
+
+  it('handles non-numeric pct gracefully (treats as 0/0 → 50/50)', () => {
     const el = createElement({
       'band1-pct': 'abc',
       'band2-pct': '',
     });
 
     const root = el.shadowRoot;
-    expect(root.querySelector('.band1-bar').style.flexBasis).toBe('0%');
-    expect(root.querySelector('.band2-bar').style.flexBasis).toBe('0%');
+    expect(root.querySelector('.band1-bar').style.flexBasis).toBe('50%');
+    expect(root.querySelector('.band2-bar').style.flexBasis).toBe('50%');
   });
 });
