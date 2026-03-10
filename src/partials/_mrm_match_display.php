@@ -56,7 +56,27 @@ $has_voted = $controller->hasVoted($match_id);
         band2-pct="<?php echo $band2_percentage; ?>"
         show-results
     <?php endif; ?>
+    <?php
+    // Determine winner for loser-dimming
+    $winner1 = $controller->getWinnerClass($match['band1_id'], $match['id']);
+    $winner2 = $controller->getWinnerClass($match['band2_id'], $match['id']);
+    if (strpos($winner1, 'mrm_winner') !== false) {
+        echo 'winner="1"';
+    } elseif (strpos($winner2, 'mrm_winner') !== false) {
+        echo 'winner="2"';
+    }
+    ?>
     <?php if ($has_voted): ?>has-voted<?php endif; ?>
+    <?php if ($match_status === 'over' && $controller->isMatchTied($match)): ?>tied<?php endif; ?>
+    <?php
+    // Auth0 login check – show login URL if not authenticated
+    $auth0 = $GLOBALS['auth0'] ?? null;
+    $userInfo = $auth0 ? $auth0->getUser() : null;
+    $voter_email = $userInfo['email'] ?? null;
+    if (empty($voter_email) && $match_status === 'running' && !$has_voted) {
+        echo 'login-url="auth_login.php?returnTo=/madness"';
+    }
+    ?>
     <?php if ($match['sponsor']): ?>
         sponsor="<?php echo htmlspecialchars($match['sponsor']); ?>"
         sponsor-msg="<?php echo htmlspecialchars($match['sponsor_msg'] ?? ''); ?>"

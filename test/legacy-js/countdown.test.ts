@@ -3,12 +3,13 @@
  *
  * Testing pure logic functions from the legacy Modern Rock Madness JavaScript:
  * - Madness.displayDiffFormat(diff) - Formats time differences for countdown display
+ * - Madness._parseAndUpdateScoreboard - Parses server HTML and updates component
  *
  * Note: Other functions (startTimer, updateScoreboard) are DOM-coupled and use
  * timers, so they will be tested with E2E Playwright tests per the testing plan.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 
 // Import the Madness object directly from the legacy JS file
 // The file now exports using CommonJS for Node.js compatibility
@@ -109,5 +110,49 @@ describe('Madness.displayDiffFormat', () => {
     const diff = 100 * HRS + 30 * MIN + 15 * SEC;
     const result = displayDiffFormat(diff);
     expect(result).toBe('100:30:15');
+  });
+});
+
+describe('Madness._parseAndUpdateScoreboard', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('parses <mrm-scoreboard> response and updates attributes', () => {
+    const mockEl = document.createElement('div');
+    mockEl.setAttribute = function setAttr(name, value) {
+      HTMLElement.prototype.setAttribute.call(this, name, value);
+    };
+
+    const html = '<mrm-scoreboard band1-pct="62" band2-pct="38" band1-label="62%" band2-label="38%"></mrm-scoreboard>';
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._parseAndUpdateScoreboard(mockEl, html);
+
+    expect(mockEl.getAttribute('band1-pct')).toBe('62');
+    expect(mockEl.getAttribute('band2-pct')).toBe('38');
+    expect(mockEl.getAttribute('band1-label')).toBe('62%');
+    expect(mockEl.getAttribute('band2-label')).toBe('38%');
+  });
+
+  it('falls back to old table format with #band1_score etc.', () => {
+    const mockEl = document.createElement('div');
+
+    const html = `
+      <table>
+        <tr>
+          <td id="band1_score">55%</td>
+          <td id="band1_value" width="55"></td>
+          <td id="band2_value" width="45"></td>
+          <td id="band2_score">45%</td>
+        </tr>
+      </table>
+    `;
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._parseAndUpdateScoreboard(mockEl, html);
+
+    expect(mockEl.getAttribute('band1-label')).toBe('55%');
+    expect(mockEl.getAttribute('band2-label')).toBe('45%');
+    expect(mockEl.getAttribute('band1-pct')).toBe('55');
+    expect(mockEl.getAttribute('band2-pct')).toBe('45');
   });
 });

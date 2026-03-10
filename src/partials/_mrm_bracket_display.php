@@ -56,6 +56,7 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 $winner2_class = $controller->getWinnerClass($match['band2_id'], $match['id']);
             ?>
             <mrm-bracket-match
+                class="match<?php echo $side . $is_live; ?>"
                 id="match<?php echo $match['id']; ?>"
                 match-id="<?php echo $match['id']; ?>"
                 band1-seed="<?php echo htmlspecialchars($band1['seed']); ?>"
@@ -64,9 +65,8 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 band2-seed="<?php echo htmlspecialchars($band2['seed']); ?>"
                 band2-name="<?php echo htmlspecialchars($band2['abbr']); ?>"
                 <?php if ($match['show_score']): ?>band2-pct="<?php echo $controller->mrmModel->calculateVotePercentage($match['band2_votes'], $match['band1_votes']); ?>"<?php endif; ?>
-                <?php echo $winner1_class ? 'winner="1"' : ''; ?><?php echo $winner2_class ? 'winner="2"' : ''; ?>
-                <?php echo $is_live ? 'live' : ''; ?>
-                <?php echo trim($side) ? 'side="' . trim($side) . '"' : ''; ?>
+                <?php echo (strpos($winner1_class, 'mrm_winner') !== false) ? 'winner="1"' : ''; ?>
+                <?php echo (strpos($winner2_class, 'mrm_winner') !== false) ? 'winner="2"' : ''; ?>
             ></mrm-bracket-match>
             
             <?php

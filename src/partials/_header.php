@@ -61,6 +61,11 @@ if ($page_file != "logout.php") {
 }
 
 ?>
+      <?php if ($page_file == "madness.php") {
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/mrm-vote-bridge.js\"></script>";
+}
+
+?>
       <?php if ($page_file == "madness.php" || $page_file == "mrm_manage_matches.php") {
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js\"></script>";
 }

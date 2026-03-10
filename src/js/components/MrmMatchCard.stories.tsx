@@ -15,16 +15,20 @@ interface MatchCardProps {
   band2Pct?: string;
   showResults?: boolean;
   hasVoted?: boolean;
+  winner?: '' | '1' | '2';
+  tied?: boolean;
   sponsor?: string;
   sponsorMsg?: string;
+  loginUrl?: string;
+  timerText?: string;
 }
 
 const MatchCardWrapper: React.FC<MatchCardProps> = ({
   matchId, status,
   band1Name, band1Image, band2Name, band2Image,
   band1Pct, band2Pct,
-  showResults, hasVoted,
-  sponsor, sponsorMsg,
+  showResults, hasVoted, winner, tied,
+  sponsor, sponsorMsg, loginUrl, timerText,
 }) => {
   const ref = useRef<HTMLElement>(null);
 
@@ -48,8 +52,12 @@ const MatchCardWrapper: React.FC<MatchCardProps> = ({
     setAttr('band2-pct', band2Pct);
     setAttr('show-results', showResults);
     setAttr('has-voted', hasVoted);
+    setAttr('winner', winner);
+    setAttr('tied', tied);
     setAttr('sponsor', sponsor);
     setAttr('sponsor-msg', sponsorMsg);
+    setAttr('login-url', loginUrl);
+    setAttr('timer-text', timerText);
   });
 
   return React.createElement('mrm-match-card', { ref });
@@ -64,6 +72,8 @@ const meta: Meta<typeof MatchCardWrapper> = {
     status: { control: 'select', options: ['running', 'early', 'over'] },
     showResults: { control: 'boolean' },
     hasVoted: { control: 'boolean' },
+    winner: { control: 'select', options: ['', '1', '2'] },
+    tied: { control: 'boolean' },
   },
 };
 
@@ -78,6 +88,18 @@ export const LiveMatch: Story = {
     band1Image: 'https://placehold.co/200x200?text=Radiohead',
     band2Name: 'Muse',
     band2Image: 'https://placehold.co/200x200?text=Muse',
+  },
+};
+
+export const LiveWithTimer: Story = {
+  args: {
+    matchId: '42',
+    status: 'running',
+    band1Name: 'Radiohead',
+    band1Image: 'https://placehold.co/200x200?text=Radiohead',
+    band2Name: 'Muse',
+    band2Image: 'https://placehold.co/200x200?text=Muse',
+    timerText: '12:45',
   },
 };
 
@@ -103,6 +125,22 @@ export const CompletedMatch: Story = {
     band1Pct: '62%',
     band2Pct: '38%',
     showResults: true,
+    winner: '1',
+  },
+};
+
+export const TiedMatch: Story = {
+  args: {
+    matchId: '41',
+    status: 'over',
+    band1Name: 'Pearl Jam',
+    band1Image: 'https://placehold.co/200x200?text=Pearl+Jam',
+    band2Name: 'Nirvana',
+    band2Image: 'https://placehold.co/200x200?text=Nirvana',
+    band1Pct: '50%',
+    band2Pct: '50%',
+    showResults: true,
+    tied: true,
   },
 };
 
@@ -115,6 +153,18 @@ export const AlreadyVoted: Story = {
     band2Name: 'Muse',
     band2Image: 'https://placehold.co/200x200?text=Muse',
     hasVoted: true,
+  },
+};
+
+export const NeedsLogin: Story = {
+  args: {
+    matchId: '42',
+    status: 'running',
+    band1Name: 'Radiohead',
+    band1Image: 'https://placehold.co/200x200?text=Radiohead',
+    band2Name: 'Muse',
+    band2Image: 'https://placehold.co/200x200?text=Muse',
+    loginUrl: 'auth_login.php?returnTo=/madness',
   },
 };
 
@@ -142,6 +192,7 @@ export const CompletedWithSponsor: Story = {
     band1Pct: '55%',
     band2Pct: '45%',
     showResults: true,
+    winner: '1',
     sponsor: 'Guitar Center',
     sponsorMsg: 'Your ultimate music destination',
   },

@@ -2,7 +2,8 @@
  * Tests for <mrm-match-card> custom element.
  *
  * Validates attribute-driven rendering, vote button visibility,
- * status messages, sponsor display, and the mrm-vote custom event.
+ * status messages, sponsor display, timer, login-url, winner/loser
+ * dimming, and the mrm-vote custom event.
  */
 
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
@@ -153,6 +154,12 @@ describe('MrmMatchCard', () => {
       .toBe('Voting is now over');
   });
 
+  it('shows tied-match message when status=over and tied is set', () => {
+    const el = createElement({ status: 'over', tied: true });
+    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
+      .toBe('Match is over and tied - vote for the winner');
+  });
+
   it('shows "Thanks for voting!" when status=running and has-voted', () => {
     const el = createElement({ status: 'running', 'has-voted': true });
     expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
@@ -175,5 +182,60 @@ describe('MrmMatchCard', () => {
     const el = createElement({});
     const sponsorEl = el.shadowRoot.querySelector('[data-slot="sponsor"]');
     expect(sponsorEl.classList.contains('hidden')).toBe(true);
+  });
+
+  it('shows countdown timer text when timer-text is set', () => {
+    const el = createElement({ status: 'running', 'timer-text': '05:30' });
+    const timer = el.shadowRoot.querySelector('[data-slot="timer"]');
+    expect(timer.classList.contains('hidden')).toBe(false);
+    expect(timer.textContent).toBe('Time Remaining: 05:30');
+  });
+
+  it('hides timer when timer-text is absent', () => {
+    const el = createElement({ status: 'running' });
+    const timer = el.shadowRoot.querySelector('[data-slot="timer"]');
+    expect(timer.classList.contains('hidden')).toBe(true);
+  });
+
+  it('shows login links when login-url is set instead of vote buttons', () => {
+    const el = createElement({
+      status: 'running',
+      'login-url': '/auth/login',
+    });
+    const root = el.shadowRoot;
+    const loginAreas = root.querySelectorAll('.login-area');
+    loginAreas.forEach((area) => {
+      expect(area.classList.contains('hidden')).toBe(false);
+    });
+    const loginLink = root.querySelector('[data-slot="band1-login-link"]');
+    expect(loginLink.getAttribute('href')).toBe('/auth/login');
+
+    // Vote buttons should be hidden
+    const voteAreas = root.querySelectorAll('.vote-area');
+    voteAreas.forEach((area) => {
+      expect(area.classList.contains('hidden')).toBe(true);
+    });
+  });
+
+  it('dims losing band image when winner="1"', () => {
+    const el = createElement({
+      winner: '1',
+      'band1-image': 'a.jpg',
+      'band2-image': 'b.jpg',
+    });
+    const root = el.shadowRoot;
+    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(false);
+    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(true);
+  });
+
+  it('dims losing band image when winner="2"', () => {
+    const el = createElement({
+      winner: '2',
+      'band1-image': 'a.jpg',
+      'band2-image': 'b.jpg',
+    });
+    const root = el.shadowRoot;
+    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(true);
+    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(false);
   });
 });

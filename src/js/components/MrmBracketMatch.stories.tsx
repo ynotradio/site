@@ -7,7 +7,8 @@ import './MrmBracketMatch.js';
 
 /**
  * Thin React wrapper so Storybook can render the custom element declaratively.
- * In production PHP pages, the element is used directly in HTML.
+ * In production PHP pages, the element is used directly in HTML with
+ * class="match left|right live_match" for external CSS positioning.
  */
 interface BracketMatchProps {
   band1Seed?: string;
@@ -17,15 +18,14 @@ interface BracketMatchProps {
   band2Name?: string;
   band2Pct?: string;
   winner?: '' | '1' | '2';
-  live?: boolean;
   matchId?: string;
-  side?: 'left' | 'right' | '';
+  cssClass?: string;
 }
 
 const BracketMatchWrapper: React.FC<BracketMatchProps> = ({
   band1Seed, band1Name, band1Pct,
   band2Seed, band2Name, band2Pct,
-  winner, live, matchId, side,
+  winner, matchId, cssClass,
 }) => {
   const ref = useRef<HTMLElement>(null);
 
@@ -33,10 +33,9 @@ const BracketMatchWrapper: React.FC<BracketMatchProps> = ({
     const el = ref.current;
     if (!el) return;
 
-    const setAttr = (name: string, value?: string | boolean) => {
-      if (value === true) el.setAttribute(name, '');
-      else if (value === false || value == null || value === '') el.removeAttribute(name);
-      else el.setAttribute(name, value);
+    const setAttr = (name: string, value?: string) => {
+      if (value != null && value !== '') el.setAttribute(name, value);
+      else el.removeAttribute(name);
     };
 
     setAttr('band1-seed', band1Seed);
@@ -46,13 +45,10 @@ const BracketMatchWrapper: React.FC<BracketMatchProps> = ({
     setAttr('band2-name', band2Name);
     setAttr('band2-pct', band2Pct);
     setAttr('winner', winner);
-    setAttr('live', live);
     setAttr('match-id', matchId);
-    setAttr('side', side);
+    if (cssClass) el.className = cssClass;
   });
 
-  // React 19 passes unknown attributes through to custom elements,
-  // but we use a ref for explicit control over boolean attributes.
   return React.createElement('mrm-bracket-match', { ref });
 };
 
@@ -60,11 +56,23 @@ const meta: Meta<typeof BracketMatchWrapper> = {
   title: 'MRM/BracketMatch',
   component: BracketMatchWrapper,
   tags: ['autodocs'],
-  parameters: { layout: 'padded' },
+  parameters: {
+    layout: 'padded',
+    docs: {
+      description: {
+        component:
+          'Light-DOM web component for bracket match slots. Uses original CSS class names '
+          + '(.band1, .band2, .seed, .band_abbr, .mrm_winner, .mrm_loser) for compatibility '
+          + 'with the madness.css layout.',
+      },
+    },
+  },
   argTypes: {
     winner: { control: 'select', options: ['', '1', '2'] },
-    side: { control: 'select', options: ['', 'left', 'right'] },
-    live: { control: 'boolean' },
+    cssClass: {
+      control: 'text',
+      description: 'CSS classes on the host element (e.g. "match left", "match right live_match")',
+    },
   },
 };
 
@@ -78,7 +86,7 @@ export const Default: Story = {
     band2Seed: '16',
     band2Name: 'Weezer',
     matchId: '1',
-    side: 'left',
+    cssClass: 'match left',
   },
 };
 
@@ -91,7 +99,7 @@ export const WithScores: Story = {
     band2Name: 'RHCP',
     band2Pct: '45%',
     matchId: '5',
-    side: 'left',
+    cssClass: 'match left',
   },
 };
 
@@ -105,7 +113,7 @@ export const Winner: Story = {
     band2Pct: '38%',
     winner: '1',
     matchId: '1',
-    side: 'left',
+    cssClass: 'match left',
   },
 };
 
@@ -115,9 +123,8 @@ export const LiveMatch: Story = {
     band1Name: 'Foo Fghtrs',
     band2Seed: '14',
     band2Name: 'Green Day',
-    live: true,
     matchId: '3',
-    side: 'right',
+    cssClass: 'match right live_match',
   },
 };
 
@@ -128,7 +135,7 @@ export const RightSide: Story = {
     band2Seed: '15',
     band2Name: 'Smsh Mouth',
     matchId: '2',
-    side: 'right',
+    cssClass: 'match right',
   },
 };
 
@@ -156,7 +163,7 @@ export const BracketColumn: Story = {
           band1Name={m.n1}
           band2Seed={m.s2}
           band2Name={m.n2}
-          side="left"
+          cssClass="match left"
           matchId={String(i + 1)}
         />
       ))}

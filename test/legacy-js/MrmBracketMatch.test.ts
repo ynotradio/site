@@ -2,7 +2,7 @@
  * Tests for <mrm-bracket-match> custom element.
  *
  * Uses Vitest + jsdom to exercise attribute rendering, winner/loser classes,
- * and the `live` attribute styling hook.
+ * and the light-DOM output that matches the original PHP markup.
  */
 
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
@@ -34,7 +34,7 @@ describe('MrmBracketMatch', () => {
     document.body.innerHTML = '';
   });
 
-  it('renders band seed and name from attributes', () => {
+  it('renders band seed and name from attributes using original class names', () => {
     const el = createElement({
       'band1-seed': '1',
       'band1-name': 'Radiohead',
@@ -42,11 +42,11 @@ describe('MrmBracketMatch', () => {
       'band2-name': 'Weezer',
     });
 
-    const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-seed"]').textContent).toBe('1');
-    expect(root.querySelector('[data-slot="band1-name"]').textContent).toBe('Radiohead');
-    expect(root.querySelector('[data-slot="band2-seed"]').textContent).toBe('16');
-    expect(root.querySelector('[data-slot="band2-name"]').textContent).toBe('Weezer');
+    // Light DOM – uses same class names as original PHP output
+    expect(el.querySelector('.band1 .seed').textContent).toBe('1');
+    expect(el.querySelector('.band1 .band_abbr').textContent).toBe('Radiohead');
+    expect(el.querySelector('.band2 .seed').textContent).toBe('16');
+    expect(el.querySelector('.band2 .band_abbr').textContent).toBe('Weezer');
   });
 
   it('renders vote percentages when provided', () => {
@@ -55,35 +55,39 @@ describe('MrmBracketMatch', () => {
       'band2-pct': '45%',
     });
 
-    const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('55%');
-    expect(root.querySelector('[data-slot="band2-pct"]').textContent).toBe('45%');
+    expect(el.querySelector('.band1 .percentage').textContent).toBe('55%');
+    expect(el.querySelector('.band2 .percentage').textContent).toBe('45%');
   });
 
-  it('applies winner class when winner="1"', () => {
+  it('omits percentage span when not provided', () => {
+    const el = createElement({
+      'band1-seed': '1',
+      'band1-name': 'Radiohead',
+    });
+
+    expect(el.querySelector('.band1 .percentage')).toBeNull();
+  });
+
+  it('applies mrm_winner class when winner="1"', () => {
     const el = createElement({
       'band1-name': 'Winner',
       'band2-name': 'Loser',
       winner: '1',
     });
 
-    const root = el.shadowRoot;
-    expect(root.querySelector('.band1-row').classList.contains('winner')).toBe(true);
-    expect(root.querySelector('.band1-row').classList.contains('loser')).toBe(false);
-    expect(root.querySelector('.band2-row').classList.contains('loser')).toBe(true);
-    expect(root.querySelector('.band2-row').classList.contains('winner')).toBe(false);
+    expect(el.querySelector('.band1').classList.contains('mrm_winner')).toBe(true);
+    expect(el.querySelector('.band2').classList.contains('mrm_loser')).toBe(true);
   });
 
-  it('applies winner class when winner="2"', () => {
+  it('applies mrm_winner class when winner="2"', () => {
     const el = createElement({
       'band1-name': 'Loser',
       'band2-name': 'Winner',
       winner: '2',
     });
 
-    const root = el.shadowRoot;
-    expect(root.querySelector('.band1-row').classList.contains('loser')).toBe(true);
-    expect(root.querySelector('.band2-row').classList.contains('winner')).toBe(true);
+    expect(el.querySelector('.band1').classList.contains('mrm_loser')).toBe(true);
+    expect(el.querySelector('.band2').classList.contains('mrm_winner')).toBe(true);
   });
 
   it('does not apply winner/loser classes without winner attribute', () => {
@@ -92,27 +96,40 @@ describe('MrmBracketMatch', () => {
       'band2-name': 'B',
     });
 
-    const root = el.shadowRoot;
-    expect(root.querySelector('.band1-row').classList.contains('winner')).toBe(false);
-    expect(root.querySelector('.band1-row').classList.contains('loser')).toBe(false);
-    expect(root.querySelector('.band2-row').classList.contains('winner')).toBe(false);
-    expect(root.querySelector('.band2-row').classList.contains('loser')).toBe(false);
+    expect(el.querySelector('.band1').className).toBe('band1');
+    expect(el.querySelector('.band2').className).toBe('band2');
   });
 
   it('updates when attributes change dynamically', () => {
     const el = createElement({ 'band1-name': 'Before' });
 
-    expect(el.shadowRoot.querySelector('[data-slot="band1-name"]').textContent).toBe('Before');
+    expect(el.querySelector('.band1 .band_abbr').textContent).toBe('Before');
 
     el.setAttribute('band1-name', 'After');
-    expect(el.shadowRoot.querySelector('[data-slot="band1-name"]').textContent).toBe('After');
+    expect(el.querySelector('.band1 .band_abbr').textContent).toBe('After');
   });
 
   it('renders empty strings for missing attributes', () => {
     const el = createElement({});
-    const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-seed"]').textContent).toBe('');
-    expect(root.querySelector('[data-slot="band1-name"]').textContent).toBe('');
-    expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('');
+    expect(el.querySelector('.band1 .seed').textContent).toBe('');
+    expect(el.querySelector('.band1 .band_abbr').textContent).toBe('');
+  });
+
+  it('escapes HTML entities in band names', () => {
+    const el = createElement({ 'band1-name': '<script>alert("xss")</script>' });
+    expect(el.querySelector('.band1 .band_abbr').textContent).toBe('<script>alert("xss")</script>');
+    expect(el.querySelector('.band1 .band_abbr').innerHTML).not.toContain('<script>');
+  });
+
+  it('outputs a <dl> element matching original PHP structure', () => {
+    const el = createElement({
+      'band1-seed': '1',
+      'band1-name': 'Radiohead',
+      'band2-seed': '16',
+      'band2-name': 'Weezer',
+    });
+
+    expect(el.querySelector('dl')).toBeTruthy();
+    expect(el.querySelectorAll('dt').length).toBe(2);
   });
 });

@@ -14,9 +14,13 @@
  *   band2-pct       – Vote percentage for band 2 (e.g. "48%")
  *   show-results    – Boolean attribute; when present, shows percentages
  *   has-voted       – Boolean attribute; when present, hides vote buttons
+ *   winner          – "1" or "2"; dims the losing band image
+ *   tied            – Boolean attribute; when present, shows tied-match message
  *   sponsor         – Sponsor name
  *   sponsor-msg     – Sponsor message
  *   voting-disabled – Boolean attribute; disables vote buttons
+ *   login-url       – URL for login link (when present, shows "Log in to vote" instead of buttons)
+ *   timer-text      – Text for the countdown timer display (e.g. "05:30")
  *
  * Events:
  *   mrm-vote – Dispatched when a user clicks a vote button.
@@ -52,13 +56,19 @@ TEMPLATE.innerHTML = `
   .header.live {
     background: #222;
     color: #ff4444;
-    animation: pulse 2s infinite;
   }
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
+  .timer {
+    text-align: center;
+    padding: 4px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    background: #f5f5f5;
+    border-bottom: 1px solid #eee;
   }
+
+  .timer.hidden { display: none; }
 
   .bands {
     display: grid;
@@ -88,6 +98,11 @@ TEMPLATE.innerHTML = `
 
   .band-image img[src=""], .band-image img:not([src]) {
     display: none;
+  }
+
+  .band-image.loser img {
+    border: 1px solid black;
+    opacity: 0.35;
   }
 
   .vote-pct {
@@ -128,12 +143,21 @@ TEMPLATE.innerHTML = `
     cursor: not-allowed;
   }
 
-  .footer {
-    text-align: center;
-    padding: 10px;
+  .login-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 24px;
+    border-radius: 4px;
+    background: #4CAF50;
+    color: white;
+    font-size: 14px;
     font-weight: bold;
-    border-top: 1px solid #ccc;
-    background: #f9f9f9;
+    text-decoration: none;
+    transition: background 0.2s;
+  }
+
+  .login-link:hover {
+    background: #45a049;
   }
 
   .message {
@@ -157,26 +181,33 @@ TEMPLATE.innerHTML = `
 
 <div class="card">
   <div class="header" data-slot="header">VS</div>
+  <div class="timer hidden" data-slot="timer"></div>
   <div class="bands">
     <div class="band band1">
       <div class="band-name" data-slot="band1-name"></div>
-      <div class="band-image">
+      <div class="band-image" data-slot="band1-image-wrap">
         <img data-slot="band1-image" alt="" />
       </div>
       <div class="vote-pct hidden" data-slot="band1-pct"></div>
       <div class="vote-area" data-slot="band1-vote">
         <button class="vote-btn" data-band="1" type="button">Vote!</button>
       </div>
+      <div class="login-area hidden" data-slot="band1-login">
+        <a class="login-link" data-slot="band1-login-link" href="#">Log in to vote</a>
+      </div>
     </div>
     <div class="vs">VS</div>
     <div class="band band2">
       <div class="band-name" data-slot="band2-name"></div>
-      <div class="band-image">
+      <div class="band-image" data-slot="band2-image-wrap">
         <img data-slot="band2-image" alt="" />
       </div>
       <div class="vote-pct hidden" data-slot="band2-pct"></div>
       <div class="vote-area" data-slot="band2-vote">
         <button class="vote-btn" data-band="2" type="button">Vote!</button>
+      </div>
+      <div class="login-area hidden" data-slot="band2-login">
+        <a class="login-link" data-slot="band2-login-link" href="#">Log in to vote</a>
       </div>
     </div>
   </div>
@@ -192,8 +223,9 @@ class MrmMatchCard extends HTMLElement {
       'band1-name', 'band1-image', 'band1-seed',
       'band2-name', 'band2-image', 'band2-seed',
       'band1-pct', 'band2-pct',
-      'show-results', 'has-voted',
+      'show-results', 'has-voted', 'winner', 'tied',
       'sponsor', 'sponsor-msg', 'voting-disabled',
+      'login-url', 'timer-text',
     ];
   }
 
@@ -238,6 +270,10 @@ class MrmMatchCard extends HTMLElement {
     const hasVoted = this.hasAttribute('has-voted');
     const isRunning = status === 'running';
     const votingDisabled = this.hasAttribute('voting-disabled');
+    const loginUrl = this.getAttribute('login-url');
+    const timerText = this.getAttribute('timer-text');
+    const winner = this.getAttribute('winner');
+    const isTied = this.hasAttribute('tied');
 
     // Header
     const header = root.querySelector('.header');
@@ -247,6 +283,15 @@ class MrmMatchCard extends HTMLElement {
     } else {
       header.classList.remove('live');
       header.textContent = 'VS';
+    }
+
+    // Countdown timer
+    const timerEl = root.querySelector('[data-slot="timer"]');
+    if (timerText) {
+      timerEl.textContent = `Time Remaining: ${timerText}`;
+      timerEl.classList.remove('hidden');
+    } else {
+      timerEl.classList.add('hidden');
     }
 
     // Band names
@@ -263,6 +308,12 @@ class MrmMatchCard extends HTMLElement {
     img2.src = this.getAttribute('band2-image') ?? '';
     img2.alt = this.getAttribute('band2-name') ?? '';
 
+    // Loser image dimming
+    const imgWrap1 = root.querySelector('[data-slot="band1-image-wrap"]');
+    const imgWrap2 = root.querySelector('[data-slot="band2-image-wrap"]');
+    imgWrap1.classList.toggle('loser', winner === '2');
+    imgWrap2.classList.toggle('loser', winner === '1');
+
     // Vote percentages
     const pct1 = root.querySelector('[data-slot="band1-pct"]');
     const pct2 = root.querySelector('[data-slot="band2-pct"]');
@@ -271,8 +322,10 @@ class MrmMatchCard extends HTMLElement {
     pct1.classList.toggle('hidden', !showResults);
     pct2.classList.toggle('hidden', !showResults);
 
-    // Vote buttons – visible only when match is running and user hasn't voted
-    const showVoteButtons = isRunning && !hasVoted && !votingDisabled;
+    // Vote buttons vs login links
+    const needsLogin = isRunning && !hasVoted && loginUrl;
+    const showVoteButtons = isRunning && !hasVoted && !votingDisabled && !loginUrl;
+
     root.querySelectorAll('.vote-area').forEach((area) => {
       area.classList.toggle('hidden', !showVoteButtons);
     });
@@ -280,11 +333,22 @@ class MrmMatchCard extends HTMLElement {
       btn.disabled = votingDisabled;
     });
 
+    root.querySelectorAll('.login-area').forEach((area) => {
+      area.classList.toggle('hidden', !needsLogin);
+    });
+    if (loginUrl) {
+      root.querySelectorAll('.login-link').forEach((link) => {
+        link.href = loginUrl;
+      });
+    }
+
     // Status message
     const messageEl = root.querySelector('[data-slot="message"]');
     let message = '';
     if (status === 'early') {
       message = 'Voting has not started yet';
+    } else if (status === 'over' && isTied) {
+      message = 'Match is over and tied - vote for the winner';
     } else if (status === 'over') {
       message = 'Voting is now over';
     } else if (hasVoted) {
