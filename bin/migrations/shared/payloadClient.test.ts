@@ -46,6 +46,7 @@ describe('payloadClient', () => {
       find: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      findByID: vi.fn(),
     };
   });
 
@@ -435,6 +436,476 @@ describe('payloadClient', () => {
       expect(result.djNames).toHaveLength(0);
       expect(result.artistNames).toHaveLength(0);
       expect(result.cleanTitle).toBe('Simple Show Title');
+    });
+  });
+
+  describe('findOrCreateArtist - error edge cases', () => {
+    it('should handle name conflict (race condition) by retrying find', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce(null);
+      const nameError = {
+        status: 400,
+        data: { errors: [{ path: 'name', message: 'Duplicate name' }] },
+        message: 'Duplicate name',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(nameError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'race-condition-artist' }] });
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Race Condition Artist');
+
+      expect(artistId).toBe('race-condition-artist');
+    });
+
+    it('should rethrow when name conflict retry finds nothing', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce(null);
+      const nameError = {
+        status: 400,
+        data: { errors: [{ path: 'name', message: 'Duplicate name' }] },
+        message: 'Duplicate name',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(nameError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      await expect(
+        findOrCreateArtist(mockPayload as Payload, 'Race Condition Artist'),
+      ).rejects.toEqual(nameError);
+    });
+
+    it('should handle MBID conflict when retry also hits slug conflict', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce('some-mbid');
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Duplicate MBID' }] },
+        message: 'Duplicate MBID',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(mbidError);
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'slug-fallback-artist' }] });
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Duplicate Artist');
+
+      expect(artistId).toBe('slug-fallback-artist');
+    });
+  });
+
+  describe('findOrCreateVenue - error handling', () => {
+    it('should handle slug conflict by finding venue by slug', async () => {
+      const { findOrCreateVenue } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'existing-venue-by-slug' }] });
+
+      const venueId = await findOrCreateVenue(mockPayload as Payload, 'The Venue');
+
+      expect(venueId).toBe('existing-venue-by-slug');
+    });
+
+    it('should rethrow non-slug errors', async () => {
+      const { findOrCreateVenue } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const genericError = { status: 500, message: 'Database error' };
+      (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
+
+      await expect(
+        findOrCreateVenue(mockPayload as Payload, 'Bad Venue'),
+      ).rejects.toEqual(genericError);
+    });
+
+    it('should rethrow slug error when no existing venue found by slug', async () => {
+      const { findOrCreateVenue } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      await expect(
+        findOrCreateVenue(mockPayload as Payload, 'Ghost Venue'),
+      ).rejects.toEqual(slugError);
+    });
+  });
+
+  describe('findOrCreatePerson', () => {
+    it('should return existing person ID when found by legacy ID', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'person-by-legacy' }] });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'John Doe', 42);
+
+      expect(personId).toBe('person-by-legacy');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'people',
+        where: { legacyId: { equals: 42 } },
+        limit: 1,
+      });
+    });
+
+    it('should fallback to name search when legacy ID not found', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'person-by-name' }] });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'John Doe', 99);
+
+      expect(personId).toBe('person-by-name');
+    });
+
+    it('should return existing person ID when found by name (no legacy ID)', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'person-123' }] });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'Jane Smith');
+
+      expect(personId).toBe('person-123');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'people',
+        where: { name: { equals: 'Jane Smith' } },
+        limit: 1,
+      });
+    });
+
+    it('should create new person when not found', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'new-person-456' });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'New Person');
+
+      expect(personId).toBe('new-person-456');
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'people',
+          data: expect.objectContaining({
+            name: 'New Person',
+            slug: 'new-person',
+          }),
+        }),
+      );
+    });
+
+    it('should create person with legacyId when provided', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'new-person-789' });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'Legacy Person', 7);
+
+      expect(personId).toBe('new-person-789');
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'people',
+          data: expect.objectContaining({
+            legacyId: 7,
+          }),
+        }),
+      );
+    });
+
+    it('should handle slug conflict by finding person by slug', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'person-by-slug' }] });
+
+      const personId = await findOrCreatePerson(mockPayload as Payload, 'Duplicate Person');
+
+      expect(personId).toBe('person-by-slug');
+    });
+
+    it('should rethrow non-slug errors', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const genericError = { status: 500, message: 'Database error' };
+      (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
+
+      await expect(
+        findOrCreatePerson(mockPayload as Payload, 'Error Person'),
+      ).rejects.toEqual(genericError);
+    });
+
+    it('should rethrow slug error when no existing person found by slug', async () => {
+      const { findOrCreatePerson } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      await expect(
+        findOrCreatePerson(mockPayload as Payload, 'Ghost Person'),
+      ).rejects.toEqual(slugError);
+    });
+  });
+
+  describe('findDJByLegacyId', () => {
+    it('should return DJ ID when found by legacy ID', async () => {
+      const { findDJByLegacyId } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'dj-legacy-123' }] });
+
+      const djId = await findDJByLegacyId(mockPayload as Payload, 42);
+
+      expect(djId).toBe('dj-legacy-123');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'djs',
+        where: { legacyId: { equals: 42 } },
+        limit: 1,
+      });
+    });
+
+    it('should return null when DJ not found by legacy ID', async () => {
+      const { findDJByLegacyId } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      const djId = await findDJByLegacyId(mockPayload as Payload, 999);
+
+      expect(djId).toBeNull();
+    });
+  });
+
+  describe('findOrCreateRecord', () => {
+    it('should return existing record ID when found by legacy ID', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-by-legacy' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Test Album', 1, 42);
+
+      expect(recordId).toBe('record-by-legacy');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'records',
+        where: { legacyId: { equals: 42 } },
+        limit: 1,
+      });
+    });
+
+    it('should fallback to title+artist search when legacy ID not found', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-by-title-artist' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Known Album', 5, 99);
+
+      expect(recordId).toBe('record-by-title-artist');
+    });
+
+    it('should return existing record ID when found by title and artist', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-123' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Test Album', 1);
+
+      expect(recordId).toBe('record-123');
+      expect(mockPayload.find).toHaveBeenCalledWith({
+        collection: 'records',
+        where: {
+          and: [
+            { title: { equals: 'Test Album' } },
+            { artist: { equals: 1 } },
+          ],
+        },
+        limit: 1,
+      });
+    });
+
+    it('should create new record when not found', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'new-record-456' });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'New Album', 2);
+
+      expect(recordId).toBe('new-record-456');
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          collection: 'records',
+          data: expect.objectContaining({
+            title: 'New Album',
+            artist: 2,
+          }),
+        }),
+      );
+    });
+
+    it('should handle slug conflict by looking up artist name and finding by slug', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'The Artist' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-by-slug' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Duplicate Album', 3);
+
+      expect(recordId).toBe('record-by-slug');
+      expect(mockPayload.findByID).toHaveBeenCalledWith({ collection: 'artists', id: 3 });
+    });
+
+    it('should handle slug conflict when artist lookup fails', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockRejectedValueOnce(new Error('Not found'));
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-no-artist' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Orphan Album', 4);
+
+      expect(recordId).toBe('record-no-artist');
+    });
+
+    it('should rethrow non-slug errors', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const genericError = { status: 500, message: 'Database error' };
+      (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
+
+      await expect(
+        findOrCreateRecord(mockPayload as Payload, 'Error Album', 5),
+      ).rejects.toEqual(genericError);
+    });
+
+    it('should rethrow slug error when no existing record found by slug', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Some Artist' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      await expect(
+        findOrCreateRecord(mockPayload as Payload, 'Ghost Album', 6),
+      ).rejects.toEqual(slugError);
+    });
+  });
+
+  describe('findOrCreateSong - slug error handling', () => {
+    it('should handle slug conflict by looking up artist name and finding by slug', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Song Artist' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-by-slug' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Duplicate Song', 10);
+
+      expect(songId).toBe('song-by-slug');
+      expect(mockPayload.findByID).toHaveBeenCalledWith({ collection: 'artists', id: 10 });
+    });
+
+    it('should handle slug conflict with no artist ID', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-no-artist' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'No Artist Song');
+
+      expect(songId).toBe('song-no-artist');
+      expect(mockPayload.findByID).not.toHaveBeenCalled();
+    });
+
+    it('should rethrow non-slug errors in song creation', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const genericError = { status: 500, message: 'Database error' };
+      (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
+
+      await expect(
+        findOrCreateSong(mockPayload as Payload, 'Error Song', 11),
+      ).rejects.toEqual(genericError);
+    });
+
+    it('should rethrow slug error when no existing song found by slug', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Artist Name' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+
+      await expect(
+        findOrCreateSong(mockPayload as Payload, 'Ghost Song', 12),
+      ).rejects.toEqual(slugError);
     });
   });
 });
