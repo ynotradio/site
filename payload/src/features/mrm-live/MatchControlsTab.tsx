@@ -4,96 +4,23 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Gutter, useDocumentInfo } from '@payloadcms/ui';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
+import { AdminBracketMatch } from '../mrm-shared/AdminBracketMatch';
+import { AdminScoreboard } from '../mrm-shared/AdminScoreboard';
 import { useMatchActions } from './useMatchActions';
-import type { LiveMatch, MatchStatus } from './types';
+import type { LiveMatch } from './types';
+import {
+  ROUND_LABELS,
+  STATUS_LABELS,
+  getMatchStatus,
+  getVotePercent,
+  getWinnerSlot,
+  getTournamentId,
+  getNextMatchId,
+} from './matchControlsUtils';
+import { BandPanel, NavLinks, ActionButtons } from './MatchControlsPanels';
 import './MatchControlsTab.css';
 
 const POLL_INTERVAL_MS = 5000;
-
-const getMatchStatus = (match: LiveMatch): MatchStatus => {
-  const now = Date.now();
-  const start = new Date(match.startTime).getTime();
-  const end = new Date(match.endTime).getTime();
-  if (now < start) return 'upcoming';
-  if (now <= end) return 'live';
-  if (!match.winner) return 'overtime';
-  return 'closed';
-};
-
-const getVotePercent = (votes: number, total: number): number => {
-  if (total === 0) return 50;
-  return Math.round((votes / total) * 100);
-};
-
-const getBandName = (band: LiveMatch['band1']): string => {
-  if (!band) return '(TBD)';
-  return typeof band === 'string' ? band : band.name;
-};
-
-const getBandSeed = (band: LiveMatch['band1']): number | null => {
-  if (!band || typeof band === 'string') return null;
-  return band.seed;
-};
-
-const isWinner = (match: LiveMatch, bandKey: 'band1' | 'band2'): boolean => {
-  if (!match.winner) return false;
-  const band = match[bandKey];
-  if (!band || typeof band === 'string') return false;
-  const winnerId = typeof match.winner === 'string' ? match.winner : match.winner.id;
-  return band.id === winnerId;
-};
-
-interface BandPanelProps {
-  match: LiveMatch;
-  bandKey: 'band1' | 'band2';
-  bandIndex: number;
-  total: number;
-  canVote: boolean;
-  saving: boolean;
-  onManualVote: (bandKey: 'band1' | 'band2') => Promise<void>;
-}
-
-const BandPanel: React.FC<BandPanelProps> = ({
-  match, bandKey, bandIndex, total, canVote, saving, onManualVote,
-}) => {
-  const band = match[bandKey];
-  const votes = bandKey === 'band1' ? match.band1Votes : match.band2Votes;
-  const pct = getVotePercent(votes, total);
-  const won = isWinner(match, bandKey);
-  const seed = getBandSeed(band);
-  return (
-    <div className={`match-controls-tab__band ${won ? 'match-controls-tab__band--winner' : ''}`}>
-      <div className="match-controls-tab__band-name">
-        {seed !== null && <span className="match-controls-tab__seed">#{seed}</span>}
-        {getBandName(band)}
-        {won && <span className="match-controls-tab__crown"> 🏆</span>}
-      </div>
-      <div className="match-controls-tab__votes">
-        <span className="match-controls-tab__vote-count">{votes.toLocaleString()}</span>
-        <span className="match-controls-tab__vote-pct">{pct}%</span>
-      </div>
-      <div className="match-controls-tab__bar-track">
-        <div className="match-controls-tab__bar-fill" style={{ width: `${pct}%` }} aria-label={`${pct}% of votes`} />
-      </div>
-      <button
-        type="button"
-        className="match-controls-tab__vote-btn"
-        onClick={() => onManualVote(bandKey)}
-        disabled={saving || !canVote}
-        aria-label={`Manual vote for ${getBandName(band)} (band ${bandIndex + 1})`}
-      >
-        {saving ? '…' : 'Manual Vote'}
-      </button>
-    </div>
-  );
-};
-
-const STATUS_LABELS: Record<MatchStatus, string> = {
-  live: '🔴 LIVE',
-  upcoming: '⏳ Upcoming',
-  overtime: '⏰ Overtime',
-  closed: '✅ Closed',
-};
 
 interface MatchControlsPanelProps {
   match: LiveMatch;
@@ -105,28 +32,67 @@ interface MatchControlsPanelProps {
   onExtend: () => Promise<void>;
 }
 
+const getBandObj = (band: LiveMatch['band1']) => (band && typeof band !== 'string' ? band : null);
+
 const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
-  match, saving, error, successMessage, onManualVote, onClose, onExtend,
+  match,
+  saving,
+  error,
+  successMessage,
+  onManualVote,
+  onClose,
+  onExtend,
 }) => {
   const status = getMatchStatus(match);
   const isTied = match.band1Votes === match.band2Votes && !match.winner;
-
   const canVote = status === 'live' || (status === 'overtime' && isTied);
-  const canClose = status === 'overtime' && !isTied;
-  const canExtend = status === 'overtime' && isTied;
   const total = match.band1Votes + match.band2Votes;
+  const p1 = getVotePercent(match.band1Votes, total);
+  const p2 = getVotePercent(match.band2Votes, total);
+  const b1 = getBandObj(match.band1);
+  const b2 = getBandObj(match.band2);
 
   return (
     <div className="match-controls-tab">
-      {error && <div className="match-controls-tab__alert match-controls-tab__alert--error">{error}</div>}
-      {successMessage && <div className="match-controls-tab__alert match-controls-tab__alert--success">{successMessage}</div>}
+      {error && (
+        <div className="match-controls-tab__alert match-controls-tab__alert--error">{error}</div>
+      )}
+      {successMessage && (
+        <div className="match-controls-tab__alert match-controls-tab__alert--success">
+          {successMessage}
+        </div>
+      )}
+
+      <NavLinks tournamentId={getTournamentId(match)} nextMatchId={getNextMatchId(match)} />
+
+      <div className="match-controls-tab__preview">
+        <AdminBracketMatch
+          band1={b1 ? { seed: b1.seed, name: b1.name, pct: `${p1}%` } : null}
+          band2={b2 ? { seed: b2.seed, name: b2.name, pct: `${p2}%` } : null}
+          winner={getWinnerSlot(match)}
+          live={status === 'live'}
+          matchLabel={`#${match.matchNumber}`}
+          statusBadge={STATUS_LABELS[status]}
+        />
+      </div>
+
+      <div className="match-controls-tab__scoreboard">
+        <AdminScoreboard
+          band1Pct={p1}
+          band2Pct={p2}
+          band1Label={`${match.band1Votes.toLocaleString()} (${p1}%)`}
+          band2Label={`${match.band2Votes.toLocaleString()} (${p2}%)`}
+        />
+      </div>
 
       <div className="match-controls-tab__meta">
         <span className={`match-controls-tab__status match-controls-tab__status--${status}`}>
           {STATUS_LABELS[status]}
         </span>
         <span className="match-controls-tab__round">
-          Round {match.round} · Match #{match.matchNumber}
+          {ROUND_LABELS[match.round] ?? `Round ${match.round}`}
+          {' · Match #'}
+          {match.matchNumber}
         </span>
       </div>
 
@@ -145,30 +111,17 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
         ))}
       </div>
 
-      <div className="match-controls-tab__actions">
-        <button
-          type="button"
-          className="match-controls-tab__action-btn match-controls-tab__action-btn--danger"
-          onClick={onClose}
-          disabled={saving || !canClose}
-        >
-          {saving ? 'Closing…' : 'Close Match'}
-        </button>
-        <button
-          type="button"
-          className="match-controls-tab__action-btn match-controls-tab__action-btn--warning"
-          onClick={onExtend}
-          disabled={saving || !canExtend}
-        >
-          {saving ? 'Extending…' : 'Extend Overtime (+15 min)'}
-        </button>
-      </div>
+      <ActionButtons
+        saving={saving}
+        canClose={status === 'overtime' && !isTied}
+        canExtend={status === 'overtime' && isTied}
+        onClose={onClose}
+        onExtend={onExtend}
+      />
 
       {match.sponsor && (
         <div className="match-controls-tab__sponsor">
-          <strong>Sponsor:</strong>
-          {' '}
-          {match.sponsor}
+          <strong>Sponsor:</strong> {match.sponsor}
           {match.sponsorMessage && <p>{match.sponsorMessage}</p>}
         </div>
       )}
@@ -195,9 +148,7 @@ export const MatchControlsTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(
-        `/api/modern-rock-madness-matches/${matchId}?depth=2`,
-      );
+      const res = await fetch(`/api/modern-rock-madness-matches/${matchId}?depth=2`);
       if (!res.ok) throw new Error('Failed to fetch match');
       const doc: LiveMatch = await res.json();
       setMatch(doc);
@@ -211,7 +162,9 @@ export const MatchControlsTab: React.FC = () => {
     }
   }, [matchId]);
 
-  useEffect(() => { fetchMatch(); }, [fetchMatch]);
+  useEffect(() => {
+    fetchMatch();
+  }, [fetchMatch]);
   useEffect(() => {
     if (!matchId) return undefined;
     const timer = setInterval(fetchMatch, POLL_INTERVAL_MS);
@@ -227,7 +180,13 @@ export const MatchControlsTab: React.FC = () => {
     handleExtendOvertime,
   } = useMatchActions(match, fetchMatch);
 
-  if (loading) return <Gutter><LoadingSpinner /></Gutter>;
+  if (loading) {
+    return (
+      <Gutter>
+        <LoadingSpinner />
+      </Gutter>
+    );
+  }
 
   if (!matchId) {
     return (
@@ -241,7 +200,9 @@ export const MatchControlsTab: React.FC = () => {
     return (
       <Gutter>
         {fetchError ? (
-          <div className="match-controls-tab__alert match-controls-tab__alert--error">{fetchError}</div>
+          <div className="match-controls-tab__alert match-controls-tab__alert--error">
+            {fetchError}
+          </div>
         ) : (
           <EmptyState message="Match data could not be loaded." />
         )}

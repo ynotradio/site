@@ -15,19 +15,47 @@ vi.mock('../shared/LoadingSpinner', () => ({
 }));
 
 vi.mock('../shared/EmptyState', () => ({
-  EmptyState: ({ message }: { message: string }) => (
-    <div data-testid="empty-state">{message}</div>
+  EmptyState: ({ message }: { message: string }) => <div data-testid="empty-state">{message}</div>,
+}));
+
+vi.mock('../mrm-shared/AdminBracketMatch', () => ({
+  AdminBracketMatch: ({
+    band1,
+    band2,
+    matchLabel,
+    statusBadge,
+    href,
+    winner,
+    live,
+  }: {
+    band1?: { name: string; seed?: number; pct?: string } | null;
+    band2?: { name: string; seed?: number; pct?: string } | null;
+    matchLabel?: string;
+    statusBadge?: string;
+    href?: string;
+    winner?: string | null;
+    live?: boolean;
+  }) => (
+    <a
+      href={href}
+      data-testid="admin-bracket-match"
+      data-winner={winner ?? ''}
+      data-live={live ? 'true' : 'false'}
+    >
+      <span>{matchLabel}</span>
+      <span>{band1?.name ?? '(TBD)'}</span>
+      <span>vs</span>
+      <span>{band2?.name ?? '(TBD)'}</span>
+      <span>{statusBadge}</span>
+      {band1?.pct && <span>{band1.pct}</span>}
+      {band2?.pct && <span>{band2.pct}</span>}
+    </a>
   ),
 }));
 
 const { useDocumentInfo } = await import('@payloadcms/ui');
 
-const makeMatch = (
-  id: string,
-  matchNumber: number,
-  round: string,
-  overrides: object = {},
-) => ({
+const makeMatch = (id: string, matchNumber: number, round: string, overrides: object = {}) => ({
   id,
   matchNumber,
   round,
@@ -74,11 +102,7 @@ describe('TournamentBracketTab', () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 't1', name: 'MRM 2025' },
     } as ReturnType<typeof useDocumentInfo>);
-    const matches = [
-      makeMatch('m1', 1, '1'),
-      makeMatch('m2', 2, '1'),
-      makeMatch('m3', 33, '2'),
-    ];
+    const matches = [makeMatch('m1', 1, '1'), makeMatch('m2', 2, '1'), makeMatch('m3', 33, '2')];
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ docs: matches, totalDocs: matches.length }),
@@ -90,7 +114,7 @@ describe('TournamentBracketTab', () => {
     });
   });
 
-  it('renders band names inside match cards', async () => {
+  it('renders AdminBracketMatch components with band names', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 't1', name: 'MRM 2025' },
     } as ReturnType<typeof useDocumentInfo>);
@@ -100,8 +124,8 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(screen.getByText(/#1 Radiohead/)).toBeInTheDocument();
-      expect(screen.getByText(/#2 Nirvana/)).toBeInTheDocument();
+      expect(screen.getByText('Radiohead')).toBeInTheDocument();
+      expect(screen.getByText('Nirvana')).toBeInTheDocument();
     });
   });
 
@@ -115,12 +139,12 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      const link = screen.getByRole('link', { name: /Match 1/ });
-      expect(link).toHaveAttribute('href', '/admin/collections/modern-rock-madness-matches/m1');
+      const matchEl = screen.getByTestId('admin-bracket-match');
+      expect(matchEl).toHaveAttribute('href', '/admin/collections/modern-rock-madness-matches/m1');
     });
   });
 
-  it('shows winner trophy on winning band', async () => {
+  it('shows winner on completed matches', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 't1', name: 'MRM 2025' },
     } as ReturnType<typeof useDocumentInfo>);
@@ -137,7 +161,8 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(screen.getByText(/🏆/)).toBeInTheDocument();
+      const matchEl = screen.getByTestId('admin-bracket-match');
+      expect(matchEl).toHaveAttribute('data-winner', '1');
     });
   });
 
@@ -162,8 +187,24 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('tournament-42'),
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('tournament-42'));
+    });
+  });
+
+  it('renders navigation links', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 't1', name: 'MRM 2025' },
+    } as ReturnType<typeof useDocumentInfo>);
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ docs: [], totalDocs: 0 }),
+    });
+    render(<TournamentBracketTab />);
+    await waitFor(() => {
+      expect(screen.getByText(/Bracket Overview/)).toHaveAttribute('href', '/admin/mrm-bracket');
+      expect(screen.getByText(/All Matches/)).toHaveAttribute(
+        'href',
+        '/admin/collections/modern-rock-madness-matches',
       );
     });
   });

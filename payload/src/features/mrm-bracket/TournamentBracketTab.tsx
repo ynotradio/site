@@ -4,14 +4,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Gutter, useDocumentInfo } from '@payloadcms/ui';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
+import { AdminBracketMatch } from '../mrm-shared/AdminBracketMatch';
 import type { BracketMatch, MatchesApiResponse } from './types';
 import { ROUND_LABELS } from './types';
 import './TournamentBracketTab.css';
 
-const getBandLabel = (band: BracketMatch['band1']): string => {
-  if (!band) return '(TBD)';
-  if (typeof band === 'string') return band;
-  return `#${band.seed} ${band.name}`;
+const MATCH_EDIT_BASE = '/admin/collections/modern-rock-madness-matches';
+const BRACKET_OVERVIEW_URL = '/admin/mrm-bracket';
+const MATCHES_LIST_URL = '/admin/collections/modern-rock-madness-matches';
+
+const getBandProp = (band: BracketMatch['band1']) => {
+  if (!band || typeof band === 'string') return null;
+  return { seed: band.seed, name: band.name };
 };
 
 const getWinnerId = (match: BracketMatch): string | null => {
@@ -24,11 +28,34 @@ const getBandId = (band: BracketMatch['band1']): string | null => {
   return band.id;
 };
 
-const getMatchStatus = (match: BracketMatch): 'upcoming' | 'live' | 'closed' => {
+const getWinnerSlot = (match: BracketMatch): '1' | '2' | null => {
+  const wId = getWinnerId(match);
+  if (!wId) return null;
+  if (getBandId(match.band1) === wId) return '1';
+  if (getBandId(match.band2) === wId) return '2';
+  return null;
+};
+
+type MatchStatus = 'upcoming' | 'live' | 'closed';
+
+const getMatchStatus = (match: BracketMatch): MatchStatus => {
   const now = Date.now();
   if (match.winner) return 'closed';
   if (new Date(match.startTime).getTime() > now) return 'upcoming';
   return 'live';
+};
+
+const STATUS_BADGES: Record<MatchStatus, string> = {
+  live: '🔴 LIVE',
+  upcoming: '⏳',
+  closed: '✅',
+};
+
+const getVotePct = (match: BracketMatch): { b1: string; b2: string } | null => {
+  const total = match.band1Votes + match.band2Votes;
+  if (total === 0) return null;
+  const p1 = Math.round((match.band1Votes / total) * 100);
+  return { b1: `${p1}%`, b2: `${100 - p1}%` };
 };
 
 const groupByRound = (matches: BracketMatch[]): Map<string, BracketMatch[]> => {
@@ -76,7 +103,13 @@ export const TournamentBracketTab: React.FC = () => {
     fetchMatches();
   }, [fetchMatches]);
 
-  if (loading) return <Gutter><LoadingSpinner /></Gutter>;
+  if (loading) {
+    return (
+      <Gutter>
+        <LoadingSpinner />
+      </Gutter>
+    );
+  }
 
   if (!tournamentId) {
     return (
@@ -87,69 +120,62 @@ export const TournamentBracketTab: React.FC = () => {
   }
 
   const rounds = groupByRound(matches);
-  const roundKeys = Array.from(rounds.keys()).sort(
-    (a, b) => parseInt(a, 10) - parseInt(b, 10),
-  );
+  const roundKeys = Array.from(rounds.keys()).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
 
   return (
     <Gutter>
       <div className="bracket-tab">
-        {error && (
-          <div className="bracket-tab__alert bracket-tab__alert--error">{error}</div>
-        )}
+        <nav className="bracket-tab__nav">
+          <a href={BRACKET_OVERVIEW_URL} className="bracket-tab__nav-link">
+            📊 Bracket Overview
+          </a>
+          <a href={MATCHES_LIST_URL} className="bracket-tab__nav-link">
+            📋 All Matches
+          </a>
+        </nav>
+
+        {error && <div className="bracket-tab__alert bracket-tab__alert--error">{error}</div>}
 
         {matches.length === 0 && !error && (
-          <EmptyState message={`No matches found for ${tournamentName}. Add matches to see the bracket.`} />
+          <EmptyState
+            message={`No matches found for ${tournamentName}. Add matches to see the bracket.`}
+          />
         )}
 
-        {roundKeys.map((round) => (
-          <section key={round} className="bracket-tab__round">
-            <h3 className="bracket-tab__round-label">
-              {ROUND_LABELS[round] ?? `Round ${round}`}
-            </h3>
-            <div className="bracket-tab__grid">
-              {(rounds.get(round) ?? []).map((match) => {
-                const status = getMatchStatus(match);
-                const winnerId = getWinnerId(match);
-                const band1Id = getBandId(match.band1);
-                const band2Id = getBandId(match.band2);
-                return (
-                  <a
-                    key={match.id}
-                    href={`/admin/collections/modern-rock-madness-matches/${match.id}`}
-                    className={`bracket-tab__match bracket-tab__match--${status}`}
-                    aria-label={`Match ${match.matchNumber}: ${getBandLabel(match.band1)} vs ${getBandLabel(match.band2)}`}
-                  >
-                    <span className="bracket-tab__match-num">#{match.matchNumber}</span>
-                    <span className={`bracket-tab__status bracket-tab__status--${status}`}>
-                      {status === 'live' && '🔴'}
-                      {status === 'closed' && '✅'}
-                      {status === 'upcoming' && '⏳'}
-                    </span>
-                    <span
-                      className={`bracket-tab__band ${band1Id && winnerId === band1Id ? 'bracket-tab__band--winner' : ''}`}
-                    >
-                      {getBandLabel(match.band1)}
-                      {band1Id && winnerId === band1Id && ' 🏆'}
-                    </span>
-                    <span className="bracket-tab__vs">vs</span>
-                    <span
-                      className={`bracket-tab__band ${band2Id && winnerId === band2Id ? 'bracket-tab__band--winner' : ''}`}
-                    >
-                      {getBandLabel(match.band2)}
-                      {band2Id && winnerId === band2Id && ' 🏆'}
-                    </span>
-                    {status !== 'upcoming' && (
-                      <span className="bracket-tab__votes">
-                        {match.band1Votes.toLocaleString()} – {match.band2Votes.toLocaleString()}
-                      </span>
-                    )}
-                  </a>
-                );
-              })}
-            </div>
-          </section>
-        ))}
+        {roundKeys.map((round) => {
+          const roundMatches = rounds.get(round) ?? [];
+          return (
+            <section key={round} className="bracket-tab__round">
+              <h3 className="bracket-tab__round-label">
+                {ROUND_LABELS[round] ?? `Round ${round}`}
+                <span className="bracket-tab__round-count">
+                  {roundMatches.length} match{roundMatches.length !== 1 ? 'es' : ''}
+                </span>
+              </h3>
+              <div className="bracket-tab__grid">
+                {roundMatches.map((match) => {
+                  const status = getMatchStatus(match);
+                  const pcts = status !== 'upcoming' ? getVotePct(match) : null;
+                  const b1 = getBandProp(match.band1);
+                  const b2 = getBandProp(match.band2);
+
+                  return (
+                    <AdminBracketMatch
+                      key={match.id}
+                      band1={b1 ? { ...b1, pct: pcts?.b1 } : null}
+                      band2={b2 ? { ...b2, pct: pcts?.b2 } : null}
+                      winner={getWinnerSlot(match)}
+                      live={status === 'live'}
+                      href={`${MATCH_EDIT_BASE}/${match.id}`}
+                      matchLabel={`#${match.matchNumber}`}
+                      statusBadge={STATUS_BADGES[status]}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </Gutter>
   );

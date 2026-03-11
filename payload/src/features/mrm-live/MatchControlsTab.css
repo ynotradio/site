@@ -23,6 +23,40 @@
   border: 1px solid #27ae60;
 }
 
+/* Navigation links */
+.match-controls-tab__nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.match-controls-tab__nav-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--theme-text-link, #2563eb);
+  text-decoration: none;
+  padding: 5px 10px;
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.match-controls-tab__nav-link:hover {
+  background: var(--theme-elevation-50, #f3f4f6);
+}
+
+/* Match preview card */
+.match-controls-tab__preview {
+  max-width: 260px;
+  margin-bottom: 12px;
+}
+
+/* Scoreboard bar */
+.match-controls-tab__scoreboard {
+  margin-bottom: 16px;
+}
+
 /* Meta row */
 .match-controls-tab__meta {
   display: flex;

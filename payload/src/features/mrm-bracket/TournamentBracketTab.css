@@ -1,9 +1,33 @@
-/* Compact bracket grid for the tournament edit tab */
+/* Bracket tab — tournament edit view */
 
 .bracket-tab {
   max-width: 100%;
 }
 
+/* Navigation links */
+.bracket-tab__nav {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bracket-tab__nav-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--theme-text-link, #2563eb);
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.bracket-tab__nav-link:hover {
+  background: var(--theme-elevation-50, #f3f4f6);
+}
+
+/* Alert */
 .bracket-tab__alert {
   padding: 10px 14px;
   border-radius: 4px;
@@ -29,98 +53,32 @@
   padding-bottom: 6px;
   border-bottom: 2px solid var(--theme-border-color, #e5e7eb);
   color: var(--theme-text, #374151);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bracket-tab__round-count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--theme-text, #9ca3af);
 }
 
 /* Responsive CSS grid for match cards */
 .bracket-tab__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
 }
 
 @media (min-width: 768px) {
   .bracket-tab__grid {
-    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   }
 }
 
 @media (min-width: 1200px) {
   .bracket-tab__grid {
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   }
-}
-
-/* Compact match card */
-.bracket-tab__match {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto auto auto;
-  gap: 1px 6px;
-  padding: 8px 10px;
-  border: 1px solid var(--theme-border-color, #ddd);
-  border-radius: 4px;
-  text-decoration: none;
-  color: var(--theme-text, #374151);
-  background: var(--theme-bg, #fff);
-  transition: box-shadow 0.15s, border-color 0.15s;
-  font-size: 0.8rem;
-  line-height: 1.3;
-}
-
-.bracket-tab__match:hover {
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
-  border-color: var(--theme-text-link, #2563eb);
-}
-
-.bracket-tab__match--live {
-  border-color: #e74c3c;
-  background: #fff8f8;
-}
-
-.bracket-tab__match--closed {
-  opacity: 0.75;
-}
-
-/* Match number + status on the header row */
-.bracket-tab__match-num {
-  grid-column: 1;
-  grid-row: 1;
-  font-size: 0.7rem;
-  color: var(--theme-text, #888);
-  font-weight: 600;
-}
-
-.bracket-tab__status {
-  grid-column: 3;
-  grid-row: 1;
-  font-size: 0.7rem;
-  text-align: right;
-}
-
-/* Band names */
-.bracket-tab__band {
-  grid-column: 1 / -1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.bracket-tab__band--winner {
-  font-weight: 700;
-  color: #1a7d2e;
-}
-
-.bracket-tab__vs {
-  grid-column: 1 / -1;
-  font-size: 0.65rem;
-  color: var(--theme-text, #9ca3af);
-  text-align: center;
-}
-
-/* Vote counts */
-.bracket-tab__votes {
-  grid-column: 1 / -1;
-  font-size: 0.7rem;
-  color: var(--theme-text, #6b7280);
-  text-align: center;
 }

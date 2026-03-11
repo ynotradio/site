@@ -15,8 +15,29 @@ vi.mock('../shared/LoadingSpinner', () => ({
 }));
 
 vi.mock('../shared/EmptyState', () => ({
-  EmptyState: ({ message }: { message: string }) => (
-    <div data-testid="empty-state">{message}</div>
+  EmptyState: ({ message }: { message: string }) => <div data-testid="empty-state">{message}</div>,
+}));
+
+vi.mock('../mrm-shared/AdminBracketMatch', () => ({
+  AdminBracketMatch: ({
+    matchLabel,
+    statusBadge,
+  }: {
+    matchLabel?: string;
+    statusBadge?: string;
+  }) => (
+    <div data-testid="admin-bracket-match">
+      {matchLabel && <span>{matchLabel}</span>}
+      {statusBadge && <span>{statusBadge}</span>}
+    </div>
+  ),
+}));
+
+vi.mock('../mrm-shared/AdminScoreboard', () => ({
+  AdminScoreboard: ({ band1Pct, band2Pct }: { band1Pct: number; band2Pct: number }) => (
+    <div data-testid="admin-scoreboard">
+      {band1Pct}% / {band2Pct}%
+    </div>
   ),
 }));
 
@@ -108,7 +129,7 @@ describe('MatchControlsTab', () => {
     });
     render(<MatchControlsTab />);
     await waitFor(() => {
-      expect(screen.getByText(/🔴 LIVE/)).toBeInTheDocument();
+      expect(screen.getAllByText(/🔴 LIVE/).length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -170,7 +191,7 @@ describe('MatchControlsTab', () => {
     });
     render(<MatchControlsTab />);
     await waitFor(() => {
-      expect(screen.getByText(/⏰ Overtime/)).toBeInTheDocument();
+      expect(screen.getAllByText(/⏰ Overtime/).length).toBeGreaterThanOrEqual(1);
       const extendBtn = screen.getByText(/Extend Overtime/);
       expect(extendBtn).not.toBeDisabled();
     });
@@ -241,9 +262,7 @@ describe('MatchControlsTab', () => {
     });
     render(<MatchControlsTab />);
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('specific-match-42'),
-      );
+      expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('specific-match-42'));
     });
   });
 

@@ -1,0 +1,96 @@
+/* AdminBracketMatch — React bracket cell matching <mrm-bracket-match> */
+
+.admin-bracket-match__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.admin-bracket-match {
+  border: 1px solid var(--theme-border-color, #ccc);
+  border-radius: 5px;
+  background: var(--theme-bg, #fff);
+  overflow: hidden;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.admin-bracket-match__link:hover .admin-bracket-match {
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
+  border-color: var(--theme-text-link, #2563eb);
+}
+
+.admin-bracket-match--live {
+  border-color: #e74c3c;
+  background: #fff8f8;
+}
+
+/* Header with match label + status */
+.admin-bracket-match__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 8px;
+  font-size: 0.7rem;
+  border-bottom: 1px solid var(--theme-border-color, #eee);
+  background: var(--theme-elevation-50, #f9fafb);
+}
+
+.admin-bracket-match__label {
+  font-weight: 700;
+  color: var(--theme-text, #555);
+}
+
+.admin-bracket-match__badge {
+  font-weight: 600;
+}
+
+/* Match body — dl/dt structure matching mrm-bracket-match output */
+.admin-bracket-match dl {
+  margin: 0;
+  padding: 0;
+}
+
+.admin-bracket-match dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  margin: 0;
+  border-bottom: 1px solid var(--theme-border-color, #eee);
+}
+
+.admin-bracket-match dt:last-child {
+  border-bottom: none;
+}
+
+.admin-bracket-match .seed {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--theme-text, #888);
+  min-width: 22px;
+}
+
+.admin-bracket-match .band_abbr {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bracket-match .percentage {
+  font-size: 0.75rem;
+  color: var(--theme-text, #888);
+  margin-left: auto;
+}
+
+/* Winner / loser styling */
+.admin-bracket-match .mrm_winner {
+  font-weight: 700;
+  color: #1a7d2e;
+}
+
+.admin-bracket-match .mrm_loser {
+  opacity: 0.5;
+}
