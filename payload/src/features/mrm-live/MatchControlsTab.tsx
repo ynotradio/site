@@ -34,7 +34,7 @@ interface MatchControlsPanelProps {
   onClose: () => Promise<void>;
   onExtend: () => Promise<void>;
   onToggleShowScore: () => Promise<void>;
-  onRematch: () => Promise<void>;
+  onRematch: (startISO: string, durationMin: number) => Promise<void>;
 }
 
 const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
@@ -97,7 +97,7 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
           onToggleShowScore={onToggleShowScore}
           onRematch={onRematch}
         />
-        <AdminLinks match={match} previousMatchId={previousMatchId} />
+        <AdminLinks match={match} />
       </div>
 
       <div className="match-controls-tab__details">

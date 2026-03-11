@@ -335,6 +335,54 @@
   background: var(--theme-elevation-100, #eee);
 }
 
+/* ---- Rematch scheduler form ---- */
+
+.match-controls-tab__rematch-form {
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px;
+  background: var(--theme-elevation-100, #f3f4f6);
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 6px;
+}
+
+.match-controls-tab__rematch-title {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--theme-text, #333);
+}
+
+.match-controls-tab__rematch-fields {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.match-controls-tab__rematch-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__rematch-input {
+  padding: 6px 10px;
+  border: 1px solid var(--theme-border-color, #ccc);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--theme-input-bg, #fff);
+  color: var(--theme-text, #333);
+}
+
+.match-controls-tab__rematch-actions {
+  display: flex;
+  gap: 8px;
+}
+
 /* ---- Details footer ---- */
 
 .match-controls-tab__details {

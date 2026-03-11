@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import type { LiveMatch } from './types';
 
 const OVERTIME_MINUTES = 15;
-const REMATCH_DURATION_MINUTES = 30;
 
 interface MatchActions {
   saving: boolean;
@@ -12,7 +11,7 @@ interface MatchActions {
   handleCloseMatch: () => Promise<void>;
   handleExtendOvertime: () => Promise<void>;
   handleToggleShowScore: () => Promise<void>;
-  handleScheduleRematch: () => Promise<void>;
+  handleScheduleRematch: (startISO: string, durationMin: number) => Promise<void>;
 }
 
 const logEvent = async (matchId: string, eventType: string, snapshot: object) => {
@@ -158,33 +157,36 @@ export const useMatchActions = (
     });
   }, [match, withSaving]);
 
-  const handleScheduleRematch = useCallback(async () => {
-    if (!match) return;
-    const start = new Date();
-    const end = new Date(start.getTime() + REMATCH_DURATION_MINUTES * 60 * 1000);
-    await withSaving('Schedule rematch', async () => {
-      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          band1Votes: 0,
-          band2Votes: 0,
-          winner: null,
-          showScore: false,
-          startTime: start.toISOString(),
-          endTime: end.toISOString(),
-        }),
+  const handleScheduleRematch = useCallback(
+    async (startISO: string, durationMin: number) => {
+      if (!match) return;
+      const start = new Date(startISO);
+      const end = new Date(start.getTime() + durationMin * 60 * 1000);
+      await withSaving('Schedule rematch', async () => {
+        const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            band1Votes: 0,
+            band2Votes: 0,
+            winner: null,
+            showScore: false,
+            startTime: start.toISOString(),
+            endTime: end.toISOString(),
+          }),
+        });
+        if (!res.ok) throw new Error('PATCH failed');
+        await logEvent(match.id, 'rematch_scheduled', {
+          previousWinner: match.winner,
+          previousBand1Votes: match.band1Votes,
+          previousBand2Votes: match.band2Votes,
+          newStartTime: start.toISOString(),
+          newEndTime: end.toISOString(),
+        });
       });
-      if (!res.ok) throw new Error('PATCH failed');
-      await logEvent(match.id, 'rematch_scheduled', {
-        previousWinner: match.winner,
-        previousBand1Votes: match.band1Votes,
-        previousBand2Votes: match.band2Votes,
-        newStartTime: start.toISOString(),
-        newEndTime: end.toISOString(),
-      });
-    });
-  }, [match, withSaving]);
+    },
+    [match, withSaving],
+  );
 
   return {
     saving,

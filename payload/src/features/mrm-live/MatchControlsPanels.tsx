@@ -1,5 +1,6 @@
 import React from 'react';
 import type { LiveMatch, MatchStatus } from './types';
+import { RematchScheduler } from './RematchScheduler';
 import {
   TOURNAMENT_EDIT_BASE,
   MATCH_EDIT_BASE,
@@ -12,8 +13,6 @@ import {
   getBandId,
   isWinner,
   getCenterDisplay,
-  getTournamentId,
-  getNextMatchId,
   getVotesUrl,
   getEventsUrl,
   getGroupUrl,
@@ -176,7 +175,7 @@ export interface ActionButtonsProps {
   onClose: () => Promise<void>;
   onExtend: () => Promise<void>;
   onToggleShowScore: () => Promise<void>;
-  onRematch: () => Promise<void>;
+  onRematch: (startISO: string, durationMin: number) => Promise<void>;
 }
 
 // eslint-disable-next-line max-len
@@ -205,9 +204,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     <button type="button" className={DEFAULT_CLS} onClick={onToggleShowScore} disabled={saving}>
       {showScore ? '🙈 Hide Winner' : '👁️ Show Winner'}
     </button>
-    <button type="button" className={WARN_CLS} onClick={onRematch} disabled={saving}>
-      {saving ? 'Scheduling…' : '🔄 Schedule Rematch'}
-    </button>
+    <RematchScheduler saving={saving} onConfirm={onRematch} />
   </div>
 );
 
@@ -216,31 +213,21 @@ interface AdminLink {
   label: string;
 }
 
-interface AdminLinksProps {
-  match: LiveMatch;
-  previousMatchId: string | null;
-}
-
-const buildAdminLinks = (match: LiveMatch, prevId: string | null): AdminLink[] => {
+const buildAdminLinks = (match: LiveMatch): AdminLink[] => {
   const b1 = getBandId(match.band1);
   const b2 = getBandId(match.band2);
-  const tId = getTournamentId(match);
-  const nId = getNextMatchId(match);
   const links: AdminLink[] = [
     { href: getVotesUrl(String(match.id)), label: '📊 Votes' },
     { href: getEventsUrl(String(match.id)), label: '📋 Events' },
   ];
   if (b1) links.push({ href: getGroupUrl(b1), label: `🎵 ${getBandName(match.band1)}` });
   if (b2) links.push({ href: getGroupUrl(b2), label: `🎵 ${getBandName(match.band2)}` });
-  if (tId) links.push({ href: `${TOURNAMENT_EDIT_BASE}/${tId}/bracket`, label: '🏟️ Tournament' });
-  if (prevId) links.push({ href: `${MATCH_EDIT_BASE}/${prevId}/controls`, label: '⬅️ Previous' });
-  if (nId) links.push({ href: `${MATCH_EDIT_BASE}/${nId}/controls`, label: '➡️ Next Match' });
   return links;
 };
 
-export const AdminLinks: React.FC<AdminLinksProps> = ({ match, previousMatchId }) => (
+export const AdminLinks: React.FC<{ match: LiveMatch }> = ({ match }) => (
   <div className="match-controls-tab__admin-links">
-    {buildAdminLinks(match, previousMatchId).map((link) => (
+    {buildAdminLinks(match).map((link) => (
       <a key={link.href} href={link.href} className={LINK_CLS}>
         {link.label}
       </a>
