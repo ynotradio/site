@@ -85,13 +85,17 @@ TEMPLATE.innerHTML = `
     width: 350px;
   }
 
+  .vote-area {
+    text-align: center;
+  }
+
   .vote-btn {
     display: inline-block;
     margin-top: 6px;
     padding: 6px 20px;
-    border: 1px solid #4a4;
+    border: 1px solid #3a7a3a;
     border-radius: 4px;
-    background: #5cb85c;
+    background: linear-gradient(to bottom, #5cb85c, #449d44);
     color: white;
     font-size: 14px;
     font-weight: bold;
@@ -99,7 +103,7 @@ TEMPLATE.innerHTML = `
   }
 
   .vote-btn:hover:not(:disabled) {
-    background: #449d44;
+    background: linear-gradient(to bottom, #449d44, #398439);
   }
 
   .vote-btn:disabled {
@@ -112,9 +116,9 @@ TEMPLATE.innerHTML = `
     display: inline-block;
     margin-top: 6px;
     padding: 6px 20px;
-    border: 1px solid #4a4;
+    border: 1px solid #222;
     border-radius: 4px;
-    background: #5cb85c;
+    background: linear-gradient(to bottom, #555, #333);
     color: white;
     font-size: 14px;
     font-weight: bold;
@@ -122,7 +126,7 @@ TEMPLATE.innerHTML = `
   }
 
   .login-link:hover {
-    background: #449d44;
+    background: linear-gradient(to bottom, #444, #222);
   }
 
   .message {

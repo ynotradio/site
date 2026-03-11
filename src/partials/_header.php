@@ -61,9 +61,13 @@ if ($page_file != "logout.php") {
       <script src="<?php echo $base_path; ?>js/legacy.js"></script>
       <script src="<?php echo $base_path; ?>js/init.js"></script>
       <?php if ($page_file == "madness.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-bracket-match.js\"></script>";
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-scoreboard.js\"></script>";
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-match-card.js\"></script>";
+    $js_dir = __DIR__ . '/../js/components/';
+    $bm_v = file_exists($js_dir . 'mrm-bracket-match.js') ? filemtime($js_dir . 'mrm-bracket-match.js') : time();
+    $sb_v = file_exists($js_dir . 'mrm-scoreboard.js') ? filemtime($js_dir . 'mrm-scoreboard.js') : time();
+    $mc_v = file_exists($js_dir . 'mrm-match-card.js') ? filemtime($js_dir . 'mrm-match-card.js') : time();
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-bracket-match.js?v=" . $bm_v . "\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-scoreboard.js?v=" . $sb_v . "\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-match-card.js?v=" . $mc_v . "\"></script>";
 }
 
 ?>
