@@ -36,6 +36,16 @@ export const useStepNav = () => {
   };
 };
 
+// Mock useDocumentInfo hook (for custom edit tabs)
+export const useDocumentInfo = () => {
+  return {
+    id: '1',
+    collectionSlug: 'mock-collection',
+    globalSlug: undefined,
+    data: {},
+  };
+};
+
 // Pre-populated document cache for useListRelationships
 let mockRelationshipDocuments: Record<string, Record<string, unknown>> = {};
 
