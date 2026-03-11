@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
-require('../../src/js/components/MrmScoreboard.js');
+require('../../src/js/components/mrm-scoreboard.js');
 
 const createElement = (attrs = {}) => {
   const el = document.createElement('mrm-scoreboard');

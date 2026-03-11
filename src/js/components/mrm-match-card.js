@@ -27,151 +27,113 @@
  *              detail: { matchId: string, band: "1" | "2" }
  */
 
+(function () {
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
 <style>
   :host {
     display: block;
-    font-family: sans-serif;
-    max-width: 760px;
-    margin: 0 auto;
-  }
-
-  .card {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #fff;
-  }
-
-  .header {
-    text-align: center;
-    padding: 10px;
     font-size: 18px;
-    font-weight: bold;
-    background: #f5f5f5;
-    border-bottom: 1px solid #ccc;
-  }
-
-  .header.live {
-    background: #222;
-    color: #ff4444;
-  }
-
-  .timer {
+    margin: auto;
+    padding: 20px 0 0;
     text-align: center;
-    padding: 4px 10px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    background: #f5f5f5;
-    border-bottom: 1px solid #eee;
   }
 
-  .timer.hidden { display: none; }
-
-  .bands {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 0;
-    align-items: center;
-    padding: 20px;
-  }
-
-  .band {
-    text-align: center;
+  table {
+    margin: auto;
+    border-collapse: collapse;
   }
 
   .band-name {
-    font-size: 18px;
     font-weight: bold;
-    margin-bottom: 10px;
+    text-align: center;
+    width: 350px;
   }
 
-  .band-image img {
+  .band-cell {
+    text-align: center;
+  }
+
+  .band-cell img {
     display: block;
-    margin: 0 auto;
+    margin: auto;
     width: 200px;
     height: auto;
-    border-radius: 4px;
   }
 
-  .band-image img[src=""], .band-image img:not([src]) {
+  .band-cell img[src=""], .band-cell img:not([src]) {
     display: none;
   }
 
-  .band-image.loser img {
+  .band-cell.loser img {
     border: 1px solid black;
     opacity: 0.35;
   }
 
-  .vote-pct {
-    margin-top: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .vs {
+  .vs-cell {
     font-family: 'Courier New', monospace;
     font-size: 24px;
     font-weight: bold;
     text-align: center;
-    padding: 0 20px;
+    vertical-align: middle;
+    width: 100px;
+  }
+
+  .vote-pct {
+    font-weight: bold;
+    text-align: center;
+    width: 350px;
   }
 
   .vote-btn {
     display: inline-block;
-    margin-top: 10px;
-    padding: 8px 24px;
-    border: none;
+    margin-top: 6px;
+    padding: 6px 20px;
+    border: 1px solid #4a4;
     border-radius: 4px;
-    background: #4CAF50;
+    background: #5cb85c;
     color: white;
     font-size: 14px;
     font-weight: bold;
     cursor: pointer;
-    transition: background 0.2s;
   }
 
   .vote-btn:hover:not(:disabled) {
-    background: #45a049;
+    background: #449d44;
   }
 
   .vote-btn:disabled {
     background: #aaa;
+    border-color: #999;
     cursor: not-allowed;
   }
 
   .login-link {
     display: inline-block;
-    margin-top: 10px;
-    padding: 8px 24px;
+    margin-top: 6px;
+    padding: 6px 20px;
+    border: 1px solid #4a4;
     border-radius: 4px;
-    background: #4CAF50;
+    background: #5cb85c;
     color: white;
     font-size: 14px;
     font-weight: bold;
     text-decoration: none;
-    transition: background 0.2s;
   }
 
   .login-link:hover {
-    background: #45a049;
+    background: #449d44;
   }
 
   .message {
     text-align: center;
-    padding: 8px;
     font-weight: bold;
-    color: #666;
-    border-top: 1px solid #eee;
+    padding: 6px 0;
   }
 
   .sponsor {
     text-align: center;
-    padding: 8px;
-    border-top: 1px solid #eee;
+    padding: 8px 0;
     color: #592D00;
     font-weight: bold;
   }
@@ -179,41 +141,47 @@ TEMPLATE.innerHTML = `
   .hidden { display: none; }
 </style>
 
-<div class="card">
-  <div class="header" data-slot="header">VS</div>
-  <div class="timer hidden" data-slot="timer"></div>
-  <div class="bands">
-    <div class="band band1">
-      <div class="band-name" data-slot="band1-name"></div>
-      <div class="band-image" data-slot="band1-image-wrap">
-        <img data-slot="band1-image" alt="" />
-      </div>
-      <div class="vote-pct hidden" data-slot="band1-pct"></div>
-      <div class="vote-area" data-slot="band1-vote">
-        <button class="vote-btn" data-band="1" type="button">Vote!</button>
-      </div>
-      <div class="login-area hidden" data-slot="band1-login">
-        <a class="login-link" data-slot="band1-login-link" href="#">Log in to vote</a>
-      </div>
-    </div>
-    <div class="vs">VS</div>
-    <div class="band band2">
-      <div class="band-name" data-slot="band2-name"></div>
-      <div class="band-image" data-slot="band2-image-wrap">
-        <img data-slot="band2-image" alt="" />
-      </div>
-      <div class="vote-pct hidden" data-slot="band2-pct"></div>
-      <div class="vote-area" data-slot="band2-vote">
-        <button class="vote-btn" data-band="2" type="button">Vote!</button>
-      </div>
-      <div class="login-area hidden" data-slot="band2-login">
-        <a class="login-link" data-slot="band2-login-link" href="#">Log in to vote</a>
-      </div>
-    </div>
-  </div>
-  <div class="message hidden" data-slot="message"></div>
-  <div class="sponsor hidden" data-slot="sponsor"></div>
-</div>
+<table>
+  <tr>
+    <td class="band-name" data-slot="band1-name"></td>
+    <td class="vs-cell" rowspan="3" data-slot="vs">VS</td>
+    <td class="band-name" data-slot="band2-name"></td>
+  </tr>
+  <tr>
+    <td class="band-cell" data-slot="band1-image-wrap">
+      <img data-slot="band1-image" alt="" />
+    </td>
+    <td class="band-cell" data-slot="band2-image-wrap">
+      <img data-slot="band2-image" alt="" />
+    </td>
+  </tr>
+  <tr>
+    <td class="vote-pct" data-slot="band1-pct"></td>
+    <td class="vote-pct" data-slot="band2-pct"></td>
+  </tr>
+  <tr data-slot="action-row">
+    <td class="vote-area" data-slot="band1-vote">
+      <button class="vote-btn" data-band="1" type="button">Vote!</button>
+    </td>
+    <td></td>
+    <td class="vote-area" data-slot="band2-vote">
+      <button class="vote-btn" data-band="2" type="button">Vote!</button>
+    </td>
+  </tr>
+  <tr data-slot="login-row" class="hidden">
+    <td class="vote-area" data-slot="band1-login">
+      <a class="login-link" data-slot="band1-login-link" href="#">Log in to vote</a>
+    </td>
+    <td></td>
+    <td class="vote-area" data-slot="band2-login">
+      <a class="login-link" data-slot="band2-login-link" href="#">Log in to vote</a>
+    </td>
+  </tr>
+  <tr data-slot="message-row" class="hidden">
+    <td colspan="3" class="message" data-slot="message"></td>
+  </tr>
+</table>
+<div class="sponsor hidden" data-slot="sponsor"></div>
 `;
 
 class MrmMatchCard extends HTMLElement {
@@ -275,23 +243,14 @@ class MrmMatchCard extends HTMLElement {
     const winner = this.getAttribute('winner');
     const isTied = this.hasAttribute('tied');
 
-    // Header
-    const header = root.querySelector('.header');
-    if (isRunning) {
-      header.classList.add('live');
-      header.textContent = '🔴 LIVE';
+    // VS / Timer cell — shows countdown when running, "VS" otherwise
+    const vsCell = root.querySelector('[data-slot="vs"]');
+    if (isRunning && timerText) {
+      vsCell.textContent = timerText;
+    } else if (isRunning) {
+      vsCell.textContent = '--:--:--';
     } else {
-      header.classList.remove('live');
-      header.textContent = 'VS';
-    }
-
-    // Countdown timer
-    const timerEl = root.querySelector('[data-slot="timer"]');
-    if (timerText) {
-      timerEl.textContent = `Time Remaining: ${timerText}`;
-      timerEl.classList.remove('hidden');
-    } else {
-      timerEl.classList.add('hidden');
+      vsCell.textContent = 'VS';
     }
 
     // Band names
@@ -319,23 +278,19 @@ class MrmMatchCard extends HTMLElement {
     const pct2 = root.querySelector('[data-slot="band2-pct"]');
     pct1.textContent = this.getAttribute('band1-pct') ?? '';
     pct2.textContent = this.getAttribute('band2-pct') ?? '';
-    pct1.classList.toggle('hidden', !showResults);
-    pct2.classList.toggle('hidden', !showResults);
 
     // Vote buttons vs login links
     const needsLogin = isRunning && !hasVoted && loginUrl;
     const showVoteButtons = isRunning && !hasVoted && !votingDisabled && !loginUrl;
 
-    root.querySelectorAll('.vote-area').forEach((area) => {
-      area.classList.toggle('hidden', !showVoteButtons);
-    });
+    const actionRow = root.querySelector('[data-slot="action-row"]');
+    actionRow.classList.toggle('hidden', !showVoteButtons);
     root.querySelectorAll('.vote-btn').forEach((btn) => {
       btn.disabled = votingDisabled;
     });
 
-    root.querySelectorAll('.login-area').forEach((area) => {
-      area.classList.toggle('hidden', !needsLogin);
-    });
+    const loginRow = root.querySelector('[data-slot="login-row"]');
+    loginRow.classList.toggle('hidden', !needsLogin);
     if (loginUrl) {
       root.querySelectorAll('.login-link').forEach((link) => {
         link.href = loginUrl;
@@ -343,6 +298,7 @@ class MrmMatchCard extends HTMLElement {
     }
 
     // Status message
+    const messageRow = root.querySelector('[data-slot="message-row"]');
     const messageEl = root.querySelector('[data-slot="message"]');
     let message = '';
     if (status === 'early') {
@@ -355,7 +311,7 @@ class MrmMatchCard extends HTMLElement {
       message = 'Thanks for voting!';
     }
     messageEl.textContent = message;
-    messageEl.classList.toggle('hidden', !message);
+    messageRow.classList.toggle('hidden', !message);
 
     // Sponsor
     const sponsorEl = root.querySelector('[data-slot="sponsor"]');
@@ -385,3 +341,4 @@ if (!customElements.get('mrm-match-card')) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { MrmMatchCard };
 }
+})();

@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 
 // jsdom supports custom elements – importing the file registers the element.
 // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
-require('../../src/js/components/MrmBracketMatch.js');
+require('../../src/js/components/mrm-bracket-match.js');
 
 const createElement = (attrs = {}) => {
   const el = document.createElement('mrm-bracket-match');

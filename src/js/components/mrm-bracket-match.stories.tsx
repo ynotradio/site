@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 /* Side-effect import registers the <mrm-bracket-match> custom element. */
 // eslint-disable-next-line import/extensions
-import './MrmBracketMatch.js';
+import './mrm-bracket-match.js';
 
 /* Import the PHP site's madness.css so light-DOM class names are styled. */
 import '../../style/madness.css';
@@ -26,9 +26,15 @@ interface BracketMatchProps {
 }
 
 const BracketMatchWrapper: React.FC<BracketMatchProps> = ({
-  band1Seed, band1Name, band1Pct,
-  band2Seed, band2Name, band2Pct,
-  winner, matchId, cssClass,
+  band1Seed,
+  band1Name,
+  band1Pct,
+  band2Seed,
+  band2Name,
+  band2Pct,
+  winner,
+  matchId,
+  cssClass,
 }) => {
   const ref = useRef<HTMLElement>(null);
 
@@ -148,16 +154,28 @@ export const BracketColumn: Story = {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
       {[
         {
-          s1: '1', n1: 'Radiohead', s2: '16', n2: 'Weezer',
+          s1: '1',
+          n1: 'Radiohead',
+          s2: '16',
+          n2: 'Weezer',
         },
         {
-          s1: '8', n1: 'Foo Fghtrs', s2: '9', n2: 'Green Day',
+          s1: '8',
+          n1: 'Foo Fghtrs',
+          s2: '9',
+          n2: 'Green Day',
         },
         {
-          s1: '4', n1: 'Muse', s2: '13', n2: 'RHCP',
+          s1: '4',
+          n1: 'Muse',
+          s2: '13',
+          n2: 'RHCP',
         },
         {
-          s1: '5', n1: 'Pearl Jam', s2: '12', n2: 'Smsh Mouth',
+          s1: '5',
+          n1: 'Pearl Jam',
+          s2: '12',
+          n2: 'Smsh Mouth',
         },
       ].map((m, i) => (
         <BracketMatchWrapper

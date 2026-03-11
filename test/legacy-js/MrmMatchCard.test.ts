@@ -4,12 +4,22 @@
  * Validates attribute-driven rendering, vote button visibility,
  * status messages, sponsor display, timer, login-url, winner/loser
  * dimming, and the mrm-vote custom event.
+ *
+ * The component uses a table-based Shadow DOM layout:
+ *   - Band names in [data-slot="band1-name"] / [data-slot="band2-name"]
+ *   - Images in [data-slot="band1-image"] / [data-slot="band2-image"]
+ *   - VS/timer in [data-slot="vs"] cell
+ *   - Percentages in [data-slot="band1-pct"] / [data-slot="band2-pct"]
+ *   - Vote buttons in [data-slot="action-row"] (hidden class toggles row)
+ *   - Login links in [data-slot="login-row"] (hidden class toggles row)
+ *   - Status message in [data-slot="message-row"] / [data-slot="message"]
+ *   - Sponsor in [data-slot="sponsor"]
  */
 
 import { describe, it, expect, beforeAll, beforeEach, vi } from 'vitest';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
-require('../../src/js/components/MrmMatchCard.js');
+require('../../src/js/components/mrm-match-card.js');
 
 const createElement = (attrs = {}) => {
   const el = document.createElement('mrm-match-card');
@@ -61,16 +71,22 @@ describe('MrmMatchCard', () => {
     expect(img2.alt).toBe('Muse');
   });
 
-  it('shows LIVE header when status is running', () => {
-    const el = createElement({ status: 'running' });
-    const header = el.shadowRoot.querySelector('.header');
-    expect(header.textContent).toBe('🔴 LIVE');
-    expect(header.classList.contains('live')).toBe(true);
+  it('shows timer text in VS cell when status=running and timer-text is set', () => {
+    const el = createElement({ status: 'running', 'timer-text': '05:30' });
+    const vsCell = el.shadowRoot.querySelector('[data-slot="vs"]');
+    expect(vsCell.textContent).toBe('05:30');
   });
 
-  it('shows VS header when status is not running', () => {
+  it('shows placeholder in VS cell when status=running and no timer-text', () => {
+    const el = createElement({ status: 'running' });
+    const vsCell = el.shadowRoot.querySelector('[data-slot="vs"]');
+    expect(vsCell.textContent).toBe('--:--:--');
+  });
+
+  it('shows VS in VS cell when status is not running', () => {
     const el = createElement({ status: 'early' });
-    expect(el.shadowRoot.querySelector('.header').textContent).toBe('VS');
+    const vsCell = el.shadowRoot.querySelector('[data-slot="vs"]');
+    expect(vsCell.textContent).toBe('VS');
   });
 
   it('shows vote percentages when show-results is set', () => {
@@ -81,42 +97,36 @@ describe('MrmMatchCard', () => {
     });
 
     const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-pct"]').classList.contains('hidden')).toBe(false);
     expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('55%');
+    expect(root.querySelector('[data-slot="band2-pct"]').textContent).toBe('45%');
   });
 
-  it('hides vote percentages when show-results is absent', () => {
+  it('renders percentage attributes as text content even without show-results', () => {
     const el = createElement({
       'band1-pct': '55%',
       'band2-pct': '45%',
     });
 
     const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-pct"]').classList.contains('hidden')).toBe(true);
+    expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('55%');
   });
 
   it('shows vote buttons when status=running and has-voted is absent', () => {
     const el = createElement({ status: 'running' });
-    const voteAreas = el.shadowRoot.querySelectorAll('.vote-area');
-    voteAreas.forEach((area) => {
-      expect(area.classList.contains('hidden')).toBe(false);
-    });
+    const actionRow = el.shadowRoot.querySelector('[data-slot="action-row"]');
+    expect(actionRow.classList.contains('hidden')).toBe(false);
   });
 
   it('hides vote buttons when has-voted is set', () => {
     const el = createElement({ status: 'running', 'has-voted': true });
-    const voteAreas = el.shadowRoot.querySelectorAll('.vote-area');
-    voteAreas.forEach((area) => {
-      expect(area.classList.contains('hidden')).toBe(true);
-    });
+    const actionRow = el.shadowRoot.querySelector('[data-slot="action-row"]');
+    expect(actionRow.classList.contains('hidden')).toBe(true);
   });
 
   it('hides vote buttons when status is not running', () => {
     const el = createElement({ status: 'over' });
-    const voteAreas = el.shadowRoot.querySelectorAll('.vote-area');
-    voteAreas.forEach((area) => {
-      expect(area.classList.contains('hidden')).toBe(true);
-    });
+    const actionRow = el.shadowRoot.querySelector('[data-slot="action-row"]');
+    expect(actionRow.classList.contains('hidden')).toBe(true);
   });
 
   it('dispatches mrm-vote event when vote button is clicked', () => {
@@ -144,26 +154,30 @@ describe('MrmMatchCard', () => {
 
   it('shows "Voting has not started yet" when status=early', () => {
     const el = createElement({ status: 'early' });
-    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
-      .toBe('Voting has not started yet');
+    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent).toBe(
+      'Voting has not started yet',
+    );
   });
 
   it('shows "Voting is now over" when status=over', () => {
     const el = createElement({ status: 'over' });
-    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
-      .toBe('Voting is now over');
+    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent).toBe(
+      'Voting is now over',
+    );
   });
 
   it('shows tied-match message when status=over and tied is set', () => {
     const el = createElement({ status: 'over', tied: true });
-    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
-      .toBe('Match is over and tied - vote for the winner');
+    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent).toBe(
+      'Match is over and tied - vote for the winner',
+    );
   });
 
   it('shows "Thanks for voting!" when status=running and has-voted', () => {
     const el = createElement({ status: 'running', 'has-voted': true });
-    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent)
-      .toBe('Thanks for voting!');
+    expect(el.shadowRoot.querySelector('[data-slot="message"]').textContent).toBe(
+      'Thanks for voting!',
+    );
   });
 
   it('displays sponsor information when sponsor attribute is set', () => {
@@ -184,37 +198,23 @@ describe('MrmMatchCard', () => {
     expect(sponsorEl.classList.contains('hidden')).toBe(true);
   });
 
-  it('shows countdown timer text when timer-text is set', () => {
-    const el = createElement({ status: 'running', 'timer-text': '05:30' });
-    const timer = el.shadowRoot.querySelector('[data-slot="timer"]');
-    expect(timer.classList.contains('hidden')).toBe(false);
-    expect(timer.textContent).toBe('Time Remaining: 05:30');
-  });
-
-  it('hides timer when timer-text is absent', () => {
-    const el = createElement({ status: 'running' });
-    const timer = el.shadowRoot.querySelector('[data-slot="timer"]');
-    expect(timer.classList.contains('hidden')).toBe(true);
-  });
-
   it('shows login links when login-url is set instead of vote buttons', () => {
     const el = createElement({
       status: 'running',
       'login-url': '/auth/login',
     });
     const root = el.shadowRoot;
-    const loginAreas = root.querySelectorAll('.login-area');
-    loginAreas.forEach((area) => {
-      expect(area.classList.contains('hidden')).toBe(false);
-    });
+
+    // Login row visible
+    const loginRow = root.querySelector('[data-slot="login-row"]');
+    expect(loginRow.classList.contains('hidden')).toBe(false);
+
     const loginLink = root.querySelector('[data-slot="band1-login-link"]');
     expect(loginLink.getAttribute('href')).toBe('/auth/login');
 
-    // Vote buttons should be hidden
-    const voteAreas = root.querySelectorAll('.vote-area');
-    voteAreas.forEach((area) => {
-      expect(area.classList.contains('hidden')).toBe(true);
-    });
+    // Vote buttons row should be hidden
+    const actionRow = root.querySelector('[data-slot="action-row"]');
+    expect(actionRow.classList.contains('hidden')).toBe(true);
   });
 
   it('dims losing band image when winner="1"', () => {
@@ -224,8 +224,12 @@ describe('MrmMatchCard', () => {
       'band2-image': 'b.jpg',
     });
     const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(false);
-    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(true);
+    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(
+      false,
+    );
+    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(
+      true,
+    );
   });
 
   it('dims losing band image when winner="2"', () => {
@@ -235,7 +239,11 @@ describe('MrmMatchCard', () => {
       'band2-image': 'b.jpg',
     });
     const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(true);
-    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(false);
+    expect(root.querySelector('[data-slot="band1-image-wrap"]').classList.contains('loser')).toBe(
+      true,
+    );
+    expect(root.querySelector('[data-slot="band2-image-wrap"]').classList.contains('loser')).toBe(
+      false,
+    );
   });
 });

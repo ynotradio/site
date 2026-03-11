@@ -11,6 +11,7 @@
  * Uses Shadow DOM so it is fully encapsulated and reusable.
  */
 
+(function () {
 const TEMPLATE = document.createElement('template');
 TEMPLATE.innerHTML = `
 <style>
@@ -124,3 +125,4 @@ if (!customElements.get('mrm-scoreboard')) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { MrmScoreboard };
 }
+})();

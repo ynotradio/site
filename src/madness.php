@@ -81,7 +81,15 @@ if ($match_id && $band_id) {
 }
 
 // All header-modifying operations complete — now output HTML
+$GLOBALS['auth0'] = $auth0;
+$userInfo = $auth0->getUser();
+$voter_email_for_body = $userInfo['email'] ?? null;
 require "partials/_header.php";
+
+// Set voter email on body for the vote bridge JS
+if ($voter_email_for_body) {
+    echo '<script>document.body.setAttribute("data-voter-email", ' . json_encode($voter_email_for_body) . ');</script>';
+}
 
 /*----- CONTENT ------*/
 ?>
@@ -108,9 +116,9 @@ require "partials/_header.php";
 
 // Render match using controller
 $madnessController->renderMatchDisplay($current_match['id'], $madness_start_date);
+$madnessController->renderScoreboard($current_match);
 render_first_row($madness_start_date);
 $madnessController->renderBracketDisplay($madness_start_date);
-$madnessController->renderSponsorInfo($current_match['id']);
 ?>
 
   </div>

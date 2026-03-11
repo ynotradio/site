@@ -11,6 +11,6 @@
 
 // Side-effect imports register each element via customElements.define().
 // Safe to import multiple times – each file guards against double-registration.
-require('./MrmBracketMatch.js');
-require('./MrmScoreboard.js');
-require('./MrmMatchCard.js');
+require('./mrm-bracket-match.js');
+require('./mrm-scoreboard.js');
+require('./mrm-match-card.js');

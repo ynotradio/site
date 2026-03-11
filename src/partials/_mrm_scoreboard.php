@@ -26,5 +26,5 @@ $band2_width = $controller->mrmModel->calculateVotePercentage($match['band2_vote
     band2-pct="<?php echo $band2_width; ?>"
     band1-label="<?php echo $band1_percentage; ?>"
     band2-label="<?php echo $band2_percentage; ?>"
-    style="max-width: 880px; margin: auto;"
+    style="max-width: 880px;"
 ></mrm-scoreboard>
