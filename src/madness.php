@@ -1,4 +1,5 @@
 <?php
+ob_start();
 
 $page_file = "madness.php";
 $page_title = "Modern Rock Madness";
@@ -32,7 +33,6 @@ $auth0 = new Auth0\SDK\Auth0([
 // Only require necessary dependencies
 require "models/ModernRockMadnessFactory.php";
 require "controllers/MadnessController.php";
-require "partials/_header.php";
 
 // Initialize the Modern Rock Madness controller with database connection
 $db = open_db();
@@ -72,6 +72,17 @@ $match_id = $_POST['match_id'] ?? null;
 $band_id = $_POST['band_id'] ?? null;
 $voter_email = $_POST['voter_email'] ?? null;
 
+// Process vote before any HTML output so Auth0 can set cookies/headers
+if ($match_id && $band_id) {
+    $vote_processed = $madnessController->processVote($match_id, $band_id, $voter_email);
+    if (!$vote_processed) {
+        error_log("Vote processing failed for match: $match_id, band: $band_id");
+    }
+}
+
+// All header-modifying operations complete — now output HTML
+require "partials/_header.php";
+
 /*----- CONTENT ------*/
 ?>
 
@@ -94,15 +105,6 @@ $voter_email = $_POST['voter_email'] ?? null;
       </div>
     </div>
 <?php
-
-// Process vote through controller if submitted
-if ($match_id && $band_id) {
-    $vote_processed = $madnessController->processVote($match_id, $band_id, $voter_email);
-    if (!$vote_processed) {
-        // Log error but don't display to user
-        error_log("Vote processing failed for match: $match_id, band: $band_id");
-    }
-}
 
 // Render match using controller
 $madnessController->renderMatchDisplay($current_match['id'], $madness_start_date);
