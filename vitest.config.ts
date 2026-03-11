@@ -14,9 +14,9 @@ export default defineConfig({
         'src/js/countdown.js',
         'src/js/yr_end_poll.js',
         'src/js/admin-madness.js',
-        'src/js/components/MrmBracketMatch.js',
-        'src/js/components/MrmScoreboard.js',
-        'src/js/components/MrmMatchCard.js',
+        'src/js/components/mrm-bracket-match.js',
+        'src/js/components/mrm-scoreboard.js',
+        'src/js/components/mrm-match-card.js',
       ],
       exclude: [
         '**/*.test.ts',

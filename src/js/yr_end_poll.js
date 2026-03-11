@@ -42,5 +42,5 @@ function otherWatcher(){
 // Export for testing (Node.js environment)
 // In browser, this will be undefined and won't affect existing functionality
 if (typeof module !== 'undefined' && module.exports) {
-	module.exports = { errorMessage };
+	module.exports = { init, enableSubmit, errorMessage, otherWatcher };
 }
