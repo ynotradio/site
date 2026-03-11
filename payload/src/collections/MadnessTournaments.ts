@@ -35,7 +35,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: ({ req }) => hasRole(req.user, ['admin']),
+    create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },

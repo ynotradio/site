@@ -57,22 +57,40 @@ interface RoundMeta {
 
 const ROUNDS: RoundMeta[] = [
   {
-    round: '1', startMatch: 1, count: 32, matchesPerRegion: 8,
+    round: '1',
+    startMatch: 1,
+    count: 32,
+    matchesPerRegion: 8,
   },
   {
-    round: '2', startMatch: 33, count: 16, matchesPerRegion: 4,
+    round: '2',
+    startMatch: 33,
+    count: 16,
+    matchesPerRegion: 4,
   },
   {
-    round: '3', startMatch: 49, count: 8, matchesPerRegion: 2,
+    round: '3',
+    startMatch: 49,
+    count: 8,
+    matchesPerRegion: 2,
   },
   {
-    round: '4', startMatch: 57, count: 4, matchesPerRegion: 1,
+    round: '4',
+    startMatch: 57,
+    count: 4,
+    matchesPerRegion: 1,
   },
   {
-    round: '5', startMatch: 61, count: 2, matchesPerRegion: 0, // region 5
+    round: '5',
+    startMatch: 61,
+    count: 2,
+    matchesPerRegion: 0, // region 5
   },
   {
-    round: '6', startMatch: 63, count: 1, matchesPerRegion: 0, // region 5
+    round: '6',
+    startMatch: 63,
+    count: 1,
+    matchesPerRegion: 0, // region 5
   },
 ];
 
@@ -152,15 +170,27 @@ export const buildScheduleSlots = (): MatchSlot[] => {
 
   // ── Week 2: Final 4 (Thu afternoon, 2 × 60 min) ───────────────────
   slots.push({
-    matchNumber: 61, dayOffset: 9, hour: 14, minute: 0, durationMinutes: 60,
+    matchNumber: 61,
+    dayOffset: 9,
+    hour: 14,
+    minute: 0,
+    durationMinutes: 60,
   });
   slots.push({
-    matchNumber: 62, dayOffset: 9, hour: 15, minute: 0, durationMinutes: 60,
+    matchNumber: 62,
+    dayOffset: 9,
+    hour: 15,
+    minute: 0,
+    durationMinutes: 60,
   });
 
   // ── Week 2: Championship (Fri, 1 × 120 min) ───────────────────────
   slots.push({
-    matchNumber: 63, dayOffset: 10, hour: 13, minute: 0, durationMinutes: 120,
+    matchNumber: 63,
+    dayOffset: 10,
+    hour: 13,
+    minute: 0,
+    durationMinutes: 120,
   });
 
   return slots;
@@ -266,14 +296,13 @@ export const scaffoldTournamentMatches: CollectionAfterChangeHook = async ({
 
   // eslint-disable-next-line no-restricted-syntax
   for (const def of reversed) {
-    const nextMatchId = def.nextMatchNumber
-      ? matchIdByNumber.get(def.nextMatchNumber)
-      : undefined;
+    const nextMatchId = def.nextMatchNumber ? matchIdByNumber.get(def.nextMatchNumber) : undefined;
 
     try {
       // eslint-disable-next-line no-await-in-loop
       const created = await req.payload.create({
         collection: 'modern-rock-madness-matches',
+        overrideAccess: true,
         data: {
           tournament: tournamentId,
           matchNumber: def.matchNumber,
