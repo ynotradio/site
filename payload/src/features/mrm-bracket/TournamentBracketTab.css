@@ -1,0 +1,42 @@
+/* Bracket tab — tournament edit view */
+
+.bracket-tab {
+  max-width: 100%;
+}
+
+/* Navigation links */
+.bracket-tab__nav {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.bracket-tab__nav-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--theme-text-link, #2563eb);
+  text-decoration: none;
+  padding: 6px 12px;
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.bracket-tab__nav-link:hover {
+  background: var(--theme-elevation-50, #f3f4f6);
+}
+
+/* Alert */
+.bracket-tab__alert {
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.bracket-tab__alert--error {
+  background: #fde8e8;
+  color: #c0392b;
+  border: 1px solid #e74c3c;
+}

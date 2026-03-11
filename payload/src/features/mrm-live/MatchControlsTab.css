@@ -1,0 +1,412 @@
+/* Match Controls Tab — admin match card view */
+
+.match-controls-tab {
+  max-width: 760px;
+}
+
+/* ---- Alert banners ---- */
+
+.match-controls-tab__alert {
+  padding: 10px 14px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.match-controls-tab__alert--error {
+  background: #fde8e8;
+  color: #c0392b;
+  border: 1px solid #e74c3c;
+}
+
+.match-controls-tab__alert--success {
+  background: #e8f8e8;
+  color: #1a7d2e;
+  border: 1px solid #27ae60;
+}
+
+/* ---- Navigation links ---- */
+
+.match-controls-tab__nav {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 0;
+  flex-wrap: wrap;
+}
+
+.match-controls-tab__nav-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--theme-text-link, #2563eb);
+  text-decoration: none;
+  padding: 8px 16px;
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.match-controls-tab__nav-link:hover {
+  background: var(--theme-elevation-50, #f3f4f6);
+}
+
+/* ---- Match card container ---- */
+
+.match-controls-tab__card {
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  background: var(--theme-bg, #fff);
+}
+
+/* Card header: round + status badge */
+
+.match-controls-tab__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--theme-elevation-50, #f9fafb);
+  border-bottom: 1px solid var(--theme-border-color, #ddd);
+}
+
+.match-controls-tab__round {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.match-controls-tab__status--live {
+  background: #fde2e2;
+  color: #c0392b;
+}
+
+.match-controls-tab__status--upcoming {
+  background: #e8f0fe;
+  color: #1967d2;
+}
+
+.match-controls-tab__status--overtime {
+  background: #fef3e2;
+  color: #b45309;
+}
+
+.match-controls-tab__status--closed {
+  background: #e8f8e8;
+  color: #1a7d2e;
+}
+
+/* Card body: band1 | center | band2 */
+
+.match-controls-tab__card-body {
+  display: flex;
+  align-items: flex-start;
+  padding: 24px 16px;
+  gap: 8px;
+}
+
+@media (max-width: 600px) {
+  .match-controls-tab__card-body {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Band column */
+
+.match-controls-tab__band-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.match-controls-tab__band-col--loser {
+  opacity: 0.4;
+}
+
+.match-controls-tab__band-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  min-height: 2.4em;
+}
+
+.match-controls-tab__seed {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--theme-border-color, #e5e7eb);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__crown {
+  font-size: 0.95rem;
+}
+
+/* Band image / placeholder */
+
+.match-controls-tab__band-img {
+  width: 160px;
+  height: 160px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid var(--theme-border-color, #ddd);
+}
+
+.match-controls-tab__band-img-placeholder {
+  width: 160px;
+  height: 160px;
+  border-radius: 6px;
+  background: var(--theme-elevation-50, #e5e7eb);
+  border: 1px solid var(--theme-border-color, #ddd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+}
+
+/* Vote info */
+
+.match-controls-tab__band-votes {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.match-controls-tab__vote-count {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.match-controls-tab__vote-pct {
+  font-size: 0.9rem;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__vote-btn {
+  padding: 6px 14px;
+  background: var(--theme-text, #374151);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.match-controls-tab__vote-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.match-controls-tab__vote-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+/* Center column (timer / VS / Final) */
+
+.match-controls-tab__center-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  padding-top: 80px;
+}
+
+.match-controls-tab__timer {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--theme-text, #333);
+}
+
+.match-controls-tab__timer--vs {
+  font-family: inherit;
+  font-size: 1.6rem;
+  color: var(--theme-text, #888);
+  letter-spacing: 2px;
+}
+
+.match-controls-tab__timer--final {
+  color: #1a7d2e;
+  font-style: italic;
+}
+
+/* Scoreboard bar */
+
+.match-controls-tab__scoreboard {
+  padding: 0 16px 16px;
+}
+
+/* ---- Admin section ---- */
+
+.match-controls-tab__admin-section {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--theme-elevation-50, #f9fafb);
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 6px;
+}
+
+.match-controls-tab__section-title {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.match-controls-tab__action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.match-controls-tab__action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.match-controls-tab__action-btn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.match-controls-tab__action-btn--danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.match-controls-tab__action-btn--warning {
+  background: #f39c12;
+  color: #fff;
+}
+
+/* Admin links to related collections */
+
+.match-controls-tab__admin-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.match-controls-tab__admin-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--theme-text-link, #2563eb);
+  text-decoration: none;
+  padding: 4px 10px;
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.match-controls-tab__admin-link:hover {
+  background: var(--theme-elevation-100, #eee);
+}
+
+/* ---- Rematch scheduler form ---- */
+
+.match-controls-tab__rematch-form {
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px;
+  background: var(--theme-elevation-100, #f3f4f6);
+  border: 1px solid var(--theme-border-color, #ddd);
+  border-radius: 6px;
+}
+
+.match-controls-tab__rematch-title {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--theme-text, #333);
+}
+
+.match-controls-tab__rematch-fields {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.match-controls-tab__rematch-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--theme-text, #555);
+}
+
+.match-controls-tab__rematch-input {
+  padding: 6px 10px;
+  border: 1px solid var(--theme-border-color, #ccc);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--theme-input-bg, #fff);
+  color: var(--theme-text, #333);
+}
+
+.match-controls-tab__rematch-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- Details footer ---- */
+
+.match-controls-tab__details {
+  font-size: 0.82rem;
+  color: var(--theme-text, #888);
+}
+
+.match-controls-tab__times {
+  display: flex;
+  gap: 16px;
+  font-size: 0.78rem;
+  color: var(--theme-text, #888);
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.match-controls-tab__sponsor {
+  padding: 10px 14px;
+  background: var(--theme-elevation-50, #f9fafb);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.match-controls-tab__sponsor p {
+  margin: 4px 0 0;
+  color: var(--theme-text, #555);
+}

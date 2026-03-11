@@ -1,0 +1,45 @@
+/* AdminScoreboard — React vote bar matching <mrm-scoreboard> */
+
+.admin-scoreboard {
+  display: flex;
+  width: 100%;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 28px;
+  font-size: 14px;
+  font-family: sans-serif;
+  box-sizing: border-box;
+}
+
+.admin-scoreboard__score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-weight: bold;
+  min-width: 40px;
+  white-space: nowrap;
+}
+
+.admin-scoreboard__score--band1 {
+  background-color: #ffa500;
+  color: #000;
+}
+
+.admin-scoreboard__score--band2 {
+  background-color: #1047a9;
+  color: #fff;
+}
+
+.admin-scoreboard__bar {
+  transition: flex-basis 0.4s ease;
+}
+
+.admin-scoreboard__bar--band1 {
+  background-image: linear-gradient(to right, #ffa500, #000);
+}
+
+.admin-scoreboard__bar--band2 {
+  background-image: linear-gradient(to left, #1047a9, #000);
+}

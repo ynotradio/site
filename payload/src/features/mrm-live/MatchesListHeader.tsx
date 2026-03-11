@@ -4,14 +4,14 @@ import React from 'react';
 import './MatchesListHeader.css';
 
 /**
- * Link displayed above the Madness Matches collection list.
- * Takes the admin directly to the Live Match Dashboard.
+ * Header displayed above the Madness Matches collection list.
+ * Points users to the Match Controls tab.
  */
 export const MatchesListHeader: React.FC = () => (
   <div className="matches-list-header">
-    <a href="/admin/mrm-live" className="matches-list-header__link">
-      Live Match Dashboard
-    </a>
+    <span className="matches-list-header__tip">
+      💡 Click a match, then use the <strong>Match Controls</strong> tab for live management.
+    </span>
   </div>
 );
 

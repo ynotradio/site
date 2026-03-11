@@ -1,0 +1,320 @@
+/**
+ * BracketTree — tournament bracket visualization
+ *
+ * Layout closely mirrors the legacy madness.css bracket using absolute
+ * positioning within a fixed-height container. Regions are placed in
+ * quadrants with championship centred.
+ *
+ * Region layout:
+ *   ┌─── Region 1 ───┐   ┌─── Region 3 ───┐
+ *   │  R1→R2→R3→R4    │   │    R4←R3←R2←R1  │
+ *   └─────────────────┘   └─────────────────┘
+ *          Championship (centre)
+ *   ┌─── Region 2 ───┐   ┌─── Region 4 ───┐
+ *   │  R1→R2→R3→R4    │   │    R4←R3←R2←R1  │
+ *   └─────────────────┘   └─────────────────┘
+ */
+
+/* ------------------------------------------------------------------ */
+/* Scroll wrapper                                                     */
+/* ------------------------------------------------------------------ */
+
+.bracket-tree__scroll {
+  overflow-x: auto;
+  padding: 8px 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Main bracket container                                             */
+/* ------------------------------------------------------------------ */
+
+.bracket-tree {
+  position: relative;
+  height: 950px;
+  min-width: 930px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Bracket cell — compact match tile (120×40)                         */
+/* ------------------------------------------------------------------ */
+
+.bracket-tree__cell {
+  display: block;
+  width: 120px;
+  height: 40px;
+  border: 1px solid #333;
+  font-size: 10px;
+  margin: 0 0 12px 0;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.bracket-tree__cell:hover {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
+  z-index: 1;
+  position: relative;
+}
+
+.bracket-tree__cell dl {
+  margin: 0;
+  padding: 0;
+}
+
+.bracket-tree__cell dt {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  margin: 0;
+  padding: 0 4px;
+  line-height: 20px;
+}
+
+.bracket-tree__seed {
+  display: inline-block;
+  font-size: 8px;
+  width: 16px;
+  text-align: right;
+  padding-right: 4px;
+  flex-shrink: 0;
+}
+
+.bracket-tree__abbr {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-tree__pct {
+  margin-left: auto;
+  padding-left: 2px;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+
+/* Winner / loser */
+.bracket-tree__winner {
+  font-weight: bold;
+}
+
+.bracket-tree__loser {
+  color: grey;
+}
+
+/* Live match */
+.bracket-tree__cell--live {
+  background: black !important;
+  color: white;
+}
+
+/* Left regions: gradient left→right, rounded right side */
+.bracket-tree__region--left .bracket-tree__cell {
+  background: linear-gradient(to right, #fafbfb, #eaebeb);
+  border-width: 1px 1px 1px 0;
+  border-radius: 0 5px 5px 0;
+}
+
+/* Right regions: gradient right→left, rounded left side */
+.bracket-tree__region--right .bracket-tree__cell {
+  background: linear-gradient(to left, #fafbfb, #eaebeb);
+  border-width: 1px 0 1px 1px;
+  border-radius: 5px 0 0 5px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Region positioning (absolute within bracket container)             */
+/* ------------------------------------------------------------------ */
+
+.bracket-tree__region {
+  height: 404px;
+  position: absolute;
+  width: 50%;
+}
+
+/* Region 1: top-left */
+.bracket-tree__region--1 {
+  top: 0;
+  left: 0;
+}
+
+/* Region 2: bottom-left */
+.bracket-tree__region--2 {
+  top: 545px;
+  left: 0;
+}
+
+/* Region 3: top-right */
+.bracket-tree__region--3 {
+  top: 0;
+  left: 810px;
+}
+
+/* Region 4: bottom-right */
+.bracket-tree__region--4 {
+  top: 545px;
+  left: 810px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Round positioning within regions                                   */
+/* ------------------------------------------------------------------ */
+
+/* -- Round 2 -- */
+.bracket-tree__region--1 .bracket-tree__round--2 {
+  position: absolute;
+  left: 120px;
+  top: -40px;
+}
+
+.bracket-tree__region--2 .bracket-tree__round--2 {
+  position: relative;
+  left: 120px;
+  top: -444px;
+}
+
+.bracket-tree__region--3 .bracket-tree__round--2 {
+  position: absolute;
+  left: -120px;
+  top: -40px;
+}
+
+.bracket-tree__region--4 .bracket-tree__round--2 {
+  position: relative;
+  left: -120px;
+  top: -444px;
+}
+
+/* Round 2 match spacing */
+.bracket-tree__region .bracket-tree__round--2 .bracket-tree__cell {
+  margin: 66px 0 0 0;
+}
+
+/* -- Round 3 (Sweet 16) with connector lines -- */
+.bracket-tree__region .bracket-tree__round--3 .bracket-tree__cell {
+  margin: 0 0 175px 0;
+  border: 1px solid #333;
+}
+
+/* Left connector lines */
+.bracket-tree__region--left .bracket-tree__round--3 {
+  border-right: 1px solid #ccc;
+  height: 255px;
+  left: 230px;
+  position: absolute;
+  top: 78px;
+  width: 95px;
+}
+
+/* Right connector lines */
+.bracket-tree__region--right .bracket-tree__round--3 {
+  border-right: 1px solid #ccc;
+  height: 232px;
+  left: -230px;
+  margin: 43px 0 0 0;
+  position: absolute;
+  top: 35px;
+  width: 25px;
+}
+
+/* -- Round 4 (Elusive 8) -- */
+.bracket-tree__region--left .bracket-tree__round--4 {
+  position: absolute;
+  left: 300px;
+  top: 185px;
+}
+
+.bracket-tree__region--right .bracket-tree__round--4 {
+  position: absolute;
+  left: -300px;
+  top: 185px;
+}
+
+.bracket-tree__region .bracket-tree__round--4 .bracket-tree__cell {
+  border: 1px solid #333;
+}
+
+/* ------------------------------------------------------------------ */
+/* Championship (centred between top and bottom halves)               */
+/* ------------------------------------------------------------------ */
+
+.bracket-tree__championship {
+  font-size: 10px;
+  position: absolute;
+  left: 252px;
+  top: 424px;
+  width: 425px;
+  background: linear-gradient(to right, #666, black 50%, #666);
+  border: 1px solid black;
+  border-radius: 5px;
+  height: 100px;
+  overflow: hidden;
+}
+
+/* Semi-final left */
+.bracket-tree__semi--left {
+  border-width: 1px 0 1px 1px !important;
+  border-radius: 5px 0 0 5px !important;
+  background: transparent !important;
+  color: white;
+  float: left;
+  left: 20px;
+  margin: 30px 0 0 0 !important;
+  position: relative;
+}
+
+/* Semi-final right */
+.bracket-tree__semi--right {
+  border-width: 1px 1px 1px 0 !important;
+  border-radius: 0 5px 5px 0 !important;
+  background: transparent !important;
+  color: white;
+  float: right;
+  margin: 30px 0 0 0 !important;
+  position: relative;
+  right: 20px;
+}
+
+/* Championship final */
+.bracket-tree__final {
+  background: linear-gradient(to right, #eaebeb, #fafbfb 50%, #eaebeb) !important;
+  border: 1px solid #333 !important;
+  border-radius: 5px !important;
+  color: black;
+  float: left;
+  height: 58px;
+  font-size: 12px;
+  left: 20px;
+  padding-top: 10px;
+  position: relative;
+  top: 20px;
+  width: 143px;
+}
+
+.bracket-tree__final dt {
+  height: 24px;
+  line-height: 24px;
+  padding: 0 8px;
+}
+
+.bracket-tree__final .bracket-tree__abbr {
+  font-size: 11px;
+}
+
+/* Championship cells: keep winner/loser colours visible against dark bg */
+.bracket-tree__championship .bracket-tree__winner {
+  font-weight: bold;
+  color: #90ee90;
+}
+
+.bracket-tree__championship .bracket-tree__loser {
+  color: #aaa;
+}
+
+/* Semi-finals: override loser colour for dark bg */
+.bracket-tree__semi--left .bracket-tree__loser,
+.bracket-tree__semi--right .bracket-tree__loser {
+  color: #888;
+}

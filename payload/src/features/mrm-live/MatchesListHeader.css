@@ -1,5 +1,14 @@
 .matches-list-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.matches-list-header__tip {
+  font-size: 0.82rem;
+  color: var(--theme-text, #555);
 }
 
 .matches-list-header__link {
