@@ -4,10 +4,21 @@
 
 # Detect if we're in CI/CD
 detect_ci() {
-  if [ -n "$CI" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$GITLAB_CI" ] || [ -n "$CIRCLECI" ]; then
+  if [ -n "$CI" ] || [ -n "$BUILDKITE" ] || [ -n "$GITHUB_ACTIONS" ] || [ -n "$GITLAB_CI" ] || [ -n "$CIRCLECI" ]; then
     return 0  # true
   fi
   return 1  # false
+}
+
+# Return which CI provider is active (empty string if local)
+detect_ci_provider() {
+  if [ -n "$BUILDKITE" ]; then echo "buildkite"
+  elif [ -n "$GITHUB_ACTIONS" ]; then echo "github-actions"
+  elif [ -n "$GITLAB_CI" ]; then echo "gitlab"
+  elif [ -n "$CIRCLECI" ]; then echo "circleci"
+  elif [ -n "$CI" ]; then echo "unknown-ci"
+  else echo ""
+  fi
 }
 
 # Detect if we have network access to key services
@@ -65,8 +76,10 @@ get_timeout() {
 print_environment() {
   echo "🔍 Environment Detection:"
   
-  if detect_ci; then
-    echo "   📍 Environment: CI/CD"
+  local provider
+  provider=$(detect_ci_provider)
+  if [ -n "$provider" ]; then
+    echo "   📍 Environment: CI/CD ($provider)"
   else
     echo "   📍 Environment: Local Development"
   fi
@@ -88,6 +101,7 @@ print_environment() {
 
 # Export functions for use in other scripts
 export -f detect_ci
+export -f detect_ci_provider
 export -f detect_network
 export -f detect_port_available
 export -f detect_docker
