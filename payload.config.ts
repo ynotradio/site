@@ -110,14 +110,6 @@ export default buildConfig({
             title: 'Live Match Dashboard',
           },
         },
-        MRMBracket: {
-          Component: '/payload/src/features/mrm-bracket#BracketTool',
-          path: '/mrm-bracket',
-          exact: true,
-          meta: {
-            title: 'Bracket Overview',
-          },
-        },
       },
     },
     importMap: {

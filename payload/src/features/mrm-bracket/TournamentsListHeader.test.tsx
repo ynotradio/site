@@ -4,10 +4,15 @@ import { render, screen } from '@testing-library/react';
 import { TournamentsListHeader } from './TournamentsListHeader';
 
 describe('TournamentsListHeader', () => {
-  it('renders the Bracket Overview link', () => {
+  it('renders tip text about the Bracket tab', () => {
     render(<TournamentsListHeader />);
-    const link = screen.getByRole('link', { name: 'Bracket Overview' });
+    expect(screen.getByText(/Bracket/)).toBeInTheDocument();
+  });
+
+  it('renders the Live Dashboard link', () => {
+    render(<TournamentsListHeader />);
+    const link = screen.getByRole('link', { name: /Live Dashboard/ });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/admin/mrm-bracket');
+    expect(link).toHaveAttribute('href', '/admin/mrm-live');
   });
 });

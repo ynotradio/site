@@ -141,11 +141,11 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(screen.getByText(/Bracket Overview/)).toHaveAttribute('href', '/admin/mrm-bracket');
       expect(screen.getByText(/All Matches/)).toHaveAttribute(
         'href',
         '/admin/collections/modern-rock-madness-matches',
       );
+      expect(screen.getByText(/Live Dashboard/)).toHaveAttribute('href', '/admin/mrm-live');
     });
   });
 });

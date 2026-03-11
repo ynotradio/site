@@ -8,8 +8,8 @@ import { BracketTree } from './BracketTree';
 import type { BracketMatch, MatchesApiResponse } from './types';
 import './TournamentBracketTab.css';
 
-const BRACKET_OVERVIEW_URL = '/admin/mrm-bracket';
 const MATCHES_LIST_URL = '/admin/collections/modern-rock-madness-matches';
+const LIVE_DASHBOARD_URL = '/admin/mrm-live';
 
 export const TournamentBracketTab: React.FC = () => {
   const { data } = useDocumentInfo();
@@ -66,11 +66,11 @@ export const TournamentBracketTab: React.FC = () => {
     <Gutter>
       <div className="bracket-tab">
         <nav className="bracket-tab__nav">
-          <a href={BRACKET_OVERVIEW_URL} className="bracket-tab__nav-link">
-            📊 Bracket Overview
-          </a>
           <a href={MATCHES_LIST_URL} className="bracket-tab__nav-link">
             📋 All Matches
+          </a>
+          <a href={LIVE_DASHBOARD_URL} className="bracket-tab__nav-link">
+            📡 Live Dashboard
           </a>
         </nav>
 

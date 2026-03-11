@@ -4,20 +4,22 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Gutter, useDocumentInfo } from '@payloadcms/ui';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
-import { AdminBracketMatch } from '../mrm-shared/AdminBracketMatch';
 import { AdminScoreboard } from '../mrm-shared/AdminScoreboard';
 import { useMatchActions } from './useMatchActions';
 import type { LiveMatch } from './types';
 import {
-  ROUND_LABELS,
-  STATUS_LABELS,
   getMatchStatus,
   getVotePercent,
-  getWinnerSlot,
   getTournamentId,
   getNextMatchId,
 } from './matchControlsUtils';
-import { BandPanel, NavLinks, ActionButtons } from './MatchControlsPanels';
+import {
+  NavLinks,
+  MatchCardHeader,
+  MatchCardBody,
+  ActionButtons,
+  AdminLinks,
+} from './MatchControlsPanels';
 import './MatchControlsTab.css';
 
 const POLL_INTERVAL_MS = 5000;
@@ -31,8 +33,6 @@ interface MatchControlsPanelProps {
   onClose: () => Promise<void>;
   onExtend: () => Promise<void>;
 }
-
-const getBandObj = (band: LiveMatch['band1']) => (band && typeof band !== 'string' ? band : null);
 
 const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
   match,
@@ -49,11 +49,11 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
   const total = match.band1Votes + match.band2Votes;
   const p1 = getVotePercent(match.band1Votes, total);
   const p2 = getVotePercent(match.band2Votes, total);
-  const b1 = getBandObj(match.band1);
-  const b2 = getBandObj(match.band2);
 
   return (
     <div className="match-controls-tab">
+      <NavLinks tournamentId={getTournamentId(match)} nextMatchId={getNextMatchId(match)} />
+
       {error && (
         <div className="match-controls-tab__alert match-controls-tab__alert--error">{error}</div>
       )}
@@ -63,72 +63,53 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
         </div>
       )}
 
-      <NavLinks tournamentId={getTournamentId(match)} nextMatchId={getNextMatchId(match)} />
-
-      <div className="match-controls-tab__preview">
-        <AdminBracketMatch
-          band1={b1 ? { seed: b1.seed, name: b1.name, pct: `${p1}%` } : null}
-          band2={b2 ? { seed: b2.seed, name: b2.name, pct: `${p2}%` } : null}
-          winner={getWinnerSlot(match)}
-          live={status === 'live'}
-          matchLabel={`#${match.matchNumber}`}
-          statusBadge={STATUS_LABELS[status]}
+      <div className="match-controls-tab__card">
+        <MatchCardHeader match={match} status={status} />
+        <MatchCardBody
+          match={match}
+          canVote={canVote}
+          saving={saving}
+          onManualVote={onManualVote}
         />
-      </div>
-
-      <div className="match-controls-tab__scoreboard">
-        <AdminScoreboard
-          band1Pct={p1}
-          band2Pct={p2}
-          band1Label={`${match.band1Votes.toLocaleString()} (${p1}%)`}
-          band2Label={`${match.band2Votes.toLocaleString()} (${p2}%)`}
-        />
-      </div>
-
-      <div className="match-controls-tab__meta">
-        <span className={`match-controls-tab__status match-controls-tab__status--${status}`}>
-          {STATUS_LABELS[status]}
-        </span>
-        <span className="match-controls-tab__round">
-          {ROUND_LABELS[match.round] ?? `Round ${match.round}`}
-          {' · Match #'}
-          {match.matchNumber}
-        </span>
-      </div>
-
-      <div className="match-controls-tab__bands">
-        {(['band1', 'band2'] as const).map((bandKey, i) => (
-          <BandPanel
-            key={bandKey}
-            match={match}
-            bandKey={bandKey}
-            bandIndex={i}
-            total={total}
-            canVote={canVote}
-            saving={saving}
-            onManualVote={onManualVote}
+        <div className="match-controls-tab__scoreboard">
+          <AdminScoreboard
+            band1Pct={p1}
+            band2Pct={p2}
+            band1Label={`${match.band1Votes.toLocaleString()} (${p1}%)`}
+            band2Label={`${match.band2Votes.toLocaleString()} (${p2}%)`}
           />
-        ))}
+        </div>
       </div>
 
-      <ActionButtons
-        saving={saving}
-        canClose={status === 'overtime' && !isTied}
-        canExtend={status === 'overtime' && isTied}
-        onClose={onClose}
-        onExtend={onExtend}
-      />
+      <div className="match-controls-tab__admin-section">
+        <h4 className="match-controls-tab__section-title">Admin Actions</h4>
+        <ActionButtons
+          saving={saving}
+          canClose={status === 'overtime' && !isTied}
+          canExtend={status === 'overtime' && isTied}
+          onClose={onClose}
+          onExtend={onExtend}
+        />
+        <AdminLinks match={match} />
+      </div>
 
-      {match.sponsor && (
-        <div className="match-controls-tab__sponsor">
-          <strong>Sponsor:</strong> {match.sponsor}
-          {match.sponsorMessage && <p>{match.sponsorMessage}</p>}
+      <div className="match-controls-tab__details">
+        <div className="match-controls-tab__times">
+          <span>
+            {'Start: '}
+            {new Date(match.startTime).toLocaleString()}
+          </span>
+          <span>
+            {'End: '}
+            {new Date(match.endTime).toLocaleString()}
+          </span>
         </div>
-      )}
-
-      <div className="match-controls-tab__times">
-        <span>Start: {new Date(match.startTime).toLocaleString()}</span>
-        <span>End: {new Date(match.endTime).toLocaleString()}</span>
+        {match.sponsor && (
+          <div className="match-controls-tab__sponsor">
+            <strong>Sponsor:</strong> {match.sponsor}
+            {match.sponsorMessage && <p>{match.sponsorMessage}</p>}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -148,15 +129,16 @@ export const MatchControlsTab: React.FC = () => {
       return;
     }
     try {
-      const res = await fetch(`/api/modern-rock-madness-matches/${matchId}?depth=2`);
-      if (!res.ok) throw new Error('Failed to fetch match');
+      const base = '/api/modern-rock-madness-matches/';
+      const res = await fetch(`${base}${matchId}?depth=2`);
+      if (!res.ok) throw new Error('Failed to fetch');
       const doc: LiveMatch = await res.json();
       setMatch(doc);
       setFetchError(null);
     } catch (err) {
       setFetchError('Could not load match data.');
       // eslint-disable-next-line no-console
-      console.error('MatchControlsTab fetch error:', err);
+      console.error('MatchControlsTab fetch:', err);
     } finally {
       setLoading(false);
     }
@@ -191,7 +173,7 @@ export const MatchControlsTab: React.FC = () => {
   if (!matchId) {
     return (
       <Gutter>
-        <EmptyState message="Save this match first to use controls." />
+        <EmptyState message={'Save this match first to use controls.'} />
       </Gutter>
     );
   }

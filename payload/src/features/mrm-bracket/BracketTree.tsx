@@ -13,7 +13,7 @@ import {
 import type { RegionRounds } from './bracketUtils';
 import './BracketTree.css';
 
-const MATCH_EDIT_BASE = '/admin/collections/modern-rock-madness-matches';
+const MATCH_CONTROLS_BASE = '/admin/collections/modern-rock-madness-matches';
 
 /* ------------------------------------------------------------------ */
 /* BracketCell — compact match cell for the bracket tree              */
@@ -52,7 +52,7 @@ const BracketCell: React.FC<BracketCellProps> = ({ match, className = '' }) => {
 
   return (
     <a
-      href={`${MATCH_EDIT_BASE}/${match.id}`}
+      href={`${MATCH_CONTROLS_BASE}/${match.id}/controls`}
       className={cls}
       title={`Match #${match.matchNumber}`}
     >
