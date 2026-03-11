@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useConfig } from '@payloadcms/ui';
 import Link from 'next/link';
 import './CustomDashboard.css';
@@ -59,6 +59,29 @@ const SECONDARY_COLLECTIONS = [
   { slug: 'media', label: 'Media Files', group: 'Content' },
 ] as const;
 
+export interface MrmTournament {
+  status: string;
+  startDate: string;
+  updatedAt: string;
+}
+
+/**
+ * Returns true when the Modern Rock Madness tile should be shown:
+ * - any tournament is currently active (status === 'active')
+ * - any tournament is upcoming (startDate is in the future)
+ * - any tournament completed within the last 30 days
+ */
+export const isMrmTileActive = (tournaments: MrmTournament[]): boolean => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  return tournaments.some((tournament) => {
+    if (tournament.status === 'active') return true;
+    if (new Date(tournament.startDate) > now) return true;
+    return tournament.status === 'complete' && new Date(tournament.updatedAt) > thirtyDaysAgo;
+  });
+};
+
 /**
  * Custom dashboard component that highlights top-level user pages
  * and organizes collections into primary and secondary groups.
@@ -67,6 +90,20 @@ export const CustomDashboard: React.FC = () => {
   const { config } = useConfig();
   const baseURL = config?.routes?.admin || '/admin';
   const [secondaryOpen, setSecondaryOpen] = useState(false);
+  const [mrmActive, setMrmActive] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/modern-rock-madness-tournaments?limit=10&sort=-startDate')
+      .then((res) => res.json())
+      .then((data: { docs: MrmTournament[] }) => {
+        setMrmActive(isMrmTileActive(data.docs ?? []));
+      })
+      .catch((err) => {
+        // On fetch error, keep the tile hidden
+        // eslint-disable-next-line no-console
+        console.error('Failed to load tournament data for dashboard:', err);
+      });
+  }, []);
 
   return (
     <div className="dashboard-container">
@@ -98,6 +135,36 @@ export const CustomDashboard: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Special Events - only shown when at least one tile is active */}
+      {mrmActive && (
+        <section className="section">
+          <h2 className="section-title">Special Events</h2>
+          <div className="primary-grid">
+            <div className="primary-card">
+              <div className="primary-card-icon">🏆</div>
+              <h3 className="primary-card-label">Modern Rock Madness</h3>
+              <p className="primary-card-description">
+                Annual tournament - manage brackets, matches, and results
+              </p>
+              <div className="primary-card-actions">
+                <Link
+                  href={`${baseURL}/collections/modern-rock-madness-tournaments`}
+                  className="primary-card-action"
+                >
+                  View All
+                </Link>
+                <Link
+                  href={`${baseURL}/collections/modern-rock-madness-matches`}
+                  className="primary-card-action"
+                >
+                  Matches
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Secondary Collections - Collapsible accordion */}
       <section>

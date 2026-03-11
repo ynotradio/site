@@ -1,11 +1,36 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { CustomDashboard } from './CustomDashboard';
 
+const ACTIVE_TOURNAMENT_STARTED_DAYS_AGO = 3;
+
+const activeTournamentResponse = {
+  docs: [
+    {
+      id: 1,
+      status: 'active',
+      startDate: new Date(
+        Date.now() - ACTIVE_TOURNAMENT_STARTED_DAYS_AGO * 24 * 60 * 60 * 1000,
+      ).toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+  ],
+};
+
+const noActiveTournamentResponse = { docs: [] };
+
 const meta: Meta<typeof CustomDashboard> = {
   title: 'Components/Dashboard/CustomDashboard',
   component: CustomDashboard,
   parameters: {
     layout: 'fullscreen',
+    mockData: [
+      {
+        url: '/api/modern-rock-madness-tournaments',
+        method: 'GET',
+        status: 200,
+        response: noActiveTournamentResponse,
+      },
+    ],
   },
   tags: ['autodocs'],
 };
@@ -16,8 +41,32 @@ type Story = StoryObj<typeof CustomDashboard>;
 /**
  * Default dashboard view with primary cards (View All / Add New links)
  * and a collapsed Supporting Content accordion.
+ * No Special Events section (no active tournament).
  */
 export const Default: Story = {};
+
+/**
+ * Dashboard with the Special Events section visible.
+ * Shown when there is an active, upcoming, or recently completed MRM tournament.
+ */
+export const WithSpecialEvents: Story = {
+  parameters: {
+    mockData: [
+      {
+        url: '/api/modern-rock-madness-tournaments',
+        method: 'GET',
+        status: 200,
+        response: activeTournamentResponse,
+      },
+    ],
+    docs: {
+      description: {
+        story:
+          'When a Modern Rock Madness tournament is active, upcoming, or completed within the last 30 days, a Special Events section appears above Supporting Content with a Modern Rock Madness tile.',
+      },
+    },
+  },
+};
 
 /**
  * Dashboard emphasizes the two-tier organization:

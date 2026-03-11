@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { CustomDashboard } from './CustomDashboard';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { CustomDashboard, isMrmTileActive, type MrmTournament } from './CustomDashboard';
 
 // Mock the Payload UI hook
 vi.mock('@payloadcms/ui', () => ({
@@ -20,6 +20,73 @@ vi.mock('next/link', () => ({
 
 const { useConfig } = await import('@payloadcms/ui');
 
+function makePayloadResponse(docs: MrmTournament[]): Promise<Response> {
+  return Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve({ docs }),
+  } as Response);
+}
+
+describe('isMrmTileActive', () => {
+  const NOW = new Date('2025-03-15T12:00:00.000Z');
+  const FUTURE = new Date('2025-04-01T00:00:00.000Z').toISOString();
+  const PAST = new Date('2025-01-01T00:00:00.000Z').toISOString();
+  const RECENT = new Date(NOW.getTime() - 10 * 24 * 60 * 60 * 1000).toISOString(); // 10 days ago
+  const OLD = new Date(NOW.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days ago
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('returns false for an empty array', () => {
+    expect(isMrmTileActive([])).toBe(false);
+  });
+
+  it('returns true when a tournament is active', () => {
+    expect(
+      isMrmTileActive([{ status: 'active', startDate: PAST, updatedAt: OLD }]),
+    ).toBe(true);
+  });
+
+  it('returns true when a tournament is upcoming (startDate in the future)', () => {
+    expect(
+      isMrmTileActive([{ status: 'draft', startDate: FUTURE, updatedAt: OLD }]),
+    ).toBe(true);
+  });
+
+  it('returns true when a completed tournament was updated within 30 days', () => {
+    expect(
+      isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: RECENT }]),
+    ).toBe(true);
+  });
+
+  it('returns false when a completed tournament was updated more than 30 days ago', () => {
+    expect(
+      isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: OLD }]),
+    ).toBe(false);
+  });
+
+  it('returns false for a draft tournament with a past startDate', () => {
+    expect(
+      isMrmTileActive([{ status: 'draft', startDate: PAST, updatedAt: OLD }]),
+    ).toBe(false);
+  });
+
+  it('returns true when any tournament in the list meets the criteria', () => {
+    expect(
+      isMrmTileActive([
+        { status: 'complete', startDate: PAST, updatedAt: OLD },
+        { status: 'active', startDate: PAST, updatedAt: OLD },
+      ]),
+    ).toBe(true);
+  });
+});
+
 describe('CustomDashboard', () => {
   beforeEach(() => {
     vi.mocked(useConfig).mockReturnValue({
@@ -29,6 +96,11 @@ describe('CustomDashboard', () => {
         },
       },
     } as any);
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(makePayloadResponse([])));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe('header', () => {
@@ -300,6 +372,191 @@ describe('CustomDashboard', () => {
     it('applies dashboard container class', () => {
       const { container } = render(<CustomDashboard />);
       expect(container.querySelector('.dashboard-container')).toBeInTheDocument();
+    });
+  });
+
+  describe('Special Events section', () => {
+    it('does not render the Special Events section when no active tournaments', () => {
+      render(<CustomDashboard />);
+      expect(screen.queryByText('Special Events')).not.toBeInTheDocument();
+    });
+
+    it('does not render the Modern Rock Madness tile when no active tournaments', () => {
+      render(<CustomDashboard />);
+      expect(screen.queryByText('Modern Rock Madness')).not.toBeInTheDocument();
+    });
+
+    it('renders the Special Events section when a tournament is active', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'active',
+              startDate: '2025-03-10T00:00:00.000Z',
+              updatedAt: '2025-03-11T00:00:00.000Z',
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Special Events')).toBeInTheDocument();
+      });
+    });
+
+    it('renders the Modern Rock Madness tile when a tournament is active', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'active',
+              startDate: '2025-03-10T00:00:00.000Z',
+              updatedAt: '2025-03-11T00:00:00.000Z',
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Modern Rock Madness')).toBeInTheDocument();
+        expect(screen.getByText('🏆')).toBeInTheDocument();
+        expect(
+          screen.getByText('Annual tournament - manage brackets, matches, and results'),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it('renders correct links for the Modern Rock Madness tile', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'active',
+              startDate: '2025-03-10T00:00:00.000Z',
+              updatedAt: '2025-03-11T00:00:00.000Z',
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        const viewAllLinks = screen.getAllByText('View All');
+        const mrmViewAll = viewAllLinks.find((link) => {
+          const href = link.closest('a')?.getAttribute('href');
+          return href?.includes('modern-rock-madness-tournaments');
+        });
+        expect(mrmViewAll?.closest('a')).toHaveAttribute(
+          'href',
+          '/admin/collections/modern-rock-madness-tournaments',
+        );
+
+        expect(screen.getByText('Matches').closest('a')).toHaveAttribute(
+          'href',
+          '/admin/collections/modern-rock-madness-matches',
+        );
+      });
+    });
+
+    it('shows Special Events for an upcoming tournament', async () => {
+      const future = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'draft',
+              startDate: future,
+              updatedAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Special Events')).toBeInTheDocument();
+      });
+    });
+
+    it('shows Special Events for a tournament completed within 30 days', async () => {
+      const recent = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'complete',
+              startDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+              updatedAt: recent,
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Special Events')).toBeInTheDocument();
+      });
+    });
+
+    it('hides Special Events for a tournament completed more than 30 days ago', async () => {
+      const old = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          makePayloadResponse([
+            {
+              status: 'complete',
+              startDate: old,
+              updatedAt: old,
+            },
+          ]),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Special Events')).not.toBeInTheDocument();
+      });
+    });
+
+    it('hides Special Events when fetch fails', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockRejectedValue(new Error('Network error')),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Special Events')).not.toBeInTheDocument();
+      });
     });
   });
 });
