@@ -96,7 +96,7 @@ Export MySQL data and import to PostgreSQL:
 For each collection:
 1. Define Payload collection schema in TypeScript
 2. Configure fields, relationships, access control
-3. Run migrations: `yarn payload migrate`
+3. Run migrations: `yarn payload:migrate`
 4. Seed with sample data
 5. Test CRUD operations in Admin UI
 6. Verify PHP can query via PostgreSQL
@@ -161,7 +161,7 @@ Each collection must meet:
 yarn payload:dev
 
 # Run migrations
-yarn payload migrate
+yarn payload:migrate
 
 # Seed sample data
 yarn seed:payload
@@ -236,7 +236,7 @@ plugins: [
 ### Migration Fails
 - Check PostgreSQL connection
 - Verify all dependencies installed
-- Review migration logs: `yarn payload migrate --debug`
+- Review migration logs: `yarn payload:migrate --debug`
 
 ### Admin UI Not Accessible
 - Ensure `yarn payload:dev` is running
