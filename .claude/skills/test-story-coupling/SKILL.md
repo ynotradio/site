@@ -337,12 +337,12 @@ export const WithValue: Story = {
 
 ### Pre-commit Hook
 
-A custom script `bin/check-test-story-files.ts` validates file presence:
+A custom script `bin/check-test-story-files.mts` validates file presence:
 
 ```typescript
 /**
  * Pre-commit hook to check for missing test/story files
- * Run with: tsx bin/check-test-story-files.ts
+ * Run with: tsx bin/check-test-story-files.mts
  */
 
 // Pseudo-code for validation logic:
@@ -360,7 +360,7 @@ GitHub Actions should validate completeness:
 ```yaml
 # .github/workflows/test.yml
 - name: Check test-story coupling
-  run: tsx bin/check-test-story-files.ts --all
+  run: tsx bin/check-test-story-files.mts --all
 ```
 
 ## Coverage Requirements

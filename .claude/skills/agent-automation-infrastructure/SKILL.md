@@ -62,7 +62,7 @@ After adding domains to firewall allowlist:
 - ✅ No yarn install timeouts
 - ✅ Database comes pre-seeded with test data
 
-**Status:** ✅ Workflow ready in `.github/workflows/build-agent-images.yml`
+**Status:** ✅ Workflow ready in `.buildkite/build-images.yml`
 
 **Usage:**
 ```bash
