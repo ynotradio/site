@@ -126,10 +126,15 @@ function _init() {
   AdminMadness.startScoreboardPolling();
 }
 
-if (typeof document !== 'undefined' && document.readyState !== 'loading') {
-  _init();
-} else if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', _init);
+if (
+  typeof document !== 'undefined' &&
+  !(typeof module !== 'undefined' && module.exports)
+) {
+  if (document.readyState !== 'loading') {
+    _init();
+  } else {
+    document.addEventListener('DOMContentLoaded', _init);
+  }
 }
 
 // Export for testing

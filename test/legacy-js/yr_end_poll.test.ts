@@ -23,7 +23,11 @@ function createJQueryMock(): any {
     const first = els[0] as HTMLElement | undefined;
 
     return {
-      html: () => (first ? first.innerHTML : ''),
+      html(value?: string) {
+        if (value === undefined) return first ? first.innerHTML : '';
+        els.forEach((el) => { Object.assign(el, { innerHTML: value }); });
+        return this;
+      },
       change(fn: (this: HTMLElement) => void) {
         els.forEach((el) => el.addEventListener('change', fn.bind(el) as EventListener));
         return this;

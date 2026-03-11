@@ -112,8 +112,11 @@ function _initMadness() {
   Madness.updateScoreboard();
 }
 
-// Run init when DOM is ready
-if (typeof document !== 'undefined') {
+// Run init when DOM is ready (skip in test/Node environment)
+if (
+  typeof document !== 'undefined' &&
+  !(typeof module !== 'undefined' && module.exports)
+) {
   if (document.readyState !== 'loading') {
     _initMadness();
   } else {

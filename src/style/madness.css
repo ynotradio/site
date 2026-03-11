@@ -73,11 +73,11 @@ mrm-bracket-match {
   padding: 0;
 }
 
-.mrm-timeline ul {
+.mrm-timeline {
   list-style-type: none;
 }
 
-.mrm-timeline li {
+.mrm-timeline > li {
   display: inline;
   float: left;
   text-align: center;
@@ -155,9 +155,6 @@ mrm-bracket-match {
 .mrm-bracket__region {
   height: 404px;
   position: absolute;
-}
-
-.mrm-bracket__region--1 {
   width: 50%;
 }
 

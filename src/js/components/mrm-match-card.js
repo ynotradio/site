@@ -289,8 +289,12 @@ class MrmMatchCard extends HTMLElement {
 
     const actionRow = root.querySelector('[data-slot="action-row"]');
     actionRow.classList.toggle('hidden', !showVoteButtons);
+    const band1Name = this.getAttribute('band1-name') || '';
+    const band2Name = this.getAttribute('band2-name') || '';
     root.querySelectorAll('.vote-btn').forEach((btn) => {
       btn.disabled = votingDisabled;
+      const bandNum = btn.getAttribute('data-band');
+      btn.setAttribute('aria-label', `Vote for ${bandNum === '1' ? band1Name : band2Name}`);
     });
 
     const loginRow = root.querySelector('[data-slot="login-row"]');
