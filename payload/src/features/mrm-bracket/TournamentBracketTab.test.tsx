@@ -18,38 +18,15 @@ vi.mock('../shared/EmptyState', () => ({
   EmptyState: ({ message }: { message: string }) => <div data-testid="empty-state">{message}</div>,
 }));
 
-vi.mock('../mrm-shared/AdminBracketMatch', () => ({
-  AdminBracketMatch: ({
-    band1,
-    band2,
-    matchLabel,
-    statusBadge,
-    href,
-    winner,
-    live,
-  }: {
-    band1?: { name: string; seed?: number; pct?: string } | null;
-    band2?: { name: string; seed?: number; pct?: string } | null;
-    matchLabel?: string;
-    statusBadge?: string;
-    href?: string;
-    winner?: string | null;
-    live?: boolean;
-  }) => (
-    <a
-      href={href}
-      data-testid="admin-bracket-match"
-      data-winner={winner ?? ''}
-      data-live={live ? 'true' : 'false'}
-    >
-      <span>{matchLabel}</span>
-      <span>{band1?.name ?? '(TBD)'}</span>
-      <span>vs</span>
-      <span>{band2?.name ?? '(TBD)'}</span>
-      <span>{statusBadge}</span>
-      {band1?.pct && <span>{band1.pct}</span>}
-      {band2?.pct && <span>{band2.pct}</span>}
-    </a>
+vi.mock('./BracketTree', () => ({
+  BracketTree: ({ matches }: { matches: { id: string; matchNumber: number }[] }) => (
+    <div data-testid="bracket-tree">
+      {matches.map((m) => (
+        <div key={m.id} data-testid="bracket-match" data-match={m.matchNumber}>
+          Match #{m.matchNumber}
+        </div>
+      ))}
+    </div>
   ),
 }));
 
@@ -59,6 +36,7 @@ const makeMatch = (id: string, matchNumber: number, round: string, overrides: ob
   id,
   matchNumber,
   round,
+  region: 1,
   band1Votes: 0,
   band2Votes: 0,
   startTime: new Date(Date.now() + 60_000).toISOString(),
@@ -98,7 +76,7 @@ describe('TournamentBracketTab', () => {
     });
   });
 
-  it('renders matches grouped by round', async () => {
+  it('renders BracketTree with all matches', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 't1', name: 'MRM 2025' },
     } as ReturnType<typeof useDocumentInfo>);
@@ -109,60 +87,22 @@ describe('TournamentBracketTab', () => {
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(screen.getByText('Round 1 (64→32)')).toBeInTheDocument();
-      expect(screen.getByText('Round 2 (32→16)')).toBeInTheDocument();
+      expect(screen.getByTestId('bracket-tree')).toBeInTheDocument();
+      expect(screen.getAllByTestId('bracket-match')).toHaveLength(3);
     });
   });
 
-  it('renders AdminBracketMatch components with band names', async () => {
+  it('passes matches to BracketTree', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 't1', name: 'MRM 2025' },
     } as ReturnType<typeof useDocumentInfo>);
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ docs: [makeMatch('m1', 1, '1')], totalDocs: 1 }),
+      json: async () => ({ docs: [makeMatch('m1', 7, '1')], totalDocs: 1 }),
     });
     render(<TournamentBracketTab />);
     await waitFor(() => {
-      expect(screen.getByText('Radiohead')).toBeInTheDocument();
-      expect(screen.getByText('Nirvana')).toBeInTheDocument();
-    });
-  });
-
-  it('renders match links to edit individual matches', async () => {
-    vi.mocked(useDocumentInfo).mockReturnValue({
-      data: { id: 't1', name: 'MRM 2025' },
-    } as ReturnType<typeof useDocumentInfo>);
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ docs: [makeMatch('m1', 1, '1')], totalDocs: 1 }),
-    });
-    render(<TournamentBracketTab />);
-    await waitFor(() => {
-      const matchEl = screen.getByTestId('admin-bracket-match');
-      expect(matchEl).toHaveAttribute('href', '/admin/collections/modern-rock-madness-matches/m1');
-    });
-  });
-
-  it('shows winner on completed matches', async () => {
-    vi.mocked(useDocumentInfo).mockReturnValue({
-      data: { id: 't1', name: 'MRM 2025' },
-    } as ReturnType<typeof useDocumentInfo>);
-    const closedMatch = makeMatch('m1', 1, '1', {
-      band1Votes: 2000,
-      band2Votes: 900,
-      startTime: new Date(Date.now() - 120_000).toISOString(),
-      endTime: new Date(Date.now() - 60_000).toISOString(),
-      winner: { id: 'b1', name: 'Radiohead', seed: 1, placement: 1 },
-    });
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ docs: [closedMatch], totalDocs: 1 }),
-    });
-    render(<TournamentBracketTab />);
-    await waitFor(() => {
-      const matchEl = screen.getByTestId('admin-bracket-match');
-      expect(matchEl).toHaveAttribute('data-winner', '1');
+      expect(screen.getByText('Match #7')).toBeInTheDocument();
     });
   });
 
