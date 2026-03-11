@@ -78,7 +78,8 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 #### MRM Admin Interfaces (March 2026)
 
 - [x] Live Match Dashboard (`/admin/mrm-live`) — auto-polling vote display, Manual Vote/Close/Extend actions, bracket progression on close, audit logging
-- [x] Bracket Overview (`/admin/mrm-bracket`) — full bracket grouped by round, click-to-edit cards
+- [x] Match Controls tab — per-match edit tab with vote monitoring, admin actions (manual vote, close, extend, toggle scores, schedule rematch)
+- [x] Tournament Bracket tab — per-tournament edit tab showing full bracket tree with click-through to match controls
 
 ---
 
@@ -131,7 +132,7 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 ### March 2026
 
-- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression (winner advances to the next-round slot on close). Added Bracket Overview (`/admin/mrm-bracket`) showing all rounds in one scrollable view.
+- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression. Added per-document custom edit tabs: Tournament "Bracket" tab showing the full bracket tree, and Match "Controls" tab with vote monitoring and admin actions (manual vote, close, extend, toggle scores, schedule rematch).
 - **MRM Collections**: Created all 5 Modern Rock Madness Payload collections (Tournaments, Bands, Matches, Votes, MatchEvents). Audit trail records every admin action with event type and snapshot.
 
 ### December 2025 - January 2026

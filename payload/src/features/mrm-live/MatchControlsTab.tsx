@@ -137,8 +137,8 @@ export const MatchControlsTab: React.FC = () => {
       return;
     }
     try {
-      const base = '/api/modern-rock-madness-matches/';
-      const res = await fetch(`${base}${matchId}?depth=2`);
+      const base = '/api/modern-rock-madness-matches';
+      const res = await fetch(`${base}/${matchId}?depth=2`);
       if (!res.ok) throw new Error('Failed to fetch');
       const doc: LiveMatch = await res.json();
       setMatch(doc);

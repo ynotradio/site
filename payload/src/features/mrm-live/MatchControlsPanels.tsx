@@ -202,7 +202,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
       {saving ? 'Extending…' : 'Extend Overtime (+15 min)'}
     </button>
     <button type="button" className={DEFAULT_CLS} onClick={onToggleShowScore} disabled={saving}>
-      {showScore ? '🙈 Hide Winner' : '👁️ Show Winner'}
+      {showScore ? '🙈 Hide Scores' : '👁️ Show Scores'}
     </button>
     <RematchScheduler saving={saving} onConfirm={onRematch} />
   </div>

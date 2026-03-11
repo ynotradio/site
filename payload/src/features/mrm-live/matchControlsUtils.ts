@@ -3,7 +3,6 @@ import type { LiveMatch, MatchStatus } from './types';
 const COL = '/admin/collections';
 export const TOURNAMENT_EDIT_BASE = `${COL}/modern-rock-madness-tournaments`;
 export const MATCH_EDIT_BASE = `${COL}/modern-rock-madness-matches`;
-export const LIVE_DASHBOARD_URL = '/admin/mrm-live';
 const VOTES_BASE = `${COL}/modern-rock-madness-votes`;
 const EVENTS_BASE = `${COL}/modern-rock-madness-match-events`;
 const GROUPS_BASE = `${COL}/modern-rock-madness-groups`;

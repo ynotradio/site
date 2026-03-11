@@ -144,7 +144,7 @@ export const useMatchActions = (
   const handleToggleShowScore = useCallback(async () => {
     if (!match) return;
     const newVal = !match.showScore;
-    await withSaving(newVal ? 'Show winner' : 'Hide winner', async () => {
+    await withSaving(newVal ? 'Show scores' : 'Hide scores', async () => {
       const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
