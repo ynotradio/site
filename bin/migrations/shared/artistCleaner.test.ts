@@ -2,17 +2,27 @@
  * Unit tests for artist cleanup utilities
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   cleanArtistString,
   shouldPreserveAsCustomTitle,
   isEventName,
   isSingleArtistWithConjunction,
+  isSingleArtistWithConjunctionAsync,
   parseArtistNames,
+  parseArtistNamesAsync,
   extractArtistsFromTitle,
   extractArtistsFromEventString,
   processArtistString,
+  processArtistStringAsync,
 } from './artistCleaner';
+
+vi.mock('./musicbrainz', () => ({
+  isKnownArtist: vi.fn(),
+}));
+
+// eslint-disable-next-line import/first
+import * as musicbrainz from './musicbrainz';
 
 describe('cleanArtistString', () => {
   it('should remove HTML tags', () => {
@@ -386,5 +396,159 @@ describe('processArtistString', () => {
     const result = processArtistString('The Roots Picnic f/ The Roots');
     expect(result.customTitle).toBe('The Roots Picnic f/ The Roots');
     expect(result.artistNames).toEqual(['The Roots']);
+  });
+});
+
+describe('isSingleArtistWithConjunctionAsync', () => {
+  const mockIsKnownArtist = vi.mocked(musicbrainz.isKnownArtist);
+
+  beforeEach(() => {
+    mockIsKnownArtist.mockReset();
+  });
+
+  it('returns false when name has no conjunction', async () => {
+    const result = await isSingleArtistWithConjunctionAsync('Miles Davis');
+    expect(result).toBe(false);
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+
+  it('returns true when MusicBrainz confirms it is a single artist', async () => {
+    mockIsKnownArtist.mockResolvedValue(true);
+    const result = await isSingleArtistWithConjunctionAsync('Coheed and Cambria');
+    expect(result).toBe(true);
+    expect(mockIsKnownArtist).toHaveBeenCalledWith('Coheed and Cambria');
+  });
+
+  it('falls back to heuristics when MusicBrainz returns false', async () => {
+    mockIsKnownArtist.mockResolvedValue(false);
+    // "The Tisburys and Twin Princess" is not a known single artist and fails heuristics
+    const result = await isSingleArtistWithConjunctionAsync('The Tisburys and Twin Princess');
+    expect(result).toBe(false);
+  });
+
+  it('falls back to heuristics when MusicBrainz throws an error', async () => {
+    mockIsKnownArtist.mockRejectedValue(new Error('API unavailable'));
+    // "Echo & The Bunnymen" matches the heuristic "X & The Y" pattern
+    const result = await isSingleArtistWithConjunctionAsync('Echo & The Bunnymen');
+    expect(result).toBe(true);
+  });
+
+  it('returns false via heuristics when MusicBrainz fails and name is not a known pattern', async () => {
+    mockIsKnownArtist.mockRejectedValue(new Error('Network error'));
+    const result = await isSingleArtistWithConjunctionAsync('Alice and Bob');
+    expect(result).toBe(false);
+  });
+
+  it('handles & conjunction', async () => {
+    mockIsKnownArtist.mockResolvedValue(true);
+    const result = await isSingleArtistWithConjunctionAsync('Simon & Garfunkel');
+    expect(result).toBe(true);
+  });
+
+  it('handles + conjunction', async () => {
+    mockIsKnownArtist.mockResolvedValue(false);
+    const result = await isSingleArtistWithConjunctionAsync('Crosby + Nash');
+    expect(result).toBe(false);
+  });
+});
+
+describe('parseArtistNamesAsync', () => {
+  const mockIsKnownArtist = vi.mocked(musicbrainz.isKnownArtist);
+
+  beforeEach(() => {
+    mockIsKnownArtist.mockReset();
+  });
+
+  it('returns empty array for empty string', async () => {
+    const result = await parseArtistNamesAsync('');
+    expect(result).toEqual([]);
+  });
+
+  it('returns empty array for whitespace-only string', async () => {
+    const result = await parseArtistNamesAsync('   ');
+    expect(result).toEqual([]);
+  });
+
+  it('returns single-element array when MusicBrainz confirms it is one artist', async () => {
+    mockIsKnownArtist.mockResolvedValue(true);
+    const result = await parseArtistNamesAsync('Coheed and Cambria');
+    expect(result).toEqual(['Coheed and Cambria']);
+  });
+
+  it('splits into multiple artists when not a known single artist', async () => {
+    mockIsKnownArtist.mockResolvedValue(false);
+    const result = await parseArtistNamesAsync('Artist One and Artist Two');
+    expect(result).toEqual(['Artist One', 'Artist Two']);
+  });
+
+  it('handles a name with no conjunction (no MusicBrainz call needed)', async () => {
+    const result = await parseArtistNamesAsync('Miles Davis');
+    expect(result).toEqual(['Miles Davis']);
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+
+  it('handles comma-separated artists', async () => {
+    const result = await parseArtistNamesAsync('Artist One, Artist Two, Artist Three');
+    expect(result).toEqual(['Artist One', 'Artist Two', 'Artist Three']);
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+});
+
+describe('processArtistStringAsync', () => {
+  const mockIsKnownArtist = vi.mocked(musicbrainz.isKnownArtist);
+
+  beforeEach(() => {
+    mockIsKnownArtist.mockReset();
+  });
+
+  it('returns empty result for empty string', async () => {
+    const result = await processArtistStringAsync('');
+    expect(result).toEqual({ customTitle: null, artistNames: [] });
+  });
+
+  it('returns empty result for whitespace-only string', async () => {
+    const result = await processArtistStringAsync('   ');
+    expect(result).toEqual({ customTitle: null, artistNames: [] });
+  });
+
+  it('handles event name format with custom title', async () => {
+    const result = await processArtistStringAsync(
+      '<i>Sing Us Home Festival</i><br>ft. Dave Hause',
+    );
+    expect(result.customTitle).toBe('Sing Us Home Festival ft. Dave Hause');
+    expect(result.artistNames).toEqual(['Dave Hause']);
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+
+  it('handles custom title pattern (performing)', async () => {
+    const result = await processArtistStringAsync('The Darkness (performing Permission to Land)');
+    expect(result.customTitle).toBe('The Darkness (performing Permission to Land)');
+    expect(result.artistNames).toEqual(['The Darkness']);
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+
+  it('parses a single artist with no conjunction normally', async () => {
+    const result = await processArtistStringAsync('Miles Davis');
+    expect(result).toEqual({ customTitle: null, artistNames: ['Miles Davis'] });
+    expect(mockIsKnownArtist).not.toHaveBeenCalled();
+  });
+
+  it('returns single artist when MusicBrainz confirms conjunction name', async () => {
+    mockIsKnownArtist.mockResolvedValue(true);
+    const result = await processArtistStringAsync('Coheed and Cambria');
+    expect(result).toEqual({ customTitle: null, artistNames: ['Coheed and Cambria'] });
+  });
+
+  it('splits artists when MusicBrainz says it is not a known single artist', async () => {
+    mockIsKnownArtist.mockResolvedValue(false);
+    const result = await processArtistStringAsync('The Tisburys and Twin Princess');
+    expect(result).toEqual({ customTitle: null, artistNames: ['The Tisburys', 'Twin Princess'] });
+  });
+
+  it('cleans HTML before processing', async () => {
+    mockIsKnownArtist.mockResolvedValue(false);
+    const result = await processArtistStringAsync('<em>Artist One</em> and Artist Two');
+    expect(result.customTitle).toBe(null);
+    expect(result.artistNames).toEqual(['Artist One', 'Artist Two']);
   });
 });
