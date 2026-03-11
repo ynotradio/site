@@ -7,12 +7,16 @@
  *
  * The page uses ?preview=true to bypass date-based redirects.
  * The tournament start date is configured in _mrm_config.php.
+ *
+ * The PostgreSQL mode tests use ?ff=use_postgres_madness to enable the
+ * Payload/Postgres adapter instead of the legacy MySQL adapter.
  */
 import { test, expect } from '@playwright/test';
 import { captureScreenshot, checkForPhpErrors, navigateWithRetry } from './utils/test-helpers';
 
 const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 const MRM_URL = `${LEGACY_BASE_URL}/madness.php?preview=true`;
+const MRM_POSTGRES_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
 test.describe('Modern Rock Madness', () => {
   test.describe('Page Loading', () => {
@@ -231,5 +235,70 @@ test.describe('Modern Rock Madness', () => {
         });
       }
     });
+  });
+});
+
+test.describe('Modern Rock Madness — PostgreSQL mode', () => {
+  test('loads without PHP errors when Postgres feature flag is set', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, MRM_POSTGRES_URL);
+
+    const pageContent = await page.content();
+    const errors = checkForPhpErrors(pageContent);
+    expect(errors).toHaveLength(0);
+
+    await captureScreenshot(page, testInfo, 'MRM-Postgres-Page-Load');
+  });
+
+  test('renders bracket with band data from Payload', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, MRM_POSTGRES_URL);
+
+    const bracket = page.locator('#bracket');
+    await expect(bracket).toBeVisible({ timeout: 10000 });
+
+    // All 5 regions should be present
+    await Promise.all([
+      expect(page.locator('#region_1')).toBeVisible({ timeout: 10000 }),
+      expect(page.locator('#region_2')).toBeVisible({ timeout: 10000 }),
+      expect(page.locator('#region_3')).toBeVisible({ timeout: 10000 }),
+      expect(page.locator('#region_4')).toBeVisible({ timeout: 10000 }),
+      expect(page.locator('#region_5')).toBeVisible({ timeout: 10000 }),
+    ]);
+
+    // Match elements should exist with band abbreviations
+    const matchElements = page.locator('.match');
+    expect(await matchElements.count()).toBeGreaterThan(0);
+
+    const seedElements = page.locator('.seed');
+    expect(await seedElements.count()).toBeGreaterThan(0);
+
+    const abbrElements = page.locator('.band_abbr');
+    expect(await abbrElements.count()).toBeGreaterThan(0);
+
+    await captureScreenshot(page, testInfo, 'MRM-Postgres-Bracket');
+  });
+
+  test('displays tournament timeline from Postgres data', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, MRM_POSTGRES_URL);
+
+    const timeline = page.locator('#time_line');
+    await expect(timeline).toBeVisible({ timeout: 10000 });
+
+    const timelineContent = await timeline.textContent();
+    expect(timelineContent).toContain('1st ROUND');
+    expect(timelineContent).toContain('CHAMPION');
+
+    await captureScreenshot(page, testInfo, 'MRM-Postgres-Timeline');
+  });
+
+  test('shows banner and branding in Postgres mode', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, MRM_POSTGRES_URL);
+
+    const pageContent = await page.content();
+    expect(pageContent.toLowerCase()).toContain('modern rock madness');
+
+    const bannerImage = page.locator('img[alt*="Modern Rock Madness"]');
+    await expect(bannerImage).toBeVisible({ timeout: 10000 });
+
+    await captureScreenshot(page, testInfo, 'MRM-Postgres-Banner');
   });
 });

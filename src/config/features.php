@@ -10,5 +10,6 @@ return [
     'use_postgres_stories' => false,
     'use_postgres_cdoftheweek' => false,
     'use_postgres_schedule' => false,
-    'use_postgres_customtext' => false
+    'use_postgres_customtext' => false,
+    'use_postgres_madness' => false,
 ];
