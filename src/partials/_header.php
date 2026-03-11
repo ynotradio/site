@@ -44,6 +44,12 @@ if ($page_file != "logout.php") {
       $css_version = file_exists($css_file) ? filemtime($css_file) : time();
       ?>
       <link href="<?php echo $base_path; ?>style/base.css?v=<?php echo $css_version; ?>" rel="stylesheet" type="text/css" media="all">
+      <?php if ($page_file == "madness.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+    $madness_css = __DIR__ . '/../style/madness.css';
+    $madness_version = file_exists($madness_css) ? filemtime($madness_css) : time();
+    echo "<link href=\"" . $base_path . "style/madness.css?v=" . $madness_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\">\n";
+}
+?>
 
       <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
       <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
