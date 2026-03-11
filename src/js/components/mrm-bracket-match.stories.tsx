@@ -91,9 +91,9 @@ type Story = StoryObj<typeof BracketMatchWrapper>;
 export const Default: Story = {
   args: {
     band1Seed: '1',
-    band1Name: 'Radiohead',
+    band1Name: 'JBrekie',
     band2Seed: '16',
-    band2Name: 'Weezer',
+    band2Name: 'ChlyBls',
     matchId: '1',
     cssClass: 'match left',
   },
@@ -101,12 +101,12 @@ export const Default: Story = {
 
 export const WithScores: Story = {
   args: {
-    band1Seed: '4',
-    band1Name: 'Muse',
-    band1Pct: '55%',
-    band2Seed: '13',
-    band2Name: 'RHCP',
-    band2Pct: '45%',
+    band1Seed: '5',
+    band1Name: 'Clash',
+    band1Pct: '53%',
+    band2Seed: '4',
+    band2Name: 'CHVRCHS',
+    band2Pct: '47%',
     matchId: '5',
     cssClass: 'match left',
   },
@@ -115,11 +115,11 @@ export const WithScores: Story = {
 export const Winner: Story = {
   args: {
     band1Seed: '1',
-    band1Name: 'Radiohead',
-    band1Pct: '62%',
+    band1Name: 'JBrekie',
+    band1Pct: '77%',
     band2Seed: '16',
-    band2Name: 'Weezer',
-    band2Pct: '38%',
+    band2Name: 'ChlyBls',
+    band2Pct: '23%',
     winner: '1',
     matchId: '1',
     cssClass: 'match left',
@@ -129,10 +129,10 @@ export const Winner: Story = {
 export const LiveMatch: Story = {
   args: {
     band1Seed: '3',
-    band1Name: 'Foo Fghtrs',
-    band2Seed: '14',
-    band2Name: 'Green Day',
-    matchId: '3',
+    band1Name: 'YYYs',
+    band2Seed: '2',
+    band2Name: 'REM',
+    matchId: '63',
     cssClass: 'match right live_match',
   },
 };
@@ -140,9 +140,9 @@ export const LiveMatch: Story = {
 export const RightSide: Story = {
   args: {
     band1Seed: '2',
-    band1Name: 'Pearl Jam',
+    band1Name: 'MnqnPsy',
     band2Seed: '15',
-    band2Name: 'Smsh Mouth',
+    band2Name: 'SpdyOtz',
     matchId: '2',
     cssClass: 'match right',
   },
@@ -154,36 +154,27 @@ export const BracketColumn: Story = {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
       {[
         {
-          s1: '1',
-          n1: 'Radiohead',
-          s2: '16',
-          n2: 'Weezer',
+          s1: '1', n1: 'JBrekie', p1: '77%', s2: '16', n2: 'ChlyBls', p2: '23%', w: '1' as const,
         },
         {
-          s1: '8',
-          n1: 'Foo Fghtrs',
-          s2: '9',
-          n2: 'Green Day',
+          s1: '8', n1: 'Wombts', p1: '49%', s2: '9', n2: 'Jpndrds', p2: '51%', w: '2' as const,
         },
         {
-          s1: '4',
-          n1: 'Muse',
-          s2: '13',
-          n2: 'RHCP',
+          s1: '5', n1: 'Clash', p1: '62%', s2: '12', n2: 'Cake', p2: '38%', w: '1' as const,
         },
         {
-          s1: '5',
-          n1: 'Pearl Jam',
-          s2: '12',
-          n2: 'Smsh Mouth',
+          s1: '4', n1: 'CHVRCHS', p1: '65%', s2: '13', n2: 'SlvnEso', p2: '35%', w: '1' as const,
         },
       ].map((m, i) => (
         <BracketMatchWrapper
           key={i}
           band1Seed={m.s1}
           band1Name={m.n1}
+          band1Pct={m.p1}
           band2Seed={m.s2}
           band2Name={m.n2}
+          band2Pct={m.p2}
+          winner={m.w}
           cssClass="match left"
           matchId={String(i + 1)}
         />

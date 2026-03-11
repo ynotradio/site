@@ -1,0 +1,8 @@
+/*
+ * Override legacy site styles that don't make sense in Storybook.
+ * The PHP site uses body { background: black } with a white #container.
+ * Storybook stories don't have #container, so we reset the body background.
+ */
+body {
+  background: white !important;
+}
