@@ -8,7 +8,7 @@
  */
 
 // Tournament start date (YYYY-MM-DD format)
-$madness_start_date = '2025-03-09';
+$madness_start_date = '2026-03-23';
 
 // Bracket PDF URL
 $madness_bracket_pdf_url = "https://od.lk/d/219145587_ruE6q/MRM2025Bracket.pdf";
