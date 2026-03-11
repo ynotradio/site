@@ -54,7 +54,7 @@ $current_match = $madnessController->getCurrentMatch();
 <div class="row">
   <div class="twelve columns">
   <a href="madness.php"><img src="<?php echo $madness_banner_image_url; ?>" alt="Modern Rock Madness <?php echo $madnessController->getTournamentYear($madness_start_date); ?>" width="930px"></a>
-    <div id="mrm_text">
+    <div class="mrm-text" id="mrm_text">
   <p>Download your Modern Rock Madness <?php echo $madnessController->getTournamentYear($madness_start_date); ?> brackets <a href="<?php echo $madness_bracket_pdf_url; ?>">here</a>. <a href="madness.php">Click here to vote</a> in the current match!</p>
       <div class="social">
         <a href="https://twitter.com/share" class="twitter-share-button" data-text="Tune in now to @YNotRadio's Modern Rock Madness - 64 bands go head to head! #modernrockmadness" data-count="none" data-via="YNotRadio">Tweet</a><script type="text/javascript" src="//platform.twitter.com/widgets.js"></script>

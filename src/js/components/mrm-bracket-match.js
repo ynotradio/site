@@ -7,8 +7,8 @@
  *   winner ("1" | "2"), live (boolean), match-id
  *
  * Uses LIGHT DOM rendering so the bracket's external CSS
- * (madness.css with #region_X .match, #match63, etc.) can position
- * and style the element. Class names match the original PHP output:
+ * (madness.css with .mrm-bracket__region .match, .mrm-bracket__match--final, etc.)
+ * can position and style the element. Class names match the original PHP output:
  *   .band1 / .band2, .seed, .band_abbr, .percentage, .mrm_winner / .mrm_loser
  *
  * In production the element is wrapped with class="match left|right live_match"

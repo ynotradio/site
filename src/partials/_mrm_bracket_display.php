@@ -13,9 +13,15 @@ $matches = $controller->mrmModel->getBracketMatches();
 $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m-d'));
 ?>
 
-<div id="bracket">
-    <?php for ($region = 1; $region <= 5; $region++): ?>
-        <div id="region_<?php echo $region; ?>">
+<div class="mrm-bracket" id="bracket">
+    <?php for ($region = 1; $region <= 5; $region++):
+        // BEM classes for each region
+        $regionSide = ($region <= 2) ? 'left' : 'right';
+        $regionClasses = ($region < 5)
+            ? "mrm-bracket__region mrm-bracket__region--{$region} mrm-bracket__region--{$regionSide}"
+            : 'mrm-bracket__championship';
+    ?>
+        <div class="<?php echo $regionClasses; ?>" id="region_<?php echo $region; ?>">
             <?php 
             $round_counter = 1;
             $regionMatches = $matches[$region] ?? [];
@@ -42,6 +48,12 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 } else {
                     $side = ' right';
                 }
+
+                // BEM modifier for championship-region matches (61, 62, 63)
+                $bemMatch = '';
+                if ($match['id'] == 61) $bemMatch = ' mrm-bracket__match--semi-left';
+                if ($match['id'] == 62) $bemMatch = ' mrm-bracket__match--semi-right';
+                if ($match['id'] == 63) $bemMatch = ' mrm-bracket__match--final';
                 
                 // Get match status
                 $match_status = $controller->mrmModel->getMatchStatus($match['id']);
@@ -56,7 +68,7 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
                 $winner2_class = $controller->getWinnerClass($match['band2_id'], $match['id']);
             ?>
             <mrm-bracket-match
-                class="match<?php echo $side . $is_live; ?>"
+                class="match<?php echo $side . $is_live . $bemMatch; ?>"
                 id="match<?php echo $match['id']; ?>"
                 match-id="<?php echo $match['id']; ?>"
                 band1-seed="<?php echo htmlspecialchars($band1['seed']); ?>"
@@ -86,14 +98,14 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
     $sponsorInfo = $controller->getSponsorInfo();
     if ($sponsorInfo):
     ?>
-        <div class="sponsor" id="sponsor_top">
+        <div class="sponsor mrm-bracket__sponsor--top" id="sponsor_top">
             Match sponsored by<br>
             <?php echo htmlspecialchars($sponsorInfo['name']); ?>
             <?php if (!empty($sponsorInfo['message'])): ?>
                 <br><?php echo htmlspecialchars($sponsorInfo['message']); ?>
             <?php endif; ?>
         </div>
-        <div class="sponsor" id="sponsor_bottom">
+        <div class="sponsor mrm-bracket__sponsor--bottom" id="sponsor_bottom">
             Match sponsored by<br>
             <?php echo htmlspecialchars($sponsorInfo['name']); ?>
             <?php if (!empty($sponsorInfo['message'])): ?>
@@ -105,7 +117,7 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
 
 <?php
 // Display tournament timeline
-echo "<ul id='time_line'>\n";
+echo "<ul class='mrm-timeline' id='time_line'>\n";
 
 // Left side of the bracket (first to championship)
 echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_left']}</li>\n";
