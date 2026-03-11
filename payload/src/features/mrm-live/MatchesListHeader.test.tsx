@@ -8,11 +8,4 @@ describe('MatchesListHeader', () => {
     render(<MatchesListHeader />);
     expect(screen.getByText(/Match Controls/)).toBeInTheDocument();
   });
-
-  it('renders the Live Dashboard link', () => {
-    render(<MatchesListHeader />);
-    const link = screen.getByRole('link', { name: /Live Dashboard/ });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/admin/mrm-live');
-  });
 });

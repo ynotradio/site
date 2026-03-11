@@ -3,7 +3,6 @@ import type { LiveMatch, MatchStatus } from './types';
 import {
   TOURNAMENT_EDIT_BASE,
   MATCH_EDIT_BASE,
-  LIVE_DASHBOARD_URL,
   ROUND_LABELS,
   STATUS_LABELS,
   getVotePercent,
@@ -25,19 +24,26 @@ const LINK_CLS = 'match-controls-tab__admin-link';
 
 export interface NavLinksProps {
   tournamentId: string | null;
+  previousMatchId: string | null;
   nextMatchId: string | null;
 }
 
-export const NavLinks: React.FC<NavLinksProps> = ({ tournamentId, nextMatchId }) => (
+export const NavLinks: React.FC<NavLinksProps> = ({
+  tournamentId,
+  previousMatchId,
+  nextMatchId,
+}) => (
   <nav className="match-controls-tab__nav">
-    {tournamentId && (
-      <a href={`${TOURNAMENT_EDIT_BASE}/${tournamentId}/bracket`} className={NAV_CLS}>
-        ← Tournament Bracket
+    {previousMatchId && (
+      <a href={`${MATCH_EDIT_BASE}/${previousMatchId}/controls`} className={NAV_CLS}>
+        ← Previous Match
       </a>
     )}
-    <a href={LIVE_DASHBOARD_URL} className={NAV_CLS}>
-      📡 Live Dashboard
-    </a>
+    {tournamentId && (
+      <a href={`${TOURNAMENT_EDIT_BASE}/${tournamentId}/bracket`} className={NAV_CLS}>
+        Tournament Bracket
+      </a>
+    )}
     {nextMatchId && (
       <a href={`${MATCH_EDIT_BASE}/${nextMatchId}/controls`} className={NAV_CLS}>
         Next Match →
@@ -69,18 +75,12 @@ interface BandColumnProps {
   match: LiveMatch;
   bandKey: 'band1' | 'band2';
   total: number;
-  canVote: boolean;
   saving: boolean;
   onManualVote: (bandKey: 'band1' | 'band2') => Promise<void>;
 }
 
 const BandColumn: React.FC<BandColumnProps> = ({
-  match,
-  bandKey,
-  total,
-  canVote,
-  saving,
-  onManualVote,
+  match, bandKey, total, saving, onManualVote,
 }) => {
   const band = match[bandKey];
   const votes = bandKey === 'band1' ? match.band1Votes : match.band2Votes;
@@ -119,7 +119,7 @@ const BandColumn: React.FC<BandColumnProps> = ({
         type="button"
         className="match-controls-tab__vote-btn"
         onClick={() => onManualVote(bandKey)}
-        disabled={saving || !canVote}
+        disabled={saving}
         aria-label={`Manual vote for ${name}`}
       >
         {saving ? '…' : 'Manual Vote'}
@@ -141,17 +141,11 @@ const CenterColumn: React.FC<{ match: LiveMatch }> = ({ match }) => {
 
 export interface MatchCardBodyProps {
   match: LiveMatch;
-  canVote: boolean;
   saving: boolean;
   onManualVote: (bandKey: 'band1' | 'band2') => Promise<void>;
 }
 
-export const MatchCardBody: React.FC<MatchCardBodyProps> = ({
-  match,
-  canVote,
-  saving,
-  onManualVote,
-}) => {
+export const MatchCardBody: React.FC<MatchCardBodyProps> = ({ match, saving, onManualVote }) => {
   const total = match.band1Votes + match.band2Votes;
   return (
     <div className="match-controls-tab__card-body">
@@ -159,7 +153,6 @@ export const MatchCardBody: React.FC<MatchCardBodyProps> = ({
         match={match}
         bandKey="band1"
         total={total}
-        canVote={canVote}
         saving={saving}
         onManualVote={onManualVote}
       />
@@ -168,7 +161,6 @@ export const MatchCardBody: React.FC<MatchCardBodyProps> = ({
         match={match}
         bandKey="band2"
         total={total}
-        canVote={canVote}
         saving={saving}
         onManualVote={onManualVote}
       />
@@ -178,23 +170,30 @@ export const MatchCardBody: React.FC<MatchCardBodyProps> = ({
 
 export interface ActionButtonsProps {
   saving: boolean;
+  showScore: boolean;
   canClose: boolean;
   canExtend: boolean;
   onClose: () => Promise<void>;
   onExtend: () => Promise<void>;
+  onToggleShowScore: () => Promise<void>;
+  onRematch: () => Promise<void>;
 }
 
 // eslint-disable-next-line max-len
 const DANGER_CLS = 'match-controls-tab__action-btn match-controls-tab__action-btn--danger';
 // eslint-disable-next-line max-len
 const WARN_CLS = 'match-controls-tab__action-btn match-controls-tab__action-btn--warning';
+const DEFAULT_CLS = 'match-controls-tab__action-btn';
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
   saving,
+  showScore,
   canClose,
   canExtend,
   onClose,
   onExtend,
+  onToggleShowScore,
+  onRematch,
 }) => (
   <div className="match-controls-tab__actions">
     <button type="button" className={DANGER_CLS} onClick={onClose} disabled={saving || !canClose}>
@@ -202,6 +201,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     </button>
     <button type="button" className={WARN_CLS} onClick={onExtend} disabled={saving || !canExtend}>
       {saving ? 'Extending…' : 'Extend Overtime (+15 min)'}
+    </button>
+    <button type="button" className={DEFAULT_CLS} onClick={onToggleShowScore} disabled={saving}>
+      {showScore ? '🙈 Hide Winner' : '👁️ Show Winner'}
+    </button>
+    <button type="button" className={WARN_CLS} onClick={onRematch} disabled={saving}>
+      {saving ? 'Scheduling…' : '🔄 Schedule Rematch'}
     </button>
   </div>
 );
@@ -211,7 +216,12 @@ interface AdminLink {
   label: string;
 }
 
-const buildAdminLinks = (match: LiveMatch): AdminLink[] => {
+interface AdminLinksProps {
+  match: LiveMatch;
+  previousMatchId: string | null;
+}
+
+const buildAdminLinks = (match: LiveMatch, prevId: string | null): AdminLink[] => {
   const b1 = getBandId(match.band1);
   const b2 = getBandId(match.band2);
   const tId = getTournamentId(match);
@@ -223,13 +233,14 @@ const buildAdminLinks = (match: LiveMatch): AdminLink[] => {
   if (b1) links.push({ href: getGroupUrl(b1), label: `🎵 ${getBandName(match.band1)}` });
   if (b2) links.push({ href: getGroupUrl(b2), label: `🎵 ${getBandName(match.band2)}` });
   if (tId) links.push({ href: `${TOURNAMENT_EDIT_BASE}/${tId}/bracket`, label: '🏟️ Tournament' });
+  if (prevId) links.push({ href: `${MATCH_EDIT_BASE}/${prevId}/controls`, label: '⬅️ Previous' });
   if (nId) links.push({ href: `${MATCH_EDIT_BASE}/${nId}/controls`, label: '➡️ Next Match' });
   return links;
 };
 
-export const AdminLinks: React.FC<{ match: LiveMatch }> = ({ match }) => (
+export const AdminLinks: React.FC<AdminLinksProps> = ({ match, previousMatchId }) => (
   <div className="match-controls-tab__admin-links">
-    {buildAdminLinks(match).map((link) => (
+    {buildAdminLinks(match, previousMatchId).map((link) => (
       <a key={link.href} href={link.href} className={LINK_CLS}>
         {link.label}
       </a>

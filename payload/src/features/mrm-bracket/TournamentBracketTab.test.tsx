@@ -145,7 +145,6 @@ describe('TournamentBracketTab', () => {
         'href',
         '/admin/collections/modern-rock-madness-matches',
       );
-      expect(screen.getByText(/Live Dashboard/)).toHaveAttribute('href', '/admin/mrm-live');
     });
   });
 });

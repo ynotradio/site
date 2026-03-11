@@ -40,7 +40,6 @@ import { NavDefaultClosed as NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631 }
 import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
 import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } from '../../../payload/src/features/show-cloner'
 import { LiveMatchTool as LiveMatchTool_8e09218c140287dbcfa6d389b5910882 } from '../../../payload/src/features/mrm-live'
-import { BracketTool as BracketTool_fc14364db9d4f5c4cd8e0286dd7d8954 } from '../../../payload/src/features/mrm-bracket'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -86,6 +85,5 @@ export const importMap = {
   "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
   "/payload/src/features/mrm-live#LiveMatchTool": LiveMatchTool_8e09218c140287dbcfa6d389b5910882,
-  "/payload/src/features/mrm-bracket#BracketTool": BracketTool_fc14364db9d4f5c4cd8e0286dd7d8954,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

@@ -149,7 +149,7 @@ describe('MatchControlsTab', () => {
     });
   });
 
-  it('shows disabled Manual Vote buttons for upcoming match', async () => {
+  it('shows enabled Manual Vote buttons for upcoming match (admin override)', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 'match-5' },
     } as ReturnType<typeof useDocumentInfo>);
@@ -161,11 +161,11 @@ describe('MatchControlsTab', () => {
     await waitFor(() => {
       const buttons = screen.getAllByText('Manual Vote');
       expect(buttons).toHaveLength(2);
-      buttons.forEach((btn) => expect(btn).toBeDisabled());
+      buttons.forEach((btn) => expect(btn).not.toBeDisabled());
     });
   });
 
-  it('shows disabled Manual Vote buttons for closed match', async () => {
+  it('shows enabled Manual Vote buttons for closed match (admin override)', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 'match-4' },
     } as ReturnType<typeof useDocumentInfo>);
@@ -177,7 +177,7 @@ describe('MatchControlsTab', () => {
     await waitFor(() => {
       const buttons = screen.getAllByText('Manual Vote');
       expect(buttons).toHaveLength(2);
-      buttons.forEach((btn) => expect(btn).toBeDisabled());
+      buttons.forEach((btn) => expect(btn).not.toBeDisabled());
     });
   });
 

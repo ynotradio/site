@@ -12,9 +12,6 @@ export const TournamentsListHeader: React.FC = () => (
     <span className="tournaments-list-header__tip">
       💡 Click a tournament, then use the <strong>Bracket</strong> tab to view its full bracket.
     </span>
-    <a href="/admin/mrm-live" className="tournaments-list-header__link">
-      📡 Live Dashboard
-    </a>
   </div>
 );
 

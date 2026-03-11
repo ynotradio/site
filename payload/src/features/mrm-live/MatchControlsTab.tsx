@@ -26,33 +26,42 @@ const POLL_INTERVAL_MS = 5000;
 
 interface MatchControlsPanelProps {
   match: LiveMatch;
+  previousMatchId: string | null;
   saving: boolean;
   error: string | null;
   successMessage: string | null;
   onManualVote: (bandKey: 'band1' | 'band2') => Promise<void>;
   onClose: () => Promise<void>;
   onExtend: () => Promise<void>;
+  onToggleShowScore: () => Promise<void>;
+  onRematch: () => Promise<void>;
 }
 
 const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
   match,
+  previousMatchId,
   saving,
   error,
   successMessage,
   onManualVote,
   onClose,
   onExtend,
+  onToggleShowScore,
+  onRematch,
 }) => {
   const status = getMatchStatus(match);
-  const isTied = match.band1Votes === match.band2Votes && !match.winner;
-  const canVote = status === 'live' || (status === 'overtime' && isTied);
   const total = match.band1Votes + match.band2Votes;
+  const isTied = match.band1Votes === match.band2Votes && !match.winner;
   const p1 = getVotePercent(match.band1Votes, total);
   const p2 = getVotePercent(match.band2Votes, total);
 
   return (
     <div className="match-controls-tab">
-      <NavLinks tournamentId={getTournamentId(match)} nextMatchId={getNextMatchId(match)} />
+      <NavLinks
+        tournamentId={getTournamentId(match)}
+        previousMatchId={previousMatchId}
+        nextMatchId={getNextMatchId(match)}
+      />
 
       {error && (
         <div className="match-controls-tab__alert match-controls-tab__alert--error">{error}</div>
@@ -65,12 +74,7 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
 
       <div className="match-controls-tab__card">
         <MatchCardHeader match={match} status={status} />
-        <MatchCardBody
-          match={match}
-          canVote={canVote}
-          saving={saving}
-          onManualVote={onManualVote}
-        />
+        <MatchCardBody match={match} saving={saving} onManualVote={onManualVote} />
         <div className="match-controls-tab__scoreboard">
           <AdminScoreboard
             band1Pct={p1}
@@ -85,12 +89,15 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
         <h4 className="match-controls-tab__section-title">Admin Actions</h4>
         <ActionButtons
           saving={saving}
+          showScore={match.showScore}
           canClose={status === 'overtime' && !isTied}
           canExtend={status === 'overtime' && isTied}
           onClose={onClose}
           onExtend={onExtend}
+          onToggleShowScore={onToggleShowScore}
+          onRematch={onRematch}
         />
-        <AdminLinks match={match} />
+        <AdminLinks match={match} previousMatchId={previousMatchId} />
       </div>
 
       <div className="match-controls-tab__details">
@@ -120,6 +127,7 @@ export const MatchControlsTab: React.FC = () => {
   const matchId = data?.id as string | undefined;
 
   const [match, setMatch] = useState<LiveMatch | null>(null);
+  const [previousMatchId, setPreviousMatchId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -135,6 +143,23 @@ export const MatchControlsTab: React.FC = () => {
       const doc: LiveMatch = await res.json();
       setMatch(doc);
       setFetchError(null);
+
+      // Fetch previous match (matchNumber - 1 in same tournament)
+      const tId = getTournamentId(doc);
+      const prevNum = doc.matchNumber - 1;
+      if (tId && prevNum >= 1) {
+        const qs = `where[tournament][equals]=${tId}`
+          + `&where[matchNumber][equals]=${prevNum}`
+          + '&limit=1&depth=0';
+        const prevRes = await fetch(`${base}?${qs}`);
+        if (prevRes.ok) {
+          const prevData = await prevRes.json();
+          const prev = prevData?.docs?.[0];
+          setPreviousMatchId(prev ? String(prev.id) : null);
+        }
+      } else {
+        setPreviousMatchId(null);
+      }
     } catch (err) {
       setFetchError('Could not load match data.');
       // eslint-disable-next-line no-console
@@ -160,6 +185,8 @@ export const MatchControlsTab: React.FC = () => {
     handleManualVote,
     handleCloseMatch,
     handleExtendOvertime,
+    handleToggleShowScore,
+    handleScheduleRematch,
   } = useMatchActions(match, fetchMatch);
 
   if (loading) {
@@ -196,12 +223,15 @@ export const MatchControlsTab: React.FC = () => {
     <Gutter>
       <MatchControlsPanel
         match={match}
+        previousMatchId={previousMatchId}
         saving={saving}
         error={fetchError ?? actionError}
         successMessage={successMessage}
         onManualVote={handleManualVote}
         onClose={handleCloseMatch}
         onExtend={handleExtendOvertime}
+        onToggleShowScore={handleToggleShowScore}
+        onRematch={handleScheduleRematch}
       />
     </Gutter>
   );
