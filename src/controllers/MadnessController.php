@@ -281,7 +281,7 @@ class MadnessController
         $timeline = $this->mrmModel->getTimelineData($tournament_date ?? date('Y-m-d'));
         
         // Display tournament timeline
-        echo "<ul id='time_line'>\n";
+        echo "<ul class='mrm-timeline' id='time_line'>\n";
 
         // Left side of the bracket (first to championship)
         echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_left']}</li>\n";

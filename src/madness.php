@@ -1,4 +1,5 @@
 <?php
+ob_start();
 
 $page_file = "madness.php";
 $page_title = "Modern Rock Madness";
@@ -32,7 +33,6 @@ $auth0 = new Auth0\SDK\Auth0([
 // Only require necessary dependencies
 require "models/ModernRockMadnessFactory.php";
 require "controllers/MadnessController.php";
-require "partials/_header.php";
 
 // Initialize the Modern Rock Madness controller with database connection
 $db = open_db();
@@ -72,6 +72,25 @@ $match_id = $_POST['match_id'] ?? null;
 $band_id = $_POST['band_id'] ?? null;
 $voter_email = $_POST['voter_email'] ?? null;
 
+// Process vote before any HTML output so Auth0 can set cookies/headers
+if ($match_id && $band_id) {
+    $vote_processed = $madnessController->processVote($match_id, $band_id, $voter_email);
+    if (!$vote_processed) {
+        error_log("Vote processing failed for match: $match_id, band: $band_id");
+    }
+}
+
+// All header-modifying operations complete — now output HTML
+$GLOBALS['auth0'] = $auth0;
+$userInfo = $auth0->getUser();
+$voter_email_for_body = $userInfo['email'] ?? null;
+require "partials/_header.php";
+
+// Set voter email on body for the vote bridge JS
+if ($voter_email_for_body) {
+    echo '<script>document.body.setAttribute("data-voter-email", ' . json_encode($voter_email_for_body) . ');</script>';
+}
+
 /*----- CONTENT ------*/
 ?>
 
@@ -85,7 +104,7 @@ $voter_email = $_POST['voter_email'] ?? null;
 <div class="row">
   <div class="twelve columns">
 	<a href="madness.php"><img src="<?php echo $madness_banner_image_url; ?>" alt="Modern Rock Madness <?php echo $madnessController->getTournamentYear($madness_start_date); ?>" width="930px"></a>
-    <div id="mrm_text">
+    <div class="mrm-text" id="mrm_text">
       <p>Download your Modern Rock Madness <?php echo $madnessController->getTournamentYear($madness_start_date); ?> brackets <a href="<?php echo $madness_bracket_pdf_url; ?>">here</a> and listen all throughout the tournament as Y-Not bands go head to head! Help your favorites advance to the next round by voting here, or if you're listening on the go, you can text your votes in to 707-800-YNOT.</p>
 
       <div class="social">
@@ -95,20 +114,11 @@ $voter_email = $_POST['voter_email'] ?? null;
     </div>
 <?php
 
-// Process vote through controller if submitted
-if ($match_id && $band_id) {
-    $vote_processed = $madnessController->processVote($match_id, $band_id, $voter_email);
-    if (!$vote_processed) {
-        // Log error but don't display to user
-        error_log("Vote processing failed for match: $match_id, band: $band_id");
-    }
-}
-
 // Render match using controller
 $madnessController->renderMatchDisplay($current_match['id'], $madness_start_date);
+$madnessController->renderScoreboard($current_match);
 render_first_row($madness_start_date);
 $madnessController->renderBracketDisplay($madness_start_date);
-$madnessController->renderSponsorInfo($current_match['id']);
 ?>
 
   </div>

@@ -32,6 +32,7 @@
     "e2e/**/*.ts",
     "playwright.config.ts",
     "src/types/**/*.ts",
+    "src/**/*.tsx",
     "vitest.config.ts",
     "payload/**/*.ts",
     "payload/**/*.tsx",

@@ -1,67 +1,103 @@
+/**
+ * Modern Rock Madness — BEM-scoped styles
+ *
+ * Block naming:
+ *   .mrm-bracket        – tournament bracket container
+ *   .mrm-scoring        – vote-percentage scoreboard bar
+ *   .mrm-timeline       – round-date ribbon below the bracket
+ *
+ * Existing class names (.match, .left, .right, .live_match, .round1–.round4,
+ * .seed, .band_abbr, .percentage, .sponsor, .mrm_winner, .mrm_loser, etc.)
+ * are kept as-is since they were already class-based.
+ */
+
 .social {
   height: 25px;
 }
 
-#mrm_text {
-	padding: 0 40px;
+/* Custom elements default to display:inline — force block for layout */
+mrm-bracket-match {
+  display: block;
+}
+
+/* ------------------------------------------------------------------ */
+/* Match display (current match card area)                            */
+/* ------------------------------------------------------------------ */
+
+.mrm-text {
+  padding: 0 40px;
   text-align: center;
 }
 
-#mrm_current_match {
-	font-size: 18px;
-	margin: auto;
-	padding: 20px 0 0 0;
-	text-align: center;
+.mrm-current-match {
+  font-size: 18px;
+  margin: auto;
+  padding: 20px 0 0 0;
+  text-align: center;
 }
 
-#mrm_current_match > tbody > tr:first-child > td:first-child, #mrm_current_match > tbody > tr:first-child > td:last-child {
-	width: 350px;
+.mrm-current-match > tbody > tr:first-child > td:first-child,
+.mrm-current-match > tbody > tr:first-child > td:last-child {
+  width: 350px;
 }
 
-#mrm_current_match img{
-	display: block;
-	margin: auto;
-	width: 200px;
+.mrm-current-match img {
+  display: block;
+  margin: auto;
+  width: 200px;
 }
 
-#next_match {
-	font-style: italic;
-	padding: 10px 40px 0 0;
+.mrm-next-match {
+  font-style: italic;
+  padding: 10px 40px 0 0;
   text-align: right;
 }
 
-#time_line {
+.mrm-next-match span {
+  font-weight: bold;
+  font-style: normal;
+}
+
+/* ------------------------------------------------------------------ */
+/* Timeline ribbon                                                    */
+/* ------------------------------------------------------------------ */
+
+.mrm-timeline {
   background-color: #666;
-  background: -webkit-gradient(linear, left center, right center, from(#666666), to(#666), color-stop(.5,black));
+  background: -webkit-gradient(linear, left center, right center, from(#666666), to(#666), color-stop(.5, black));
   background: -moz-linear-gradient(left, #666666 0%, black 50%, #666 100%);
   color: white;
-	font-size: 80%;
+  font-size: 80%;
   height: 42px;
-	margin: 10px -15px;
+  margin: 10px -15px;
   padding: 0;
 }
 
-#time_line ul {
-	list-style-type: none;
+.mrm-timeline {
+  list-style-type: none;
 }
 
-#time_line li {
-	display: inline;
-	float: left;
-	text-align:center;
+.mrm-timeline > li {
+  display: inline;
+  float: left;
+  text-align: center;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
   text-transform: uppercase;
-	margin: 0 0 10px 0;
-	width: 87px;
+  margin: 0 0 10px 0;
+  width: 87px;
 }
 
 .top-pad_3 {
   padding-top: 3px;
 }
 
-#time_line li strong {
-	display: block;
+.mrm-timeline li strong {
+  display: block;
 }
+
+/* ------------------------------------------------------------------ */
+/* Match tile gradients & states                                      */
+/* ------------------------------------------------------------------ */
 
 .left {
   background-image: -ms-linear-gradient(left, #fafbfb, #eaebeb);
@@ -87,230 +123,275 @@
 }
 
 .match {
-	border: 1px solid black;
-	height: 40px;
-	font-size: 10px;
-	margin: 0 0 12px 0;
-	width: 120px;
+  border: 1px solid black;
+  height: 40px;
+  font-size: 10px;
+  margin: 0 0 12px 0;
+  width: 120px;
 }
 
-#region_1 {
+/* ------------------------------------------------------------------ */
+/* Bracket container                                                  */
+/* ------------------------------------------------------------------ */
+
+.mrm-bracket {
+  height: 950px;
+  position: relative;
+}
+
+/* Override global dt:after " -- " leak from typography.css */
+.mrm-bracket dt:after {
+  content: '';
+}
+
+.match dl {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Region base + per-region positioning                               */
+/* ------------------------------------------------------------------ */
+
+.mrm-bracket__region {
   height: 404px;
-	position: absolute;
-	width: 50%;
+  position: absolute;
+  width: 50%;
 }
 
-#region_1 .match, #region_2 .match {
-	border-width: 1px 1px 1px 0;
+.mrm-bracket__region--2 {
+  top: 545px;
+}
+
+.mrm-bracket__region--3 {
+  left: 810px;
+}
+
+.mrm-bracket__region--4 {
+  left: 810px;
+  top: 545px;
+}
+
+/* Left regions (1, 2): matches rounded on right */
+.mrm-bracket__region--left .match {
+  border-width: 1px 1px 1px 0;
   border-radius: 0 5px 5px 0;
 }
 
-#region_1 .round2 {
-	position: absolute;
-	left: 120px;
-	top: -40px;
-}
-
-#region_1 .round2 .match, #region_2 .round2 .match, #region_3 .round2 .match, #region_4 .round2 .match {
-	margin: 66px 0 0 0;
-}
-
-#region_1 .round3 .match, #region_2 .round3 .match, #region_3 .round3 .match, #region_4 .round3 .match {
-	margin: 0 0 175px 0;
-	border: 1px solid black
-}
-
-#region_1 .round3, #region_2 .round3 {
-	border-right: 1px solid #ccc;
-	height: 255px;
-	left: 230px;
-	position: absolute;
-	top: 78px;
-	width: 95px;
-}
-
-#region_1 .round4, #region_2 .round4 {
-	position: absolute;
-	left: 300px;
-	top: 185px;
-}
-
-#region_1 .round4 .match, #region_2 .round4 .match,#region_3 .round4 .match, #region_4 .round4 .match {
-	border: 1px solid black;
-}
-
-#region_2 {
-	position: absolute;
-  height: 404px;
-	top: 545px;
-}
-
-#region_2 .round2 {
-	position: relative;
-	left: 120px;
-	top: -444px;
-}
-
-#region_3 {
-	position: absolute;
-  height: 404px;
-	left: 810px;
-}
-
-#region_3 .round2 {
-	position: absolute;
-	left: -120px;
-	top: -40px;
-}
-
-#region_3 .round3, #region_4 .round3 {
-	border-right: 1px solid #ccc;
-	height: 232px;
-	left: -230px;
-	margin: 43px 0 0 0;
-	position: absolute;
-	top: 35px;
-	width: 25px;
-}
-
-#region_3 .round4, #region_4 .round4 {
-	position: absolute;
-	left: -300px;
-	top: 185px;
-}
-
-#region_3 .match, #region_4 .match {
-	border-width: 1px 0px 1px 1px;
+/* Right regions (3, 4): matches rounded on left */
+.mrm-bracket__region--right .match {
+  border-width: 1px 0 1px 1px;
   border-radius: 5px 0 0 5px;
 }
 
-#region_4 {
-	position: absolute;
-	height: 404px;
-	left: 810px;
-	top: 545px;
+/* ------------------------------------------------------------------ */
+/* Round positioning (per-region)                                     */
+/* ------------------------------------------------------------------ */
+
+/* Round 2 — unique position per region */
+.mrm-bracket__region--1 .round2 {
+  position: absolute;
+  left: 120px;
+  top: -40px;
 }
 
-#region_4 .round2 {
-	position: relative;
-	left: -120px;
-	top: -444px;
+.mrm-bracket__region--2 .round2 {
+  position: relative;
+  left: 120px;
+  top: -444px;
 }
 
-#region_5 {
-	font-size: 10px;
-	position: absolute;
-	left: 252px;
-	top: 424px;
-	width: 425px;
+.mrm-bracket__region--3 .round2 {
+  position: absolute;
+  left: -120px;
+  top: -40px;
+}
+
+.mrm-bracket__region--4 .round2 {
+  position: relative;
+  left: -120px;
+  top: -444px;
+}
+
+/* Round 2 matches — shared by all regions */
+.mrm-bracket__region .round2 .match {
+  margin: 66px 0 0 0;
+}
+
+/* Round 3 matches — shared by all regions */
+.mrm-bracket__region .round3 .match {
+  margin: 0 0 175px 0;
+  border: 1px solid black;
+}
+
+/* Round 3 connector lines — left regions */
+.mrm-bracket__region--left .round3 {
+  border-right: 1px solid #ccc;
+  height: 255px;
+  left: 230px;
+  position: absolute;
+  top: 78px;
+  width: 95px;
+}
+
+/* Round 3 connector lines — right regions */
+.mrm-bracket__region--right .round3 {
+  border-right: 1px solid #ccc;
+  height: 232px;
+  left: -230px;
+  margin: 43px 0 0 0;
+  position: absolute;
+  top: 35px;
+  width: 25px;
+}
+
+/* Round 4 — left regions */
+.mrm-bracket__region--left .round4 {
+  position: absolute;
+  left: 300px;
+  top: 185px;
+}
+
+/* Round 4 — right regions */
+.mrm-bracket__region--right .round4 {
+  position: absolute;
+  left: -300px;
+  top: 185px;
+}
+
+/* Round 4 matches — shared by all regions */
+.mrm-bracket__region .round4 .match {
+  border: 1px solid black;
+}
+
+/* ------------------------------------------------------------------ */
+/* Championship region (region 5)                                     */
+/* ------------------------------------------------------------------ */
+
+.mrm-bracket__championship {
+  font-size: 10px;
+  position: absolute;
+  left: 252px;
+  top: 424px;
+  width: 425px;
   background-color: #666;
-  background: -webkit-gradient(linear, left center, right center, from(#666666), to(#666), color-stop(.5,black));
+  background: -webkit-gradient(linear, left center, right center, from(#666666), to(#666), color-stop(.5, black));
   background: -moz-linear-gradient(left, #666666 0%, black 50%, #666 100%);
-	border: 1px solid black;
-	border-width: 1px 1px 1px 1px;
-	border-radius: 5px 5px 5px 5px;
-	height: 100px;
+  border: 1px solid black;
+  border-width: 1px;
+  border-radius: 5px;
+  height: 100px;
 }
 
-#match61 {
-	border-width: 1px 0px 1px 1px;
-	border-radius: 5px 0 0 5px;
-	float: left;
-	left: 20px;
-	margin: 30px 0 0 0;
-	position: relative;
+/* Semi-final matches */
+.mrm-bracket__match--semi-left {
+  border-width: 1px 0 1px 1px;
+  border-radius: 5px 0 0 5px;
+  float: left;
+  left: 20px;
+  margin: 30px 0 0 0;
+  position: relative;
 }
 
-#match62 {
-	border-width: 1px 1px 1px 0;
+.mrm-bracket__match--semi-right {
+  border-width: 1px 1px 1px 0;
   border-radius: 0 5px 5px 0;
-	float: right;
-	margin: 30px 0 0 0;
-	position: relative;
-	right: 20px;
+  float: right;
+  margin: 30px 0 0 0;
+  position: relative;
+  right: 20px;
 }
 
-#match63 {
+/* Championship final */
+.mrm-bracket__match--final {
   background-color: #eaebeb;
-  background: -webkit-gradient(linear, left center, right center, from(#EAEBEB), to(#eaebeb), color-stop(.5,#fafbfb));
-  background: -moz-linear-gradient(left, #EAEBEB 0%, #fafbfb 50%, #eaebeb 100%);	border-width: 1px 1px 1px 1px;
-	border-radius: 5px 5px 5px 5px;
+  background: -webkit-gradient(linear, left center, right center, from(#EAEBEB), to(#eaebeb), color-stop(.5, #fafbfb));
+  background: -moz-linear-gradient(left, #EAEBEB 0%, #fafbfb 50%, #eaebeb 100%);
+  border-width: 1px;
+  border-radius: 5px;
   color: black;
-	float: left;
-	height: 58px;
-	font-size: 12px;
-	left: 20px;
-	padding-top: 10px;
-	position: relative;
-	top: 20px;
-	width: 143px;
+  float: left;
+  height: 58px;
+  font-size: 12px;
+  left: 20px;
+  padding-top: 10px;
+  position: relative;
+  top: 20px;
+  width: 143px;
 }
 
-#match63 dt {
+.mrm-bracket__match--final dt {
   margin-left: 10px;
 }
 
-#match63 .band_abbr {
-	width: 50px;
+.mrm-bracket__match--final .band_abbr {
+  width: 50px;
 }
 
+/* ------------------------------------------------------------------ */
+/* Match display helpers                                              */
+/* ------------------------------------------------------------------ */
+
 .mrm_band, .mrm_votes {
-	font-weight: bold;
-	text-align: center;
-	width: 200px;
+  font-weight: bold;
+  text-align: center;
+  width: 200px;
 }
 
 .mrm_winner {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 .mrm_loser {
-	color: grey;
+  color: grey;
 }
 
 .mrm_loser img {
-	border: 1px solid black;
-	filter:alpha(opacity=35);
-	-moz-opacity: 0.35;
-	opacity: 0.35;
+  border: 1px solid black;
+  filter: alpha(opacity=35);
+  -moz-opacity: 0.35;
+  opacity: 0.35;
 }
 
 .voting_message {
-	text-align: center;
-	font-weight: bold;
+  text-align: center;
+  font-weight: bold;
 }
 
 .middle {
-	font-family: 'Courier New';
-	font-size: 24px;
-	font-weight: bold;
+  font-family: 'Courier New';
+  font-size: 24px;
+  font-weight: bold;
   margin: 0 auto;
-	text-align: center;
-	vertical-align: middle;
-	width: 100px;
+  text-align: center;
+  vertical-align: middle;
+  width: 100px;
 }
 
-#mrm_scoring {
-	border-collapse: collapse;
-	font-size: 18px;
-	margin: auto;
-	padding: 0 20px;
-	width: 880px;
+/* ------------------------------------------------------------------ */
+/* Scoreboard (vote percentage bar)                                   */
+/* ------------------------------------------------------------------ */
+
+.mrm-scoring {
+  border-collapse: collapse;
+  font-size: 18px;
+  margin: 10px auto 20px;
+  padding: 0 20px;
+  width: 880px;
 }
 
-#mrm_scoring td {
+.mrm-scoring td {
   border-top: 1px solid black;
   border-bottom: 1px solid black;
 }
 
-#band1_score {
-	background-color: #FFA500;
+.mrm-scoring__band1-label {
+  background-color: #FFA500;
   border-left: 1px solid black;
-	color:black;
-	width: 15px;
+  color: black;
+  width: 15px;
 }
 
-#band1_value {
+.mrm-scoring__band1-bar {
   background-image: -ms-linear-gradient(left, #FFA500, black);
   background-image: -webkit-gradient(left, #FFA500, black);
   background-image: -webkit-linear-gradient(left, #FFA500, black);
@@ -319,14 +400,14 @@
   background-image: -moz-linear-gradient(left, #FFA500, black);
 }
 
-#band2_score {
-	background-color: #1047A9;
+.mrm-scoring__band2-label {
+  background-color: #1047A9;
   border-right: 1px solid black;
-	color: white;
-	width: 15px;
+  color: white;
+  width: 15px;
 }
 
-#band2_value {
+.mrm-scoring__band2-bar {
   background-image: -ms-linear-gradient(right, #1047A9, black);
   background-image: -webkit-gradient(right, #1047A9, black);
   background-image: -webkit-linear-gradient(right, #1047A9, black);
@@ -335,64 +416,54 @@
   background-image: -moz-linear-gradient(right, #1047A9, black);
 }
 
-#next_match span {
-	font-weight: bold;
-	font-style: normal;
-}
-
-#bracket {
-	height: 950px;
-	position: relative;	
-}
-
-#bracket dt:after {
-  content: '';
-}
-
-.match dl {
-	margin: 0;
-}
+/* ------------------------------------------------------------------ */
+/* Bracket inner element styles                                       */
+/* ------------------------------------------------------------------ */
 
 .seed {
-	display: inline-block;
-	font-size: 8px;
-	padding: 0 15px 0 5px;
-	text-align: right;
-	width: 11px;
+  display: inline-block;
+  font-size: 8px;
+  padding: 0 15px 0 5px;
+  text-align: right;
+  width: 11px;
 }
 
 .seed_size {
-	position: relative;
-	font-size: 65%;	
+  position: relative;
+  font-size: 65%;
 }
 
 .band_abbr {
-	display: inline-block;
-	width: 50px;
+  display: inline-block;
+  width: 50px;
 }
 
 .percentage {
-	position: relative;
-	left: 12px;
+  position: relative;
+  left: 12px;
 }
 
+/* ------------------------------------------------------------------ */
+/* Sponsors                                                           */
+/* ------------------------------------------------------------------ */
+
 .sponsor {
-	color: #592D00;
-	font-weight: bold;
-	left: 400px;
-	position: absolute;
-	text-align: center;
+  color: #592D00;
+  font-weight: bold;
+  left: 400px;
+  position: absolute;
+  text-align: center;
 }
 
 .sponsor a {
-	color: #592D00;
+  color: #592D00;
   text-decoration: none;
 }
 
-#sponsor_top {
-	top: 34px;
+.mrm-bracket__sponsor--top {
+  top: 34px;
 }
 
-#sponsor_bottom {
-	top: 818px;
+.mrm-bracket__sponsor--bottom {
+  top: 818px;
 }

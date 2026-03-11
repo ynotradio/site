@@ -20,16 +20,12 @@ $band1_width = $controller->mrmModel->calculateVotePercentage($match['band1_vote
 $band2_width = $controller->mrmModel->calculateVotePercentage($match['band2_votes'], $match['band1_votes']);
 ?>
 
-<table id="mrm_scoring" border="0">
-    <tr>
-        <td id="band1_score"><?php echo $band1_percentage; ?></td>
-        <td id="band1_value" width="<?php echo $band1_width; ?>"></td>
-        <td id="band2_value" width="<?php echo $band2_width; ?>"></td>
-        <td id="band2_score"><?php echo $band2_percentage; ?></td>
-    </tr>
-</table>
-
-<script type="text/javascript">
-    $('.live_match > dl .band1 .percentage').text("<?php echo $band1_width; ?>");
-    $('.live_match > dl .band2 .percentage').text("<?php echo $band2_width; ?>");
-</script>
+<mrm-scoreboard
+    class="mrm-scoring"
+    id="mrm_scoring"
+    band1-pct="<?php echo $band1_width; ?>"
+    band2-pct="<?php echo $band2_width; ?>"
+    band1-label="<?php echo $band1_percentage; ?>"
+    band2-label="<?php echo $band2_percentage; ?>"
+    style="max-width: 880px;"
+></mrm-scoreboard>

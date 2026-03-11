@@ -1,6 +1,10 @@
 import React, { useEffect } from 'react';
 import type { Preview } from '@storybook/nextjs-vite';
 
+/* Global styles from the PHP site so stories render with accurate typography/layout */
+import '../src/style/base.css';
+import './storybook-overrides.css';
+
 /**
  * Mock entry describing a URL pattern and its canned response.
  * Stories declare these via `parameters.mockData`.

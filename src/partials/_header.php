@@ -44,6 +44,12 @@ if ($page_file != "logout.php") {
       $css_version = file_exists($css_file) ? filemtime($css_file) : time();
       ?>
       <link href="<?php echo $base_path; ?>style/base.css?v=<?php echo $css_version; ?>" rel="stylesheet" type="text/css" media="all">
+      <?php if ($page_file == "madness.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+    $madness_css = __DIR__ . '/../style/madness.css';
+    $madness_version = file_exists($madness_css) ? filemtime($madness_css) : time();
+    echo "<link href=\"" . $base_path . "style/madness.css?v=" . $madness_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\">\n";
+}
+?>
 
       <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
       <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
@@ -54,13 +60,29 @@ if ($page_file != "logout.php") {
       <script src="<?php echo $base_path; ?>js/picker.time.js"></script>
       <script src="<?php echo $base_path; ?>js/legacy.js"></script>
       <script src="<?php echo $base_path; ?>js/init.js"></script>
+      <?php if ($page_file == "madness.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+    $js_dir = __DIR__ . '/../js/components/';
+    $bm_v = file_exists($js_dir . 'mrm-bracket-match.js') ? filemtime($js_dir . 'mrm-bracket-match.js') : time();
+    $sb_v = file_exists($js_dir . 'mrm-scoreboard.js') ? filemtime($js_dir . 'mrm-scoreboard.js') : time();
+    $mc_v = file_exists($js_dir . 'mrm-match-card.js') ? filemtime($js_dir . 'mrm-match-card.js') : time();
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-bracket-match.js?v=" . $bm_v . "\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-scoreboard.js?v=" . $sb_v . "\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-match-card.js?v=" . $mc_v . "\"></script>";
+}
+
+?>
+      <?php if ($page_file == "madness.php") {
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/mrm-vote-bridge.js\"></script>";
+}
+
+?>
       <?php if ($page_file == "madness.php" || $page_file == "mrm_manage_matches.php") {
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js\"></script>";
 }
 
 ?>
       <?php if ($page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin_madness.js\"></script>";
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin-madness.js\"></script>";
 }
 
 ?>
