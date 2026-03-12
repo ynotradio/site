@@ -42,12 +42,27 @@ export const ModernRockMadnessGroups: CollectionConfig = {
       },
     },
     {
-      name: 'name',
-      type: 'text',
-      admin: {
-        description:
-          'Optional display name override. Useful for supergroups (e.g., "Jack White / White Stripes"). If blank, the name from the primary artist record is used.',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'name',
+          type: 'text',
+          admin: {
+            description:
+              'Optional display name override. Useful for supergroups (e.g., "Jack White / White Stripes"). If blank, the name from the primary artist record is used.',
+            width: '60%',
+          },
+        },
+        {
+          name: 'abbreviation',
+          type: 'text',
+          maxLength: 7,
+          admin: {
+            description: 'Short abbreviation for bracket display (max 7 chars)',
+            width: '40%',
+          },
+        },
+      ],
     },
     {
       name: 'image',
@@ -58,43 +73,49 @@ export const ModernRockMadnessGroups: CollectionConfig = {
       },
     },
     {
-      name: 'abbreviation',
-      type: 'text',
-      maxLength: 7,
-      admin: {
-        description: 'Short abbreviation for bracket display (max 7 chars)',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'seed',
+          type: 'number',
+          required: true,
+          admin: {
+            description: 'Tournament seed (1-16 per region)',
+            width: '50%',
+          },
+        },
+        {
+          name: 'placement',
+          type: 'number',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Overall bracket placement (1-64)',
+            width: '50%',
+          },
+        },
+      ],
     },
     {
-      name: 'url',
-      type: 'text',
-      admin: {
-        description: 'Group or primary artist website URL',
-      },
-    },
-    {
-      name: 'seed',
-      type: 'number',
-      required: true,
-      admin: {
-        description: 'Tournament seed (1-16 per region)',
-      },
-    },
-    {
-      name: 'placement',
-      type: 'number',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Overall bracket placement (1-64)',
-      },
-    },
-    {
-      name: 'sponsor',
-      type: 'text',
-      admin: {
-        description: 'Group sponsor name',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'url',
+          type: 'text',
+          admin: {
+            description: 'Group or primary artist website URL',
+            width: '60%',
+          },
+        },
+        {
+          name: 'sponsor',
+          type: 'text',
+          admin: {
+            description: 'Group sponsor name',
+            width: '40%',
+          },
+        },
+      ],
     },
   ],
   timestamps: true,

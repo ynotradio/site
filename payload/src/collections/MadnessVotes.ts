@@ -21,23 +21,30 @@ export const ModernRockMadnessVotes: CollectionConfig = {
   },
   fields: [
     {
-      name: 'match',
-      type: 'relationship',
-      relationTo: 'modern-rock-madness-matches',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Match this vote was cast in',
-      },
-    },
-    {
-      name: 'group',
-      type: 'relationship',
-      relationTo: 'modern-rock-madness-groups',
-      required: true,
-      admin: {
-        description: 'Group voted for',
-      },
+      type: 'row',
+      fields: [
+        {
+          name: 'match',
+          type: 'relationship',
+          relationTo: 'modern-rock-madness-matches',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Match this vote was cast in',
+            width: '50%',
+          },
+        },
+        {
+          name: 'group',
+          type: 'relationship',
+          relationTo: 'modern-rock-madness-groups',
+          required: true,
+          admin: {
+            description: 'Group voted for',
+            width: '50%',
+          },
+        },
+      ],
     },
     {
       name: 'userId',

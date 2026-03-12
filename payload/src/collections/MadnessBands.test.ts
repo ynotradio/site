@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessGroups } from './MadnessBands';
+import { flattenRowFields } from './testUtils';
 
 describe('ModernRockMadnessGroups', () => {
   it('has the correct slug', () => {
@@ -15,58 +16,45 @@ describe('ModernRockMadnessGroups', () => {
   });
 
   it('has required fields', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{ name: string; required?: boolean }>;
-    const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const requiredNames = allFields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('tournament');
     expect(requiredNames).toContain('seed');
     expect(requiredNames).toContain('placement');
   });
 
   it('name is an optional override field', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{ name: string; required?: boolean }>;
-    const nameField = fields.find((f) => f.name === 'name');
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const nameField = allFields.find((f) => f.name === 'name');
     expect(nameField).toBeDefined();
     expect(nameField?.required).toBeFalsy();
   });
 
   it('has artists as a hasMany relationship to artists', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-      hasMany?: boolean;
-    }>;
-    const artistsField = fields.find((f) => f.name === 'artists');
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const artistsField = allFields.find((f) => f.name === 'artists');
     expect(artistsField?.type).toBe('relationship');
     expect(artistsField?.relationTo).toBe('artists');
     expect(artistsField?.hasMany).toBe(true);
   });
 
   it('has image as an upload relationship to media', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const imageField = fields.find((f) => f.name === 'image');
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const imageField = allFields.find((f) => f.name === 'image');
     expect(imageField?.type).toBe('upload');
     expect(imageField?.relationTo).toBe('media');
   });
 
   it('has tournament as a relationship to modern-rock-madness-tournaments', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const tournamentField = fields.find((f) => f.name === 'tournament');
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const tournamentField = allFields.find((f) => f.name === 'tournament');
     expect(tournamentField?.type).toBe('relationship');
     expect(tournamentField?.relationTo).toBe('modern-rock-madness-tournaments');
   });
 
   it('enforces abbreviation max length of 7', () => {
-    const fields = ModernRockMadnessGroups.fields as Array<{ name: string; maxLength?: number }>;
-    const abbrField = fields.find((f) => f.name === 'abbreviation');
+    const allFields = flattenRowFields(ModernRockMadnessGroups.fields);
+    const abbrField = allFields.find((f) => f.name === 'abbreviation');
     expect(abbrField?.maxLength).toBe(7);
   });
 

@@ -1,18 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessMatches } from './MadnessMatches';
-
-/**
- * Flatten row-type fields into a flat array for easier testing.
- * Payload uses { type: 'row', fields: [...] } to group fields visually.
- */
-const flattenRowFields = (
-  fields: readonly Record<string, unknown>[],
-): Array<Record<string, unknown>> => fields.reduce<Array<Record<string, unknown>>>((result, field) => {
-  if (field.type === 'row' && Array.isArray(field.fields)) {
-    return [...result, ...(field.fields as Array<Record<string, unknown>>)];
-  }
-  return [...result, field];
-}, []);
+import { flattenRowFields } from './testUtils';
 
 describe('ModernRockMadnessMatches', () => {
   it('has the correct slug', () => {
@@ -69,32 +57,21 @@ describe('ModernRockMadnessMatches', () => {
   });
 
   it('has nextMatch as a self-referencing relationship', () => {
-    const fields = ModernRockMadnessMatches.fields as Array<{
-      name?: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const nextMatch = fields.find((f) => f.name === 'nextMatch');
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const nextMatch = allFields.find((f: { name?: string }) => f.name === 'nextMatch');
     expect(nextMatch?.type).toBe('relationship');
     expect(nextMatch?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has 6 round options covering the full tournament', () => {
-    const fields = ModernRockMadnessMatches.fields as Array<{
-      name?: string;
-      options?: Array<{ value: string }>;
-    }>;
-    const roundField = fields.find((f) => f.name === 'round');
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const roundField = allFields.find((f: { name?: string }) => f.name === 'round');
     expect(roundField?.options).toHaveLength(6);
   });
 
   it('has winner as a relationship to modern-rock-madness-groups', () => {
-    const fields = ModernRockMadnessMatches.fields as Array<{
-      name?: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const winner = fields.find((f) => f.name === 'winner');
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const winner = allFields.find((f: { name?: string }) => f.name === 'winner');
     expect(winner?.type).toBe('relationship');
     expect(winner?.relationTo).toBe('modern-rock-madness-groups');
   });
