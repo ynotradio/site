@@ -36,14 +36,14 @@ describe('ModernRockMadnessTournaments', () => {
     expect(statusField?.defaultValue).toBe('draft');
   });
 
-  it('has year as unique and indexed', () => {
+  it('has year as indexed (not unique)', () => {
     const fields = ModernRockMadnessTournaments.fields as Array<{
       name: string;
       unique?: boolean;
       index?: boolean;
     }>;
     const yearField = fields.find((f) => f.name === 'year');
-    expect(yearField?.unique).toBe(true);
+    expect(yearField?.unique).toBe(false);
     expect(yearField?.index).toBe(true);
   });
 
