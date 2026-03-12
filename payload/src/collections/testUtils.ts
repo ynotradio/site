@@ -5,9 +5,10 @@
 type FieldRecord = Record<string, unknown>;
 
 export function flattenRowFields(fields: readonly FieldRecord[]): FieldRecord[] {
-  return fields.flatMap((field) =>
-    field.type === 'row' && Array.isArray(field.fields)
-      ? (field.fields as FieldRecord[])
-      : [field],
-  );
+  return fields.flatMap((field) => {
+    if (field.type === 'row' && Array.isArray(field.fields)) {
+      return field.fields as FieldRecord[];
+    }
+    return [field];
+  });
 }
