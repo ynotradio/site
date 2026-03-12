@@ -16,13 +16,8 @@ describe('ModernRockMadnessMatches', () => {
   });
 
   it('has tournament as a required relationship to modern-rock-madness-tournaments', () => {
-    const fields = ModernRockMadnessMatches.fields as Array<{
-      name?: string;
-      type: string;
-      relationTo?: string;
-      required?: boolean;
-    }>;
-    const tournamentField = fields.find((f) => f.name === 'tournament');
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const tournamentField = allFields.find((f) => f.name === 'tournament');
     expect(tournamentField?.type).toBe('relationship');
     expect(tournamentField?.relationTo).toBe('modern-rock-madness-tournaments');
     expect(tournamentField?.required).toBe(true);
@@ -30,8 +25,8 @@ describe('ModernRockMadnessMatches', () => {
 
   it('has band1 and band2 as relationships to modern-rock-madness-groups', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const band1 = allFields.find((f: { name?: string }) => f.name === 'band1');
-    const band2 = allFields.find((f: { name?: string }) => f.name === 'band2');
+    const band1 = allFields.find((f) => f.name === 'band1');
+    const band2 = allFields.find((f) => f.name === 'band2');
     expect(band1?.type).toBe('relationship');
     expect(band1?.relationTo).toBe('modern-rock-madness-groups');
     expect(band2?.type).toBe('relationship');
@@ -40,16 +35,16 @@ describe('ModernRockMadnessMatches', () => {
 
   it('has vote count fields with default value of 0', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const band1Votes = allFields.find((f: { name?: string }) => f.name === 'band1Votes');
-    const band2Votes = allFields.find((f: { name?: string }) => f.name === 'band2Votes');
+    const band1Votes = allFields.find((f) => f.name === 'band1Votes');
+    const band2Votes = allFields.find((f) => f.name === 'band2Votes');
     expect(band1Votes?.defaultValue).toBe(0);
     expect(band2Votes?.defaultValue).toBe(0);
   });
 
   it('has startTime and endTime as date fields with dayAndTime picker', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const startTime = allFields.find((f: { name?: string }) => f.name === 'startTime');
-    const endTime = allFields.find((f: { name?: string }) => f.name === 'endTime');
+    const startTime = allFields.find((f) => f.name === 'startTime');
+    const endTime = allFields.find((f) => f.name === 'endTime');
     expect(startTime?.type).toBe('date');
     expect(startTime?.required).toBe(true);
     expect(endTime?.type).toBe('date');
@@ -58,27 +53,27 @@ describe('ModernRockMadnessMatches', () => {
 
   it('has nextMatch as a self-referencing relationship', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const nextMatch = allFields.find((f: { name?: string }) => f.name === 'nextMatch');
+    const nextMatch = allFields.find((f) => f.name === 'nextMatch');
     expect(nextMatch?.type).toBe('relationship');
     expect(nextMatch?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has 6 round options covering the full tournament', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const roundField = allFields.find((f: { name?: string }) => f.name === 'round');
+    const roundField = allFields.find((f) => f.name === 'round');
     expect(roundField?.options).toHaveLength(6);
   });
 
   it('has winner as a relationship to modern-rock-madness-groups', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const winner = allFields.find((f: { name?: string }) => f.name === 'winner');
+    const winner = allFields.find((f) => f.name === 'winner');
     expect(winner?.type).toBe('relationship');
     expect(winner?.relationTo).toBe('modern-rock-madness-groups');
   });
 
   it('has no legacyId or migratedAt fields', () => {
     const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
-    const names = allFields.map((f: { name?: string }) => f.name);
+    const names = allFields.map((f) => f.name);
     expect(names).not.toContain('legacyId');
     expect(names).not.toContain('migratedAt');
   });
