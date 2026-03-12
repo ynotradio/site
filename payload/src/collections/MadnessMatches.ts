@@ -13,7 +13,6 @@ export const ModernRockMadnessMatches: CollectionConfig = {
     group: 'Modern Rock Madness',
     description: 'Tournament bracket matchups (63 matches per tournament).',
     components: {
-      beforeList: ['/payload/src/features/mrm-live/MatchesListHeader#MatchesListHeader'],
       views: {
         edit: {
           controls: {
