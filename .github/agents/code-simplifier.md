@@ -74,15 +74,26 @@ Read [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-qualit
 
 ### 3. Validate
 
-**CRITICAL - You MUST verify all checks pass locally BEFORE pushing:**
+**CRITICAL - You MUST actually run and verify all checks BEFORE creating a branch or pushing. Do not skip this step or assume checks pass.**
 
 ```bash
-yarn lint    # Must exit 0
-yarn test    # Must exit 0
-yarn build   # Must exit 0
+corepack enable && yarn install --immutable
+yarn lint    # Must exit 0 — if it fails, fix the code or revert and do not push
+yarn test    # Must exit 0 — if it fails, fix the code or revert and do not push
 ```
 
-All must pass. If validation fails, fix or revert changes. **Never push failing code.**
+If `yarn lint` fails:
+1. Read the exact error messages
+2. Fix the code to satisfy the linting rules
+3. Re-run `yarn lint` until it exits 0
+4. Only then proceed to create the PR
+
+**Never push code that fails lint or tests. No exceptions.**
+
+Common ESLint pitfalls to avoid:
+- `no-confusing-arrow`: Arrow functions with ternary bodies need explicit braces. Use `(x) => { if (...) return ...; return ...; }` instead of `(x) => condition ? a : b`
+- `implicit-arrow-linebreak`: Arrow function body must start on the same line as `=>`
+- `function-paren-newline`: Function call parens must be consistent (avoid trailing newlines before `)`)
 
 ### 4. Create PR
 
@@ -93,7 +104,7 @@ git commit -m "refactor: simplify code for improved clarity
 
 - [List specific improvements]
 
-All tests passing"
+All checks pass (lint + tests)"
 git push origin HEAD
 ```
 
