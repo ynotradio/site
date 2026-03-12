@@ -131,6 +131,20 @@ class PostgresModernRockMadness implements ModernRockMadness
             return ['id' => 8888];
         }
 
+        // DEBUG: capture time comparison for e2e diagnosis
+        $debug = $this->db->query("SELECT NOW()::text AS pg_now, current_setting('TIMEZONE') AS tz")->fetch();
+        $m1 = $this->db->prepare("SELECT start_time, end_time, pg_typeof(start_time)::text AS col_type FROM modern_rock_madness_matches WHERE tournament_id = :tid AND match_number = 1");
+        $m1->execute([':tid' => $tId]);
+        $m1r = $m1->fetch();
+        $this->_debugInfo = [
+            'pg_now' => $debug['pg_now'] ?? 'N/A',
+            'pg_tz' => $debug['tz'] ?? 'N/A',
+            'tid' => $tId,
+            'match1_start' => $m1r['start_time'] ?? 'N/A',
+            'match1_end' => $m1r['end_time'] ?? 'N/A',
+            'col_type' => $m1r['col_type'] ?? 'N/A',
+        ];
+
         $stmt = $this->db->prepare("
             SELECT {$this->matchSelectClause()}
             {$this->matchFromClause()}
@@ -144,6 +158,9 @@ class PostgresModernRockMadness implements ModernRockMadness
 
         return $row ? $this->formatMatch($row) : ['id' => 8888];
     }
+
+    /** @internal Debug info from last getCurrentMatch call */
+    public array $_debugInfo = [];
 
     /** {@inheritdoc} */
     public function getMatch(int $matchId): ?array
