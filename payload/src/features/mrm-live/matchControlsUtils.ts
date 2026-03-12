@@ -10,9 +10,9 @@ const GROUPS_BASE = `${COL}/modern-rock-madness-groups`;
 export const ROUND_LABELS: Record<string, string> = {
   1: 'Round 1',
   2: 'Round 2',
-  3: 'Sweet 16',
+  3: 'Swell 16',
   4: 'Elusive 8',
-  5: 'Final 4',
+  5: 'Fantastic 4',
   6: 'Championship',
 };
 

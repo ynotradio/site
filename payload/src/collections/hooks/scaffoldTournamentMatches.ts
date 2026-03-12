@@ -4,9 +4,9 @@
  * A 64-team single-elimination bracket has:
  *   Round 1 (64→32): 32 matches — 8 per region
  *   Round 2 (32→16): 16 matches — 4 per region
- *   Sweet 16 (16→8):  8 matches — 2 per region
+ *   Swell 16 (16→8):  8 matches — 2 per region
  *   Elusive 8 (8→4):  4 matches — 1 per region
- *   Final 4  (4→2):   2 matches — region 5
+ *   Fantastic 4  (4→2):   2 matches — region 5
  *   Championship:      1 match  — region 5
  *                     ──
  *                     63 total
@@ -20,12 +20,12 @@
  *   Week 1 (Mon–Thu): Round 1 — one region per day, 8 matches/day
  *   Week 2 Mon:       Round 2, regions 1-2 (8 matches)
  *   Week 2 Tue:       Round 2, regions 3-4 (8 matches)
- *   Week 2 Wed:       Sweet 16 (8 matches)
- *   Week 2 Thu:       Elusive 8 afternoon + Final 4 evening (6 matches)
+ *   Week 2 Wed:       Swell 16 (8 matches)
+ *   Week 2 Thu:       Elusive 8 afternoon + Fantastic 4 evening (6 matches)
  *   Week 2 Fri:       Championship (1 match)
  *
  * Daily slots: 10:00, 10:30, 11:00, 11:30 | 13:00, 13:30, 14:00, 14:30
- * Durations:   R1-R4 = 30 min, Final 4 = 60 min, Championship = 120 min
+ * Durations:   R1-R4 = 30 min, Fantastic 4 = 60 min, Championship = 120 min
  */
 
 import type { CollectionAfterChangeHook } from 'payload';
@@ -154,7 +154,7 @@ export const buildScheduleSlots = (): MatchSlot[] => {
   addStandardDay(33, 6); // Regions 1-2
   addStandardDay(41, 7); // Regions 3-4
 
-  // ── Week 2: Sweet 16 (Wed) ─────────────────────────────────────────
+  // ── Week 2: Swell 16 (Wed) ─────────────────────────────────────────
   addStandardDay(49, 8);
 
   // ── Week 2: Elusive 8 (Thu morning, 4 × 30 min) ───────────────────
@@ -168,7 +168,7 @@ export const buildScheduleSlots = (): MatchSlot[] => {
     });
   });
 
-  // ── Week 2: Final 4 (Thu afternoon, 2 × 60 min) ───────────────────
+  // ── Week 2: Fantastic 4 (Thu afternoon, 2 × 60 min) ───────────────────
   slots.push({
     matchNumber: 61,
     dayOffset: 9,
@@ -201,7 +201,7 @@ export const buildScheduleSlots = (): MatchSlot[] => {
 // ---------------------------------------------------------------------------
 
 /**
- * Return the region (1-4) for a match within rounds 1-4, or 5 for Final 4+.
+ * Return the region (1-4) for a match within rounds 1-4, or 5 for Fantastic 4+.
  */
 const getRegion = (matchNumber: number, roundMeta: RoundMeta): number => {
   if (roundMeta.matchesPerRegion === 0) return 5;
@@ -237,7 +237,7 @@ const buildTime = (baseDate: Date, dayOffset: number, hour: number, minute: numb
  * @param startDate – ISO-8601 date string for the tournament start (should be
  *   a Monday). The schedule follows the historical 2-week pattern:
  *   - 8 matches/day with 30-min slots in morning (10:00) and afternoon (13:00) blocks
- *   - Final 4 matches are 60 min, Championship is 120 min
+ *   - Fantastic 4 matches are 60 min, Championship is 120 min
  */
 export const generateBracketDefinitions = (startDate: string): MatchDefinition[] => {
   const baseDate = new Date(startDate);

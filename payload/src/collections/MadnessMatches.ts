@@ -64,9 +64,9 @@ export const ModernRockMadnessMatches: CollectionConfig = {
           options: [
             { label: 'Round 1 (64→32)', value: '1' },
             { label: 'Round 2 (32→16)', value: '2' },
-            { label: 'Sweet 16 (16→8)', value: '3' },
+            { label: 'Swell 16 (16→8)', value: '3' },
             { label: 'Elusive 8 (8→4)', value: '4' },
-            { label: 'Final 4 (4→2)', value: '5' },
+            { label: 'Fantastic 4 (4→2)', value: '5' },
             { label: 'Championship', value: '6' },
           ],
           admin: {
@@ -78,7 +78,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
           name: 'region',
           type: 'number',
           admin: {
-            description: 'Tournament region (1-4 for early rounds, 5 for Final 4+)',
+            description: 'Tournament region (1-4 for early rounds, 5 for Fantastic 4+)',
             width: '20%',
           },
         },
@@ -170,8 +170,13 @@ export const ModernRockMadnessMatches: CollectionConfig = {
           name: 'winner',
           type: 'relationship',
           relationTo: 'modern-rock-madness-groups',
+          filterOptions: ({ siblingData }) => {
+            const ids = [siblingData?.band1, siblingData?.band2].filter(Boolean);
+            if (ids.length === 0) return { id: { equals: '' } };
+            return { id: { in: ids } };
+          },
           admin: {
-            description: 'Match winner (set when match is closed)',
+            description: 'Match winner (must be Band 1 or Band 2)',
             width: '70%',
           },
         },

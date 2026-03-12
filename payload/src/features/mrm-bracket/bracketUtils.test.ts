@@ -58,7 +58,7 @@ describe('inferRegion', () => {
     expect(inferRegion(45)).toBe(4);
   });
 
-  it('maps R3 (Sweet 16) to correct regions', () => {
+  it('maps R3 (Swell 16) to correct regions', () => {
     expect(inferRegion(49)).toBe(1);
     expect(inferRegion(51)).toBe(2);
     expect(inferRegion(53)).toBe(3);
