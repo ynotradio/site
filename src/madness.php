@@ -70,7 +70,6 @@ function render_first_row($tournament_date = null) {
 $current_match = $madnessController->getCurrentMatch();
 // DEBUG: output current match data as HTML comment for e2e diagnosis
 $_debug_match_json = json_encode($current_match);
-$_debug_pg = json_encode($madnessController->mrmModel->_debugInfo ?? []);
 $match_id = $_POST['match_id'] ?? null;
 $band_id = $_POST['band_id'] ?? null;
 $voter_email = $_POST['voter_email'] ?? null;
@@ -99,7 +98,6 @@ if ($voter_email_for_body) {
 
 <!-- <?php echo date('Y-m-d H:i:s'); ?> -->
 <!-- DEBUG_CURRENT_MATCH:<?php echo $_debug_match_json; ?> -->
-<!-- DEBUG_PG_INFO:<?php echo $_debug_pg; ?> -->
 <!-- DEBUG_PHP_NOW:<?php echo date('Y-m-d\TH:i:s\Z'); ?> -->
 <?php if ($preview_mode): ?>
 <div style="background-color: #FFEB3B; color: #000; padding: 10px; text-align: center; margin-bottom: 10px; border-radius: 4px;">

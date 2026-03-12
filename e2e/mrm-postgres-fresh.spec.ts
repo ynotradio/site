@@ -209,12 +209,9 @@ test.describe('MRM Postgres — Fresh Tournament — Active Match', () => {
     const html = await page.content();
     // Extract debug comments
     const matchDebug = html.match(/DEBUG_CURRENT_MATCH:(.*?)-->/)?.[1] ?? 'NOT FOUND';
-    const pgInfo = html.match(/DEBUG_PG_INFO:(.*?)-->/)?.[1] ?? 'NOT FOUND';
     const phpNow = html.match(/DEBUG_PHP_NOW:(.*?)-->/)?.[1] ?? 'NOT FOUND';
     // eslint-disable-next-line no-console
     console.log(`[DEBUG] getCurrentMatch = ${matchDebug}`);
-    // eslint-disable-next-line no-console
-    console.log(`[DEBUG] PG INFO = ${pgInfo}`);
     // eslint-disable-next-line no-console
     console.log(`[DEBUG] PHP NOW = ${phpNow}`);
     // This test always passes — it's just for logging
