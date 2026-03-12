@@ -21,9 +21,7 @@ import { test as baseTest, expect } from '@playwright/test';
 import { captureScreenshot, checkForPhpErrors, navigateWithRetry } from './utils/test-helpers';
 
 // Use PLAYWRIGHT_LEGACY_URL for CI Docker networking; fall back to localhost for local dev.
-const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL
-  || process.env.LEGACY_BASE_URL
-  || 'http://localhost:8080';
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 
 const MRM_FRESH_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
@@ -113,8 +111,9 @@ test.describe('MRM Postgres — Fresh Tournament — Basic Rendering', () => {
     // Wait for bracket to be populated by JS
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
     // Wait for first .band_abbr span to contain actual content (not empty)
-    await expect(page.locator('mrm-bracket-match').first().locator('.band_abbr').first())
-      .not.toHaveText('', { timeout: 5000 });
+    await expect(
+      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
+    ).not.toHaveText('', { timeout: 5000 });
 
     // The first mrm-bracket-match is match 1 (Region 1, Round 1).
     // Its .band_abbr spans should show the seeded abbreviations 'JBrekie' and 'ChlyBls'.
@@ -138,8 +137,9 @@ test.describe('MRM Postgres — Fresh Tournament — Basic Rendering', () => {
 
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
     // Wait for web-component to render abbreviations
-    await expect(page.locator('mrm-bracket-match').first().locator('.band_abbr').first())
-      .not.toHaveText('', { timeout: 5000 });
+    await expect(
+      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
+    ).not.toHaveText('', { timeout: 5000 });
     const firstMatch = page.locator('mrm-bracket-match').first();
     const abbrs = firstMatch.locator('.band_abbr');
 
@@ -153,8 +153,11 @@ test.describe('MRM Postgres — Fresh Tournament — Basic Rendering', () => {
 
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
     // Wait for web-component rendering to stabilize
-    await expect(page.locator('mrm-bracket-match').first().locator('.seed').first())
-      .not.toHaveText('', { timeout: 5000 });
+    await expect(page.locator('mrm-bracket-match').first().locator('.seed').first()).not.toHaveText(
+      '',
+      { timeout: 5000 },
+    );
+    const seedElements = page.locator('mrm-bracket-match .seed');
     const seedCount = await seedElements.count();
     // 63 matches × 2 bands each = 126 seed spans
     expect(seedCount).toBeGreaterThanOrEqual(126);
@@ -298,7 +301,7 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
     const pageContent = await page.content();
     // No winner exists, so no champion heading should be present.
     expect(pageContent).not.toContain('mrm-champion');
-    expect(pageContent.toLowerCase()).not.toContain('this year\'s champion');
+    expect(pageContent.toLowerCase()).not.toContain("this year's champion");
   });
 
   test('does NOT show vote percentages for future bracket matches', async ({ page }) => {
@@ -306,8 +309,9 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
 
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
     // Wait for web-component rendering to stabilize (band_abbr should contain content)
-    await expect(page.locator('mrm-bracket-match').first().locator('.band_abbr').first())
-      .not.toHaveText('', { timeout: 5000 });
+    await expect(
+      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
+    ).not.toHaveText('', { timeout: 5000 });
     // on bracket match elements for future (non-running) round 1 matches.
     // Check the second match (index 1) which is in the future and has no votes.
     const secondMatch = page.locator('mrm-bracket-match').nth(1);
