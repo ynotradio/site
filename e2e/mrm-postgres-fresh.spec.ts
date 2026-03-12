@@ -204,6 +204,20 @@ test.describe('MRM Postgres — Fresh Tournament — Basic Rendering', () => {
 // ---------------------------------------------------------------------------
 
 test.describe('MRM Postgres — Fresh Tournament — Active Match', () => {
+  test('DEBUG: dump getCurrentMatch result from page source', async ({ page }) => {
+    await navigateWithRetry(page, MRM_FRESH_URL);
+    const html = await page.content();
+    // Extract debug comments
+    const matchDebug = html.match(/DEBUG_CURRENT_MATCH:(.*?)-->/)?.[1] ?? 'NOT FOUND';
+    const phpNow = html.match(/DEBUG_PHP_NOW:(.*?)-->/)?.[1] ?? 'NOT FOUND';
+    // eslint-disable-next-line no-console
+    console.log(`[DEBUG] getCurrentMatch = ${matchDebug}`);
+    // eslint-disable-next-line no-console
+    console.log(`[DEBUG] PHP NOW = ${phpNow}`);
+    // This test always passes — it's just for logging
+    expect(true).toBe(true);
+  });
+
   test('renders the current match card for the running match', async ({ page }, testInfo) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
