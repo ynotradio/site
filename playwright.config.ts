@@ -6,12 +6,15 @@ const authFile = isCi ? '/tmp/.auth/payload-session.json' : './e2e/.auth/payload
 /**
  * Playwright E2E Test Configuration
  *
- * CI: Runs payload-basic.spec.ts only (no auth setup dependency)
+ * CI: Runs a curated set of spec files that work with the mrm-fresh seed:
+ *   payload-basic, mrm-postgres-fresh, mrm-postgres-extended, mrm-payload-admin
  * Local: Runs all tests with shared auth session
  */
 export default defineConfig({
   testDir: './e2e',
-  testMatch: isCi ? /(payload-basic|mrm-postgres-fresh)\.spec\.ts/ : undefined,
+  testMatch: isCi
+    ? /(payload-basic|mrm-postgres-fresh|mrm-postgres-extended|mrm-payload-admin)\.spec\.ts/
+    : undefined,
 
   timeout: isCi ? 60_000 : 20_000,
   expect: { timeout: 10_000 },
