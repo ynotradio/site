@@ -1,6 +1,7 @@
 [build]
   command = "npm run payload:migrate && yarn build"
   publish = ".next"
+  ignore = "./scripts/netlify-ignore.sh"
 
 [functions]
   # Externalize lexical packages to prevent esbuild from bundling them as CJS
