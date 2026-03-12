@@ -69,7 +69,11 @@ services:
         
         echo '=== Starting Payload ==='
         yarn payload:migrate
-        yarn seed:mrm:fresh
+        # Run seed directly (yarn script may not be found if Docker layer cached old package.json)
+        npx tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts || {
+          echo '=== SEED FAILED — aborting container ==='
+          exit 1
+        }
         
         # Trap signals to prevent unexpected exits
         trap 'echo "Received SIGTERM, ignoring..."' TERM

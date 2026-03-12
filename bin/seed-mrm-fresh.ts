@@ -11,7 +11,7 @@ import config from '@payload-config';
  * - 1 tournament (Modern Rock Madness 2026, status: active)
  * - 64 groups (bands) with the same roster as the 2025 tournament
  * - 63 matches (full bracket, no winners, no votes)
- *   - Match 1 is set to be currently RUNNING (start: now-15min, end: now+15min)
+ *   - Match 1 is set to be currently RUNNING (start: now-2h, end: now+2h)
  *   - All other matches are in the future
  * - nextMatch links wired by the scaffold hook automatically
  *
@@ -121,8 +121,9 @@ async function seedMrmFresh() {
 
     // ── Set match 1 to "currently running" ─────────────────────────────────
     const now = new Date();
-    const match1Start = new Date(now.getTime() - 15 * 60 * 1000);
-    const match1End = new Date(now.getTime() + 15 * 60 * 1000);
+    // Wide window (±2 hours) so the match is still "running" even if CI is slow.
+    const match1Start = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+    const match1End = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
     await payload.update({
       collection: 'modern-rock-madness-matches',
