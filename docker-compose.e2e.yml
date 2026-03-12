@@ -69,6 +69,7 @@ services:
         
         echo '=== Starting Payload ==='
         yarn payload:migrate
+        yarn seed:mrm:fresh
         
         # Trap signals to prevent unexpected exits
         trap 'echo "Received SIGTERM, ignoring..."' TERM

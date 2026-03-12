@@ -36,6 +36,7 @@
     "payload:migrate:create": "tsx --import ./bin/preload-nextenv-fix.mjs node_modules/.bin/payload migrate:create",
     "payload:migrate:status": "tsx --import ./bin/preload-nextenv-fix.mjs node_modules/.bin/payload migrate:status",
     "seed:mrm": "tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm.ts",
+    "seed:mrm:fresh": "tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts",
     "seed:payload": "tsx bin/seed-payload.ts",
     "seed:legacy": "./bin/seed-legacy.sh",
     "seed": "yarn seed:payload && yarn seed:legacy",
