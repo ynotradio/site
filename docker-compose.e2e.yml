@@ -68,12 +68,18 @@ services:
         cd /app
         
         echo '=== Starting Payload ==='
+        # Debug: verify key files exist in the image
+        echo '--- /app contents ---'
+        ls /app/bin/preload-nextenv-fix.mjs /app/bin/seed-mrm-fresh.ts 2>&1 || true
+        grep 'seed:mrm:fresh' /app/package.json 2>&1 || echo 'seed:mrm:fresh NOT in package.json'
+        echo '---'
+        
         yarn payload:migrate
-        # Debug: verify seed files exist
-        ls -la bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts
-        # Use tsx binary directly (npx resolves modules differently, causing ERR_MODULE_NOT_FOUND)
+        # Use tsx binary directly; yarn script name depends on package.json being up to date
         ./node_modules/.bin/tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts || {
           echo '=== SEED FAILED — aborting container ==='
+          echo 'Contents of /app/bin:'
+          ls -la /app/bin/ 2>&1 || echo '/app/bin does not exist'
           exit 1
         }
         
