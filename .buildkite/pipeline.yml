@@ -51,7 +51,7 @@ steps:
       echo "📦 Building and pulling images..."
       docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
       docker pull ghcr.io/ynotradio/site/playwright:latest &
-      docker build --no-cache --load -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
+      docker build --load -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
       wait
       
       # Start databases first

@@ -55,9 +55,7 @@ services:
       - sh
       - -c
       - |
-        set -x
-        echo '=== Payload container starting ==='
-        node --version
+        set -e
         
         # WORKAROUND: DinD esbuild version mismatch
         cd node_modules/tsx/node_modules
@@ -67,22 +65,13 @@ services:
         rm -f esbuild-wasm-*.tgz
         cd /app
         
-        echo '=== Starting Payload ==='
-        # Debug: verify key files exist in the image
-        echo '--- /app contents ---'
-        ls /app/bin/preload-nextenv-fix.mjs /app/bin/seed-mrm-fresh.ts 2>&1 || true
-        grep 'seed:mrm:fresh' /app/package.json 2>&1 || echo 'seed:mrm:fresh NOT in package.json'
-        echo '---'
-        
         yarn payload:migrate
-        # Use tsx binary directly; yarn script name depends on package.json being up to date
         ./node_modules/.bin/tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts || {
           echo '=== SEED FAILED — aborting container ==='
-          echo 'Contents of /app/bin:'
-          ls -la /app/bin/ 2>&1 || echo '/app/bin does not exist'
           exit 1
         }
         
+        set +e
         # Trap signals to prevent unexpected exits
         trap 'echo "Received SIGTERM, ignoring..."' TERM
         trap 'echo "Received SIGINT, ignoring..."' INT
