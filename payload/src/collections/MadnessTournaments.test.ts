@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessTournaments } from './MadnessTournaments';
+import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 describe('ModernRockMadnessTournaments', () => {
   it('has the correct slug', () => {
@@ -35,14 +36,14 @@ describe('ModernRockMadnessTournaments', () => {
     expect(statusField?.defaultValue).toBe('draft');
   });
 
-  it('has year as unique and indexed', () => {
+  it('has year as indexed (not unique)', () => {
     const fields = ModernRockMadnessTournaments.fields as Array<{
       name: string;
       unique?: boolean;
       index?: boolean;
     }>;
     const yearField = fields.find((f) => f.name === 'year');
-    expect(yearField?.unique).toBe(true);
+    expect(yearField?.unique).toBe(false);
     expect(yearField?.index).toBe(true);
   });
 
@@ -72,5 +73,9 @@ describe('ModernRockMadnessTournaments', () => {
 
   it('has timestamps enabled', () => {
     expect(ModernRockMadnessTournaments.timestamps).toBe(true);
+  });
+
+  it('has scaffoldTournamentMatches as an afterChange hook', () => {
+    expect(ModernRockMadnessTournaments.hooks?.afterChange).toContain(scaffoldTournamentMatches);
   });
 });

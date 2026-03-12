@@ -30,7 +30,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: ({ req }) => hasRole(req.user, ['admin']),
+    create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
@@ -82,6 +82,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
       fields: [
         {
           name: 'band1',
+          label: 'Group 1',
           type: 'relationship',
           relationTo: 'modern-rock-madness-groups',
           admin: {
@@ -91,6 +92,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
         },
         {
           name: 'band2',
+          label: 'Group 2',
           type: 'relationship',
           relationTo: 'modern-rock-madness-groups',
           admin: {
@@ -105,6 +107,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
       fields: [
         {
           name: 'band1Votes',
+          label: 'Group 1 Votes',
           type: 'number',
           defaultValue: 0,
           admin: {
@@ -114,6 +117,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
         },
         {
           name: 'band2Votes',
+          label: 'Group 2 Votes',
           type: 'number',
           defaultValue: 0,
           admin: {

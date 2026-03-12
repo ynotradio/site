@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
+import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 export const ModernRockMadnessTournaments: CollectionConfig = {
   slug: 'modern-rock-madness-tournaments',
@@ -7,13 +8,15 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     singular: 'Tournament',
     plural: 'Tournaments',
   },
+  hooks: {
+    afterChange: [scaffoldTournamentMatches],
+  },
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'year', 'status', 'startDate', 'updatedAt'],
     group: 'Modern Rock Madness',
     description: 'Annual Modern Rock Madness tournament configuration.',
     components: {
-      beforeList: ['/payload/src/features/mrm-bracket/TournamentsListHeader#TournamentsListHeader'],
       views: {
         edit: {
           bracket: {
@@ -31,7 +34,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
   },
   access: {
     read: () => true,
-    create: ({ req }) => hasRole(req.user, ['admin']),
+    create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
@@ -48,7 +51,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
       name: 'year',
       type: 'number',
       required: true,
-      unique: true,
+      unique: false,
       index: true,
       admin: {
         description: 'Tournament year',

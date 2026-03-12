@@ -121,10 +121,11 @@ export default buildConfig({
   },
   // CORS: Allow requests from these origins (set PAYLOAD_CORS env var in production)
   cors: coerceList(
-    process.env.PAYLOAD_CORS ?? 'http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173',
+    process.env.PAYLOAD_CORS
+      ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
   ),
   // CSRF: Protect against CSRF attacks (set PAYLOAD_CSRF env var in production)
-  csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000'),
+  csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
   collections: [
     Users,
     Media,
