@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessMatchEvents } from './MadnessMatchEvents';
+import { flattenRowFields } from './testUtils';
 
 describe('ModernRockMadnessMatchEvents', () => {
   it('has the correct slug', () => {
@@ -11,34 +12,24 @@ describe('ModernRockMadnessMatchEvents', () => {
   });
 
   it('has required fields', () => {
-    const fields = ModernRockMadnessMatchEvents.fields as Array<{
-      name: string;
-      required?: boolean;
-    }>;
-    const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessMatchEvents.fields);
+    const requiredNames = allFields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('match');
     expect(requiredNames).toContain('eventType');
   });
 
   it('has match as a relationship to modern-rock-madness-matches', () => {
-    const fields = ModernRockMadnessMatchEvents.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const matchField = fields.find((f) => f.name === 'match');
+    const allFields = flattenRowFields(ModernRockMadnessMatchEvents.fields);
+    const matchField = allFields.find((f) => f.name === 'match');
     expect(matchField?.type).toBe('relationship');
     expect(matchField?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has 4 event type options', () => {
-    const fields = ModernRockMadnessMatchEvents.fields as Array<{
-      name: string;
-      options?: Array<{ value: string }>;
-    }>;
-    const eventTypeField = fields.find((f) => f.name === 'eventType');
+    const allFields = flattenRowFields(ModernRockMadnessMatchEvents.fields);
+    const eventTypeField = allFields.find((f) => f.name === 'eventType');
     expect(eventTypeField?.options).toHaveLength(4);
-    const values = eventTypeField?.options?.map((o) => o.value);
+    const values = (eventTypeField?.options as Array<{ value: string }>)?.map((o) => o.value);
     expect(values).toContain('overtime_extended');
     expect(values).toContain('rematch');
     expect(values).toContain('admin_vote');
@@ -46,8 +37,8 @@ describe('ModernRockMadnessMatchEvents', () => {
   });
 
   it('has snapshot as a JSON field', () => {
-    const fields = ModernRockMadnessMatchEvents.fields as Array<{ name: string; type: string }>;
-    const snapshotField = fields.find((f) => f.name === 'snapshot');
+    const allFields = flattenRowFields(ModernRockMadnessMatchEvents.fields);
+    const snapshotField = allFields.find((f) => f.name === 'snapshot');
     expect(snapshotField?.type).toBe('json');
   });
 

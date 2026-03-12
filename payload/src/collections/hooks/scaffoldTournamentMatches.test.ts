@@ -21,12 +21,14 @@ describe('buildScheduleSlots', () => {
   });
 
   it('uses 30 min duration for rounds 1-4 (matches 1-60)', () => {
-    slots.filter((s) => s.matchNumber <= 60).forEach((s) => {
-      expect(s.durationMinutes).toBe(30);
-    });
+    slots
+      .filter((s) => s.matchNumber <= 60)
+      .forEach((s) => {
+        expect(s.durationMinutes).toBe(30);
+      });
   });
 
-  it('uses 60 min duration for Final 4 (matches 61-62)', () => {
+  it('uses 60 min duration for Fantastic 4 (matches 61-62)', () => {
     [61, 62].forEach((n) => {
       expect(slots.find((s) => s.matchNumber === n)?.durationMinutes).toBe(60);
     });
@@ -62,7 +64,7 @@ describe('generateBracketDefinitions', () => {
   });
 
   // ── Region assignments ────────────────────────────────────────────────
-  it('assigns regions 1-4 for rounds 1-4 and region 5 for Final 4+', () => {
+  it('assigns regions 1-4 for rounds 1-4 and region 5 for Fantastic 4+', () => {
     defs.forEach((d) => {
       if (['1', '2', '3', '4'].includes(d.round)) {
         expect(d.region).toBeGreaterThanOrEqual(1);
@@ -93,7 +95,7 @@ describe('generateBracketDefinitions', () => {
     expect(championship?.nextMatchNumber).toBeUndefined();
   });
 
-  it('Final 4 matches both advance to championship', () => {
+  it('Fantastic 4 matches both advance to championship', () => {
     const m61 = defs.find((d) => d.matchNumber === 61);
     const m62 = defs.find((d) => d.matchNumber === 62);
     expect(m61?.nextMatchNumber).toBe(63);
@@ -174,17 +176,21 @@ describe('generateBracketDefinitions', () => {
 
   // ── Schedule: match durations ─────────────────────────────────────────
   it('rounds 1-4 matches are 30 minutes long', () => {
-    defs.filter((d) => ['1', '2', '3', '4'].includes(d.round)).forEach((d) => {
-      const diff = new Date(d.endTime).getTime() - new Date(d.startTime).getTime();
-      expect(diff).toBe(30 * 60_000);
-    });
+    defs
+      .filter((d) => ['1', '2', '3', '4'].includes(d.round))
+      .forEach((d) => {
+        const diff = new Date(d.endTime).getTime() - new Date(d.startTime).getTime();
+        expect(diff).toBe(30 * 60_000);
+      });
   });
 
-  it('Final 4 matches are 60 minutes long', () => {
-    defs.filter((d) => d.round === '5').forEach((d) => {
-      const diff = new Date(d.endTime).getTime() - new Date(d.startTime).getTime();
-      expect(diff).toBe(60 * 60_000);
-    });
+  it('Fantastic 4 matches are 60 minutes long', () => {
+    defs
+      .filter((d) => d.round === '5')
+      .forEach((d) => {
+        const diff = new Date(d.endTime).getTime() - new Date(d.startTime).getTime();
+        expect(diff).toBe(60 * 60_000);
+      });
   });
 
   it('Championship match is 120 minutes long', () => {

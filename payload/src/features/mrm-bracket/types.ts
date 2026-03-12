@@ -41,9 +41,9 @@ export interface MatchesApiResponse {
 export const ROUND_LABELS: Record<string, string> = {
   1: 'Round 1 (64→32)',
   2: 'Round 2 (32→16)',
-  3: 'Sweet 16 (16→8)',
+  3: 'Swell 16 (16→8)',
   4: 'Elusive 8 (8→4)',
-  5: 'Final 4 (4→2)',
+  5: 'Fantastic 4 (4→2)',
   6: 'Championship',
 };
 

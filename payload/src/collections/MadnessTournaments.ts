@@ -48,40 +48,48 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
       },
     },
     {
-      name: 'year',
-      type: 'number',
-      required: true,
-      unique: false,
-      index: true,
-      admin: {
-        description: 'Tournament year',
-      },
-    },
-    {
-      name: 'startDate',
-      type: 'date',
-      required: true,
-      admin: {
-        description: 'Tournament start date',
-        date: {
-          displayFormat: 'yyyy-MM-dd',
+      type: 'row',
+      fields: [
+        {
+          name: 'year',
+          type: 'number',
+          required: true,
+          unique: false,
+          index: true,
+          admin: {
+            description: 'Tournament year',
+            width: '20%',
+          },
         },
-      },
-    },
-    {
-      name: 'status',
-      type: 'select',
-      required: true,
-      defaultValue: 'draft',
-      options: [
-        { label: 'Draft', value: 'draft' },
-        { label: 'Active', value: 'active' },
-        { label: 'Complete', value: 'complete' },
+        {
+          name: 'startDate',
+          type: 'date',
+          required: true,
+          admin: {
+            description: 'Tournament start date',
+            date: {
+              displayFormat: 'yyyy-MM-dd',
+            },
+            width: '40%',
+          },
+        },
+        {
+          name: 'status',
+          type: 'select',
+          required: true,
+          defaultValue: 'draft',
+          options: [
+            { label: 'Draft', value: 'draft' },
+            { label: 'Active', value: 'active' },
+            { label: 'Complete', value: 'complete' },
+          ],
+          index: true,
+          admin: {
+            description: 'Tournament status. Only one tournament should be "active" at a time.',
+            width: '40%',
+          },
+        },
       ],
-      index: true,
-      admin: {
-        description: 'Tournament status. Only one tournament should be "active" at a time.',
-      },
     },
     {
       name: 'bracketPdfUrl',

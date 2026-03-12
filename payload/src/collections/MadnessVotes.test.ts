@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessVotes } from './MadnessVotes';
+import { flattenRowFields } from './testUtils';
 
 describe('ModernRockMadnessVotes', () => {
   it('has the correct slug', () => {
@@ -11,50 +12,42 @@ describe('ModernRockMadnessVotes', () => {
   });
 
   it('has required fields', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{ name: string; required?: boolean }>;
-    const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const requiredNames = allFields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('match');
     expect(requiredNames).toContain('group');
     expect(requiredNames).toContain('userId');
   });
 
   it('has match as a relationship to modern-rock-madness-matches', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const matchField = fields.find((f) => f.name === 'match');
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const matchField = allFields.find((f) => f.name === 'match');
     expect(matchField?.type).toBe('relationship');
     expect(matchField?.relationTo).toBe('modern-rock-madness-matches');
   });
 
   it('has group as a relationship to modern-rock-madness-groups', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{
-      name: string;
-      type: string;
-      relationTo?: string;
-    }>;
-    const groupField = fields.find((f) => f.name === 'group');
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const groupField = allFields.find((f) => f.name === 'group');
     expect(groupField?.type).toBe('relationship');
     expect(groupField?.relationTo).toBe('modern-rock-madness-groups');
   });
 
   it('has userId indexed for duplicate prevention', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{ name: string; index?: boolean }>;
-    const userIdField = fields.find((f) => f.name === 'userId');
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const userIdField = allFields.find((f) => f.name === 'userId');
     expect(userIdField?.index).toBe(true);
   });
 
   it('does not collect IP addresses (Auth0 handles duplicate prevention)', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{ name: string }>;
-    const names = fields.map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const names = allFields.map((f) => f.name);
     expect(names).not.toContain('voterIp');
   });
 
   it('has no legacyId or migratedAt fields', () => {
-    const fields = ModernRockMadnessVotes.fields as Array<{ name: string }>;
-    const names = fields.map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessVotes.fields);
+    const names = allFields.map((f) => f.name);
     expect(names).not.toContain('legacyId');
     expect(names).not.toContain('migratedAt');
   });

@@ -21,29 +21,36 @@ export const ModernRockMadnessMatchEvents: CollectionConfig = {
   },
   fields: [
     {
-      name: 'match',
-      type: 'relationship',
-      relationTo: 'modern-rock-madness-matches',
-      required: true,
-      index: true,
-      admin: {
-        description: 'Match this event relates to',
-      },
-    },
-    {
-      name: 'eventType',
-      type: 'select',
-      required: true,
-      index: true,
-      options: [
-        { label: 'Overtime Extended', value: 'overtime_extended' },
-        { label: 'Rematch', value: 'rematch' },
-        { label: 'Admin Vote', value: 'admin_vote' },
-        { label: 'Match Closed', value: 'match_closed' },
+      type: 'row',
+      fields: [
+        {
+          name: 'match',
+          type: 'relationship',
+          relationTo: 'modern-rock-madness-matches',
+          required: true,
+          index: true,
+          admin: {
+            description: 'Match this event relates to',
+            width: '50%',
+          },
+        },
+        {
+          name: 'eventType',
+          type: 'select',
+          required: true,
+          index: true,
+          options: [
+            { label: 'Overtime Extended', value: 'overtime_extended' },
+            { label: 'Rematch', value: 'rematch' },
+            { label: 'Admin Vote', value: 'admin_vote' },
+            { label: 'Match Closed', value: 'match_closed' },
+          ],
+          admin: {
+            description: 'Type of admin action performed',
+            width: '50%',
+          },
+        },
       ],
-      admin: {
-        description: 'Type of admin action performed',
-      },
     },
     {
       name: 'snapshot',

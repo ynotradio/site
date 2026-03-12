@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ModernRockMadnessTournaments } from './MadnessTournaments';
 import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
+import { flattenRowFields } from './testUtils';
 
 describe('ModernRockMadnessTournaments', () => {
   it('has the correct slug', () => {
@@ -16,11 +17,8 @@ describe('ModernRockMadnessTournaments', () => {
   });
 
   it('has required fields', () => {
-    const fields = ModernRockMadnessTournaments.fields as Array<{
-      name: string;
-      required?: boolean;
-    }>;
-    const requiredNames = fields.filter((f) => f.required).map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessTournaments.fields);
+    const requiredNames = allFields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('name');
     expect(requiredNames).toContain('year');
     expect(requiredNames).toContain('startDate');
@@ -28,21 +26,14 @@ describe('ModernRockMadnessTournaments', () => {
   });
 
   it('has draft as default status', () => {
-    const fields = ModernRockMadnessTournaments.fields as Array<{
-      name: string;
-      defaultValue?: string;
-    }>;
-    const statusField = fields.find((f) => f.name === 'status');
+    const allFields = flattenRowFields(ModernRockMadnessTournaments.fields);
+    const statusField = allFields.find((f) => f.name === 'status');
     expect(statusField?.defaultValue).toBe('draft');
   });
 
   it('has year as indexed (not unique)', () => {
-    const fields = ModernRockMadnessTournaments.fields as Array<{
-      name: string;
-      unique?: boolean;
-      index?: boolean;
-    }>;
-    const yearField = fields.find((f) => f.name === 'year');
+    const allFields = flattenRowFields(ModernRockMadnessTournaments.fields);
+    const yearField = allFields.find((f) => f.name === 'year');
     expect(yearField?.unique).toBe(false);
     expect(yearField?.index).toBe(true);
   });
@@ -59,8 +50,8 @@ describe('ModernRockMadnessTournaments', () => {
   });
 
   it('has no legacyId or migratedAt fields', () => {
-    const fields = ModernRockMadnessTournaments.fields as Array<{ name: string }>;
-    const names = fields.map((f) => f.name);
+    const allFields = flattenRowFields(ModernRockMadnessTournaments.fields);
+    const names = allFields.map((f) => f.name);
     expect(names).not.toContain('legacyId');
     expect(names).not.toContain('migratedAt');
   });
