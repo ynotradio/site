@@ -82,8 +82,8 @@ class PostgresModernRockMadness implements ModernRockMadness
             COALESCE(m.band1_votes, 0)                       AS band1_votes,
             COALESCE(g2.placement, 0)                        AS band2_id,
             COALESCE(m.band2_votes, 0)                       AS band2_votes,
-            TO_CHAR(m.start_time AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS start_time,
-            TO_CHAR(m.end_time   AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS end_time,
+            TO_CHAR(m.start_time::timestamptz AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS start_time,
+            TO_CHAR(m.end_time::timestamptz   AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS end_time,
             COALESCE(gw.placement, 0)                        AS winner_id,
             m.show_score,
             COALESCE(m.sponsor, '')                          AS sponsor,
@@ -135,8 +135,8 @@ class PostgresModernRockMadness implements ModernRockMadness
             SELECT {$this->matchSelectClause()}
             {$this->matchFromClause()}
             WHERE m.tournament_id = :tid
-              AND NOW() >= m.start_time
-              AND NOW() <  m.end_time
+              AND NOW() >= m.start_time::timestamptz
+              AND NOW() <  m.end_time::timestamptz
             LIMIT 1
         ");
         $stmt->execute([':tid' => $tId]);
@@ -179,12 +179,12 @@ class PostgresModernRockMadness implements ModernRockMadness
                 m.match_number                                   AS id,
                 COALESCE(g1.placement, 0)                        AS band1_id,
                 COALESCE(g2.placement, 0)                        AS band2_id,
-                TO_CHAR(m.start_time AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS start_time,
-                TO_CHAR(m.start_time AT TIME ZONE 'UTC', 'HH12:MI')               AS fdate
+                TO_CHAR(m.start_time::timestamptz AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS start_time,
+                TO_CHAR(m.start_time::timestamptz AT TIME ZONE 'UTC', 'HH12:MI')               AS fdate
             {$this->matchFromClause()}
             WHERE m.tournament_id = :tid
-              AND NOW() < m.start_time
-            ORDER BY m.start_time ASC
+              AND NOW() < m.start_time::timestamptz
+            ORDER BY m.start_time::timestamptz ASC
             LIMIT 1
         ");
         $stmt->execute([':tid' => $tId]);
@@ -286,7 +286,8 @@ class PostgresModernRockMadness implements ModernRockMadness
             return 'early';
         }
 
-        $now = date('Y-m-d H:i:s');
+        // Times from matchSelectClause() are always UTC, so compare with gmdate
+        $now = gmdate('Y-m-d H:i:s');
 
         if ($now > $match['end_time']) {
             return 'over';
@@ -311,7 +312,7 @@ class PostgresModernRockMadness implements ModernRockMadness
         if (!$match) {
             return false;
         }
-        $now = date('Y-m-d H:i:s');
+        $now = gmdate('Y-m-d H:i:s');
         return $match['end_time'] < $now && $match['winner_id'] === 0;
     }
 

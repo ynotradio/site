@@ -55,9 +55,7 @@ services:
       - sh
       - -c
       - |
-        set -x
-        echo '=== Payload container starting ==='
-        node --version
+        set -e
         
         # WORKAROUND: DinD esbuild version mismatch
         cd node_modules/tsx/node_modules
@@ -67,9 +65,13 @@ services:
         rm -f esbuild-wasm-*.tgz
         cd /app
         
-        echo '=== Starting Payload ==='
         yarn payload:migrate
+        ./node_modules/.bin/tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts || {
+          echo '=== SEED FAILED — aborting container ==='
+          exit 1
+        }
         
+        set +e
         # Trap signals to prevent unexpected exits
         trap 'echo "Received SIGTERM, ignoring..."' TERM
         trap 'echo "Received SIGINT, ignoring..."' INT
@@ -112,12 +114,15 @@ services:
       - POSTGRES_DATABASE=${POSTGRES_DB:-ynot_payload_dev}
       - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
+      - POSTGRES_SSL_MODE=disable
       - USE_POSTGRES_SCHEDULE=false
       # Auth0 dummy config
       - AUTH0_DOMAIN=test.auth0.com
       - AUTH0_CLIENT_ID=test-client-id
       - AUTH0_CLIENT_SECRET=test-client-secret
     depends_on:
+      postgres:
+        condition: service_healthy
       mysql:
         condition: service_healthy
     command: ["sh", "-c", "composer install --no-interaction --no-dev && php-fpm"]

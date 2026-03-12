@@ -11,7 +11,7 @@ const authFile = isCi ? '/tmp/.auth/payload-session.json' : './e2e/.auth/payload
  */
 export default defineConfig({
   testDir: './e2e',
-  testMatch: isCi ? /payload-basic\.spec\.ts/ : undefined,
+  testMatch: isCi ? /(payload-basic|mrm-postgres-fresh)\.spec\.ts/ : undefined,
 
   timeout: isCi ? 60_000 : 20_000,
   expect: { timeout: 10_000 },
