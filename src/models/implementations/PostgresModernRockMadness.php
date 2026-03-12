@@ -128,7 +128,7 @@ class PostgresModernRockMadness implements ModernRockMadness
     {
         $tId = $this->getActiveTournamentId();
         if (!$tId) {
-            return ['id' => 8888];
+            return ['id' => 8888, '_debug' => 'no_tournament_id'];
         }
 
         // DEBUG: capture time comparison for e2e diagnosis
@@ -136,14 +136,6 @@ class PostgresModernRockMadness implements ModernRockMadness
         $m1 = $this->db->prepare("SELECT start_time, end_time, pg_typeof(start_time)::text AS col_type FROM modern_rock_madness_matches WHERE tournament_id = :tid AND match_number = 1");
         $m1->execute([':tid' => $tId]);
         $m1r = $m1->fetch();
-        $this->_debugInfo = [
-            'pg_now' => $debug['pg_now'] ?? 'N/A',
-            'pg_tz' => $debug['tz'] ?? 'N/A',
-            'tid' => $tId,
-            'match1_start' => $m1r['start_time'] ?? 'N/A',
-            'match1_end' => $m1r['end_time'] ?? 'N/A',
-            'col_type' => $m1r['col_type'] ?? 'N/A',
-        ];
 
         $stmt = $this->db->prepare("
             SELECT {$this->matchSelectClause()}
@@ -156,7 +148,17 @@ class PostgresModernRockMadness implements ModernRockMadness
         $stmt->execute([':tid' => $tId]);
         $row = $stmt->fetch();
 
-        return $row ? $this->formatMatch($row) : ['id' => 8888];
+        $result = $row ? $this->formatMatch($row) : ['id' => 8888];
+        // Attach debug info to the result
+        $result['_debug'] = [
+            'pg_now' => $debug['pg_now'] ?? 'N/A',
+            'pg_tz' => $debug['tz'] ?? 'N/A',
+            'tid' => $tId,
+            'match1_start' => $m1r['start_time'] ?? 'N/A',
+            'match1_end' => $m1r['end_time'] ?? 'N/A',
+            'col_type' => $m1r['col_type'] ?? 'N/A',
+        ];
+        return $result;
     }
 
     /** @internal Debug info from last getCurrentMatch call */
@@ -303,7 +305,8 @@ class PostgresModernRockMadness implements ModernRockMadness
             return 'early';
         }
 
-        $now = date('Y-m-d H:i:s');
+        // Times from matchSelectClause() are always UTC, so compare with gmdate
+        $now = gmdate('Y-m-d H:i:s');
 
         if ($now > $match['end_time']) {
             return 'over';
@@ -328,7 +331,7 @@ class PostgresModernRockMadness implements ModernRockMadness
         if (!$match) {
             return false;
         }
-        $now = date('Y-m-d H:i:s');
+        $now = gmdate('Y-m-d H:i:s');
         return $match['end_time'] < $now && $match['winner_id'] === 0;
     }
 

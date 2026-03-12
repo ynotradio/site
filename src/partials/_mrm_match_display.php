@@ -85,8 +85,8 @@ $has_voted = $controller->hasVoted($match_id);
 
 <?php if ($is_current_match): ?>
     <div class="hidden" id="hr"><?php
-        $end_time = new DateTime($match['end_time']);
-        $now = new DateTime();
+        $end_time = new DateTime($match['end_time'], new DateTimeZone('UTC'));
+        $now = new DateTime('now', new DateTimeZone('UTC'));
         $interval = $now->diff($end_time);
         echo $interval->h;
     ?></div>
