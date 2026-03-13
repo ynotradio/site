@@ -15,10 +15,15 @@ COPY . .
 # Generate Payload types (if possible, don't fail if can't)
 RUN yarn payload:generate-types || echo "⚠️  Type generation skipped (needs database)"
 
+# Pre-build Next.js at image build time (payload.config.ts allows missing
+# DATABASE_URI during NEXT_PHASE=phase-production-build). Building here
+# avoids slow JIT compilation and dev server crashes during E2E tests.
+ENV NODE_OPTIONS=--max-old-space-size=4096
+RUN yarn build
+
 # Expose port
 EXPOSE 3000
 
-# Use dev mode - production build requires database connection
-# The first startup will be slow while Next.js compiles, but subsequent
-# requests are fast. Consider using a cached .next directory if needed.
-CMD ["sh", "-c", "yarn payload:migrate && yarn dev"]
+# Runtime: migrate + seed happen at container start (they need the database).
+# The production server is stable and fast — no restart loops needed.
+CMD ["sh", "-c", "yarn payload:migrate && yarn start"]

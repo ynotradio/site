@@ -4,8 +4,8 @@
 # Trigger: Automatically on main/master when Dockerfiles change (via pipeline.yml)
 # Purpose: Build and push pre-built Docker images to GHCR for faster CI/agent testing
 #
-# Note: This pipeline builds ALL images when triggered. The main pipeline.yml
-# decides whether to trigger based on Dockerfile changes.
+# Note: Payload image is NOT built here — it's always built locally in the E2E step
+# because it needs fresh dependencies and the esbuild DinD workaround.
 
 env:
   GHCR_REGISTRY: "ghcr.io"
@@ -15,33 +15,6 @@ steps:
   - group: ":docker: Build Docker Images"
     key: "build-images"
     steps:
-      - label: ":package: Build Payload Dev Image"
-        key: "build-payload"
-        command: |
-          echo "--- :docker: Logging into GHCR"
-          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-          
-          # Create short commit SHA (first 7 characters)
-          SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
-          
-          echo "--- :docker: Building Payload development image"
-          docker build \
-            -f Dockerfile.payload \
-            -t ghcr.io/$${GHCR_ORG}/payload-dev:$$SHORT_COMMIT \
-            -t ghcr.io/$${GHCR_ORG}/payload-dev:latest \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
-            .
-          
-          echo "--- :docker: Pushing Payload image to GHCR"
-          docker push ghcr.io/$${GHCR_ORG}/payload-dev:$$SHORT_COMMIT
-          docker push ghcr.io/$${GHCR_ORG}/payload-dev:latest
-        env:
-          GHCR_USERNAME: "${GHCR_USERNAME}"
-          GHCR_TOKEN: "${GHCR_TOKEN}"
-        agents:
-          queue: "default"
-          docker: "true"
-
       - label: ":php: Build PHP-FPM Dev Image"
         key: "build-phpfpm"
         command: |

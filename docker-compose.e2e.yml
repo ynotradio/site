@@ -44,7 +44,7 @@ services:
       - "3000:3000"
     environment:
       - CI=true
-      - NODE_ENV=development
+      - NODE_ENV=production
       - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
       - DATABASE_SSL=disable
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
@@ -57,7 +57,7 @@ services:
       - |
         set -e
         
-        # WORKAROUND: DinD esbuild version mismatch
+        # WORKAROUND: DinD esbuild version mismatch (needed for tsx seed scripts)
         cd node_modules/tsx/node_modules
         rm -rf esbuild @esbuild
         npm pack esbuild-wasm@0.27.3 2>&1
@@ -65,35 +65,23 @@ services:
         rm -f esbuild-wasm-*.tgz
         cd /app
         
+        echo "🔄 Running Payload migrations..."
         yarn payload:migrate
+        
+        echo "🌱 Seeding MRM tournament data..."
         ./node_modules/.bin/tsx --import ./bin/preload-nextenv-fix.mjs bin/seed-mrm-fresh.ts || {
           echo '=== SEED FAILED — aborting container ==='
           exit 1
         }
         
-        set +e
-        # Trap signals to prevent unexpected exits
-        trap 'echo "Received SIGTERM, ignoring..."' TERM
-        trap 'echo "Received SIGINT, ignoring..."' INT
-        trap 'echo "Received SIGHUP, ignoring..."' HUP
-        
-        # Keep a background process alive
-        tail -f /dev/null &
-        
-        # CRITICAL: Next.js dev server exits when stdin closes in detached containers
-        # Pipe `yes` to stdin to keep it alive. Restart loop provides resilience.
-        while true; do
-          echo "Starting Next.js dev server..."
-          yes 2>/dev/null | yarn dev --port 3000 2>&1 || true
-          echo "Next.js exited (code $?), restarting in 1 second..."
-          sleep 1
-        done
+        echo "🚀 Starting production server..."
+        exec yarn start --port 3000
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:3000 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 60
-      start_period: 30s
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 60s
 
   # === PHP-FPM for Legacy Site ===
   # Uses pre-built image with extensions compiled
