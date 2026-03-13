@@ -137,14 +137,9 @@ export const getCenterDisplay = (match: LiveMatch): CenterDisplay => {
 };
 
 // --- Collection URLs ---
-export const getVotesUrl = (matchId: string): string => {
-  const q = `?where[match][equals]=${matchId}`;
-  return `${VOTES_BASE}${q}`;
-};
+const matchFilterQuery = (matchId: string) => `?where[match][equals]=${matchId}`;
 
-export const getEventsUrl = (matchId: string): string => {
-  const q = `?where[match][equals]=${matchId}`;
-  return `${EVENTS_BASE}${q}`;
-};
+export const getVotesUrl = (matchId: string): string => `${VOTES_BASE}${matchFilterQuery(matchId)}`;
+export const getEventsUrl = (matchId: string): string => `${EVENTS_BASE}${matchFilterQuery(matchId)}`;
 
 export const getGroupUrl = (groupId: string): string => `${GROUPS_BASE}/${groupId}`;

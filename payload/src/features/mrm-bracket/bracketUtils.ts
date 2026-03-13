@@ -65,6 +65,10 @@ export const organizeForBracket = (matches: BracketMatch[]): BracketLayout => {
     },
   };
 
+  const semis = matches
+    .filter((x) => (x.region ?? inferRegion(x.matchNumber)) === 5 && parseInt(x.round, 10) === 5)
+    .sort((a, b) => a.matchNumber - b.matchNumber);
+
   matches.forEach((m) => {
     const region = m.region ?? inferRegion(m.matchNumber);
     const round = parseInt(m.round, 10);
@@ -72,15 +76,10 @@ export const organizeForBracket = (matches: BracketMatch[]): BracketLayout => {
     if (region === 5 || round >= 5) {
       if (round === 6 || m.matchNumber === 63) {
         layout.final = m;
+      } else if (semis[0]?.id === m.id) {
+        layout.semiLeft = m;
       } else {
-        const semis = matches
-          .filter((x) => {
-            const r = x.region ?? inferRegion(x.matchNumber);
-            return r === 5 && parseInt(x.round, 10) === 5;
-          })
-          .sort((a, b) => a.matchNumber - b.matchNumber);
-        if (semis[0]?.id === m.id) layout.semiLeft = m;
-        else layout.semiRight = m;
+        layout.semiRight = m;
       }
       return;
     }

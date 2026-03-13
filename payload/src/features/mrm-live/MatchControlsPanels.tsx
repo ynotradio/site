@@ -89,8 +89,7 @@ const BandColumn: React.FC<BandColumnProps> = ({
   const seed = getBandSeed(band);
   const imgUrl = getBandImageUrl(band);
   const name = getBandName(band);
-  const loserCls = 'match-controls-tab__band-col--loser';
-  const colCls = lost ? `match-controls-tab__band-col ${loserCls}` : 'match-controls-tab__band-col';
+  const colCls = `match-controls-tab__band-col${lost ? ' match-controls-tab__band-col--loser' : ''}`;
 
   return (
     <div className={colCls}>
@@ -178,9 +177,7 @@ export interface ActionButtonsProps {
   onRematch: (startISO: string, durationMin: number) => Promise<void>;
 }
 
-// eslint-disable-next-line max-len
 const DANGER_CLS = 'match-controls-tab__action-btn match-controls-tab__action-btn--danger';
-// eslint-disable-next-line max-len
 const WARN_CLS = 'match-controls-tab__action-btn match-controls-tab__action-btn--warning';
 const DEFAULT_CLS = 'match-controls-tab__action-btn';
 

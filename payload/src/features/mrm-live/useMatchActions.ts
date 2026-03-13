@@ -22,6 +22,15 @@ const logEvent = async (matchId: string, eventType: string, snapshot: object) =>
   });
 };
 
+const patchMatch = async (id: string, data: Record<string, unknown>): Promise<void> => {
+  const res = await fetch(`/api/modern-rock-madness-matches/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('PATCH failed');
+};
+
 export const useMatchActions = (
   match: LiveMatch | null,
   onComplete: () => Promise<void>,
@@ -56,12 +65,7 @@ export const useMatchActions = (
       const votesField = bandKey === 'band1' ? 'band1Votes' : 'band2Votes';
       const newCount = match[votesField] + 1;
       await withSaving('Manual vote', async () => {
-        const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [votesField]: newCount }),
-        });
-        if (!res.ok) throw new Error('PATCH failed');
+        await patchMatch(match.id, { [votesField]: newCount });
         await logEvent(match.id, 'admin_vote', {
           bandKey,
           band1Votes: match.band1Votes,
@@ -81,12 +85,7 @@ export const useMatchActions = (
       const winnerId = match.band1Votes > match.band2Votes ? band1.id : band2.id;
 
       // Close the match: set winner and enable public score display
-      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ winner: winnerId, showScore: true }),
-      });
-      if (!res.ok) throw new Error('PATCH failed');
+      await patchMatch(match.id, { winner: winnerId, showScore: true });
 
       // Bracket progression: advance winner to the open slot in the next match
       const nextMatchRef = match.nextMatch;
@@ -128,12 +127,7 @@ export const useMatchActions = (
       new Date(match.endTime).getTime() + OVERTIME_MINUTES * 60 * 1000,
     ).toISOString();
     await withSaving('Extend overtime', async () => {
-      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ endTime: newEnd }),
-      });
-      if (!res.ok) throw new Error('PATCH failed');
+      await patchMatch(match.id, { endTime: newEnd });
       await logEvent(match.id, 'overtime_extended', {
         previousEndTime: match.endTime,
         newEnd,
@@ -145,12 +139,7 @@ export const useMatchActions = (
     if (!match) return;
     const newVal = !match.showScore;
     await withSaving(newVal ? 'Show scores' : 'Hide scores', async () => {
-      const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ showScore: newVal }),
-      });
-      if (!res.ok) throw new Error('PATCH failed');
+      await patchMatch(match.id, { showScore: newVal });
       await logEvent(match.id, 'toggle_show_score', {
         showScore: newVal,
       });
@@ -163,19 +152,14 @@ export const useMatchActions = (
       const start = new Date(startISO);
       const end = new Date(start.getTime() + durationMin * 60 * 1000);
       await withSaving('Schedule rematch', async () => {
-        const res = await fetch(`/api/modern-rock-madness-matches/${match.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            band1Votes: 0,
-            band2Votes: 0,
-            winner: null,
-            showScore: false,
-            startTime: start.toISOString(),
-            endTime: end.toISOString(),
-          }),
+        await patchMatch(match.id, {
+          band1Votes: 0,
+          band2Votes: 0,
+          winner: null,
+          showScore: false,
+          startTime: start.toISOString(),
+          endTime: end.toISOString(),
         });
-        if (!res.ok) throw new Error('PATCH failed');
         await logEvent(match.id, 'rematch_scheduled', {
           previousWinner: match.winner,
           previousBand1Votes: match.band1Votes,
