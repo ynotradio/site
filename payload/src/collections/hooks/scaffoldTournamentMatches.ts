@@ -244,9 +244,9 @@ export const generateBracketDefinitions = (startDate: string): MatchDefinition[]
   // Normalize to midnight UTC so time slots are clean
   baseDate.setUTCHours(0, 0, 0, 0);
 
-  const scheduleSlots = buildScheduleSlots();
-  const slotByMatch = new Map<number, MatchSlot>();
-  scheduleSlots.forEach((slot) => slotByMatch.set(slot.matchNumber, slot));
+  const slotByMatch = new Map<number, MatchSlot>(
+    buildScheduleSlots().map((slot) => [slot.matchNumber, slot]),
+  );
 
   const matches: MatchDefinition[] = [];
 

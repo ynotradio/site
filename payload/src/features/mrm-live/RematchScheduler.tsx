@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 const DEFAULT_DURATION = 30;
 
-// eslint-disable-next-line max-len
 const WARN_CLS = 'match-controls-tab__action-btn match-controls-tab__action-btn--warning';
 const DEFAULT_CLS = 'match-controls-tab__action-btn';
 
