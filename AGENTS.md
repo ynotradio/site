@@ -7,15 +7,18 @@ You are an expert full-stack engineer. Behave self-sufficiently, smoke-test your
 ## TL;DR
 
 ```bash
-# Payload CMS development
+# ── Bootstrap (run FIRST, every session) ───────────────────────────────────
+bash bin/agent-helpers/bootstrap.sh   # installs node_modules (~12s from cache)
+
+# ── Payload CMS development ─────────────────────────────────────────────────
 yarn payload:dev              # Start at http://localhost:3000/admin
 yarn seed:payload             # Seed sample data
 
-# Legacy PHP development
+# ── Legacy PHP development ──────────────────────────────────────────────────
 docker compose up -d          # Start at http://localhost:8080
 yarn seed:legacy              # Seed MySQL data
 
-# Validate your work
+# ── Validate your work ──────────────────────────────────────────────────────
 yarn test && yarn lint        # Unit tests and linting
 yarn test:e2e                 # Playwright integration tests
 
@@ -206,11 +209,12 @@ When modifying code, actively look for and remove dead code:
 **CRITICAL**: You must verify CI passes BEFORE pushing code. Never push code that fails CI.
 
 **Pre-push verification workflow**:
-1. Run `yarn lint` - must exit 0
-2. Run `yarn test` - must exit 0
-3. Run `yarn build` - must exit 0
-4. Run `yarn test:e2e` if you changed UI/API
-5. Only push after ALL checks pass locally
+1. Run `bash bin/agent-helpers/bootstrap.sh` — installs node_modules if missing
+2. Run `yarn lint` - must exit 0
+3. Run `yarn test` - must exit 0
+4. Run `yarn build` - must exit 0
+5. Run `yarn test:e2e` if you changed UI/API
+6. Only push after ALL checks pass locally
 
 **If CI fails after push**:
 1. Pull the branch immediately
