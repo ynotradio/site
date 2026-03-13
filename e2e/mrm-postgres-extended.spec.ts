@@ -11,8 +11,7 @@
 import { test as baseTest, expect } from '@playwright/test';
 import { captureScreenshot, checkForPhpErrors, navigateWithRetry } from './utils/test-helpers';
 
-const LEGACY_BASE_URL =
-  process.env.PLAYWRIGHT_LEGACY_URL || process.env.LEGACY_BASE_URL || 'http://localhost:8080';
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 
 const MRM_FRESH_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
@@ -157,7 +156,7 @@ test.describe('MRM Postgres — Fresh Tournament — Multi-Region Bracket', () =
     });
 
     const abbrs = await firstR4Match.locator('.band_abbr').allTextContents();
-    expect(abbrs).toContain('StVnct');  // St. Vincent (seed 1)
+    expect(abbrs).toContain('StVnct'); // St. Vincent (seed 1)
     expect(abbrs).toContain('YardAct'); // Yard Act (seed 16)
   });
 
