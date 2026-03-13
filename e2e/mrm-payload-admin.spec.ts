@@ -35,10 +35,10 @@ test.describe('MRM Payload Admin — Tournaments', () => {
   });
 
   test('Tournaments collection list page is accessible', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     // Should still be in admin (not redirected to login)
     expect(page.url()).toContain('/admin');
@@ -48,19 +48,19 @@ test.describe('MRM Payload Admin — Tournaments', () => {
   });
 
   test('seeded tournament "Modern Rock Madness 2026" appears in the list', async ({ page }) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
   });
 
   test('tournament row shows active status', async ({ page }) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     // 'active' should appear somewhere in the list row for this tournament.
     await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
@@ -68,16 +68,16 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     expect(pageContent.toLowerCase()).toContain('active');
   });
 
-  test('clicking a tournament row opens the edit page', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
-
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
+  test('clicking a tournament opens the edit page', async ({ page }, testInfo) => {
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     // Click the tournament name link to open the document.
-    await page.getByText('Modern Rock Madness 2026').first().click();
+    const tournamentLink = page.locator('table tbody tr td a').first();
+    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
+    await tournamentLink.click();
     await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
 
     expect(page.url()).toContain('/modern-rock-madness-tournaments/');
@@ -85,13 +85,14 @@ test.describe('MRM Payload Admin — Tournaments', () => {
   });
 
   test('tournament edit page has a Bracket tab', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
-    await page.getByText('Modern Rock Madness 2026').first().click();
+    const tournamentLink = page.locator('table tbody tr td a').first();
+    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
+    await tournamentLink.click();
     await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
 
     // The Bracket custom tab should be visible in the document tab bar.
@@ -102,13 +103,14 @@ test.describe('MRM Payload Admin — Tournaments', () => {
   });
 
   test('Bracket tab loads without errors', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
-    await page.getByText('Modern Rock Madness 2026').first().click();
+    const tournamentLink = page.locator('table tbody tr td a').first();
+    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
+    await tournamentLink.click();
     await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
 
     await page.getByRole('link', { name: /bracket/i }).click();
@@ -132,10 +134,10 @@ test.describe('MRM Payload Admin — Groups (Bands)', () => {
   });
 
   test('Groups collection list page is accessible', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     expect(page.url()).toContain('/admin');
     await expect(page.locator('html[data-theme]')).toBeAttached();
@@ -144,24 +146,23 @@ test.describe('MRM Payload Admin — Groups (Bands)', () => {
   });
 
   test('seeded band "Japanese Breakfast" appears in the Groups list', async ({ page }) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    // Use limit=100 so all 64 groups are visible on one page (default limit=10).
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups?limit=100`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     await expect(page.getByText('Japanese Breakfast')).toBeVisible({ timeout: 15000 });
   });
 
   test('Groups list page content indicates 64 total groups', async ({ page }) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-groups`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    // Payload displays a count like "64 Groups" or "1-10 of 64" somewhere on the page.
-    await page.waitForLoadState('networkidle');
-    const pageContent = await page.content();
-    expect(pageContent).toContain('64');
+    // Payload displays "1-10 of 64" in the pagination area.
+    await expect(page.getByText(/of 64/)).toBeVisible({ timeout: 15000 });
   });
 });
 
@@ -175,10 +176,10 @@ test.describe('MRM Payload Admin — Matches', () => {
   });
 
   test('Matches collection list page is accessible', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
     expect(page.url()).toContain('/admin');
     await expect(page.locator('html[data-theme]')).toBeAttached();
@@ -187,26 +188,25 @@ test.describe('MRM Payload Admin — Matches', () => {
   });
 
   test('Matches list page content indicates 63 total matches', async ({ page }) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    await page.waitForLoadState('networkidle');
-    const pageContent = await page.content();
-    expect(pageContent).toContain('63');
+    // Payload displays "1-10 of 63" in the pagination area.
+    await expect(page.getByText(/of 63/)).toBeVisible({ timeout: 15000 });
   });
 
-  test('clicking a match row opens the match edit page', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+  test('clicking a match link opens the match edit page', async ({ page }, testInfo) => {
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    // Click the first match row.
-    const firstRow = page.locator('table tbody tr').first();
-    await expect(firstRow).toBeVisible({ timeout: 15000 });
-    await firstRow.click();
+    // Click the first link in the table body (the name cell link).
+    const firstLink = page.locator('table tbody tr td a').first();
+    await expect(firstLink).toBeVisible({ timeout: 15000 });
+    await firstLink.click();
 
     await page.waitForURL('**/modern-rock-madness-matches/**', { timeout: 15000 });
     expect(page.url()).toContain('/modern-rock-madness-matches/');
@@ -215,14 +215,14 @@ test.describe('MRM Payload Admin — Matches', () => {
   });
 
   test('match edit page has a Match Controls tab', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    const firstRow = page.locator('table tbody tr').first();
-    await expect(firstRow).toBeVisible({ timeout: 15000 });
-    await firstRow.click();
+    const firstLink = page.locator('table tbody tr td a').first();
+    await expect(firstLink).toBeVisible({ timeout: 15000 });
+    await firstLink.click();
 
     await page.waitForURL('**/modern-rock-madness-matches/**', { timeout: 15000 });
 
@@ -234,14 +234,14 @@ test.describe('MRM Payload Admin — Matches', () => {
   });
 
   test('Match Controls tab loads without errors', async ({ page }, testInfo) => {
-    await page.goto(
-      `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`,
-      { waitUntil: 'networkidle', timeout: 30000 },
-    );
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-matches`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
 
-    const firstRow = page.locator('table tbody tr').first();
-    await expect(firstRow).toBeVisible({ timeout: 15000 });
-    await firstRow.click();
+    const firstLink = page.locator('table tbody tr td a').first();
+    await expect(firstLink).toBeVisible({ timeout: 15000 });
+    await firstLink.click();
 
     await page.waitForURL('**/modern-rock-madness-matches/**', { timeout: 15000 });
 
