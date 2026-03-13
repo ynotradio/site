@@ -3,211 +3,143 @@ name: agent-automation-infrastructure
 description: Current state of CI/CD automation infrastructure, pre-built Docker images, and performance optimization strategies. Use when dealing with slow builds, container timeouts, yarn install issues, or when you need to understand available pre-built images and automation tooling.
 ---
 
-# Agent Automation Status & Recommendations
+# Agent Automation Infrastructure
 
-## Current State (Updated 2026-01-04)
+## Bootstrap: Run This First (Every Session)
 
-### For Local Development ✅
-Agents can successfully test on local workstations where:
-- Full network access available
-- Docker and Node.js installed
-- Can manually run `yarn install` and `docker compose up`
-- Screenshots can be captured via browser
-
-### Pre-built Images Available 🚀
-
-Three pre-built images are available via GitHub Container Registry:
-- **Payload dev** (`ghcr.io/ynotradio/site/payload-dev:latest`) - Next.js + Payload CMS
-- **PHP-FPM dev** (`ghcr.io/ynotradio/site/phpfpm-dev:latest`) - Legacy site backend
-- **Postgres seeded** (`ghcr.io/ynotradio/site/postgres-seeded:latest`) - PostgreSQL with Payload schema + sample data
-
-### For CI/CD Automation ⚠️
-
-**Infrastructure:** Complete and functional  
-**Blocker:** Performance (yarn install takes 5+ minutes in containers)
-
-After adding domains to firewall allowlist:
-- ✅ `registry.hub.docker.com` - Docker Hub access working
-- ✅ `registry.npmjs.org` - npm package downloads working
-- ❌ **yarn install in Alpine containers: 5+ minutes** (timeout)
-
-## Performance Metrics
-
-| Operation | Current | With Pre-built | Status |
-|-----------|---------|----------------|--------|
-| Docker pull base images | ~2s | ~30s | ✅ |
-| yarn install (Alpine) | 5+ min | N/A (pre-installed) | ✅ |
-| Postgres startup (seeded) | ~3 min | ~10s | ✅ |
-| Container startup | Blocked | ~20s | ✅ |
-| Total time to ready | Timeout | ~1 min | ✅ |
-
-## Recommended Solutions
-
-### Option 1: Pre-Built Images (Recommended) ⭐
-
-**Implementation:**
-- GitHub Actions workflow builds images on every push to master
-- Images pushed to GitHub Container Registry (ghcr.io)
-- Agents pull pre-built images instead of building
-
-**Available images:**
-1. **Payload dev** - Next.js + Payload CMS with dependencies pre-installed
-2. **PHP-FPM dev** - Legacy site with PHP extensions and configuration
-3. **Postgres seeded** - PostgreSQL 16 with Payload schema and sample data baked in
-
-**Benefits:**
-- ✅ Startup time: 5+ minutes → ~20 seconds (15x faster)
-- ✅ No network restrictions needed beyond image pull
-- ✅ Consistent environments
-- ✅ No yarn install timeouts
-- ✅ Database comes pre-seeded with test data
-
-**Status:** ✅ Workflow ready in `.buildkite/build-images.yml`
-
-**Usage:**
 ```bash
-# Pull and run pre-built images
-docker pull ghcr.io/ynotradio/site/payload-dev:latest
-docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
-docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
-
-# Or use docker-compose (configured to use pre-built images)
-docker-compose up postgres  # Pre-seeded Postgres ready in ~10s
+bash bin/agent-helpers/bootstrap.sh
 ```
 
-**Image details:**
-- `payload-dev`: Node.js 22 + yarn dependencies (~800 MB)
-- `phpfpm-dev`: PHP 8.3-FPM + extensions (~450 MB)
-- `postgres-seeded`: PostgreSQL 16 + seeded data (~400 MB)
+**Why**: The coding-agent sandbox clones the repo but does NOT run `yarn install`. Without `node_modules`, commands like `yarn lint`, `yarn test`, and `yarn test:e2e` fail with "command not found".
 
-See `bin/docker/postgres/README.md` for Postgres image details.
+**Timing** (measured on GitHub-hosted runner, March 2026):
 
-### Option 2: Playwright MCP Server
+| Cache state | Time |
+|-------------|------|
+| Warm (runner reused / cache populated) | **~12 seconds** |
+| Cold (brand-new runner, no cache) | ~2–3 minutes |
 
-**Implementation:**
-- Add Playwright MCP server to agent tooling
-- Point to existing staging/dev instances
-- Agents navigate and screenshot directly
+The runner's Yarn cache (`~/.cache/yarn`, ~4 GB) persists across jobs on the same runner instance, so most sessions get the fast path.
 
-**Benefits:**
-- ✅ No local Docker needed
-- ✅ Test against real data
-- ✅ Instant access
+## Available Tools After Bootstrap
 
-**Drawbacks:**
-- ❌ Requires maintained staging environment
-- ❌ Potential for environment conflicts
-- ❌ Can't test isolated changes
+| Command | Tool | Notes |
+|---------|------|-------|
+| `yarn lint` | ESLint | Project config in `.eslintrc.json`, max-warnings=0 |
+| `yarn test` | Vitest | Unit + integration tests |
+| `yarn test:e2e` | Playwright | Requires services (see below) |
+| `yarn build` | Next.js | Needs DATABASE_URI |
+| `node_modules/.bin/tsc --noEmit` | TypeScript | Type-check only |
 
-### Option 3: Optimized Containers
+## Pre-built Docker Images
 
-**Improvements to current approach:**
+Four pre-built images are available at GHCR for running services:
 
-1. **Use Debian instead of Alpine** (faster yarn install)
-   ```dockerfile
-   FROM node:22  # Not -alpine
-   ```
+| Image | Purpose | ~Size |
+|-------|---------|-------|
+| `ghcr.io/ynotradio/site/payload-dev:latest` | Next.js + Payload CMS | ~800 MB |
+| `ghcr.io/ynotradio/site/phpfpm-dev:latest` | PHP-FPM + extensions | ~450 MB |
+| `ghcr.io/ynotradio/site/postgres-seeded:latest` | PostgreSQL 16 + seed data | ~400 MB |
+| `ghcr.io/ynotradio/site/playwright:latest` | Playwright + browsers | ~1.2 GB |
 
-2. **Layer caching**
-   ```dockerfile
-   COPY package*.json ./
-   RUN npm ci --omit=dev
-   COPY . .
-   ```
+These are for **running services** (E2E tests, local dev), not for bootstrapping node_modules — `yarn install` from cache is just as fast and avoids authentication complexity.
 
-3. **Use Yarn** (faster than npm)
-   ```dockerfile
-   RUN yarn install --frozen-lockfile
-   ```
+**Note**: GHCR requires authentication (`docker login ghcr.io`). In the coding-agent sandbox, no GHCR token is configured, so `docker pull ghcr.io/…` will be unauthorized. These images are used by Buildkite CI (which has credentials) and by local devs who `docker login` themselves.
 
-**Expected improvement:** 5 min → 2-3 min (still slow for CI)
+## Do We Need a Container Just for Lint/Test?
 
-## Recommendations
+**Short answer: No.**
 
-### Immediate Action
-1. ✅ Enable pre-built image workflow (already created)
-2. Update agent documentation to use pre-built images
-3. Add `ghcr.io` to firewall allowlist (if not already)
+The question was whether to add a dedicated container that agents can use to run lint/test without needing local node_modules. The answer is no, because:
 
-### For Future PRs
-Agents should:
-1. **Check for pre-built images first** before building locally
-2. **Report performance issues** when exceeding baselines
-3. **Provide evidence or explain why not** (per testing checklist)
-4. **Test locally** when CI automation unavailable
+1. `yarn install --frozen-lockfile` takes 12s from cache — as fast as pulling a container
+2. Docker IS available in the agent sandbox (Docker 28.0.4), but GHCR is unauthorized
+3. A hypothetical "agent-tools" container would require auth setup and introduce complexity
+4. The bootstrap script (`bin/agent-helpers/bootstrap.sh`) solves the problem directly
 
-## Usage Examples
+## MCP Services Assessment
 
-### With Pre-Built Images (Fast)
+### Services in `.vscode/mcp.json` (VS Code only)
+
+These MCP servers are configured for **VS Code users**, not for GitHub Copilot coding agents. The coding agent runs its own separate MCP setup via the `copilot-developer-action` machinery and does not read `.vscode/mcp.json`.
+
+| Server | Package | Verdict |
+|--------|---------|---------|
+| `mcp_server_mysql` | `@benborla29/mcp-server-mysql` | ✅ Useful for VS Code users querying legacy MySQL interactively. No impact on coding agents. |
+| `chrome-devtools` | `@modelcontextprotocol/server-chrome-devtools` | ⚠️ Redundant for VS Code users who already have Playwright. Has no impact on coding agents. Consider removing to reduce clutter. |
+
+### Tools Available TO the Coding Agent
+
+These are the MCP tools wired into the coding-agent session itself:
+
+| Tool category | Usefulness | Notes |
+|--------------|-----------|-------|
+| `playwright-browser_*` | ✅ High | Navigate, screenshot, interact with running pages. Essential for UI verification. |
+| `github-mcp-server-*` | ✅ High | GitHub API — list runs, read logs, search code, inspect PRs. Replaces many `gh` CLI needs. |
+| `bash` / `read_bash` / `write_bash` | ✅ Essential | Run any command. Primary workhorse. |
+| `web_search` / `web_fetch` | ✅ Useful | Documentation lookup, package research. |
+| `code_review` | ✅ Useful | Automated review before finalising a PR. |
+| `codeql_checker` | ✅ Useful | Security scan after code changes. |
+| `search_code_subagent` / `task` | ✅ Useful | Semantic code exploration without grep-thrashing. |
+| `sequential-thinking` | 🟡 Marginal | Helpful for complex multi-step reasoning; rarely needed. |
+| `store_memory` | ✅ Useful | Persist facts across sessions. |
+
+**Nothing is missing** from the coding-agent toolset. The only previous gap was the missing `node_modules` bootstrap, now fixed.
+
+## CI/CD: Buildkite Pipeline
+
+All lint/test/E2E steps run inside Docker containers in Buildkite. They always do `corepack enable && yarn install --immutable` themselves — the bootstrap issue only affects interactive coding-agent sandbox sessions, not CI.
+
+```yaml
+# Every Buildkite step that needs Node.js:
+command: "corepack enable && yarn install --immutable && yarn lint"
+plugins:
+  - docker#v5.11.0:
+      image: "node:22-slim"
+```
+
+## Performance Reference
+
+| Operation | Time | Context |
+|-----------|------|---------|
+| `yarn install` warm cache | **12s** | GitHub-hosted runner, cache populated |
+| `yarn install` cold | ~2–3 min | Fresh runner, downloading packages |
+| `yarn lint` | ~6s | After install |
+| `yarn test` | ~30s | After install |
+| Postgres startup (seeded image) | ~10s | With pre-built image |
+| Payload dev server startup | ~2–4 min | First compile (Next.js) |
+
+Stop and report if:
+- `yarn install` takes more than 5 minutes
+- Container startup exceeds 3 minutes
+
+## Usage
+
+### Standard Agent Workflow
+
 ```bash
-# Pull pre-built images
-docker pull ghcr.io/ynotradio/site/payload-dev:latest
-docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest
+# 1. Bootstrap (once at session start)
+bash bin/agent-helpers/bootstrap.sh
 
-# Start services (uses pre-built images)
-docker compose up -d
+# 2. Make code changes
 
-# Seed databases with data
-yarn seed:legacy    # Legacy site with production data
-yarn seed:payload         # Payload with sample data
+# 3. Validate before pushing
+yarn lint    # must exit 0
+yarn test    # must exit 0
 
-# Ready in ~20 seconds (+ seed time)
+# 4. E2E (only if you changed UI/API — requires services running)
+docker compose -f docker-compose.e2e.yml up -d
+yarn test:e2e
 ```
 
-### Building Locally (Slow)
+### Running E2E Tests Locally
+
 ```bash
-# Build from scratch
-docker compose up -d --build
-
-# Seed databases
-yarn seed:legacy    # Legacy site
-yarn seed:payload         # Payload
-
-# Takes 5+ minutes due to yarn install
+docker compose up -d          # mysql + postgres + phpfpm + apache
+yarn payload:dev &             # payload on :3000
+yarn seed:payload
+yarn seed:legacy
+yarn test:e2e
 ```
 
-### Database Seeding Notes
-
-**Why seed:**
-- Empty applications are hard to verify
-- Screenshots of empty dashboards don't prove functionality
-- Real data helps test relationships and queries
-
-**Legacy site:** `yarn seed:legacy`
-- Pulls production database snapshot
-- Imports into MySQL container
-- Site shows real content at http://localhost:8080
-
-**Payload:** `yarn seed:payload`
-- Creates sample collections and data
-- Admin UI shows populated tables
-- May need implementation if not yet available
-
-## Monitoring
-
-Track these metrics in agent PRs:
-
-```markdown
-## Performance Report
-- Image pull: [time]
-- Container start: [time]  
-- Service ready: [time]
-- Total: [time]
-
-Target: < 3 minutes total
-```
-
-## Future Improvements
-
-1. **Multi-stage builds** - Build dependencies in separate stage
-2. **Volume caching** - Share node_modules between builds
-3. **Lighter dependencies** - Audit and remove unnecessary packages
-4. **Playwright MCP** - Add as complementary testing option
-
-## Conclusion
-
-**For immediate use:** Pre-built images solve the CI/CD automation blocker.
-
-**For local development:** Direct installation continues to work perfectly.
-
-All agent infrastructure is production-ready and documented. The only remaining step is enabling the pre-built image workflow.
