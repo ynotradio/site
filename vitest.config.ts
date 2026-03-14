@@ -17,6 +17,10 @@ export default defineConfig({
         'src/js/components/mrm-bracket-match.js',
         'src/js/components/mrm-scoreboard.js',
         'src/js/components/mrm-match-card.js',
+        'payload/src/utils/auth.ts',
+        'payload/src/features/embed/utils.ts',
+        'payload/src/features/show-cloner/utils.ts',
+        'payload/src/features/show-cloner/hooks/useDateRanges.ts',
       ],
       exclude: [
         '**/*.test.ts',
