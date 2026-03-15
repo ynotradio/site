@@ -3,14 +3,10 @@ import { Page } from '@playwright/test';
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
 async function checkIfCreateUserPage(page: Page): Promise<boolean> {
-  const hasNewPasswordField = await page
-    .getByLabel(/new password/i)
-    .isVisible()
-    .catch(() => false);
-  const hasConfirmPasswordField = await page
-    .getByLabel(/confirm password/i)
-    .isVisible()
-    .catch(() => false);
+  const [hasNewPasswordField, hasConfirmPasswordField] = await Promise.all([
+    page.getByLabel(/new password/i).isVisible().catch(() => false),
+    page.getByLabel(/confirm password/i).isVisible().catch(() => false),
+  ]);
   return hasNewPasswordField || hasConfirmPasswordField;
 }
 
