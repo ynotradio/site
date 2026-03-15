@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { Show, ShowApiResponse, ShowsApiResult } from '../types';
+import { toLocalDateString } from '../utils';
 
 export const useShows = () => {
   const [shows, setShows] = useState<Show[]>([]);
@@ -16,18 +17,7 @@ export const useShows = () => {
       const data: ShowsApiResult = await response.json();
 
       const fetchedShows: Show[] = data.docs.map((show: ShowApiResponse) => {
-        // Convert UTC date string to local date in YYYY-MM-DD format
-        // The API returns dates like "2026-02-01T05:00:00.000Z" which represents
-        // Jan 31, 2026 at midnight EST, so we need to parse it properly
-        let localDate = '';
-        if (show.date) {
-          const utcDate = new Date(show.date);
-          // Get the date in the local timezone as YYYY-MM-DD
-          const year = utcDate.getFullYear();
-          const month = String(utcDate.getMonth() + 1).padStart(2, '0');
-          const day = String(utcDate.getDate()).padStart(2, '0');
-          localDate = `${year}-${month}-${day}`;
-        }
+        const localDate = show.date ? toLocalDateString(new Date(show.date)) : '';
 
         return {
           id: String(show.id),
