@@ -143,37 +143,68 @@ steps:
         [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ] && break
       done
       
-      # Start Payload in FOREGROUND mode (key to keeping TTY alive)
-      # The foreground compose maintains the stdin connection that prevents exit
-      echo "🚀 Starting Payload CMS (foreground mode)..."
-      docker compose -f docker-compose.e2e.yml up payload 2>&1 &
-      COMPOSE_PID=$$!
+      # Start Payload and PHP/Apache in parallel (they don't depend on each other)
+      echo "🚀 Starting Payload CMS and PHP/Apache..."
+      docker compose -f docker-compose.e2e.yml up -d payload phpfpm apache
       
-      # Monitor Payload startup
-      echo "⏳ Monitoring Payload startup..."
-      for i in $$(seq 1 48); do
+      # Monitor Payload startup (migrate + seed + production server)
+      echo "⏳ Waiting for Payload to be healthy..."
+      for i in $$(seq 1 60); do
         sleep 5
-        STATE=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
         HEALTH=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        echo "Payload check $$i/48: state=$$STATE health=$$HEALTH"
+        STATE=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
         
-        [ "$$HEALTH" = "healthy" ] && echo "✅ Payload is healthy!" && break
+        [ "$$HEALTH" = "healthy" ] && echo "✅ Payload is healthy! (check $$i)" && break
         
-        if [ "$$STATE" = "exited" ]; then
-          echo "❌ Payload container exited!"
-          docker compose -f docker-compose.e2e.yml logs payload --tail=100
+        # Detect container exit or unhealthy state
+        if [ "$$HEALTH" = "unhealthy" ] || [ "$$STATE" = "exited" ]; then
+          echo "❌ Payload container failed! state=$$STATE health=$$HEALTH"
+          docker compose -f docker-compose.e2e.yml logs payload --tail=200
           exit 1
+        fi
+        
+        # If state is empty, container may have exited — check if it's still listed
+        if [ -z "$$STATE" ] || [ "$$STATE" = "unknown" ]; then
+          RUNNING=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r 'length // 0' || echo "0")
+          if [ "$$RUNNING" = "0" ] || [ -z "$$RUNNING" ]; then
+            echo "⚠️ Payload container not found (check $$i), checking logs..."
+            docker compose -f docker-compose.e2e.yml logs payload --tail=50
+          fi
+        fi
+        
+        # Log every 6th check (~30s)
+        if [ $$((i % 6)) -eq 0 ]; then
+          echo "Payload check $$i: state=$$STATE health=$$HEALTH"
+          docker compose -f docker-compose.e2e.yml logs payload --tail=5
         fi
       done
       
-      # The foreground compose process can be terminated - container keeps running
-      # via the restart loop in docker-compose.e2e.yml
-      kill $$COMPOSE_PID 2>/dev/null || true
+      # Fail fast if Payload never became healthy
+      PAYLOAD_FINAL=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+      if [ "$$PAYLOAD_FINAL" != "healthy" ]; then
+        echo "❌ Payload failed to become healthy after 300s (health=$$PAYLOAD_FINAL)"
+        docker compose -f docker-compose.e2e.yml logs payload --tail=100
+        docker compose -f docker-compose.e2e.yml down -v
+        exit 1
+      fi
       
-      # Start remaining services
-      echo "🚀 Starting remaining services..."
-      docker compose -f docker-compose.e2e.yml up -d phpfpm apache
-      sleep 10
+      # Verify Apache is also healthy before running tests
+      echo "⏳ Checking Apache..."
+      for i in $$(seq 1 12); do
+        APACHE_HEALTH=$$(docker compose -f docker-compose.e2e.yml ps apache --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+        [ "$$APACHE_HEALTH" = "healthy" ] && echo "✅ Apache is healthy! (check $$i)" && break
+        [ $$((i % 3)) -eq 0 ] && echo "Apache check $$i: health=$$APACHE_HEALTH"
+        sleep 5
+      done
+      
+      # Fail fast if Apache never became healthy
+      APACHE_FINAL=$$(docker compose -f docker-compose.e2e.yml ps apache --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
+      if [ "$$APACHE_FINAL" != "healthy" ]; then
+        echo "❌ Apache failed to become healthy after 60s (health=$$APACHE_FINAL)"
+        docker compose -f docker-compose.e2e.yml logs apache --tail=50
+        docker compose -f docker-compose.e2e.yml down -v
+        exit 1
+      fi
       
       # Run tests
       echo "🎭 Running Playwright E2E tests..."
