@@ -168,6 +168,59 @@ describe('convertHtmlToLexical', () => {
     expect(result.root.children).toHaveLength(1);
     expect(result.root.children[0].type).toBe('paragraph');
   });
+
+  it('should append space to previous node when single space separates inline elements', () => {
+    // Covers the branch where normalizedText === ' ' and lastNode.text doesn't end with space
+    const result = convertHtmlToLexical('<strong>bold</strong> <em>italic</em>');
+    const children = result.root.children[0].children;
+    // The bold text should have a trailing space appended, italic text should follow
+    const boldNode = children.find((c: any) => c.format === 1);
+    const italicNode = children.find((c: any) => c.format === 2);
+    expect(boldNode).toBeDefined();
+    expect(italicNode).toBeDefined();
+    expect(boldNode.text).toBe('bold ');
+    expect(italicNode.text).toBe('italic');
+  });
+
+  it('should fallback to stripped tag text when link has no href', () => {
+    // Covers fallback path in parseInlineElements (lines 218-220): link with empty href
+    // has its text extracted by stripping tags from the raw HTML
+    const result = convertHtmlToLexical('<a href="">click here</a>');
+    const children = result.root.children[0].children;
+    expect(children.length).toBeGreaterThan(0);
+    const textContent = children.map((c: any) => c.text || '').join('');
+    expect(textContent).toContain('click here');
+  });
+
+  it('should produce minimal paragraph for link with no text or href', () => {
+    // Covers the branch in convertHtmlToLexical where parseHtmlToLexicalNodes returns []
+    // An empty anchor tag with a URL but no text produces no nodes from parseInlineElements
+    const result = convertHtmlToLexical('<a href="http://example.com"></a>');
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+  });
+
+  it('should recursively parse bold tags containing nested inline elements', () => {
+    // Covers the branch where <b>/<strong> innerHtml contains '<' (nested HTML)
+    const result = convertHtmlToLexical('<b><a href="http://example.com">link text</a></b>');
+    const children = result.root.children[0].children;
+    expect(children.length).toBeGreaterThan(0);
+    const linkNode = children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.children[0].text).toBe('link text');
+  });
+
+  it('should append space to previous node when trailing text starts with whitespace', () => {
+    // Covers lines 199-201: remaining text after inline elements starts with whitespace
+    const result = convertHtmlToLexical('<strong>bold</strong> trailing');
+    const children = result.root.children[0].children;
+    const boldNode = children.find((c: any) => c.format === 1);
+    const trailingNode = children.find((c: any) => c.text === 'trailing');
+    expect(boldNode).toBeDefined();
+    expect(trailingNode).toBeDefined();
+    // Bold node should have trailing space appended before the plain text node
+    expect(boldNode.text).toBe('bold ');
+  });
 });
 
 describe('getStatusFromDeleted', () => {
