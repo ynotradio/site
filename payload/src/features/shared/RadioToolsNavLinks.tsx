@@ -47,9 +47,23 @@ export const RadioToolsNavLinks: React.FC = () => (
         color: '#333',
         textDecoration: 'none',
         borderRadius: '4px',
+        marginBottom: '4px',
       }}
     >
       📋 Show Cloner
+    </Link>
+    <Link
+      href="/admin/editor-guide"
+      style={{
+        display: 'block',
+        padding: '8px 12px',
+        fontSize: '14px',
+        color: '#333',
+        textDecoration: 'none',
+        borderRadius: '4px',
+      }}
+    >
+      📖 Editor Guide
     </Link>
   </div>
 );

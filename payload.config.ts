@@ -85,6 +85,7 @@ export default buildConfig({
       providers: ['/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed'],
       beforeDashboard: [],
       afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
+      afterNavLinks: ['/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks'],
       views: {
         DJOrder: {
           Component: '/payload/src/features/dj-order#DJOrderTool',
@@ -108,6 +109,14 @@ export default buildConfig({
           exact: true,
           meta: {
             title: 'Live Match Dashboard',
+          },
+        },
+        EditorGuide: {
+          Component: '/payload/src/features/editor-guide#EditorGuideTool',
+          path: '/editor-guide',
+          exact: true,
+          meta: {
+            title: 'Editor Guide',
           },
         },
       },
