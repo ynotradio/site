@@ -308,7 +308,20 @@ function runImportScript(
       '--start-id',
       startId.toString(),
     ];
-    const child = spawn('node', args, { stdio: 'pipe' });
+
+    // Pass MySQL config as env vars so child scripts' getLegacyDbConfig() picks up
+    // the correct connection (prod-mysql vs local-mysql)
+    const mysqlConfig = getMySQLConfig(from);
+    const env = {
+      ...process.env,
+      IMPORT_DB_HOST: mysqlConfig.host,
+      IMPORT_DB_USER: mysqlConfig.user,
+      IMPORT_DB_PASSWORD: mysqlConfig.password,
+      IMPORT_DB_NAME: mysqlConfig.database,
+      ...(mysqlConfig.port ? { IMPORT_DB_PORT: mysqlConfig.port.toString() } : {}),
+    };
+
+    const child = spawn('node', args, { stdio: 'pipe', env });
 
     let output = '';
     const skipReasons: string[] = [];
