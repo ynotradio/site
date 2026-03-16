@@ -16,7 +16,7 @@ package-lock.json
 .react-router
 db/docker/*.sql
 dist
-tsconfig.tsbuildinfo
+*.tsbuildinfo
 coverage
 tmp
 .claude/settings.local.json
