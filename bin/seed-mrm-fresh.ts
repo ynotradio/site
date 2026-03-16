@@ -12,7 +12,7 @@ import config from '@payload-config';
  * - 64 groups (bands) with the same roster as the 2025 tournament
  * - 63 matches (full bracket, no winners, no votes)
  *   - Match 1 is set to be currently RUNNING (start: now-2h, end: now+2h)
- *   - All other matches are in the future
+ *   - All other matches are rebased relative to now (always in the future)
  * - nextMatch links wired by the scaffold hook automatically
  *
  * Idempotent: skips if an active tournament already exists.
@@ -119,23 +119,51 @@ async function seedMrmFresh() {
       matchIdByNumber.set(mn, id);
     }
 
-    // ── Set match 1 to "currently running" ─────────────────────────────────
+    // ── Rewrite match times relative to "now" ──────────────────────────────
+    // The scaffold hook assigns absolute UTC times based on the startDate.
+    // If seeding happens after some of those times, those matches end up in
+    // the past and the "next match" query returns a different match than the
+    // tests expect. Fix: rebase every match's times relative to now.
     const now = new Date();
-    // Wide window (±2 hours) so the match is still "running" even if CI is slow.
-    const match1Start = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    const match1End = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    const baseDate = new Date(`${startDate}T00:00:00.000Z`);
 
-    await payload.update({
-      collection: 'modern-rock-madness-matches',
-      id: matchIdByNumber.get(1) as number,
-      data: {
-        startTime: match1Start.toISOString(),
-        endTime: match1End.toISOString(),
-      },
-    });
-    console.log(
-      `   ✅ Match 1 set to running (${match1Start.toISOString()} – ${match1End.toISOString()})`,
-    );
+    /* eslint-disable no-await-in-loop */
+    for (const m of scaffoldedMatches) {
+      const mn = typeof m.matchNumber === 'number' ? m.matchNumber : parseInt(m.matchNumber as string, 10);
+
+      if (mn === 1) {
+        // Match 1: currently running (wide ±2h window for slow CI)
+        const match1Start = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+        const match1End = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+        await payload.update({
+          collection: 'modern-rock-madness-matches',
+          id: matchIdByNumber.get(1) as number,
+          data: {
+            startTime: match1Start.toISOString(),
+            endTime: match1End.toISOString(),
+          },
+        });
+      } else {
+        // Shift: preserve offset from midnight of startDate, rebase onto now
+        const origStart = new Date(m.startTime as string);
+        const origEnd = new Date(m.endTime as string);
+        const offsetMs = origStart.getTime() - baseDate.getTime();
+        const durationMs = origEnd.getTime() - origStart.getTime();
+        const newStart = new Date(now.getTime() + offsetMs);
+        const newEnd = new Date(newStart.getTime() + durationMs);
+
+        await payload.update({
+          collection: 'modern-rock-madness-matches',
+          id: matchIdByNumber.get(mn) as number,
+          data: {
+            startTime: newStart.toISOString(),
+            endTime: newEnd.toISOString(),
+          },
+        });
+      }
+    }
+    /* eslint-enable no-await-in-loop */
+    console.log('   ✅ All match times rebased relative to now');
 
     // ── 64 Groups (bands) ───────────────────────────────────────────────────
     // Same roster as the 2025 tournament for realistic test data.
