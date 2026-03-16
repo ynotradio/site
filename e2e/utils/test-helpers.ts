@@ -142,13 +142,7 @@ export async function fillPayloadDateField(page: Page, fieldId: string, date: Da
     .click();
 }
 
-/**
- * Check page for common PHP errors
- * @param pageContent - HTML content of the page
- * @returns Array of error messages found (empty if no errors)
- */
 export function checkForPhpErrors(pageContent: string): string[] {
-  const errors: string[] = [];
   const errorPatterns = [
     'Fatal error',
     'Parse error',
@@ -157,14 +151,7 @@ export function checkForPhpErrors(pageContent: string): string[] {
     'Database error',
     'SQLSTATE',
   ];
-
-  errorPatterns.forEach((pattern) => {
-    if (pageContent.includes(pattern)) {
-      errors.push(pattern);
-    }
-  });
-
-  return errors;
+  return errorPatterns.filter((pattern) => pageContent.includes(pattern));
 }
 
 /**
