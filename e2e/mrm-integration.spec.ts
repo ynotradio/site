@@ -200,8 +200,8 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     await expect(matchCard).toBeVisible({ timeout: 10000 });
 
     // Match card full names match API (depth=1 expands relationships)
-    expect(await matchCard.getAttribute('band1-name')).toBe(apiMatch.band1.name);
-    expect(await matchCard.getAttribute('band2-name')).toBe(apiMatch.band2.name);
+    await expect(matchCard).toHaveAttribute('band1-name', apiMatch.band1.name);
+    await expect(matchCard).toHaveAttribute('band2-name', apiMatch.band2.name);
 
     // Bracket abbreviations match API
     await expect(
@@ -214,7 +214,7 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     expect(phpAbbrs).toContain(apiMatch.band2.abbreviation);
 
     // Match card status matches running state
-    expect(await matchCard.getAttribute('status')).toBe('running');
+    await expect(matchCard).toHaveAttribute('status', 'running');
   });
 
   test('API match count equals PHP bracket match count', async ({ page, request }, testInfo) => {
@@ -226,10 +226,9 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
     await navigateWithRetry(page, MRM_FRESH_URL);
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
-    const phpMatchCount = await page.locator('mrm-bracket-match').count();
+    await expect(page.locator('mrm-bracket-match')).toHaveCount(63);
 
     expect(matchesData.totalDocs).toBe(63);
-    expect(phpMatchCount).toBe(63);
     await captureScreenshot(page, testInfo, '25-Integration-MatchCount');
   });
 

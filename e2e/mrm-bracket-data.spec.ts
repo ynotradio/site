@@ -96,10 +96,7 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
       await navigateWithRetry(page, MRM_FRESH_URL);
       await waitForBracketRender(page);
 
-      const matchesWithWinner = await page
-        .locator('mrm-bracket-match[winner]')
-        .count();
-      expect(matchesWithWinner).toBe(0);
+      await expect(page.locator('mrm-bracket-match[winner]')).toHaveCount(0);
 
       await captureScreenshot(page, testInfo, '21-Bracket-NoWinners');
     },
@@ -113,16 +110,11 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
 
     // Match 1 should have the live_match class since it's currently running.
     const liveMatches = page.locator('mrm-bracket-match.live_match');
-    const liveCount = await liveMatches.count();
-    expect(liveCount).toBe(1);
+    await expect(liveMatches).toHaveCount(1);
 
     // Verify it's specifically match 1 (the seeded running match).
     const liveMatchEl = liveMatches.first();
-    const abbrs = await liveMatchEl
-      .locator('.band_abbr')
-      .allTextContents();
-    expect(abbrs).toContain('JBrekie');
-    expect(abbrs).toContain('ChlyBls');
+    await expect(liveMatchEl.locator('.band_abbr')).toContainText(['JBrekie', 'ChlyBls']);
   });
 
   test('non-running matches do not have live_match CSS class', async ({
@@ -131,13 +123,8 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
     await navigateWithRetry(page, MRM_FRESH_URL);
     await waitForBracketRender(page);
 
-    const liveCount = await page
-      .locator('mrm-bracket-match.live_match')
-      .count();
-    const totalCount = await page.locator('mrm-bracket-match').count();
-
-    expect(liveCount).toBe(1);
-    expect(totalCount - liveCount).toBe(62);
+    await expect(page.locator('mrm-bracket-match.live_match')).toHaveCount(1);
+    await expect(page.locator('mrm-bracket-match')).toHaveCount(63);
   });
 
   test(
@@ -169,14 +156,9 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
       await navigateWithRetry(page, MRM_FRESH_URL);
       await waitForBracketRender(page);
 
-      const withPct1 = await page
-        .locator('mrm-bracket-match[band1-pct]')
-        .count();
-      const withPct2 = await page
-        .locator('mrm-bracket-match[band2-pct]')
-        .count();
-      expect(withPct1).toBe(0);
-      expect(withPct2).toBe(0);
+      // showScore=false means no pct attributes on any match.
+      await expect(page.locator('mrm-bracket-match[band1-pct]')).toHaveCount(0);
+      await expect(page.locator('mrm-bracket-match[band2-pct]')).toHaveCount(0);
     },
   );
 
@@ -186,10 +168,8 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
     await navigateWithRetry(page, MRM_FRESH_URL);
     await expect(page.locator('#bracket')).toBeVisible({ timeout: 10000 });
 
-    const sponsorTop = await page.locator('#sponsor_top').count();
-    const sponsorBottom = await page.locator('#sponsor_bottom').count();
-    expect(sponsorTop).toBe(0);
-    expect(sponsorBottom).toBe(0);
+    await expect(page.locator('#sponsor_top')).toHaveCount(0);
+    await expect(page.locator('#sponsor_bottom')).toHaveCount(0);
   });
 });
 
@@ -242,11 +222,8 @@ test.describe('MRM Postgres — Bracket Seed Distribution', () => {
       await waitForBracketRender(page);
 
       const match1 = page.locator('#region_1 mrm-bracket-match').first();
-      const s1 = await match1.getAttribute('band1-seed');
-      const s2 = await match1.getAttribute('band2-seed');
-
-      expect(s1).toBe('1');
-      expect(s2).toBe('16');
+      await expect(match1).toHaveAttribute('band1-seed', '1');
+      await expect(match1).toHaveAttribute('band2-seed', '16');
 
       await captureScreenshot(page, testInfo, '22-Bracket-R1-SeedPairing');
     },
