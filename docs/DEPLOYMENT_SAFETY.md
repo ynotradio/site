@@ -10,7 +10,7 @@ This checklist ensures the production PHP site remains stable and can roll back 
 
 ### 1. Verify Feature Flags (MOST IMPORTANT)
 
-Check `.env` on the **production server** (NOT your local copy):
+Check the production `.env` file (deployed from `.env.php` via `bin/deploy.sh`):
 
 ```bash
 ssh ynotradio 'cat ~/htdocs/.env | grep USE_POSTGRES'
