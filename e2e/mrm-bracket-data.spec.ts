@@ -10,6 +10,7 @@
  * Prerequisites: same as mrm-postgres-fresh.spec.ts (seed:mrm:fresh).
  */
 import { test as baseTest, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import {
   captureScreenshot,
   checkForPhpErrors,
@@ -34,7 +35,7 @@ const test = baseTest.extend({
 });
 
 /** Wait for the bracket web components to render their content. */
-async function waitForBracketRender(page: import('@playwright/test').Page) {
+async function waitForBracketRender(page: Page) {
   await expect(page.locator('#bracket')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('mrm-bracket-match').first()).toBeVisible({
     timeout: 10000,

@@ -11,6 +11,7 @@
  * Prerequisites: same as mrm-postgres-fresh.spec.ts (seed:mrm:fresh).
  */
 import { test as baseTest, expect } from '@playwright/test';
+import type { APIRequestContext, Page } from '@playwright/test';
 import {
   captureScreenshot,
   checkForPhpErrors,
@@ -34,7 +35,7 @@ const test = baseTest.extend({
 
 /** Fetch the active tournament ID from the Payload API. */
 async function getActiveTournamentId(
-  request: import('@playwright/test').APIRequestContext,
+  request: APIRequestContext,
 ): Promise<number> {
   const res = await request.get(
     `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments`
@@ -158,7 +159,7 @@ test.describe('MRM Integration — Payload API Data', () => {
 });
 
 /** Wait for the bracket web components to render their content. */
-async function waitForBracketRender(page: import('@playwright/test').Page) {
+async function waitForBracketRender(page: Page) {
   await expect(page.locator('#bracket')).toBeVisible({ timeout: 10000 });
   await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
   await expect(
