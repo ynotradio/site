@@ -1,0 +1,65 @@
+# Buildkite Pipeline for Nightly Import Gap Report
+#
+# Compares legacy MySQL content with records imported to production Payload/Neon,
+# then updates a GitHub issue with the results so progress can be tracked.
+#
+# Note: Configure this as a scheduled build in Buildkite UI:
+# Schedule: 0 3 * * * (cron format: daily at 3 AM UTC)
+# Branch: master
+#
+# Required Buildkite secrets (set via Buildkite UI → Pipeline → Secrets):
+#   PROD_MYSQL_HOST        — Production MySQL hostname
+#   PROD_MYSQL_USER        — Production MySQL username
+#   PROD_MYSQL_PASSWORD    — Production MySQL password
+#   PROD_MYSQL_DATABASE    — Production MySQL database name (default: ynot_site)
+#   NEON_PROD_DATABASE_URL — Production Neon/PostgreSQL connection string
+#   GITHUB_PR_TOKEN        — Fine-grained PAT with issues:write permission
+#   GAP_REPORT_ISSUE_NUMBER — GitHub issue number to update with results
+
+env:
+  NODE_VERSION: "22"
+
+steps:
+  - label: ":bar_chart: Generate Import Gap Report"
+    key: "gap-report"
+    timeout_in_minutes: 15
+    command: |
+      echo "--- :yarn: Installing dependencies"
+      corepack enable && yarn install --immutable
+
+      echo "--- :bar_chart: Running gap report (prod-mysql → prod-neon)"
+      yarn tsx bin/migrations/importGapReport.ts \
+        --from prod-mysql \
+        --to prod-neon \
+        --output /tmp/gap-report.md \
+        --verbose
+
+      echo "--- :github: Updating GitHub issue #$$GAP_REPORT_ISSUE_NUMBER"
+      node .buildkite/scripts/update-gap-report-issue.mjs /tmp/gap-report.md
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "PROD_MYSQL_HOST"
+            - "PROD_MYSQL_USER"
+            - "PROD_MYSQL_PASSWORD"
+            - "PROD_MYSQL_DATABASE"
+            - "NEON_PROD_DATABASE_URL"
+            - "GITHUB_PR_TOKEN"
+            - "GAP_REPORT_ISSUE_NUMBER"
+    agents:
+      queue: "default"
+
+  - wait: ~
+    continue_on_failure: true
+
+  - label: ":memo: Annotate on Failure"
+    command: |
+      buildkite-agent annotate \
+        "⚠️ Nightly gap report failed. Check logs for details." \
+        --style "warning" \
+        --context "gap-report-failure"
+    if: build.state == "failed"
+    agents:
+      queue: "default"

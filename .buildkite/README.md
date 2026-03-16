@@ -7,6 +7,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 - **`pipeline.yml`** - Main CI: quality checks → tests → build → E2E (triggers on PRs)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev DB sync (Monday 2 AM UTC)
+- **`nightly-gap-report.yml`** - Nightly import gap report: compares prod MySQL vs Payload/Neon, updates a GitHub issue
 
 ## Required Environment Variables
 
@@ -28,6 +29,14 @@ CLOUDINARY_API_SECRET=<api-secret>
 
 # CodeCov (optional)
 CODECOV_TOKEN=<codecov-token>
+
+# Nightly gap report
+PROD_MYSQL_HOST=<production-mysql-hostname>
+PROD_MYSQL_USER=<production-mysql-username>
+PROD_MYSQL_PASSWORD=<production-mysql-password>
+PROD_MYSQL_DATABASE=<production-mysql-database>  # default: ynot_site
+GITHUB_PR_TOKEN=<fine-grained-pat-with-issues-write>  # also used by storybook deploy
+GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 ```
 
 ## Agent Requirements
@@ -59,6 +68,15 @@ CODECOV_TOKEN=<codecov-token>
 3. Disable webhooks
 4. Build Schedule: `0 2 * * 1` on `main`
 5. Add database URLs
+
+### Nightly Gap Report
+1. New Pipeline: "Y-Not Radio - Nightly Gap Report"
+2. Configuration path: `.buildkite/nightly-gap-report.yml`
+3. Disable webhooks
+4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
+5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
+   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
+6. Create a GitHub issue to track migration progress (note the issue number)
 
 ## Troubleshooting
 
