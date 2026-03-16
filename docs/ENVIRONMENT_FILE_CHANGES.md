@@ -76,13 +76,12 @@ yarn setup:e2e  # Creates .env.local with test config
 
 ## Historical Documentation
 
-These documents describe the OLD structure and are kept for reference:
+These documents describe the OLD structure and are archived for reference:
 
-- `docs/CURRENT_ENVIRONMENT_AUDIT.md` - Pre-2026 audit
-- `docs/DEPLOYMENT_SAFETY.md` - Pre-2026 deployment checklist
-- `docs/ENVIRONMENT_STRATEGY.md` - The proposal that led to these changes
+- `docs/archive/environment/CURRENT_ENVIRONMENT_AUDIT.md` - Pre-2026 audit
+- `docs/archive/environment/ENVIRONMENT_STRATEGY.md` - The proposal that led to these changes
 
-If you need to understand the motivation for these changes, read `ENVIRONMENT_STRATEGY.md`.
+If you need to understand the motivation for these changes, read `ENVIRONMENT_STRATEGY.md` in the archive.
 
 ## Related PRs
 

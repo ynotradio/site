@@ -4,27 +4,15 @@
 
 Migration from GitHub Actions to Buildkite for CI/CD. All pipeline configurations are in `.buildkite/` directory.
 
-## Current GitHub Actions Workflows
+**Current status:** Non-E2E steps (ESLint, Vitest, Storybook, PHP Lint) run on Buildkite. E2E tests remain in GitHub Actions due to Docker-in-Docker networking limitations (see `docs/archive/ci-setup/buildkite-e2e-investigation.md`).
 
-- **ci.yml** - Lint, test, build (5 parallel jobs)
-- **e2e.yml** - Playwright E2E tests with Docker
-- **build-agent-images.yml** - Docker image building → GHCR
-- **weekly-db-sync.yml** - Scheduled prod→dev DB sync
+## Pipelines
 
-## Buildkite Pipelines
-
-- **pipeline.yml** - Main CI (replaces ci.yml + e2e.yml)
-- **build-images.yml** - Docker image building (replaces build-agent-images.yml)
-- **scheduled-db-sync.yml** - Weekly DB sync (replaces weekly-db-sync.yml)
-
-Complete feature parity maintained.
-
-## Migration Approach
-
-1. **Setup**: Create Buildkite account, configure agents, set environment variables
-2. **Test**: Upload pipelines and validate with test PRs
-3. **Parallel**: Run both CI systems simultaneously for validation
-4. **Cutover**: Make Buildkite primary, archive GitHub Actions
+| Buildkite Pipeline | Replaces GitHub Actions | Status |
+|---|---|---|
+| `pipeline.yml` | ci.yml + e2e.yml | ✅ CI steps active, E2E deferred |
+| `build-images.yml` | build-agent-images.yml | ✅ Active |
+| `scheduled-db-sync.yml` | weekly-db-sync.yml | ✅ Active |
 
 ## Required Configuration
 
@@ -40,14 +28,12 @@ Complete feature parity maintained.
 - PHP 7.4 (or use Docker images)
 - 4GB+ RAM, 2+ CPU cores, 50GB+ disk
 
-### Agent Options
-- **Buildkite Cloud Agents**: Managed, pay-per-use
-- **Self-Hosted Agents**: More control, fixed costs
+## Setup
 
-## Setup Instructions
+1. Sign up at [buildkite.com](https://buildkite.com) (cloud agents or self-hosted)
+2. Add environment variables in Buildkite UI: Pipeline → Settings → Environment Variables
+3. Create pipeline: name "Y-Not Radio - CI", config path `.buildkite/pipeline.yml`
+4. Enable webhooks for pull requests
+5. Trigger a manual build or test PR to verify
 
-See `.buildkite/README.md` for detailed setup steps.
-
-## Rollback
-
-GitHub Actions remain active during parallel phase. Can revert at any time before final cutover.
+See `.buildkite/README.md` for detailed pipeline configuration.
