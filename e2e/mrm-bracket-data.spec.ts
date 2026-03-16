@@ -347,7 +347,8 @@ test.describe('MRM Postgres — Bracket Seed Distribution', () => {
       await navigateWithRetry(page, MRM_FRESH_URL);
       await waitForBracketRender(page);
 
-      const bandNames = await page.evaluate(() => {
+      // Collect all R1 abbreviation text content via page.evaluate
+      const abbrTexts = await page.evaluate(() => {
         const result: string[] = [];
         [1, 2, 3, 4].forEach((region) => {
           const matches = document.querySelectorAll(
@@ -356,18 +357,19 @@ test.describe('MRM Postgres — Bracket Seed Distribution', () => {
           Array.from(matches)
             .slice(0, 8)
             .forEach((m) => {
-              const b1 = m.getAttribute('band1-name');
-              const b2 = m.getAttribute('band2-name');
-              if (b1) result.push(b1);
-              if (b2) result.push(b2);
+              Array.from(m.querySelectorAll('.band_abbr')).forEach((el) => {
+                const text = el.textContent ?? '';
+                if (text.length > 0) result.push(text);
+              });
             });
         });
         return result;
       });
 
-      expect(bandNames).toHaveLength(64); // 32 R1 matches × 2 bands
-      bandNames.forEach((name) => {
-        expect(name.length).toBeLessThanOrEqual(7);
+      expect(abbrTexts).toHaveLength(64); // 32 R1 matches × 2 bands
+      abbrTexts.forEach((abbr) => {
+        // MadnessBands abbreviation max length is 7
+        expect(abbr.length).toBeLessThanOrEqual(7);
       });
     },
   );

@@ -94,17 +94,13 @@ test.describe('MRM Integration — Payload API Data', () => {
     expect(new Date(match1.startTime).getTime()).toBeLessThan(now.getTime());
     expect(new Date(match1.endTime).getTime()).toBeGreaterThan(now.getTime());
 
-    // Bands assigned with correct names
+    // Bands assigned with correct names (depth=1 expands relationships)
     expect(match1.band1).toBeTruthy();
     expect(match1.band2).toBeTruthy();
-    if (typeof match1.band1 === 'object') {
-      expect(match1.band1.name).toBe('Japanese Breakfast');
-      expect(match1.band1.abbreviation).toBe('JBrekie');
-    }
-    if (typeof match1.band2 === 'object') {
-      expect(match1.band2.name).toBe('Charly Bliss');
-      expect(match1.band2.abbreviation).toBe('ChlyBls');
-    }
+    expect(match1.band1.name).toBe('Japanese Breakfast');
+    expect(match1.band1.abbreviation).toBe('JBrekie');
+    expect(match1.band2.name).toBe('Charly Bliss');
+    expect(match1.band2.abbreviation).toBe('ChlyBls');
   });
 
   test('R1 matches have bands, R2+ matches do not', async ({ request }) => {
@@ -203,13 +199,9 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     const matchCard = page.locator('mrm-match-card');
     await expect(matchCard).toBeVisible({ timeout: 10000 });
 
-    // Match card full names match API
-    if (typeof apiMatch.band1 === 'object') {
-      expect(await matchCard.getAttribute('band1-name')).toBe(apiMatch.band1.name);
-    }
-    if (typeof apiMatch.band2 === 'object') {
-      expect(await matchCard.getAttribute('band2-name')).toBe(apiMatch.band2.name);
-    }
+    // Match card full names match API (depth=1 expands relationships)
+    expect(await matchCard.getAttribute('band1-name')).toBe(apiMatch.band1.name);
+    expect(await matchCard.getAttribute('band2-name')).toBe(apiMatch.band2.name);
 
     // Bracket abbreviations match API
     await expect(
@@ -218,12 +210,8 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     const phpAbbrs = await page
       .locator('#region_1 mrm-bracket-match').first()
       .locator('.band_abbr').allTextContents();
-    if (typeof apiMatch.band1 === 'object') {
-      expect(phpAbbrs).toContain(apiMatch.band1.abbreviation);
-    }
-    if (typeof apiMatch.band2 === 'object') {
-      expect(phpAbbrs).toContain(apiMatch.band2.abbreviation);
-    }
+    expect(phpAbbrs).toContain(apiMatch.band1.abbreviation);
+    expect(phpAbbrs).toContain(apiMatch.band2.abbreviation);
 
     // Match card status matches running state
     expect(await matchCard.getAttribute('status')).toBe('running');
