@@ -28,7 +28,7 @@ steps:
       corepack enable && yarn install --immutable
 
       echo "--- :bar_chart: Running gap report (prod-mysql → prod-neon)"
-      yarn tsx bin/migrations/importGapReport.ts \
+      node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/migrations/importGapReport.ts \
         --from prod-mysql \
         --to prod-neon \
         --output /tmp/gap-report.md \
