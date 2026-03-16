@@ -7,7 +7,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 - **`pipeline.yml`** - Main CI: quality checks → tests → build → E2E (triggers on PRs)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev DB sync (Monday 2 AM UTC)
-- **`nightly-gap-report.yml`** - Nightly import gap report: compares prod MySQL vs Payload/Neon, updates a GitHub issue
+- **`nightly-gap-report.yml`** - Nightly import + gap report: imports new records from prod MySQL → Payload/Neon, posts import summary as issue comment, updates issue body with gap report
 
 ## Required Environment Variables
 
@@ -48,6 +48,7 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 ## Setting Up Pipelines
 
 ### Main CI Pipeline
+
 1. Buildkite → Pipelines → New Pipeline
 2. Name: "Y-Not Radio - CI"
 3. Repository: `https://github.com/ynotradio/site`
@@ -56,6 +57,7 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 6. Add environment variables
 
 ### Image Building Pipeline
+
 1. New Pipeline: "Y-Not Radio - Build Images"
 2. Configuration path: `.buildkite/build-images.yml`
 3. Branch filter: `main master`
@@ -63,14 +65,16 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 5. Add GHCR credentials
 
 ### Scheduled DB Sync
+
 1. New Pipeline: "Y-Not Radio - Weekly DB Sync"
 2. Configuration path: `.buildkite/scheduled-db-sync.yml`
 3. Disable webhooks
 4. Build Schedule: `0 2 * * 1` on `main`
 5. Add database URLs
 
-### Nightly Gap Report
-1. New Pipeline: "Y-Not Radio - Nightly Gap Report"
+### Nightly Import & Gap Report
+
+1. New Pipeline: "Y-Not Radio - Nightly Sync"
 2. Configuration path: `.buildkite/nightly-gap-report.yml`
 3. Disable webhooks
 4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
