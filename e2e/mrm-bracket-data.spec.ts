@@ -22,6 +22,9 @@ const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL
 
 const MRM_FRESH_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
+/** 64-team single-elimination bracket = 63 total matches. */
+const TOTAL_MATCHES = 63;
+
 // Skip storage-state auth — these tests hit the legacy PHP site directly.
 const test = baseTest.extend({
   // eslint-disable-next-line no-empty-pattern
@@ -66,7 +69,7 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
         .locator('mrm-bracket-match')
         .evaluateAll((els) => els.map((el) => el.getAttribute('match-id')));
 
-      expect(allMatchIds).toHaveLength(63);
+      expect(allMatchIds).toHaveLength(TOTAL_MATCHES);
       allMatchIds.forEach((id) => {
         expect(id).toBeTruthy();
         const numId = Number(id);
@@ -78,7 +81,7 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
     },
   );
 
-  test('all 63 bracket match-id values are unique', async ({ page }) => {
+  test('all bracket match-id values are unique', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
     await waitForBracketRender(page);
 
@@ -87,7 +90,7 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
       .evaluateAll((els) => els.map((el) => el.getAttribute('match-id')));
 
     const uniqueIds = new Set(allMatchIds);
-    expect(uniqueIds.size).toBe(63);
+    expect(uniqueIds.size).toBe(TOTAL_MATCHES);
   });
 
   test(
@@ -124,7 +127,7 @@ test.describe('MRM Postgres — Bracket Match Data Integrity', () => {
     await waitForBracketRender(page);
 
     await expect(page.locator('mrm-bracket-match.live_match')).toHaveCount(1);
-    await expect(page.locator('mrm-bracket-match')).toHaveCount(63);
+    await expect(page.locator('mrm-bracket-match')).toHaveCount(TOTAL_MATCHES);
   });
 
   test(

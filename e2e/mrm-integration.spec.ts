@@ -24,6 +24,9 @@ const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL
   || 'http://localhost:8080';
 const MRM_FRESH_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
+/** 64-team single-elimination bracket = 63 total matches. */
+const TOTAL_MATCHES = 63;
+
 const test = baseTest.extend({
   // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, runTest) => { await runTest({}); },
@@ -62,7 +65,7 @@ test.describe('MRM Integration — Payload API Data', () => {
     expect(data.docs[0].bracketPdfUrl).toContain('pdf');
   });
 
-  test('64 bands and 63 matches exist for the tournament', async ({ request }) => {
+  test('64 bands and all matches exist for the tournament', async ({ request }) => {
     const tournamentId = await getActiveTournamentId(request);
 
     const [groupsRes, matchesRes] = await Promise.all([
@@ -77,7 +80,7 @@ test.describe('MRM Integration — Payload API Data', () => {
     ]);
 
     expect((await groupsRes.json()).totalDocs).toBe(64);
-    expect((await matchesRes.json()).totalDocs).toBe(63);
+    expect((await matchesRes.json()).totalDocs).toBe(TOTAL_MATCHES);
   });
 
   test('match 1 is running with correct band assignments', async ({ request }) => {
@@ -226,9 +229,9 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
     await navigateWithRetry(page, MRM_FRESH_URL);
     await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('mrm-bracket-match')).toHaveCount(63);
+    await expect(page.locator('mrm-bracket-match')).toHaveCount(TOTAL_MATCHES);
 
-    expect(matchesData.totalDocs).toBe(63);
+    expect(matchesData.totalDocs).toBe(TOTAL_MATCHES);
     await captureScreenshot(page, testInfo, '25-Integration-MatchCount');
   });
 
