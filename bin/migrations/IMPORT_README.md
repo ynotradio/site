@@ -356,4 +356,3 @@ npx tsx bin/migrations/importCdOfTheWeek.ts --env prod
 - [ARTIST_CLEANUP_SPEC.md](./ARTIST_CLEANUP_SPEC.md) - Artist name normalization
 - [MUSICBRAINZ_INTEGRATION.md](./MUSICBRAINZ_INTEGRATION.md) - MusicBrainz enrichment
 - [../../docs/payload-migration/03-core-data-models.md](../../docs/payload-migration/03-core-data-models.md) - Payload collection schemas
-- [AUDIT_FINDINGS.md](./AUDIT_FINDINGS.md) - Detailed audit of import scripts vs MySQL structure
