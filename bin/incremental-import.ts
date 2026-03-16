@@ -357,11 +357,20 @@ function runImportScript(
     child.stderr?.on('data', (data) => {
       const text = data.toString();
 
-      // Capture errors from stderr too
+      // Capture meaningful errors from stderr, filtering out noise
+      const isNoise = (s: string) => !s
+        || s.startsWith('(node:')
+        || s.startsWith('Warning: SECURITY WARNING')
+        || s.startsWith('In the next major version')
+        || s.startsWith('To prepare for this change')
+        || s.startsWith('- If you want')
+        || s.startsWith('See https://node-postgres');
+
       const lines = text.split('\n').filter((l) => l.trim());
       for (const line of lines) {
-        if (line && !errorDetails.includes(line)) {
-          errorDetails.push(line.trim());
+        const trimmed = line.trim();
+        if (!isNoise(trimmed) && !errorDetails.includes(trimmed)) {
+          errorDetails.push(trimmed);
         }
       }
 
