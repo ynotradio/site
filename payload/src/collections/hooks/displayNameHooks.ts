@@ -1,17 +1,5 @@
-/**
- * Collection hooks for generating displayName fields
- *
- * These hooks are used across multiple collections to generate user-friendly
- * display names for relationships and admin UI titles.
- */
-
 import type { CollectionBeforeChangeHook } from 'payload';
 
-/**
- * DJ beforeChange hook: Generates displayName from person relationship
- *
- * Fetches person names and joins them with commas. Falls back to "DJ #<id>" if no person.
- */
 export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, req }) => {
   const updatedData = data;
 
@@ -47,23 +35,18 @@ export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, 
   return updatedData;
 };
 
-/**
- * Song/Record beforeChange hook: Generates displayName from artist + title
- *
- * Stores "Artist - Title" format, falling back to just title or "Song/Record #<id>"
- */
 export const generateMusicDisplayName = (entityType: 'Song' | 'Record'): CollectionBeforeChangeHook => async ({ data, req }) => {
   const updatedData = data;
   let artistName = '';
 
   if (updatedData.artist) {
-    if (typeof updatedData.artist === 'object' && updatedData.artist.name) {
-      artistName = updatedData.artist.name;
+    if (typeof updatedData.artist === 'object' && (updatedData.artist as { name?: string }).name) {
+      artistName = (updatedData.artist as { name: string }).name;
     } else {
       try {
         const artist = await req.payload.findByID({
           collection: 'artists',
-          id: typeof updatedData.artist === 'object' ? updatedData.artist.id : updatedData.artist,
+          id: typeof updatedData.artist === 'object' ? (updatedData.artist as { id: unknown }).id : updatedData.artist,
         });
         if (artist) {
           artistName = artist.name;

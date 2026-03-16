@@ -1,18 +1,6 @@
-/**
- * Custom slug generation for music collections (Songs and Records)
- *
- * Generates slugs in the format "artist-name--title" using a double-hyphen
- * separator between artist and title for SEO-friendly URLs.
- *
- * Also provides a hook for CdOfTheWeek to inherit the slug from its associated record.
- */
-
 import type { CollectionBeforeChangeHook, Payload } from 'payload';
 import type { Slugify } from 'payload/shared';
 
-/**
- * Slugify a single text value (lowercases, removes special chars, replaces spaces with hyphens)
- */
 export function slugifyText(text: string): string {
   return text
     .toLowerCase()
@@ -74,15 +62,12 @@ export const musicSlugify: Slugify = async ({ data, req }) => {
   return titleSlug;
 };
 
-/**
- * beforeChange hook for CdOfTheWeek that copies the slug from the associated record.
- */
 export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({ data, req }) => {
   const updatedData = data;
 
   if (!updatedData.record) return updatedData;
 
-  const recordId = typeof updatedData.record === 'object' ? updatedData.record.id : updatedData.record;
+  const recordId = typeof updatedData.record === 'object' ? (updatedData.record as { id: unknown }).id : updatedData.record;
 
   try {
     const record = await req.payload.findByID({

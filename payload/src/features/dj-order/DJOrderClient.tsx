@@ -1,6 +1,5 @@
 'use client';
 
-// DJ Order Tool - Client Component for interactive functionality
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   DndContext,
@@ -24,7 +23,6 @@ import { EmptyState } from '../shared/EmptyState';
 import type { DJ, DJApiResponse, DJsApiResult } from './types';
 import './DJOrderClient.css';
 
-// Client component for DJ ordering
 export const DJOrderClient: React.FC = () => {
   const [djs, setDjs] = useState<DJ[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,7 +39,6 @@ export const DJOrderClient: React.FC = () => {
     }),
   );
 
-  // Set up step nav breadcrumbs
   useEffect(() => {
     setStepNav([
       {
@@ -54,7 +51,6 @@ export const DJOrderClient: React.FC = () => {
     ]);
   }, [setStepNav]);
 
-  // Load DJs from Payload API
   useEffect(() => {
     async function fetchDjs() {
       try {
@@ -82,7 +78,6 @@ export const DJOrderClient: React.FC = () => {
     fetchDjs();
   }, []);
 
-  // Handle drag end - update the order
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -97,14 +92,12 @@ export const DJOrderClient: React.FC = () => {
     }
   }, []);
 
-  // Save the new order to Payload
   const saveOrder = async () => {
     setSaving(true);
     setError(null);
     setSuccessMessage(null);
 
     try {
-      // Update each DJ with its new sortOrder
       // Include _status and onAir to preserve existing values when drafts are enabled
       const updatePromises = djs.map((dj, index) => fetch(`/api/djs/${dj.id}`, {
         method: 'PATCH',
