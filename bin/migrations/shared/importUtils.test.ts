@@ -155,6 +155,19 @@ describe('convertHtmlToLexical', () => {
     expect(result.root.children[0].type).toBe('paragraph');
     expect(result.root.children[0].direction).toBe('ltr');
   });
+
+  it('should return minimal paragraph when parsing yields no nodes', () => {
+    // <br> only produces no paragraph nodes since all split segments are empty
+    const result = convertHtmlToLexical('<br>');
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+  });
+
+  it('should handle HTML containing only whitespace paragraph tags', () => {
+    const result = convertHtmlToLexical('<p>   </p>');
+    expect(result.root.children).toHaveLength(1);
+    expect(result.root.children[0].type).toBe('paragraph');
+  });
 });
 
 describe('getStatusFromDeleted', () => {
