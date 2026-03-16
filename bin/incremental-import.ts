@@ -360,11 +360,14 @@ function runImportScript(
       // Capture meaningful errors from stderr, filtering out noise
       const isNoise = (s: string) => !s
         || s.startsWith('(node:')
+        || s.startsWith('(Use `node --trace-warnings')
         || s.startsWith('Warning: SECURITY WARNING')
         || s.startsWith('In the next major version')
         || s.startsWith('To prepare for this change')
         || s.startsWith('- If you want')
-        || s.startsWith('See https://node-postgres');
+        || s.startsWith('See https://node-postgres')
+        || s.startsWith('See https://www.postgresql.org')
+        || s.includes('[WARN]');
 
       const lines = text.split('\n').filter((l) => l.trim());
       for (const line of lines) {
