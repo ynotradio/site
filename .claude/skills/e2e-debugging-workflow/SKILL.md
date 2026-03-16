@@ -30,11 +30,13 @@ yarn playwright test e2e/collections/shows.spec.ts --headed
 ### 1. Selector Timeouts
 
 **Symptom:**
+
 ```
 Error: Timeout 30000ms exceeded waiting for locator('#field-note')
 ```
 
 **Debugging Steps:**
+
 1. Run the test with `--headed` to see the actual page state
 2. Open browser DevTools to inspect the actual element IDs/classes
 3. Payload CMS often uses:
@@ -44,6 +46,7 @@ Error: Timeout 30000ms exceeded waiting for locator('#field-note')
    - `input[id^="react-select"]` for relationship dropdowns
 
 **Common Fixes:**
+
 ```typescript
 // Rich text fields - find via label, not direct ID
 const fieldLabel = page.locator(`label[for="field-${fieldName}"]`);
@@ -60,6 +63,7 @@ await page.waitForSelector('[role="listbox"]', { state: 'visible' });
 ### 2. Date Picker Issues
 
 **Symptom:**
+
 ```
 Error: strict mode violation: locator matched 2 elements
 ```
@@ -67,9 +71,11 @@ Error: strict mode violation: locator matched 2 elements
 **Cause:** Date picker regex like `Choose.*3.*2026` matches multiple days (3rd, 13th, 23rd).
 
 **Fix:** Use ordinal suffix matching:
+
 ```typescript
 function getOrdinalSuffix(day: number): string {
-  const j = day % 10, k = day % 100;
+  const j = day % 10,
+    k = day % 100;
   if (j === 1 && k !== 11) return 'st';
   if (j === 2 && k !== 12) return 'nd';
   if (j === 3 && k !== 13) return 'rd';
@@ -83,17 +89,20 @@ const dayRegex = new RegExp(`Choose.*\\b${day}${getOrdinalSuffix(day)}\\b.*${yea
 ### 3. PHP Page Verification Failures
 
 **Symptom:**
+
 ```
 expect(pageContent).toContain(uniqueShowNote)  # Fails even though data was created
 ```
 
 **Causes:**
+
 1. **Timestamp vs date comparison**: PostgreSQL `timestamp with time zone` vs `date` comparison fails for same-day timestamps after midnight UTC
 2. **Feature flags not set**: PHP page needs `?ff=use_postgres_schedule` parameter
 3. **Date filter excludes data**: Query uses `date <= CURRENT_DATE` but test data is in the future
 4. **Data not committed**: Test didn't wait for save to complete
 
 **Recommendation:** For reliability, test Payload CMS CRUD only:
+
 ```typescript
 // Instead of checking PHP page:
 await test.step('Verify in Payload list', async () => {
@@ -105,6 +114,7 @@ await test.step('Verify in Payload list', async () => {
 ### 4. Auth Session Issues
 
 **Symptom:**
+
 ```
 Error: page.goto: net::ERR_CONNECTION_REFUSED
 # or
@@ -114,6 +124,7 @@ Redirected to login page
 **Cause:** Auth setup didn't run or session expired.
 
 **Check:**
+
 1. Verify `auth.setup.ts` runs first in `playwright.config.ts`
 2. Check `.auth/` directory has session files
 3. Ensure `storageState` is configured for test projects
@@ -121,6 +132,7 @@ Redirected to login page
 ### 5. Stale Listbox Options
 
 **Symptom:**
+
 ```
 Error: Timeout waiting for getByRole('option')
 ```
@@ -128,6 +140,7 @@ Error: Timeout waiting for getByRole('option')
 **Cause:** Relationship dropdown is empty (no seeded data) or search didn't match.
 
 **Fix:**
+
 ```typescript
 // Type to search for specific item
 await field.locator('input[id^="react-select"]').fill(uniqueArtistName);
@@ -183,6 +196,7 @@ yarn playwright test e2e/collections/shows.spec.ts --trace on
 When a selector isn't working:
 
 1. **Pause the test:**
+
    ```typescript
    await page.pause(); // Opens Playwright Inspector
    ```
@@ -193,8 +207,8 @@ When a selector isn't working:
 
 3. **Test selector in console:**
    ```javascript
-   document.querySelector('#field-note')
-   document.querySelectorAll('[data-lexical-editor="true"]')
+   document.querySelector('#field-note');
+   document.querySelectorAll('[data-lexical-editor="true"]');
    ```
 
 ### Step 5: Verify Fix Works
@@ -213,6 +227,7 @@ yarn playwright test
 ### Step 6: Check Screenshots
 
 Test screenshots are saved to `e2e/screenshots/`. Review them to verify:
+
 - Form was filled correctly
 - Save completed successfully
 - Data appears in collection list
@@ -222,6 +237,7 @@ Test screenshots are saved to `e2e/screenshots/`. Review them to verify:
 ### 1. Focus on Payload CMS, Not PHP
 
 The Payload admin UI is consistent and predictable. The PHP pages have:
+
 - Complex date/time filters
 - Feature flag dependencies
 - Timezone sensitivities
@@ -267,15 +283,16 @@ await test.step('Fill artist form', async () => {
 
 ## CI vs Local Differences
 
-| Aspect | Local | CI |
-|--------|-------|-----|
-| Node version | May vary | Uses nvm 22 |
-| Docker images | Built locally | Pulled from GHCR |
-| Database | Persistent volume | Fresh each run |
-| Network | localhost | Docker network |
-| Timezone | System TZ | UTC |
+| Aspect        | Local             | CI               |
+| ------------- | ----------------- | ---------------- |
+| Node version  | May vary          | Uses nvm 22      |
+| Docker images | Built locally     | Pulled from GHCR |
+| Database      | Persistent volume | Fresh each run   |
+| Network       | localhost         | Docker network   |
+| Timezone      | System TZ         | UTC              |
 
 **Key insight:** If tests pass locally but fail in CI, suspect:
+
 1. Timezone differences (especially date comparisons)
 2. Missing seeded data
 3. Docker network configuration
@@ -284,7 +301,15 @@ await test.step('Fill artist form', async () => {
 ## Getting Help
 
 If stuck after following this workflow:
+
 1. Check CI logs for the actual error message
 2. Look for screenshots in test artifacts
 3. Search for similar issues in the Playwright docs
 4. Ask for help with specific error details
+
+## Related Skills
+
+- **playwright-ci-workflow** — The complete lifecycle for writing tests that pass in CI. Covers Buildkite monitoring, fast feedback loops (pipeline trimming), environment-aware workflows for CLI vs web agents, and adding tests to the CI curated list. **Use that skill for the CI workflow; use this skill for debugging specific test failures.**
+- **detecting-agent-environment** — Environment detection utilities (`detect_docker`, `detect_ci`, etc.)
+- **agent-automation-infrastructure** — Pre-built Docker images, CI pipeline details
+- **testing-pr-changes** — PR verification checklist and proof requirements
