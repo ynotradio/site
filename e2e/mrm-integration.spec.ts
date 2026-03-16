@@ -40,7 +40,9 @@ async function getActiveTournamentId(
     `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments`
       + '?where[status][equals]=active&limit=1',
   );
+  expect(res.ok()).toBe(true);
   const data = await res.json();
+  expect(data.docs?.length).toBeGreaterThan(0);
   return data.docs[0].id;
 }
 
@@ -155,6 +157,15 @@ test.describe('MRM Integration — Payload API Data', () => {
   });
 });
 
+/** Wait for the bracket web components to render their content. */
+async function waitForBracketRender(page: import('@playwright/test').Page) {
+  await expect(page.locator('#bracket')).toBeVisible({ timeout: 10000 });
+  await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
+  ).not.toHaveText('', { timeout: 5000 });
+}
+
 // -----------------------------------------------------------------------
 // Phase 10 — Cross-system consistency (API ↔ PHP)
 // -----------------------------------------------------------------------
@@ -168,10 +179,7 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     )).json();
 
     await navigateWithRetry(page, MRM_FRESH_URL);
-    await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
-    ).not.toHaveText('', { timeout: 5000 });
+    await waitForBracketRender(page);
 
     const phpBandCount = await page.evaluate(() => {
       let count = 0;
@@ -199,6 +207,7 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     )).json()).docs[0];
 
     await navigateWithRetry(page, MRM_FRESH_URL);
+    await waitForBracketRender(page);
     const matchCard = page.locator('mrm-match-card');
     await expect(matchCard).toBeVisible({ timeout: 10000 });
 
@@ -207,9 +216,6 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     await expect(matchCard).toHaveAttribute('band2-name', apiMatch.band2.name);
 
     // Bracket abbreviations match API
-    await expect(
-      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
-    ).not.toHaveText('', { timeout: 5000 });
     const phpAbbrs = await page
       .locator('#region_1 mrm-bracket-match').first()
       .locator('.band_abbr').allTextContents();
@@ -228,7 +234,7 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     )).json();
 
     await navigateWithRetry(page, MRM_FRESH_URL);
-    await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
+    await waitForBracketRender(page);
     await expect(page.locator('mrm-bracket-match')).toHaveCount(TOTAL_MATCHES);
 
     expect(matchesData.totalDocs).toBe(TOTAL_MATCHES);
@@ -258,10 +264,7 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
     expect(apiAbbrs.size).toBe(64);
 
     await navigateWithRetry(page, MRM_FRESH_URL);
-    await expect(page.locator('mrm-bracket-match').first()).toBeVisible({ timeout: 10000 });
-    await expect(
-      page.locator('mrm-bracket-match').first().locator('.band_abbr').first(),
-    ).not.toHaveText('', { timeout: 5000 });
+    await waitForBracketRender(page);
 
     const phpAbbrs: string[] = await page.evaluate(() => {
       const abbrs = new Set<string>();
