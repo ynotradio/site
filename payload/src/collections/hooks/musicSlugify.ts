@@ -41,15 +41,19 @@ async function resolveArtistName(data: Record<string, unknown>, payload: Payload
  * Custom slugify function for Songs and Records.
  * Generates "artist-name--title" format slugs.
  */
-export const musicSlugify: Slugify = async ({ data, req }) => {
+export const musicSlugify: Slugify = async ({ data, req, valueToSlugify }) => {
   const title = data?.title;
   if (!title) return undefined;
 
   const artistName = await resolveArtistName(data, req.payload);
   const titleSlug = slugifyText(String(title));
 
-  // If the title cannot be slugified, preserve any pre-existing slug (e.g. import fallback)
-  if (!titleSlug) return typeof data?.slug === 'string' && data.slug ? data.slug : undefined;
+  // If title can't be slugified, fall back to valueToSlugify (which Payload sets to
+  // data.slug || data.title before calling this hook). This preserves explicit slugs
+  // like 'legacy-song-5491' set by import scripts.
+  // Note: we can't read data.slug here because the async boundary above causes Payload's
+  // generateSlug wrapper to overwrite data.slug with our unresolved Promise.
+  if (!titleSlug) return valueToSlugify || undefined;
 
   if (artistName) {
     const artistSlug = slugifyText(artistName);

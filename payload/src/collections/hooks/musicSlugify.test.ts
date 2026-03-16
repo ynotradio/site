@@ -110,6 +110,7 @@ describe('musicSlugify (Songs/Records)', () => {
     const result = await musicSlugify({
       data: { artist: 1, title: '♪♫★', slug: 'legacy-song-5491' },
       req: createMockReq(mockPayload) as any,
+      valueToSlugify: 'legacy-song-5491',
     });
 
     expect(result).toBe('legacy-song-5491');

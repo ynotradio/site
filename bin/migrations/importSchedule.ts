@@ -319,31 +319,20 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
     stats.total = scheduleRecords.length;
     logger.info(`Found ${stats.total} schedule records to import`);
 
-    // Import shows in batches for better performance
-    const BATCH_SIZE = 50; // Process 50 records concurrently
+    // Process shows sequentially to avoid Drizzle _rels race conditions
+    // during concurrent inserts (the read-back query after INSERT can fail
+    // when too many concurrent writes compete for connection pool slots)
+    for (let i = 0; i < scheduleRecords.length; i += 1) {
+      const schedule = scheduleRecords[i];
 
-    for (let i = 0; i < scheduleRecords.length; i += BATCH_SIZE) {
-      const batch = scheduleRecords.slice(i, i + BATCH_SIZE);
+      const result = await importSchedule(payload, schedule);
 
-      // Process batch concurrently
-      const results = await Promise.allSettled(
-        batch.map((schedule) => importSchedule(payload, schedule)),
-      );
-
-      // Count results
-      for (const result of results) {
-        if (result.status === 'fulfilled') {
-          if (result.value === 'imported') {
-            stats.success += 1;
-          } else if (result.value === 'error') {
-            stats.errors += 1;
-          } else {
-            stats.skipped += 1;
-          }
-        } else {
-          stats.errors += 1;
-          logger.error('Batch import error', result.reason);
-        }
+      if (result === 'imported') {
+        stats.success += 1;
+      } else if (result === 'error') {
+        stats.errors += 1;
+      } else {
+        stats.skipped += 1;
       }
 
       // Log progress
