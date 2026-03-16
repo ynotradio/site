@@ -1,0 +1,23 @@
+{
+  "skill_name": "playwright-ci-workflow",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I need to write a Playwright e2e test for the new 'Venues' collection in Payload CMS. The test should create a new venue with a name, address, and URL, then verify it appears in the list view. I want this running in CI. I'm working from github.com so I don't have Docker locally.",
+      "expected_output": "Agent should: (1) study existing collection CRUD tests for patterns, (2) write a test using payload-helpers, (3) add the test to playwright.config.ts testMatch, (4) trim pipeline.yml for fast feedback, (5) push and monitor via GitHub MCP check runs, (6) iterate on any failures, (7) revert pipeline.yml changes",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "I wrote a new e2e test for the MRM bracket page that checks the bracket renders correctly with seeded tournament data. It passes locally with `npx playwright test e2e/mrm-bracket.spec.ts --headed` but the Buildkite build is failing. Can you help me figure out why and get it passing in CI?",
+      "expected_output": "Agent should: (1) check Buildkite logs via `bk` CLI, (2) identify CI-specific issues (Docker networking, UTC timezone, seed data differences), (3) suggest fixes for common CI-only failures, (4) use fast feedback loop (trim pipeline.yml), (5) push fix and monitor Buildkite, (6) restore pipeline.yml after success",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "We need e2e test coverage for the legacy PHP shows page that reads from PostgreSQL. The page is at /shows.php?ff=use_postgres_schedule and it should display upcoming shows. Write the test and make sure it passes in our Buildkite CI pipeline.",
+      "expected_output": "Agent should: (1) use navigateToLegacySiteWithPostgres helper, (2) use navigateWithRetry for Docker networking, (3) check for PHP errors, (4) handle timezone-aware date assertions, (5) add test to CI curated list, (6) trim pipeline for fast feedback, (7) verify via bk CLI or GitHub MCP depending on environment",
+      "files": []
+    }
+  ]
+}
