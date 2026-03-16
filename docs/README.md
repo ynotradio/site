@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Last Updated:** January 4, 2026
+**Last Updated:** March 2026
 
 Welcome to the Y-Not Radio site documentation. This index helps you find the information you need quickly.
 
@@ -32,6 +32,8 @@ Welcome to the Y-Not Radio site documentation. This index helps you find the inf
 - **[PostgreSQL Concert Model](POSTGRES_CONCERT_MODEL.md)** - Feature-flagged read model implementation
 - **[Read-Only Collections](READONLY_COLLECTIONS.md)** - Schema reference for all implemented collections
 - **[Environment Variables](ENVIRONMENT_VARIABLES.md)** - Configuration reference
+- **[Environment File Changes](ENVIRONMENT_FILE_CHANGES.md)** - Current .env structure (Jan 2026 consolidation)
+- **[Deployment Safety](DEPLOYMENT_SAFETY.md)** - Production deployment checklist
 - **[Dependency Management](dependency-management.md)** - Package update strategy and ESLint constraints
 - **[Code Quality](CODE_QUALITY.md)** - Coding standards and best practices
 
@@ -39,6 +41,15 @@ Welcome to the Y-Not Radio site documentation. This index helps you find the inf
 - **[Cloudinary Integration](payload-migration/12-cloudinary-integration.md)** - Media storage setup and image migration
 - **[PHP PostgreSQL Querying](payload-migration/03.5-php-postgresql-querying.md)** - Direct database access from PHP
 - **[Hierarchical Navigation](payload-hierarchical-navigation.md)** - Navigation system for Payload
+
+### Features
+- **[Embed Feature](EMBED_FEATURE.md)** - Custom Lexical embed blocks (YouTube, Spotify, etc.)
+- **[Enhanced HTML to Lexical](ENHANCED_HTML_TO_LEXICAL.md)** - HTML-to-Lexical converter
+- **[Payload Admin Customization](PAYLOAD_ADMIN_CUSTOMIZATION.md)** - Admin UI improvements
+
+### CI/CD
+- **[Buildkite Migration Plan](BUILDKITE_MIGRATION_PLAN.md)** - Buildkite pipeline setup and status
+- **[Agentic Workflows](AGENTIC_WORKFLOWS.md)** - Automated code quality workflows
 
 ---
 
@@ -66,13 +77,12 @@ Welcome to the Y-Not Radio site documentation. This index helps you find the inf
 
 Archive of completed implementations and historical context:
 
-- **[Archive Index](archive/README.md)** - Overview of archived documentation
-- **[Completed Implementations](archive/completed-implementations/)** - Detailed summaries of finished features
-  - PostgreSQL Concert Model (Dec 2025)
-  - MusicBrainz Custom Fields (Dec 2025)
+- **[Archive Index](archive/README.md)** - Overview of all archived documentation
+- **[Completed Implementations](archive/completed-implementations/)** - Import fixes, migration scripts, feature summaries
+- **[Environment History](archive/environment/)** - Pre-2026 env audit and strategy proposal
+- **[CI Setup History](archive/ci-setup/)** - GitHub Actions E2E setup, Buildkite E2E investigation
 - **[PHP MVC Migration Reports](archive/php-mvc-migration/)** - Legacy PHP refactoring
 - **[Legacy Processes](archive/legacy-processes/)** - Old admin workflows being replaced
-- **[Dependabot Investigation](archive/dependabot-pr-investigation.md)** - ESLint 8 compatibility constraints
 
 ---
 
@@ -94,9 +104,9 @@ Archive of completed implementations and historical context:
 - [Dependency Management](dependency-management.md)
 
 ### Migration Scripts
+- [Import README](../bin/migrations/IMPORT_README.md) - Import script overview
+- [Incremental Import](incremental-import.md) - Daily update system
 - [Shared Utilities](payload-migration/05-shared-utilities.md)
-- [Migration Tasks](payload-migration/04-migration-tasks.md)
-- Migration scripts in `/bin/migrations/`
 
 ### Testing & Quality
 - [Testing PR Changes Skill](../.claude/skills/testing-pr-changes/SKILL.md)
@@ -120,11 +130,6 @@ When updating documentation:
 
 1. **Keep it current** - Update dates and status as things change
 2. **Link appropriately** - Use relative links for internal documentation
-3. **Archive completed work** - Move implementation summaries to `/docs/archive/completed-implementations/`
+3. **Archive completed work** - Move implementation summaries to `/docs/archive/`
 4. **Update indexes** - Keep this file and [Project Status](PROJECT_STATUS.md) in sync
 5. **Test links** - Verify all internal links work after reorganization
-
----
-
-**Last Updated:** January 4, 2026  
-**Questions?** Open an issue: https://github.com/ynotradio/site/issues

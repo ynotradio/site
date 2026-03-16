@@ -10,10 +10,10 @@ This checklist ensures the production PHP site remains stable and can roll back 
 
 ### 1. Verify Feature Flags (MOST IMPORTANT)
 
-Check `src/partials/.env` on the **production server** (NOT your local copy):
+Check the production `.env` file (deployed from `.env.php` via `bin/deploy.sh`):
 
 ```bash
-ssh ynotradio 'cat ~/htdocs/partials/.env | grep USE_POSTGRES'
+ssh ynotradio 'cat ~/htdocs/.env | grep USE_POSTGRES'
 ```
 
 **MUST be:**
@@ -35,7 +35,7 @@ USE_POSTGRES_CUSTOMTEXT=false
 
 ```bash
 # In your local repo, before deploying
-git diff main src/partials/.env | grep USE_POSTGRES
+git diff main .env.php | grep USE_POSTGRES
 ```
 
 **Should return nothing** (no changes to postgres flags)
@@ -47,7 +47,7 @@ git diff main src/partials/.env | grep USE_POSTGRES
 - MySQL: `localhost`
 
 ```bash
-ssh ynotradio 'cat ~/htdocs/partials/.env | grep DB_HOST'
+ssh ynotradio 'cat ~/htdocs/.env | grep DB_HOST'
 ```
 
 **Should be:** Production MySQL hostname (NOT `mysql` or `localhost`)
@@ -98,7 +98,7 @@ ssh ynotradio 'tail -20 /var/log/apache2/error.log'
 **After every deployment, verify flags are still false:**
 
 ```bash
-ssh ynotradio 'cat ~/htdocs/partials/.env | grep USE_POSTGRES | grep true'
+ssh ynotradio 'cat ~/htdocs/.env | grep USE_POSTGRES | grep true'
 ```
 
 **Should return nothing** (no matches for "true")
@@ -112,7 +112,7 @@ ssh ynotradio 'cat ~/htdocs/partials/.env | grep USE_POSTGRES | grep true'
 **Option A: Toggle feature flags (if Postgres is the problem)**
 
 ```bash
-ssh ynotradio 'cd ~/htdocs/partials && sed -i "s/USE_POSTGRES_.*=true/&=false/g" .env'
+ssh ynotradio 'cd ~/htdocs && sed -i "s/USE_POSTGRES_.*=true/&=false/g" .env'
 ```
 
 **Option B: Revert to previous Git tag**
