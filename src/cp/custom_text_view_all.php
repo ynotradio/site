@@ -4,6 +4,7 @@ $page_file = "custom_text_view_all.php";
 $page_title = "View All Custom Texts";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require_once ("../models/CustomTextFactory.php");
 require ("../partials/_header.php");
 
@@ -30,6 +31,8 @@ if (!$_SESSION["logged_in"]) {
         echo '</ol>';
       ?>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('posts')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

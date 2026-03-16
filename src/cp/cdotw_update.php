@@ -4,6 +4,7 @@ $page_file = "cdotw_update.php";
 $page_title = "Update CD of the Week";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../partials/_header.php");
 require_once ("../models/CdOfTheWeekFactory.php");
 
@@ -67,6 +68,16 @@ if (!$_SESSION["logged_in"]) {
                 echo '<div class="top-spacer_20 center error">Sorry, there was an error. Please try again later.</div>';
             }
             ?>
+            <div class="top-spacer_20">
+              <a href="cdotw_view_all.php">View all CDs of the Week</a>
+              <p>
+              <?php $payload_edit_url = $id ? get_payload_edit_url('cdoftheweek', 'cdoftheweek', (int) $id) : null; ?>
+              <?php if ($payload_edit_url): ?>
+                <a href="<?php echo htmlspecialchars($payload_edit_url); ?>" target="_blank">Edit in Payload ↗</a>
+                <p>
+              <?php endif; ?>
+              <a href="index.php">Control Panel</a>
+            </div>
         </div>
     </div>
     <?php

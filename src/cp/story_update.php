@@ -4,6 +4,7 @@ $page_file = "story_update.php";
 $page_title = "Update Story";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/StoryFactory.php");
 require ("../partials/_story_display_helpers.php");
 require ("../partials/_header.php");
@@ -67,6 +68,11 @@ if (!$_SESSION["logged_in"]) {
     <div class="top-spacer_20">
       <a href="story_view_all.php">View all Stories</a>
       <p>
+      <?php $payload_edit_url = $id ? get_payload_edit_url('posts', 'posts', (int) $id) : null; ?>
+      <?php if ($payload_edit_url): ?>
+        <a href="<?php echo htmlspecialchars($payload_edit_url); ?>" target="_blank">Edit in Payload ↗</a>
+        <p>
+      <?php endif; ?>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

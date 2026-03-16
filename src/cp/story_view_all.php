@@ -4,6 +4,7 @@ $page_file = "story_view_all.php";
 $page_title = "View All Stories";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/StoryFactory.php");
 require ("../partials/_story_display_helpers.php");
 require ("../partials/_header.php");
@@ -32,6 +33,8 @@ if (!$_SESSION["logged_in"]) {
       ?>
     <div class="top-spacer_20">
       <a href="stories_order.php">Order Stories</a>
+      <p>
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('posts')); ?>" target="_blank">View in Payload ↗</a>
       <p>
       <a href="index.php">Control Panel</a>
     </div>

@@ -4,6 +4,7 @@ $page_file = "cdotw_view_all.php";
 $page_title = "View All CDs of the Week";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../partials/_header.php");
 require_once ("../models/CdOfTheWeekFactory.php");
 
@@ -49,6 +50,7 @@ if (!$_SESSION["logged_in"]) {
             ?>
             <div class="top-spacer_20">
                 <a href="cdotw_add.php">Add a CD of the Week</a><br>
+                <a href="<?php echo htmlspecialchars(get_payload_collection_url('cdoftheweek')); ?>" target="_blank">View in Payload ↗</a><br>
                 <a href="index.php">Control Panel</a>
             </div>
         </div>

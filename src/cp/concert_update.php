@@ -4,6 +4,7 @@ $page_file = "concert_update.php";
 $page_title = "Update Concert";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/ConcertFactory.php");
 require ("../partials/_header.php");
 
@@ -88,6 +89,11 @@ if (!$_SESSION["logged_in"]) {
     <div class="top-spacer_20">
       <a href="concert_view_all.php">View all Concerts</a>
       <p>
+      <?php $payload_edit_url = $id ? get_payload_edit_url('concerts', 'concerts', (int) $id) : null; ?>
+      <?php if ($payload_edit_url): ?>
+        <a href="<?php echo htmlspecialchars($payload_edit_url); ?>" target="_blank">Edit in Payload ↗</a>
+        <p>
+      <?php endif; ?>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

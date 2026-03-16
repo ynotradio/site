@@ -4,6 +4,7 @@ $page_file = "ondemand_view_all.php";
 $page_title = "View All On Demands";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/OnDemandFactory.php");
 require ("../partials/_ondemand_display_helpers.php");
 require ("../partials/_header.php");
@@ -33,6 +34,8 @@ if (!$_SESSION["logged_in"]) {
       echo '</ol>';
       ?>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('ondemand')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

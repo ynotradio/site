@@ -4,6 +4,7 @@ $page_file = "deejay_view_all.php";
 $page_title = "View All DeeJays";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require_once ("../models/DeejayFactory.php");
 require ("../partials/_header.php");
 
@@ -55,6 +56,8 @@ function display_deejay($deejay) {
       ?>
       </div>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('djs')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>
