@@ -257,7 +257,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
         date: schedule.date,
         startTime: schedule.start_time,
         endTime: schedule.end_time,
-        host: djId || undefined,
+        ...(djId ? { host: djId } : {}),
         name: showName,
         note: schedule.note ? convertTextToLexical(schedule.note) : undefined,
         legacyId: schedule.id,

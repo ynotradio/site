@@ -118,10 +118,13 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       : convertHtmlToLexical(post.content);
 
     // Ensure content has valid structure - provide fallback for empty/invalid content
-    if (!content?.root?.children || content.root.children.length === 0
-        || (content.root.children.length === 1
-         && content.root.children[0].children?.length === 1
-         && content.root.children[0].children[0].text === '')) {
+    if (
+      !content?.root?.children
+      || content.root.children.length === 0
+      || (content.root.children.length === 1
+        && content.root.children[0].children?.length === 1
+        && content.root.children[0].children[0].text === '')
+    ) {
       // Content is empty or invalid - provide minimal valid structure
       content = {
         root: {
@@ -187,10 +190,15 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       const date = new Date(post.start_date);
       const datePrefix = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
       const headlineSlug = slugify(post.headline);
-      slug = `${datePrefix}--${headlineSlug}`;
+      slug = headlineSlug ? `${datePrefix}--${headlineSlug}` : `${datePrefix}--post-${post.id}`;
     } else {
       // Fallback for other cases
       slug = slugify(post.headline);
+    }
+
+    // Ensure slug is never empty — use legacy ID as ultimate fallback
+    if (!slug) {
+      slug = `post-${post.id}`;
     }
 
     // Create post record
