@@ -102,14 +102,8 @@ const MatchControlsPanel: React.FC<MatchControlsPanelProps> = ({
 
       <div className="match-controls-tab__details">
         <div className="match-controls-tab__times">
-          <span>
-            {'Start: '}
-            {new Date(match.startTime).toLocaleString()}
-          </span>
-          <span>
-            {'End: '}
-            {new Date(match.endTime).toLocaleString()}
-          </span>
+          <span>{`Start: ${new Date(match.startTime).toLocaleString()}`}</span>
+          <span>{`End: ${new Date(match.endTime).toLocaleString()}`}</span>
         </div>
         {match.sponsor && (
           <div className="match-controls-tab__sponsor">
@@ -200,7 +194,7 @@ export const MatchControlsTab: React.FC = () => {
   if (!matchId) {
     return (
       <Gutter>
-        <EmptyState message={'Save this match first to use controls.'} />
+        <EmptyState message="Save this match first to use controls." />
       </Gutter>
     );
   }
