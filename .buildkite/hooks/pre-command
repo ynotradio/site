@@ -21,6 +21,15 @@ NETLIFY_AUTH_TOKEN=$(buildkite-agent secret get NETLIFY_AUTH_TOKEN 2>/dev/null |
 GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
 export NETLIFY_AUTH_TOKEN GITHUB_PR_TOKEN
 
+# Export production MySQL credentials and gap report config (for nightly-gap-report pipeline)
+PROD_MYSQL_HOST=$(buildkite-agent secret get PROD_MYSQL_HOST 2>/dev/null || true)
+PROD_MYSQL_USER=$(buildkite-agent secret get PROD_MYSQL_USER 2>/dev/null || true)
+PROD_MYSQL_PASSWORD=$(buildkite-agent secret get PROD_MYSQL_PASSWORD 2>/dev/null || true)
+PROD_MYSQL_DATABASE=$(buildkite-agent secret get PROD_MYSQL_DATABASE 2>/dev/null || true)
+NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
+GAP_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get GAP_REPORT_ISSUE_NUMBER 2>/dev/null || true)
+export PROD_MYSQL_HOST PROD_MYSQL_USER PROD_MYSQL_PASSWORD PROD_MYSQL_DATABASE NEON_PROD_DATABASE_URL GAP_REPORT_ISSUE_NUMBER
+
 # Setup E2E environment files if the script exists
 if [[ -f "./bin/setup-e2e-env.sh" ]]; then
   echo "--- Setting up E2E environment"
