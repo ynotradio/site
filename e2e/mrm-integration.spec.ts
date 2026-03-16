@@ -12,17 +12,10 @@
  */
 import { test as baseTest, expect } from '@playwright/test';
 import type { APIRequestContext, Page } from '@playwright/test';
-import {
-  captureScreenshot,
-  checkForPhpErrors,
-  navigateWithRetry,
-} from './utils/test-helpers';
+import { captureScreenshot, checkForPhpErrors, navigateWithRetry } from './utils/test-helpers';
 
-const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL
-  || 'http://localhost:3000';
-const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL
-  || process.env.LEGACY_BASE_URL
-  || 'http://localhost:8080';
+const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 const MRM_FRESH_URL = `${LEGACY_BASE_URL}/madness.php?preview=true&ff=use_postgres_madness`;
 
 /** 64-team single-elimination bracket = 63 total matches. */
@@ -30,13 +23,13 @@ const TOTAL_MATCHES = 63;
 
 const test = baseTest.extend({
   // eslint-disable-next-line no-empty-pattern
-  storageState: async ({}, runTest) => { await runTest({}); },
+  storageState: async ({}, runTest) => {
+    await runTest({});
+  },
 });
 
 /** Fetch the active tournament ID from the Payload API. */
-async function getActiveTournamentId(
-  request: APIRequestContext,
-): Promise<number> {
+async function getActiveTournamentId(request: APIRequestContext): Promise<number> {
   const res = await request.get(
     `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments`
       + '?where[status][equals]=active&limit=1',
@@ -149,12 +142,12 @@ test.describe('MRM Integration — Payload API Data', () => {
       expect(m.winner).toBeFalsy();
     });
 
-    expect(roundCounts.get('round1')).toBe(32);
-    expect(roundCounts.get('round2')).toBe(16);
-    expect(roundCounts.get('sweet16')).toBe(8);
-    expect(roundCounts.get('elite8')).toBe(4);
-    expect(roundCounts.get('final4')).toBe(2);
-    expect(roundCounts.get('championship')).toBe(1);
+    expect(roundCounts.get('1')).toBe(32);
+    expect(roundCounts.get('2')).toBe(16);
+    expect(roundCounts.get('3')).toBe(8);
+    expect(roundCounts.get('4')).toBe(4);
+    expect(roundCounts.get('5')).toBe(2);
+    expect(roundCounts.get('6')).toBe(1);
   });
 });
 
@@ -174,10 +167,12 @@ async function waitForBracketRender(page: Page) {
 test.describe('MRM Integration — API to PHP Consistency', () => {
   test('API band count matches PHP bracket R1 entries', async ({ page, request }, testInfo) => {
     const tournamentId = await getActiveTournamentId(request);
-    const groupsData = await (await request.get(
-      `${PAYLOAD_BASE_URL}/api/modern-rock-madness-groups`
-        + `?where[tournament][equals]=${tournamentId}&limit=100`,
-    )).json();
+    const groupsData = await (
+      await request.get(
+        `${PAYLOAD_BASE_URL}/api/modern-rock-madness-groups`
+          + `?where[tournament][equals]=${tournamentId}&limit=100`,
+      )
+    ).json();
 
     await navigateWithRetry(page, MRM_FRESH_URL);
     await waitForBracketRender(page);
@@ -186,10 +181,13 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
       let count = 0;
       [1, 2, 3, 4].forEach((region) => {
         const matches = document.querySelectorAll(`#region_${region} mrm-bracket-match`);
-        Array.from(matches).slice(0, 8).forEach((m) => {
-          count += Array.from(m.querySelectorAll('.band_abbr'))
-            .filter((el) => el.textContent !== 'TBD' && (el.textContent?.length ?? 0) > 0).length;
-        });
+        Array.from(matches)
+          .slice(0, 8)
+          .forEach((m) => {
+            count += Array.from(m.querySelectorAll('.band_abbr')).filter(
+              (el) => el.textContent !== 'TBD' && (el.textContent?.length ?? 0) > 0,
+            ).length;
+          });
       });
       return count;
     });
@@ -201,11 +199,15 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
   test('API match 1 data matches PHP match card and bracket', async ({ page, request }) => {
     const tournamentId = await getActiveTournamentId(request);
-    const apiMatch = (await (await request.get(
-      `${PAYLOAD_BASE_URL}/api/modern-rock-madness-matches`
-        + `?where[tournament][equals]=${tournamentId}`
-        + '&where[matchNumber][equals]=1&limit=1&depth=1',
-    )).json()).docs[0];
+    const apiMatch = (
+      await (
+        await request.get(
+          `${PAYLOAD_BASE_URL}/api/modern-rock-madness-matches`
+            + `?where[tournament][equals]=${tournamentId}`
+            + '&where[matchNumber][equals]=1&limit=1&depth=1',
+        )
+      ).json()
+    ).docs[0];
 
     await navigateWithRetry(page, MRM_FRESH_URL);
     await waitForBracketRender(page);
@@ -218,8 +220,10 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
     // Bracket abbreviations match API
     const phpAbbrs = await page
-      .locator('#region_1 mrm-bracket-match').first()
-      .locator('.band_abbr').allTextContents();
+      .locator('#region_1 mrm-bracket-match')
+      .first()
+      .locator('.band_abbr')
+      .allTextContents();
     expect(phpAbbrs).toContain(apiMatch.band1.abbreviation);
     expect(phpAbbrs).toContain(apiMatch.band2.abbreviation);
 
@@ -229,10 +233,12 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
   test('API match count equals PHP bracket match count', async ({ page, request }, testInfo) => {
     const tournamentId = await getActiveTournamentId(request);
-    const matchesData = await (await request.get(
-      `${PAYLOAD_BASE_URL}/api/modern-rock-madness-matches`
-        + `?where[tournament][equals]=${tournamentId}&limit=1`,
-    )).json();
+    const matchesData = await (
+      await request.get(
+        `${PAYLOAD_BASE_URL}/api/modern-rock-madness-matches`
+          + `?where[tournament][equals]=${tournamentId}&limit=1`,
+      )
+    ).json();
 
     await navigateWithRetry(page, MRM_FRESH_URL);
     await waitForBracketRender(page);
@@ -254,10 +260,12 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
 
   test('all 64 API abbreviations appear in PHP bracket', async ({ page, request }) => {
     const tournamentId = await getActiveTournamentId(request);
-    const groupsData = await (await request.get(
-      `${PAYLOAD_BASE_URL}/api/modern-rock-madness-groups`
-        + `?where[tournament][equals]=${tournamentId}&limit=100&sort=placement`,
-    )).json();
+    const groupsData = await (
+      await request.get(
+        `${PAYLOAD_BASE_URL}/api/modern-rock-madness-groups`
+          + `?where[tournament][equals]=${tournamentId}&limit=100&sort=placement`,
+      )
+    ).json();
 
     const apiAbbrs = new Set<string>(
       groupsData.docs.map((g: { abbreviation: string }) => g.abbreviation),
@@ -271,7 +279,8 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
       const abbrs = new Set<string>();
       [1, 2, 3, 4].forEach((region) => {
         Array.from(document.querySelectorAll(`#region_${region} mrm-bracket-match`))
-          .slice(0, 8).forEach((m) => {
+          .slice(0, 8)
+          .forEach((m) => {
             Array.from(m.querySelectorAll('.band_abbr')).forEach((el) => {
               const t = el.textContent ?? '';
               if (t !== 'TBD' && t.length > 0) abbrs.add(t);
@@ -281,6 +290,8 @@ test.describe('MRM Integration — API to PHP Consistency', () => {
       return Array.from(abbrs);
     });
 
-    apiAbbrs.forEach((abbr) => { expect(phpAbbrs).toContain(abbr); });
+    apiAbbrs.forEach((abbr) => {
+      expect(phpAbbrs).toContain(abbr);
+    });
   });
 });
