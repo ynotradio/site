@@ -90,22 +90,40 @@ These are Next.js App Router infrastructure files or simple wrappers, not testab
 - `payload/src/features/dj-order/index.tsx` (27 lines) - Server component wrapper
 - `payload/src/features/show-cloner/index.tsx` (27 lines) - Server component wrapper
 
+## ✅ New Completions (mrm-bracket / mrm-live)
+
+Components added after the original checklist that now have full test + story coverage:
+
+- [x] **BracketTree.tsx** (125 lines) ✅ Test + Story
+  - Path: `payload/src/features/mrm-bracket/`
+  - Used by: TournamentBracketTab
+
+- [x] **RematchScheduler.tsx** (91 lines) ✅ Test + Story
+  - Path: `payload/src/features/mrm-live/`
+  - Used by: MatchControlsPanels / MatchControlsTab
+
+### Still Needs Tests/Stories
+
+- [ ] **MatchControlsPanels.tsx** (233 lines) – Missing: Test file + Story file
+  - Path: `payload/src/features/mrm-live/`
+  - Exports: `NavLinks`, `MatchCardHeader`, `MatchCardBody`, `ActionButtons`, `AdminLinks`
+  - Used by: MatchControlsTab
+
 ## 🎯 Summary Statistics
 
 - **Total TSX files**: 20 (excluding .stories.tsx and .test.tsx)
-- **Fully compliant**: 10 (50%) ✅ +7 from previous
-- **Need tests/stories**: 3 (15%) 🔄 Down from 12
+- **Fully compliant**: 12 (60%) ✅ +2 from previous
+- **Need tests/stories**: 1 (5%) 🔄 Down from 3
 - **Infrastructure (exempt)**: 4 (20%)
 - **Over 300 lines**: 0 (0%) ✅ FIXED
 
 ## 📊 Issues Breakdown
 
-| Issue               | Count | Files Affected                             |
-| ------------------- | ----- | ------------------------------------------ |
-| Missing test files  | 3     | DJsListHeader, SortableItem, client.tsx    |
-| Missing story files | 3     | DJsListHeader, SortableItem, client.tsx    |
-| Inline styles       | 3     | DJsListHeader, SortableItem, client.tsx    |
-| Over 300 lines      | 0     | ✅ NONE                                     |
+| Issue               | Count | Files Affected        |
+| ------------------- | ----- | --------------------- |
+| Missing test files  | 1     | MatchControlsPanels   |
+| Missing story files | 1     | MatchControlsPanels   |
+| Over 300 lines      | 0     | ✅ NONE               |
 
 ## 🔧 Recommended Action Plan
 
