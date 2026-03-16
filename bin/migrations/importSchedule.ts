@@ -209,12 +209,15 @@ async function showExists(payload: Payload, legacyId: number): Promise<boolean> 
 /**
  * Import a single schedule record
  */
-async function importSchedule(payload: Payload, schedule: Schedule): Promise<boolean> {
+async function importSchedule(
+  payload: Payload,
+  schedule: Schedule,
+): Promise<'imported' | 'skipped' | 'error'> {
   try {
     // Check if already imported
     if (await showExists(payload, schedule.id)) {
       logger.debug(`Show ${schedule.id} already exists, skipping`);
-      return false;
+      return 'skipped';
     }
 
     // Parse the host field to extract show name and DJ name
@@ -259,7 +262,7 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
         endTime: schedule.end_time,
         ...(djId ? { host: djId } : {}),
         name: showName,
-        note: schedule.note ? convertTextToLexical(schedule.note) : undefined,
+        ...(schedule.note ? { note: convertTextToLexical(schedule.note) } : {}),
         legacyId: schedule.id,
         migratedAt: new Date().toISOString(),
       },
@@ -268,10 +271,10 @@ async function importSchedule(payload: Payload, schedule: Schedule): Promise<boo
     logger.debug(
       `Imported show ${schedule.id}: ${schedule.day} ${schedule.start_time}-${schedule.end_time} (${schedule.host || 'no host'})`,
     );
-    return true;
+    return 'imported';
   } catch (error) {
     logger.error(`Failed to import show ${schedule.id}`, error as Error);
-    return false;
+    return 'error';
   }
 }
 
@@ -330,8 +333,10 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
       // Count results
       for (const result of results) {
         if (result.status === 'fulfilled') {
-          if (result.value) {
+          if (result.value === 'imported') {
             stats.success += 1;
+          } else if (result.value === 'error') {
+            stats.errors += 1;
           } else {
             stats.skipped += 1;
           }

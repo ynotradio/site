@@ -48,8 +48,8 @@ export const musicSlugify: Slugify = async ({ data, req }) => {
   const artistName = await resolveArtistName(data, req.payload);
   const titleSlug = slugifyText(String(title));
 
-  // If the title cannot be slugified into a non-empty string, do not generate a slug
-  if (!titleSlug) return undefined;
+  // If the title cannot be slugified, preserve any pre-existing slug (e.g. import fallback)
+  if (!titleSlug) return typeof data?.slug === 'string' && data.slug ? data.slug : undefined;
 
   if (artistName) {
     const artistSlug = slugifyText(artistName);
@@ -67,7 +67,9 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
 
   if (!updatedData.record) return updatedData;
 
-  const recordId = typeof updatedData.record === 'object' ? (updatedData.record as { id: unknown }).id : updatedData.record;
+  const recordId = typeof updatedData.record === 'object'
+    ? (updatedData.record as { id: unknown }).id
+    : updatedData.record;
 
   try {
     const record = await req.payload.findByID({

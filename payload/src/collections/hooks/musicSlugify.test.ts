@@ -99,11 +99,29 @@ describe('musicSlugify (Songs/Records)', () => {
 
   it('should handle special characters in artist and title', async () => {
     const result = await musicSlugify({
-      data: { artist: { id: 1, name: "Guns N' Roses" }, title: 'Sweet Child O\' Mine' },
+      data: { artist: { id: 1, name: "Guns N' Roses" }, title: "Sweet Child O' Mine" },
       req: createMockReq(mockPayload) as any,
     });
 
     expect(result).toBe('guns-n-roses--sweet-child-o-mine');
+  });
+
+  it('should preserve pre-existing slug when title cannot be slugified', async () => {
+    const result = await musicSlugify({
+      data: { artist: 1, title: '♪♫★', slug: 'legacy-song-5491' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('legacy-song-5491');
+  });
+
+  it('should return undefined when title cannot be slugified and no slug exists', async () => {
+    const result = await musicSlugify({
+      data: { artist: 1, title: '♪♫★' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBeUndefined();
   });
 });
 

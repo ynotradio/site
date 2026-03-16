@@ -146,12 +146,15 @@ async function songExists(payload: Payload, legacyId: number): Promise<boolean> 
 /**
  * Import a single music record, creating artist if needed
  */
-async function importMusic(payload: Payload, music: Music): Promise<boolean> {
+async function importMusic(
+  payload: Payload,
+  music: Music,
+): Promise<'imported' | 'skipped' | 'error'> {
   try {
     // Check if already imported
     if (await songExists(payload, music.id)) {
       logger.debug(`Song ${music.id} already exists, skipping`);
-      return false;
+      return 'skipped';
     }
 
     // Find or create artist
@@ -178,10 +181,10 @@ async function importMusic(payload: Payload, music: Music): Promise<boolean> {
     });
 
     logger.debug(`Imported song ${music.id}: ${music.artist} - ${music.song}`);
-    return true;
+    return 'imported';
   } catch (error) {
     logger.error(`Failed to import song ${music.id}`, error as Error);
-    return false;
+    return 'error';
   }
 }
 
@@ -226,10 +229,12 @@ async function importAllMusic(options: ImportOptions): Promise<void> {
     for (let i = 0; i < musicRecords.length; i += 1) {
       const music = musicRecords[i];
 
-      const imported = await importMusic(payload, music);
+      const result = await importMusic(payload, music);
 
-      if (imported) {
+      if (result === 'imported') {
         stats.success += 1;
+      } else if (result === 'error') {
+        stats.errors += 1;
       } else {
         stats.skipped += 1;
       }
