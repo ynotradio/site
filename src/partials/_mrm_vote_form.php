@@ -16,10 +16,12 @@ $voter_email = $userInfo['email'] ?? null;
 
 if (empty($voter_email)) {
     // User is not logged in - show login button
-    echo '<a href="auth_login.php?returnTo=/madness" class="btn-success">Log in to vote</a>';
+    $page_url = '/' . basename($GLOBALS['page_file'] ?? 'madness.php', '.php');
+    echo '<a href="auth_login.php?returnTo=' . htmlspecialchars($page_url) . '" class="btn-success">Log in to vote</a>';
 } else {
     // User is logged in - show vote form
-    echo '<form action="madness.php" method="post">
+    $form_action = $GLOBALS['page_file'] ?? 'madness.php';
+    echo '<form action="' . htmlspecialchars($form_action) . '" method="post">
         <input type="submit" class="btn-success" value="Vote!">
         <input type="hidden" name="match_id" value="' . htmlspecialchars($match_id) . '">
         <input type="hidden" name="band_id" value="' . htmlspecialchars($band_id) . '">

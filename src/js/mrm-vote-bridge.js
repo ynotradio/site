@@ -21,13 +21,13 @@ function initVoteBridge() {
     var voterEmail = document.body.getAttribute('data-voter-email') || '';
     if (!voterEmail) {
       // Not logged in – redirect to login
-      window.location.href = 'auth_login.php?returnTo=/madness';
+      window.location.href = 'auth_login.php?returnTo=' + encodeURIComponent(window.location.pathname);
       return;
     }
 
     var form = document.createElement('form');
     form.method = 'POST';
-    form.action = 'madness.php';
+    form.action = window.location.pathname;
     form.style.display = 'none';
 
     var fields = {

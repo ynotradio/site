@@ -74,7 +74,8 @@ $has_voted = $controller->hasVoted($match_id);
     $userInfo = $auth0 ? $auth0->getUser() : null;
     $voter_email = $userInfo['email'] ?? null;
     if (empty($voter_email) && $match_status === 'running' && !$has_voted) {
-        echo 'login-url="auth_login.php?returnTo=/madness"';
+        $page_url = '/' . basename($GLOBALS['page_file'] ?? 'madness.php', '.php');
+        echo 'login-url="auth_login.php?returnTo=' . htmlspecialchars($page_url) . '"';
     }
     ?>
     <?php if ($match['sponsor']): ?>
