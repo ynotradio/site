@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+// Skip Drizzle pushDevSchema — these scripts only read/write data, never alter schema
 /**
  * MusicBrainz Integrity Check
  *
@@ -35,6 +36,8 @@ import {
   type CollectionConfig,
 } from './integrity-check-musicbrainz-utils';
 
+process.env.PAYLOAD_MIGRATING = 'true';
+
 // ---------------------------------------------------------------------------
 // Process a single collection
 // ---------------------------------------------------------------------------
@@ -52,9 +55,7 @@ async function processCollection(
   let processed = 0;
 
   while (hasMore) {
-    const limit = options.limit
-      ? Math.min(PAGE_SIZE, options.limit - processed)
-      : PAGE_SIZE;
+    const limit = options.limit ? Math.min(PAGE_SIZE, options.limit - processed) : PAGE_SIZE;
     if (limit <= 0) break;
 
     const result = await payload.find({
@@ -67,30 +68,22 @@ async function processCollection(
     });
 
     for (const doc of result.docs) {
-      const rawName = (
-        doc as Record<string, unknown>
-      )[collectionCfg.nameField] as string;
+      const rawName = (doc as Record<string, unknown>)[collectionCfg.nameField] as string;
       const name = repairEncoding(rawName);
       const mbid = (doc as { musicbrainzId?: string }).musicbrainzId;
 
       if (mbid) {
         const artistName = collectionCfg.needsArtist
           ? (() => {
-            const raw = getArtistName(
-              (doc as { artist?: unknown }).artist,
-            );
+            const raw = getArtistName((doc as { artist?: unknown }).artist);
             return raw ? repairEncoding(raw) : null;
           })()
           : null;
 
-        const identifier = collectionCfg.needsArtist && artistName
-          ? `${artistName} — ${name}`
-          : name;
+        const identifier = collectionCfg.needsArtist && artistName ? `${artistName} — ${name}` : name;
 
         if (options.verbose) {
-          console.log(
-            `  Checking [${collectionCfg.slug}] ${identifier} (${mbid})`,
-          );
+          console.log(`  Checking [${collectionCfg.slug}] ${identifier} (${mbid})`);
         }
 
         let handled = false;
@@ -147,9 +140,7 @@ async function processCollection(
                 });
                 checkResult.status = 'fixed';
                 if (options.verbose) {
-                  console.log(
-                    `    ✅ Fixed: ${mbid} → ${bestMatch.foundMbid}`,
-                  );
+                  console.log(`    ✅ Fixed: ${mbid} → ${bestMatch.foundMbid}`);
                 }
               } catch (err) {
                 checkResult.status = 'fix-failed';
@@ -177,8 +168,7 @@ async function processCollection(
       }
     }
 
-    hasMore = result.hasNextPage
-      && (!options.limit || processed < options.limit);
+    hasMore = result.hasNextPage && (!options.limit || processed < options.limit);
     page++;
   }
 }
@@ -225,9 +215,7 @@ async function main() {
   const exitCode = report.mismatch > 0 || report.fixFailed > 0 ? 1 : 0;
 
   if (!options.fix && report.mismatch > 0) {
-    console.log(
-      '\n💡 This was a dry run. Use --fix to update mismatched MBIDs.\n',
-    );
+    console.log('\n💡 This was a dry run. Use --fix to update mismatched MBIDs.\n');
   }
 
   process.exit(exitCode);

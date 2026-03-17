@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+// Skip Drizzle pushDevSchema — these scripts only read/write data, never alter schema
 /**
  * Slug Integrity Check
  *
@@ -25,6 +26,8 @@ import {
   type CheckReport,
   type IntegrityReport,
 } from './content-integrity-utils';
+
+process.env.PAYLOAD_MIGRATING = 'true';
 
 const PAGE_SIZE = 100;
 
@@ -100,10 +103,7 @@ export async function generateCdOfTheWeekSlug(
       depth: 1,
     });
     if (!found) return null;
-    return await generateMusicSlug(
-      payload,
-      found as unknown as Record<string, unknown>,
-    );
+    return await generateMusicSlug(payload, found as unknown as Record<string, unknown>);
   } catch {
     return null;
   }
@@ -191,9 +191,7 @@ async function checkCollection(
 
       const entry = doc as unknown as Record<string, unknown>;
       const entryId = entry.id as string | number;
-      const identifier = String(
-        entry[collectionConfig.identifierField] ?? `id:${entryId}`,
-      );
+      const identifier = String(entry[collectionConfig.identifierField] ?? `id:${entryId}`);
       const currentSlug = (entry.slug as string | undefined) ?? '';
 
       try {
@@ -212,7 +210,7 @@ async function checkCollection(
           if (options.verbose) {
             console.log(
               `  \u23ED  [${collectionConfig.collection}] ${identifier}`
-              + ' \u2014 skipped (no expected slug)',
+                + ' \u2014 skipped (no expected slug)',
             );
           }
         } else if (!currentSlug) {
@@ -237,7 +235,7 @@ async function checkCollection(
               if (options.verbose) {
                 console.log(
                   `  \u2705 [${collectionConfig.collection}] ${identifier}`
-                  + ` \u2014 fixed (was empty \u2192 ${expectedSlug})`,
+                    + ` \u2014 fixed (was empty \u2192 ${expectedSlug})`,
                 );
               }
             } catch (err) {
@@ -265,7 +263,7 @@ async function checkCollection(
             if (options.verbose) {
               console.log(
                 `  \u274C [${collectionConfig.collection}] ${identifier}`
-                + ` \u2014 missing slug (expected: ${expectedSlug})`,
+                  + ` \u2014 missing slug (expected: ${expectedSlug})`,
               );
             }
           }
@@ -291,7 +289,7 @@ async function checkCollection(
               if (options.verbose) {
                 console.log(
                   `  \u2705 [${collectionConfig.collection}] ${identifier}`
-                  + ` \u2014 fixed (${currentSlug} \u2192 ${expectedSlug})`,
+                    + ` \u2014 fixed (${currentSlug} \u2192 ${expectedSlug})`,
                 );
               }
             } catch (err) {
@@ -319,7 +317,7 @@ async function checkCollection(
             if (options.verbose) {
               console.log(
                 `  \u26A0\uFE0F  [${collectionConfig.collection}] ${identifier}`
-                + ` \u2014 mismatch: "${currentSlug}" vs "${expectedSlug}"`,
+                  + ` \u2014 mismatch: "${currentSlug}" vs "${expectedSlug}"`,
               );
             }
           }
@@ -332,9 +330,7 @@ async function checkCollection(
             status: 'ok',
           });
           if (options.verbose) {
-            console.log(
-              `  \u2713  [${collectionConfig.collection}] ${identifier} \u2014 ok`,
-            );
+            console.log(`  \u2713  [${collectionConfig.collection}] ${identifier} \u2014 ok`);
           }
         }
       } catch (err) {
@@ -376,9 +372,7 @@ async function main(): Promise<void> {
   const start = Date.now();
 
   for (const collectionConfig of COLLECTION_CONFIGS) {
-    console.log(
-      `\uD83D\uDCE6 ${collectionConfig.label} (${collectionConfig.collection}):`,
-    );
+    console.log(`\uD83D\uDCE6 ${collectionConfig.label} (${collectionConfig.collection}):`);
     const beforeTotal = report.total;
     await checkCollection(payload, collectionConfig, report, options);
     const checked = report.total - beforeTotal;

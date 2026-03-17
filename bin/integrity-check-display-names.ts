@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+// Skip Drizzle pushDevSchema — these scripts only read/write data, never alter schema
 /**
  * Display Name Integrity Check
  *
@@ -29,6 +30,8 @@ import {
   computeDJDisplayName,
   computeMusicDisplayName,
 } from './integrity-check-display-names-utils';
+
+process.env.PAYLOAD_MIGRATING = 'true';
 
 const PAGE_SIZE = 100;
 
