@@ -479,3 +479,28 @@ export async function getAlbumCoverArt(
     return null;
   }
 }
+
+export type MbEntityType = 'artist' | 'release' | 'recording';
+
+/**
+ * Look up a MusicBrainz ID and determine its entity type.
+ * Tries artist, release, and recording endpoints in sequence.
+ * Returns the entity type or null if the MBID is not found.
+ */
+export async function getMbEntityType(
+  mbid: string,
+): Promise<MbEntityType | null> {
+  for (const entityType of ['artist', 'release', 'recording'] as const) {
+    await waitForRateLimit();
+    // eslint-disable-next-line no-await-in-loop
+    const found = await fetch(
+      `https://musicbrainz.org/ws/2/${entityType}/${mbid}?fmt=json`,
+      { headers: { 'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)' } },
+    )
+      .then((r) => r.ok)
+      .catch(() => false);
+
+    if (found) return entityType;
+  }
+  return null;
+}
