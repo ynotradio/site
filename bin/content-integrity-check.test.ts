@@ -17,6 +17,7 @@ describe('content-integrity-utils', () => {
         fix: false,
         limit: 0,
         output: '',
+        since: '',
         verbose: false,
       });
     });
@@ -75,6 +76,7 @@ describe('content-integrity-utils', () => {
         fix: true,
         limit: 10,
         output: '/tmp/r.md',
+        since: '',
         verbose: true,
       });
     });

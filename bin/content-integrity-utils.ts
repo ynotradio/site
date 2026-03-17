@@ -19,7 +19,62 @@ export interface CliOptions {
   fix: boolean;
   limit: number;
   output: string;
+  since: string;
   verbose: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// --since duration/date parsing
+// ---------------------------------------------------------------------------
+
+/**
+ * Parse a `--since` value into an ISO date string.
+ * Accepts relative durations like "24h", "7d", "30m" or ISO date strings.
+ * Returns empty string if input is empty.
+ */
+export function parseSinceValue(value: string): string {
+  if (!value) return '';
+
+  const durationMatch = value.match(/^(\d+)([mhdw])$/);
+  if (durationMatch) {
+    const amount = parseInt(durationMatch[1], 10);
+    const unit = durationMatch[2];
+    const now = new Date();
+    const msPerUnit: Record<string, number> = {
+      m: 60 * 1000,
+      h: 60 * 60 * 1000,
+      d: 24 * 60 * 60 * 1000,
+      w: 7 * 24 * 60 * 60 * 1000,
+    };
+    const sinceDate = new Date(now.getTime() - amount * msPerUnit[unit]);
+    return sinceDate.toISOString();
+  }
+
+  // Try parsing as a date
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error(`Invalid --since value "${value}". Use a duration (e.g. 24h, 7d) or ISO date.`);
+  }
+  return parsed.toISOString();
+}
+
+/**
+ * Build a Payload `where` clause that merges an existing condition with a
+ * `updatedAt >= sinceDate` filter. Returns the original where if sinceDate is empty.
+ */
+export function withSinceFilter(
+  where: Record<string, unknown> | undefined,
+  sinceDate: string,
+): Record<string, unknown> | undefined {
+  if (!sinceDate) return where;
+
+  const sinceCondition = { updatedAt: { greater_than_equal: sinceDate } };
+
+  if (!where || Object.keys(where).length === 0) {
+    return sinceCondition;
+  }
+
+  return { and: [where, sinceCondition] };
 }
 
 export interface CheckResult {
@@ -66,6 +121,7 @@ export function parseArgs(argv: string[]): CliOptions {
     fix: false,
     limit: 0,
     output: '',
+    since: '',
     verbose: false,
   };
 
@@ -104,6 +160,13 @@ export function parseArgs(argv: string[]): CliOptions {
         }
         options.output = args[i];
         break;
+      case '--since':
+        i++;
+        if (!args[i]) {
+          throw new Error('--since requires a duration (e.g. 24h, 7d) or ISO date');
+        }
+        options.since = parseSinceValue(args[i]);
+        break;
       case '--verbose':
         options.verbose = true;
         break;
@@ -116,6 +179,8 @@ Options:
                   ${VALID_CHECKS.join(', ')}, all  [default: all]
   --fix           Apply fixes (default is dry-run / check-only)
   --limit <N>     Process at most N records per collection
+  --since <val>   Only check entities updated since this time.
+                  Accepts durations (24h, 7d, 30m) or ISO dates.
   --output <file> Write markdown report to file
   --verbose       Show detailed logging
   --help          Show this help message
