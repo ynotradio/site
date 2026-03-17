@@ -23,6 +23,7 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckReport,
   type IntegrityReport,
 } from './content-integrity-utils';
@@ -45,6 +46,7 @@ async function checkDJs(
   limit: number,
   fix: boolean,
   verbose: boolean,
+  since: string,
 ): Promise<void> {
   let page = 1;
   let hasMore = true;
@@ -60,6 +62,7 @@ async function checkDJs(
       page,
       depth: 1,
       sort: 'id',
+      where: withSinceFilter(undefined, since),
     });
 
     for (const doc of result.docs) {
@@ -151,6 +154,7 @@ async function checkMusicCollection(
   limit: number,
   fix: boolean,
   verbose: boolean,
+  since: string,
 ): Promise<void> {
   let page = 1;
   let hasMore = true;
@@ -167,6 +171,7 @@ async function checkMusicCollection(
       page,
       depth: 1,
       sort: 'id',
+      where: withSinceFilter(undefined, since),
     });
 
     for (const doc of result.docs) {
@@ -260,6 +265,7 @@ async function main() {
   const mode = options.fix ? '🔧 FIX MODE' : '👀 DRY RUN';
   console.log(`\n📝 Display Name Integrity Check — ${mode}`);
   if (options.limit) console.log(`   Limit: ${options.limit} per collection`);
+  if (options.since) console.log(`   Since: ${options.since}`);
   if (options.verbose) console.log('   Verbose: on');
 
   const payload = await getPayload({ config });
@@ -267,7 +273,7 @@ async function main() {
   const start = Date.now();
 
   console.log('\n⏳ Checking DJs...');
-  await checkDJs(payload, report, options.limit, options.fix, options.verbose);
+  await checkDJs(payload, report, options.limit, options.fix, options.verbose, options.since);
 
   console.log('⏳ Checking Songs...');
   await checkMusicCollection(
@@ -278,6 +284,7 @@ async function main() {
     options.limit,
     options.fix,
     options.verbose,
+    options.since,
   );
 
   console.log('⏳ Checking Records...');
@@ -289,6 +296,7 @@ async function main() {
     options.limit,
     options.fix,
     options.verbose,
+    options.since,
   );
 
   report.durationMs = Date.now() - start;

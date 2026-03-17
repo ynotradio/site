@@ -23,6 +23,7 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckReport,
   type IntegrityReport,
 } from './content-integrity-utils';
@@ -166,7 +167,7 @@ async function checkCollection(
   payload: Payload,
   collectionConfig: CollectionSlugConfig,
   report: CheckReport,
-  options: { fix: boolean; limit: number; verbose: boolean },
+  options: { fix: boolean; limit: number; verbose: boolean; since: string },
 ): Promise<void> {
   let page = 1;
   let hasMore = true;
@@ -179,7 +180,7 @@ async function checkCollection(
       page,
       sort: 'id',
       depth: 1,
-      where: { legacyId: { exists: true } },
+      where: withSinceFilter({ legacyId: { exists: true } }, options.since),
     });
 
     for (const doc of result.docs) {
@@ -360,9 +361,12 @@ async function main(): Promise<void> {
   const options = parseArgs(process.argv);
   const modeLabel = options.fix ? 'fix' : 'check';
 
-  console.log(`\n\uD83D\uDD0D Slug Integrity Check (${modeLabel} mode)`);
+  console.log(`\n🔍 Slug Integrity Check (${modeLabel} mode)`);
   if (options.limit > 0) {
     console.log(`   Limit: ${options.limit} per collection`);
+  }
+  if (options.since) {
+    console.log(`   Since: ${options.since}`);
   }
   console.log('');
 

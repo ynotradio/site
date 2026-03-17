@@ -24,6 +24,7 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckResult,
   type IntegrityReport,
 } from './content-integrity-utils';
@@ -60,7 +61,7 @@ async function processCollection(
 
     const result = await payload.find({
       collection: collectionCfg.slug,
-      where: { musicbrainzId: { exists: true } },
+      where: withSinceFilter({ musicbrainzId: { exists: true } }, options.since),
       limit,
       page,
       depth: 1,
@@ -188,6 +189,7 @@ async function main() {
   console.log(`\n🎵 MusicBrainz Integrity Check — ${mode}`);
   console.log(`   Checks: ${checks}`);
   if (options.limit) console.log(`   Limit: ${options.limit} per collection`);
+  if (options.since) console.log(`   Since: ${options.since}`);
   if (options.verbose) console.log('   Verbose: on');
 
   const payload = await getPayload({ config });

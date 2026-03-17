@@ -32,6 +32,7 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckResult,
   type IntegrityReport,
 } from './content-integrity-utils';
@@ -168,13 +169,14 @@ async function applyFixes(
 // ---------------------------------------------------------------------------
 
 async function main(): Promise<void> {
-  const opts = parseArgs(process.argv);
+  const options = parseArgs(process.argv);
   const {
     fix, limit, verbose, output,
-  } = opts;
+  } = options;
 
   console.log(`\n🔍 Record Metadata Integrity Check (${fix ? 'FIX' : 'DRY-RUN'} mode)`);
   if (limit) console.log(`   Limit: ${limit} records`);
+  if (options.since) console.log(`   Since: ${options.since}`);
 
   const payload = await getPayload({ config });
 
@@ -191,7 +193,7 @@ async function main(): Promise<void> {
   while (hasMore) {
     const batch = await payload.find({
       collection: 'records',
-      where: { legacyId: { exists: true } },
+      where: withSinceFilter({ legacyId: { exists: true } }, options.since),
       limit: PAGE_SIZE,
       page,
       sort: 'title',
