@@ -335,9 +335,10 @@ async function importAllSchedule(options: ImportOptions): Promise<void> {
         stats.skipped += 1;
       }
 
-      // Log progress
-      const processed = Math.min(i + BATCH_SIZE, scheduleRecords.length);
-      logProgress(processed, scheduleRecords.length, `Show ${batch[batch.length - 1].id}`);
+      // Log progress every 100 records
+      if ((i + 1) % 100 === 0 || i === scheduleRecords.length - 1) {
+        logProgress(i + 1, scheduleRecords.length, `Show ${schedule.id}`);
+      }
     }
   } catch (error) {
     logger.error('Import failed', error as Error);

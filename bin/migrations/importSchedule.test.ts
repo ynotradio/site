@@ -168,7 +168,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(false);
+      expect(result).toBe('skipped');
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
@@ -196,7 +196,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'Rob Huff');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
@@ -265,7 +265,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'Unknown DJ');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
@@ -273,9 +273,7 @@ describe('importSchedule', () => {
           date: '2024-01-15',
           startTime: '09:00:00',
           endTime: '12:00:00',
-          host: undefined,
           name: 'Test Show w/ Unknown DJ',
-          note: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
         },
@@ -301,11 +299,10 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: expect.objectContaining({
-          host: undefined,
           name: undefined,
         }),
       });
@@ -334,13 +331,9 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
-      expect(mockPayload.create).toHaveBeenCalledWith({
-        collection: 'shows',
-        data: expect.objectContaining({
-          note: undefined,
-        }),
-      });
+      expect(result).toBe('imported');
+      const createCall1 = (mockPayload.create as Mock).mock.calls[0][0];
+      expect(createCall1.data).not.toHaveProperty('note');
     });
 
     it('should preserve all time fields', async () => {
@@ -362,7 +355,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: expect.objectContaining({
@@ -396,7 +389,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: expect.objectContaining({
@@ -456,13 +449,9 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
-      expect(mockPayload.create).toHaveBeenCalledWith({
-        collection: 'shows',
-        data: expect.objectContaining({
-          note: undefined,
-        }),
-      });
+      expect(result).toBe('imported');
+      const createCall2 = (mockPayload.create as Mock).mock.calls[0][0];
+      expect(createCall2.data).not.toHaveProperty('note');
     });
 
     it('should use show name only when no DJ pattern found and has HTML formatting', async () => {
@@ -484,15 +473,16 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockFindDJByDisplayName).not.toHaveBeenCalled();
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',
         data: expect.objectContaining({
           name: 'Y-Not on Shuffle',
-          host: undefined,
         }),
       });
+      const createCall3 = (mockPayload.create as Mock).mock.calls[0][0];
+      expect(createCall3.data).not.toHaveProperty('host');
     });
 
     it('should try to find DJ when host has no HTML formatting', async () => {
@@ -518,7 +508,7 @@ describe('importSchedule', () => {
 
       const result = await importSchedule(mockPayload as Payload, schedule);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockFindDJByDisplayName).toHaveBeenCalledWith(mockPayload, 'John Q.');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'shows',

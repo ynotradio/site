@@ -160,11 +160,19 @@ async function importMusic(
     // Find or create artist
     const artistId = await findOrCreateArtist(payload, music.artist);
 
-    // Build explicit fallback slug when the hook's slugify produces an empty string
-    // (e.g. titles with only special characters). The hook normally generates
-    // "artist--title" format, but returns undefined for un-slugifiable titles.
+    // Pre-compute the slug so musicSlugify returns synchronously.
+    // Payload's generateSlug wrapper does NOT await async slugify results, so we must
+    // provide a pre-computed slug to avoid the Promise-as-value race condition.
+    const artistSlug = slugifyText(music.artist);
     const titleSlug = slugifyText(String(music.song));
-    const fallbackSlug = titleSlug ? undefined : `legacy-song-${music.id}`;
+    let slug: string;
+    if (!titleSlug) {
+      slug = `legacy-song-${music.id}`;
+    } else if (artistSlug) {
+      slug = `${artistSlug}--${titleSlug}`;
+    } else {
+      slug = titleSlug;
+    }
 
     await payload.create({
       collection: 'songs',
@@ -176,7 +184,7 @@ async function importMusic(
         featureOnNewMusic: true, // Assume all imported songs were featured
         legacyId: music.id,
         migratedAt: new Date().toISOString(),
-        ...(fallbackSlug ? { slug: fallbackSlug } : {}),
+        slug,
       },
     });
 
