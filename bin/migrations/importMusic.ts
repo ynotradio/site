@@ -19,7 +19,7 @@ import { connectToDatabase } from './database';
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import type { PostgresTarget } from './shared/payloadClient';
-import { slugifyText, buildMusicSlug } from '../../payload/src/collections/hooks/musicSlugify';
+import { slugifyText, buildMusicSlug } from '../../payload/src/collections/hooks/slugUtils';
 
 const logger = createLogger('MusicImport');
 

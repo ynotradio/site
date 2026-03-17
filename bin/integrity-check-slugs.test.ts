@@ -5,12 +5,7 @@ import type { Payload } from 'payload';
 vi.mock('@payload-config', () => ({ default: {} }));
 vi.mock('payload', () => ({ getPayload: vi.fn() }));
 
-const {
-  generateNameSlug,
-  generatePostSlug,
-  generateMusicSlug,
-  generateCdOfTheWeekSlug,
-} = await import('./integrity-check-slugs');
+const { generateNameSlug, generatePostSlug, generateMusicSlug, generateCdOfTheWeekSlug } = await import('./integrity-check-slugs');
 
 // ---------------------------------------------------------------------------
 // generateNameSlug
@@ -47,37 +42,48 @@ describe('generateNameSlug', () => {
 // ---------------------------------------------------------------------------
 
 describe('generatePostSlug', () => {
-  it('slugifies plain text headline', () => {
-    expect(generatePostSlug('Hello World')).toBe('hello-world');
+  it('generates date-prefixed slug from headline and startDate', () => {
+    expect(generatePostSlug({ headline: 'Hello World', startDate: '2014-10-20T12:00:00Z' })).toBe(
+      '2014-10-20--hello-world',
+    );
   });
 
-  it('strips HTML tags', () => {
-    expect(generatePostSlug('<b>Bold</b> and <i>Italic</i>')).toBe('bold-and-italic');
+  it('strips HTML tags from headline', () => {
+    expect(
+      generatePostSlug({ headline: '<b>Bold</b> and <i>Italic</i>', startDate: '2025-06-15' }),
+    ).toBe('2025-06-15--bold-and-italic');
   });
 
-  it('strips nested HTML tags', () => {
-    expect(generatePostSlug('<p><a href="http://example.com">Link Text</a></p>'))
-      .toBe('link-text');
+  it('returns headline-only slug when no startDate', () => {
+    expect(generatePostSlug({ headline: 'No Date Post' })).toBe('no-date-post');
   });
 
-  it('handles special characters', () => {
-    expect(generatePostSlug("What's New in 2024!")).toBe('whats-new-in-2024');
+  it('returns null when no headline', () => {
+    expect(generatePostSlug({ startDate: '2025-01-01' })).toBeNull();
   });
 
-  it('collapses multiple hyphens', () => {
-    expect(generatePostSlug('Foo---Bar')).toBe('foo-bar');
+  it('returns null when headline is empty', () => {
+    expect(generatePostSlug({ headline: '' })).toBeNull();
   });
 
-  it('removes leading/trailing hyphens', () => {
-    expect(generatePostSlug('---Surrounded---')).toBe('surrounded');
+  it('returns null when headline produces empty slug', () => {
+    expect(generatePostSlug({ headline: '<br/><hr/>', startDate: '2025-01-01' })).toBeNull();
   });
 
-  it('handles empty string', () => {
-    expect(generatePostSlug('')).toBe('');
+  it('handles special characters in headline', () => {
+    expect(generatePostSlug({ headline: "What's New in 2024!", startDate: '2024-03-15' })).toBe(
+      '2024-03-15--whats-new-in-2024',
+    );
   });
 
-  it('handles only HTML tags', () => {
-    expect(generatePostSlug('<br/><hr/>')).toBe('');
+  it('preserves the double-hyphen separator between date and slug', () => {
+    const result = generatePostSlug({
+      headline: 'Courtney Barnett Radio Takeover',
+      startDate: '2014-10-20',
+    });
+    expect(result).toBe('2014-10-20--courtney-barnett-radio-takeover');
+    // Verify the -- separator is present
+    expect(result!.match(/^\d{4}-\d{2}-\d{2}--/)).toBeTruthy();
   });
 });
 
@@ -117,8 +123,7 @@ describe('generateMusicSlug', () => {
   });
 
   it('returns title-only slug when artist lookup fails', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>)
-      .mockRejectedValue(new Error('not found'));
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('not found'));
     const doc = { title: 'Solo Track', artist: 999 };
     const result = await generateMusicSlug(mockPayload, doc);
     expect(result).toBe('solo-track');
@@ -162,14 +167,14 @@ describe('generateCdOfTheWeekSlug', () => {
     vi.clearAllMocks();
   });
 
-  it('derives slug from associated record with populated artist', async () => {
+  it('generates date-prefixed slug from associated record', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       title: 'Album Title',
       artist: { name: 'Great Artist', id: 5 },
     });
-    const doc = { record: 10 };
+    const doc = { record: 10, date: '2026-01-15' };
     const result = await generateCdOfTheWeekSlug(mockPayload, doc);
-    expect(result).toBe('great-artist--album-title');
+    expect(result).toBe('2026-01-15--great-artist--album-title');
     expect(mockPayload.findByID).toHaveBeenCalledWith({
       collection: 'records',
       id: 10,
@@ -177,19 +182,24 @@ describe('generateCdOfTheWeekSlug', () => {
     });
   });
 
-  it('handles populated record object', async () => {
+  it('handles populated record object with date', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       title: 'Record Title',
       artist: { name: 'Some Band', id: 3 },
     });
-    const doc = { record: { id: 7 } };
+    const doc = { record: { id: 7 }, date: '2026-03-01' };
     const result = await generateCdOfTheWeekSlug(mockPayload, doc);
-    expect(result).toBe('some-band--record-title');
-    expect(mockPayload.findByID).toHaveBeenCalledWith({
-      collection: 'records',
-      id: 7,
-      depth: 1,
+    expect(result).toBe('2026-03-01--some-band--record-title');
+  });
+
+  it('returns record slug without date prefix when no date', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      title: 'Album',
+      artist: { name: 'Artist', id: 1 },
     });
+    const doc = { record: 5 };
+    const result = await generateCdOfTheWeekSlug(mockPayload, doc);
+    expect(result).toBe('artist--album');
   });
 
   it('returns null when record is missing', async () => {
@@ -199,8 +209,7 @@ describe('generateCdOfTheWeekSlug', () => {
   });
 
   it('returns null when record lookup fails', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>)
-      .mockRejectedValue(new Error('not found'));
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('not found'));
     const doc = { record: 999 };
     const result = await generateCdOfTheWeekSlug(mockPayload, doc);
     expect(result).toBeNull();

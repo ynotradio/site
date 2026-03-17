@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
+import { slugifyHeadline, formatDatePrefix } from './hooks/slugUtils';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -54,21 +55,18 @@ export const Posts: CollectionConfig = {
       index: true,
       admin: {
         position: 'sidebar',
-        description: 'URL-friendly slug (auto-generated from headline if not provided)',
+        description: 'URL-friendly slug (auto-generated as YYYY-MM-DD--headline)',
       },
       hooks: {
         beforeValidate: [
           ({ data, operation, value }) => {
-            // Auto-generate slug from headline if not provided or if creating new post
             if (operation === 'create' && !value && data?.headline) {
-              return data.headline
-                .replace(/<[^>]*>/g, '') // Remove HTML tags
-                .toLowerCase()
-                .replace(/[^\w\s-]/g, '') // Remove special chars except hyphens
-                .replace(/\s+/g, '-') // Replace spaces with hyphens
-                .replace(/-+/g, '-') // Replace multiple hyphens with single
-                .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-                .trim();
+              const headlineSlug = slugifyHeadline(data.headline);
+              if (!headlineSlug) return value;
+              const dateStr = data.startDate
+                ? formatDatePrefix(new Date(data.startDate as string))
+                : '';
+              return dateStr ? `${dateStr}--${headlineSlug}` : headlineSlug;
             }
             return value;
           },
@@ -148,7 +146,8 @@ export const Posts: CollectionConfig = {
       defaultValue: true,
       admin: {
         position: 'sidebar',
-        description: 'Whether this post appears on the front page. Disable for standalone pages (e.g. custom text pages).',
+        description:
+          'Whether this post appears on the front page. Disable for standalone pages (e.g. custom text pages).',
       },
     },
     {
