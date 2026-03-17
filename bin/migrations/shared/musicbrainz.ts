@@ -430,6 +430,80 @@ export async function getRecordingMbid(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Release detail & direct cover-art lookups
+// ---------------------------------------------------------------------------
+
+export interface MusicBrainzReleaseDetails {
+  id: string;
+  title: string;
+  date?: string; // YYYY-MM-DD or YYYY-MM or YYYY
+  label?: string;
+  country?: string;
+}
+
+/**
+ * Get detailed release information from a MusicBrainz release ID.
+ * Returns label name and release date.
+ */
+export async function getReleaseDetails(mbid: string): Promise<MusicBrainzReleaseDetails | null> {
+  try {
+    await waitForRateLimit();
+
+    const url = `https://musicbrainz.org/ws/2/release/${mbid}?inc=labels&fmt=json`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)' },
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+
+    // Extract label from label-info array
+    let label: string | undefined;
+    if (data['label-info'] && Array.isArray(data['label-info']) && data['label-info'].length > 0) {
+      const labelInfo = data['label-info'][0];
+      if (labelInfo.label && labelInfo.label.name) {
+        label = labelInfo.label.name;
+      }
+    }
+
+    return {
+      id: data.id,
+      title: data.title,
+      date: data.date || undefined,
+      label,
+      country: data.country || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Get album cover art URL directly from a MusicBrainz release MBID.
+ * Unlike getAlbumCoverArt(), this skips the search step.
+ */
+export async function getCoverArtByMbid(mbid: string): Promise<string | null> {
+  try {
+    const url = `https://coverartarchive.org/release/${mbid}`;
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'YNotRadio/1.0.0 (https://ynotradio.org)' },
+    });
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    if (data.images && Array.isArray(data.images)) {
+      const frontCover = data.images.find((img: any) => img.front === true);
+      if (frontCover?.image) return frontCover.image;
+      if (data.images.length > 0 && data.images[0].image) return data.images[0].image;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Get album cover art URL from MusicBrainz Cover Art Archive
  * Returns the front cover URL if available, null otherwise
