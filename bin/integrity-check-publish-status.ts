@@ -26,13 +26,11 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckReport,
   type IntegrityReport,
 } from './content-integrity-utils';
-import {
-  isMysqlRecordLive,
-  resolvePostLegacyId,
-} from './integrity-check-publish-status-utils';
+import { isMysqlRecordLive, resolvePostLegacyId } from './integrity-check-publish-status-utils';
 
 const PAGE_SIZE = 100;
 
@@ -103,6 +101,7 @@ async function checkOnDemandStatus(
   limit: number,
   fix: boolean,
   verbose: boolean,
+  since: string,
 ): Promise<number> {
   let page = 1;
   let processed = 0;
@@ -114,7 +113,7 @@ async function checkOnDemandStatus(
 
     const batch = await payload.find({
       collection: 'ondemand',
-      where: { legacyId: { exists: true } },
+      where: withSinceFilter({ legacyId: { exists: true } }, since),
       limit: pageLimit,
       page,
       sort: 'id',
@@ -183,7 +182,11 @@ async function checkOnDemandStatus(
                 currentValue: currentStatus || '(unknown)',
                 expectedValue: 'published',
               });
-              if (verbose) console.log(`  🔧 [ondemand ${legacyId}] ${identifier} — ${currentStatus} → published`);
+              if (verbose) {
+                console.log(
+                  `  🔧 [ondemand ${legacyId}] ${identifier} — ${currentStatus} → published`,
+                );
+              }
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
               addResult(report, {
@@ -208,7 +211,11 @@ async function checkOnDemandStatus(
               currentValue: currentStatus || '(unknown)',
               expectedValue: 'published',
             });
-            if (verbose) console.log(`  ⚠️  [ondemand ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`);
+            if (verbose) {
+              console.log(
+                `  ⚠️  [ondemand ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`,
+              );
+            }
           }
         } else {
           // Record is deleted in MySQL; leave as-is (we only promote to published)
@@ -220,7 +227,11 @@ async function checkOnDemandStatus(
             status: 'ok',
             detail: 'Deleted in MySQL, draft status acceptable',
           });
-          if (verbose) console.log(`  ✅ [ondemand ${legacyId}] ${identifier} — deleted in MySQL, draft is OK`);
+          if (verbose) {
+            console.log(
+              `  ✅ [ondemand ${legacyId}] ${identifier} — deleted in MySQL, draft is OK`,
+            );
+          }
         }
       }
 
@@ -245,6 +256,7 @@ async function checkPostsStatus(
   limit: number,
   fix: boolean,
   verbose: boolean,
+  since: string,
 ): Promise<number> {
   let page = 1;
   let processed = 0;
@@ -256,7 +268,7 @@ async function checkPostsStatus(
 
     const batch = await payload.find({
       collection: 'posts',
-      where: { legacyId: { exists: true } },
+      where: withSinceFilter({ legacyId: { exists: true } }, since),
       limit: pageLimit,
       page,
       sort: 'id',
@@ -294,7 +306,11 @@ async function checkPostsStatus(
           status: 'skipped',
           detail: `No MySQL record found in ${table} for id=${mysqlId} (legacyId=${legacyId})`,
         });
-        if (verbose) console.log(`  ⏭️  [posts ${legacyId}] ${identifier} — MySQL record not found in ${table}`);
+        if (verbose) {
+          console.log(
+            `  ⏭️  [posts ${legacyId}] ${identifier} — MySQL record not found in ${table}`,
+          );
+        }
       } else {
         const shouldPublish = isMysqlRecordLive(deleted);
         const expectedStatus = shouldPublish ? 'published' : 'draft';
@@ -325,7 +341,11 @@ async function checkPostsStatus(
                 currentValue: currentStatus || '(unknown)',
                 expectedValue: 'published',
               });
-              if (verbose) console.log(`  🔧 [posts ${legacyId}] ${identifier} — ${currentStatus} → published`);
+              if (verbose) {
+                console.log(
+                  `  🔧 [posts ${legacyId}] ${identifier} — ${currentStatus} → published`,
+                );
+              }
             } catch (err) {
               const msg = err instanceof Error ? err.message : String(err);
               addResult(report, {
@@ -350,7 +370,11 @@ async function checkPostsStatus(
               currentValue: currentStatus || '(unknown)',
               expectedValue: 'published',
             });
-            if (verbose) console.log(`  ⚠️  [posts ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`);
+            if (verbose) {
+              console.log(
+                `  ⚠️  [posts ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`,
+              );
+            }
           }
         } else {
           addResult(report, {
@@ -402,6 +426,7 @@ async function main(): Promise<void> {
   const mode = options.fix ? '🔧 FIX MODE' : '👀 DRY RUN';
   console.log(`\n📋 Publish Status Integrity Check — ${mode}`);
   if (options.limit) console.log(`   Limit: ${options.limit} records per collection`);
+  if (options.since) console.log(`   Since: ${options.since}`);
   if (options.verbose) console.log('   Verbose: on');
   console.log(`   MySQL source: ${from}`);
 
@@ -429,6 +454,7 @@ async function main(): Promise<void> {
       options.limit,
       options.fix,
       options.verbose,
+      options.since,
     );
     console.log(`   Checked ${odCount} OnDemand records`);
 
@@ -440,6 +466,7 @@ async function main(): Promise<void> {
       options.limit,
       options.fix,
       options.verbose,
+      options.since,
     );
     console.log(`   Checked ${postsCount} Posts records`);
   } finally {

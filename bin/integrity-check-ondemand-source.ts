@@ -25,10 +25,14 @@ import {
   addResult,
   printCheckReport,
   writeReport,
+  withSinceFilter,
   type CheckReport,
   type IntegrityReport,
 } from './content-integrity-utils';
-import { mapMysqlSourceToPayload, type PayloadSource } from './integrity-check-ondemand-source-utils';
+import {
+  mapMysqlSourceToPayload,
+  type PayloadSource,
+} from './integrity-check-ondemand-source-utils';
 
 const PAGE_SIZE = 100;
 
@@ -70,6 +74,7 @@ async function checkOnDemandSource(
   limit: number,
   fix: boolean,
   verbose: boolean,
+  since: string,
 ): Promise<void> {
   let page = 1;
   let processed = 0;
@@ -81,7 +86,7 @@ async function checkOnDemandSource(
 
     const batch = await payload.find({
       collection: 'ondemand',
-      where: { legacyId: { exists: true } },
+      where: withSinceFilter({ legacyId: { exists: true } }, since),
       limit: pageLimit,
       page,
       sort: 'id',
@@ -174,7 +179,11 @@ async function checkOnDemandSource(
               currentValue: '(empty)',
               expectedValue: expected,
             });
-            if (verbose) console.log(`  ❌ [${legacyId}] ${identifier} — source missing, expected=${expected}`);
+            if (verbose) {
+              console.log(
+                `  ❌ [${legacyId}] ${identifier} — source missing, expected=${expected}`,
+              );
+            }
           }
         } else if (fix) {
           // Source is set but doesn't match — fix it
@@ -219,7 +228,11 @@ async function checkOnDemandSource(
             currentValue: currentSource,
             expectedValue: expected,
           });
-          if (verbose) console.log(`  ⚠️  [${legacyId}] ${identifier} — source=${currentSource}, expected=${expected}`);
+          if (verbose) {
+            console.log(
+              `  ⚠️  [${legacyId}] ${identifier} — source=${currentSource}, expected=${expected}`,
+            );
+          }
         }
       }
 
@@ -258,6 +271,7 @@ async function main(): Promise<void> {
   const mode = options.fix ? '🔧 FIX MODE' : '👀 DRY RUN';
   console.log(`\n📻 OnDemand Source Integrity Check — ${mode}`);
   if (options.limit) console.log(`   Limit: ${options.limit} records`);
+  if (options.since) console.log(`   Since: ${options.since}`);
   if (options.verbose) console.log('   Verbose: on');
   console.log(`   MySQL source: ${from}`);
 
@@ -285,6 +299,7 @@ async function main(): Promise<void> {
       options.limit,
       options.fix,
       options.verbose,
+      options.since,
     );
   } finally {
     await mysqlConn.end();
