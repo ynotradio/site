@@ -380,6 +380,111 @@ describe('mediaImporter', () => {
       expect(result.success).toBe(false);
       expect(result.error).toBe('Failed to download image');
     });
+
+    it('should reject buffers shorter than 4 bytes', async () => {
+      const tinyBuffer = Buffer.from([0xff, 0xd8]); // Only 2 bytes, not enough for magic number validation
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: tinyBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/tiny.jpg',
+        metadata,
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Failed to download image');
+    });
+
+    it('should detect JPEG mime type from buffer when URL has no recognized extension', async () => {
+      // URL ext resolves to 'com/media-resource', not in mimeTypes → falls through to buffer checks
+      const jpegBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: jpegBuffer,
+        headers: { 'content-type': 'image/jpeg' },
+      });
+      (mockPayload.create as Mock).mockResolvedValueOnce({
+        id: 'jpeg-buf-media',
+        url: 'https://cloudinary.com/image.jpg',
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/media-resource',
+        metadata,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          file: expect.objectContaining({ mimetype: 'image/jpeg' }),
+        }),
+      );
+    });
+
+    it('should detect GIF mime type from buffer when URL has no recognized extension', async () => {
+      const gifBuffer = Buffer.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61]); // GIF89a
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: gifBuffer,
+        headers: { 'content-type': 'image/gif' },
+      });
+      (mockPayload.create as Mock).mockResolvedValueOnce({
+        id: 'gif-buf-media',
+        url: 'https://cloudinary.com/image.gif',
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/media-resource',
+        metadata,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          file: expect.objectContaining({ mimetype: 'image/gif' }),
+        }),
+      );
+    });
+
+    it('should detect WebP mime type from buffer when URL has no recognized extension', async () => {
+      const webpBuffer = Buffer.from([
+        0x52, 0x49, 0x46, 0x46, // RIFF
+        0x00, 0x00, 0x00, 0x00, // file size placeholder
+        0x57, 0x45, 0x42, 0x50, // WEBP
+      ]);
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockAxios.get.mockResolvedValueOnce({
+        data: webpBuffer,
+        headers: { 'content-type': 'image/webp' },
+      });
+      (mockPayload.create as Mock).mockResolvedValueOnce({
+        id: 'webp-buf-media',
+        url: 'https://cloudinary.com/image.webp',
+      });
+
+      const result = await importImageFromUrl(
+        mockPayload as Payload,
+        'https://example.com/media-resource',
+        metadata,
+      );
+
+      expect(result.success).toBe(true);
+      expect(mockPayload.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          file: expect.objectContaining({ mimetype: 'image/webp' }),
+        }),
+      );
+    });
   });
 
   describe('batchImportImages', () => {
