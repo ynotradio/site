@@ -1,13 +1,14 @@
 /**
  * Unit tests for MusicBrainz API client
  *
- * Note: These tests make real API calls to MusicBrainz.
- * They should be run sparingly to respect rate limits.
- * They are skipped in CI to avoid flakiness due to network dependencies.
+ * The getMbEntityType tests use mocked fetch and run in CI.
+ * The isKnownArtist tests make real API calls and are skipped in CI.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
-import { isKnownArtist, clearArtistCache } from './musicbrainz';
+import {
+  describe, it, expect, beforeEach, vi, afterEach,
+} from 'vitest';
+import { isKnownArtist, clearArtistCache, getMbEntityType } from './musicbrainz';
 
 // Skip these tests in CI as they require external API access
 const shouldSkip = process.env.CI === 'true';
@@ -59,4 +60,78 @@ describe('musicbrainz', () => {
     expect(result2).toBe(true);
     expect(result3).toBe(true);
   }, 15000);
+});
+
+describe('getMbEntityType', () => {
+  let fetchSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    fetchSpy = vi.spyOn(globalThis, 'fetch');
+  });
+
+  afterEach(() => {
+    fetchSpy.mockRestore();
+  });
+
+  it('should return "artist" when the artist endpoint returns 200', async () => {
+    fetchSpy.mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    const result = await getMbEntityType('some-mbid');
+    expect(result).toBe('artist');
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy.mock.calls[0][0]).toContain('/artist/');
+  });
+
+  it('should return "release" when artist returns 404 but release returns 200', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    const result = await getMbEntityType('some-mbid');
+    expect(result).toBe('release');
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('should return "recording" when artist and release return 404', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    const result = await getMbEntityType('some-mbid');
+    expect(result).toBe('recording');
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('should return null when all endpoints return 404', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response);
+    const result = await getMbEntityType('nonexistent-mbid');
+    expect(result).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('should skip to next endpoint on network error', async () => {
+    fetchSpy
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    const result = await getMbEntityType('some-mbid');
+    expect(result).toBe('release');
+  });
+
+  it('should return null when all endpoints throw', async () => {
+    fetchSpy
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockRejectedValueOnce(new Error('fail'))
+      .mockRejectedValueOnce(new Error('fail'));
+    const result = await getMbEntityType('bad-mbid');
+    expect(result).toBeNull();
+  });
+
+  it('should continue on non-404 error status', async () => {
+    fetchSpy
+      .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
+      .mockResolvedValueOnce({ ok: true, status: 200 } as Response);
+    const result = await getMbEntityType('some-mbid');
+    expect(result).toBe('release');
+  });
 });
