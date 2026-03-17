@@ -38,28 +38,57 @@ async function resolveArtistName(data: Record<string, unknown>, payload: Payload
 }
 
 /**
+ * Build the "artist--title" slug from pre-resolved artist name and title.
+ */
+function buildMusicSlug(artistName: string, titleSlug: string): string {
+  if (artistName) {
+    const artistSlug = slugifyText(artistName);
+    if (artistSlug) return `${artistSlug}--${titleSlug}`;
+  }
+  return titleSlug;
+}
+
+/**
  * Custom slugify function for Songs and Records.
  * Generates "artist-name--title" format slugs.
+ *
+ * IMPORTANT: This function returns synchronously whenever possible because Payload's
+ * generateSlug wrapper does NOT await the slugify result. Returning a Promise causes
+ * data.slug to be set to a Promise object, which fails text field validation.
+ * Only falls back to async (returns Promise) when an artist DB lookup is required.
  */
-export const musicSlugify: Slugify = async ({ data, req }) => {
+export const musicSlugify: Slugify = ({ data, req, valueToSlugify }) => {
   const title = data?.title;
   if (!title) return undefined;
 
-  const artistName = await resolveArtistName(data, req.payload);
-  const titleSlug = slugifyText(String(title));
-
-  // If the title cannot be slugified into a non-empty string, do not generate a slug
-  if (!titleSlug) return undefined;
-
-  if (artistName) {
-    const artistSlug = slugifyText(artistName);
-    // Only prepend artist segment if it slugifies to a non-empty value
-    if (artistSlug) {
-      return `${artistSlug}--${titleSlug}`;
-    }
+  // If a slug was explicitly pre-set (valueToSlugify differs from title),
+  // return it synchronously. valueToSlugify is data.slug || data.title,
+  // captured by Payload BEFORE generateSlug overwrites data.slug.
+  if (valueToSlugify && String(valueToSlugify) !== String(title)) {
+    return String(valueToSlugify);
   }
 
-  return titleSlug;
+  const titleSlug = slugifyText(String(title));
+
+  // If title can't be slugified (e.g. only special characters like ♪♫★),
+  // return the fallback synchronously.
+  if (!titleSlug) {
+    if (!valueToSlugify) return undefined;
+    return slugifyText(String(valueToSlugify)) || String(valueToSlugify);
+  }
+
+  const artist = data?.artist;
+  if (!artist) return titleSlug;
+
+  // Populated artist object — resolve synchronously
+  if (typeof artist === 'object' && artist !== null && 'name' in artist) {
+    return buildMusicSlug(String((artist as { name: unknown }).name || ''), titleSlug);
+  }
+
+  // Artist is an ID — need async DB lookup, returns a Promise
+  return resolveArtistName(data, req.payload).then(
+    (artistName) => buildMusicSlug(artistName, titleSlug),
+  );
 };
 
 export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({ data, req }) => {
@@ -67,7 +96,9 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
 
   if (!updatedData.record) return updatedData;
 
-  const recordId = typeof updatedData.record === 'object' ? (updatedData.record as { id: unknown }).id : updatedData.record;
+  const recordId = typeof updatedData.record === 'object'
+    ? (updatedData.record as { id: unknown }).id
+    : updatedData.record;
 
   try {
     const record = await req.payload.findByID({

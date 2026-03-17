@@ -39,36 +39,39 @@ describe('musicSlugify (Songs/Records)', () => {
     };
   });
 
-  it('should generate artist--title slug when artist is an ID', async () => {
+  it('should generate artist--title slug when artist is an ID (async)', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 1,
       name: 'The Beatles',
     });
 
-    const result = await musicSlugify({
+    const result = musicSlugify({
       data: { artist: 1, title: 'Hey Jude' },
       req: createMockReq(mockPayload) as any,
     });
 
-    expect(result).toBe('the-beatles--hey-jude');
+    // Artist ID requires DB lookup, so returns a Promise
+    expect(result).toBeInstanceOf(Promise);
+    expect(await result).toBe('the-beatles--hey-jude');
     expect(mockPayload.findByID).toHaveBeenCalledWith({
       collection: 'artists',
       id: 1,
     });
   });
 
-  it('should generate artist--title slug from populated artist object', async () => {
-    const result = await musicSlugify({
+  it('should generate artist--title slug from populated artist object (sync)', () => {
+    const result = musicSlugify({
       data: { artist: { id: 1, name: 'Pink Floyd' }, title: 'Comfortably Numb' },
       req: createMockReq(mockPayload) as any,
     });
 
+    // Populated artist = synchronous return
     expect(result).toBe('pink-floyd--comfortably-numb');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
-  it('should generate title-only slug when no artist', async () => {
-    const result = await musicSlugify({
+  it('should generate title-only slug when no artist (sync)', () => {
+    const result = musicSlugify({
       data: { title: 'Unknown Song' },
       req: createMockReq(mockPayload) as any,
     });
@@ -77,8 +80,8 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
-  it('should return undefined when no title', async () => {
-    const result = await musicSlugify({
+  it('should return undefined when no title (sync)', () => {
+    const result = musicSlugify({
       data: {},
       req: createMockReq(mockPayload) as any,
     });
@@ -86,7 +89,7 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle artist fetch error gracefully', async () => {
+  it('should handle artist fetch error gracefully (async)', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
     const result = await musicSlugify({
@@ -97,13 +100,47 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBe('test-song');
   });
 
-  it('should handle special characters in artist and title', async () => {
-    const result = await musicSlugify({
-      data: { artist: { id: 1, name: "Guns N' Roses" }, title: 'Sweet Child O\' Mine' },
+  it('should handle special characters in artist and title (sync)', () => {
+    const result = musicSlugify({
+      data: { artist: { id: 1, name: "Guns N' Roses" }, title: "Sweet Child O' Mine" },
       req: createMockReq(mockPayload) as any,
     });
 
     expect(result).toBe('guns-n-roses--sweet-child-o-mine');
+  });
+
+  it('should preserve pre-existing slug when title cannot be slugified (sync)', () => {
+    const result = musicSlugify({
+      data: { artist: 1, title: '♪♫★', slug: 'legacy-song-5491' },
+      req: createMockReq(mockPayload) as any,
+      valueToSlugify: 'legacy-song-5491',
+    });
+
+    // Returns synchronously — critical for Payload's generateSlug wrapper
+    expect(result).toBe('legacy-song-5491');
+    expect(result).not.toBeInstanceOf(Promise);
+  });
+
+  it('should return pre-computed slug synchronously even with numeric artist ID', () => {
+    const result = musicSlugify({
+      data: { artist: 1, title: 'Hey Jude' },
+      req: createMockReq(mockPayload) as any,
+      valueToSlugify: 'the-beatles--hey-jude',
+    });
+
+    // Pre-computed slug differs from title → returns synchronously
+    expect(result).toBe('the-beatles--hey-jude');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('should return undefined when title cannot be slugified and no slug exists (sync)', () => {
+    const result = musicSlugify({
+      data: { artist: 1, title: '♪♫★' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBeUndefined();
   });
 });
 

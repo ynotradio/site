@@ -118,7 +118,7 @@ describe('importMusic', () => {
 
       const result = await importMusic(mockPayload as Payload, music);
 
-      expect(result).toBe(false);
+      expect(result).toBe('skipped');
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
@@ -141,7 +141,7 @@ describe('importMusic', () => {
 
       const result = await importMusic(mockPayload as Payload, music);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(findOrCreateArtist).toHaveBeenCalledWith(mockPayload, 'The National');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
@@ -153,6 +153,7 @@ describe('importMusic', () => {
           featureOnNewMusic: true,
           legacyId: 1,
           migratedAt: expect.any(String),
+          slug: 'the-national--bloodbuzz-ohio',
         },
       });
     });
@@ -176,7 +177,7 @@ describe('importMusic', () => {
 
       const result = await importMusic(mockPayload as Payload, music);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
         data: expect.objectContaining({
@@ -204,7 +205,7 @@ describe('importMusic', () => {
 
       const result = await importMusic(mockPayload as Payload, music);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
         data: expect.objectContaining({
@@ -232,7 +233,7 @@ describe('importMusic', () => {
 
       const result = await importMusic(mockPayload as Payload, music);
 
-      expect(result).toBe(true);
+      expect(result).toBe('imported');
       expect(mockPayload.create).toHaveBeenCalledWith({
         collection: 'songs',
         data: expect.objectContaining({
