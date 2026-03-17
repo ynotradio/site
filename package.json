@@ -49,6 +49,8 @@
     "integrity:check:slugs": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-slugs.ts",
     "integrity:check:musicbrainz": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-musicbrainz.ts",
     "integrity:check:record-metadata": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-record-metadata.ts",
+    "integrity:check:ondemand-source": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-ondemand-source.ts",
+    "integrity:check:publish-status": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-publish-status.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "validate-stories": "node scripts/validate-stories.mjs"
