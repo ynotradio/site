@@ -111,6 +111,20 @@ steps:
         --output /tmp/integrity-record-metadata.md \
         --verbose || true
 
+      echo "--- :radio: Checking OnDemand source fields"
+      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
+        bin/integrity-check-ondemand-source.ts \
+        --from prod-mysql \
+        --output /tmp/integrity-ondemand-source.md \
+        --verbose || true
+
+      echo "--- :white_check_mark: Checking publish status"
+      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
+        bin/integrity-check-publish-status.ts \
+        --from prod-mysql \
+        --output /tmp/integrity-publish-status.md \
+        --verbose || true
+
       echo "--- :bar_chart: Combining reports"
       {
         echo "# Nightly Content Integrity Report"
@@ -140,6 +154,10 @@ steps:
           propagate-environment: true
           environment:
             - "NEON_PROD_DATABASE_URL"
+            - "PROD_MYSQL_HOST"
+            - "PROD_MYSQL_USER"
+            - "PROD_MYSQL_PASSWORD"
+            - "PROD_MYSQL_DATABASE"
             - "GITHUB_PR_TOKEN"
             - "INTEGRITY_REPORT_ISSUE_NUMBER"
     agents:

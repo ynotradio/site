@@ -97,6 +97,11 @@ describe('content-integrity-utils', () => {
       expect(() => parseArgs(['node', 'script', '--unknown'])).toThrow('Unknown argument');
     });
 
+    it('should skip --from and its value without throwing', () => {
+      const result = parseArgs(['node', 'script', '--from', 'prod-mysql', '--fix']);
+      expect(result.fix).toBe(true);
+    });
+
     it('should exit on --help', () => {
       const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});

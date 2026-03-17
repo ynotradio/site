@@ -12,7 +12,7 @@ import fs from 'node:fs';
 // Types
 // ---------------------------------------------------------------------------
 
-export type CheckName = 'display-names' | 'slugs' | 'musicbrainz' | 'record-metadata';
+export type CheckName = 'display-names' | 'slugs' | 'musicbrainz' | 'record-metadata' | 'ondemand-source' | 'publish-status';
 
 export interface CliOptions {
   checks: CheckName[] | 'all';
@@ -57,7 +57,7 @@ export interface IntegrityReport {
 // CLI argument parsing
 // ---------------------------------------------------------------------------
 
-const VALID_CHECKS: CheckName[] = ['display-names', 'slugs', 'musicbrainz', 'record-metadata'];
+const VALID_CHECKS: CheckName[] = ['display-names', 'slugs', 'musicbrainz', 'record-metadata', 'ondemand-source', 'publish-status'];
 
 export function parseArgs(argv: string[]): CliOptions {
   const args = argv.slice(2);
@@ -123,6 +123,11 @@ Options:
         process.exit(0);
         break;
       default:
+        // Allow --from <value> (used by MySQL-backed scripts), skip it
+        if (args[i] === '--from') {
+          i++; // skip the value too
+          break;
+        }
         throw new Error(`Unknown argument: ${args[i]}. Use --help for usage.`);
     }
   }
