@@ -102,7 +102,7 @@ async function postExists(payload: Payload, legacyId: number): Promise<boolean> 
  * Returns: 'success' | 'skipped' | 'error'
  */
 async function importPost(payload: Payload, post: Post): Promise<'success' | 'skipped' | 'error'> {
-  let content; // Declare at function scope so it's accessible in catch block
+  let content;
 
   try {
     // Check if already imported
@@ -188,17 +188,12 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
     } else if (post.source === 'story') {
       // For stories, generate slug with date prefix: YYYY-MM-DD--headline
       const date = new Date(post.start_date);
-      const datePrefix = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+      const datePrefix = date.toISOString().split('T')[0];
       const headlineSlug = slugify(post.headline);
       slug = headlineSlug ? `${datePrefix}--${headlineSlug}` : `${datePrefix}--post-${post.id}`;
     } else {
-      // Fallback for other cases
-      slug = slugify(post.headline);
-    }
-
-    // Ensure slug is never empty — use legacy ID as ultimate fallback
-    if (!slug) {
-      slug = `post-${post.id}`;
+      // Fallback for other cases — use legacy ID if headline can't be slugified
+      slug = slugify(post.headline) || `post-${post.id}`;
     }
 
     // Create post record — retry with legacyId-suffixed slug on unique constraint violation

@@ -19,7 +19,7 @@ import { connectToDatabase } from './database';
 import { getPayloadClient, findOrCreateArtist } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import type { PostgresTarget } from './shared/payloadClient';
-import { slugifyText } from '../../payload/src/collections/hooks/musicSlugify';
+import { slugifyText, buildMusicSlug } from '../../payload/src/collections/hooks/musicSlugify';
 
 const logger = createLogger('MusicImport');
 
@@ -53,8 +53,7 @@ function parseArgs(): ImportOptions {
     to: 'prod-neon',
   };
 
-  let i = 0;
-  while (i < args.length) {
+  for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
 
     if (arg === '--to') {
@@ -63,14 +62,14 @@ function parseArgs(): ImportOptions {
         throw new Error('--to must be "prod-neon" or "local-postgres"');
       }
       options.to = toValue;
-      i += 2;
+      i += 1;
     } else if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
       if (Number.isNaN(startId) || startId < 0) {
         throw new Error('--start-id must be a positive number');
       }
       options.startId = startId;
-      i += 2;
+      i += 1;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/migrations/importMusic.ts [options]
@@ -85,8 +84,6 @@ Examples:
   tsx bin/migrations/importMusic.ts --to local-postgres --start-id 1000
       `);
       process.exit(0);
-    } else {
-      i += 1;
     }
   }
 
@@ -163,16 +160,8 @@ async function importMusic(
     // Pre-compute the slug so musicSlugify returns synchronously.
     // Payload's generateSlug wrapper does NOT await async slugify results, so we must
     // provide a pre-computed slug to avoid the Promise-as-value race condition.
-    const artistSlug = slugifyText(music.artist);
     const titleSlug = slugifyText(String(music.song));
-    let slug: string;
-    if (!titleSlug) {
-      slug = `legacy-song-${music.id}`;
-    } else if (artistSlug) {
-      slug = `${artistSlug}--${titleSlug}`;
-    } else {
-      slug = titleSlug;
-    }
+    const slug = titleSlug ? buildMusicSlug(music.artist, titleSlug) : `legacy-song-${music.id}`;
 
     await payload.create({
       collection: 'songs',

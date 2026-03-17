@@ -40,7 +40,7 @@ async function resolveArtistName(data: Record<string, unknown>, payload: Payload
 /**
  * Build the "artist--title" slug from pre-resolved artist name and title.
  */
-function buildMusicSlug(artistName: string, titleSlug: string): string {
+export function buildMusicSlug(artistName: string, titleSlug: string): string {
   if (artistName) {
     const artistSlug = slugifyText(artistName);
     if (artistSlug) return `${artistSlug}--${titleSlug}`;
