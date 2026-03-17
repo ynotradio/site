@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify } from './hooks/musicSlugify';
+import { musicSlugify } from './hooks/slugUtils';
 
 export const Records: CollectionConfig = {
   slug: 'records',

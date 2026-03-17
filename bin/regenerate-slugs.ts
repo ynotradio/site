@@ -18,7 +18,7 @@
 
 import type { Payload } from 'payload';
 import { getPayloadClient, type PostgresTarget } from './migrations/shared/payloadClient';
-import { slugifyText } from '../payload/src/collections/hooks/musicSlugify';
+import { slugifyText } from '../payload/src/collections/hooks/slugUtils';
 
 /* eslint-disable no-console */
 

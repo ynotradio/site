@@ -17,7 +17,8 @@ import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
 import { importImageFromUrl } from './shared/mediaImporter';
-import { slugify, cleanHeadline } from './shared/slugify';
+import { cleanHeadline } from './shared/slugify';
+import { slugifyHeadline, formatDatePrefix } from '../../payload/src/collections/hooks/slugUtils';
 import type { PostgresTarget } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -187,13 +188,12 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       slug = post.permalink;
     } else if (post.source === 'story') {
       // For stories, generate slug with date prefix: YYYY-MM-DD--headline
-      const date = new Date(post.start_date);
-      const datePrefix = date.toISOString().split('T')[0];
-      const headlineSlug = slugify(post.headline);
+      const datePrefix = formatDatePrefix(new Date(post.start_date));
+      const headlineSlug = slugifyHeadline(post.headline);
       slug = headlineSlug ? `${datePrefix}--${headlineSlug}` : `${datePrefix}--post-${post.id}`;
     } else {
       // Fallback for other cases — use legacy ID if headline can't be slugified
-      slug = slugify(post.headline) || `post-${post.id}`;
+      slug = slugifyHeadline(post.headline) || `post-${post.id}`;
     }
 
     // Create post record — retry with legacyId-suffixed slug on unique constraint violation

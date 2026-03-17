@@ -1,19 +1,10 @@
 /**
  * Generate a URL-friendly slug from text
  * Removes HTML tags, special characters, and normalizes whitespace
+ *
+ * @deprecated Use slugifyHeadline from payload/src/collections/hooks/slugUtils instead
  */
-export function slugify(text: string): string {
-  if (!text) return '';
-
-  return text
-    .replace(/<[^>]*>/g, '') // Remove HTML tags like <br>, <font>, etc.
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '') // Remove special chars except hyphens
-    .replace(/\s+/g, '-') // Replace spaces with hyphens
-    .replace(/-+/g, '-') // Replace multiple hyphens with single
-    .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
-    .trim();
-}
+export { slugifyHeadline as slugify } from '../../../payload/src/collections/hooks/slugUtils';
 
 /**
  * Clean HTML tags from headline text

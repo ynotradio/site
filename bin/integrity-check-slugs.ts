@@ -16,7 +16,11 @@
 import { getPayload, type Payload } from 'payload';
 // eslint-disable-next-line import/no-cycle
 import config from '@payload-config';
-import { slugifyText } from '../payload/src/collections/hooks/musicSlugify';
+import {
+  slugifyText,
+  slugifyHeadline,
+  formatDatePrefix,
+} from '../payload/src/collections/hooks/slugUtils';
 import {
   parseArgs,
   emptyReport,
@@ -40,15 +44,17 @@ export function generateNameSlug(name: string): string {
   return slugifyText(name);
 }
 
-export function generatePostSlug(headline: string): string {
-  return headline
-    .replace(/<[^>]*>/g, '')
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .trim();
+export function generatePostSlug(doc: Record<string, unknown>): string | null {
+  const headline = doc.headline as string | undefined;
+  if (!headline) return null;
+  const headlineSlug = slugifyHeadline(headline);
+  if (!headlineSlug) return null;
+  const startDate = doc.startDate as string | undefined;
+  if (startDate) {
+    const datePrefix = formatDatePrefix(new Date(startDate));
+    return `${datePrefix}--${headlineSlug}`;
+  }
+  return headlineSlug;
 }
 
 export async function generateMusicSlug(
@@ -104,7 +110,17 @@ export async function generateCdOfTheWeekSlug(
       depth: 1,
     });
     if (!found) return null;
-    return await generateMusicSlug(payload, found as unknown as Record<string, unknown>);
+    const recordSlug = await generateMusicSlug(
+      payload,
+      found as unknown as Record<string, unknown>,
+    );
+    if (!recordSlug) return null;
+    const date = doc.date as string | undefined;
+    if (date) {
+      const datePrefix = formatDatePrefix(new Date(date));
+      return `${datePrefix}--${recordSlug}`;
+    }
+    return recordSlug;
   } catch {
     return null;
   }
@@ -155,7 +171,7 @@ const COLLECTION_CONFIGS: CollectionSlugConfig[] = [
     collection: 'posts',
     label: 'Posts',
     identifierField: 'headline',
-    generateSlug: (_p, doc) => generatePostSlug(doc.headline as string),
+    generateSlug: (_p, doc) => generatePostSlug(doc),
   },
 ];
 

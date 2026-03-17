@@ -1,14 +1,21 @@
 /**
- * Unit tests for music slug generation hooks
+ * Unit tests for slug generation hooks
  *
- * Tests the custom slug generation for Songs, Records, and CdOfTheWeek.
+ * Tests the custom slug generation for Songs, Records, Posts, and CdOfTheWeek.
  * - Songs/Records: "artist-name--title" format
- * - CdOfTheWeek: inherits slug from associated record
+ * - Posts: "YYYY-MM-DD--headline" format
+ * - CdOfTheWeek: "YYYY-MM-DD--record-slug" format
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Payload } from 'payload';
-import { slugifyText, musicSlugify, setCdOfTheWeekSlugFromRecord } from './musicSlugify';
+import {
+  slugifyText,
+  slugifyHeadline,
+  formatDatePrefix,
+  musicSlugify,
+  setCdOfTheWeekSlugFromRecord,
+} from './slugUtils';
 
 // Helper to create a mock request object
 const createMockReq = (payload: Partial<Payload>) => ({
@@ -26,6 +33,42 @@ describe('slugifyText', () => {
 
   it('should handle already slugified text', () => {
     expect(slugifyText('already-slug')).toBe('already-slug');
+  });
+});
+
+describe('slugifyHeadline', () => {
+  it('should strip HTML tags and slugify', () => {
+    expect(slugifyHeadline('Hello <br> World')).toBe('hello-world');
+  });
+
+  it('should strip nested HTML tags', () => {
+    expect(slugifyHeadline('<font color="red">Headline</font> Text')).toBe('headline-text');
+  });
+
+  it('should handle plain text the same as slugifyText', () => {
+    expect(slugifyHeadline('Simple Headline')).toBe('simple-headline');
+  });
+
+  it('should return empty string for HTML-only input', () => {
+    expect(slugifyHeadline('<br><br>')).toBe('');
+  });
+
+  it('should return empty string for empty input', () => {
+    expect(slugifyHeadline('')).toBe('');
+  });
+});
+
+describe('formatDatePrefix', () => {
+  it('should format date as YYYY-MM-DD', () => {
+    expect(formatDatePrefix(new Date('2014-10-20T12:00:00Z'))).toBe('2014-10-20');
+  });
+
+  it('should handle midnight UTC dates', () => {
+    expect(formatDatePrefix(new Date('2026-01-01T00:00:00Z'))).toBe('2026-01-01');
+  });
+
+  it('should handle end-of-year dates', () => {
+    expect(formatDatePrefix(new Date('2025-12-31T23:59:59Z'))).toBe('2025-12-31');
   });
 });
 
@@ -154,33 +197,48 @@ describe('setCdOfTheWeekSlugFromRecord', () => {
     };
   });
 
-  it('should copy slug from associated record (ID)', async () => {
+  it('should generate date-prefixed slug from associated record (ID)', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 10,
       slug: 'pink-floyd--the-dark-side-of-the-moon',
     });
 
     const result = await setCdOfTheWeekSlugFromRecord({
-      data: { record: 10, date: '2026-01-01' },
+      data: { record: 10, date: '2026-01-15' },
       req: createMockReq(mockPayload),
       operation: 'create',
     });
 
-    expect(result.slug).toBe('pink-floyd--the-dark-side-of-the-moon');
+    expect(result.slug).toBe('2026-01-15--pink-floyd--the-dark-side-of-the-moon');
     expect(mockPayload.findByID).toHaveBeenCalledWith({
       collection: 'records',
       id: 10,
     });
   });
 
-  it('should copy slug from populated record object', async () => {
+  it('should generate date-prefixed slug from populated record object', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 10,
       slug: 'the-beatles--abbey-road',
     });
 
     const result = await setCdOfTheWeekSlugFromRecord({
-      data: { record: { id: 10 }, date: '2026-01-01' },
+      data: { record: { id: 10 }, date: '2026-03-01' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.slug).toBe('2026-03-01--the-beatles--abbey-road');
+  });
+
+  it('should use record slug without prefix when no date', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 10,
+      slug: 'the-beatles--abbey-road',
+    });
+
+    const result = await setCdOfTheWeekSlugFromRecord({
+      data: { record: 10 },
       req: createMockReq(mockPayload),
       operation: 'create',
     });

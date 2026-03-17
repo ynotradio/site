@@ -11,6 +11,27 @@ export function slugifyText(text: string): string {
 }
 
 /**
+ * Format a Date as YYYY-MM-DD for use as a slug prefix.
+ */
+export function formatDatePrefix(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Slugify a post headline, stripping HTML tags first.
+ */
+export function slugifyHeadline(headline: string): string {
+  return headline
+    .replace(/<[^>]*>/g, '')
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .trim();
+}
+
+/**
  * Resolve the artist name from data, handling both populated objects and IDs.
  */
 async function resolveArtistName(data: Record<string, unknown>, payload: Payload): Promise<string> {
@@ -23,9 +44,10 @@ async function resolveArtistName(data: Record<string, unknown>, payload: Payload
   }
 
   // Look up artist by ID
-  const artistId = typeof artist === 'object' && artist !== null && 'id' in artist
-    ? (artist as { id: unknown }).id
-    : artist;
+  let artistId = artist;
+  if (typeof artist === 'object' && artist !== null && 'id' in artist) {
+    artistId = (artist as { id: unknown }).id;
+  }
   try {
     const found = await payload.findByID({
       collection: 'artists',
@@ -86,9 +108,7 @@ export const musicSlugify: Slugify = ({ data, req, valueToSlugify }) => {
   }
 
   // Artist is an ID — need async DB lookup, returns a Promise
-  return resolveArtistName(data, req.payload).then(
-    (artistName) => buildMusicSlug(artistName, titleSlug),
-  );
+  return resolveArtistName(data, req.payload).then((name) => buildMusicSlug(name, titleSlug));
 };
 
 export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({ data, req }) => {
@@ -96,9 +116,10 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
 
   if (!updatedData.record) return updatedData;
 
-  const recordId = typeof updatedData.record === 'object'
-    ? (updatedData.record as { id: unknown }).id
-    : updatedData.record;
+  let recordId = updatedData.record;
+  if (typeof updatedData.record === 'object') {
+    recordId = (updatedData.record as { id: unknown }).id;
+  }
 
   try {
     const record = await req.payload.findByID({
@@ -107,7 +128,10 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
     });
 
     if (record?.slug) {
-      updatedData.slug = record.slug;
+      const dateStr = updatedData.date
+        ? formatDatePrefix(new Date(updatedData.date as string))
+        : '';
+      updatedData.slug = dateStr ? `${dateStr}--${record.slug}` : record.slug;
     }
   } catch {
     // Silently handle errors - slug will remain unchanged
