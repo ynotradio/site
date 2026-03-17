@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+// Skip Drizzle pushDevSchema — these scripts only read/write data, never alter schema
 /**
  * Record Metadata Integrity Check
  *
@@ -40,6 +41,8 @@ import {
   type RecordCheckContext,
   type MbLookupResult,
 } from './integrity-check-record-metadata-utils';
+
+process.env.PAYLOAD_MIGRATING = 'true';
 
 const PAGE_SIZE = 100;
 
