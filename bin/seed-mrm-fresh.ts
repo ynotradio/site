@@ -83,8 +83,9 @@ async function seedMrmFresh() {
     }
 
     // ── Tournament ──────────────────────────────────────────────────────────
-    // Start date snapped to next Monday so scaffold produces a clean schedule.
-    const startDate = nextMonday(new Date());
+    // Use CLI arg if provided (e.g. `yarn seed:mrm:fresh 2026-03-18`),
+    // otherwise snap to next Monday for a clean schedule.
+    const startDate = process.argv[2] ?? nextMonday(new Date());
     console.log(`📅 Tournament start date: ${startDate}`);
 
     console.log('🏆 Creating tournament (scaffold will auto-create 63 empty matches)...');

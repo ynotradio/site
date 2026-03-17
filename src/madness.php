@@ -118,6 +118,7 @@ if ($voter_email_for_body) {
 $madnessController->renderMatchDisplay($current_match['id'], $madness_start_date);
 $madnessController->renderScoreboard($current_match);
 render_first_row($madness_start_date);
+$madnessController->renderTournamentTimeline($madness_start_date);
 $madnessController->renderBracketDisplay($madness_start_date);
 ?>
 
