@@ -70,6 +70,16 @@ class MadnessController
     {
         return $this->mrmModel->isWaitingForFinal();
     }
+
+    /**
+     * Get the active tournament's start date from the database
+     *
+     * @return string|null Start date (YYYY-MM-DD) or null if unavailable
+     */
+    public function getStartDate(): ?string
+    {
+        return $this->mrmModel->getStartDate();
+    }
     
     /**
      * Determine what content should be displayed in the first row

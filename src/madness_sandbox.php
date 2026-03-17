@@ -38,6 +38,12 @@ try {
     die("Modern Rock Madness initialization failed. Please contact support.");
 }
 
+// Override the hardcoded config date with the actual tournament start date from Postgres
+$dbStartDate = $madnessController->getStartDate();
+if ($dbStartDate !== null) {
+    $madness_start_date = $dbStartDate;
+}
+
 /**
  * Render first row content based on controller logic
  */

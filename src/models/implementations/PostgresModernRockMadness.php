@@ -317,6 +317,23 @@ class PostgresModernRockMadness implements ModernRockMadness
     }
 
     /** {@inheritdoc} */
+    public function getStartDate(): ?string
+    {
+        $tId = $this->getActiveTournamentId();
+        if (!$tId) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT TO_CHAR(start_date, 'YYYY-MM-DD') AS start_date
+             FROM modern_rock_madness_tournaments WHERE id = :id LIMIT 1"
+        );
+        $stmt->execute([':id' => $tId]);
+        $row = $stmt->fetch();
+        return $row ? $row['start_date'] : null;
+    }
+
+    /** {@inheritdoc} */
     public function getChampion(): ?array
     {
         $match = $this->getMatch(63);

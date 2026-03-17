@@ -72,6 +72,13 @@ interface ModernRockMadness
     public function getChampion(): ?array;
 
     /**
+     * Get the start date of the active tournament from the database
+     *
+     * @return string|null Start date in YYYY-MM-DD format, or null if no tournament
+     */
+    public function getStartDate(): ?string;
+
+    /**
      * Get the tournament year from the start date
      *
      * @param string|null $startDate Optional start date, uses current year if null
