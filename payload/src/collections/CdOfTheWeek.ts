@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
-import { setCdOfTheWeekSlugFromRecord } from './hooks/musicSlugify';
+import { setCdOfTheWeekSlugFromRecord } from './hooks/slugUtils';
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',

@@ -98,9 +98,9 @@ Common ESLint pitfalls to avoid:
 ### 4. Create PR
 
 ```bash
-git checkout -b refactor/code-simplifier-$(date +%Y%m%d)
+git checkout -b refactor/code-simplifier-$(date +%Y%m%d)-<brief-slug>
 git add .
-git commit -m "refactor: simplify code for improved clarity
+git commit -m "refactor: <concise description of specific changes>
 
 - [List specific improvements]
 
@@ -108,7 +108,12 @@ All checks pass (lint + tests)"
 git push origin HEAD
 ```
 
-**PR Title**: `[code-simplifier] Simplify code for improved clarity`  
+**PR Title**: `[code-simplifier] <concise description of specific changes>`  
+The title must describe what was actually simplified — not a generic message. Summarize the key change in a few words.
+  - Good: `[code-simplifier] Use Record type and filter-join for bracket classes`
+  - Good: `[code-simplifier] Extract repeated fetch logic into shared helper`
+  - Bad: `[code-simplifier] Simplify code for improved clarity`
+
 **Labels**: `refactoring`, `code-quality`, `automation`  
 **Expiration**: 7 days
 
@@ -117,7 +122,7 @@ git push origin HEAD
 ```markdown
 ## Changes
 
-- [List 2-3 specific improvements]
+- [List 2-3 specific improvements with file names]
 
 ## Verification
 

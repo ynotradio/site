@@ -70,6 +70,36 @@ class MadnessController
     {
         return $this->mrmModel->isWaitingForFinal();
     }
+
+    /**
+     * Get the active tournament's start date from the database
+     *
+     * @return string|null Start date (YYYY-MM-DD) or null if unavailable
+     */
+    public function getStartDate(): ?string
+    {
+        return $this->mrmModel->getStartDate();
+    }
+
+    /**
+     * Get the bracket PDF URL from the active tournament
+     *
+     * @return string|null Bracket PDF URL, or null if unavailable
+     */
+    public function getBracketPdfUrl(): ?string
+    {
+        return $this->mrmModel->getBracketPdfUrl();
+    }
+
+    /**
+     * Get the banner image URL from the active tournament
+     *
+     * @return string|null Banner image URL, or null if unavailable
+     */
+    public function getBannerImageUrl(): ?string
+    {
+        return $this->mrmModel->getBannerImageUrl();
+    }
     
     /**
      * Determine what content should be displayed in the first row

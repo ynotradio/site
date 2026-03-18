@@ -13,6 +13,7 @@ Migration from GitHub Actions to Buildkite for CI/CD. All pipeline configuration
 | `pipeline.yml` | ci.yml + e2e.yml | ✅ CI steps active, E2E deferred |
 | `build-images.yml` | build-agent-images.yml | ✅ Active |
 | `scheduled-db-sync.yml` | weekly-db-sync.yml | ✅ Active |
+| `nightly-gap-report.yml` | *(new)* | ✅ Active |
 
 ## Required Configuration
 

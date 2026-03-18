@@ -17,7 +17,8 @@ import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
 import { importImageFromUrl } from './shared/mediaImporter';
-import { slugify, cleanHeadline } from './shared/slugify';
+import { cleanHeadline } from './shared/slugify';
+import { slugifyHeadline, formatDatePrefix } from '../../payload/src/collections/hooks/slugUtils';
 import type { PostgresTarget } from './shared/payloadClient';
 
 const logger = createLogger('PostsImport');
@@ -102,7 +103,7 @@ async function postExists(payload: Payload, legacyId: number): Promise<boolean> 
  * Returns: 'success' | 'skipped' | 'error'
  */
 async function importPost(payload: Payload, post: Post): Promise<'success' | 'skipped' | 'error'> {
-  let content; // Declare at function scope so it's accessible in catch block
+  let content;
 
   try {
     // Check if already imported
@@ -118,10 +119,13 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       : convertHtmlToLexical(post.content);
 
     // Ensure content has valid structure - provide fallback for empty/invalid content
-    if (!content?.root?.children || content.root.children.length === 0
-        || (content.root.children.length === 1
-         && content.root.children[0].children?.length === 1
-         && content.root.children[0].children[0].text === '')) {
+    if (
+      !content?.root?.children
+      || content.root.children.length === 0
+      || (content.root.children.length === 1
+        && content.root.children[0].children?.length === 1
+        && content.root.children[0].children[0].text === '')
+    ) {
       // Content is empty or invalid - provide minimal valid structure
       content = {
         root: {
@@ -184,34 +188,44 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       slug = post.permalink;
     } else if (post.source === 'story') {
       // For stories, generate slug with date prefix: YYYY-MM-DD--headline
-      const date = new Date(post.start_date);
-      const datePrefix = date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-      const headlineSlug = slugify(post.headline);
-      slug = `${datePrefix}--${headlineSlug}`;
+      const datePrefix = formatDatePrefix(new Date(post.start_date));
+      const headlineSlug = slugifyHeadline(post.headline);
+      slug = headlineSlug ? `${datePrefix}--${headlineSlug}` : `${datePrefix}--post-${post.id}`;
     } else {
-      // Fallback for other cases
-      slug = slugify(post.headline);
+      // Fallback for other cases — use legacy ID if headline can't be slugified
+      slug = slugifyHeadline(post.headline) || `post-${post.id}`;
     }
 
-    // Create post record
-    await payload.create({
-      collection: 'posts',
-      data: {
-        headline: cleanedHeadline,
-        slug,
-        startDate: post.start_date,
-        endDate: post.end_date,
-        content,
-        image: imageId,
-        imageUrl: post.image_url, // Store original image URL as fallback
-        linkUrl: post.link_url, // Store link URL for story image click target
-        priority: post.priority || 0,
-        showOnFrontPage: post.source === 'story', // Stories appear on front page, custom texts don't
-        legacyId: post.id,
-        migratedAt: new Date().toISOString(),
-        _status: 'published', // Set status to published so posts are immediately visible
-      },
-    });
+    // Create post record — retry with legacyId-suffixed slug on unique constraint violation
+    const postData = {
+      headline: cleanedHeadline,
+      slug,
+      startDate: post.start_date,
+      endDate: post.end_date,
+      content,
+      image: imageId,
+      imageUrl: post.image_url, // Store original image URL as fallback
+      linkUrl: post.link_url, // Store link URL for story image click target
+      priority: post.priority || 0,
+      showOnFrontPage: post.source === 'story', // Stories appear on front page, custom texts don't
+      legacyId: post.id,
+      migratedAt: new Date().toISOString(),
+      _status: 'published' as const, // Set status to published so posts are immediately visible
+    };
+
+    try {
+      await payload.create({ collection: 'posts', data: postData });
+    } catch (slugError) {
+      const msg = slugError instanceof Error ? slugError.message : '';
+      if (msg.includes('slug')) {
+        // Slug conflict — retry with legacyId suffix for uniqueness
+        const dedupedSlug = `${slug}-${post.id}`;
+        logger.warn(`Slug conflict for post ${post.id}, retrying with: ${dedupedSlug}`);
+        await payload.create({ collection: 'posts', data: { ...postData, slug: dedupedSlug } });
+      } else {
+        throw slugError;
+      }
+    }
 
     logger.debug(`Imported post ${post.id} [${post.source}]: ${cleanedHeadline} (slug: ${slug})`);
     return 'success';

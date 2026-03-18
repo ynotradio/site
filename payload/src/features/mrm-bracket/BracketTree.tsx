@@ -29,20 +29,20 @@ const BracketCell: React.FC<BracketCellProps> = ({ match, className = '' }) => {
   const winner = getWinnerSlot(match);
   const pcts = status !== 'upcoming' ? getVotePcts(match) : null;
 
-  const liveCls = status === 'live' ? ' bracket-tree__cell--live' : '';
-  const cls = `bracket-tree__cell${liveCls} ${className}`.trim();
+  const cls = ['bracket-tree__cell', status === 'live' && 'bracket-tree__cell--live', className]
+    .filter(Boolean)
+    .join(' ');
 
   const bandRow = (slot: '1' | '2') => {
     const band = slot === '1' ? match.band1 : match.band2;
     const pct = slot === '1' ? pcts?.b1 : pcts?.b2;
-    const isWinner = winner === slot;
-    const isLoser = winner != null && winner !== slot;
 
-    let rowCls = '';
-    if (isWinner) rowCls = ' bracket-tree__winner';
-    else if (isLoser) rowCls = ' bracket-tree__loser';
+    let rowCls: string | undefined;
+    if (winner === slot) rowCls = 'bracket-tree__winner';
+    else if (winner != null) rowCls = 'bracket-tree__loser';
+
     return (
-      <dt className={rowCls.trim()}>
+      <dt className={rowCls}>
         <span className="bracket-tree__seed">{getBandSeed(band)}</span>
         <span className="bracket-tree__abbr">{getBandAbbr(band)}</span>
         {pct != null && <span className="bracket-tree__pct">{pct}</span>}

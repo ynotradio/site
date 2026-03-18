@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import type { Payload } from 'payload';
-import { slugifyText } from '../payload/src/collections/hooks/musicSlugify';
+import { slugifyText } from '../payload/src/collections/hooks/slugUtils';
 
 // Mock modules – vitest hoists vi.mock calls above imports automatically
 vi.mock('./migrations/shared/payloadClient', () => ({
   getPayloadClient: vi.fn(),
 }));
 
-vi.mock('../payload/src/collections/hooks/musicSlugify', () => ({
+vi.mock('../payload/src/collections/hooks/slugUtils', () => ({
   slugifyText: (text: string) => text
     .toLowerCase()
     .replace(/[^\w\s-]+/g, '')

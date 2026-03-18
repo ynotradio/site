@@ -44,6 +44,7 @@ interface ImportOptions {
   to: PostgresTarget;
   reset: boolean;
   verbose: boolean;
+  output: string | null;
 }
 
 interface ImportResult {
@@ -60,6 +61,94 @@ interface ImportResult {
 
 const TRACKING_FILE = path.join(process.cwd(), '.last-import-ids.json');
 
+const COLLECTION_LABELS: Record<string, string> = {
+  Music: 'Songs',
+  Concerts: 'Concerts',
+  Posts: 'Posts (Stories)',
+  OnDemand: 'On Demand',
+  Cdotw: 'CD of the Week',
+  Ads: 'Ads (Sponsors)',
+  DJs: 'DJs',
+  Schedule: 'Schedule',
+};
+
+/**
+ * Generate a markdown summary of the import run for posting as a GitHub comment
+ */
+function generateMarkdownSummary(
+  results: ImportResult[],
+  totalImported: number,
+  totalSkipped: number,
+  totalErrors: number,
+  options: ImportOptions,
+  noNewRecords: boolean,
+): string {
+  const now = new Date().toISOString();
+  const lines: string[] = [];
+
+  lines.push('## 📦 Import Run Summary');
+  lines.push('');
+  lines.push(`**Date:** ${now}`);
+  lines.push(`**Source:** ${options.from} → ${options.to}`);
+  lines.push(`**Mode:** ${options.reset ? 'Full scan (reset)' : 'Incremental'}`);
+  lines.push('');
+
+  if (noNewRecords) {
+    lines.push('### Results');
+    lines.push('');
+    lines.push('✅ No new records to import — all collections are up to date.');
+    return lines.join('\n');
+  }
+
+  lines.push('### Results');
+  lines.push('');
+  lines.push('| Collection | Imported | Skipped | Errors | Status |');
+  lines.push('|------------|----------|---------|--------|--------|');
+
+  for (const result of results) {
+    const label = COLLECTION_LABELS[result.collection] || result.collection;
+    let status: string;
+    if (!result.success) {
+      status = '❌ Failed';
+    } else if (result.errors > 0) {
+      status = '⚠️ Errors';
+    } else if (result.imported > 0) {
+      status = '✅ Imported';
+    } else {
+      status = '✅ Up to date';
+    }
+    lines.push(
+      `| ${label} | ${result.imported.toLocaleString()} | ${result.skipped.toLocaleString()} | ${result.errors.toLocaleString()} | ${status} |`,
+    );
+  }
+
+  lines.push('');
+  lines.push(
+    `**Total: ${totalImported.toLocaleString()} imported, ${totalSkipped.toLocaleString()} skipped, ${totalErrors.toLocaleString()} errors**`,
+  );
+
+  // Add error details if any
+  const collectionsWithErrors = results.filter((r) => r.errorDetails.length > 0);
+  if (collectionsWithErrors.length > 0) {
+    lines.push('');
+    lines.push('### Errors');
+    lines.push('');
+    for (const result of collectionsWithErrors) {
+      const label = COLLECTION_LABELS[result.collection] || result.collection;
+      lines.push(`**${label}:**`);
+      for (const error of result.errorDetails.slice(0, 5)) {
+        lines.push(`- ${error}`);
+      }
+      if (result.errorDetails.length > 5) {
+        lines.push(`- *(${result.errorDetails.length - 5} more errors, see build log)*`);
+      }
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n');
+}
+
 /**
  * Parse command line arguments
  */
@@ -74,6 +163,7 @@ function parseArgs(): ImportOptions {
     to: fromTo.to,
     reset: false,
     verbose: false,
+    output: null,
   };
 
   let i = 0;
@@ -85,6 +175,9 @@ function parseArgs(): ImportOptions {
     } else if (arg === '--verbose' || arg === '-v') {
       options.verbose = true;
       i += 1;
+    } else if (arg === '--output' || arg === '-o') {
+      options.output = args[i + 1] || null;
+      i += 2;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/incremental-import.ts [options]
@@ -93,6 +186,7 @@ Options:
   --from SOURCE  MySQL source: 'local-mysql' (default) or 'prod-mysql'
   --to TARGET    Neon target: 'prod-neon' (default) or 'local-postgres'
   --reset        Reset tracking and import all data
+  --output FILE  Write markdown summary to file (for CI posting)
   --verbose      Show detailed output including skip reasons
   --help, -h     Show this help message
 
@@ -103,8 +197,8 @@ Examples:
   # Import from production MySQL to production Neon
   tsx bin/incremental-import.ts --from prod-mysql --to prod-neon
 
-  # Reset and re-import everything
-  tsx bin/incremental-import.ts --from local-mysql --to prod-neon --reset
+  # Reset and re-import everything, save summary
+  tsx bin/incremental-import.ts --from prod-mysql --to prod-neon --reset --output /tmp/import-summary.md
       `);
       process.exit(0);
     } else {
@@ -214,7 +308,20 @@ function runImportScript(
       '--start-id',
       startId.toString(),
     ];
-    const child = spawn('node', args, { stdio: 'pipe' });
+
+    // Pass MySQL config as env vars so child scripts' getLegacyDbConfig() picks up
+    // the correct connection (prod-mysql vs local-mysql)
+    const mysqlConfig = getMySQLConfig(from);
+    const env = {
+      ...process.env,
+      IMPORT_DB_HOST: mysqlConfig.host,
+      IMPORT_DB_USER: mysqlConfig.user,
+      IMPORT_DB_PASSWORD: mysqlConfig.password,
+      IMPORT_DB_NAME: mysqlConfig.database,
+      ...(mysqlConfig.port ? { IMPORT_DB_PORT: mysqlConfig.port.toString() } : {}),
+    };
+
+    const child = spawn('node', args, { stdio: 'pipe', env });
 
     let output = '';
     const skipReasons: string[] = [];
@@ -250,11 +357,23 @@ function runImportScript(
     child.stderr?.on('data', (data) => {
       const text = data.toString();
 
-      // Capture errors from stderr too
+      // Capture meaningful errors from stderr, filtering out noise
+      const isNoise = (s: string) => !s
+        || s.startsWith('(node:')
+        || s.startsWith('(Use `node --trace-warnings')
+        || s.startsWith('Warning: SECURITY WARNING')
+        || s.startsWith('In the next major version')
+        || s.startsWith('To prepare for this change')
+        || s.startsWith('- If you want')
+        || s.startsWith('See https://node-postgres')
+        || s.startsWith('See https://www.postgresql.org')
+        || s.includes('[WARN]');
+
       const lines = text.split('\n').filter((l) => l.trim());
       for (const line of lines) {
-        if (line && !errorDetails.includes(line)) {
-          errorDetails.push(line.trim());
+        const trimmed = line.trim();
+        if (!isNoise(trimmed) && !errorDetails.includes(trimmed)) {
+          errorDetails.push(trimmed);
         }
       }
 
@@ -373,6 +492,11 @@ async function main() {
 
   if (totalNew === 0) {
     console.log('✅ No new records to import!');
+    if (options.output) {
+      const markdown = generateMarkdownSummary([], 0, 0, 0, options, true);
+      fs.writeFileSync(options.output, markdown);
+      console.log(`📄 Summary written to: ${options.output}`);
+    }
     await connection.end();
     return;
   }
@@ -476,6 +600,20 @@ async function main() {
   console.log();
   console.log(`✅ Tracking updated: ${TRACKING_FILE}`);
   console.log(`   Last updated: ${lastIds.lastUpdated}`);
+
+  // Write markdown summary if --output specified
+  if (options.output) {
+    const markdown = generateMarkdownSummary(
+      results,
+      totalImported,
+      totalSkipped,
+      totalErrors,
+      options,
+      false,
+    );
+    fs.writeFileSync(options.output, markdown);
+    console.log(`📄 Summary written to: ${options.output}`);
+  }
 }
 
 // Run if executed directly

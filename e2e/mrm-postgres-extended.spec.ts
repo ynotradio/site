@@ -88,19 +88,18 @@ test.describe('MRM Postgres — Fresh Tournament — Match Card Details', () => 
     expect(sponsor ?? '').toBe('');
   });
 
-  test(
-    'match card does not have show-results attribute (score not public on fresh running match)',
-    async ({ page }) => {
-      await navigateWithRetry(page, MRM_FRESH_URL);
+  test('match card does not have show-results attribute (score not public on fresh running match)', async ({
+    page,
+  }) => {
+    await navigateWithRetry(page, MRM_FRESH_URL);
 
-      const matchCard = page.locator('mrm-match-card');
-      await expect(matchCard).toBeVisible({ timeout: 10000 });
+    const matchCard = page.locator('mrm-match-card');
+    await expect(matchCard).toBeVisible({ timeout: 10000 });
 
-      // showScore defaults to false in scaffold; match isn't over yet.
-      const showResults = await matchCard.getAttribute('show-results');
-      expect(showResults).toBeNull();
-    },
-  );
+    // showScore defaults to false in scaffold; match isn't over yet.
+    const showResults = await matchCard.getAttribute('show-results');
+    expect(showResults).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -225,44 +224,35 @@ test.describe('MRM Postgres — Fresh Tournament — Multi-Region Bracket', () =
 // ---------------------------------------------------------------------------
 
 test.describe('MRM Postgres — Fresh Tournament — Next Match Extended', () => {
-  test('next-match container has a VS separator element', async ({ page }) => {
+  test('next-match compact display contains "vs" separator', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
-    const nextMatchContainer = page.locator('.next-match-container');
-    await expect(nextMatchContainer).toBeVisible({ timeout: 10000 });
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
-    const vsEl = nextMatchContainer.locator('.vs-container');
-    await expect(vsEl).toBeVisible({ timeout: 10000 });
-
-    const vsText = await vsEl.textContent();
-    expect(vsText?.trim().toUpperCase()).toBe('VS');
+    const text = await nextMatch.textContent();
+    expect(text).toMatch(/\bvs\b/);
   });
 
-  test('next-match container includes two band image elements', async ({ page }) => {
+  test('next-match compact display shows seed numbers in parentheses', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
-    const nextMatchContainer = page.locator('.next-match-container');
-    await expect(nextMatchContainer).toBeVisible({ timeout: 10000 });
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
-    // PHP renders one <img> per band regardless of whether src is empty.
-    const images = nextMatchContainer.locator('img');
-    const imageCount = await images.count();
-    expect(imageCount).toBeGreaterThanOrEqual(2);
+    // Compact format includes "(3)" and "(4)" for seed numbers
+    const text = await nextMatch.textContent();
+    expect(text).toMatch(/\(\d+\)/);
   });
 
-  test('next-match container shows the two expected band name elements', async ({ page }) => {
+  test('next-match compact display shows both band names', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
-    const nextMatchContainer = page.locator('.next-match-container');
-    await expect(nextMatchContainer).toBeVisible({ timeout: 10000 });
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
-    // Each band is in its own .next-match-band > .band-name div.
-    const bandNames = nextMatchContainer.locator('.band-name');
-    const count = await bandNames.count();
-    expect(count).toBe(2);
-
-    const names = await bandNames.allTextContents();
-    expect(names).toContain('The Wombats');
-    expect(names).toContain('Japandroids');
+    const text = await nextMatch.textContent();
+    expect(text).toContain('The Wombats');
+    expect(text).toContain('Japandroids');
   });
 });
