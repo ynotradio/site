@@ -13,7 +13,8 @@ export const Artists: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
     group: 'Music',
-    description: 'Artists and bands in the music catalog.',
+    description:
+      'Bands and artists. Referenced by Songs, Concerts, and Records — create the artist first, then link.',
   },
   defaultSort: 'name',
   access: {
@@ -72,7 +73,8 @@ export const Artists: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        description: 'MusicBrainz artist ID (MBID) - Search and select from MusicBrainz',
+        description:
+          'Links to MusicBrainz for accurate metadata — use the search button to find the correct artist',
         components: {
           Field: '/payload/src/components/fields/MusicBrainzArtistField#MusicBrainzArtistField',
         },

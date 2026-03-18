@@ -48,33 +48,25 @@ describe('isMrmTileActive', () => {
   });
 
   it('returns true when a tournament is active', () => {
-    expect(
-      isMrmTileActive([{ status: 'active', startDate: PAST, updatedAt: OLD }]),
-    ).toBe(true);
+    expect(isMrmTileActive([{ status: 'active', startDate: PAST, updatedAt: OLD }])).toBe(true);
   });
 
   it('returns true when a tournament is upcoming (startDate in the future)', () => {
-    expect(
-      isMrmTileActive([{ status: 'draft', startDate: FUTURE, updatedAt: OLD }]),
-    ).toBe(true);
+    expect(isMrmTileActive([{ status: 'draft', startDate: FUTURE, updatedAt: OLD }])).toBe(true);
   });
 
   it('returns true when a completed tournament was updated within 30 days', () => {
-    expect(
-      isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: RECENT }]),
-    ).toBe(true);
+    expect(isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: RECENT }])).toBe(
+      true,
+    );
   });
 
   it('returns false when a completed tournament was updated more than 30 days ago', () => {
-    expect(
-      isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: OLD }]),
-    ).toBe(false);
+    expect(isMrmTileActive([{ status: 'complete', startDate: PAST, updatedAt: OLD }])).toBe(false);
   });
 
   it('returns false for a draft tournament with a past startDate', () => {
-    expect(
-      isMrmTileActive([{ status: 'draft', startDate: PAST, updatedAt: OLD }]),
-    ).toBe(false);
+    expect(isMrmTileActive([{ status: 'draft', startDate: PAST, updatedAt: OLD }])).toBe(false);
   });
 
   it('returns true when any tournament in the list meets the criteria', () => {
@@ -126,13 +118,37 @@ describe('CustomDashboard', () => {
     it('renders primary collection descriptions', () => {
       render(<CustomDashboard />);
 
-      expect(screen.getByText('Front page features and custom pages')).toBeInTheDocument();
-      expect(screen.getByText('Songs featured on the New Music page')).toBeInTheDocument();
-      expect(screen.getByText('Weekly album reviews')).toBeInTheDocument();
-      expect(screen.getByText('Upcoming concert listings')).toBeInTheDocument();
-      expect(screen.getByText('On-demand recordings and archives')).toBeInTheDocument();
-      expect(screen.getByText('Radio show schedule and information')).toBeInTheDocument();
-      expect(screen.getByText('DJ profiles and information')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Add or edit front-page stories. Set date ranges to control when they appear.',
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Add songs and toggle "Feature on New Music" to update the New Music page.',
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Pick an album, write a review, and set the date. Only one should be current.',
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Add concert listings. Toggle "Featured" to promote shows on the homepage.',
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Post archived recordings. Link audio files and tag the DJs and artists.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Build the weekly schedule. Use Show Cloner to copy a week to new dates.'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Manage DJ profiles. Toggle "On Air" to show or hide them on the website.',
+        ),
+      ).toBeInTheDocument();
     });
 
     it('renders primary collection icons', () => {
@@ -545,10 +561,7 @@ describe('CustomDashboard', () => {
     });
 
     it('hides Special Events when fetch fails', async () => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new Error('Network error')),
-      );
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
 
       await act(async () => {
         render(<CustomDashboard />);

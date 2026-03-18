@@ -28,7 +28,7 @@ export const Posts: CollectionConfig = {
     listSearchableFields: ['headline', 'slug'],
 
     description:
-      'Stories appearing on the front page. Use date range to filter currently active posts.',
+      'Front-page stories. Each story is visible on the site between its start and end dates.',
   },
   defaultSort: '-priority',
   access: {
@@ -81,7 +81,7 @@ export const Posts: CollectionConfig = {
           type: 'date',
           required: true,
           admin: {
-            description: 'Start displaying',
+            description: 'Story appears on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },
@@ -93,7 +93,7 @@ export const Posts: CollectionConfig = {
           type: 'date',
           required: true,
           admin: {
-            description: 'Stop displaying',
+            description: 'Story is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },
@@ -110,7 +110,8 @@ export const Posts: CollectionConfig = {
       }),
       required: true,
       admin: {
-        description: 'Post content (unified Story + CustomText from legacy)',
+        description:
+          'Story body — use the rich text editor for formatted text, images, and embedded media',
       },
     },
     {
@@ -136,7 +137,8 @@ export const Posts: CollectionConfig = {
       name: 'linkUrl',
       type: 'text',
       admin: {
-        description: 'Link URL when clicking the story image (legacy pic_url)',
+        description:
+          'Optional — when set, clicking the story image links here instead of opening the story',
         placeholder: 'https://',
       },
     },
@@ -156,7 +158,8 @@ export const Posts: CollectionConfig = {
       defaultValue: 0,
       admin: {
         position: 'sidebar',
-        description: 'Display priority (higher = first)',
+        description:
+          'Display order on the front page — higher numbers appear first. Same priority sorts by date.',
       },
     },
     {

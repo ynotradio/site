@@ -14,7 +14,8 @@ export const Ads: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'image', 'startDate', 'endDate', 'priority', '_status', 'updatedAt'],
     group: 'Marketing',
-    description: 'Advertisement and sponsor management.',
+    description:
+      'Site advertisements. Each ad is visible between its start and end dates. Higher priority appears first.',
   },
   defaultSort: '-priority',
   access: {
@@ -40,7 +41,7 @@ export const Ads: CollectionConfig = {
           type: 'date',
           required: true,
           admin: {
-            description: 'Start displaying',
+            description: 'Ad is visible on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },
@@ -52,7 +53,7 @@ export const Ads: CollectionConfig = {
           type: 'date',
           required: true,
           admin: {
-            description: 'Stop displaying',
+            description: 'Ad is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },
@@ -94,7 +95,7 @@ export const Ads: CollectionConfig = {
       defaultValue: 0,
       admin: {
         position: 'sidebar',
-        description: 'Display priority (higher = first)',
+        description: 'Display order — higher numbers appear first. Same priority sorts by date.',
       },
     },
     {

@@ -1,6 +1,6 @@
 import path from 'path';
 import type { CollectionConfig } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyCondition } from '../utils/auth';
 
 const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
@@ -46,10 +46,17 @@ export const Media: CollectionConfig = {
     useAsTitle: 'alt',
     defaultColumns: ['filename', 'alt', 'filesize', 'updatedAt'],
     group: 'Content',
-    description: 'Media library for images and files.',
+    description: 'Shared image library. Upload images here, then select them from any collection.',
   },
   fields: [
-    { name: 'alt', type: 'text', required: true },
+    {
+      name: 'alt',
+      type: 'text',
+      required: true,
+      admin: {
+        description: 'Describes the image for screen readers and search engines',
+      },
+    },
     { name: 'caption', type: 'text' },
     {
       name: 'cloudinaryPublicId',
@@ -58,12 +65,16 @@ export const Media: CollectionConfig = {
         position: 'sidebar',
         readOnly: true,
         description: 'Cloudinary public ID for reference',
+        condition: adminOnlyCondition,
       },
     },
     {
       name: 'legacyUrl',
       type: 'text',
-      admin: { position: 'sidebar' },
+      admin: {
+        position: 'sidebar',
+        condition: adminOnlyCondition,
+      },
     },
     {
       name: 'legacyId',
@@ -72,6 +83,7 @@ export const Media: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
+        condition: adminOnlyCondition,
       },
     },
     {
@@ -80,6 +92,7 @@ export const Media: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
+        condition: adminOnlyCondition,
       },
     },
   ],

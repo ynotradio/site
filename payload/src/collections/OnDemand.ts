@@ -15,7 +15,8 @@ export const OnDemand: CollectionConfig = {
     useAsTitle: 'headline',
     defaultColumns: ['headline', 'image', 'date', 'djs', '_status', 'updatedAt'],
     group: 'Radio',
-    description: 'On-demand recordings and show archives.',
+    description:
+      'Archived recordings for on-demand listening. Link an audio source and tag the DJs and artists.',
   },
   defaultSort: '-date',
   access: {
@@ -51,7 +52,7 @@ export const OnDemand: CollectionConfig = {
       required: true,
       index: true,
       admin: {
-        description: 'Headline/title of the on-demand content',
+        description: 'Title shown in the on-demand listing on the website',
       },
     },
     {
@@ -68,7 +69,7 @@ export const OnDemand: CollectionConfig = {
       relationTo: 'djs',
       hasMany: true,
       admin: {
-        description: 'DJs associated with this on-demand recording',
+        description: 'Which DJs were on air? Used for filtering by DJ on the website.',
       },
     },
     {
@@ -77,7 +78,7 @@ export const OnDemand: CollectionConfig = {
       relationTo: 'artists',
       hasMany: true,
       admin: {
-        description: 'Artists featured in this on-demand recording',
+        description: 'Featured artists — selecting artists here narrows the song picker below',
       },
     },
     {
@@ -105,7 +106,8 @@ export const OnDemand: CollectionConfig = {
           name: 'audioUrl',
           type: 'text',
           admin: {
-            description: 'Audio stream identifier (e.g., OpenDrive file ID)',
+            description:
+              'The audio file ID or URL — for OpenDrive, paste the file ID; for others, the full URL',
             placeholder: 'file-id or URL',
             width: '70%',
           },
@@ -119,7 +121,7 @@ export const OnDemand: CollectionConfig = {
             { label: 'Other', value: 'other' },
           ],
           admin: {
-            description: 'Audio source platform',
+            description: 'Where is the audio hosted? Determines how the player loads the file.',
             width: '30%',
           },
         },

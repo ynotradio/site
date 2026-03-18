@@ -111,14 +111,6 @@ export default buildConfig({
             title: 'Live Match Dashboard',
           },
         },
-        EditorGuide: {
-          Component: '/payload/src/features/editor-guide#EditorGuideTool',
-          path: '/editor-guide',
-          exact: true,
-          meta: {
-            title: 'Editor Guide',
-          },
-        },
       },
     },
     importMap: {

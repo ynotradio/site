@@ -28,23 +28,15 @@ describe('RadioToolsNavLinks', () => {
     expect(showClonerLink).toHaveAttribute('href', '/admin/show-cloner');
   });
 
-  it('renders the Editor Guide link', () => {
-    render(<RadioToolsNavLinks />);
-    const editorGuideLink = screen.getByRole('link', { name: /Editor Guide/i });
-    expect(editorGuideLink).toBeInTheDocument();
-    expect(editorGuideLink).toHaveAttribute('href', '/admin/editor-guide');
-  });
-
   it('renders emoji icons with the links', () => {
     render(<RadioToolsNavLinks />);
     expect(screen.getByText(/🎧/)).toBeInTheDocument();
     expect(screen.getByText(/📋/)).toBeInTheDocument();
-    expect(screen.getByText(/📖/)).toBeInTheDocument();
   });
 
-  it('has all three navigation links', () => {
+  it('has both navigation links', () => {
     render(<RadioToolsNavLinks />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(2);
   });
 });

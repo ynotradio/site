@@ -14,7 +14,8 @@ export const Records: CollectionConfig = {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
     group: 'Music',
-    description: 'Album/record catalog.',
+    description:
+      'Albums and EPs. Referenced by Songs and CD of the Week — create the record first, then link it.',
   },
   defaultSort: '-releaseDate',
   access: {
@@ -53,7 +54,7 @@ export const Records: CollectionConfig = {
       relationTo: 'artists',
       required: true,
       admin: {
-        description: 'Artist or band who released the album',
+        description: 'Select the artist — create them in the Artists collection first if needed',
       },
     },
     {
@@ -97,7 +98,8 @@ export const Records: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        description: 'MusicBrainz release ID (MBID) - Search and select from MusicBrainz',
+        description:
+          'Links to MusicBrainz for accurate metadata — use the search button to find the correct release',
         components: {
           Field: '/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField',
         },

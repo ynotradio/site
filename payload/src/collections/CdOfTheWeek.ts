@@ -16,7 +16,8 @@ export const CdOfTheWeek: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', '_status', 'updatedAt'],
     group: 'Music',
-    description: 'Weekly album reviews featured as CD of the Week.',
+    description:
+      'Weekly album reviews. Pick a record, write the review, and set the date — only one should be current at a time.',
   },
   defaultSort: '-date',
   access: {
@@ -35,7 +36,7 @@ export const CdOfTheWeek: CollectionConfig = {
       relationTo: 'records',
       required: true,
       admin: {
-        description: 'Album being reviewed',
+        description: 'Select the album to review — create it in Records first if needed',
       },
     },
     {
@@ -70,7 +71,7 @@ export const CdOfTheWeek: CollectionConfig = {
           type: 'relationship',
           relationTo: 'people',
           admin: {
-            description: 'Reviewer',
+            description: 'Who wrote the review? Select from People.',
             width: '60%',
           },
         },
@@ -82,7 +83,7 @@ export const CdOfTheWeek: CollectionConfig = {
       editor: lexicalEditor(),
       required: true,
       admin: {
-        description: 'Album review content',
+        description: 'The review text shown on the website',
       },
     },
     {
