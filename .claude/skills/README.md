@@ -18,6 +18,18 @@ For more information:
 
 ## Available Skills
 
+### elegant-ui-design
+
+Resources and patterns for crafting elegant UI designs and building them with modern web best practices. Covers:
+
+- Playwright browser tools for visual iteration (screenshot → compare → fix loop)
+- Design principles: visual hierarchy, spacing scale, color tokens, typography
+- Agent patterns: design-to-code, accessibility-first, responsive design, animation
+- Component state coverage for Storybook
+- Quality checklist and recommended reading
+
+**Use when:** Creating or improving UI components, designing page layouts, implementing a design system, or when an agent needs to produce polished, professional-looking frontend work. Library choices are the maintainer's decision — see `docs/migration/ui-library-options.md` for research.
+
 ### storybook-best-practices
 
 Best practices for creating and debugging Storybook stories. Covers:
