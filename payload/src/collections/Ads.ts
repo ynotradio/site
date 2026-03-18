@@ -17,7 +17,7 @@ export const Ads: CollectionConfig = {
     description:
       'Site advertisements. Each ad is visible between its start and end dates. Higher priority appears first.',
   },
-  defaultSort: '-priority',
+  defaultSort: ['-startDate', '-priority'],
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
