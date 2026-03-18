@@ -31,7 +31,7 @@ if (!$_SESSION["logged_in"]) {
                         echo '<b>Artist: </b>' . htmlspecialchars($cd['artist']) . '<br>';
                         echo '<b>Title: </b>' . htmlspecialchars($cd['title']) . '<br>';
                         echo '<b>Label: </b>' . htmlspecialchars($cd['label']) . '<br>';
-                        echo '<b>Review: </b>' . htmlspecialchars($cd['review']) . '<br>';
+                        echo '<b>Review: </b>' . $cd['review'] . '<br>';
                         echo '<b>Cover Art:</b><br>';
                         echo '<img src="' . htmlspecialchars($cd['cd_pic_url']) . '" width="200px"><br>';
                         echo '<b>Band Url: </b>' . htmlspecialchars($cd['band']) . '<br>';
