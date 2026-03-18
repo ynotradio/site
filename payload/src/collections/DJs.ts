@@ -16,7 +16,8 @@ export const DJs: CollectionConfig = {
     useAsTitle: 'displayName',
     defaultColumns: ['displayName', 'photo', 'onAir', 'sortOrder', '_status', 'updatedAt'],
     group: 'Radio',
-    description: 'DJ profiles. Filter by "onAir" to see active DJs.',
+    description:
+      'DJ profiles shown on the website. Toggle "On Air" to control visibility. Use the DJ Order tool to set listing position.',
 
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
@@ -39,7 +40,8 @@ export const DJs: CollectionConfig = {
       admin: {
         position: 'sidebar',
         readOnly: true,
-        description: 'Auto-generated from person names',
+        description:
+          'Shown on the website — generated automatically from the linked person name(s)',
       },
     },
     {
@@ -48,7 +50,7 @@ export const DJs: CollectionConfig = {
       relationTo: 'people',
       hasMany: true,
       admin: {
-        description: 'Link to the person record(s) - can be multiple for co-hosted shows',
+        description: 'The real person(s) behind this DJ name — select multiple for co-hosted shows',
       },
     },
     {
@@ -57,7 +59,7 @@ export const DJs: CollectionConfig = {
       editor: lexicalEditor(),
       admin: {
         description:
-          'Description of the show(s) hosted by this DJ - supports line breaks for multiple shows',
+          'Bio shown on the DJ page on the website — describe their show(s) and music style',
       },
     },
     {
@@ -71,7 +73,7 @@ export const DJs: CollectionConfig = {
       name: 'externalConnectText',
       type: 'text',
       admin: {
-        description: 'Text for external link (e.g., "Follow on Twitter")',
+        description: 'Text for the external link button on the DJ page (e.g., "Follow on Twitter")',
       },
     },
     {
@@ -101,7 +103,8 @@ export const DJs: CollectionConfig = {
           type: 'checkbox',
           defaultValue: true,
           admin: {
-            description: 'Actively scheduled for on-air shifts',
+            description:
+              'When checked, this DJ appears on the website. Uncheck to hide without deleting.',
             width: '25%',
           },
         },

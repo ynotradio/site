@@ -85,6 +85,7 @@ export default buildConfig({
       providers: ['/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed'],
       beforeDashboard: [],
       afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
+      afterNavLinks: ['/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks'],
       views: {
         DJOrder: {
           Component: '/payload/src/features/dj-order#DJOrderTool',

@@ -12,7 +12,7 @@ export const Venues: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'city', 'updatedAt'],
     group: 'Events',
-    description: 'Concert venues and locations.',
+    description: 'Concert venues. Create a venue here, then select it when adding a concert.',
   },
   defaultSort: 'name',
   access: {

@@ -14,7 +14,8 @@ export const Concerts: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['artists', 'date', 'venue', 'featured', '_status', 'updatedAt'],
     group: 'Events',
-    description: 'Concert listings. Filter by "featured" to see homepage concerts.',
+    description:
+      'Concert listings. Toggle "Featured" in the sidebar to promote a show on the homepage.',
   },
   defaultSort: 'date',
   access: {
@@ -50,7 +51,7 @@ export const Concerts: CollectionConfig = {
       hasMany: true,
       required: true,
       admin: {
-        description: 'Performing artists or bands',
+        description: 'Who is playing? Select one or more artists from the catalog.',
       },
     },
     {
@@ -59,21 +60,21 @@ export const Concerts: CollectionConfig = {
       relationTo: 'venues',
       required: true,
       admin: {
-        description: 'Concert venue',
+        description: 'Where is it? Select a venue or create one first.',
       },
     },
     {
       name: 'ticketInfo',
       type: 'textarea',
       admin: {
-        description: 'Ticket pricing and availability information',
+        description: 'Pricing details shown on the website (e.g., "$25 advance, $30 door")',
       },
     },
     {
       name: 'ticketUrl',
       type: 'text',
       admin: {
-        description: 'URL to purchase tickets',
+        description: 'Link to the ticket purchase page — visitors see a "Buy Tickets" button',
         placeholder: 'https://',
       },
     },
@@ -83,7 +84,7 @@ export const Concerts: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Feature on the homepage?',
+        description: 'When checked, this concert is promoted on the homepage',
       },
     },
     {

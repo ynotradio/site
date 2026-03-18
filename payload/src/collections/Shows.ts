@@ -12,7 +12,8 @@ export const Shows: CollectionConfig = {
     useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
     group: 'Radio',
-    description: 'Radio show schedule and history.',
+    description:
+      'Weekly show schedule. Each entry is one time slot. Use Show Cloner to copy a full week to new dates.',
 
     components: {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
@@ -76,7 +77,7 @@ export const Shows: CollectionConfig = {
       type: 'relationship',
       relationTo: 'djs',
       admin: {
-        description: 'DJ hosting the show (optional)',
+        description: 'Which DJ is on air during this time slot?',
       },
     },
     {
@@ -84,7 +85,7 @@ export const Shows: CollectionConfig = {
       type: 'richText',
       editor: lexicalEditor(),
       admin: {
-        description: 'Additional notes or special information',
+        description: 'Notes shown alongside this time slot (e.g., "Best Of" episode, guest DJ)',
       },
     },
     {

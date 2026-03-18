@@ -15,7 +15,7 @@ export const Songs: CollectionConfig = {
     defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
     description:
-      'Songs in the system. Filter by "featureOnNewMusic" to see songs on the New Music page.',
+      'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',
   },
   defaultSort: '-releaseDate',
   access: {
@@ -53,14 +53,15 @@ export const Songs: CollectionConfig = {
       type: 'relationship',
       relationTo: 'artists',
       admin: {
-        description: 'Artist or band who performed the song',
+        description: 'Select the artist — create them in the Artists collection first if needed',
       },
     },
     {
       name: 'streamUrl',
       type: 'text',
       admin: {
-        description: 'URL for streaming the song',
+        description:
+          'Paste a streaming URL (e.g., Spotify, YouTube) for the listen button on the site',
         placeholder: 'https://',
       },
     },
@@ -80,7 +81,7 @@ export const Songs: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Feature on the New Music page?',
+        description: 'When checked, this song appears on the New Music page on the website',
       },
     },
     {
@@ -89,7 +90,8 @@ export const Songs: CollectionConfig = {
       unique: true,
       admin: {
         position: 'sidebar',
-        description: 'MusicBrainz recording ID (MBID) - Search and select from MusicBrainz',
+        description:
+          'Links to MusicBrainz for accurate metadata — use the search button to find the correct recording',
         components: {
           Field:
             '/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField',

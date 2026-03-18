@@ -10,53 +10,83 @@ const PRIMARY_COLLECTIONS = [
     slug: 'posts',
     label: 'Posts',
     icon: '📰',
-    description: 'Front page features and custom pages',
+    description: 'Add or edit front-page stories. Set date ranges to control when they appear.',
   },
   {
     slug: 'songs',
     label: 'New Music',
     icon: '🎵',
-    description: 'Songs featured on the New Music page',
+    description: 'Add songs and toggle "Feature on New Music" to update the New Music page.',
   },
   {
     slug: 'cdoftheweek',
     label: 'CD of the Week',
     icon: '💿',
-    description: 'Weekly album reviews',
+    description: 'Pick an album, write a review, and set the date. Only one should be current.',
   },
   {
     slug: 'concerts',
     label: 'Concerts',
     icon: '🎸',
-    description: 'Upcoming concert listings',
+    description: 'Add concert listings. Toggle "Featured" to promote shows on the homepage.',
   },
   {
     slug: 'ondemand',
     label: 'On Demand',
     icon: '🎧',
-    description: 'On-demand recordings and archives',
+    description: 'Post archived recordings. Link audio files and tag the DJs and artists.',
   },
   {
     slug: 'shows',
     label: 'Shows',
     icon: '📻',
-    description: 'Radio show schedule and information',
+    description: 'Build the weekly schedule. Use Show Cloner to copy a week to new dates.',
   },
   {
     slug: 'djs',
     label: 'DJs',
     icon: '🎙️',
-    description: 'DJ profiles and information',
+    description: 'Manage DJ profiles. Toggle "On Air" to show or hide them on the website.',
   },
 ] as const;
 
 const SECONDARY_COLLECTIONS = [
-  { slug: 'records', label: 'Records', group: 'Music' },
-  { slug: 'artists', label: 'Artists', group: 'Music' },
-  { slug: 'people', label: 'People', group: 'People' },
-  { slug: 'venues', label: 'Venues', group: 'Events' },
-  { slug: 'ads', label: 'Advertisements', group: 'Marketing' },
-  { slug: 'media', label: 'Media Files', group: 'Content' },
+  {
+    slug: 'records',
+    label: 'Records',
+    group: 'Music',
+    description: 'Albums referenced by Songs and CD of the Week',
+  },
+  {
+    slug: 'artists',
+    label: 'Artists',
+    group: 'Music',
+    description: 'Bands and artists linked to Songs, Concerts, and Records',
+  },
+  {
+    slug: 'people',
+    label: 'People',
+    group: 'People',
+    description: 'Real people behind DJs and reviewers',
+  },
+  {
+    slug: 'venues',
+    label: 'Venues',
+    group: 'Events',
+    description: 'Concert venues linked to Concerts',
+  },
+  {
+    slug: 'ads',
+    label: 'Advertisements',
+    group: 'Marketing',
+    description: 'Site ads with date-based visibility',
+  },
+  {
+    slug: 'media',
+    label: 'Media Files',
+    group: 'Content',
+    description: 'Shared image library used across all collections',
+  },
 ] as const;
 
 export interface MrmTournament {
@@ -190,6 +220,7 @@ export const CustomDashboard: React.FC = () => {
                 className="secondary-card"
               >
                 <div className="secondary-card-label">{collection.label}</div>
+                <div className="secondary-card-description">{collection.description}</div>
                 <div className="secondary-card-group">{collection.group}</div>
               </Link>
             ))}
