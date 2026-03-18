@@ -653,7 +653,7 @@ class PostgresModernRockMadness implements ModernRockMadness
         }
 
         // All 8 keys must be present for a valid timeline
-        if (count(array_intersect_key($dates, $keyMap)) < count($keyMap)) {
+        if (count($dates) < count($keyMap)) {
             return null;
         }
 
