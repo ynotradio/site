@@ -293,6 +293,7 @@ function runImportScript(
   to: PostgresTarget,
   startId: number,
   verbose: boolean,
+  extraArgs?: string[],
 ): Promise<ImportResult> {
   return new Promise((resolve) => {
     // Pass --to directly to individual import scripts
@@ -307,6 +308,7 @@ function runImportScript(
       to,
       '--start-id',
       startId.toString(),
+      ...(extraArgs ?? []),
     ];
 
     // Pass MySQL config as env vars so child scripts' getLegacyDbConfig() picks up
@@ -507,7 +509,12 @@ async function main() {
   const imports = [
     { key: 'music', script: 'bin/migrations/importMusic.ts', count: newCounts.music },
     { key: 'concerts', script: 'bin/migrations/importConcerts.ts', count: newCounts.concerts },
-    { key: 'posts', script: 'bin/migrations/importPosts.ts', count: newCounts.posts },
+    {
+      key: 'posts',
+      script: 'bin/migrations/importPosts.ts',
+      count: newCounts.posts,
+      extraArgs: ['--sync-active'],
+    },
     { key: 'ondemand', script: 'bin/migrations/importOnDemand.ts', count: newCounts.ondemand },
     { key: 'cdotw', script: 'bin/migrations/importCdotw.ts', count: newCounts.cdotw },
     { key: 'ads', script: 'bin/migrations/importAds.ts', count: newCounts.ads },
@@ -515,25 +522,44 @@ async function main() {
     { key: 'schedule', script: 'bin/migrations/importSchedule.ts', count: newCounts.schedule },
   ];
 
-  for (const { key, script, count } of imports) {
-    if (count > 0) {
-      const startId = (lastIds[key as keyof LastImportIds] as number) + 1;
+  for (const {
+    key, script, count, extraArgs,
+  } of imports) {
+    // Always run posts with --sync-active even if no new records
+    const hasNewRecords = count > 0;
+    const hasSyncActive = extraArgs?.includes('--sync-active');
+
+    if (!hasNewRecords && !hasSyncActive) {
+      console.log(`⏭️  Skipping ${key} (no new records)`);
+    } else {
+      const startId = hasNewRecords
+        ? (lastIds[key as keyof LastImportIds] as number) + 1
+        : undefined;
+
       console.log();
       console.log('═'.repeat(80));
-      console.log(`Running: ${script} (starting from ID ${startId})`);
+      if (hasNewRecords && hasSyncActive) {
+        console.log(`Running: ${script} (starting from ID ${startId}, + sync-active)`);
+      } else if (hasNewRecords) {
+        console.log(`Running: ${script} (starting from ID ${startId})`);
+      } else {
+        console.log(`Running: ${script} (sync-active only, no new records)`);
+      }
       console.log('═'.repeat(80));
 
       const result = await runImportScript(
         script,
         options.from,
         options.to,
-        startId,
+        startId ?? (lastIds[key as keyof LastImportIds] as number),
         options.verbose,
+        extraArgs,
       );
       results.push(result);
 
       // Update tracking with new max ID
-      if (result.success && result.newMaxId > lastIds[key as keyof LastImportIds]) {
+      const lastId = lastIds[key as keyof LastImportIds];
+      if (hasNewRecords && result.success && result.newMaxId > lastId) {
         lastIds[key as keyof LastImportIds] = result.newMaxId as never;
       }
 
@@ -550,8 +576,6 @@ async function main() {
           result.errorDetails.forEach((error) => console.log(`   ${error}`));
         }
       }
-    } else {
-      console.log(`⏭️  Skipping ${key} (no new records)`);
     }
   }
 

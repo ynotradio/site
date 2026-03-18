@@ -135,4 +135,229 @@ class PostgresStoryTest extends TestCase
         $result = $this->story->getAllActive();
         $this->assertIsArray($result);
     }
+
+    // ─── Lexical → HTML conversion tests ─────────────────────────────────
+
+    /**
+     * Helper: invoke private convertLexicalToHtml via reflection
+     */
+    private function callConvertLexicalToHtml(string $json): string
+    {
+        $method = new \ReflectionMethod(PostgresStory::class, 'convertLexicalToHtml');
+        $method->setAccessible(true);
+        return $method->invoke($this->story, $json);
+    }
+
+    /**
+     * Helper: invoke private isValidUrl via reflection
+     */
+    private function callIsValidUrl(string $url): bool
+    {
+        $method = new \ReflectionMethod(PostgresStory::class, 'isValidUrl');
+        $method->setAccessible(true);
+        return $method->invoke($this->story, $url);
+    }
+
+    /**
+     * Test link nodes read URL from fields.url (Payload Lexical format)
+     */
+    public function testLinkNodeReadsUrlFromFieldsUrl(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/vote',
+                                    'linkType' => 'custom',
+                                    'newTab' => false,
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'VOTE HERE'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString(
+            'href="https://example.com/vote"',
+            $html
+        );
+        $this->assertStringContainsString('VOTE HERE', $html);
+    }
+
+    /**
+     * Test link nodes fall back to node.url when fields.url is absent
+     */
+    public function testLinkNodeFallsBackToNodeUrl(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'url' => 'https://fallback.example.com',
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Click'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString(
+            'href="https://fallback.example.com"',
+            $html
+        );
+    }
+
+    /**
+     * Test link nodes with empty URL get href="#"
+     */
+    public function testLinkNodeWithEmptyUrlGetsFallbackHash(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Broken'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        // Empty string is not a valid URL, so isValidUrl returns false → '#'
+        $this->assertStringContainsString('href="#"', $html);
+    }
+
+    /**
+     * Test link nodes with missing fields key also fall back
+     */
+    public function testLinkNodeWithNoFieldsKeyFallsBack(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'url' => 'https://direct-url.com',
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Direct'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString(
+            'href="https://direct-url.com"',
+            $html
+        );
+    }
+
+    /**
+     * Test link URL special characters are HTML-escaped
+     */
+    public function testLinkUrlIsHtmlEscaped(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/page?a=1&b=2',
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Link'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString(
+            'href="https://example.com/page?a=1&amp;b=2"',
+            $html
+        );
+    }
+
+    // ─── isValidUrl tests ────────────────────────────────────────────────
+
+    /**
+     * @dataProvider validUrlProvider
+     */
+    public function testIsValidUrlAcceptsValidUrls(string $url): void
+    {
+        $this->assertTrue($this->callIsValidUrl($url));
+    }
+
+    public static function validUrlProvider(): array
+    {
+        return [
+            'https'        => ['https://example.com'],
+            'http'         => ['http://example.com'],
+            'relative'     => ['/some/path'],
+            'anchor'       => ['#section'],
+            'path only'    => ['top11.php'],
+            'complex URL'  => ['https://www.example.com/path?q=1&r=2#frag'],
+        ];
+    }
+
+    /**
+     * @dataProvider invalidUrlProvider
+     */
+    public function testIsValidUrlRejectsInvalidUrls(string $url): void
+    {
+        $this->assertFalse($this->callIsValidUrl($url));
+    }
+
+    public static function invalidUrlProvider(): array
+    {
+        return [
+            'empty string'       => [''],
+            'javascript scheme'  => ['javascript:alert(1)'],
+            'data scheme'        => ['data:text/html,<h1>xss</h1>'],
+        ];
+    }
 }

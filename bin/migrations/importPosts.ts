@@ -4,13 +4,18 @@
  *
  * Usage:
  *   tsx bin/migrations/importPosts.ts --to prod-neon --start-id 100
+ *   tsx bin/migrations/importPosts.ts --to prod-neon --sync-active
  *
  * Options:
- *   --to        Target database: 'prod-neon' (default) or 'local-postgres'
- *   --start-id  Optional ID to start import from (for incremental imports)
+ *   --to            Target database: 'prod-neon' (default) or 'local-postgres'
+ *   --start-id      Optional ID to start import from (for incremental imports)
+ *   --sync-active   Refresh currently-visible stories: compares MySQL active stories
+ *                   with PG and re-imports any that have changed (headline, content,
+ *                   priority, dates, or image). Only affects front-page stories.
  */
 
 import type { Payload } from 'payload';
+import * as crypto from 'crypto';
 import { connectToDatabase, getActivePosts, type Post } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
@@ -33,6 +38,7 @@ interface ImportStats {
 interface ImportOptions {
   to: PostgresTarget;
   startId?: number;
+  syncActive?: boolean;
 }
 
 /**
@@ -61,6 +67,8 @@ function parseArgs(): ImportOptions {
       }
       options.startId = startId;
       i += 1;
+    } else if (arg === '--sync-active') {
+      options.syncActive = true;
     } else if (arg === '--help' || arg === '-h') {
       console.log(`
 Usage: tsx bin/migrations/importPosts.ts [options]
@@ -68,17 +76,152 @@ Usage: tsx bin/migrations/importPosts.ts [options]
 Options:
   --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
+  --sync-active    Refresh currently-visible stories that have changed in MySQL
   --help, -h       Show this help message
 
 Examples:
   tsx bin/migrations/importPosts.ts --to prod-neon
   tsx bin/migrations/importPosts.ts --to local-postgres --start-id 100
+  tsx bin/migrations/importPosts.ts --to prod-neon --sync-active
       `);
       process.exit(0);
     }
   }
 
   return options;
+}
+
+/**
+ * Compute a hash of story fields that matter for sync comparison.
+ * If any of these fields change in MySQL, the PG record should be refreshed.
+ */
+function storyHash(
+  headline: string,
+  content: string,
+  priority: number,
+  startDate: string,
+  endDate: string,
+  imageUrl: string,
+  linkUrl: string,
+): string {
+  const data = [headline, content, String(priority), startDate, endDate, imageUrl, linkUrl].join(
+    '|',
+  );
+  return crypto.createHash('md5').update(data).digest('hex');
+}
+
+/**
+ * Sync currently-visible stories: compare MySQL active stories with PG records
+ * and re-import any that have changed. Returns count of refreshed records.
+ */
+async function syncActiveStories(
+  mysqlConnection: any,
+  payload: Payload,
+): Promise<{ refreshed: number; unchanged: number; errors: number }> {
+  const stats = { refreshed: 0, unchanged: 0, errors: 0 };
+
+  // Fetch only currently-visible stories from MySQL
+  const [activeStories] = await mysqlConnection.query(
+    `SELECT id, headline, story, priority, start_date, end_date, pic, pic_url
+     FROM stories
+     WHERE deleted = 'n' AND start_date <= NOW() AND end_date >= NOW()
+     ORDER BY id ASC`,
+  );
+
+  logger.info(`[sync-active] Found ${(activeStories as any[]).length} active stories in MySQL`);
+
+  for (const story of activeStories as any[]) {
+    const mysqlHash = storyHash(
+      story.headline,
+      '', // Content excluded: MySQL stores HTML, PG stores Lexical JSON
+      story.priority,
+      String(story.start_date),
+      String(story.end_date),
+      story.pic || '',
+      story.pic_url || '',
+    );
+
+    // Find matching PG record
+    const existing = await payload.find({
+      collection: 'posts',
+      where: { legacyId: { equals: story.id } },
+      limit: 1,
+    });
+
+    if (existing.docs.length === 0) {
+      // New active story — will be handled by normal import flow
+      logger.info(`[sync-active] Story ${story.id} not in PG yet, will be imported normally`);
+    } else {
+      const pgPost = existing.docs[0] as any;
+      // Compare key fields: headline, priority, dates, image, link
+      const pgHash = storyHash(
+        pgPost.headline || '',
+        '',
+        pgPost.priority || 0,
+        String(pgPost.startDate || ''),
+        String(pgPost.endDate || ''),
+        pgPost.imageUrl || '',
+        pgPost.linkUrl || '',
+      );
+
+      // Content hash comparison is imperfect (PG has Lexical, MySQL has HTML),
+      // so also compare non-content fields directly
+      const headlineChanged = cleanHeadline(story.headline) !== pgPost.headline;
+      const priorityChanged = story.priority !== pgPost.priority;
+      const linkChanged = (story.pic_url || '') !== (pgPost.linkUrl || '');
+
+      if (!headlineChanged && !priorityChanged && !linkChanged && mysqlHash === pgHash) {
+        stats.unchanged += 1;
+      } else {
+        // Record has changed — delete PG record and re-import
+        const changedFields = [
+          headlineChanged ? 'headline' : null,
+          priorityChanged ? 'priority' : null,
+          linkChanged ? 'linkUrl' : null,
+        ]
+          .filter(Boolean)
+          .join(', ') || 'content/dates/image';
+
+        logger.info(`[sync-active] Story ${story.id} changed (${changedFields}), refreshing...`);
+
+        try {
+          // Delete existing PG record
+          await payload.delete({ collection: 'posts', id: pgPost.id });
+
+          // Re-import from MySQL
+          const post: Post = {
+            id: story.id,
+            headline: story.headline,
+            start_date: story.start_date,
+            end_date: story.end_date,
+            content: story.story,
+            image_url: story.pic,
+            link_url: story.pic_url,
+            priority: story.priority,
+            deleted: story.deleted,
+            source: 'story' as const,
+          };
+
+          // eslint-disable-next-line @typescript-eslint/no-use-before-define
+          const result = await importPost(payload, post);
+          if (result === 'success') {
+            stats.refreshed += 1;
+            logger.info(
+              `[sync-active] ✓ Story ${story.id} refreshed: "${cleanHeadline(story.headline)}"`,
+            );
+          } else {
+            stats.errors += 1;
+            logger.error(`[sync-active] ✗ Story ${story.id} failed to re-import`);
+          }
+        } catch (error) {
+          stats.errors += 1;
+          logger.error(`[sync-active] ✗ Story ${story.id} error`, error as Error);
+        }
+      }
+    }
+  }
+
+  return stats;
 }
 
 /**
@@ -249,6 +392,9 @@ async function importPosts(options: ImportOptions): Promise<void> {
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
   }
+  if (options.syncActive) {
+    logger.info('Sync-active mode: will refresh changed active stories');
+  }
 
   const stats: ImportStats = {
     total: 0,
@@ -268,7 +414,15 @@ async function importPosts(options: ImportOptions): Promise<void> {
     // Connect to Payload (destination)
     payload = await getPayloadClient(options.to);
 
-    // Fetch posts from MySQL
+    // Phase 1: sync-active — refresh changed active stories before importing new ones
+    if (options.syncActive) {
+      const syncStats = await syncActiveStories(mysqlConnection, payload);
+      logger.info(
+        `[sync-active] Done: ${syncStats.refreshed} refreshed, ${syncStats.unchanged} unchanged, ${syncStats.errors} errors`,
+      );
+    }
+
+    // Phase 2: import new records (standard flow)
     logger.info('Fetching posts from MySQL...');
     const posts = await getActivePosts(mysqlConnection, {
       startId: options.startId,
@@ -333,4 +487,6 @@ if (isMainModule()) {
     });
 }
 
-export { importPosts, parseArgs, importPost };
+export {
+  importPosts, parseArgs, importPost, storyHash, syncActiveStories,
+};
