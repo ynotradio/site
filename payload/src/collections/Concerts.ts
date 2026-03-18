@@ -17,7 +17,7 @@ export const Concerts: CollectionConfig = {
     description:
       'Concert listings. Toggle "Featured" in the sidebar to promote a show on the homepage.',
   },
-  defaultSort: 'date',
+  defaultSort: '-date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),

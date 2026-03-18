@@ -19,7 +19,7 @@ export const Shows: CollectionConfig = {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },
   },
-  defaultSort: 'date',
+  defaultSort: '-date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
