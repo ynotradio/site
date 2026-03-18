@@ -337,9 +337,9 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
     // When match 1 is running, getFirstRowContent() returns 'next_match',
-    // which renders _mrm_next_match.php showing the next upcoming match.
-    const nextMatchContainer = page.locator('.next-match-container');
-    await expect(nextMatchContainer).toBeVisible({ timeout: 10000 });
+    // which renders _mrm_next_match.php as a compact one-liner.
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
     await captureScreenshot(page, testInfo, '08-MRM-Fresh-Next-Match');
   });
@@ -347,10 +347,10 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
   test('next match display shows band names for match 2', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
-    const nextMatchContainer = page.locator('.next-match-container');
-    await expect(nextMatchContainer).toBeVisible({ timeout: 10000 });
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
-    const nextMatchText = await nextMatchContainer.textContent();
+    const nextMatchText = await nextMatch.textContent();
 
     // Match 2 bands: The Wombats (placement 3) vs Japandroids (placement 4)
     expect(nextMatchText).toContain('The Wombats');
@@ -360,13 +360,13 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
   test('next match display shows a future date and time', async ({ page }) => {
     await navigateWithRetry(page, MRM_FRESH_URL);
 
-    const heading = page.locator('.next-match-container h3');
-    await expect(heading).toBeVisible({ timeout: 10000 });
+    const nextMatch = page.locator('.mrm-next-match');
+    await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
-    const headingText = await heading.textContent();
-    // Heading format: "Next Match: <day>, <Month> <D> at <H:MM AM/PM>"
-    expect(headingText).toContain('Next Match:');
-    expect(headingText).toMatch(/at\s+\d+:\d+\s*(AM|PM)/i);
+    const text = await nextMatch.textContent();
+    // Compact format: "Next Match: (3) The Wombats vs (4) Japandroids | <when> <time> EST"
+    expect(text).toContain('Next Match:');
+    expect(text).toMatch(/EST/);
   });
 
   test('no critical console errors on page load', async ({ page }) => {
