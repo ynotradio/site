@@ -9,14 +9,14 @@ description: Comprehensive testing and verification checklist for agent-created 
 
 ## Critical Success Criteria
 
-Every agent PR **MUST** include proof of working functionality. This is **non-negotiable**.
+Every agent PR **MUST** include a screenshot. This is **non-negotiable**.
 
 **BEFORE you push any code**:
 1. Run `yarn lint` - must exit 0
 2. Run `yarn test` - must exit 0
 3. Run `yarn build` - must exit 0
 4. If UI/API changes: run `yarn test:e2e` - must exit 0
-5. Take screenshots with Playwright showing functionality works
+5. **Take a screenshot with `playwright-browser_take_screenshot` during testing, then paste it into the PR description when you create the PR**
 
 **Never push code that fails CI checks. Repeated CI failures on the same branch are unacceptable.**
 
@@ -356,26 +356,27 @@ if [ $? -eq 124 ]; then
 fi
 ```
 
-## PR Template Checklist
+## PR Template
 
-**Keep PR descriptions brief. Your code and screenshots speak for themselves.**
+**A screenshot is mandatory in every PR. No exceptions.**
 
-Include this minimal section in every PR:
+Use this template (it's pre-filled in `.github/PULL_REQUEST_TEMPLATE.md`):
 
 ```markdown
 ## Changes
 - [2-3 bullet points maximum]
 
 ## Verification
-- [x] All checks pass locally before push (lint, test, build)
-- [x] Playwright verification completed
-- [x] Screenshot attached
+- [x] `yarn lint` exits 0
+- [x] `yarn test` exits 0
+- [x] Screenshot attached below
 
-## Evidence
-[Single screenshot showing working functionality]
+## Screenshot
+
+[Paste screenshot here — use playwright-browser_take_screenshot]
 ```
 
-**If there's a blocker requiring human action**, expand to:
+**If there's a blocker preventing the screenshot**, be explicit:
 
 ```markdown
 ## Changes
@@ -383,13 +384,9 @@ Include this minimal section in every PR:
 
 ## Verification
 - [x] All checks pass locally
-- [x] Screenshot attached
 
 ## Blocker
-@owner - [Specific action needed from maintainer]
-
-## Evidence
-[Screenshot]
+@owner - [Specific reason screenshot is not possible - e.g. "port 3000 unavailable in CI environment"]
 ```
 
 **Don't include**: verbose summaries, technical comparisons, "recommendations", performance metrics unless they reveal a problem.
