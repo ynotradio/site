@@ -3,13 +3,13 @@ import type { BracketMatch, MrmGroupSummary } from './types';
 /** Infer a match's region from its matchNumber when region is not set. */
 export const inferRegion = (matchNum: number): number => {
   // Region mapping: R1 matches 1-32, R2 matches 33-48, R3 49-56, R4 57-60, Championship 61-63
-  const regionMap: Record<string, number> = {
+  const regionMap: Record<number, number> = {
     57: 1,
     58: 2,
     59: 3,
     60: 4,
   };
-  if (regionMap[matchNum]) return regionMap[matchNum];
+  if (matchNum in regionMap) return regionMap[matchNum];
   if (matchNum >= 61) return 5;
 
   // R1: 8 per region, R2: 4 per region, R3: 2 per region
