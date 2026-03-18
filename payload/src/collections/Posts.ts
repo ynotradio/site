@@ -30,7 +30,7 @@ export const Posts: CollectionConfig = {
     description:
       'Front-page stories. Each story is visible on the site between its start and end dates.',
   },
-  defaultSort: '-priority',
+  defaultSort: ['-startDate', '-priority'],
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
