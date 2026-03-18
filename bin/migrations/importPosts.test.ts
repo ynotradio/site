@@ -20,6 +20,10 @@ vi.mock('./shared/importUtils', () => ({
   convertHtmlToLexical: vi.fn((html) => ({ root: { children: [{ text: html }] } })),
 }));
 
+vi.mock('./shared/enhancedHtmlToLexical', () => ({
+  convertHtmlToLexicalEnhanced: vi.fn((html) => ({ root: { children: [{ text: html }] } })),
+}));
+
 vi.mock('./shared/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
@@ -338,6 +342,285 @@ describe('importPosts', () => {
           slug: '2025-01-15--win-free-tickets',
         }),
       });
+    });
+  });
+
+  describe('parseArgs --sync-active', () => {
+    it('should parse --sync-active flag', async () => {
+      const { parseArgs } = await import('./importPosts');
+
+      process.argv = ['node', 'script.ts', '--sync-active'];
+      const options = parseArgs();
+
+      expect(options.syncActive).toBe(true);
+    });
+
+    it('should default syncActive to undefined', async () => {
+      const { parseArgs } = await import('./importPosts');
+
+      process.argv = ['node', 'script.ts'];
+      const options = parseArgs();
+
+      expect(options.syncActive).toBeUndefined();
+    });
+
+    it('should combine --sync-active with --to and --start-id', async () => {
+      const { parseArgs } = await import('./importPosts');
+
+      process.argv = [
+        'node', 'script.ts',
+        '--to', 'local-postgres',
+        '--start-id', '100',
+        '--sync-active',
+      ];
+      const options = parseArgs();
+
+      expect(options.to).toBe('local-postgres');
+      expect(options.startId).toBe(100);
+      expect(options.syncActive).toBe(true);
+    });
+  });
+
+  describe('storyHash', () => {
+    it('should produce consistent hash for same inputs', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash1 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', 'img.jpg', 'link.com');
+      const hash2 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', 'img.jpg', 'link.com');
+
+      expect(hash1).toBe(hash2);
+    });
+
+    it('should produce different hash when headline changes', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash1 = storyHash('headline A', 'content', 5, '2025-01-01', '2025-12-31', '', '');
+      const hash2 = storyHash('headline B', 'content', 5, '2025-01-01', '2025-12-31', '', '');
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should produce different hash when priority changes', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash1 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', '', '');
+      const hash2 = storyHash('headline', 'content', 10, '2025-01-01', '2025-12-31', '', '');
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should produce different hash when dates change', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash1 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', '', '');
+      const hash2 = storyHash('headline', 'content', 5, '2025-02-01', '2025-12-31', '', '');
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should produce different hash when image or link changes', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash1 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', 'old.jpg', '');
+      const hash2 = storyHash('headline', 'content', 5, '2025-01-01', '2025-12-31', 'new.jpg', '');
+
+      expect(hash1).not.toBe(hash2);
+    });
+
+    it('should return a 32-char hex string', async () => {
+      const { storyHash } = await import('./importPosts');
+
+      const hash = storyHash('test', '', 0, '', '', '', '');
+
+      expect(hash).toMatch(/^[a-f0-9]{32}$/);
+    });
+  });
+
+  describe('syncActiveStories', () => {
+    it('should skip stories not yet in PG', async () => {
+      const { syncActiveStories } = await import('./importPosts');
+
+      const mockMysql = {
+        query: vi.fn().mockResolvedValue([[
+          {
+            id: 999,
+            headline: 'New Story',
+            story: '<p>content</p>',
+            priority: 5,
+            start_date: '2025-01-01',
+            end_date: '2025-12-31',
+            pic: '',
+            pic_url: '',
+            deleted: 'n',
+          },
+        ]]),
+      };
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+
+      const stats = await syncActiveStories(mockMysql, mockPayload as Payload);
+
+      expect(stats.refreshed).toBe(0);
+      expect(stats.unchanged).toBe(0);
+      expect(stats.errors).toBe(0);
+    });
+
+    it('should mark unchanged stories as unchanged', async () => {
+      const { syncActiveStories, storyHash } = await import('./importPosts');
+
+      const mysqlRow = {
+        id: 42,
+        headline: 'Test Story',
+        story: '<p>content</p>',
+        priority: 5,
+        start_date: '2025-01-01',
+        end_date: '2025-12-31',
+        pic: 'img.jpg',
+        pic_url: 'https://example.com',
+        deleted: 'n',
+      };
+
+      const mockMysql = {
+        query: vi.fn().mockResolvedValue([[mysqlRow]]),
+      };
+
+      // PG record with matching fields
+      (mockPayload.find as Mock).mockResolvedValue({
+        docs: [{
+          id: 'pg-id-42',
+          headline: 'Test Story',
+          priority: 5,
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+          imageUrl: 'img.jpg',
+          linkUrl: 'https://example.com',
+        }],
+      });
+
+      const stats = await syncActiveStories(mockMysql, mockPayload as Payload);
+
+      expect(stats.unchanged).toBe(1);
+      expect(stats.refreshed).toBe(0);
+    });
+
+    it('should refresh stories with changed headline', async () => {
+      const { syncActiveStories } = await import('./importPosts');
+
+      const mockMysql = {
+        query: vi.fn().mockResolvedValue([[{
+          id: 42,
+          headline: 'Updated Headline',
+          story: '<p>content</p>',
+          priority: 5,
+          start_date: '2025-01-01',
+          end_date: '2025-12-31',
+          pic: '',
+          pic_url: '',
+          deleted: 'n',
+        }]]),
+      };
+
+      mockPayload.delete = vi.fn().mockResolvedValue({});
+      // First find: syncActiveStories looks up existing PG record
+      // Second find: importPost's postExists check (after delete, record gone)
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({
+          docs: [{
+            id: 'pg-id-42',
+            headline: 'Old Headline',
+            priority: 5,
+            startDate: '2025-01-01',
+            endDate: '2025-12-31',
+            imageUrl: '',
+            linkUrl: '',
+          }],
+        })
+        .mockResolvedValueOnce({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'new-pg-id' });
+
+      const stats = await syncActiveStories(mockMysql, mockPayload as Payload);
+
+      expect(stats.refreshed).toBe(1);
+      expect(mockPayload.delete).toHaveBeenCalledWith({
+        collection: 'posts',
+        id: 'pg-id-42',
+      });
+      expect(mockPayload.create).toHaveBeenCalled();
+    });
+
+    it('should refresh stories with changed priority', async () => {
+      const { syncActiveStories } = await import('./importPosts');
+
+      const mockMysql = {
+        query: vi.fn().mockResolvedValue([[{
+          id: 42,
+          headline: 'Same Headline',
+          story: '<p>content</p>',
+          priority: 10,
+          start_date: '2025-01-01',
+          end_date: '2025-12-31',
+          pic: '',
+          pic_url: '',
+          deleted: 'n',
+        }]]),
+      };
+
+      mockPayload.delete = vi.fn().mockResolvedValue({});
+      // First find: syncActiveStories lookup; Second find: importPost dedup
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({
+          docs: [{
+            id: 'pg-id-42',
+            headline: 'Same Headline',
+            priority: 5,
+            startDate: '2025-01-01',
+            endDate: '2025-12-31',
+            imageUrl: '',
+            linkUrl: '',
+          }],
+        })
+        .mockResolvedValueOnce({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'new-pg-id' });
+
+      const stats = await syncActiveStories(mockMysql, mockPayload as Payload);
+
+      expect(stats.refreshed).toBe(1);
+    });
+
+    it('should count errors when re-import fails', async () => {
+      const { syncActiveStories } = await import('./importPosts');
+
+      const mockMysql = {
+        query: vi.fn().mockResolvedValue([[{
+          id: 42,
+          headline: 'Changed Headline',
+          story: '<p>content</p>',
+          priority: 5,
+          start_date: '2025-01-01',
+          end_date: '2025-12-31',
+          pic: '',
+          pic_url: '',
+          deleted: 'n',
+        }]]),
+      };
+
+      mockPayload.delete = vi.fn().mockRejectedValue(new Error('DB error'));
+      (mockPayload.find as Mock).mockResolvedValue({
+        docs: [{
+          id: 'pg-id-42',
+          headline: 'Old Headline',
+          priority: 5,
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+          imageUrl: '',
+          linkUrl: '',
+        }],
+      });
+
+      const stats = await syncActiveStories(mockMysql, mockPayload as Payload);
+
+      expect(stats.errors).toBe(1);
+      expect(stats.refreshed).toBe(0);
     });
   });
 });

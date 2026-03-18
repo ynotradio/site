@@ -312,7 +312,7 @@ class PostgresStory implements Story {
                 return "<li>$content</li>\n";
                 
             case 'link':
-                $rawUrl = $node['url'] ?? '';
+                $rawUrl = $node['fields']['url'] ?? $node['url'] ?? '';
                 // Validate URL first, then apply fallback if invalid
                 $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
@@ -372,6 +372,10 @@ class PostgresStory implements Story {
      * @return bool True if URL is valid and safe
      */
     private function isValidUrl(string $url): bool {
+        if ($url === '') {
+            return false;
+        }
+
         $firstChar = substr($url, 0, 1);
         
         if ($firstChar === '/' || $firstChar === '#') {
