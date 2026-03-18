@@ -15,7 +15,7 @@ Every agent PR **MUST** include a screenshot. This is **non-negotiable**.
 1. Run `yarn lint` - must exit 0
 2. Run `yarn test` - must exit 0
 3. Run `yarn build` - must exit 0
-4. If UI/API changes: run `yarn test:e2e` - must exit 0
+4. Run `yarn test:e2e` — **mandatory** if you added or changed any e2e tests; also required for UI/API changes
 5. **Take a screenshot with `playwright-browser_take_screenshot` during testing, then paste it into the PR description when you create the PR**
 
 **Never push code that fails CI checks. Repeated CI failures on the same branch are unacceptable.**

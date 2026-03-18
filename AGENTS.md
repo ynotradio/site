@@ -218,7 +218,7 @@ When modifying code, actively look for and remove dead code:
 2. Run `yarn lint` - must exit 0
 3. Run `yarn test` - must exit 0
 4. Run `yarn build` - must exit 0
-5. Run `yarn test:e2e` if you changed UI/API
+5. Run `yarn test:e2e` — **mandatory** if you changed or added any e2e tests; also required for UI/API changes
 6. Only push after ALL checks pass locally
 
 **If CI fails after push**:

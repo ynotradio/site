@@ -6,6 +6,7 @@
 
 - [ ] `yarn lint` exits 0
 - [ ] `yarn test` exits 0
+- [ ] `yarn test:e2e` exits 0 (required if e2e tests were added or modified)
 - [ ] Screenshot attached below
 
 ## Screenshot
