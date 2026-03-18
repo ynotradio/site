@@ -56,3 +56,6 @@ storybook-static
 .last-import-ids.json
 .env.local
 build-*
+
+# Playwright verification screenshots (captured by agents)
+*.png
