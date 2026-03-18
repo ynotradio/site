@@ -4,6 +4,7 @@ $page_file = "schedule_view_all.php";
 $page_title = "View All Schedules";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/ScheduleFactory.php");
 require ("../partials/_header.php");
 
@@ -57,6 +58,8 @@ $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
       echo "</table>";
       ?>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('shows')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

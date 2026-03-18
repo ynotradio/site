@@ -4,6 +4,7 @@ $page_file = "ad_view_all_active.php";
 $page_title = "View All Active Ads";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require_once ("../models/AdFactory.php");
 require ("../partials/_header.php");
 
@@ -35,6 +36,8 @@ $adModel = \YNotRadio\Models\AdFactory::create($db);
         echo '</ol>';
       ?>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('ads')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

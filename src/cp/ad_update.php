@@ -4,6 +4,7 @@ $page_file = "ad_update.php";
 $page_title = "Update Ad";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require_once ("../models/AdFactory.php");
 require ("../partials/_header.php");
 
@@ -73,6 +74,11 @@ $ad = [];
     <div class="top-spacer_20">
       <a href="ad_view_all_active.php">View all Ads</a>
       <p>
+      <?php $payload_edit_url = $id ? get_payload_edit_url('ads', 'ads', (int) $id) : null; ?>
+      <?php if ($payload_edit_url): ?>
+        <a href="<?php echo htmlspecialchars($payload_edit_url); ?>" target="_blank">Edit in Payload ↗</a>
+        <p>
+      <?php endif; ?>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

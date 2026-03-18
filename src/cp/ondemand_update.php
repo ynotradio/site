@@ -4,6 +4,7 @@ $page_file = "ondemand_update.php";
 $page_title = "Update On Demand";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/OnDemandFactory.php");
 require ("../partials/_ondemand_display_helpers.php");
 require ("../partials/_header.php");
@@ -66,6 +67,11 @@ if (!$_SESSION["logged_in"]) {
     <div class="top-spacer_20">
       <a href="ondemand_view_all.php">View all On Demands</a>
       <p>
+      <?php $payload_edit_url = $id ? get_payload_edit_url('ondemand', 'ondemand', (int) $id) : null; ?>
+      <?php if ($payload_edit_url): ?>
+        <a href="<?php echo htmlspecialchars($payload_edit_url); ?>" target="_blank">Edit in Payload ↗</a>
+        <p>
+      <?php endif; ?>
       <a href="index.php">Control Panel</a>
     </div>
   </div>

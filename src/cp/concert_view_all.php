@@ -4,6 +4,7 @@ $page_file = "concert_view_all.php";
 $page_title = "View All Concerts";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../models/ConcertFactory.php");
 require ("../partials/_header.php");
 
@@ -46,6 +47,8 @@ if (!$_SESSION["logged_in"]) {
       }
     ?>
     <div class="top-spacer_20">
+      <a href="<?php echo htmlspecialchars(get_payload_collection_url('concerts')); ?>" target="_blank">View in Payload ↗</a>
+      <p>
       <a href="index.php">Control Panel</a>
     </div>
   </div>
