@@ -3,7 +3,7 @@
  * Partial for displaying the next upcoming match.
  *
  * Renders a compact, right-aligned one-liner that matches the legacy layout:
- *   Next Match: (3) Band A vs (6) Band B | Tomorrow at 10:00 EST
+ *   Next Match: (3) Band A vs (6) Band B | Tomorrow at 10:00 PM EDT
  *
  * @param \YNotRadio\Controllers\MadnessController $controller
  */
@@ -17,11 +17,14 @@ if (!$next_match) {
 $band1 = $controller->mrmModel->getBandByPlacement($next_match['band1_id']);
 $band2 = $controller->mrmModel->getBandByPlacement($next_match['band2_id']);
 
+$eastern = new DateTimeZone('America/New_York');
 $start_time = new DateTime($next_match['start_time'], new DateTimeZone('UTC'));
+$start_time->setTimezone($eastern);
 
 // "Tomorrow at", a specific date, or just the time if it's today
-$today    = gmdate('Ymd');
-$tomorrow = gmdate('Ymd', strtotime('+1 day'));
+$now_eastern = new DateTime('now', $eastern);
+$today    = $now_eastern->format('Ymd');
+$tomorrow = (clone $now_eastern)->modify('+1 day')->format('Ymd');
 $match_day = $start_time->format('Ymd');
 
 if ($match_day === $today) {
@@ -32,7 +35,8 @@ if ($match_day === $today) {
     $when = $start_time->format('n/j ');
 }
 
-$formatted_time = $next_match['fdate'] . ' EST';
+$tz_abbr = $start_time->format('T'); // EDT or EST depending on DST
+$formatted_time = $start_time->format('g:i A') . ' ' . $tz_abbr;
 ?>
 
 <div class="mrm-next-match">

@@ -364,9 +364,9 @@ test.describe('MRM Postgres — Fresh Tournament — Fresh State', () => {
     await expect(nextMatch).toBeVisible({ timeout: 10000 });
 
     const text = await nextMatch.textContent();
-    // Compact format: "Next Match: (3) The Wombats vs (4) Japandroids | <when> <time> EST"
+    // Compact format: "Next Match: (3) The Wombats vs (4) Japandroids | <when> <time> EST/EDT"
     expect(text).toContain('Next Match:');
-    expect(text).toMatch(/EST/);
+    expect(text).toMatch(/E[SD]T/);
   });
 
   test('no critical console errors on page load', async ({ page }) => {
