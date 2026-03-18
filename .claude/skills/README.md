@@ -22,14 +22,13 @@ For more information:
 
 Resources and patterns for crafting elegant UI designs and building them with modern web best practices. Covers:
 
-- MCP servers (Figma MCP, Context7, Playwright browser tools)
-- Component library recommendations (shadcn/ui, Radix UI, React Aria, Headless UI)
-- Styling and animation tools (Tailwind CSS, Framer Motion, auto-animate)
+- Playwright browser tools for visual iteration (screenshot → compare → fix loop)
 - Design principles: visual hierarchy, spacing scale, color tokens, typography
-- Agent subagent patterns: design-to-code, accessibility-first, responsive design
+- Agent patterns: design-to-code, accessibility-first, responsive design, animation
+- Component state coverage for Storybook
 - Quality checklist and recommended reading
 
-**Use when:** Creating or improving UI components, designing page layouts, implementing a design system, choosing UI libraries, or when an agent needs to produce polished, professional-looking frontend work.
+**Use when:** Creating or improving UI components, designing page layouts, implementing a design system, or when an agent needs to produce polished, professional-looking frontend work. Library choices are the maintainer's decision — see `docs/migration/ui-library-options.md` for research.
 
 ### storybook-best-practices
 

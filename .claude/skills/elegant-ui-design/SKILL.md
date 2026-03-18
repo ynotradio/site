@@ -1,32 +1,17 @@
 ---
 name: elegant-ui-design
-description: Resources, tools, MCP servers, plugins, and subagent patterns for crafting elegant UI designs and building them accurately with modern web best practices the way an expert frontend engineer would. Use when creating new UI components, designing layouts, implementing design systems, choosing UI libraries, or whenever an agent needs to produce high-quality, production-ready frontend work that looks polished and professional.
+description: Resources, tools, and agent patterns for crafting elegant UI designs and building them accurately with modern web best practices the way an expert frontend engineer would. Use when creating new UI components, designing layouts, implementing design systems, or whenever an agent needs to produce high-quality, production-ready frontend work that looks polished and professional.
 ---
 
 # Elegant UI Design
 
 Guidance for producing beautiful, accessible, performant UIs on this Next.js 15 + React 19 stack — from design conception through pixel-perfect implementation.
 
-## MCP Servers
+> **Library choices are the maintainer's decision.** Do not introduce new component libraries, styling libraries, or animation libraries without explicit approval. See `docs/migration/ui-library-options.md` for research. Use what is already in `package.json`.
 
-### Figma MCP
-Reads Figma design files programmatically. Extracts exact colors, spacing, typography, and component specs — no guessing from screenshots.
+## Visual Iteration with Playwright
 
-Install in the workspace when designs exist in Figma:
-```bash
-npx figma-developer-mcp --figma-api-key=<token>
-```
-
-Typical queries once connected:
-```
-figma_get_file(fileId, nodeId)   → Component specs, tokens, layout rules
-figma_get_image(fileId, nodeIds) → Export nodes as images for reference
-```
-
-**Workflow**: Use Figma MCP to extract design tokens (colors, spacing, type scale) *before* writing CSS. Never invent values that exist in a design file.
-
-### Playwright Browser MCP (already available)
-Use `playwright-browser_*` tools for visual design iteration — navigate to Storybook or the running app, take screenshots, compare to reference.
+Use `playwright-browser_*` tools throughout UI work — navigate to Storybook or the running app, take screenshots, compare to reference.
 
 **Design iteration loop:**
 1. `playwright-browser_navigate` → open component in Storybook or app
@@ -34,71 +19,9 @@ Use `playwright-browser_*` tools for visual design iteration — navigate to Sto
 3. Visually compare against design reference → identify gaps
 4. Edit code → repeat until match
 
-### Context7 MCP (documentation lookup)
-Resolves current docs for any library. Use it instead of guessing API signatures.
-```
-use context7 to get docs for: tailwindcss v4 gradient syntax
-use context7 to get docs for: framer-motion AnimatePresence exit animations
-use context7 to get docs for: radix-ui Dialog accessibility props
-```
-
 ---
 
-## UI Library Ecosystem
-
-### Component Primitives
-
-| Library | Role | Install |
-|---------|------|---------|
-| **shadcn/ui** | Pre-styled Radix components; generates owned source files | `npx shadcn@latest add button` |
-| **Radix UI** | Accessible, unstyled primitives (Dialog, Tooltip, Select…) | `yarn add @radix-ui/react-dialog` |
-| **React Aria Components** | Adobe's fully accessible primitives; most complete keyboard/ARIA support | `yarn add react-aria-components` |
-| **Headless UI** | Tailwind Labs' unstyled accessible components | `yarn add @headlessui/react` |
-
-**Preference**: Use **shadcn/ui** for rapid iteration — it generates source files you own. Use **Radix UI** primitives for custom-styled components that need robust accessibility.
-
-### Styling
-
-| Tool | Use case |
-|------|----------|
-| **Tailwind CSS** | Utility-first; enforces the spacing/type scale |
-| **CSS Modules** | Scoped styles when Tailwind class lists grow unwieldy |
-| **CSS custom properties** | Design tokens (colors, spacing, radii) |
-| **clsx + tailwind-merge** | Safe conditional class composition |
-
-```typescript
-// Standard cn() helper — add to lib/utils.ts if not present
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
-```
-
-### Motion & Animation
-
-| Library | Role |
-|---------|------|
-| **Framer Motion** | Page transitions, shared-layout animations, gestures |
-| **@formkit/auto-animate** | Drop-in list/reorder animations with one line |
-| **CSS transitions** | Simple hover/focus states — prefer over JS when possible |
-
-Always respect `prefers-reduced-motion`:
-```typescript
-import { useReducedMotion } from 'framer-motion';
-const prefersReduced = useReducedMotion();
-```
-
-### Icons
-
-| Library | Notes |
-|---------|-------|
-| **Lucide React** | Clean, consistent, tree-shakeable; already common in Next.js ecosystem |
-| **Heroicons** | Pairs naturally with Tailwind; from Tailwind Labs |
-| **Phosphor Icons** | Extensive set, multiple weights for emphasis |
-
----
-
-## Design Principles for Agents
+## Design Principles
 
 ### Visual Hierarchy
 Apply in this order of importance:
@@ -109,13 +32,13 @@ Apply in this order of importance:
 5. **Position** — Top-left to bottom-right reading flow (LTR)
 
 ### Spacing Scale
-Use a consistent scale. Tailwind's 4px base (1 unit = 0.25rem):
-- `gap-1` / `gap-2` (4px/8px) — tight groupings (icon + label)
-- `gap-3` / `gap-4` (12px/16px) — related elements within a component
-- `gap-6` (24px) — distinct sections within a card
-- `gap-8` / `gap-12` (32px/48px) — major page sections
+Use a consistent scale — never invent arbitrary pixel values. A 4px base works well:
+- **4–8px** — tight groupings (icon + label pairings)
+- **12–16px** — related elements within a component
+- **24px** — distinct sections within a card
+- **32–48px** — major page sections
 
-Never invent arbitrary pixel values. Stick to the scale.
+Translate these directly into whatever spacing system the codebase uses.
 
 ### Color System
 Define tokens, not hardcoded values:
@@ -129,29 +52,18 @@ Define tokens, not hardcoded values:
   --color-border:         rgba(255, 255, 255, 0.1);
 }
 ```
-Register tokens in `tailwind.config.ts` under `extend.colors` so utility classes work.
+Use the established token names throughout — don't inline color values.
 
 ### Typography
-Two font families maximum. Define a type scale in Tailwind config:
-```typescript
-fontSize: {
-  xs:   ['0.75rem',  { lineHeight: '1rem' }],
-  sm:   ['0.875rem', { lineHeight: '1.25rem' }],
-  base: ['1rem',     { lineHeight: '1.5rem' }],
-  lg:   ['1.125rem', { lineHeight: '1.75rem' }],
-  xl:   ['1.25rem',  { lineHeight: '1.75rem' }],
-  '2xl':['1.5rem',   { lineHeight: '2rem' }],
-  '3xl':['1.875rem', { lineHeight: '2.25rem' }],
-}
-```
+Two font families maximum. Work within the type scale the codebase defines — do not add new font sizes or weights without a clear visual reason.
 
 ---
 
-## Agent Subagent Patterns
+## Agent Patterns
 
 ### Design-to-Code Pattern
-When given a design reference (screenshot, Figma link, written description):
-1. **Extract tokens** — list exact colors, spacing, font sizes from the design
+When given a design reference (screenshot, description, or design file):
+1. **Extract tokens** — identify exact colors, spacing, font sizes from the design
 2. **Identify components** — decompose the design into isolated, composable pieces
 3. **Build bottom-up** — atoms first (Button, Badge, Avatar) → molecules (Card, ListItem) → organisms (Header, Sidebar)
 4. **Visual-diff** — screenshot the result and compare against the reference before declaring done
@@ -165,17 +77,22 @@ For every interactive component, verify:
 - Focus visible — never `outline: none` without a custom focus indicator
 
 ### Responsive Design Pattern
-Mobile-first, three breakpoints:
-```typescript
-// Tailwind mobile-first breakpoints
-// sm: 640px  md: 768px  lg: 1024px  xl: 1280px
+Mobile-first, three breakpoints. Test at: **375px** (mobile), **768px** (tablet), **1280px** (desktop).
 
-<div className="flex flex-col md:flex-row gap-4">
-  <aside className="w-full md:w-64 shrink-0">...</aside>
-  <main className="min-w-0 flex-1">...</main>
-</div>
+Use the layout approach already established in the codebase. Typical pattern:
+- Stack vertically on mobile, switch to side-by-side at the tablet breakpoint
+- Constrain sidebar width; allow content area to fill remaining space
+- Ensure text never overflows its container at any viewport
+
+### Animation Pattern
+Prefer CSS transitions for simple hover/focus states. Use JS animation only when CSS cannot achieve the effect.
+
+Always respect `prefers-reduced-motion` — check via CSS media query or the equivalent hook in whatever library is in use:
+```css
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
 ```
-Test at: **375px** (mobile), **768px** (tablet), **1280px** (desktop).
 
 ### Component State Coverage
 Every component needs visual states modeled in Storybook:
@@ -196,7 +113,7 @@ Every component needs visual states modeled in Storybook:
 - [ ] Color contrast verified (use browser DevTools accessibility panel)
 - [ ] Loading, error, and empty states exist
 - [ ] Animations respect `prefers-reduced-motion`
-- [ ] No hardcoded pixel values — spacing scale used throughout
+- [ ] No hardcoded color values or arbitrary spacing — tokens used throughout
 - [ ] Storybook story covers all visual states (see `storybook-best-practices` skill)
 - [ ] `yarn lint` exits 0
 
@@ -209,9 +126,5 @@ Every component needs visual states modeled in Storybook:
 | [Refactoring UI](https://www.refactoringui.com) | The single best resource on making UI *look* designed, not developer-default |
 | [Every Layout](https://every-layout.dev) | Intrinsic CSS layout patterns that adapt without breakpoints |
 | [Open UI](https://open-ui.org) | Browser-native UI component standards and baseline behaviors |
-| [Tailwind CSS Docs](https://tailwindcss.com/docs) | Utility reference and design-system configuration |
-| [shadcn/ui](https://ui.shadcn.com) | Component patterns and composition examples |
-| [Radix UI Primitives](https://www.radix-ui.com) | Accessible primitive APIs and keyboard interaction models |
 | [WCAG 2.1 Quick Reference](https://www.w3.org/WAI/WCAG21/quickref/) | Accessibility success criteria checklist |
-| [Framer Motion](https://www.framer.com/motion/) | Animation API and gesture documentation |
 | [Inclusive Components](https://inclusive-components.design) | Deep dives on building common UI patterns accessibly |

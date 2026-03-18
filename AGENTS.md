@@ -42,7 +42,7 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 | **storybook-best-practices**        | When creating `.stories.tsx` files. Payload UI mocking, provider wrapping.                                                    |
 | **e2e-debugging-workflow**          | When E2E tests fail. Playwright debugging, selector issues, local verification.                                               |
 | **playwright-ci-workflow**          | When writing new e2e tests or getting them through CI. Buildkite monitoring, fast feedback loops, web vs CLI agent workflows. |
-| **elegant-ui-design**               | When designing or building UI components, layouts, or design systems. MCP servers, libraries, design principles, and agent patterns for expert-level frontend work. |
+| **elegant-ui-design**               | When designing or building UI components, layouts, or design systems. Design principles, agent patterns, and quality checklist for expert-level frontend work. |
 
 ### Skills Usage Workflow
 
