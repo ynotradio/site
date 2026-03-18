@@ -466,7 +466,10 @@ class PostgresModernRockMadness implements ModernRockMadness
             // Increment the cached vote counter on the match row.
             // Use a whitelist for the column name to prevent any injection risk.
             $voteColMap = [1 => 'band1_votes', 2 => 'band2_votes'];
-            $voteCol    = $voteColMap[$bandNumber];
+            $voteCol    = $voteColMap[$bandNumber] ?? null;
+            if (!$voteCol) {
+                throw new \Exception("Invalid bandNumber for voteColMap: " . var_export($bandNumber, true));
+            }
             $updateStmt = $this->db->prepare("
                 UPDATE modern_rock_madness_matches
                 SET {$voteCol} = COALESCE({$voteCol}, 0) + 1,
