@@ -218,7 +218,7 @@ When modifying code, actively look for and remove dead code:
 2. Run `yarn lint` - must exit 0
 3. Run `yarn test` - must exit 0
 4. Run `yarn build` - must exit 0
-5. Run `yarn test:e2e` if you changed UI/API
+5. Run `yarn test:e2e` — **mandatory** if you changed or added any e2e tests; also required for UI/API changes
 6. Only push after ALL checks pass locally
 
 **If CI fails after push**:
@@ -273,28 +273,11 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 - Or create a GitHub issue for complex decisions that need input
 - Don't create TODO lists expecting others to complete your work
 
-## Minimizing Reports
+## PR Screenshot Requirement
 
-**Your code and tests are your documentation. Let them speak.**
+**Every PR MUST include at least one screenshot. This is non-negotiable.**
 
-**Do:**
-
-- Let passing tests demonstrate functionality
-- Include screenshots as evidence of working features
-- Write clear commit messages
-- Make a brief PR description (2-3 sentences max)
-
-**Don't:**
-
-- Write lengthy summaries of what you did
-- Create "proof of work" documentation (action plans, checklists, summaries)
-- Repeat information that's in the code or tests
-- Explain every decision in prose
-- Create "quick reference" comparison guides for external tools (users can read official docs)
-- Create detailed timeline/phase plans for solo hobby projects (no team coordination needed)
-- Generate implementation summaries as proof of work (code speaks for itself)
-- Generate documentation as evidence you completed a task
-- Ask for permission to write to /tmp directories outside of this repository. This is never necessary. The repo has a gitignored ./tmp directory for throwaway files.
+During testing (before pushing), use `playwright-browser_take_screenshot` to capture evidence. Then paste the image into the PR description when you create the PR. No screenshot = PR will be sent back.
 
 **PR Description Format:**
 
@@ -303,17 +286,39 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 
 - [Brief bullet points of what changed]
 
-## Testing
+## Verification
 
-- [x] All checks pass locally before push
-- [x] Screenshot attached
+- [x] `yarn lint` exits 0
+- [x] `yarn test` exits 0
+- [x] Screenshot attached below
 
-## Evidence
+## Screenshot
 
-[Single screenshot showing it works]
+[Paste screenshot here — use playwright-browser_take_screenshot]
 ```
 
-**Exception**: If there's a genuine blocker requiring human action, state it clearly in the PR and tag the maintainer.
+**If there's a genuine blocker** preventing the screenshot, state it explicitly and tag the maintainer.
+
+## Minimizing Reports
+
+**Screenshots are required. Verbose text is not.**
+
+**Do:**
+
+- Paste a screenshot showing the feature working
+- Let passing tests demonstrate functionality
+- Write clear commit messages
+- Keep PR descriptions to the template above
+
+**Don't:**
+
+- Write lengthy prose summaries of what you did
+- Create action plans, checklists beyond the PR template, or decision logs
+- Repeat information that's already in the code or tests
+- Explain every decision in prose
+- Create "quick reference" comparison guides for external tools (users can read official docs)
+- Create detailed timeline/phase plans for solo hobby projects (no team coordination needed)
+- Ask for permission to write to /tmp directories outside of this repository. This is never necessary. The repo has a gitignored ./tmp directory for throwaway files.
 
 ## Quick Reference
 
