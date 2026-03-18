@@ -2,7 +2,7 @@
  * Unit tests for Enhanced HTML to Lexical Converter
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { convertHtmlToLexicalEnhanced } from './enhancedHtmlToLexical';
 
 describe('enhancedHtmlToLexical', () => {
@@ -344,6 +344,68 @@ describe('enhancedHtmlToLexical', () => {
       expect(textNode).toHaveProperty('mode');
       expect(textNode).toHaveProperty('style');
       expect(textNode).toHaveProperty('detail');
+    });
+  });
+
+  describe('Line Breaks', () => {
+    it('should not crash on top-level br element', () => {
+      const result = convertHtmlToLexicalEnhanced('<br/>');
+      expect(result.root).toBeDefined();
+      expect(result.root.type).toBe('root');
+    });
+
+    it('should handle br inside a paragraph without crashing', () => {
+      const result = convertHtmlToLexicalEnhanced('<p>before<br/>after</p>');
+      expect(result.root.children[0].type).toBe('paragraph');
+    });
+  });
+
+  describe('Unknown Elements', () => {
+    it('should extract text content from unknown block elements', () => {
+      const result = convertHtmlToLexicalEnhanced('<footer>Footer content</footer>');
+      expect(result.root.children[0].type).toBe('paragraph');
+      expect(result.root.children[0].children[0].text).toBe('Footer content');
+    });
+
+    it('should extract plain text from unknown elements with inline formatting', () => {
+      const result = convertHtmlToLexicalEnhanced('<aside><strong>Important</strong></aside>');
+      expect(result.root.children[0].type).toBe('paragraph');
+      // textContent strips HTML tags, so text is extracted as plain text
+      const textNode = result.root.children[0].children.find((n: any) => n.text === 'Important');
+      expect(textNode).toBeDefined();
+    });
+
+    it('should silently skip unknown elements with no text content', () => {
+      const result = convertHtmlToLexicalEnhanced('<aside></aside>');
+      expect(result.root).toBeDefined();
+      expect(result.root.type).toBe('root');
+    });
+
+    it('should silently skip unknown elements with only whitespace', () => {
+      const result = convertHtmlToLexicalEnhanced('<nav>   </nav>');
+      expect(result.root).toBeDefined();
+      expect(result.root.type).toBe('root');
+    });
+  });
+
+  describe('Error Recovery', () => {
+    it('should return fallback structure when JSDOM throws', async () => {
+      vi.doMock('jsdom', () => ({
+        JSDOM: vi.fn().mockImplementation(() => {
+          throw new Error('JSDOM failed');
+        }),
+      }));
+      vi.resetModules();
+
+      const { convertHtmlToLexicalEnhanced: convertWithError } = await import('./enhancedHtmlToLexical');
+      const result = convertWithError('<p>Some content</p>');
+
+      expect(result.root.children[0].children[0].text).toBe(
+        '[Content conversion failed - see legacy HTML]',
+      );
+
+      vi.doUnmock('jsdom');
+      vi.resetModules();
     });
   });
 });
