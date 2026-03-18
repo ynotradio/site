@@ -79,6 +79,20 @@ interface ModernRockMadness
     public function getStartDate(): ?string;
 
     /**
+     * Get the bracket PDF URL from the active tournament
+     *
+     * @return string|null Bracket PDF URL, or null if not set
+     */
+    public function getBracketPdfUrl(): ?string;
+
+    /**
+     * Get the banner image URL from the active tournament
+     *
+     * @return string|null Banner image URL, or null if not set
+     */
+    public function getBannerImageUrl(): ?string;
+
+    /**
      * Get the tournament year from the start date
      *
      * @param string|null $startDate Optional start date, uses current year if null

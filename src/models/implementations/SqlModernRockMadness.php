@@ -217,6 +217,24 @@ class SqlModernRockMadness implements ModernRockMadness
 
     /**
      * {@inheritdoc}
+     * MySQL has no tournaments table — bracket PDF URL comes from config.
+     */
+    public function getBracketPdfUrl(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
+     * MySQL has no tournaments table — banner image URL comes from config.
+     */
+    public function getBannerImageUrl(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getTournamentYear(?string $startDate = null): string
     {

@@ -334,6 +334,42 @@ class PostgresModernRockMadness implements ModernRockMadness
     }
 
     /** {@inheritdoc} */
+    public function getBracketPdfUrl(): ?string
+    {
+        $tId = $this->getActiveTournamentId();
+        if (!$tId) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT bracket_pdf_url
+             FROM modern_rock_madness_tournaments WHERE id = :id LIMIT 1"
+        );
+        $stmt->execute([':id' => $tId]);
+        $row = $stmt->fetch();
+        return $row ? ($row['bracket_pdf_url'] ?: null) : null;
+    }
+
+    /** {@inheritdoc} */
+    public function getBannerImageUrl(): ?string
+    {
+        $tId = $this->getActiveTournamentId();
+        if (!$tId) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT m.url
+             FROM modern_rock_madness_tournaments t
+             JOIN media m ON m.id = t.banner_image_id
+             WHERE t.id = :id LIMIT 1"
+        );
+        $stmt->execute([':id' => $tId]);
+        $row = $stmt->fetch();
+        return $row ? ($row['url'] ?: null) : null;
+    }
+
+    /** {@inheritdoc} */
     public function getChampion(): ?array
     {
         $match = $this->getMatch(63);
@@ -540,6 +576,95 @@ class PostgresModernRockMadness implements ModernRockMadness
 
     /** {@inheritdoc} */
     public function getTournamentDates(string $startDate): array
+    {
+        $tId = $this->getActiveTournamentId();
+        if ($tId) {
+            $dates = $this->getTournamentDatesFromMatches($tId);
+            if ($dates !== null) {
+                return $dates;
+            }
+        }
+
+        // Fall back to hardcoded offset math if no match records exist
+        return $this->getTournamentDatesFromOffsets($startDate);
+    }
+
+    /**
+     * Derive tournament dates from actual match records.
+     * Rounds 1-2 are split by region (left=1-2, right=3-4).
+     *
+     * @return array|null Dates array, or null if no matches found
+     */
+    private function getTournamentDatesFromMatches(int $tournamentId): ?array
+    {
+        $stmt = $this->db->prepare("
+            SELECT
+                m.round,
+                CASE
+                    WHEN m.round IN ('1', '2') AND m.region IN (1, 2) THEN 'left'
+                    WHEN m.round IN ('1', '2') AND m.region IN (3, 4) THEN 'right'
+                    ELSE 'both'
+                END AS side,
+                TO_CHAR(MIN(m.start_time) AT TIME ZONE 'UTC', 'FMMonth FMDD') AS first_date,
+                TO_CHAR(MAX(m.start_time) AT TIME ZONE 'UTC', 'FMDD') AS last_day,
+                MIN(m.start_time)::date AS min_date,
+                MAX(m.start_time)::date AS max_date
+            FROM modern_rock_madness_matches m
+            WHERE m.tournament_id = :tid
+            GROUP BY m.round,
+                CASE
+                    WHEN m.round IN ('1', '2') AND m.region IN (1, 2) THEN 'left'
+                    WHEN m.round IN ('1', '2') AND m.region IN (3, 4) THEN 'right'
+                    ELSE 'both'
+                END
+            ORDER BY MIN(m.start_time)
+        ");
+        $stmt->execute([':tid' => $tournamentId]);
+        $rows = $stmt->fetchAll();
+
+        if (empty($rows)) {
+            return null;
+        }
+
+        // Map round+side → timeline key
+        $keyMap = [
+            '1_left'  => 'first_round_left',
+            '1_right' => 'first_round_right',
+            '2_left'  => 'second_round_left',
+            '2_right' => 'second_round_right',
+            '3_both'  => 'sweet_16',
+            '4_both'  => 'elusive_8',
+            '5_both'  => 'final_4',
+            '6_both'  => 'championship',
+        ];
+
+        $dates = [];
+        foreach ($rows as $row) {
+            $key = $keyMap[$row['round'] . '_' . $row['side']] ?? null;
+            if ($key === null) {
+                continue;
+            }
+            // Multi-day range: "Month D-D"; single day: "Month D"
+            if ($row['min_date'] !== $row['max_date']) {
+                $dates[$key] = $row['first_date'] . '-' . $row['last_day'];
+            } else {
+                $dates[$key] = $row['first_date'];
+            }
+        }
+
+        // All 8 keys must be present for a valid timeline
+        if (count($dates) < count($keyMap)) {
+            return null;
+        }
+
+        return $dates;
+    }
+
+    /**
+     * Compute tournament dates from a start date using hardcoded day offsets.
+     * Used as fallback when match records are not yet available.
+     */
+    private function getTournamentDatesFromOffsets(string $startDate): array
     {
         $start = strtotime($startDate);
 
