@@ -8,9 +8,6 @@
 
 // Get bracket matches from the model
 $matches = $controller->mrmModel->getBracketMatches();
-
-// Get tournament timeline
-$timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m-d'));
 ?>
 
 <div class="mrm-bracket" id="bracket">
@@ -114,28 +111,3 @@ $timeline = $controller->mrmModel->getTimelineData($tournament_date ?? date('Y-m
         </div>
     <?php endif; ?>
 </div>
-
-<?php
-// Display tournament timeline
-echo "<ul class='mrm-timeline' id='time_line'>\n";
-
-// Left side of the bracket (first to championship)
-echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_left']}</li>\n";
-echo "<li><strong>2<sup>nd</sup> ROUND</strong>{$timeline['second_round_left']}</li>\n";
-echo "<li class=\"top-pad_3\"><strong>SWELL 16</strong>{$timeline['sweet_16']}</li>\n";
-echo "<li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>{$timeline['elusive_8']}</li>\n";
-echo "<li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>{$timeline['final_4']}</li>\n";
-
-// Championship (center)
-echo "<li class=\"top-pad_3\"><strong>CHAMPION</strong>{$timeline['championship']}</li>\n";
-
-// Right side of the bracket (championship to first)
-echo "<li class=\"top-pad_3\"><strong>FANTASTIC 4</strong>{$timeline['final_4']}</li>\n";
-echo "<li class=\"top-pad_3\"><strong>ELUSIVE 8</strong>{$timeline['elusive_8']}</li>\n";
-echo "<li class=\"top-pad_3\"><strong>SWELL 16</strong>{$timeline['sweet_16']}</li>\n";
-echo "<li><strong>2<sup>nd</sup> ROUND</strong>{$timeline['second_round_right']}</li>\n";
-echo "<li><strong>1<sup>st</sup> ROUND</strong>{$timeline['first_round_right']}</li>\n";
-
-// Close the timeline
-echo "</ul>\n";
-?>

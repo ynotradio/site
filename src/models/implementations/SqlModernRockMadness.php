@@ -208,6 +208,15 @@ class SqlModernRockMadness implements ModernRockMadness
 
     /**
      * {@inheritdoc}
+     * MySQL has no tournaments table — start date comes from config.
+     */
+    public function getStartDate(): ?string
+    {
+        return null;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getTournamentYear(?string $startDate = null): string
     {

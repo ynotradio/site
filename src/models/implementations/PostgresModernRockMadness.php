@@ -317,6 +317,23 @@ class PostgresModernRockMadness implements ModernRockMadness
     }
 
     /** {@inheritdoc} */
+    public function getStartDate(): ?string
+    {
+        $tId = $this->getActiveTournamentId();
+        if (!$tId) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT TO_CHAR(start_date, 'YYYY-MM-DD') AS start_date
+             FROM modern_rock_madness_tournaments WHERE id = :id LIMIT 1"
+        );
+        $stmt->execute([':id' => $tId]);
+        $row = $stmt->fetch();
+        return $row ? $row['start_date'] : null;
+    }
+
+    /** {@inheritdoc} */
     public function getChampion(): ?array
     {
         $match = $this->getMatch(63);
@@ -449,7 +466,10 @@ class PostgresModernRockMadness implements ModernRockMadness
             // Increment the cached vote counter on the match row.
             // Use a whitelist for the column name to prevent any injection risk.
             $voteColMap = [1 => 'band1_votes', 2 => 'band2_votes'];
-            $voteCol    = $voteColMap[$bandNumber];
+            $voteCol    = $voteColMap[$bandNumber] ?? null;
+            if (!$voteCol) {
+                throw new \Exception("Invalid bandNumber for voteColMap: " . var_export($bandNumber, true));
+            }
             $updateStmt = $this->db->prepare("
                 UPDATE modern_rock_madness_matches
                 SET {$voteCol} = COALESCE({$voteCol}, 0) + 1,

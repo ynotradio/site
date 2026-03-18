@@ -52,8 +52,9 @@ $userInfo = $auth0->getUser();
       <?php
 
 if ($userInfo) {
+    $logout_return = isset($page_file) ? '/' . basename($page_file, '.php') : '/madness';
     ?>
-| <a href="/auth_logout.php?returnTo=/madness">Log out</a>
+| <a href="/auth_logout.php?returnTo=<?php echo htmlspecialchars($logout_return); ?>">Log out</a>
         <?php
 }
 ?>
