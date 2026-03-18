@@ -18,6 +18,19 @@ For more information:
 
 ## Available Skills
 
+### elegant-ui-design
+
+Resources and patterns for crafting elegant UI designs and building them with modern web best practices. Covers:
+
+- MCP servers (Figma MCP, Context7, Playwright browser tools)
+- Component library recommendations (shadcn/ui, Radix UI, React Aria, Headless UI)
+- Styling and animation tools (Tailwind CSS, Framer Motion, auto-animate)
+- Design principles: visual hierarchy, spacing scale, color tokens, typography
+- Agent subagent patterns: design-to-code, accessibility-first, responsive design
+- Quality checklist and recommended reading
+
+**Use when:** Creating or improving UI components, designing page layouts, implementing a design system, choosing UI libraries, or when an agent needs to produce polished, professional-looking frontend work.
+
 ### storybook-best-practices
 
 Best practices for creating and debugging Storybook stories. Covers:
