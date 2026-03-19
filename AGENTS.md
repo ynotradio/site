@@ -281,6 +281,32 @@ docker pull ghcr.io/ynotradio/site/payload-dev:latest
 
 During testing (before pushing), use `playwright-browser_take_screenshot` to capture evidence. Then paste the image into the PR description when you create the PR. No screenshot = PR will be sent back.
 
+### Screenshots Must Be Real
+
+**The screenshot MUST come from a real, running service.** Acceptable sources:
+
+- Payload admin at `http://localhost:3000/admin` (started via `yarn payload:dev` or Docker)
+- Legacy PHP site at `http://localhost:8080` (started via `docker compose up -d`)
+- Storybook at `http://localhost:6006` (started via `yarn storybook`)
+
+**Strictly prohibited:**
+
+- ❌ Creating a plain HTML/CSS file that mimics the UI and screenshotting it
+- ❌ Screenshotting a local file opened via a Python `http.server` or equivalent
+- ❌ Using any page that is not the actual application
+- ❌ Fabricating or compositing screenshots in any way
+
+If the service fails to start, use the **blocker template** below instead of working around it with a fake screenshot. A missing screenshot with an honest blocker is far better than a fake one.
+
+### What to Do If the Service Won't Start
+
+```markdown
+## Blocker
+
+@owner — Could not start Payload dev server: [paste the actual error here].
+Screenshot not possible. Code changes are complete and lint/tests pass locally.
+```
+
 **PR Description Format:**
 
 ```markdown
@@ -296,7 +322,7 @@ During testing (before pushing), use `playwright-browser_take_screenshot` to cap
 
 ## Screenshot
 
-[Paste screenshot here — use playwright-browser_take_screenshot]
+[Paste screenshot here — must be from real running service]
 ```
 
 **If there's a genuine blocker** preventing the screenshot, state it explicitly and tag the maintainer.
@@ -383,6 +409,16 @@ When you need more context:
 3. Run `yarn payload:migrate`
 4. Add tests in same directory
 5. Seed sample data in `bin/seed-payload.ts`
+
+### Adding Custom Cell or Field Components to a Collection
+
+After wiring a `Cell` or `Field` component into a collection's field config, the Payload import map **must** be regenerated or the component won't be found at runtime (blank cell, `getFromImportMap` console error):
+
+```bash
+yarn payload:generate-importmap
+```
+
+This rewrites `app/(payload)/admin/importMap.js`. Commit that file alongside your collection changes.
 
 ### Modifying Legacy PHP
 
