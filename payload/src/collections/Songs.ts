@@ -12,7 +12,7 @@ export const Songs: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'artist', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
+    defaultColumns: ['displayName', 'artist', 'musicbrainzId', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
     group: 'Music',
     description:
       'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',
@@ -95,6 +95,7 @@ export const Songs: CollectionConfig = {
         components: {
           Field:
             '/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField',
+          Cell: '/payload/src/components/cells/MusicBrainzCell#MusicBrainzRecordingCell',
         },
       },
     },

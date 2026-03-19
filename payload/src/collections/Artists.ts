@@ -11,7 +11,7 @@ export const Artists: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'photo', 'slug', 'updatedAt'],
+    defaultColumns: ['name', 'photo', 'musicbrainzId', 'slug', 'updatedAt'],
     group: 'Music',
     description:
       'Bands and artists. Referenced by Songs, Concerts, and Records — create the artist first, then link.',
@@ -77,6 +77,7 @@ export const Artists: CollectionConfig = {
           'Links to MusicBrainz for accurate metadata — use the search button to find the correct artist',
         components: {
           Field: '/payload/src/components/fields/MusicBrainzArtistField#MusicBrainzArtistField',
+          Cell: '/payload/src/components/cells/MusicBrainzCell#MusicBrainzArtistCell',
         },
       },
     },

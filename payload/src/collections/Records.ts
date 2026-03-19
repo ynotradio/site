@@ -12,7 +12,7 @@ export const Records: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'coverImage', 'artist', 'label', 'releaseDate', 'updatedAt'],
+    defaultColumns: ['displayName', 'coverImage', 'artist', 'musicbrainzId', 'label', 'releaseDate', 'updatedAt'],
     group: 'Music',
     description:
       'Albums and EPs. Referenced by Songs and CD of the Week — create the record first, then link it.',
@@ -102,6 +102,7 @@ export const Records: CollectionConfig = {
           'Links to MusicBrainz for accurate metadata — use the search button to find the correct release',
         components: {
           Field: '/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField',
+          Cell: '/payload/src/components/cells/MusicBrainzCell#MusicBrainzReleaseCell',
         },
       },
     },
