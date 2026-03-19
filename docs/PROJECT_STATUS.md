@@ -1,7 +1,7 @@
 # Project Status - Y-Not Radio Site Migration
 
-**Last Updated:** March 7, 2026  
-**Current Phase:** Payload CMS Migration - MRM Admin Interfaces Complete
+**Last Updated:** March 2026  
+**Current Phase:** Pre-Cutover Validation — Ready for incremental flag enablement
 
 ---
 
@@ -18,9 +18,9 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 #### Infrastructure Setup (2025)
 
 - [x] Payload CMS installed and configured
-- [x] PostgreSQL (Neon) connection established
+- [x] PostgreSQL (Neon) connection established (prod + dev databases)
 - [x] Netlify deployment configured
-- [x] Cloudinary media storage integrated
+- [x] Cloudinary media storage integrated (credentials confirmed in prod)
 - [x] GitHub Actions CI/CD pipeline
 
 #### Payload Collections Created (2025)
@@ -67,43 +67,96 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] Test coverage reporting
 - [x] Comprehensive test files for migration scripts
 
-#### Modern Rock Madness Collections (March 2026)
+#### Modern Rock Madness — Complete (March 2026)
+
+All 5 collections, admin interfaces, bracket view, voting, and live match dashboard are built and tested on production. MRM is running on Postgres in prod.
 
 - [x] MadnessTournaments (`madness-tournaments`) — annual tournament config
 - [x] MadnessBands (`madness-bands`) — tournament participants (name/seed/placement/sponsor)
 - [x] MadnessMatches (`madness-matches`) — bracket matchups with `nextMatch` progression field
 - [x] MadnessVotes (`madness-votes`) — individual vote records
 - [x] MadnessMatchEvents (`madness-match-events`) — audit log (overtime, admin_vote, match_closed, rematch)
-
-#### MRM Admin Interfaces (March 2026)
-
 - [x] Live Match Dashboard (`/admin/mrm-live`) — auto-polling vote display, Manual Vote/Close/Extend actions, bracket progression on close, audit logging
 - [x] Match Controls tab — per-match edit tab with vote monitoring, admin actions (manual vote, close, extend, toggle scores, schedule rematch)
 - [x] Tournament Bracket tab — per-tournament edit tab showing full bracket tree with click-through to match controls
 
+#### Production Data Import — Complete (March 2026)
+
+All collections imported to prod Neon. Over 6,370 records validated via integrity checks.
+
+- [x] Run all import scripts against production MySQL
+- [x] Import DJ photos and artist media to Cloudinary
+- [x] Validate data integrity after imports (6 integrity check scripts)
+
+#### Data Integrity — Validated and Cleaned (March 2026)
+
+Six integrity check scripts (`bin/integrity-check-*.ts`) run with `--fix` against prod:
+
+| Check | Fixed | Failures |
+|-------|-------|----------|
+| display-names | 599 | 0 |
+| ondemand-source | 520 | 0 |
+| publish-status | 543 | 0 |
+| record-metadata | 813 | 11 (coverImage — acceptable) |
+| slugs | 7,138 | 34 (uniqueness conflicts — resolved) |
+| musicbrainz | 331 | 6 (niche local artists — acceptable) |
+
+#### Artist Data Cleanup — Complete (March 2026)
+
+- [x] 20 "Y-Not Radio Presents:" duplicate artists consolidated
+- [x] 6 artist names corrected (renamed)
+- [x] 12 mojibake artist names fixed (encoding issues)
+- [x] 37 duplicate artist pairs merged (exact dupes, "The X"/"X", "&"/"and" standardization)
+- [x] `bin/migrations/shared/artistCleaner.ts` — reusable cleanup utility with unit tests
+
+#### Nightly Sync — Running (March 2026)
+
+- [x] `nightly-gap-report.yml` Buildkite pipeline runs daily at 3 AM UTC
+- [x] Incremental import from prod MySQL → prod Neon
+- [x] 6 integrity checks run after each sync
+
+#### Weekly Dev DB Sync — Running (March 2026)
+
+- [x] `scheduled-db-sync.yml` copies prod Neon → dev Neon every Monday at 2 AM UTC
+
+#### Feature Flags Infrastructure — Built (March 2026)
+
+- [x] `src/config/features.php` — 11 flags for all collections (all currently `false`)
+- [x] `src/models/FeatureManager.php` — 3-tier override: URL param (`?ff=use_postgres_concerts`), cookie, env var
+- [x] CP pages suppress Postgres flags by default (safety measure)
+
+#### PHP Postgres Models — Complete (March 2026)
+
+Readonly Postgres implementations with Cloudinary image support for all content collections:
+
+- [x] `ConcertFactory.php`
+- [x] `DeejayFactory.php`
+- [x] `MusicFactory.php`
+- [x] `OnDemandFactory.php`
+- [x] `ScheduleFactory.php`
+- [x] `CdOfTheWeekFactory.php`
+- [x] `CustomTextFactory.php`
+- [x] `StoryFactory.php`
+
+> **Note:** `AdFactory` remains MySQL-only. Ads load independently and won't break when other content switches to Postgres.
+
 ---
 
-### 🚧 In Progress
+### 🚧 Next Up: Incremental Flag Enablement
 
-#### Data Migration
+The parallel systems are running, data is synced and validated, feature flags are built, and PHP Postgres models are ready. The next step is to enable feature flags one collection at a time in production.
 
-- [ ] Run DJ import against production MySQL data
-- [ ] Run concert import against production data
-- [ ] Import DJ photos from legacy URLs to Cloudinary
-- [ ] Import artist photos and media
-- [ ] Validate data integrity after imports
-
-#### Frontend Integration
-
-- [ ] Update PHP pages to read from Payload API (feature-flagged)
-- [ ] Test concert page with PostgreSQL read model
-- [ ] Gradual rollout of Payload-powered pages
+- [ ] Enable `use_postgres_concerts` on production (lowest risk — validate with `?ff=use_postgres_concerts` first)
+- [ ] Enable `use_postgres_deejays` on production
+- [ ] Enable remaining collection flags incrementally
+- [ ] Monitor error rates and page load times after each flag flip
+- [ ] Remove MySQL fallback code after all flags stable
 
 ---
 
 ### 📋 Planned
 
-#### Additional Collections
+#### Additional Collections (Needs Requirements)
 
 - [ ] Top11Contests (weekly contest configuration)
 - [ ] Top11Results (published weekly results)
@@ -111,20 +164,17 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [ ] YearEndPolls (annual poll configuration)
 - [ ] YearEndPollCategories (poll categories)
 - [ ] YearEndPollVotes (user votes)
-- [ ] ModernRockMadnessGroups → implemented as `madness-bands` ✅ (complete, see above)
 
 #### Migration Scripts
 
 - [ ] Import Top 11 historical data
 - [ ] Import Year End Poll historical data
-- [ ] Import Modern Rock Madness historical data
 
-#### Frontend Cutover
+#### Frontend Cutover (Future)
 
-- [ ] Feature flag all legacy PHP pages
 - [ ] Build Next.js frontend components
 - [ ] Responsive redesign of public site
-- [ ] Full production cutover
+- [ ] Full production cutover (retire PHP)
 
 ---
 
@@ -132,8 +182,14 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 ### March 2026
 
-- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression. Added per-document custom edit tabs: Tournament "Bracket" tab showing the full bracket tree, and Match "Controls" tab with vote monitoring and admin actions (manual vote, close, extend, toggle scores, schedule rematch).
-- **MRM Collections**: Created all 5 Modern Rock Madness Payload collections (Tournaments, Bands, Matches, Votes, MatchEvents). Audit trail records every admin action with event type and snapshot.
+- **Production Data Import**: All collections imported to prod Neon (6,370+ records). Six integrity check scripts validate data correctness on every nightly sync.
+- **Nightly Sync Pipeline**: `nightly-gap-report.yml` runs daily at 3 AM UTC — incremental MySQL→Neon import followed by integrity checks. Dev database synced weekly from prod.
+- **Data Integrity Cleanup**: All six integrity checks run with `--fix`: display names, slugs, musicbrainz, record metadata, ondemand source, and publish status. Tens of thousands of records fixed automatically.
+- **Artist Deduplication**: Consolidated 20 "Y-Not Radio Presents:" duplicates, fixed 12 mojibake names, merged 37 duplicate pairs using exact match, "The X"/"X", and "&"/"and" standardization.
+- **Feature Flags**: Built `FeatureManager.php` with env var, cookie, and URL param overrides. 11 flags defined in `features.php` covering all collections. All flags default to `false` (MySQL remains active).
+- **PHP Postgres Models**: 8 factory classes with Postgres implementations — ConcertFactory, DeejayFactory, MusicFactory, OnDemandFactory, ScheduleFactory, CdOfTheWeekFactory, CustomTextFactory, StoryFactory. All readonly with Cloudinary image support.
+- **MRM on Production**: All 5 MRM collections, admin interfaces, bracket view, voting, and live match dashboard fully built and tested on production Postgres.
+- **MRM Admin Interfaces**: Replaced legacy `mrm_manage_matches.php` with Live Match Dashboard (`/admin/mrm-live`) featuring auto-polling vote counts, Manual Vote/Close/Extend Overtime actions, and automatic bracket progression.
 
 ### December 2025 - January 2026
 
@@ -152,42 +208,18 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 
 ## Current Priorities
 
-1. **Data Population**: Run all migration scripts against production MySQL to populate Payload collections
-2. **Photo Migration**: Import all legacy DJ and artist photos to Cloudinary
-3. **Data Validation**: Verify integrity of imported data (relationships, media links, etc.)
-4. **Frontend Testing**: Test feature-flagged pages reading from Payload API
+1. **Incremental Flag Enablement**: Enable Postgres feature flags one collection at a time, starting with lowest-risk (concerts). Validate each via URL param (`?ff=use_postgres_concerts`) before enabling by default.
+2. **Top 11 Collections**: Define requirements, create collections and migration scripts for Top 11 contests.
+3. **Year End Poll Collections**: Define requirements, create collections for annual polls.
 
 ---
 
 ## Known Issues & Blockers
 
-None currently. Database schema is finalized and ready for fresh initialization.
-
-**⚠️ Database Reset Required:**
-After recent schema changes (removed legacy fields, updated relationships), we recommend dropping all Payload tables in Neon and starting fresh. Use the SQL DROP statements provided, then restart the app to auto-create clean tables.
-
----
-
-## Next Agent Tasks
-
-### High Priority
-
-1. **Database Reset**: Drop all Payload tables in Neon and restart app for clean schema
-2. **DJ Photo Import**: Update `importDJs.ts` to download photos from legacy URLs (imgur, box.com, local paths) and upload to Cloudinary
-3. **Production Data Import**: Execute all import scripts against production MySQL database
-4. **Data Validation Script**: Create utility to compare MySQL vs PostgreSQL record counts and verify relationships
-
-### Medium Priority
-
-4. **Top 11 Collections**: Create collections and migration scripts for Top 11 contests
-5. **Feature Flag Testing**: Test PostgreSQL concert read model in production with feature flag
-6. **API Documentation**: Document Payload REST/GraphQL endpoints for frontend consumption
-
-### Low Priority
-
-7. **Modern Rock Madness Collections**: Create collections for tournament system
-8. **Year End Poll Collections**: Create collections for annual polls
-9. **Frontend Components**: Begin building Next.js components for new site design
+None. All systems operational:
+- Production data import complete and validated
+- Nightly sync running successfully
+- All integrity checks passing (minor acceptable failures: 11 coverImage, 6 niche MusicBrainz artists)
 
 ---
 
@@ -196,6 +228,7 @@ After recent schema changes (removed legacy fields, updated relationships), we r
 - [Migration Overview](./payload-migration/README.md)
 - [Core Data Models](./payload-migration/03-core-data-models.md)
 - [Migration Tasks](./payload-migration/04-migration-tasks.md)
+- [Frontend Cutover Strategy](./payload-migration/06-frontend-cutover.md)
 - [Testing PR Changes Skill](../.claude/skills/testing-pr-changes/SKILL.md)
 - [Completed Implementations](./archive/completed-implementations/)
 
