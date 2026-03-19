@@ -169,6 +169,7 @@ describe('musicbrainz-bulk-match-utils', () => {
         matched: 0,
         mismatched: 0,
         notFound: 0,
+        conflicts: 0,
         verified: 0,
         updated: 0,
         results: [],
@@ -234,6 +235,18 @@ describe('musicbrainz-bulk-match-utils', () => {
       expect(result.status).toBe('matched');
     });
 
+    it('should accept conflict status in MatchResult', () => {
+      const result: MatchResult = {
+        id: '456',
+        name: 'Song Title',
+        currentMbid: null,
+        foundMbid: 'mbid-789',
+        status: 'conflict',
+        updated: false,
+      };
+      expect(result.status).toBe('conflict');
+    });
+
     it('should accept numeric ids', () => {
       const result: MatchResult = {
         id: 42,
@@ -255,6 +268,7 @@ describe('musicbrainz-bulk-match-utils', () => {
         matched: 20,
         mismatched: 2,
         notFound: 8,
+        conflicts: 1,
         verified: 0,
         updated: 0,
         results: [],
