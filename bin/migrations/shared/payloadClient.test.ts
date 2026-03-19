@@ -2,7 +2,7 @@
  * Unit tests for Payload client utilities
  */
 
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import type { Payload } from 'payload';
 
 // Mock the payload module
@@ -48,6 +48,39 @@ describe('payloadClient', () => {
       update: vi.fn(),
       findByID: vi.fn(),
     };
+  });
+
+  describe('getPayloadClient', () => {
+    const savedEnv: Record<string, string | undefined> = {};
+
+    beforeEach(() => {
+      savedEnv.NEON_PROD_DATABASE_URL = process.env.NEON_PROD_DATABASE_URL;
+      savedEnv.NEON_DEV_DATABASE_URL = process.env.NEON_DEV_DATABASE_URL;
+      savedEnv.DATABASE_URI = process.env.DATABASE_URI;
+      delete process.env.NEON_PROD_DATABASE_URL;
+      delete process.env.NEON_DEV_DATABASE_URL;
+      delete process.env.DATABASE_URI;
+    });
+
+    afterEach(() => {
+      process.env.NEON_PROD_DATABASE_URL = savedEnv.NEON_PROD_DATABASE_URL;
+      process.env.NEON_DEV_DATABASE_URL = savedEnv.NEON_DEV_DATABASE_URL;
+      process.env.DATABASE_URI = savedEnv.DATABASE_URI;
+    });
+
+    it('should throw when NEON_PROD_DATABASE_URL is not set for prod-neon target', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      await expect(getPayloadClient('prod-neon')).rejects.toThrow(
+        'Database URI not found for target "prod-neon"',
+      );
+    });
+
+    it('should throw when neither NEON_DEV_DATABASE_URL nor DATABASE_URI is set for local-postgres', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      await expect(getPayloadClient('local-postgres')).rejects.toThrow(
+        'Database URI not found for target "local-postgres"',
+      );
+    });
   });
 
   describe('findOrCreateArtist', () => {
@@ -254,6 +287,54 @@ describe('payloadClient', () => {
 
       expect(artistId).toBe('new-artist-no-mbid');
       expect(mockPayload.create).toHaveBeenCalledTimes(2);
+    });
+
+    it('should rethrow non-slug error from MBID retry failure', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      const retryError = { status: 500, message: 'Server error during retry' };
+
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError)
+        .mockRejectedValueOnce(retryError);
+
+      await expect(findOrCreateArtist(mockPayload as Payload, 'Test Artist')).rejects.toEqual(
+        retryError,
+      );
+    });
+
+    it('should rethrow slug error from MBID retry when no artist found by slug', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock)
+        .mockResolvedValueOnce({ docs: [] }) // Initial find by name
+        .mockResolvedValueOnce({ docs: [] }); // findDocBySlug returns empty
+
+      mockGetArtistMbid.mockResolvedValueOnce('duplicate-mbid');
+
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      const retrySlugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Slug must be unique' }] },
+      };
+
+      (mockPayload.create as Mock)
+        .mockRejectedValueOnce(mbidError)
+        .mockRejectedValueOnce(retrySlugError);
+
+      await expect(findOrCreateArtist(mockPayload as Payload, 'Test Artist')).rejects.toEqual(
+        retrySlugError,
+      );
     });
   });
 

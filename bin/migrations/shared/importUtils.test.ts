@@ -221,6 +221,20 @@ describe('convertHtmlToLexical', () => {
     // Bold node should have trailing space appended before the plain text node
     expect(boldNode.text).toBe('bold ');
   });
+
+  it('should convert protocol-relative URLs to https absolute URLs', () => {
+    const result = convertHtmlToLexical('<a href="//example.com/path">Protocol relative link</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.url).toBe('https://example.com/path');
+  });
+
+  it('should convert root-relative URLs to absolute URLs using baseUrl', () => {
+    const result = convertHtmlToLexical('<a href="/artists/miles-davis">Root relative link</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.url).toBe('https://www.ynotradio.net/artists/miles-davis');
+  });
 });
 
 describe('getStatusFromDeleted', () => {
