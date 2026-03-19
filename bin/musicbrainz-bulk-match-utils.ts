@@ -24,7 +24,7 @@ export interface MatchResult {
   name: string;
   currentMbid: string | null;
   foundMbid: string | null;
-  status: 'missing' | 'matched' | 'mismatch' | 'not-found' | 'skipped' | 'verified';
+  status: 'missing' | 'matched' | 'mismatch' | 'not-found' | 'skipped' | 'verified' | 'conflict';
   updated: boolean;
 }
 
@@ -36,6 +36,7 @@ export interface CollectionReport {
   matched: number;
   mismatched: number;
   notFound: number;
+  conflicts: number;
   verified: number;
   updated: number;
   results: MatchResult[];
@@ -162,6 +163,7 @@ export function emptyReport(collection: string): CollectionReport {
     matched: 0,
     mismatched: 0,
     notFound: 0,
+    conflicts: 0,
     verified: 0,
     updated: 0,
     results: [],
@@ -223,13 +225,15 @@ export function printReport(report: CollectionReport): void {
   console.log(`  Verified:        ${report.verified}`);
   console.log(`  Mismatched:      ${report.mismatched}`);
   console.log(`  Not found:       ${report.notFound}`);
+  console.log(`  Conflicts:       ${report.conflicts}`);
   console.log(`  Updated:         ${report.updated}`);
 
   const actionable = report.results.filter(
     (r) => r.status === 'matched'
       || r.status === 'mismatch'
       || r.status === 'not-found'
-      || r.status === 'verified',
+      || r.status === 'verified'
+      || r.status === 'conflict',
   );
 
   if (actionable.length > 0) {
@@ -239,6 +243,7 @@ export function printReport(report: CollectionReport): void {
       if (r.status === 'matched') icon = '✅';
       else if (r.status === 'verified') icon = '✔️';
       else if (r.status === 'mismatch') icon = '⚠️';
+      else if (r.status === 'conflict') icon = '🔁';
       const updateTag = r.updated ? ' [UPDATED]' : '';
       console.log(`    ${icon} ${r.name}`);
       if (r.currentMbid) {

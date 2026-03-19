@@ -183,7 +183,11 @@ async function processRecords(payload: Payload, options: CliOptions): Promise<Co
 async function processSongs(payload: Payload, options: CliOptions): Promise<CollectionReport> {
   const report = emptyReport('songs');
 
-  const where: Record<string, unknown> = options.verify ? {} : { musicbrainzId: { exists: false } };
+  const where: Record<string, unknown> = {
+    ...(options.verify ? {} : { musicbrainzId: { exists: false } }),
+    // Skip songs whose artist lacks a MusicBrainz ID (artist cleanup in progress)
+    'artist.musicbrainzId': { exists: true },
+  };
 
   let page = 1;
   let hasMore = true;
@@ -235,13 +239,19 @@ async function processSongs(payload: Payload, options: CliOptions): Promise<Coll
         matchResult.status = classifyMatch(currentMbid, foundMbid, options.verify, report);
 
         if (options.fix && foundMbid && matchResult.status === 'matched') {
-          await payload.update({
-            collection: 'songs',
-            id: doc.id,
-            data: { musicbrainzId: foundMbid },
-          });
-          matchResult.updated = true;
-          report.updated++;
+          try {
+            await payload.update({
+              collection: 'songs',
+              id: doc.id,
+              data: { musicbrainzId: foundMbid },
+            });
+            matchResult.updated = true;
+            report.updated++;
+          } catch {
+            // Uniqueness conflict — another song already has this MBID
+            matchResult.status = 'conflict';
+            report.conflicts++;
+          }
         }
       }
 
