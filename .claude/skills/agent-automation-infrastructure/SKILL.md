@@ -45,7 +45,49 @@ Four pre-built images are available at GHCR for running services:
 
 These are for **running services** (E2E tests, local dev), not for bootstrapping node_modules — `yarn install` from cache is just as fast and avoids authentication complexity.
 
-**Note**: GHCR requires authentication (`docker login ghcr.io`). In the coding-agent sandbox, no GHCR token is configured, so `docker pull ghcr.io/…` will be unauthorized. These images are used by Buildkite CI (which has credentials) and by local devs who `docker login` themselves.
+### Accessing GHCR from the Agent Sandbox
+
+The packages are **private**. The agent has a `GITHUB_TOKEN` in the environment, but it must be used to log in before pulling:
+
+```bash
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u "x-access-token" --password-stdin
+docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
+```
+
+This works when the running workflow's `GITHUB_TOKEN` has `packages: read` permission. As of March 2026, all three automated agent workflows (`.github/workflows/*.lock.yml`) include `packages: read` in the `agent` job. **The interactive Copilot coding agent** (responding to issues/PRs) runs under a different token that may not have this permission — if `docker pull` still fails with "denied" after login, fall back to the manual workaround below.
+
+### Fallback When GHCR Is Inaccessible
+
+If `docker pull ghcr.io/…` returns "denied", use public images and seed manually:
+
+```bash
+# Start a plain Postgres (public image — no auth needed)
+docker run -d --name pg-dev \
+  -e POSTGRES_DB=ynot_payload_dev \
+  -e POSTGRES_USER=ynot_postgres_user \
+  -e POSTGRES_PASSWORD=dev_postgres_password_not_secret \
+  -p 5432:5432 postgres:16-alpine
+
+# Create a minimal .env.local
+cat > .env.local << 'EOF'
+PAYLOAD_SECRET=dev-secret-not-for-production
+PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000
+PORT=3000
+PAYLOAD_DEV_EMAIL=admin@ynotradio.net
+PAYLOAD_DEV_PASSWORD=password
+DATABASE_URI=postgres://ynot_postgres_user:dev_postgres_password_not_secret@localhost:5432/ynot_payload_dev
+DATABASE_SSL=disable
+PAYLOAD_CORS=http://localhost:3000
+PAYLOAD_CSRF=http://localhost:3000
+EOF
+
+# Run migrations + seed
+yarn payload:migrate
+yarn seed:payload
+
+# Start Payload dev server
+yarn payload:dev
+```
 
 ## Do We Need a Container Just for Lint/Test?
 
@@ -54,7 +96,7 @@ These are for **running services** (E2E tests, local dev), not for bootstrapping
 The question was whether to add a dedicated container that agents can use to run lint/test without needing local node_modules. The answer is no, because:
 
 1. `yarn install --frozen-lockfile` takes 12s from cache — as fast as pulling a container
-2. Docker IS available in the agent sandbox (Docker 28.0.4), but GHCR is unauthorized
+2. Docker IS available in the agent sandbox (Docker 28.0.4)
 3. A hypothetical "agent-tools" container would require auth setup and introduce complexity
 4. The bootstrap script (`bin/agent-helpers/bootstrap.sh`) solves the problem directly
 

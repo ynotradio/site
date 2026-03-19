@@ -24,8 +24,11 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ThumbnailCell as ThumbnailCell_adbafcd38e87e042677c7a6d8acf96f8 } from '../../../payload/src/components/cells/ThumbnailCell'
 import { DJsListHeader as DJsListHeader_fab9b7be078f862c52b656555577bb87 } from '../../../payload/src/features/dj-order/DJsListHeader'
+import { MusicBrainzArtistCell as MusicBrainzArtistCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzArtistField as MusicBrainzArtistField_50489d8f6f9d8ebab0181b54a6d2f07c } from '../../../payload/src/components/fields/MusicBrainzArtistField'
+import { MusicBrainzRecordingCell as MusicBrainzRecordingCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
+import { MusicBrainzReleaseCell as MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
@@ -68,8 +71,11 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/components/cells/ThumbnailCell#ThumbnailCell": ThumbnailCell_adbafcd38e87e042677c7a6d8acf96f8,
   "/payload/src/features/dj-order/DJsListHeader#DJsListHeader": DJsListHeader_fab9b7be078f862c52b656555577bb87,
+  "/payload/src/components/cells/MusicBrainzCell#MusicBrainzArtistCell": MusicBrainzArtistCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzArtistField#MusicBrainzArtistField": MusicBrainzArtistField_50489d8f6f9d8ebab0181b54a6d2f07c,
+  "/payload/src/components/cells/MusicBrainzCell#MusicBrainzRecordingCell": MusicBrainzRecordingCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
+  "/payload/src/components/cells/MusicBrainzCell#MusicBrainzReleaseCell": MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,

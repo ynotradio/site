@@ -233,6 +233,7 @@ jobs:
     permissions:
       contents: read
       issues: read
+      packages: read
       pull-requests: read
     concurrency:
       group: "gh-aw-copilot-${{ github.workflow }}"

@@ -217,28 +217,36 @@ yarn seed:legacy
 
 **Option 1: Use Pre-seeded Postgres Container (Fastest)**
 
-The pre-built Postgres image includes schema and sample data pre-installed:
+The pre-built Postgres image includes schema and sample data pre-installed. The packages are **private**, so log in first using the `GITHUB_TOKEN` from the environment:
 
 ```bash
-# Using docker-compose (recommended)
-docker-compose up postgres
+# Log into GHCR (GITHUB_TOKEN must have packages:read — see agent-automation-infrastructure skill)
+echo "$GITHUB_TOKEN" | docker login ghcr.io -u "x-access-token" --password-stdin
 
-# Or pull pre-built image directly
+# Pull and run the pre-seeded image
 docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
 docker run -d -p 5432:5432 ghcr.io/ynotradio/site/postgres-seeded:latest
 ```
 
+If pull is denied after login, fall back to Option 2.
+
 **Performance:**
 - ✅ First start: ~2-3 minutes (seeds automatically)
 - ✅ Subsequent starts: ~10 seconds (data persists)
-- ⚠️ Requires GHCR access for pre-built image
+- ⚠️ Requires GHCR access (`packages: read` on the workflow's GITHUB_TOKEN)
 
-**Option 2: Manual Seeding**
+**Option 2: Manual Seeding (Fallback)**
 
-If you need custom data or don't have GHCR access:
+When GHCR is inaccessible, spin up a plain public Postgres and seed:
 
 ```bash
-# After Payload is running with empty database
+docker run -d --name pg-dev \
+  -e POSTGRES_DB=ynot_payload_dev \
+  -e POSTGRES_USER=ynot_postgres_user \
+  -e POSTGRES_PASSWORD=dev_postgres_password_not_secret \
+  -p 5432:5432 postgres:16-alpine
+
+yarn payload:migrate
 yarn seed:payload
 ```
 
