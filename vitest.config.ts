@@ -27,20 +27,21 @@ export default defineConfig({
         'payload/src/features/embed/utils.ts',
         'payload/src/features/show-cloner/utils.ts',
         'payload/src/features/show-cloner/hooks/useDateRanges.ts',
+        'payload/src/components/cells/**/*.tsx',
+        'payload/src/components/branding/**/*.tsx',
+        'payload/src/components/providers/**/*.tsx',
       ],
       exclude: [
         '**/*.test.ts',
         '**/*.test.tsx',
+        '**/*.stories.tsx',
         '**/musicbrainz.ts', // Excluded because tests are skipped in CI (requires external API)
       ],
       thresholds: {
-        // Adjusted to current coverage levels - improve incrementally
-        // TODO: Raise these back to statements: 75, branches: 60, lines: 75 as we add tests
-        // Target date: Q1 2025 - focus on testing new Payload collections and migrations
-        statements: 70,
-        branches: 55,
-        functions: 80,
-        lines: 69,
+        statements: 80,
+        branches: 60,
+        functions: 85,
+        lines: 80,
       },
     },
     server: {

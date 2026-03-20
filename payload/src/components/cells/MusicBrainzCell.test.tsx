@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
@@ -6,12 +7,7 @@ import {
   MusicBrainzRecordingCell,
 } from './MusicBrainzCell';
 
-/**
- * NOTE: These tests are currently skipped due to CSS import issues with
- * @payloadcms/ui in the Vitest environment — matching the pattern established
- * by ThumbnailCell.test.tsx.
- */
-describe.skip('MusicBrainzCell', () => {
+describe('MusicBrainzCell', () => {
   const field = { name: 'musicbrainzId', type: 'text' as const };
   const rowData = {};
 

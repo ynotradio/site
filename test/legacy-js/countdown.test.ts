@@ -8,6 +8,7 @@
  * - Madness.updateScoreboard - Scoreboard polling
  * - Madness.delayedRedirect - Page redirect after match ends
  * - Madness.loadPartial - jQuery-based partial loading
+ * - _initMadness - Reads DOM elements and initializes the timer
  */
 
 import {
@@ -17,7 +18,7 @@ import {
 // Import the Madness object directly from the legacy JS file
 // The file now exports using CommonJS for Node.js compatibility
 // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
-const { Madness } = require('../../src/js/countdown.js');
+const { Madness, _initMadness } = require('../../src/js/countdown.js');
 
 const { displayDiffFormat } = Madness;
 
@@ -380,5 +381,72 @@ describe('Madness.loadPartial', () => {
     // Ensure $ is not defined
     vi.stubGlobal('$', undefined);
     expect(() => Madness.loadPartial('#mrm_scoring', 'partials/_update_scoreboard.php')).not.toThrow();
+  });
+});
+
+describe('_initMadness', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '';
+    Madness.endtime = null;
+    Madness.timer = false;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+      ok: true,
+      text: () => Promise.resolve('<div></div>'),
+    }));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('does nothing when hr/min/sec elements are absent', () => {
+    _initMadness();
+    expect(Madness.endtime).toBeNull();
+  });
+
+  it('initializes endtime from hr/min/sec DOM elements', () => {
+    document.body.innerHTML = '<span id="hr">0</span><span id="min">1</span><span id="sec">30</span>';
+    const before = Date.now();
+    _initMadness();
+    const after = Date.now();
+    const expectedMs = (1 * 60 + 30) * 1000;
+    expect(Madness.endtime.getTime()).toBeGreaterThanOrEqual(before + expectedMs);
+    expect(Madness.endtime.getTime()).toBeLessThanOrEqual(after + expectedMs);
+  });
+
+  it('sets Madness.timer to true when endtime is in the future', () => {
+    document.body.innerHTML = '<span id="hr">1</span><span id="min">0</span><span id="sec">0</span>';
+    _initMadness();
+    expect(Madness.timer).toBe(true);
+  });
+
+  it('sets Madness.timer to false when all elements are zero', () => {
+    document.body.innerHTML = '<span id="hr">0</span><span id="min">0</span><span id="sec">0</span>';
+    _initMadness();
+    // endtime === starttime so timer is false
+    expect(Madness.timer).toBe(false);
+  });
+
+  it('handles non-numeric element content gracefully (defaults to 0)', () => {
+    document.body.innerHTML = '<span id="hr">abc</span><span id="min"></span><span id="sec">xyz</span>';
+    expect(() => _initMadness()).not.toThrow();
+    // All values default to 0, so endtime should equal starttime
+    expect(Madness.timer).toBe(false);
+  });
+
+  it('calls updateScoreboard even when hr/min/sec elements are absent', () => {
+    const spy = vi.spyOn(Madness, 'updateScoreboard');
+    _initMadness();
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
+  it('calls startTimer when timer elements are present', () => {
+    document.body.innerHTML = '<span id="hr">0</span><span id="min">5</span><span id="sec">0</span>';
+    const spy = vi.spyOn(Madness, 'startTimer');
+    _initMadness();
+    expect(spy).toHaveBeenCalledOnce();
   });
 });
