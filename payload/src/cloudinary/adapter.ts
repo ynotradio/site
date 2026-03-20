@@ -69,9 +69,10 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
       // generateFileURL receives it when building transform URLs.
       if (data.sizes && typeof data.sizes === 'object') {
         Object.keys(data.sizes).forEach((sizeName) => {
-          if (data.sizes[sizeName]) {
+          const sizeData = data.sizes[sizeName];
+          if (sizeData) {
             // eslint-disable-next-line no-param-reassign
-            data.sizes[sizeName].filename = publicId;
+            sizeData.filename = publicId;
           }
         });
       }
