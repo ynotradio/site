@@ -223,14 +223,14 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillDateFieldDirect(page, 'field-date', getFutureDate(14));
       await fillPayloadTextField(page, 'field-startTime', '14:00');
       await fillPayloadTextField(page, 'field-endTime', '18:00');
-      await fillPayloadTextField(page, 'field-programTitle', `E2E Editor Show ${uid}`);
+      await fillPayloadTextField(page, 'field-name', `E2E Editor Show ${uid}`);
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'shows');
       docId = extractDocId(page.url());
     });
 
     await test.step('Edit', async () => {
-      await fillPayloadTextField(page, 'field-programTitle', `E2E Editor Show ${uid} (edited)`);
+      await fillPayloadTextField(page, 'field-name', `E2E Editor Show ${uid} (edited)`);
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'shows');
     });

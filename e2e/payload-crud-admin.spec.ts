@@ -121,13 +121,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillDateFieldDirect(page, 'field-date', getFutureDate(7));
       await fillPayloadTextField(page, 'field-startTime', '10:00');
       await fillPayloadTextField(page, 'field-endTime', '14:00');
-      await fillPayloadTextField(page, 'field-programTitle', `E2E Show ${uid}`);
+      await fillPayloadTextField(page, 'field-name', `E2E Show ${uid}`);
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'shows');
       await captureScreenshot(page, testInfo, 'Admin-Shows-01-Created');
     });
     await test.step('Edit then delete', async () => {
-      await fillPayloadTextField(page, 'field-programTitle', `E2E Show ${uid} (edited)`);
+      await fillPayloadTextField(page, 'field-name', `E2E Show ${uid} (edited)`);
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'shows');
       await deleteCurrentDocument(page);
