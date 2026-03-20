@@ -59,3 +59,5 @@ build-*
 
 # Playwright verification screenshots (captured by agents)
 *.png
+*.png
+src/.env.local
