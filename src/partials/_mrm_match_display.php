@@ -49,8 +49,14 @@ $has_voted = $controller->hasVoted($match_id);
     status="<?php echo htmlspecialchars($match_status); ?>"
     band1-name="<?php echo htmlspecialchars($band1['name']); ?>"
     band1-image="<?php echo htmlspecialchars($band1['pic_url']); ?>"
+    <?php if (!empty($band1['sponsor'])): ?>
+        band1-sponsor="<?php echo htmlspecialchars($band1['sponsor']); ?>"
+    <?php endif; ?>
     band2-name="<?php echo htmlspecialchars($band2['name']); ?>"
     band2-image="<?php echo htmlspecialchars($band2['pic_url']); ?>"
+    <?php if (!empty($band2['sponsor'])): ?>
+        band2-sponsor="<?php echo htmlspecialchars($band2['sponsor']); ?>"
+    <?php endif; ?>
     <?php if ($show_results): ?>
         band1-pct="<?php echo $band1_percentage; ?>"
         band2-pct="<?php echo $band2_percentage; ?>"

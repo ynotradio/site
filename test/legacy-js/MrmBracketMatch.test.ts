@@ -132,4 +132,66 @@ describe('MrmBracketMatch', () => {
     expect(el.querySelector('dl')).toBeTruthy();
     expect(el.querySelectorAll('dt').length).toBe(2);
   });
+
+  it('renders band sponsor text when band1-sponsor is set', () => {
+    const el = createElement({
+      'band1-seed': '1',
+      'band1-name': 'Radiohead',
+      'band1-sponsor': 'Jane Doe',
+      'band2-seed': '16',
+      'band2-name': 'Weezer',
+    });
+
+    const sponsorSpan = el.querySelector('.band1 .band_sponsor');
+    expect(sponsorSpan).toBeTruthy();
+    expect(sponsorSpan.textContent).toBe('Jane Doe');
+  });
+
+  it('renders band sponsor text when band2-sponsor is set', () => {
+    const el = createElement({
+      'band1-seed': '1',
+      'band1-name': 'Radiohead',
+      'band2-seed': '16',
+      'band2-name': 'Weezer',
+      'band2-sponsor': 'John Smith',
+    });
+
+    const sponsorSpan = el.querySelector('.band2 .band_sponsor');
+    expect(sponsorSpan).toBeTruthy();
+    expect(sponsorSpan.textContent).toBe('John Smith');
+  });
+
+  it('omits band sponsor span when no sponsor attribute is provided', () => {
+    const el = createElement({
+      'band1-seed': '1',
+      'band1-name': 'Radiohead',
+      'band2-seed': '16',
+      'band2-name': 'Weezer',
+    });
+
+    expect(el.querySelector('.band1 .band_sponsor')).toBeNull();
+    expect(el.querySelector('.band2 .band_sponsor')).toBeNull();
+  });
+
+  it('adds title tooltip with sponsor info on dt element', () => {
+    const el = createElement({
+      'band1-name': 'Radiohead',
+      'band1-sponsor': 'Jane Doe',
+      'band2-name': 'Weezer',
+    });
+
+    expect(el.querySelector('.band1').getAttribute('title')).toBe('Sponsored by: Jane Doe');
+    expect(el.querySelector('.band2').hasAttribute('title')).toBe(false);
+  });
+
+  it('escapes HTML in sponsor attribute values', () => {
+    const el = createElement({
+      'band1-name': 'Radiohead',
+      'band1-sponsor': '<script>alert("xss")</script>',
+    });
+
+    const sponsorSpan = el.querySelector('.band1 .band_sponsor');
+    expect(sponsorSpan.textContent).toBe('<script>alert("xss")</script>');
+    expect(sponsorSpan.innerHTML).not.toContain('<script>');
+  });
 });

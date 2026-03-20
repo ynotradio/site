@@ -438,6 +438,17 @@ mrm-bracket-match {
   width: 50px;
 }
 
+.band_sponsor {
+  color: #592D00;
+  display: block;
+  font-size: 7px;
+  font-style: italic;
+  font-weight: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .percentage {
   position: relative;
   left: 12px;

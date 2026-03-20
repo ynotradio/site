@@ -70,9 +70,11 @@ $matches = $controller->mrmModel->getBracketMatches();
                 match-id="<?php echo $match['id']; ?>"
                 band1-seed="<?php echo htmlspecialchars($band1['seed']); ?>"
                 band1-name="<?php echo htmlspecialchars($band1['abbr']); ?>"
+                <?php if (!empty($band1['sponsor'])): ?>band1-sponsor="<?php echo htmlspecialchars($band1['sponsor']); ?>"<?php endif; ?>
                 <?php if ($match['show_score']): ?>band1-pct="<?php echo $controller->mrmModel->calculateVotePercentage($match['band1_votes'], $match['band2_votes']); ?>"<?php endif; ?>
                 band2-seed="<?php echo htmlspecialchars($band2['seed']); ?>"
                 band2-name="<?php echo htmlspecialchars($band2['abbr']); ?>"
+                <?php if (!empty($band2['sponsor'])): ?>band2-sponsor="<?php echo htmlspecialchars($band2['sponsor']); ?>"<?php endif; ?>
                 <?php if ($match['show_score']): ?>band2-pct="<?php echo $controller->mrmModel->calculateVotePercentage($match['band2_votes'], $match['band1_votes']); ?>"<?php endif; ?>
                 <?php echo (strpos($winner1_class, 'mrm_winner') !== false) ? 'winner="1"' : ''; ?>
                 <?php echo (strpos($winner2_class, 'mrm_winner') !== false) ? 'winner="2"' : ''; ?>
