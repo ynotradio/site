@@ -32,10 +32,22 @@
     "bin/check-test-story-files.ts"
   ],
   "rules": {
-    "@typescript-eslint/semi": ["error", "always"],
-    "@typescript-eslint/comma-dangle": ["error", "always-multiline"],
-    "@typescript-eslint/indent": ["error", 2],
-    "@typescript-eslint/object-curly-spacing": ["error", "always"],
+    "@typescript-eslint/semi": [
+      "error",
+      "always"
+    ],
+    "@typescript-eslint/comma-dangle": [
+      "error",
+      "always-multiline"
+    ],
+    "@typescript-eslint/indent": [
+      "error",
+      2
+    ],
+    "@typescript-eslint/object-curly-spacing": [
+      "error",
+      "always"
+    ],
     "@typescript-eslint/consistent-type-assertions": [
       "error",
       {
@@ -56,7 +68,12 @@
     "no-underscore-dangle": [
       "error",
       {
-        "allow": ["_id", "_key", "_type", "_ref"]
+        "allow": [
+          "_id",
+          "_key",
+          "_type",
+          "_ref"
+        ]
       }
     ],
     "import/prefer-default-export": "off",
@@ -83,12 +100,25 @@
         "skipComments": true
       }
     ],
-    "complexity": ["warn", 15],
-    "operator-linebreak": ["error", "before", { "overrides": { "=": "none" } }]
+    "complexity": [
+      "warn",
+      15
+    ],
+    "operator-linebreak": [
+      "error",
+      "before",
+      {
+        "overrides": {
+          "=": "none"
+        }
+      }
+    ]
   },
   "overrides": [
     {
-      "files": ["**/*.tsx"],
+      "files": [
+        "**/*.tsx"
+      ],
       "env": {
         "browser": true
       },
@@ -97,19 +127,28 @@
       }
     },
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx"],
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx"
+      ],
       "rules": {
         "@typescript-eslint/consistent-type-assertions": "off",
         "object-curly-newline": "off",
         "import/order": "off",
         "@typescript-eslint/no-shadow": "off",
         "max-len": "off",
-        "prefer-template": "off"
+        "prefer-template": "off",
+        "max-lines": "off",
+        "@typescript-eslint/naming-convention": "off"
       }
     },
     {
-      "files": ["bin/**/*.ts"],
-      "excludedFiles": ["**/*.test.ts"],
+      "files": [
+        "bin/**/*.ts"
+      ],
+      "excludedFiles": [
+        "**/*.test.ts"
+      ],
       "rules": {
         "no-console": "off",
         "no-await-in-loop": "off",
@@ -120,7 +159,10 @@
       }
     },
     {
-      "files": ["payload/src/collections/**/*.ts", "payload/src/components/**/*.tsx"],
+      "files": [
+        "payload/src/collections/**/*.ts",
+        "payload/src/components/**/*.tsx"
+      ],
       "rules": {
         "max-lines": "off",
         "complexity": "off",
@@ -128,13 +170,17 @@
       }
     },
     {
-      "files": ["payload/src/features/**/*.tsx"],
+      "files": [
+        "payload/src/features/**/*.tsx"
+      ],
       "rules": {
         "@next/next/no-html-link-for-pages": "off"
       }
     },
     {
-      "files": ["**/index.ts"],
+      "files": [
+        "**/index.ts"
+      ],
       "rules": {
         "no-restricted-syntax": [
           "error",
@@ -146,7 +192,9 @@
       }
     },
     {
-      "files": ["app/(payload)/**/*.tsx"],
+      "files": [
+        "app/(payload)/**/*.tsx"
+      ],
       "rules": {
         "import/extensions": "off"
       }

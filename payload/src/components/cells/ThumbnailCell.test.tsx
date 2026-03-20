@@ -1,6 +1,7 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ThumbnailCell } from './ThumbnailCell';
 
 // Mock @payloadcms/ui BEFORE importing components
@@ -14,58 +15,80 @@ vi.mock('@payloadcms/ui', () => ({
   }),
 }));
 
-/**
- * NOTE: These tests are currently skipped due to CSS import issues with @payloadcms/ui
- * in the Vitest environment. The component has been manually verified to work correctly
- * in the browser (see /admin/collections/djs for visual verification).
- *
- * TODO: Fix vitest config to properly handle CSS imports from @payloadcms/ui dependencies
- * or find an alternative mocking strategy that intercepts CSS imports during module resolution.
- */
-describe.skip('ThumbnailCell', () => {
+const field = { name: 'photo', type: 'upload' as const, relationTo: 'media' };
+
+describe('ThumbnailCell', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Clear any media entries added by previous tests
+    delete mockDocuments.media;
   });
 
   it('renders placeholder when cellData (media ID) is null', () => {
-    render(
-      <ThumbnailCell
-        cellData={null}
-        field={{ name: 'photo', type: 'upload', relationTo: 'media' }}
-        collectionSlug="artists"
-        rowData={{}}
-      />,
-    );
+    render(<ThumbnailCell cellData={null} field={field} collectionSlug="artists" rowData={{}} />);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
   it('renders placeholder when media document is not found', () => {
-    render(
-      <ThumbnailCell
-        cellData="123"
-        field={{ name: 'photo', type: 'upload', relationTo: 'media' }}
-        collectionSlug="artists"
-        rowData={{ photo: '123' }}
-      />,
-    );
+    render(<ThumbnailCell cellData="123" field={field} collectionSlug="artists" rowData={{}} />);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 
   it('requests relationship data when media ID is provided', () => {
-    render(
-      <ThumbnailCell
-        cellData="456"
-        field={{ name: 'photo', type: 'upload', relationTo: 'media' }}
-        collectionSlug="artists"
-        rowData={{ photo: '456' }}
-      />,
-    );
+    render(<ThumbnailCell cellData="456" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(mockGetRelationships).toHaveBeenCalledWith([{ relationTo: 'media', value: '456' }]);
+  });
 
-    expect(mockGetRelationships).toHaveBeenCalledWith([
-      {
-        relationTo: 'media',
-        value: '456',
-      },
-    ]);
+  it('renders an image when media document has a url', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg', filename: 'photo.jpg' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('src', '/uploads/photo.jpg');
+  });
+
+  it('prefers thumbnailURL over url', () => {
+    mockDocuments.media = {
+      789: { id: '789', url: '/uploads/photo.jpg', thumbnailURL: '/uploads/thumb.jpg' },
+    };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/uploads/thumb.jpg');
+  });
+
+  it('uses alt text from media.alt when provided', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg', alt: 'A photo' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'A photo');
+  });
+
+  it('falls back to filename for alt when alt is absent', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg', filename: 'photo.jpg' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'photo.jpg');
+  });
+
+  it('falls back to "Thumbnail" for alt when both alt and filename are absent', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByRole('img')).toHaveAttribute('alt', 'Thumbnail');
+  });
+
+  it('shows filename caption when filename is present', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg', filename: 'photo.jpg' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByText('photo.jpg')).toBeInTheDocument();
+  });
+
+  it('renders placeholder when media has no url', () => {
+    mockDocuments.media = { 789: { id: '789' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByText('—')).toBeInTheDocument();
+  });
+
+  it('renders placeholder after image load error', () => {
+    mockDocuments.media = { 789: { id: '789', url: '/uploads/photo.jpg' } };
+    render(<ThumbnailCell cellData="789" field={field} collectionSlug="artists" rowData={{}} />);
+    const img = screen.getByRole('img');
+    fireEvent.error(img);
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 });
