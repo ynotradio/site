@@ -82,6 +82,29 @@ async function seedMrmFresh() {
       console.log('   ✅ Admin user created');
     }
 
+    // Ensure editor user exists (used by e2e CRUD tests)
+    const existingEditor = await payload.find({
+      collection: 'users',
+      where: {
+        email: { equals: 'e2e-editor@test.invalid' },
+      },
+      limit: 1,
+    });
+
+    if (existingEditor.docs.length === 0) {
+      console.log('👤 Creating e2e editor user...');
+      await payload.create({
+        collection: 'users',
+        data: {
+          email: 'e2e-editor@test.invalid',
+          password: 'E2eTest123!',
+          role: 'editor',
+          _verified: true,
+        },
+      });
+      console.log('   ✅ Editor user created');
+    }
+
     // ── Tournament ──────────────────────────────────────────────────────────
     // Use CLI arg if provided (e.g. `yarn seed:mrm:fresh 2026-03-18`),
     // otherwise snap to next Monday for a clean schedule.
