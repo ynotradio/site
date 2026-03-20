@@ -209,14 +209,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
     await test.step('Create', async () => {
       await navigateToPayloadCollectionCreate(page, 'users');
       await fillPayloadTextField(page, 'field-email', email);
-      await page
-        .getByLabel(/^password$/i)
-        .first()
-        .fill('TestPass123!');
-      await page
-        .getByLabel(/confirm password/i)
-        .first()
-        .fill('TestPass123!');
+      await page.locator('#field-password').fill('TestPass123!');
+      await page.locator('#field-confirm-password').fill('TestPass123!');
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'users');
       await captureScreenshot(page, testInfo, 'Admin-Users-01-Created');

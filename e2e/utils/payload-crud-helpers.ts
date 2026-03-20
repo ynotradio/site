@@ -155,6 +155,8 @@ export async function createPrereqData(jwt: string): Promise<PrereqIds> {
       title: `Prereq Album ${uid}`,
       slug: `prereq-album-${uid}`,
       artist: artistId,
+      // Disable auto-slug generation to avoid async musicSlugify issue
+      generateSlug: false,
     }),
   });
   if (!recordRes.ok) {

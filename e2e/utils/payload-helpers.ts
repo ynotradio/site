@@ -1,25 +1,30 @@
-import { Page, expect } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || 'http://localhost:8080';
 
 /**
- * Wait for Payload CMS save operation to complete
- * Checks for either URL change to detail page or success message
- * @param page - Playwright page object
- * @param collectionName - Name of the collection (e.g., 'concerts', 'artists')
+ * Wait for Payload CMS save operation to complete.
+ * After a create, waits for the URL to redirect to the edit page (contains a
+ * document ID, not "/create"). After an edit, the URL already has an ID so this
+ * resolves once the success toast appears.
  */
 export async function waitForPayloadSave(page: Page, collectionName: string): Promise<void> {
-  await Promise.race([
-    page.waitForURL(`**/${collectionName}/**`, { timeout: 30000 }),
-    page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 }),
-  ]);
+  const onCreatePage = page.url().includes('/create');
 
-  const currentUrl = page.url();
-  if (!currentUrl.includes(`/${collectionName}/`)) {
-    await expect(page.getByText(/saved successfully|successfully saved/i)).toBeVisible({
-      timeout: 5000,
-    });
+  if (onCreatePage) {
+    // After creation Payload redirects /create → /{id}. Wait for a URL that
+    // contains the collection name followed by a segment that is NOT "create".
+    await page.waitForURL(
+      (url) => {
+        const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
+        return re.test(url.pathname);
+      },
+      { timeout: 30000 },
+    );
+  } else {
+    // Editing an existing doc — just wait for the success toast.
+    await page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 });
   }
 }
 
@@ -140,12 +145,12 @@ export async function fillPayloadRichTextField(
 }
 
 /**
- * Click Publish button and wait for publish to complete
- * Used for collections with drafts enabled (like Posts)
- * @param page - Playwright page object
- * @param collectionName - Name of the collection for URL verification
+ * Click Publish button and wait for publish to complete.
+ * Used for collections with drafts enabled (like Posts).
  */
 export async function clickPayloadPublish(page: Page, collectionName: string): Promise<void> {
+  const onCreatePage = page.url().includes('/create');
+
   await Promise.all([
     page.waitForResponse(
       // eslint-disable-next-line implicit-arrow-linebreak
@@ -155,13 +160,21 @@ export async function clickPayloadPublish(page: Page, collectionName: string): P
     ),
     page.getByRole('button', { name: /publish/i }).click(),
   ]);
-  // For initial create, wait for redirect to the edit page
-  await Promise.race([
-    page.waitForURL(`**/${collectionName}/**`, { timeout: 30000 }),
-    page
+
+  if (onCreatePage) {
+    // After initial publish, Payload redirects /create → /{id}.
+    await page.waitForURL(
+      (url) => {
+        const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
+        return re.test(url.pathname);
+      },
+      { timeout: 30000 },
+    );
+  } else {
+    await page
       .getByText(/published successfully|successfully published|saved successfully/i)
-      .waitFor({ timeout: 30000 }),
-  ]);
+      .waitFor({ timeout: 30000 });
+  }
 }
 
 /**
