@@ -104,21 +104,22 @@ export interface PrereqIds {
 
 export async function createPrereqData(jwt: string): Promise<PrereqIds> {
   const uid = generateUniqueId('prereq');
+  const headers = { 'Content-Type': 'application/json', Authorization: `JWT ${jwt}` };
 
   const [personRes, artistRes, venueRes] = await Promise.all([
     fetch(`${PAYLOAD_BASE_URL}/api/people`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${jwt}` },
+      headers,
       body: JSON.stringify({ name: `Prereq Person ${uid}`, slug: `prereq-person-${uid}` }),
     }),
     fetch(`${PAYLOAD_BASE_URL}/api/artists`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${jwt}` },
+      headers,
       body: JSON.stringify({ name: `Prereq Artist ${uid}`, slug: `prereq-artist-${uid}` }),
     }),
     fetch(`${PAYLOAD_BASE_URL}/api/venues`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `JWT ${jwt}` },
+      headers,
       body: JSON.stringify({
         name: `Prereq Venue ${uid}`,
         slug: `prereq-venue-${uid}`,
@@ -126,6 +127,18 @@ export async function createPrereqData(jwt: string): Promise<PrereqIds> {
       }),
     }),
   ]);
+
+  const prereqResponses: [string, Response][] = [
+    ['Person', personRes],
+    ['Artist', artistRes],
+    ['Venue', venueRes],
+  ];
+  const failedPrereqs = prereqResponses.filter(([, res]) => !res.ok);
+  if (failedPrereqs.length > 0) {
+    const [name, res] = failedPrereqs[0];
+    const body = await res.text();
+    throw new Error(`Prereq ${name} creation failed: ${res.status} — ${body}`);
+  }
 
   const [personData, artistData, venueData] = await Promise.all([
     personRes.json() as Promise<{ doc: { id: string } }>,
@@ -137,13 +150,17 @@ export async function createPrereqData(jwt: string): Promise<PrereqIds> {
 
   const recordRes = await fetch(`${PAYLOAD_BASE_URL}/api/records`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `JWT ${jwt}` },
+    headers,
     body: JSON.stringify({
       title: `Prereq Album ${uid}`,
       slug: `prereq-album-${uid}`,
       artist: artistId,
     }),
   });
+  if (!recordRes.ok) {
+    const body = await recordRes.text();
+    throw new Error(`Prereq Record creation failed: ${recordRes.status} — ${body}`);
+  }
   const recordData = (await recordRes.json()) as { doc: { id: string } };
 
   return {
@@ -179,8 +196,10 @@ export async function fillDateFieldDirect(page: Page, fieldId: string, date: Dat
 
 /** Open the three-dot popup menu in the Payload document controls. */
 export async function openDocumentActionsMenu(page: Page): Promise<void> {
+  // Ensure any pending saves/navigations have settled
+  await page.waitForLoadState('domcontentloaded');
   const dotsMenu = page.locator('.doc-controls__dots').first();
-  await dotsMenu.waitFor({ state: 'visible', timeout: 10000 });
+  await dotsMenu.waitFor({ state: 'visible', timeout: 15000 });
   await dotsMenu.click();
 }
 

@@ -60,7 +60,15 @@ export async function clickPayloadCreateNew(page: Page): Promise<void> {
 }
 
 export async function clickPayloadSave(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /save/i }).click();
+  await Promise.all([
+    page.waitForResponse(
+      // eslint-disable-next-line implicit-arrow-linebreak
+      (res) => /\/api\/[a-z]/.test(res.url())
+        && ['PATCH', 'POST'].includes(res.request().method())
+        && res.status() < 500,
+    ),
+    page.getByRole('button', { name: /save/i }).click(),
+  ]);
 }
 
 /**
@@ -138,12 +146,21 @@ export async function fillPayloadRichTextField(
  * @param collectionName - Name of the collection for URL verification
  */
 export async function clickPayloadPublish(page: Page, collectionName: string): Promise<void> {
-  await page.getByRole('button', { name: /publish/i }).click();
+  await Promise.all([
+    page.waitForResponse(
+      // eslint-disable-next-line implicit-arrow-linebreak
+      (res) => /\/api\/[a-z]/.test(res.url())
+        && ['PATCH', 'POST'].includes(res.request().method())
+        && res.status() < 500,
+    ),
+    page.getByRole('button', { name: /publish/i }).click(),
+  ]);
+  // For initial create, wait for redirect to the edit page
   await Promise.race([
     page.waitForURL(`**/${collectionName}/**`, { timeout: 30000 }),
-    page.getByText(/published successfully|successfully published|saved successfully/i).waitFor({
-      timeout: 30000,
-    }),
+    page
+      .getByText(/published successfully|successfully published|saved successfully/i)
+      .waitFor({ timeout: 30000 }),
   ]);
 }
 
