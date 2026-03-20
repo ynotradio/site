@@ -118,7 +118,7 @@ steps:
   # === E2E Integration Tests ===
   - label: ":playwright: E2E Tests"
     key: "e2e"
-    timeout_in_minutes: 20
+    timeout_in_minutes: 25
     command: |
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       

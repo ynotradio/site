@@ -18,31 +18,30 @@ import {
   waitForPayloadSave,
   generateSlug,
 } from './utils/payload-helpers';
-import { loginToPayload } from './utils/payload-auth';
 import {
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
   EDITOR_EMAIL,
   EDITOR_PASSWORD,
   getAdminJwt,
+  getStorageState,
   ensureEditorUser,
   deleteCurrentDocument,
   fillDateFieldDirect,
 } from './utils/payload-crud-helpers';
 
+/* eslint-disable no-empty-pattern, react-hooks/rules-of-hooks */
 const test = baseTest.extend({
-  // eslint-disable-next-line no-empty-pattern
-  storageState: async ({}, run) => { await run({}); },
+  storageState: async ({}, use) => {
+    await use(await getStorageState(ADMIN_EMAIL, ADMIN_PASSWORD));
+  },
 });
+/* eslint-enable no-empty-pattern, react-hooks/rules-of-hooks */
 
 test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
   test.beforeAll(async () => {
     const jwt = await getAdminJwt();
     await ensureEditorUser(jwt);
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await loginToPayload(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
 
   test('People: create, edit, and delete', async ({ page }, testInfo) => {
@@ -210,8 +209,14 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
     await test.step('Create', async () => {
       await navigateToPayloadCollectionCreate(page, 'users');
       await fillPayloadTextField(page, 'field-email', email);
-      await page.getByLabel(/^password$/i).first().fill('TestPass123!');
-      await page.getByLabel(/confirm password/i).first().fill('TestPass123!');
+      await page
+        .getByLabel(/^password$/i)
+        .first()
+        .fill('TestPass123!');
+      await page
+        .getByLabel(/confirm password/i)
+        .first()
+        .fill('TestPass123!');
       await clickPayloadSave(page);
       await waitForPayloadSave(page, 'users');
       await captureScreenshot(page, testInfo, 'Admin-Users-01-Created');
@@ -226,7 +231,12 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
   });
 
   test('Editor cannot access the Users collection', async ({ page }) => {
-    await loginToPayload(page, EDITOR_EMAIL, EDITOR_PASSWORD);
+    // Switch to editor auth for this test (rest of file uses admin)
+    const context = page.context();
+    await context.clearCookies();
+    const editorState = await getStorageState(EDITOR_EMAIL, EDITOR_PASSWORD);
+    await context.addCookies(editorState.cookies);
+
     await page.goto(
       `${process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'}/admin/collections/users`,
       { waitUntil: 'networkidle', timeout: 30000 },

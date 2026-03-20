@@ -24,11 +24,11 @@ import {
   waitForPayloadSave,
   generateSlug,
 } from './utils/payload-helpers';
-import { loginToPayload } from './utils/payload-auth';
 import {
   EDITOR_EMAIL,
   EDITOR_PASSWORD,
   getAdminJwt,
+  getStorageState,
   ensureEditorUser,
   deleteDocViaApi,
   assertDeleteNotAccessible,
@@ -36,21 +36,18 @@ import {
   extractDocId,
 } from './utils/payload-crud-helpers';
 
+/* eslint-disable no-empty-pattern, react-hooks/rules-of-hooks */
 const test = baseTest.extend({
-  // eslint-disable-next-line no-empty-pattern
-  storageState: async ({}, run) => {
-    await run({});
+  storageState: async ({}, use) => {
+    await use(await getStorageState(EDITOR_EMAIL, EDITOR_PASSWORD));
   },
 });
+/* eslint-enable no-empty-pattern, react-hooks/rules-of-hooks */
 
 test.describe('Payload CRUD — Editor Role', () => {
   test.beforeAll(async () => {
     const jwt = await getAdminJwt();
     await ensureEditorUser(jwt);
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await loginToPayload(page, EDITOR_EMAIL, EDITOR_PASSWORD);
   });
 
   // ── People ────────────────────────────────────────────────────────────────
@@ -153,7 +150,9 @@ test.describe('Payload CRUD — Editor Role', () => {
 
   // ── Posts ─────────────────────────────────────────────────────────────────
 
-  test('Posts: editor can create, publish, edit, and is denied delete', async ({ page }, testInfo) => {
+  test('Posts: editor can create, publish, edit, and is denied delete', async ({
+    page,
+  }, testInfo) => {
     const uid = generateUniqueId();
     const headline = `E2E Editor Story ${uid}`;
     let docId: string | undefined;
@@ -183,7 +182,9 @@ test.describe('Payload CRUD — Editor Role', () => {
 
   // ── Ads ───────────────────────────────────────────────────────────────────
 
-  test('Ads: editor can create, publish, edit, and is denied delete', async ({ page }, testInfo) => {
+  test('Ads: editor can create, publish, edit, and is denied delete', async ({
+    page,
+  }, testInfo) => {
     const uid = generateUniqueId();
     const name = `E2E Editor Ad ${uid}`;
     let docId: string | undefined;

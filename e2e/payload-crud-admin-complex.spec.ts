@@ -18,31 +18,30 @@ import {
   clickPayloadPublish,
   waitForPayloadSave,
 } from './utils/payload-helpers';
-import { loginToPayload } from './utils/payload-auth';
 import {
   ADMIN_EMAIL,
   ADMIN_PASSWORD,
   getAdminJwt,
+  getStorageState,
   ensureEditorUser,
   createPrereqData,
   deleteCurrentDocument,
   fillDateFieldDirect,
 } from './utils/payload-crud-helpers';
 
+/* eslint-disable no-empty-pattern, react-hooks/rules-of-hooks */
 const test = baseTest.extend({
-  // eslint-disable-next-line no-empty-pattern
-  storageState: async ({}, run) => { await run({}); },
+  storageState: async ({}, use) => {
+    await use(await getStorageState(ADMIN_EMAIL, ADMIN_PASSWORD));
+  },
 });
+/* eslint-enable no-empty-pattern, react-hooks/rules-of-hooks */
 
 test.describe('Payload Admin CRUD — Admin Role (Relationship Collections)', () => {
   test.beforeAll(async () => {
     const jwt = await getAdminJwt();
     await ensureEditorUser(jwt);
     await createPrereqData(jwt); // artist, venue, record, person appear in dropdowns
-  });
-
-  test.beforeEach(async ({ page }) => {
-    await loginToPayload(page, ADMIN_EMAIL, ADMIN_PASSWORD);
   });
 
   test('Records: create, edit, and delete', async ({ page }, testInfo) => {
