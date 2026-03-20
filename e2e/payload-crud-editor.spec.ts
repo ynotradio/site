@@ -33,7 +33,6 @@ import {
   deleteDocViaApi,
   assertDeleteNotAccessible,
   fillDateFieldDirect,
-  extractDocId,
 } from './utils/payload-crud-helpers';
 
 /* eslint-disable no-empty-pattern, react-hooks/rules-of-hooks */
@@ -61,9 +60,8 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'people');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'people');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'people', docId);
       await captureScreenshot(page, testInfo, 'Editor-People-01-Created');
     });
 
@@ -94,9 +92,8 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'artists');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'artists', docId);
     });
 
     await test.step('Edit', async () => {
@@ -127,9 +124,8 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
       await fillPayloadTextField(page, 'field-city', 'Test City');
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'venues');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'venues', docId);
     });
 
     await test.step('Edit', async () => {
@@ -161,8 +157,7 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'posts');
       await fillPayloadTextField(page, 'field-headline', headline);
       await fillDateFieldDirect(page, 'field-startDate', new Date());
-      await clickPayloadPublish(page, 'posts');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadPublish(page, 'posts');
       await captureScreenshot(page, testInfo, 'Editor-Posts-01-Published');
     });
 
@@ -194,8 +189,7 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillPayloadTextField(page, 'field-name', name);
       await fillDateFieldDirect(page, 'field-startDate', new Date());
       await fillDateFieldDirect(page, 'field-endDate', getFutureDate(30));
-      await clickPayloadPublish(page, 'ads');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadPublish(page, 'ads');
       await captureScreenshot(page, testInfo, 'Editor-Ads-01-Published');
     });
 
@@ -225,9 +219,8 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillPayloadTextField(page, 'field-startTime', '14:00');
       await fillPayloadTextField(page, 'field-endTime', '18:00');
       await fillPayloadTextField(page, 'field-name', `E2E Editor Show ${uid}`);
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'shows');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'shows', docId);
     });
 
     await test.step('Edit', async () => {
@@ -256,9 +249,8 @@ test.describe('Payload CRUD — Editor Role', () => {
     await test.step('Create', async () => {
       await navigateToPayloadCollectionCreate(page, 'songs');
       await fillPayloadTextField(page, 'field-title', title);
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'songs');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'songs', docId);
     });
 
     await test.step('Edit', async () => {
@@ -287,8 +279,7 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'ondemand');
       await fillDateFieldDirect(page, 'field-date', new Date());
       await fillPayloadTextField(page, 'field-headline', headline);
-      await clickPayloadPublish(page, 'ondemand');
-      docId = extractDocId(page.url());
+      docId = await clickPayloadPublish(page, 'ondemand');
     });
 
     await test.step('Edit', async () => {

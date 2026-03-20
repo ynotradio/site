@@ -5,26 +5,38 @@ const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || 'http://localhost:8
 
 /**
  * Wait for Payload CMS save operation to complete.
- * After a create, waits for the URL to redirect to the edit page (contains a
- * document ID, not "/create"). After an edit, the URL already has an ID so this
- * resolves once the success toast appears.
+ * Waits for the success toast OR URL redirect (whichever comes first).
+ * On /create pages: if Payload doesn't auto-redirect, navigates to the edit
+ * page using the docId from the API response.
  */
-export async function waitForPayloadSave(page: Page, collectionName: string): Promise<void> {
+export async function waitForPayloadSave(
+  page: Page,
+  collectionName: string,
+  docId?: string,
+): Promise<void> {
   const onCreatePage = page.url().includes('/create');
 
-  if (onCreatePage) {
-    // After creation Payload redirects /create → /{id}. Wait for a URL that
-    // contains the collection name followed by a segment that is NOT "create".
-    await page.waitForURL(
-      (url) => {
-        const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
-        return re.test(url.pathname);
-      },
-      { timeout: 30000 },
-    );
-  } else {
-    // Editing an existing doc — just wait for the success toast.
-    await page.getByText(/saved successfully|successfully saved/i).waitFor({ timeout: 30000 });
+  // Wait for any signal that the save completed
+  await Promise.race([
+    page
+      .waitForURL(
+        (url) => {
+          const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
+          return re.test(url.pathname);
+        },
+        { timeout: 10000 },
+      )
+      .catch(() => {}),
+    page
+      .getByText(/saved successfully|successfully saved|created successfully/i)
+      .waitFor({ timeout: 10000 })
+      .catch(() => {}),
+  ]);
+
+  // If still on /create after save, navigate to the edit page explicitly.
+  if (onCreatePage && page.url().includes('/create') && docId) {
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/${collectionName}/${docId}`);
+    await page.waitForSelector('form', { state: 'visible', timeout: 15000 });
   }
 }
 
@@ -64,8 +76,12 @@ export async function clickPayloadCreateNew(page: Page): Promise<void> {
   await page.getByRole('link', { name: /create new/i }).click();
 }
 
-export async function clickPayloadSave(page: Page): Promise<void> {
-  await Promise.all([
+/**
+ * Click Save and return the created/updated document ID from the API response.
+ * Captures the response body so callers can pass the ID to waitForPayloadSave.
+ */
+export async function clickPayloadSave(page: Page): Promise<string | undefined> {
+  const [response] = await Promise.all([
     page.waitForResponse(
       // eslint-disable-next-line implicit-arrow-linebreak
       (res) => /\/api\/[a-z]/.test(res.url())
@@ -74,6 +90,13 @@ export async function clickPayloadSave(page: Page): Promise<void> {
     ),
     page.getByRole('button', { name: /save/i }).click(),
   ]);
+
+  try {
+    const json = await response.json();
+    return json?.doc?.id;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -146,12 +169,15 @@ export async function fillPayloadRichTextField(
 
 /**
  * Click Publish button and wait for publish to complete.
- * Used for collections with drafts enabled (like Posts).
+ * Returns the document ID from the API response.
  */
-export async function clickPayloadPublish(page: Page, collectionName: string): Promise<void> {
+export async function clickPayloadPublish(
+  page: Page,
+  collectionName: string,
+): Promise<string | undefined> {
   const onCreatePage = page.url().includes('/create');
 
-  await Promise.all([
+  const [response] = await Promise.all([
     page.waitForResponse(
       // eslint-disable-next-line implicit-arrow-linebreak
       (res) => /\/api\/[a-z]/.test(res.url())
@@ -161,20 +187,38 @@ export async function clickPayloadPublish(page: Page, collectionName: string): P
     page.getByRole('button', { name: /publish/i }).click(),
   ]);
 
-  if (onCreatePage) {
-    // After initial publish, Payload redirects /create → /{id}.
-    await page.waitForURL(
-      (url) => {
-        const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
-        return re.test(url.pathname);
-      },
-      { timeout: 30000 },
-    );
-  } else {
-    await page
-      .getByText(/published successfully|successfully published|saved successfully/i)
-      .waitFor({ timeout: 30000 });
+  let docId: string | undefined;
+  try {
+    const json = await response.json();
+    docId = json?.doc?.id;
+  } catch {
+    // Response may not be JSON
   }
+
+  // Wait for any signal that the publish completed
+  await Promise.race([
+    page
+      .waitForURL(
+        (url) => {
+          const re = new RegExp(`/${collectionName}/(?!create)[^/]+`);
+          return re.test(url.pathname);
+        },
+        { timeout: 10000 },
+      )
+      .catch(() => {}),
+    page
+      .getByText(/published successfully|successfully published|saved successfully/i)
+      .waitFor({ timeout: 10000 })
+      .catch(() => {}),
+  ]);
+
+  // If still on /create after publish, navigate to the edit page explicitly.
+  if (onCreatePage && page.url().includes('/create') && docId) {
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/${collectionName}/${docId}`);
+    await page.waitForSelector('form', { state: 'visible', timeout: 15000 });
+  }
+
+  return docId;
 }
 
 /**

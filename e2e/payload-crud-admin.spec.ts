@@ -51,8 +51,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await navigateToPayloadCollectionCreate(page, 'people');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'people');
+      const docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'people', docId);
       await captureScreenshot(page, testInfo, 'Admin-People-01-Created');
     });
     await test.step('Edit', async () => {
@@ -79,8 +79,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'artists');
+      const docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'artists', docId);
       await captureScreenshot(page, testInfo, 'Admin-Artists-01-Created');
     });
     await test.step('Edit then delete', async () => {
@@ -100,8 +100,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
       await fillPayloadTextField(page, 'field-city', 'Test City');
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'venues');
+      const docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'venues', docId);
       await captureScreenshot(page, testInfo, 'Admin-Venues-01-Created');
     });
     await test.step('Edit then delete', async () => {
@@ -121,8 +121,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-startTime', '10:00');
       await fillPayloadTextField(page, 'field-endTime', '14:00');
       await fillPayloadTextField(page, 'field-name', `E2E Show ${uid}`);
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'shows');
+      const docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'shows', docId);
       await captureScreenshot(page, testInfo, 'Admin-Shows-01-Created');
     });
     await test.step('Edit then delete', async () => {
@@ -194,8 +194,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
     const title = `E2E Song ${uid}`;
     await navigateToPayloadCollectionCreate(page, 'songs');
     await fillPayloadTextField(page, 'field-title', title);
-    await clickPayloadSave(page);
-    await waitForPayloadSave(page, 'songs');
+    const docId = await clickPayloadSave(page);
+    await waitForPayloadSave(page, 'songs', docId);
     await fillPayloadTextField(page, 'field-title', `${title} (edited)`);
     await clickPayloadSave(page);
     await waitForPayloadSave(page, 'songs');
@@ -211,8 +211,8 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-email', email);
       await page.locator('#field-password').fill('TestPass123!');
       await page.locator('#field-confirm-password').fill('TestPass123!');
-      await clickPayloadSave(page);
-      await waitForPayloadSave(page, 'users');
+      const docId = await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'users', docId);
       await captureScreenshot(page, testInfo, 'Admin-Users-01-Created');
     });
     await test.step('Edit then delete', async () => {
