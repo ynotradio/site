@@ -185,29 +185,27 @@ export function classifyMatch(
   if (currentMbid && !verify) return 'skipped';
 
   const counters = report; // alias to satisfy no-param-reassign
-  if (!currentMbid) counters.missing += 1;
+  if (!currentMbid) {
+    counters.missing += 1;
+    if (foundMbid) {
+      counters.matched += 1;
+      return 'matched';
+    }
+    counters.notFound += 1;
+    return 'not-found';
+  }
 
-  if (!currentMbid && foundMbid) {
-    counters.matched += 1;
-    return 'matched';
-  }
-  if (!currentMbid && !foundMbid) {
+  // currentMbid is set; verify must be true (else we early-returned above)
+  if (!foundMbid) {
     counters.notFound += 1;
     return 'not-found';
   }
-  if (currentMbid && foundMbid && currentMbid !== foundMbid) {
-    counters.mismatched += 1;
-    return 'mismatch';
-  }
-  if (currentMbid && !foundMbid) {
-    counters.notFound += 1;
-    return 'not-found';
-  }
-  if (currentMbid && foundMbid && currentMbid === foundMbid) {
+  if (currentMbid === foundMbid) {
     counters.verified += 1;
     return 'verified';
   }
-  return 'skipped';
+  counters.mismatched += 1;
+  return 'mismatch';
 }
 
 // ---------------------------------------------------------------------------
@@ -228,22 +226,22 @@ export function printReport(report: CollectionReport): void {
   console.log(`  Conflicts:       ${report.conflicts}`);
   console.log(`  Updated:         ${report.updated}`);
 
-  const actionable = report.results.filter(
-    (r) => r.status === 'matched'
-      || r.status === 'mismatch'
-      || r.status === 'not-found'
-      || r.status === 'verified'
-      || r.status === 'conflict',
-  );
+  const actionableStatuses = new Set<MatchResult['status']>([
+    'matched', 'mismatch', 'not-found', 'verified', 'conflict',
+  ]);
+  const actionable = report.results.filter((r) => actionableStatuses.has(r.status));
+
+  const statusIcons: Partial<Record<MatchResult['status'], string>> = {
+    matched: '✅',
+    verified: '✔️',
+    mismatch: '⚠️',
+    conflict: '🔁',
+  };
 
   if (actionable.length > 0) {
     console.log('\n  Details:');
     for (const r of actionable) {
-      let icon = '❌';
-      if (r.status === 'matched') icon = '✅';
-      else if (r.status === 'verified') icon = '✔️';
-      else if (r.status === 'mismatch') icon = '⚠️';
-      else if (r.status === 'conflict') icon = '🔁';
+      const icon = statusIcons[r.status] ?? '❌';
       const updateTag = r.updated ? ' [UPDATED]' : '';
       console.log(`    ${icon} ${r.name}`);
       if (r.currentMbid) {

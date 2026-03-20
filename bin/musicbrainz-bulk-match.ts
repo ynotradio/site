@@ -321,6 +321,7 @@ async function main() {
         verified: acc.verified + r.verified,
         mismatched: acc.mismatched + r.mismatched,
         notFound: acc.notFound + r.notFound,
+        conflicts: acc.conflicts + r.conflicts,
         updated: acc.updated + r.updated,
       }),
       {
@@ -330,6 +331,7 @@ async function main() {
         verified: 0,
         mismatched: 0,
         notFound: 0,
+        conflicts: 0,
         updated: 0,
       },
     );
@@ -343,6 +345,7 @@ async function main() {
     console.log(`  Verified:     ${totals.verified}`);
     console.log(`  Mismatched:   ${totals.mismatched}`);
     console.log(`  Not found:    ${totals.notFound}`);
+    console.log(`  Conflicts:    ${totals.conflicts}`);
     console.log(`  Updated:      ${totals.updated}`);
   }
 
