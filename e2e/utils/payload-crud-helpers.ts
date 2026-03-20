@@ -199,6 +199,24 @@ export async function openDocumentActionsMenu(page: Page): Promise<void> {
   // Ensure any pending saves/navigations have settled
   await page.waitForLoadState('domcontentloaded');
   const dotsMenu = page.locator('.doc-controls__dots').first();
+
+  // First check if the element exists in the DOM at all
+  const count = await page.locator('.doc-controls__dots').count();
+  if (count === 0) {
+    // Element not in DOM — gather diagnostic info
+    const url = page.url();
+    const controlsHtml = await page
+      .locator('.doc-controls')
+      .first()
+      .innerHTML()
+      .catch(() => '<doc-controls not found>');
+    throw new Error(
+      'openDocumentActionsMenu: .doc-controls__dots not in DOM (found 0).'
+        + ` URL: ${url}.`
+        + ` .doc-controls innerHTML: ${controlsHtml.slice(0, 500)}`,
+    );
+  }
+
   await dotsMenu.waitFor({ state: 'visible', timeout: 15000 });
   await dotsMenu.click();
 }
