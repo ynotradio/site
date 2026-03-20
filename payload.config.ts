@@ -8,6 +8,7 @@ import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage';
 
 import { Media } from './payload/src/collections/Media';
 import { cloudinaryAdapter } from './payload/src/cloudinary/adapter';
+import { cloudinaryGenerateFileURL } from './payload/src/cloudinary/generateFileURL';
 import { Users } from './payload/src/collections/Users';
 import { People } from './payload/src/collections/People';
 import { DJs } from './payload/src/collections/DJs';
@@ -156,12 +157,7 @@ export default buildConfig({
           adapter: cloudinaryAdapter,
           disableLocalStorage: true,
           disablePayloadAccessControl: true,
-          generateFileURL: ({ filename: publicId }) => {
-            // publicId contains the Cloudinary public_id (e.g., "dev/uploads/my-image")
-            // Construct the full Cloudinary URL
-            const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-            return `https://res.cloudinary.com/${cloudName}/image/upload/${publicId}`;
-          },
+          generateFileURL: cloudinaryGenerateFileURL,
         },
       },
     }),

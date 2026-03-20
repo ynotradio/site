@@ -28,6 +28,13 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
     name: 'cloudinary',
 
     handleUpload: async ({ data, file }) => {
+      // After the original image is uploaded, data.cloudinaryPublicId is set.
+      // Subsequent calls are for sized variants (thumbnail, card, hero) —
+      // skip them because we use Cloudinary's on-the-fly transformations.
+      if (data.cloudinaryPublicId) {
+        return {};
+      }
+
       const randomFilename = generateRandomFilename();
 
       const uploadResult: UploadApiResponse = await new Promise((resolve, reject) => {
@@ -57,6 +64,17 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
       data.cloudinaryPublicId = publicId;
       // eslint-disable-next-line no-param-reassign
       data.filename = publicId;
+
+      // Copy the public ID into each image-size filename so that
+      // generateFileURL receives it when building transform URLs.
+      if (data.sizes && typeof data.sizes === 'object') {
+        Object.keys(data.sizes).forEach((sizeName) => {
+          if (data.sizes[sizeName]) {
+            // eslint-disable-next-line no-param-reassign
+            data.sizes[sizeName].filename = publicId;
+          }
+        });
+      }
 
       return {
         filename: publicId,
