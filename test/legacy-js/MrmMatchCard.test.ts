@@ -226,6 +226,7 @@ describe('MrmMatchCard', () => {
 
     const root = el.shadowRoot;
     const sponsorEl = root.querySelector('[data-slot="band1-sponsor"]');
+    expect(sponsorEl).toBeTruthy();
     expect(sponsorEl.classList.contains('hidden')).toBe(false);
     expect(sponsorEl.textContent).toBe('Sponsored by: Jane Doe');
   });
@@ -239,6 +240,7 @@ describe('MrmMatchCard', () => {
 
     const root = el.shadowRoot;
     const sponsorEl = root.querySelector('[data-slot="band2-sponsor"]');
+    expect(sponsorEl).toBeTruthy();
     expect(sponsorEl.classList.contains('hidden')).toBe(false);
     expect(sponsorEl.textContent).toBe('Sponsored by: John Smith');
   });
