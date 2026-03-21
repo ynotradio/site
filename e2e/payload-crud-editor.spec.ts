@@ -60,14 +60,14 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'people');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      docId = await clickPayloadSave(page);
+      docId = await clickPayloadSave(page, 'people');
       await waitForPayloadSave(page, 'people', docId);
       await captureScreenshot(page, testInfo, 'Editor-People-01-Created');
     });
 
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-name', `${name} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'people');
       await waitForPayloadSave(page, 'people');
     });
 
@@ -92,13 +92,13 @@ test.describe('Payload CRUD — Editor Role', () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      docId = await clickPayloadSave(page);
+      docId = await clickPayloadSave(page, 'artists');
       await waitForPayloadSave(page, 'artists', docId);
     });
 
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-website', 'https://example.com');
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'artists');
       await waitForPayloadSave(page, 'artists');
     });
 
@@ -124,13 +124,13 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
       await fillPayloadTextField(page, 'field-city', 'Test City');
-      docId = await clickPayloadSave(page);
+      docId = await clickPayloadSave(page, 'venues');
       await waitForPayloadSave(page, 'venues', docId);
     });
 
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-city', 'Updated City');
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'venues');
       await waitForPayloadSave(page, 'venues');
     });
 
@@ -219,13 +219,13 @@ test.describe('Payload CRUD — Editor Role', () => {
       await fillPayloadTextField(page, 'field-startTime', '14:00');
       await fillPayloadTextField(page, 'field-endTime', '18:00');
       await fillPayloadTextField(page, 'field-name', `E2E Editor Show ${uid}`);
-      docId = await clickPayloadSave(page);
+      docId = await clickPayloadSave(page, 'shows');
       await waitForPayloadSave(page, 'shows', docId);
     });
 
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-name', `E2E Editor Show ${uid} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'shows');
       await waitForPayloadSave(page, 'shows');
     });
 
@@ -249,13 +249,13 @@ test.describe('Payload CRUD — Editor Role', () => {
     await test.step('Create', async () => {
       await navigateToPayloadCollectionCreate(page, 'songs');
       await fillPayloadTextField(page, 'field-title', title);
-      docId = await clickPayloadSave(page);
+      docId = await clickPayloadSave(page, 'songs');
       await waitForPayloadSave(page, 'songs', docId);
     });
 
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-title', `${title} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'songs');
       await waitForPayloadSave(page, 'songs');
     });
 

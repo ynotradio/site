@@ -53,13 +53,13 @@ test.describe('Payload Admin CRUD — Admin Role (Relationship Collections)', ()
       await page.locator('#field-artist').locator('input[id^="react-select"]').click();
       await page.waitForSelector('[role="listbox"]', { state: 'visible', timeout: 10000 });
       await page.getByRole('option').first().click();
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'records');
       await waitForPayloadSave(page, 'records', docId);
       await captureScreenshot(page, testInfo, 'Admin-Records-01-Created');
     });
     await test.step('Edit then delete', async () => {
       await fillPayloadTextField(page, 'field-title', `${title} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'records');
       await waitForPayloadSave(page, 'records');
       await deleteCurrentDocument(page);
       await page.waitForURL('**/collections/records', { timeout: 15000 });

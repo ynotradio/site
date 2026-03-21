@@ -51,13 +51,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await navigateToPayloadCollectionCreate(page, 'people');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'people');
       await waitForPayloadSave(page, 'people', docId);
       await captureScreenshot(page, testInfo, 'Admin-People-01-Created');
     });
     await test.step('Edit', async () => {
       await fillPayloadTextField(page, 'field-name', `${name} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'people');
       await waitForPayloadSave(page, 'people');
     });
     await test.step('Verify in list', async () => {
@@ -79,13 +79,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await navigateToPayloadCollectionCreate(page, 'artists');
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'artists');
       await waitForPayloadSave(page, 'artists', docId);
       await captureScreenshot(page, testInfo, 'Admin-Artists-01-Created');
     });
     await test.step('Edit then delete', async () => {
       await fillPayloadTextField(page, 'field-name', `${name} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'artists');
       await waitForPayloadSave(page, 'artists');
       await deleteCurrentDocument(page);
       await page.waitForURL('**/collections/artists', { timeout: 15000 });
@@ -100,13 +100,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-name', name);
       await fillPayloadSlugField(page, generateSlug(name));
       await fillPayloadTextField(page, 'field-city', 'Test City');
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'venues');
       await waitForPayloadSave(page, 'venues', docId);
       await captureScreenshot(page, testInfo, 'Admin-Venues-01-Created');
     });
     await test.step('Edit then delete', async () => {
       await fillPayloadTextField(page, 'field-city', 'Edited City');
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'venues');
       await waitForPayloadSave(page, 'venues');
       await deleteCurrentDocument(page);
       await page.waitForURL('**/collections/venues', { timeout: 15000 });
@@ -121,13 +121,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-startTime', '10:00');
       await fillPayloadTextField(page, 'field-endTime', '14:00');
       await fillPayloadTextField(page, 'field-name', `E2E Show ${uid}`);
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'shows');
       await waitForPayloadSave(page, 'shows', docId);
       await captureScreenshot(page, testInfo, 'Admin-Shows-01-Created');
     });
     await test.step('Edit then delete', async () => {
       await fillPayloadTextField(page, 'field-name', `E2E Show ${uid} (edited)`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'shows');
       await waitForPayloadSave(page, 'shows');
       await deleteCurrentDocument(page);
       await page.waitForURL('**/collections/shows', { timeout: 15000 });
@@ -194,10 +194,10 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
     const title = `E2E Song ${uid}`;
     await navigateToPayloadCollectionCreate(page, 'songs');
     await fillPayloadTextField(page, 'field-title', title);
-    const docId = await clickPayloadSave(page);
+    const docId = await clickPayloadSave(page, 'songs');
     await waitForPayloadSave(page, 'songs', docId);
     await fillPayloadTextField(page, 'field-title', `${title} (edited)`);
-    await clickPayloadSave(page);
+    await clickPayloadSave(page, 'songs');
     await waitForPayloadSave(page, 'songs');
     await deleteCurrentDocument(page);
     await page.waitForURL('**/collections/songs', { timeout: 15000 });
@@ -211,13 +211,13 @@ test.describe('Payload Admin CRUD — Admin Role (Simple Collections)', () => {
       await fillPayloadTextField(page, 'field-email', email);
       await page.locator('#field-password').fill('TestPass123!');
       await page.locator('#field-confirm-password').fill('TestPass123!');
-      const docId = await clickPayloadSave(page);
+      const docId = await clickPayloadSave(page, 'users');
       await waitForPayloadSave(page, 'users', docId);
       await captureScreenshot(page, testInfo, 'Admin-Users-01-Created');
     });
     await test.step('Edit then delete', async () => {
       await fillPayloadTextField(page, 'field-email', `${email}-edited`);
-      await clickPayloadSave(page);
+      await clickPayloadSave(page, 'users');
       await waitForPayloadSave(page, 'users');
       await deleteCurrentDocument(page);
       await page.waitForURL('**/collections/users', { timeout: 15000 });

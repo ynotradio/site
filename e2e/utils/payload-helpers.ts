@@ -79,12 +79,21 @@ export async function clickPayloadCreateNew(page: Page): Promise<void> {
 /**
  * Click Save and return the created/updated document ID from the API response.
  * Captures the response body so callers can pass the ID to waitForPayloadSave.
+ * @param page - Playwright page object
+ * @param collectionName - Optional collection name for precise response filtering
  */
-export async function clickPayloadSave(page: Page): Promise<string | undefined> {
+export async function clickPayloadSave(
+  page: Page,
+  collectionName?: string,
+): Promise<string | undefined> {
+  const urlFilter = collectionName
+    ? (url: string) => url.includes(`/api/${collectionName}`)
+    : (url: string) => /\/api\/[a-z]/.test(url);
+
   const [response] = await Promise.all([
     page.waitForResponse(
       // eslint-disable-next-line implicit-arrow-linebreak
-      (res) => /\/api\/[a-z]/.test(res.url())
+      (res) => urlFilter(res.url())
         && ['PATCH', 'POST'].includes(res.request().method())
         && res.status() < 500,
     ),
@@ -93,8 +102,21 @@ export async function clickPayloadSave(page: Page): Promise<string | undefined> 
 
   try {
     const json = await response.json();
-    return json?.doc?.id;
+    const docId = json?.doc?.id;
+    if (!docId) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[clickPayloadSave] No doc.id in response. URL: ${response.url()},`
+          + ` status: ${response.status()}, keys: ${Object.keys(json || {}).join(',')}`,
+      );
+    }
+    return docId;
   } catch {
+    // eslint-disable-next-line no-console
+    console.log(
+      `[clickPayloadSave] Failed to parse response JSON. URL: ${response.url()},`
+        + ` status: ${response.status()}`,
+    );
     return undefined;
   }
 }
@@ -180,7 +202,7 @@ export async function clickPayloadPublish(
   const [response] = await Promise.all([
     page.waitForResponse(
       // eslint-disable-next-line implicit-arrow-linebreak
-      (res) => /\/api\/[a-z]/.test(res.url())
+      (res) => res.url().includes(`/api/${collectionName}`)
         && ['PATCH', 'POST'].includes(res.request().method())
         && res.status() < 500,
     ),
