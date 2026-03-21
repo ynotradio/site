@@ -124,9 +124,9 @@ mrm-bracket-match {
 
 .match {
   border: 1px solid black;
-  height: 54px;
+  height: 40px;
   font-size: 10px;
-  margin: 0 0 6px 0;
+  margin: 0 0 12px 0;
   width: 120px;
 }
 
@@ -135,7 +135,7 @@ mrm-bracket-match {
 /* ------------------------------------------------------------------ */
 
 .mrm-bracket {
-  height: 1100px;
+  height: 950px;
   position: relative;
 }
 
@@ -146,11 +146,6 @@ mrm-bracket-match {
 
 .match dl {
   margin: 0;
-  line-height: 1.3;
-}
-
-.match dt {
-  padding: 2px 0 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -158,13 +153,13 @@ mrm-bracket-match {
 /* ------------------------------------------------------------------ */
 
 .mrm-bracket__region {
-  height: 474px;
+  height: 404px;
   position: absolute;
   width: 50%;
 }
 
 .mrm-bracket__region--2 {
-  top: 615px;
+  top: 545px;
 }
 
 .mrm-bracket__region--3 {
@@ -173,7 +168,7 @@ mrm-bracket-match {
 
 .mrm-bracket__region--4 {
   left: 810px;
-  top: 615px;
+  top: 545px;
 }
 
 /* Left regions (1, 2): matches rounded on right */
@@ -196,25 +191,25 @@ mrm-bracket-match {
 .mrm-bracket__region--1 .round2 {
   position: absolute;
   left: 120px;
-  top: -36px;
+  top: -40px;
 }
 
 .mrm-bracket__region--2 .round2 {
   position: relative;
   left: 120px;
-  top: -510px;
+  top: -444px;
 }
 
 .mrm-bracket__region--3 .round2 {
   position: absolute;
   left: -120px;
-  top: -36px;
+  top: -40px;
 }
 
 .mrm-bracket__region--4 .round2 {
   position: relative;
   left: -120px;
-  top: -510px;
+  top: -444px;
 }
 
 /* Round 2 matches — shared by all regions */
@@ -224,28 +219,28 @@ mrm-bracket-match {
 
 /* Round 3 matches — shared by all regions */
 .mrm-bracket__region .round3 .match {
-  margin: 0 0 186px 0;
+  margin: 0 0 175px 0;
   border: 1px solid black;
 }
 
 /* Round 3 connector lines — left regions */
 .mrm-bracket__region--left .round3 {
   border-right: 1px solid #ccc;
-  height: 290px;
+  height: 255px;
   left: 230px;
   position: absolute;
-  top: 90px;
+  top: 78px;
   width: 95px;
 }
 
 /* Round 3 connector lines — right regions */
 .mrm-bracket__region--right .round3 {
   border-right: 1px solid #ccc;
-  height: 265px;
+  height: 232px;
   left: -230px;
-  margin: 50px 0 0 0;
+  margin: 43px 0 0 0;
   position: absolute;
-  top: 40px;
+  top: 35px;
   width: 25px;
 }
 
@@ -253,14 +248,14 @@ mrm-bracket-match {
 .mrm-bracket__region--left .round4 {
   position: absolute;
   left: 300px;
-  top: 210px;
+  top: 185px;
 }
 
 /* Round 4 — right regions */
 .mrm-bracket__region--right .round4 {
   position: absolute;
   left: -300px;
-  top: 210px;
+  top: 185px;
 }
 
 /* Round 4 matches — shared by all regions */
@@ -276,7 +271,7 @@ mrm-bracket-match {
   font-size: 10px;
   position: absolute;
   left: 252px;
-  top: 494px;
+  top: 424px;
   width: 425px;
   background-color: #666;
   background: -webkit-gradient(linear, left center, right center, from(#666666), to(#666), color-stop(.5, black));
@@ -443,19 +438,6 @@ mrm-bracket-match {
   width: 50px;
 }
 
-.band_sponsor {
-  color: #592D00;
-  display: block;
-  font-size: 7px;
-  font-style: italic;
-  font-weight: normal;
-  line-height: 1.1;
-  overflow: hidden;
-  padding-left: 5px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .percentage {
   position: relative;
   left: 12px;
@@ -483,5 +465,5 @@ mrm-bracket-match {
 }
 
 .mrm-bracket__sponsor--bottom {
-  top: 958px;
+  top: 818px;
 }
