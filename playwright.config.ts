@@ -22,7 +22,7 @@ export default defineConfig({
 
   fullyParallel: false,
   forbidOnly: isCi,
-  retries: isCi ? 2 : 0,
+  retries: isCi ? 1 : 0,
   workers: isCi ? 1 : undefined,
 
   reporter: isCi ? [['html'], ['list'], ['github']] : [['html'], ['list']],
