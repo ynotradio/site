@@ -12,8 +12,10 @@ interface MatchCardProps {
   status?: 'running' | 'early' | 'over';
   band1Name?: string;
   band1Image?: string;
+  band1Sponsor?: string;
   band2Name?: string;
   band2Image?: string;
+  band2Sponsor?: string;
   band1Pct?: string;
   band2Pct?: string;
   showResults?: boolean;
@@ -31,8 +33,10 @@ const MatchCardWrapper: React.FC<MatchCardProps> = ({
   status,
   band1Name,
   band1Image,
+  band1Sponsor,
   band2Name,
   band2Image,
+  band2Sponsor,
   band1Pct,
   band2Pct,
   showResults,
@@ -60,8 +64,10 @@ const MatchCardWrapper: React.FC<MatchCardProps> = ({
     setAttr('status', status);
     setAttr('band1-name', band1Name);
     setAttr('band1-image', band1Image);
+    setAttr('band1-sponsor', band1Sponsor);
     setAttr('band2-name', band2Name);
     setAttr('band2-image', band2Image);
+    setAttr('band2-sponsor', band2Sponsor);
     setAttr('band1-pct', band1Pct);
     setAttr('band2-pct', band2Pct);
     setAttr('show-results', showResults);
@@ -101,8 +107,10 @@ export const LiveMatch: Story = {
     status: 'running',
     band1Name: 'Yeah Yeah Yeahs',
     band1Image: 'https://placehold.co/200x200?text=YYYs',
+    band1Sponsor: 'Dave Mooney',
     band2Name: 'R.E.M.',
     band2Image: 'https://placehold.co/200x200?text=REM',
+    band2Sponsor: 'Liz Whelan',
     band1Pct: '48%',
     band2Pct: '52%',
     showResults: true,

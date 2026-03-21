@@ -138,9 +138,9 @@ TEMPLATE.innerHTML = `
   }
 
   .band-sponsor {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: normal;
-    color: #592D00;
+    color: #787878;
     font-style: italic;
   }
 
