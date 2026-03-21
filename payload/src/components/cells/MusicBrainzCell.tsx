@@ -4,10 +4,6 @@ import React from 'react';
 import type { DefaultCellComponentProps } from 'payload';
 import './MusicBrainzCell.css';
 
-/**
- * Inline MusicBrainz logo SVG — orange badge with "MB" mark.
- * Used as a verified-match indicator when a MusicBrainz ID is present.
- */
 const MusicBrainzLogo: React.FC = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -34,11 +30,6 @@ const MusicBrainzLogo: React.FC = () => (
 
 type EntityType = 'artist' | 'release' | 'recording';
 
-/**
- * Factory that produces a Payload cell component linked to the given
- * MusicBrainz entity type.  The cell renders the orange MB badge (a
- * verified-match indicator) when a MBID is present, and a dash otherwise.
- */
 const makeMusicBrainzCell = (entityType: EntityType): React.FC<DefaultCellComponentProps> => {
   const Cell: React.FC<DefaultCellComponentProps> = ({ cellData }) => {
     if (!cellData || typeof cellData !== 'string' || cellData.trim() === '') {

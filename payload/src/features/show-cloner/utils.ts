@@ -72,13 +72,11 @@ export const addDays = (dateStr: string, days: number): string => {
 };
 
 export const groupShowsByDate = (shows: Show[]): DateGroup[] => {
-  const groups: { [key: string]: Show[] } = {};
-  shows.forEach((show) => {
-    if (!groups[show.date]) {
-      groups[show.date] = [];
-    }
-    groups[show.date].push(show);
-  });
+  const groups = shows.reduce<Record<string, Show[]>>((acc, show) => {
+    if (!acc[show.date]) acc[show.date] = [];
+    acc[show.date].push(show);
+    return acc;
+  }, {});
 
   return Object.keys(groups)
     .sort()

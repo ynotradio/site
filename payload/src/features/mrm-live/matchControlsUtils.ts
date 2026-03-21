@@ -1,4 +1,6 @@
-import type { LiveMatch, MatchStatus } from './types';
+import type {
+  LiveMatch, MatchStatus, MrmGroupSummary, NextMatchRef,
+} from './types';
 
 const COL = '/admin/collections';
 export const TOURNAMENT_EDIT_BASE = `${COL}/modern-rock-madness-tournaments`;
@@ -21,6 +23,11 @@ export const STATUS_LABELS: Record<MatchStatus, string> = {
   upcoming: '⏳ Upcoming',
   overtime: '⏰ Overtime',
   closed: '✅ Closed',
+};
+
+const resolveId = (ref: string | { id: string } | null | undefined): string | null => {
+  if (!ref) return null;
+  return typeof ref === 'string' ? ref : ref.id;
 };
 
 export const getMatchStatus = (match: LiveMatch): MatchStatus => {
@@ -52,7 +59,7 @@ export const isWinner = (match: LiveMatch, bandKey: 'band1' | 'band2'): boolean 
   if (!match.winner) return false;
   const band = match[bandKey];
   if (!band || typeof band === 'string') return false;
-  const winnerId = typeof match.winner === 'string' ? match.winner : match.winner.id;
+  const winnerId = resolveId(match.winner as MrmGroupSummary | string | null);
   return band.id === winnerId;
 };
 
@@ -63,17 +70,13 @@ export const getWinnerSlot = (match: LiveMatch): '1' | '2' | null => {
 };
 
 export const getTournamentId = (match: LiveMatch): string | null => {
-  const extended = match as LiveMatch & {
-    tournament?: string | { id: string };
-  };
-  if (!extended.tournament) return null;
-  return typeof extended.tournament === 'string' ? extended.tournament : extended.tournament.id;
+  const extended = match as LiveMatch & { tournament?: string | { id: string } };
+  return resolveId(extended.tournament);
 };
 
-export const getNextMatchId = (match: LiveMatch): string | null => {
-  if (!match.nextMatch) return null;
-  return typeof match.nextMatch === 'string' ? match.nextMatch : match.nextMatch.id;
-};
+export const getNextMatchId = (match: LiveMatch): string | null => resolveId(
+  match.nextMatch as NextMatchRef | string | null,
+);
 
 // --- Band image helpers (depth=2 populated data) ---
 interface MediaRef {
