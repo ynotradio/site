@@ -157,8 +157,222 @@ describe('useMatchActions', () => {
       await result.current.handleManualVote('band1');
       await result.current.handleCloseMatch();
       await result.current.handleExtendOvertime();
+      await result.current.handleToggleShowScore();
+      await result.current.handleScheduleRematch('2025-01-01T14:00:00.000Z', 30);
     });
 
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('handleToggleShowScore patches showScore from false to true', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ showScore: false });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleToggleShowScore();
+    });
+
+    const patchCall = patchCalls.find(({ body }) => 'showScore' in body);
+    expect(patchCall?.body).toMatchObject({ showScore: true });
+    expect(result.current.successMessage).toBe('Show scores succeeded.');
+  });
+
+  it('handleToggleShowScore patches showScore from true to false', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ showScore: true });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleToggleShowScore();
+    });
+
+    const patchCall = patchCalls.find(({ body }) => 'showScore' in body);
+    expect(patchCall?.body).toMatchObject({ showScore: false });
+    expect(result.current.successMessage).toBe('Hide scores succeeded.');
+  });
+
+  it('handleScheduleRematch resets votes and sets new times', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ band1Votes: 500, band2Votes: 400 });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    const startISO = '2025-04-01T14:00:00.000Z';
+    await act(async () => {
+      await result.current.handleScheduleRematch(startISO, 60);
+    });
+
+    const patchCall = patchCalls.find(({ body }) => 'band1Votes' in body);
+    expect(patchCall?.body).toMatchObject({
+      band1Votes: 0,
+      band2Votes: 0,
+      winner: null,
+      showScore: false,
+      startTime: startISO,
+      endTime: new Date(new Date(startISO).getTime() + 60 * 60_000).toISOString(),
+    });
+    expect(result.current.successMessage).toBe('Schedule rematch succeeded.');
+    expect(onComplete).toHaveBeenCalled();
+  });
+
+  it('handleCloseMatch does nothing when band1 is null', async () => {
+    global.fetch = vi.fn();
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ band1: null });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('handleCloseMatch does nothing when band2 is a string reference', async () => {
+    global.fetch = vi.fn();
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({ band2: 'band-id-string' as unknown as typeof BAND2 });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('handleCloseMatch advances winner to band1 slot when nextMatch band1 is empty', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({
+      band1Votes: 2000,
+      band2Votes: 900,
+      nextMatch: { id: 'next-match', matchNumber: 33, band1: null, band2: null },
+    });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    const advanceCall = patchCalls.find(({ url }) => url.includes('next-match'));
+    expect(advanceCall?.body).toMatchObject({ band1: 'b1' });
+    expect(result.current.successMessage).toBe('Close match succeeded.');
+  });
+
+  it('handleCloseMatch advances winner to band2 slot when nextMatch band1 is filled', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const NEXT_BAND1 = { id: 'b3', name: 'Pearl Jam', seed: 2, placement: 1 };
+    const match = makeMatch({
+      band1Votes: 100,
+      band2Votes: 900,
+      nextMatch: { id: 'next-match', matchNumber: 33, band1: NEXT_BAND1, band2: null },
+    });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    const advanceCall = patchCalls.find(({ url }) => url.includes('next-match'));
+    expect(advanceCall?.body).toMatchObject({ band2: 'b2' });
+  });
+
+  it('handleCloseMatch skips bracket progression when nextMatch is a string', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({
+      band1Votes: 2000,
+      band2Votes: 900,
+      nextMatch: 'next-match-id-string',
+    });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    // Only the primary PATCH and the log event POST should be called, not a bracket progression
+    const advanceCall = patchCalls.find(({ url }) => url.includes('next-match-id-string'));
+    expect(advanceCall).toBeUndefined();
+    expect(result.current.successMessage).toBe('Close match succeeded.');
+  });
+
+  it('handleCloseMatch skips advancement when both nextMatch slots are already filled', async () => {
+    const patchCalls: Array<{ url: string; body: object }> = [];
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      patchCalls.push({ url: String(url), body: JSON.parse(opts?.body as string) });
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const NEXT_BAND1 = { id: 'b3', name: 'Pearl Jam', seed: 2, placement: 1 };
+    const NEXT_BAND2 = { id: 'b4', name: 'Soundgarden', seed: 3, placement: 2 };
+    const match = makeMatch({
+      band1Votes: 2000,
+      band2Votes: 900,
+      nextMatch: { id: 'next-match', matchNumber: 33, band1: NEXT_BAND1, band2: NEXT_BAND2 },
+    });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    const advanceCall = patchCalls.find(({ url }) => url.includes('next-match'));
+    expect(advanceCall).toBeUndefined();
+    expect(result.current.successMessage).toBe('Close match succeeded.');
+  });
+
+  it('handleCloseMatch logs error but still succeeds when bracket progression PATCH fails', async () => {
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      if (String(url).includes('next-match') && opts?.method === 'PATCH') {
+        return { ok: false, status: 500, json: async () => ({}) };
+      }
+      return { ok: true, json: async () => ({}) };
+    });
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const match = makeMatch({
+      band1Votes: 2000,
+      band2Votes: 900,
+      nextMatch: { id: 'next-match', matchNumber: 33, band1: null, band2: null },
+    });
+    const { result } = renderHook(() => useMatchActions(match, onComplete));
+
+    await act(async () => {
+      await result.current.handleCloseMatch();
+    });
+
+    // Operation still succeeds - bracket failure is logged but not thrown
+    expect(result.current.successMessage).toBe('Close match succeeded.');
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Bracket progression PATCH failed'));
   });
 });
