@@ -5,43 +5,18 @@ import { Gutter, useStepNav } from '@payloadcms/ui';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 import { EmptyState } from '../shared/EmptyState';
 import { useMatchActions } from './useMatchActions';
+import {
+  getMatchStatus,
+  getVotePercent,
+  getBandName,
+  getBandSeed,
+  isWinner,
+  STATUS_LABELS,
+} from './matchControlsUtils';
 import type { LiveMatch, MatchApiResponse, MatchStatus } from './types';
 import './LiveMatchClient.css';
 
 const POLL_INTERVAL_MS = 5000;
-
-const getMatchStatus = (match: LiveMatch): MatchStatus => {
-  const now = Date.now();
-  const start = new Date(match.startTime).getTime();
-  const end = new Date(match.endTime).getTime();
-  if (now < start) return 'upcoming';
-  if (now <= end) return 'live';
-  if (!match.winner) return 'overtime';
-  return 'closed';
-};
-
-const getVotePercent = (votes: number, total: number): number => {
-  if (total === 0) return 50;
-  return Math.round((votes / total) * 100);
-};
-
-const getBandName = (band: LiveMatch['band1']): string => {
-  if (!band) return '(TBD)';
-  return typeof band === 'string' ? band : band.name;
-};
-
-const getBandSeed = (band: LiveMatch['band1']): number | null => {
-  if (!band || typeof band === 'string') return null;
-  return band.seed;
-};
-
-const isWinner = (match: LiveMatch, bandKey: 'band1' | 'band2'): boolean => {
-  if (!match.winner) return false;
-  const band = match[bandKey];
-  if (!band || typeof band === 'string') return false;
-  const winnerId = typeof match.winner === 'string' ? match.winner : match.winner.id;
-  return band.id === winnerId;
-};
 
 interface MatchPanelProps {
   match: LiveMatch;
@@ -69,10 +44,7 @@ const MatchPanel: React.FC<MatchPanelProps> = ({
   <div className="live-match-client__match">
     <div className="live-match-client__meta">
       <span className={`live-match-client__status live-match-client__status--${status}`}>
-        {status === 'live' && '🔴 LIVE'}
-        {status === 'upcoming' && '⏳ Upcoming'}
-        {status === 'overtime' && '⏰ Overtime'}
-        {status === 'closed' && '✅ Closed'}
+        {STATUS_LABELS[status]}
       </span>
       <span className="live-match-client__round">
         Round {match.round} · Match #{match.matchNumber}
