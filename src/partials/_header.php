@@ -68,10 +68,11 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
       <script src="<?php echo $base_path; ?>js/legacy.js"></script>
       <script src="<?php echo $base_path; ?>js/init.js"></script>
       <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
-    $js_dir = __DIR__ . '/../js/components/';
-    $bm_v = file_exists($js_dir . 'mrm-bracket-match.js') ? filemtime($js_dir . 'mrm-bracket-match.js') : time();
-    $sb_v = file_exists($js_dir . 'mrm-scoreboard.js') ? filemtime($js_dir . 'mrm-scoreboard.js') : time();
-    $mc_v = file_exists($js_dir . 'mrm-match-card.js') ? filemtime($js_dir . 'mrm-match-card.js') : time();
+    $js_dir = __DIR__ . '/../js/';
+    $js_comp_dir = $js_dir . 'components/';
+    $bm_v = file_exists($js_comp_dir . 'mrm-bracket-match.js') ? filemtime($js_comp_dir . 'mrm-bracket-match.js') : time();
+    $sb_v = file_exists($js_comp_dir . 'mrm-scoreboard.js') ? filemtime($js_comp_dir . 'mrm-scoreboard.js') : time();
+    $mc_v = file_exists($js_comp_dir . 'mrm-match-card.js') ? filemtime($js_comp_dir . 'mrm-match-card.js') : time();
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-bracket-match.js?v=" . $bm_v . "\"></script>";
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-scoreboard.js?v=" . $sb_v . "\"></script>";
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/components/mrm-match-card.js?v=" . $mc_v . "\"></script>";
@@ -79,17 +80,20 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
 
 ?>
       <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/mrm-vote-bridge.js\"></script>";
+    $vb_v = file_exists($js_dir . 'mrm-vote-bridge.js') ? filemtime($js_dir . 'mrm-vote-bridge.js') : time();
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/mrm-vote-bridge.js?v=" . $vb_v . "\"></script>";
 }
 
 ?>
       <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js\"></script>";
+    $cd_v = file_exists($js_dir . 'countdown.js') ? filemtime($js_dir . 'countdown.js') : time();
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js?v=" . $cd_v . "\"></script>";
 }
 
 ?>
       <?php if ($page_file == "mrm_manage_matches.php") {
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin-madness.js\"></script>";
+    $am_v = file_exists($js_dir . 'admin-madness.js') ? filemtime($js_dir . 'admin-madness.js') : time();
+    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin-madness.js?v=" . $am_v . "\"></script>";
 }
 
 ?>

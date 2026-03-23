@@ -11,9 +11,7 @@
  * - _initMadness - Reads DOM elements and initializes the timer
  */
 
-import {
-  describe, it, expect, beforeEach, afterEach, vi,
-} from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 // Import the Madness object directly from the legacy JS file
 // The file now exports using CommonJS for Node.js compatibility
@@ -138,6 +136,19 @@ describe('Madness._parseAndUpdateScoreboard', () => {
     expect(mockEl.getAttribute('band2-label')).toBe('38%');
   });
 
+  it('syncs live bracket match when parsing <mrm-scoreboard> response', () => {
+    document.body.innerHTML = '<mrm-bracket-match class="match live_match" match-id="1" band1-pct="50%" band2-pct="50%"></mrm-bracket-match>';
+    const bracket = document.querySelector('mrm-bracket-match')!;
+    const mockEl = document.createElement('div');
+
+    const html = '<mrm-scoreboard band1-pct="62" band2-pct="38" band1-label="62%" band2-label="38%"></mrm-scoreboard>';
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._parseAndUpdateScoreboard(mockEl, html);
+
+    expect(bracket.getAttribute('band1-pct')).toBe('62%');
+    expect(bracket.getAttribute('band2-pct')).toBe('38%');
+  });
+
   it('falls back to old table format with #band1_score etc.', () => {
     const mockEl = document.createElement('div');
 
@@ -158,6 +169,28 @@ describe('Madness._parseAndUpdateScoreboard', () => {
     expect(mockEl.getAttribute('band2-label')).toBe('45%');
     expect(mockEl.getAttribute('band1-pct')).toBe('55');
     expect(mockEl.getAttribute('band2-pct')).toBe('45');
+  });
+
+  it('syncs live bracket match from old table format', () => {
+    document.body.innerHTML = '<mrm-bracket-match class="match live_match" match-id="1"></mrm-bracket-match>';
+    const bracket = document.querySelector('mrm-bracket-match')!;
+    const mockEl = document.createElement('div');
+
+    const html = `
+      <table>
+        <tr>
+          <td id="band1_score">55%</td>
+          <td id="band1_value" width="55"></td>
+          <td id="band2_value" width="45"></td>
+          <td id="band2_score">45%</td>
+        </tr>
+      </table>
+    `;
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._parseAndUpdateScoreboard(mockEl, html);
+
+    expect(bracket.getAttribute('band1-pct')).toBe('55%');
+    expect(bracket.getAttribute('band2-pct')).toBe('45%');
   });
 
   it('defaults to "0" when mrm-scoreboard attributes are absent', () => {
@@ -187,6 +220,40 @@ describe('Madness._parseAndUpdateScoreboard', () => {
     Madness._parseAndUpdateScoreboard(mockEl, html);
     expect(mockEl.getAttribute('band1-label')).toBe('70%');
     expect(mockEl.getAttribute('band2-label')).toBeNull();
+  });
+});
+
+describe('Madness._syncBracketMatch', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('updates band1-pct and band2-pct on the live bracket match', () => {
+    document.body.innerHTML = '<mrm-bracket-match class="match live_match" match-id="5"></mrm-bracket-match>';
+    const bracket = document.querySelector('mrm-bracket-match')!;
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._syncBracketMatch('75%', '25%');
+    expect(bracket.getAttribute('band1-pct')).toBe('75%');
+    expect(bracket.getAttribute('band2-pct')).toBe('25%');
+  });
+
+  it('does nothing when no live bracket match exists', () => {
+    document.body.innerHTML = '<mrm-bracket-match class="match" match-id="5"></mrm-bracket-match>';
+    // eslint-disable-next-line no-underscore-dangle
+    expect(() => Madness._syncBracketMatch('75%', '25%')).not.toThrow();
+  });
+
+  it('only updates the element with the live_match class', () => {
+    document.body.innerHTML = `
+      <mrm-bracket-match class="match" match-id="4" band1-pct="60%" band2-pct="40%"></mrm-bracket-match>
+      <mrm-bracket-match class="match live_match" match-id="5" band1-pct="50%" band2-pct="50%"></mrm-bracket-match>
+    `;
+    // eslint-disable-next-line no-underscore-dangle
+    Madness._syncBracketMatch('80%', '20%');
+    const other = document.querySelector('mrm-bracket-match[match-id="4"]')!;
+    const live = document.querySelector('mrm-bracket-match[match-id="5"]')!;
+    expect(other.getAttribute('band1-pct')).toBe('60%');
+    expect(live.getAttribute('band1-pct')).toBe('80%');
   });
 });
 
@@ -290,10 +357,13 @@ describe('Madness.updateScoreboard', () => {
     vi.useFakeTimers();
     document.body.innerHTML = '';
     Madness.timer = false;
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('<mrm-scoreboard band1-pct="60" band2-pct="40"></mrm-scoreboard>'),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('<mrm-scoreboard band1-pct="60" band2-pct="40"></mrm-scoreboard>'),
+      }),
+    );
   });
 
   afterEach(() => {
@@ -390,10 +460,13 @@ describe('_initMadness', () => {
     document.body.innerHTML = '';
     Madness.endtime = null;
     Madness.timer = false;
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      text: () => Promise.resolve('<div></div>'),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve('<div></div>'),
+      }),
+    );
   });
 
   afterEach(() => {
