@@ -75,6 +75,11 @@ var Madness = {
       scoreboard.setAttribute('band2-pct', newBoard.getAttribute('band2-pct') || '0');
       scoreboard.setAttribute('band1-label', newBoard.getAttribute('band1-label') || '');
       scoreboard.setAttribute('band2-label', newBoard.getAttribute('band2-label') || '');
+      // Sync the live bracket match with the same percentages
+      Madness._syncBracketMatch(
+        newBoard.getAttribute('band1-label') || '',
+        newBoard.getAttribute('band2-label') || '',
+      );
       return;
     }
 
@@ -87,6 +92,18 @@ var Madness = {
     if (b2score) scoreboard.setAttribute('band2-label', b2score.textContent.trim());
     if (b1value) scoreboard.setAttribute('band1-pct', b1value.getAttribute('width') || '0');
     if (b2value) scoreboard.setAttribute('band2-pct', b2value.getAttribute('width') || '0');
+    Madness._syncBracketMatch(
+      b1score ? b1score.textContent.trim() : '',
+      b2score ? b2score.textContent.trim() : '',
+    );
+  },
+  /** Update the live bracket match element with fresh percentages. */
+  _syncBracketMatch: function(band1Label, band2Label) {
+    var liveBracket = document.querySelector('mrm-bracket-match.live_match');
+    if (liveBracket) {
+      liveBracket.setAttribute('band1-pct', band1Label);
+      liveBracket.setAttribute('band2-pct', band2Label);
+    }
   },
   loadPartial: function(selector, partial) {
     if (typeof $ !== 'undefined') {

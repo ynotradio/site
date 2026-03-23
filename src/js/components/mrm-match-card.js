@@ -12,9 +12,6 @@
  *   band2-image     – Image URL for band 2
  *   band2-seed      – Seed number for band 2
  *   band2-sponsor   – Group sponsor name for band 2
- *   band1-pct       – Vote percentage for band 1 (e.g. "52%")
- *   band2-pct       – Vote percentage for band 2 (e.g. "48%")
- *   show-results    – Boolean attribute; when present, shows percentages
  *   has-voted       – Boolean attribute; when present, hides vote buttons
  *   winner          – "1" or "2"; dims the losing band image
  *   tied            – Boolean attribute; when present, shows tied-match message
@@ -79,12 +76,6 @@ TEMPLATE.innerHTML = `
     text-align: center;
     vertical-align: middle;
     width: 100px;
-  }
-
-  .vote-pct {
-    font-weight: bold;
-    text-align: center;
-    width: 350px;
   }
 
   .vote-area {
@@ -160,7 +151,7 @@ TEMPLATE.innerHTML = `
       <div data-slot="band1-name"></div>
       <div class="band-sponsor hidden" data-slot="band1-sponsor"></div>
     </td>
-    <td class="vs-cell" rowspan="3" data-slot="vs">VS</td>
+    <td class="vs-cell" rowspan="2" data-slot="vs">VS</td>
     <td class="band-name">
       <div data-slot="band2-name"></div>
       <div class="band-sponsor hidden" data-slot="band2-sponsor"></div>
@@ -173,10 +164,6 @@ TEMPLATE.innerHTML = `
     <td class="band-cell" data-slot="band2-image-wrap">
       <img data-slot="band2-image" alt="" />
     </td>
-  </tr>
-  <tr>
-    <td class="vote-pct" data-slot="band1-pct"></td>
-    <td class="vote-pct" data-slot="band2-pct"></td>
   </tr>
   <tr data-slot="action-row">
     <td class="vote-area" data-slot="band1-vote">
@@ -209,8 +196,7 @@ class MrmMatchCard extends HTMLElement {
       'match-id', 'status',
       'band1-name', 'band1-image', 'band1-seed', 'band1-sponsor',
       'band2-name', 'band2-image', 'band2-seed', 'band2-sponsor',
-      'band1-pct', 'band2-pct',
-      'show-results', 'has-voted', 'winner', 'tied',
+      'has-voted', 'winner', 'tied',
       'sponsor', 'sponsor-msg', 'voting-disabled',
       'login-url', 'timer-text',
     ];
@@ -253,7 +239,6 @@ class MrmMatchCard extends HTMLElement {
   _render() {
     const root = this.shadowRoot;
     const status = this.getAttribute('status') || 'early';
-    const showResults = this.hasAttribute('show-results');
     const hasVoted = this.hasAttribute('has-voted');
     const isRunning = status === 'running';
     const votingDisabled = this.hasAttribute('voting-disabled');
@@ -304,12 +289,6 @@ class MrmMatchCard extends HTMLElement {
     const imgWrap2 = root.querySelector('[data-slot="band2-image-wrap"]');
     imgWrap1.classList.toggle('loser', winner === '2');
     imgWrap2.classList.toggle('loser', winner === '1');
-
-    // Vote percentages
-    const pct1 = root.querySelector('[data-slot="band1-pct"]');
-    const pct2 = root.querySelector('[data-slot="band2-pct"]');
-    pct1.textContent = this.getAttribute('band1-pct') ?? '';
-    pct2.textContent = this.getAttribute('band2-pct') ?? '';
 
     // Vote buttons vs login links
     const needsLogin = isRunning && !hasVoted && loginUrl;

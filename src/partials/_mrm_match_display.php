@@ -57,11 +57,7 @@ $has_voted = $controller->hasVoted($match_id);
     <?php if (!empty($band2['sponsor'])): ?>
         band2-sponsor="<?php echo htmlspecialchars($band2['sponsor']); ?>"
     <?php endif; ?>
-    <?php if ($show_results): ?>
-        band1-pct="<?php echo $band1_percentage; ?>"
-        band2-pct="<?php echo $band2_percentage; ?>"
-        show-results
-    <?php endif; ?>
+    <?php if ($show_results): ?>show-results<?php endif; ?>
     <?php
     // Determine winner for loser-dimming
     $winner1 = $controller->getWinnerClass($match['band1_id'], $match['id']);
