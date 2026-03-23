@@ -56,6 +56,9 @@ steps:
     command: |
       # Skip if no storybook-relevant files changed (saves Netlify credits + build time)
       if [ "$${BUILDKITE_PULL_REQUEST:-false}" != "false" ]; then
+        # Ensure origin/master is available — Buildkite does a shallow clone of the PR
+        # branch only, so origin/master won't exist unless explicitly fetched.
+        git fetch origin master --depth=1 2>/dev/null || true
         STORYBOOK_CHANGES=$$(git diff --name-only origin/master...HEAD -- \
           'app/' 'payload/src/' '.storybook/' 'package.json' 'yarn.lock' \
           | grep -v '\.test\.\|\.spec\.' || true)
