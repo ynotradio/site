@@ -24,15 +24,9 @@ class MadnessControllerTest extends TestCase
     {
         parent::setUp();
         $this->mockDb = $this->createMock(\mysqli::class);
-        
-        $this->controller = new MadnessController($this->mockDb);
-        
-        // Get the model via reflection to mock it
-        $reflection = new \ReflectionClass($this->controller);
-        $modelProperty = $reflection->getProperty('mrmModel');
-        $modelProperty->setAccessible(true);
         $this->mockModel = $this->createMock(ModernRockMadness::class);
-        $modelProperty->setValue($this->controller, $this->mockModel);
+        
+        $this->controller = new MadnessController($this->mockDb, $this->mockModel);
     }
 
     /**
