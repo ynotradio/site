@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   generateBracketDefinitions,
   buildScheduleSlots,
   STANDARD_SLOTS,
   TOTAL_MATCHES,
+  scaffoldTournamentMatches,
 } from './scaffoldTournamentMatches';
 
 const START_DATE = '2025-03-24T00:00:00.000Z'; // Monday
@@ -218,5 +219,174 @@ describe('generateBracketDefinitions', () => {
     expect(STANDARD_SLOTS).toHaveLength(8);
     expect(STANDARD_SLOTS[0]).toEqual({ hour: 10, minute: 0 });
     expect(STANDARD_SLOTS[7]).toEqual({ hour: 14, minute: 30 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// scaffoldTournamentMatches hook
+// ---------------------------------------------------------------------------
+
+const makeReq = (createFn: ReturnType<typeof vi.fn>) => ({
+  payload: {
+    create: createFn,
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+    },
+  },
+});
+
+describe('scaffoldTournamentMatches hook', () => {
+  it('returns doc unchanged for non-create operations', async () => {
+    const doc = { id: 1, name: 'Test', startDate: '2025-03-24' };
+    const req = makeReq(vi.fn());
+
+    const result = await scaffoldTournamentMatches({
+      doc,
+      operation: 'update',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: doc,
+    });
+
+    expect(result).toBe(doc);
+    expect(req.payload.create).not.toHaveBeenCalled();
+  });
+
+  it('creates all 63 matches for a new tournament', async () => {
+    const doc = { id: 42, name: 'MRM 2025', startDate: '2025-03-24T00:00:00.000Z' };
+    let idCounter = 100;
+    // eslint-disable-next-line no-plusplus
+    const createFn = vi.fn().mockImplementation(() => Promise.resolve({ id: idCounter++ }));
+    const req = makeReq(createFn);
+
+    const result = await scaffoldTournamentMatches({
+      doc,
+      operation: 'create',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: undefined as any,
+    });
+
+    expect(result).toBe(doc);
+    expect(createFn).toHaveBeenCalledTimes(TOTAL_MATCHES);
+    expect(req.payload.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining(`${TOTAL_MATCHES}/${TOTAL_MATCHES}`),
+    );
+  });
+
+  it('creates matches in reverse order (championship first)', async () => {
+    const doc = { id: 7, name: 'MRM 2025', startDate: '2025-03-24T00:00:00.000Z' };
+    const createdMatchNumbers: number[] = [];
+    let idCounter = 200;
+    const createFn = vi.fn().mockImplementation(({ data }: { data: { matchNumber: number } }) => {
+      createdMatchNumbers.push(data.matchNumber);
+      // eslint-disable-next-line no-plusplus
+      return Promise.resolve({ id: idCounter++ });
+    });
+    const req = makeReq(createFn);
+
+    await scaffoldTournamentMatches({
+      doc,
+      operation: 'create',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: undefined as any,
+    });
+
+    expect(createdMatchNumbers[0]).toBe(63); // championship first
+    expect(createdMatchNumbers[createdMatchNumbers.length - 1]).toBe(1); // first match last
+  });
+
+  it('wires nextMatch id for non-championship matches', async () => {
+    const doc = { id: 5, name: 'MRM 2025', startDate: '2025-03-24T00:00:00.000Z' };
+    let idCounter = 300;
+    const callDataByMatchNumber = new Map<number, Record<string, unknown>>();
+    const createFn = vi.fn().mockImplementation(({ data }: { data: Record<string, unknown> }) => {
+      // eslint-disable-next-line no-plusplus
+      const id = idCounter++;
+      const createdId = id;
+      callDataByMatchNumber.set(data.matchNumber as number, { ...data, createdId });
+      return Promise.resolve({ id });
+    });
+    const req = makeReq(createFn);
+
+    await scaffoldTournamentMatches({
+      doc,
+      operation: 'create',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: undefined as any,
+    });
+
+    // Championship (63) should have no nextMatch
+    const champ = callDataByMatchNumber.get(63)!;
+    expect(champ.nextMatch).toBeUndefined();
+
+    // Fantastic 4 (61, 62) should reference championship's created id
+    const champCreatedId = champ.createdId as number;
+    const m61 = callDataByMatchNumber.get(61)!;
+    const m62 = callDataByMatchNumber.get(62)!;
+    expect(m61.nextMatch).toBe(champCreatedId);
+    expect(m62.nextMatch).toBe(champCreatedId);
+  });
+
+  it('logs error and continues when a match creation fails', async () => {
+    const doc = { id: 9, name: 'MRM 2025', startDate: '2025-03-24T00:00:00.000Z' };
+    let idCounter = 400;
+    const createFn = vi.fn().mockImplementation(({ data }: { data: { matchNumber: number } }) => {
+      if (data.matchNumber === 62) return Promise.reject(new Error('DB error'));
+      // eslint-disable-next-line no-plusplus
+      return Promise.resolve({ id: idCounter++ });
+    });
+    const req = makeReq(createFn);
+
+    await scaffoldTournamentMatches({
+      doc,
+      operation: 'create',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: undefined as any,
+    });
+
+    expect(req.payload.logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Failed to scaffold match #62'),
+    );
+    // Still called for all 63 matches
+    expect(createFn).toHaveBeenCalledTimes(TOTAL_MATCHES);
+    // Info log reflects actual successful count (62 out of 63)
+    expect(req.payload.logger.info).toHaveBeenCalledWith(
+      expect.stringContaining(`62/${TOTAL_MATCHES}`),
+    );
+  });
+
+  it('uses correct collection name and base data fields', async () => {
+    const doc = { id: 3, name: 'Test', startDate: '2025-03-24T00:00:00.000Z' };
+    let idCounter = 500;
+    // eslint-disable-next-line no-plusplus
+    const createFn = vi.fn().mockResolvedValue({ id: idCounter++ });
+    const req = makeReq(createFn);
+
+    await scaffoldTournamentMatches({
+      doc,
+      operation: 'create',
+      req: req as any,
+      collection: {} as any,
+      context: {} as any,
+      previousDoc: undefined as any,
+    });
+
+    const firstCall = createFn.mock.calls[0][0];
+    expect(firstCall.collection).toBe('modern-rock-madness-matches');
+    expect(firstCall.overrideAccess).toBe(true);
+    expect(firstCall.data.tournament).toBe(3);
+    expect(firstCall.data.band1Votes).toBe(0);
+    expect(firstCall.data.band2Votes).toBe(0);
+    expect(firstCall.data.showScore).toBe(false);
   });
 });
