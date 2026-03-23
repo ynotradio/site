@@ -59,6 +59,39 @@ export const useListRelationships = () => {
   };
 };
 
+// Mock useNav hook (for nav open/close state)
+let mockNavOpen = true;
+
+export const useNav = () => ({
+  navOpen: mockNavOpen,
+  setNavOpen: (open: boolean) => {
+    mockNavOpen = open;
+  },
+  navRef: { current: null },
+  hydrated: true,
+  shouldAnimate: false,
+});
+
+// Mock usePreferences hook (for user preference persistence)
+let mockPreferences: Record<string, unknown> = {};
+
+export const usePreferences = () => ({
+  getPreference: async <T>(key: string): Promise<T | null> =>
+    (mockPreferences[key] as T) ?? null,
+  setPreference: async (key: string, value: unknown) => {
+    mockPreferences[key] = value;
+  },
+});
+
+// Helper to set mock nav preferences for stories
+export const setMockNavPreference = (value: { open?: boolean } | null) => {
+  if (value === null) {
+    delete mockPreferences.nav;
+  } else {
+    mockPreferences.nav = value;
+  }
+};
+
 // Mock useConfig hook (for Payload config access)
 export const useConfig = () => {
   return {
@@ -90,6 +123,8 @@ export const resetMocks = () => {
   mockFieldValue = '';
   mockFormFieldsValue = {};
   mockRelationshipDocuments = {};
+  mockNavOpen = true;
+  mockPreferences = {};
 };
 
 export const setMockDocuments = (docs: Record<string, Record<string, unknown>>) => {

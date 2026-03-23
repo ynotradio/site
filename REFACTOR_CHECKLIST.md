@@ -90,6 +90,12 @@ These are Next.js App Router infrastructure files or simple wrappers, not testab
 - `payload/src/features/dj-order/index.tsx` (27 lines) - Server component wrapper
 - `payload/src/features/show-cloner/index.tsx` (27 lines) - Server component wrapper
 
+## ✅ New Completions (providers)
+
+- [x] **NavDefaultClosed.tsx** (29 lines) ✅ Test + Story
+  - Path: `payload/src/components/providers/`
+  - Used by: Payload admin layout to collapse sidebar on first visit
+
 ## ✅ New Completions (mrm-bracket / mrm-live)
 
 Components added after the original checklist that now have full test + story coverage:
@@ -111,18 +117,18 @@ Components added after the original checklist that now have full test + story co
 
 ## 🎯 Summary Statistics
 
-- **Total TSX files**: 20 (excluding .stories.tsx and .test.tsx)
-- **Fully compliant**: 12 (60%) ✅ +2 from previous
-- **Need tests/stories**: 1 (5%) 🔄 Down from 3
-- **Infrastructure (exempt)**: 4 (20%)
+- **Total TSX files**: 21 (excluding .stories.tsx and .test.tsx)
+- **Fully compliant**: 14 (67%) ✅ +1 from previous (NavDefaultClosed)
+- **Need tests/stories**: 0 (0%) 🎉 All components covered
+- **Infrastructure (exempt)**: 4 (19%)
 - **Over 300 lines**: 0 (0%) ✅ FIXED
 
 ## 📊 Issues Breakdown
 
 | Issue               | Count | Files Affected        |
 | ------------------- | ----- | --------------------- |
-| Missing test files  | 1     | MatchControlsPanels   |
-| Missing story files | 1     | MatchControlsPanels   |
+| Missing test files  | 0     | ✅ NONE               |
+| Missing story files | 0     | ✅ NONE               |
 | Over 300 lines      | 0     | ✅ NONE               |
 
 ## 🔧 Recommended Action Plan
