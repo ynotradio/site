@@ -175,6 +175,7 @@ async function seedMrmFresh() {
         abbreviation: 'JBrekie',
         name: 'Japanese Breakfast',
         url: 'http://japanesebreakfast.rocks/',
+        sponsor: 'Dave Mooney',
       },
       {
         placement: 2,
@@ -182,6 +183,7 @@ async function seedMrmFresh() {
         abbreviation: 'ChlyBls',
         name: 'Charly Bliss',
         url: 'https://charlybliss.os.fan/',
+        sponsor: 'Wendy Kessler',
       },
       {
         placement: 3,
@@ -189,6 +191,7 @@ async function seedMrmFresh() {
         abbreviation: 'Wombats',
         name: 'The Wombats',
         url: 'https://www.thewombats.co.uk/',
+        sponsor: 'David Cohen',
       },
       {
         placement: 4,
@@ -196,6 +199,7 @@ async function seedMrmFresh() {
         abbreviation: 'Jpndrds',
         name: 'Japandroids',
         url: 'https://japandroids.com/',
+        sponsor: 'Vincent Smith',
       },
       {
         placement: 5,
@@ -203,6 +207,7 @@ async function seedMrmFresh() {
         abbreviation: 'Clash',
         name: 'The Clash',
         url: 'https://www.theclash.com/',
+        sponsor: 'Vincent Smith',
       },
       {
         placement: 6,
@@ -210,6 +215,7 @@ async function seedMrmFresh() {
         abbreviation: 'Cake',
         name: 'Cake',
         url: 'https://www.cakemusic.com/',
+        sponsor: 'Orlan Santos',
       },
       {
         placement: 7,
@@ -217,6 +223,7 @@ async function seedMrmFresh() {
         abbreviation: 'CHVRCHS',
         name: 'CHVRCHES',
         url: 'http://www.chvrch.es/',
+        sponsor: 'Marisa Lumino',
       },
       {
         placement: 8,
@@ -224,6 +231,7 @@ async function seedMrmFresh() {
         abbreviation: 'SlvnEso',
         name: 'Sylvan Esso',
         url: 'https://www.sylvanesso.com/',
+        sponsor: 'David Cohen',
       },
       {
         placement: 9,
@@ -231,6 +239,7 @@ async function seedMrmFresh() {
         abbreviation: 'Lindas',
         name: 'The Linda Lindas',
         url: 'https://www.thelindalindas.com/',
+        sponsor: 'Brian Osborn',
       },
       {
         placement: 10,
@@ -238,6 +247,7 @@ async function seedMrmFresh() {
         abbreviation: 'BenFlds',
         name: 'Ben Folds (Five)',
         url: 'https://www.benfolds.com/',
+        sponsor: 'Thomas Rife',
       },
       {
         placement: 11,
@@ -245,6 +255,7 @@ async function seedMrmFresh() {
         abbreviation: 'Beastie',
         name: 'Beastie Boys',
         url: 'http://beastieboys.com/',
+        sponsor: 'Jennifer Kondracki',
       },
       {
         placement: 12,
@@ -252,6 +263,7 @@ async function seedMrmFresh() {
         abbreviation: 'DaftPnk',
         name: 'Daft Punk',
         url: 'https://daftpunk.com/',
+        sponsor: 'Andrew Dippell',
       },
       {
         placement: 13,
@@ -259,6 +271,7 @@ async function seedMrmFresh() {
         abbreviation: 'WrOnDrg',
         name: 'The War on Drugs',
         url: 'http://www.thewarondrugs.net/home',
+        sponsor: 'Jason Rohde',
       },
       {
         placement: 14,
@@ -266,6 +279,7 @@ async function seedMrmFresh() {
         abbreviation: 'Interpl',
         name: 'Interpol',
         url: 'https://www.interpolnyc.com/',
+        sponsor: 'Dave Mazzone',
       },
       {
         placement: 15,
@@ -273,6 +287,7 @@ async function seedMrmFresh() {
         abbreviation: 'Rdohead',
         name: 'Radiohead / The Smile',
         url: 'https://radiohead.com/',
+        sponsor: 'Mary Holman',
       },
       {
         placement: 16,
@@ -280,6 +295,7 @@ async function seedMrmFresh() {
         abbreviation: 'NadaSrf',
         name: 'Nada Surf',
         url: 'https://www.nadasurf.com/',
+        sponsor: 'Jennifer Kondracki',
       },
       {
         placement: 17,
@@ -287,6 +303,7 @@ async function seedMrmFresh() {
         abbreviation: 'FntnsDC',
         name: 'Fontaines D.C.',
         url: 'https://fontainesdc.com/',
+        sponsor: 'Jim McAndrew',
       },
       {
         placement: 18,
@@ -294,6 +311,7 @@ async function seedMrmFresh() {
         abbreviation: 'ClnRose',
         name: 'Caroline Rose',
         url: 'https://www.carolinerosemusic.com/',
+        sponsor: 'Scott Hemmons',
       },
       {
         placement: 19,
@@ -301,6 +319,7 @@ async function seedMrmFresh() {
         abbreviation: 'KrtVile',
         name: 'Kurt Vile',
         url: 'https://www.kurtvile.com/',
+        sponsor: 'Andrew Gribbin',
       },
       {
         placement: 20,
@@ -308,6 +327,7 @@ async function seedMrmFresh() {
         abbreviation: 'Alvvays',
         name: 'Alvvays',
         url: 'https://alvvays.com/',
+        sponsor: 'Gordon Lung',
       },
       {
         placement: 21,
@@ -315,6 +335,7 @@ async function seedMrmFresh() {
         abbreviation: 'Bbadbee',
         name: 'Beabadoobee',
         url: 'https://www.beabadoobee.com/',
+        sponsor: 'Michael Cunningham',
       },
       {
         placement: 22,
@@ -322,6 +343,7 @@ async function seedMrmFresh() {
         abbreviation: 'Strokes',
         name: 'The Strokes',
         url: 'http://www.thestrokes.com',
+        sponsor: 'Steve Hrobsky',
       },
       {
         placement: 23,
@@ -329,6 +351,7 @@ async function seedMrmFresh() {
         abbreviation: 'AgnstMe',
         name: 'Against Me! / Laura Jane Grace',
         url: 'https://www.laurajanegrace.com/',
+        sponsor: 'Richard Crespo',
       },
       {
         placement: 24,
@@ -336,6 +359,7 @@ async function seedMrmFresh() {
         abbreviation: 'CSHR',
         name: 'Car Seat Headrest',
         url: 'https://carseatheadrest.com/',
+        sponsor: 'Michael Ferry',
       },
       {
         placement: 25,
@@ -343,6 +367,7 @@ async function seedMrmFresh() {
         abbreviation: 'Spoon',
         name: 'Spoon',
         url: 'http://www.spoontheband.com',
+        sponsor: 'David & Pat Schaeffer',
       },
       {
         placement: 26,
@@ -350,6 +375,7 @@ async function seedMrmFresh() {
         abbreviation: 'ArcMnky',
         name: 'Arctic Monkeys',
         url: 'http://www.arcticmonkeys.com',
+        sponsor: 'Eric Rusack',
       },
       {
         placement: 27,
@@ -357,6 +383,7 @@ async function seedMrmFresh() {
         abbreviation: 'YYYs',
         name: 'Yeah Yeah Yeahs',
         url: 'http://www.yeahyeahyeahs.com/',
+        sponsor: 'Steve Quirk',
       },
       {
         placement: 28,
@@ -364,6 +391,7 @@ async function seedMrmFresh() {
         abbreviation: 'FooFtrs',
         name: 'Foo Fighters',
         url: 'https://foofighters.com/',
+        sponsor: 'Meredith Drumheller',
       },
       {
         placement: 29,
@@ -371,6 +399,7 @@ async function seedMrmFresh() {
         abbreviation: 'NIN',
         name: 'Nine Inch Nails',
         url: 'https://www.nin.com/',
+        sponsor: 'Image360 of the Main Line (David Friedenberg)',
       },
       {
         placement: 30,
@@ -378,6 +407,7 @@ async function seedMrmFresh() {
         abbreviation: 'BchBnny',
         name: 'Beach Bunny',
         url: 'https://www.beachbunnymusic.com/',
+        sponsor: 'Karen Isaacman',
       },
       {
         placement: 31,
@@ -385,6 +415,7 @@ async function seedMrmFresh() {
         abbreviation: 'Cure',
         name: 'The Cure',
         url: 'https://www.thecure.com/',
+        sponsor: 'Dennis Beach',
       },
       {
         placement: 32,
@@ -392,6 +423,7 @@ async function seedMrmFresh() {
         abbreviation: 'BlcPrty',
         name: 'Bloc Party',
         url: 'https://blocparty.com/',
+        sponsor: 'Joe Tittermary',
       },
       {
         placement: 33,
@@ -399,6 +431,7 @@ async function seedMrmFresh() {
         abbreviation: 'JackWht',
         name: 'Jack White / White Stripes',
         url: 'http://www.jackwhiteiii.com',
+        sponsor: 'Damian Petrone',
       },
       {
         placement: 34,
@@ -406,6 +439,7 @@ async function seedMrmFresh() {
         abbreviation: 'SherMag',
         name: 'Sheer Mag',
         url: 'https://www.sheer-mag.com/',
+        sponsor: 'Liz Whelan',
       },
       {
         placement: 35,
@@ -413,6 +447,7 @@ async function seedMrmFresh() {
         abbreviation: 'IDLES',
         name: 'IDLES',
         url: 'https://www.idlesband.com/',
+        sponsor: 'Thomas Rife',
       },
       {
         placement: 36,
@@ -420,6 +455,7 @@ async function seedMrmFresh() {
         abbreviation: 'Nationl',
         name: 'The National',
         url: 'https://americanmary.com/',
+        sponsor: 'Steve Hrobsky',
       },
       {
         placement: 37,
@@ -427,6 +463,7 @@ async function seedMrmFresh() {
         abbreviation: 'Garbage',
         name: 'Garbage',
         url: 'http://www.garbage.com',
+        sponsor: 'David Johnson',
       },
       {
         placement: 38,
@@ -434,6 +471,7 @@ async function seedMrmFresh() {
         abbreviation: 'FrnzFrd',
         name: 'Franz Ferdinand',
         url: 'https://franzferdinand.com/',
+        sponsor: 'Daniel Rowan',
       },
       {
         placement: 39,
@@ -441,6 +479,7 @@ async function seedMrmFresh() {
         abbreviation: 'DCfC',
         name: 'Death Cab For Cutie',
         url: 'https://www.deathcabforcutie.com/',
+        sponsor: 'Bill Syrros',
       },
       {
         placement: 40,
@@ -448,6 +487,7 @@ async function seedMrmFresh() {
         abbreviation: 'Mitski',
         name: 'Mitski',
         url: 'https://mitski.com/',
+        sponsor: 'Eric Rusack',
       },
       {
         placement: 41,
@@ -455,6 +495,7 @@ async function seedMrmFresh() {
         abbreviation: 'Beths',
         name: 'The Beths',
         url: 'https://thebeths.com/',
+        sponsor: 'Martin Falasco',
       },
       {
         placement: 42,
@@ -462,6 +503,7 @@ async function seedMrmFresh() {
         abbreviation: 'NewPrno',
         name: 'The New Pornographers',
         url: 'https://thenewpornographers.com/',
+        sponsor: 'Jakey Greenberg',
       },
       {
         placement: 43,
@@ -469,6 +511,7 @@ async function seedMrmFresh() {
         abbreviation: 'VmprWkd',
         name: 'Vampire Weekend',
         url: 'http://www.vampireweekend.com',
+        sponsor: 'Michael Lebovitz',
       },
       {
         placement: 44,
@@ -476,6 +519,7 @@ async function seedMrmFresh() {
         abbreviation: 'Ramones',
         name: 'Ramones',
         url: 'https://www.ramones.com/',
+        sponsor: 'Brandon Pinzini',
       },
       {
         placement: 45,
@@ -483,6 +527,7 @@ async function seedMrmFresh() {
         abbreviation: 'TVOTR',
         name: 'TV On The Radio',
         url: 'https://tvontheradio.com/',
+        sponsor: 'George White',
       },
       {
         placement: 46,
@@ -490,6 +535,7 @@ async function seedMrmFresh() {
         abbreviation: 'TlkgHds',
         name: 'Talking Heads / David Byrne',
         url: 'http://davidbyrne.com/',
+        sponsor: 'Terry Lautin',
       },
       {
         placement: 47,
@@ -497,6 +543,7 @@ async function seedMrmFresh() {
         abbreviation: 'REM',
         name: 'R.E.M.',
         url: 'https://remhq.com/',
+        sponsor: 'Image360 of the Main Line (David Friedenberg)',
       },
       {
         placement: 48,
@@ -504,6 +551,7 @@ async function seedMrmFresh() {
         abbreviation: 'Hives',
         name: 'The Hives',
         url: 'https://www.thehives.com/',
+        sponsor: 'Meredith Drumheller',
       },
       {
         placement: 49,
@@ -511,6 +559,7 @@ async function seedMrmFresh() {
         abbreviation: 'StVnct',
         name: 'St. Vincent',
         url: 'http://www.ilovestvincent.com/',
+        sponsor: 'Lisa Wetherby',
       },
       {
         placement: 50,
@@ -518,6 +567,7 @@ async function seedMrmFresh() {
         abbreviation: 'YardAct',
         name: 'Yard Act',
         url: 'https://www.yardactors.com/',
+        sponsor: 'Gregory Itts',
       },
       {
         placement: 51,
@@ -525,6 +575,7 @@ async function seedMrmFresh() {
         abbreviation: 'Metric',
         name: 'Metric',
         url: 'http://www.ilovemetric.com',
+        sponsor: 'Danielle Nutt',
       },
       {
         placement: 52,
@@ -532,6 +583,7 @@ async function seedMrmFresh() {
         abbreviation: 'Guster',
         name: 'Guster',
         url: 'https://www.guster.com/',
+        sponsor: 'Michele Gurz',
       },
       {
         placement: 53,
@@ -539,6 +591,7 @@ async function seedMrmFresh() {
         abbreviation: 'Wxhtche',
         name: 'Waxahatchee',
         url: 'https://www.waxahatchee.com/',
+        sponsor: 'Madge & Joe Rassman',
       },
       {
         placement: 54,
@@ -546,6 +599,7 @@ async function seedMrmFresh() {
         abbreviation: 'TmImpla',
         name: 'Tame Impala',
         url: 'https://official.tameimpala.com/',
+        sponsor: 'Jeffrey Seltzer',
       },
       {
         placement: 55,
@@ -553,6 +607,7 @@ async function seedMrmFresh() {
         abbreviation: 'Beck',
         name: 'Beck',
         url: 'http://www.beck.com',
+        sponsor: 'Wendy Kessler',
       },
       {
         placement: 56,
@@ -560,6 +615,7 @@ async function seedMrmFresh() {
         abbreviation: 'Nirvana',
         name: 'Nirvana',
         url: 'https://www.nirvana.com/',
+        sponsor: 'David Soto',
       },
       {
         placement: 57,
@@ -567,6 +623,7 @@ async function seedMrmFresh() {
         abbreviation: 'SSPU',
         name: 'Silversun Pickups',
         url: 'https://silversunpickups.com/',
+        sponsor: 'Bruce Grant',
       },
       {
         placement: 58,
@@ -574,6 +631,7 @@ async function seedMrmFresh() {
         abbreviation: 'Vaccins',
         name: 'The Vaccines',
         url: 'https://www.thevaccines.com/',
+        sponsor: 'Jeanne Martin',
       },
       {
         placement: 59,
@@ -581,6 +639,7 @@ async function seedMrmFresh() {
         abbreviation: 'LCDSyst',
         name: 'LCD Soundsystem',
         url: 'http://lcdsoundsystem.com/main/.',
+        sponsor: 'Liz Whelan',
       },
       {
         placement: 60,
@@ -588,6 +647,7 @@ async function seedMrmFresh() {
         abbreviation: 'FtrIsld',
         name: 'Future Islands',
         url: 'https://www.future-islands.com/',
+        sponsor: 'Patrick Raimondo',
       },
       {
         placement: 61,
@@ -595,6 +655,7 @@ async function seedMrmFresh() {
         abbreviation: 'Gorllaz',
         name: 'Gorillaz / Blur',
         url: 'https://www.gorillaz.com/',
+        sponsor: 'Michael Clarke',
       },
       {
         placement: 62,
@@ -602,6 +663,7 @@ async function seedMrmFresh() {
         abbreviation: 'Dcmbrst',
         name: 'The Decemberists',
         url: 'https://www.decemberists.com/',
+        sponsor: 'Danielle Nutt',
       },
       {
         placement: 63,
@@ -609,6 +671,7 @@ async function seedMrmFresh() {
         abbreviation: 'MnqnPsy',
         name: 'Mannequin Pussy',
         url: 'https://mannequinpussy.com/',
+        sponsor: 'George White',
       },
       {
         placement: 64,
@@ -616,6 +679,7 @@ async function seedMrmFresh() {
         abbreviation: 'SpdyOtz',
         name: 'Speedy Ortiz',
         url: 'https://www.speedyortiz.com/',
+        sponsor: 'Jeffrey Seltzer',
       },
     ];
 
@@ -633,6 +697,7 @@ async function seedMrmFresh() {
           abbreviation: b.abbreviation,
           name: b.name,
           url: b.url,
+          sponsor: b.sponsor,
         },
       });
       const id = typeof created.id === 'number' ? created.id : parseInt(created.id as string, 10);

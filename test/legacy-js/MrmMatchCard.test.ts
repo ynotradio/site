@@ -217,6 +217,45 @@ describe('MrmMatchCard', () => {
     expect(actionRow.classList.contains('hidden')).toBe(true);
   });
 
+  it('displays band-level sponsor under band1 name when band1-sponsor is set', () => {
+    const el = createElement({
+      'band1-name': 'Radiohead',
+      'band1-sponsor': 'Jane Doe',
+      'band2-name': 'Muse',
+    });
+
+    const root = el.shadowRoot;
+    const sponsorEl = root.querySelector('[data-slot="band1-sponsor"]');
+    expect(sponsorEl).toBeTruthy();
+    expect(sponsorEl.classList.contains('hidden')).toBe(false);
+    expect(sponsorEl.textContent).toBe('Sponsored by: Jane Doe');
+  });
+
+  it('displays band-level sponsor under band2 name when band2-sponsor is set', () => {
+    const el = createElement({
+      'band1-name': 'Radiohead',
+      'band2-name': 'Muse',
+      'band2-sponsor': 'John Smith',
+    });
+
+    const root = el.shadowRoot;
+    const sponsorEl = root.querySelector('[data-slot="band2-sponsor"]');
+    expect(sponsorEl).toBeTruthy();
+    expect(sponsorEl.classList.contains('hidden')).toBe(false);
+    expect(sponsorEl.textContent).toBe('Sponsored by: John Smith');
+  });
+
+  it('hides band-level sponsor slots when no sponsor attributes are set', () => {
+    const el = createElement({
+      'band1-name': 'Radiohead',
+      'band2-name': 'Muse',
+    });
+
+    const root = el.shadowRoot;
+    expect(root.querySelector('[data-slot="band1-sponsor"]').classList.contains('hidden')).toBe(true);
+    expect(root.querySelector('[data-slot="band2-sponsor"]').classList.contains('hidden')).toBe(true);
+  });
+
   it('dims losing band image when winner="1"', () => {
     const el = createElement({
       winner: '1',

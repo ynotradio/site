@@ -7,9 +7,11 @@
  *   band1-name      – Full name of band 1
  *   band1-image     – Image URL for band 1
  *   band1-seed      – Seed number for band 1
+ *   band1-sponsor   – Group sponsor name for band 1
  *   band2-name      – Full name of band 2
  *   band2-image     – Image URL for band 2
  *   band2-seed      – Seed number for band 2
+ *   band2-sponsor   – Group sponsor name for band 2
  *   band1-pct       – Vote percentage for band 1 (e.g. "52%")
  *   band2-pct       – Vote percentage for band 2 (e.g. "48%")
  *   show-results    – Boolean attribute; when present, shows percentages
@@ -135,6 +137,13 @@ TEMPLATE.innerHTML = `
     padding: 6px 0;
   }
 
+  .band-sponsor {
+    font-size: 11px;
+    font-weight: normal;
+    color: #787878;
+    font-style: italic;
+  }
+
   .sponsor {
     text-align: center;
     padding: 8px 0;
@@ -147,9 +156,15 @@ TEMPLATE.innerHTML = `
 
 <table>
   <tr>
-    <td class="band-name" data-slot="band1-name"></td>
+    <td class="band-name">
+      <div data-slot="band1-name"></div>
+      <div class="band-sponsor hidden" data-slot="band1-sponsor"></div>
+    </td>
     <td class="vs-cell" rowspan="3" data-slot="vs">VS</td>
-    <td class="band-name" data-slot="band2-name"></td>
+    <td class="band-name">
+      <div data-slot="band2-name"></div>
+      <div class="band-sponsor hidden" data-slot="band2-sponsor"></div>
+    </td>
   </tr>
   <tr>
     <td class="band-cell" data-slot="band1-image-wrap">
@@ -192,8 +207,8 @@ class MrmMatchCard extends HTMLElement {
   static get observedAttributes() {
     return [
       'match-id', 'status',
-      'band1-name', 'band1-image', 'band1-seed',
-      'band2-name', 'band2-image', 'band2-seed',
+      'band1-name', 'band1-image', 'band1-seed', 'band1-sponsor',
+      'band2-name', 'band2-image', 'band2-seed', 'band2-sponsor',
       'band1-pct', 'band2-pct',
       'show-results', 'has-voted', 'winner', 'tied',
       'sponsor', 'sponsor-msg', 'voting-disabled',
@@ -262,6 +277,19 @@ class MrmMatchCard extends HTMLElement {
       this.getAttribute('band1-name') ?? '';
     root.querySelector('[data-slot="band2-name"]').textContent =
       this.getAttribute('band2-name') ?? '';
+
+    // Band sponsors (group-level)
+    ['1', '2'].forEach((n) => {
+      const sponsorVal = this.getAttribute(`band${n}-sponsor`);
+      const el = root.querySelector(`[data-slot="band${n}-sponsor"]`);
+      if (sponsorVal) {
+        el.textContent = `Sponsored by: ${sponsorVal}`;
+        el.classList.remove('hidden');
+      } else {
+        el.textContent = '';
+        el.classList.add('hidden');
+      }
+    });
 
     // Band images
     const img1 = root.querySelector('[data-slot="band1-image"]');
