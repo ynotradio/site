@@ -9,7 +9,6 @@
  *   - Band names in [data-slot="band1-name"] / [data-slot="band2-name"]
  *   - Images in [data-slot="band1-image"] / [data-slot="band2-image"]
  *   - VS/timer in [data-slot="vs"] cell
- *   - Percentages in [data-slot="band1-pct"] / [data-slot="band2-pct"]
  *   - Vote buttons in [data-slot="action-row"] (hidden class toggles row)
  *   - Login links in [data-slot="login-row"] (hidden class toggles row)
  *   - Status message in [data-slot="message-row"] / [data-slot="message"]
@@ -87,28 +86,6 @@ describe('MrmMatchCard', () => {
     const el = createElement({ status: 'early' });
     const vsCell = el.shadowRoot.querySelector('[data-slot="vs"]');
     expect(vsCell.textContent).toBe('VS');
-  });
-
-  it('shows vote percentages when show-results is set', () => {
-    const el = createElement({
-      'band1-pct': '55%',
-      'band2-pct': '45%',
-      'show-results': true,
-    });
-
-    const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('55%');
-    expect(root.querySelector('[data-slot="band2-pct"]').textContent).toBe('45%');
-  });
-
-  it('renders percentage attributes as text content even without show-results', () => {
-    const el = createElement({
-      'band1-pct': '55%',
-      'band2-pct': '45%',
-    });
-
-    const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-pct"]').textContent).toBe('55%');
   });
 
   it('shows vote buttons when status=running and has-voted is absent', () => {
@@ -252,8 +229,12 @@ describe('MrmMatchCard', () => {
     });
 
     const root = el.shadowRoot;
-    expect(root.querySelector('[data-slot="band1-sponsor"]').classList.contains('hidden')).toBe(true);
-    expect(root.querySelector('[data-slot="band2-sponsor"]').classList.contains('hidden')).toBe(true);
+    expect(root.querySelector('[data-slot="band1-sponsor"]').classList.contains('hidden')).toBe(
+      true,
+    );
+    expect(root.querySelector('[data-slot="band2-sponsor"]').classList.contains('hidden')).toBe(
+      true,
+    );
   });
 
   it('dims losing band image when winner="1"', () => {
