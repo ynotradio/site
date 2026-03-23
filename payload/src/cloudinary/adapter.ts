@@ -2,7 +2,6 @@ import type { Adapter } from '@payloadcms/plugin-cloud-storage/types';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { randomBytes } from 'crypto';
 
-// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -11,10 +10,6 @@ cloudinary.config({
 
 const folder = process.env.NODE_ENV === 'production' ? 'prod/uploads' : 'dev/uploads';
 
-/**
- * Generate a random filename using timestamp and random bytes
- * Format: {timestamp}-{random} (e.g., 1704251928-a3f9c2d1)
- */
 function generateRandomFilename(): string {
   const timestamp = Date.now();
   const random = randomBytes(4).toString('hex');
@@ -68,8 +63,7 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
       // Copy the public ID into each image-size filename so that
       // generateFileURL receives it when building transform URLs.
       if (data.sizes && typeof data.sizes === 'object') {
-        Object.keys(data.sizes).forEach((sizeName) => {
-          const sizeData = data.sizes[sizeName];
+        Object.values(data.sizes).forEach((sizeData) => {
           if (sizeData) {
             // eslint-disable-next-line no-param-reassign
             sizeData.filename = publicId;
@@ -94,8 +88,6 @@ export const cloudinaryAdapter: Adapter = ({ prefix }) => {
     },
 
     staticHandler: async (req, { params }) => {
-      // This handles direct file access via /media/file/:filename
-      // Redirect to the actual Cloudinary URL
       const { filename } = params;
       const publicId = filename.includes('/') ? filename : `${collectionPrefix}/${filename}`;
 
