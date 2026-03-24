@@ -225,6 +225,89 @@ async function syncActiveStories(
 }
 
 /**
+ * Sync front-page visibility: ensures only stories that are currently active
+ * and non-deleted in MySQL have showOnFrontPage=true in Postgres.
+ *
+ * Catches: soft-deleted stories, hard-deleted stories (no longer in MySQL),
+ * and custom texts that were incorrectly imported with showOnFrontPage=true.
+ */
+async function syncDeletedFromFrontPage(
+  mysqlConnection: any,
+  payload: Payload,
+): Promise<{ fixed: number }> {
+  const stats = { fixed: 0 };
+
+  // Paginate through all Postgres posts that are on the front page with a legacyId
+  const allFrontPagePosts: { pgId: string; legacyId: number }[] = [];
+  let page = 1;
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const result = await payload.find({
+      collection: 'posts',
+      where: {
+        showOnFrontPage: { equals: true },
+        legacyId: { exists: true },
+      },
+      limit: 100,
+      page,
+    });
+
+    for (const doc of result.docs as any[]) {
+      if (doc.legacyId) {
+        allFrontPagePosts.push({ pgId: doc.id, legacyId: doc.legacyId });
+      }
+    }
+
+    if (!result.hasNextPage) break;
+    page += 1;
+  }
+
+  if (allFrontPagePosts.length === 0) return stats;
+
+  logger.info(
+    `[sync-deleted] Checking ${allFrontPagePosts.length} front-page posts against MySQL`,
+  );
+
+  // Batch-query MySQL for which legacy IDs are active (non-deleted) stories
+  const legacyIds = allFrontPagePosts.map((r) => r.legacyId);
+  const [activeRows] = await mysqlConnection.query(
+    "SELECT id FROM stories WHERE id IN (?) AND deleted = 'n'",
+    [legacyIds],
+  );
+
+  const activeSet = new Set((activeRows as any[]).map((r: any) => r.id));
+
+  // Any front-page post NOT in the active MySQL set should be removed
+  const toFix = allFrontPagePosts.filter(({ legacyId }) => !activeSet.has(legacyId));
+
+  if (toFix.length === 0) {
+    logger.info('[sync-deleted] All front-page posts are active in MySQL');
+    return stats;
+  }
+
+  logger.info(
+    `[sync-deleted] ${toFix.length} posts to remove from front page (not active in MySQL)`,
+  );
+
+  for (const { pgId, legacyId } of toFix) {
+    try {
+      await payload.update({
+        collection: 'posts',
+        id: pgId,
+        data: { showOnFrontPage: false },
+      });
+      stats.fixed += 1;
+      logger.info(`[sync-deleted] ✓ Post legacyId=${legacyId} removed from front page`);
+    } catch (error) {
+      logger.error(`[sync-deleted] ✗ Post legacyId=${legacyId} update failed`, error as Error);
+    }
+  }
+
+  return stats;
+}
+
+/**
  * Check if a post with the given legacy ID already exists
  */
 async function postExists(payload: Payload, legacyId: number): Promise<boolean> {
@@ -350,7 +433,8 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
       imageUrl: post.image_url, // Store original image URL as fallback
       linkUrl: post.link_url, // Store link URL for story image click target
       priority: post.priority || 0,
-      showOnFrontPage: post.source === 'story', // Stories appear on front page, custom texts don't
+      showOnFrontPage: post.source === 'story'
+        && post.deleted?.toLowerCase() !== 'y', // Deleted stories stay published but off front page
       legacyId: post.id,
       migratedAt: new Date().toISOString(),
       _status: 'published' as const, // Set status to published so posts are immediately visible
@@ -420,6 +504,10 @@ async function importPosts(options: ImportOptions): Promise<void> {
       logger.info(
         `[sync-active] Done: ${syncStats.refreshed} refreshed, ${syncStats.unchanged} unchanged, ${syncStats.errors} errors`,
       );
+
+      // Phase 1b: remove deleted MySQL stories from the Postgres front page
+      const deletedStats = await syncDeletedFromFrontPage(mysqlConnection, payload);
+      logger.info(`[sync-deleted] Done: ${deletedStats.fixed} removed from front page`);
     }
 
     // Phase 2: import new records (standard flow)
@@ -488,5 +576,5 @@ if (isMainModule()) {
 }
 
 export {
-  importPosts, parseArgs, importPost, storyHash, syncActiveStories,
+  importPosts, parseArgs, importPost, storyHash, syncActiveStories, syncDeletedFromFrontPage,
 };
