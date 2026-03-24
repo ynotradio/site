@@ -40,10 +40,6 @@ if (!$_SESSION["logged_in"]) {
               <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
           <td width="275px">
-            <dt>Modern Rock Madness</dt>
-              <dd><a href="mrm_add_band.php">Add A Band</a></dd>
-              <dd><a href="mrm_view_all.php">View all Bands</a></dd>
-              <dd><a href="mrm_manage_matches.php">Manage Matches</a></dd>
             <dt>New Music</dt>
               <dd><a href="music_add.php">Add New Music</a></dd>
               <dd><a href="music_view_all.php">View all New Music</a></dd>

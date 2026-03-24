@@ -2,6 +2,7 @@
 
 namespace YNotRadio\Controllers;
 
+use YNotRadio\Models\ModernRockMadness;
 use YNotRadio\Models\ModernRockMadnessFactory;
 
 require_once(__DIR__ . "/../models/ModernRockMadnessFactory.php");
@@ -17,17 +18,18 @@ class MadnessController
     /**
      * Create controller with database connection
      * 
-     * @param \mysqli $db Database connection
+     * @param \mysqli $db Database connection (used to create model when $model is not provided)
+     * @param ModernRockMadness|null $model Optional pre-built model (useful for testing)
      * @throws \Exception If model creation fails
      */
-    public function __construct(\mysqli $db)
+    public function __construct(\mysqli $db, ModernRockMadness $model = null)
     {
         if (!$db) {
             throw new \InvalidArgumentException('Database connection is required');
         }
         
-        // Initialize the model internally
-        $this->mrmModel = ModernRockMadnessFactory::create($db);
+        // Allow injecting a model directly (e.g. for unit tests)
+        $this->mrmModel = $model ?? ModernRockMadnessFactory::create($db);
     }
     
     /**

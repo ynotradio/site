@@ -51,7 +51,7 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
       $css_version = file_exists($css_file) ? filemtime($css_file) : time();
       ?>
       <link href="<?php echo $base_path; ?>style/base.css?v=<?php echo $css_version; ?>" rel="stylesheet" type="text/css" media="all">
-      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php") {
     $madness_css = __DIR__ . '/../style/madness.css';
     $madness_version = file_exists($madness_css) ? filemtime($madness_css) : time();
     echo "<link href=\"" . $base_path . "style/madness.css?v=" . $madness_version . "\" rel=\"stylesheet\" type=\"text/css\" media=\"all\">\n";
@@ -67,7 +67,7 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
       <script src="<?php echo $base_path; ?>js/picker.time.js"></script>
       <script src="<?php echo $base_path; ?>js/legacy.js"></script>
       <script src="<?php echo $base_path; ?>js/init.js"></script>
-      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php" || $page_file == "mrm_manage_matches.php") {
+      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php") {
     $js_dir = __DIR__ . '/../js/';
     $js_comp_dir = $js_dir . 'components/';
     $bm_v = file_exists($js_comp_dir . 'mrm-bracket-match.js') ? filemtime($js_comp_dir . 'mrm-bracket-match.js') : time();
@@ -85,15 +85,9 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
 }
 
 ?>
-      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "mrm_manage_matches.php") {
+      <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php") {
     $cd_v = file_exists($js_dir . 'countdown.js') ? filemtime($js_dir . 'countdown.js') : time();
     echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/countdown.js?v=" . $cd_v . "\"></script>";
-}
-
-?>
-      <?php if ($page_file == "mrm_manage_matches.php") {
-    $am_v = file_exists($js_dir . 'admin-madness.js') ? filemtime($js_dir . 'admin-madness.js') : time();
-    echo "<script type=\"text/javascript\" src=\"" . $base_path . "js/admin-madness.js?v=" . $am_v . "\"></script>";
 }
 
 ?>
