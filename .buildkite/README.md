@@ -6,8 +6,8 @@ Pipeline configurations for Y-Not Radio CI/CD.
 
 - **`pipeline.yml`** - Main CI: quality checks → tests → build → E2E (triggers on PRs)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
-- **`scheduled-db-sync.yml`** - Weekly prod→dev DB sync (Monday 2 AM UTC)
-- **`nightly-gap-report.yml`** - Nightly import + gap report: imports new records from prod MySQL → Payload/Neon, posts import summary as issue comment, updates issue body with gap report
+- **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
+- **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
 
 ## Required Environment Variables
 
@@ -21,6 +21,7 @@ GHCR_TOKEN=<github-token-with-packages-write>
 # Databases
 NEON_PROD_DATABASE_URL=<production-url>
 NEON_DEV_DATABASE_URL=<development-url>
+NEON_API_KEY=<neon-api-key>  # for dev branch reset (neonctl)
 
 # Cloudinary (for E2E tests)
 CLOUDINARY_CLOUD_NAME=<cloud-name>
@@ -69,8 +70,8 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 1. New Pipeline: "Y-Not Radio - Weekly DB Sync"
 2. Configuration path: `.buildkite/scheduled-db-sync.yml`
 3. Disable webhooks
-4. Build Schedule: `0 2 * * 1` on `main`
-5. Add database URLs
+4. Build Schedule: `0 2 * * 1` on `master`
+5. Add secret: `NEON_API_KEY`
 
 ### Nightly Import & Gap Report
 
@@ -79,7 +80,7 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 3. Disable webhooks
 4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
 5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
-   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
+   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `NEON_API_KEY`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
 6. Create a GitHub issue to track migration progress (note the issue number)
 
 ## Troubleshooting

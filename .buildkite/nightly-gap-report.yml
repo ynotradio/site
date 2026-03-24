@@ -18,9 +18,12 @@
 #   GITHUB_PR_TOKEN              — Fine-grained PAT with issues:write permission
 #   GAP_REPORT_ISSUE_NUMBER      — GitHub issue number to update with results
 #   INTEGRITY_REPORT_ISSUE_NUMBER — GitHub issue number for integrity report
+#   NEON_API_KEY                   — Neon API key (for dev branch reset)
 
 env:
   NODE_VERSION: "22"
+  NEON_PROJECT_ID: "flat-bird-55654203"
+  NEON_ORG_ID: "org-cool-hat-59377226"
 
 steps:
   - label: ":package: Import & :bar_chart: Gap Report"
@@ -72,6 +75,29 @@ steps:
             - "NEON_PROD_DATABASE_URL"
             - "GITHUB_PR_TOKEN"
             - "GAP_REPORT_ISSUE_NUMBER"
+    agents:
+      queue: "default"
+
+  - label: ":neon: Reset dev branch from production"
+    key: "reset-dev-branch"
+    depends_on: "import-and-gap-report"
+    timeout_in_minutes: 5
+    command: |
+      echo "--- :neon: Resetting development branch to match production"
+      npx neonctl branches reset development \
+        --parent \
+        --api-key "$$NEON_API_KEY" \
+        --project-id "$$NEON_PROJECT_ID" \
+        --org-id "$$NEON_ORG_ID"
+      echo "✅ Development branch reset to production"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "NEON_API_KEY"
+            - "NEON_PROJECT_ID"
+            - "NEON_ORG_ID"
     agents:
       queue: "default"
 

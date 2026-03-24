@@ -1,48 +1,54 @@
 # Buildkite Pipeline for Scheduled Database Sync
-# This pipeline replaces the GitHub Actions weekly-db-sync.yml workflow
+# This pipeline resets the Neon development branch from production.
 #
 # Schedule: Weekly on Monday at 2:00 AM UTC
 # Purpose: Sync production database to development for testing
-# 
-# Note: Configure this as a scheduled build in Buildkite UI:
+#
+# Note: The nightly pipeline also resets dev from prod after each import.
+# This weekly pipeline serves as a safety net in case the nightly run
+# is skipped or fails before reaching the reset step.
+#
+# Configure as a scheduled build in Buildkite UI:
 # Schedule: 0 2 * * 1 (cron format: Monday at 2 AM UTC)
-# Branch: main
+# Branch: master
 
 env:
   NODE_VERSION: "22"
+  NEON_PROJECT_ID: "flat-bird-55654203"
+  NEON_ORG_ID: "org-cool-hat-59377226"
 
 steps:
-  - label: ":database: Sync Production → Development"
+  - label: ":neon: Sync Production → Development"
     key: "db-sync"
+    timeout_in_minutes: 5
     command: |
-      echo "--- :yarn: Installing dependencies"
-      yarn install --frozen-lockfile
-      
-      echo "--- :database: Copying production database to development"
-      echo "WARNING: This will completely replace the development database"
-      echo "Source: Production ($$NEON_PROD_DATABASE_URL)"
-      echo "Target: Development ($$NEON_DEV_DATABASE_URL)"
-      
-      # Auto-confirm by piping 'yes' to the script
-      echo "yes" | yarn neon-db:copy prod dev
-      
-      echo "--- :white_check_mark: Database sync completed successfully"
-    env:
-      NEON_PROD_DATABASE_URL: "${NEON_PROD_DATABASE_URL}"
-      NEON_DEV_DATABASE_URL: "${NEON_DEV_DATABASE_URL}"
+      echo "--- :neon: Resetting development branch to match production"
+      npx neonctl branches reset development \
+        --parent \
+        --api-key "$$NEON_API_KEY" \
+        --project-id "$$NEON_PROJECT_ID" \
+        --org-id "$$NEON_ORG_ID"
+      echo "✅ Development branch reset to production"
     plugins:
       - docker#v5.11.0:
-          image: "node:22"
-          volumes:
-            - ".:/app"
-          workdir: "/app"
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "NEON_API_KEY"
+            - "NEON_PROJECT_ID"
+            - "NEON_ORG_ID"
     agents:
       queue: "default"
 
-  - wait
+  - wait: ~
+    continue_on_failure: true
 
-  - label: ":memo: Notify on Failure"
+  - label: ":memo: Annotate on Failure"
     command: |
-      echo "Database sync failed! Check the logs above for details."
-      echo "You may need to manually verify the database state."
+      buildkite-agent annotate \
+        "⚠️ Database sync failed. Check the logs above for details." \
+        --style "warning" \
+        --context "db-sync-failure"
     if: build.state == "failed"
+    agents:
+      queue: "default"
