@@ -314,6 +314,91 @@ describe('importPosts', () => {
       });
     });
 
+    it('should set showOnFrontPage=true for non-deleted stories', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 1,
+        headline: 'Active Story',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        content: '<p>content</p>',
+        image_url: '',
+        priority: 0,
+        deleted: 'n',
+        source: 'story',
+      };
+
+      await importPost(mockPayload as Payload, post);
+
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          showOnFrontPage: true,
+        }),
+      });
+    });
+
+    it('should set showOnFrontPage=false for deleted stories', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 1,
+        headline: 'Deleted Story',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        content: '<p>content</p>',
+        image_url: '',
+        priority: 0,
+        deleted: 'y',
+        source: 'story',
+      };
+
+      await importPost(mockPayload as Payload, post);
+
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          showOnFrontPage: false,
+          _status: 'published',
+        }),
+      });
+    });
+
+    it('should set showOnFrontPage=false for uppercase-deleted stories', async () => {
+      const { importPost } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id-123' });
+
+      const post: Post = {
+        id: 1,
+        headline: 'Deleted Story',
+        start_date: '2024-01-01',
+        end_date: '2024-12-31',
+        content: '<p>content</p>',
+        image_url: '',
+        priority: 0,
+        deleted: 'Y',
+        source: 'story',
+      };
+
+      await importPost(mockPayload as Payload, post);
+
+      expect(mockPayload.create).toHaveBeenCalledWith({
+        collection: 'posts',
+        data: expect.objectContaining({
+          showOnFrontPage: false,
+        }),
+      });
+    });
+
     it('should handle HTML in headline for slug generation', async () => {
       const { importPost } = await import('./importPosts');
 
@@ -621,6 +706,129 @@ describe('importPosts', () => {
 
       expect(stats.errors).toBe(1);
       expect(stats.refreshed).toBe(0);
+    });
+  });
+
+  describe('syncDeletedFromFrontPage', () => {
+    it('should remove posts not active in MySQL from Postgres front page', async () => {
+      const { syncDeletedFromFrontPage } = await import('./importPosts');
+
+      mockPayload.update = vi.fn().mockResolvedValue({});
+      // Front-page posts: legacyIds 10, 20, 30
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [
+          { id: 'pg-1', legacyId: 10 },
+          { id: 'pg-2', legacyId: 20 },
+          { id: 'pg-3', legacyId: 30 },
+        ],
+        hasNextPage: false,
+      });
+
+      const mockMysql = {
+        // Only legacyId 10 is active in MySQL (20, 30 are missing/deleted)
+        query: vi.fn().mockResolvedValue([[{ id: 10 }]]),
+      };
+
+      const stats = await syncDeletedFromFrontPage(mockMysql, mockPayload as Payload);
+
+      expect(stats.fixed).toBe(2);
+      expect(mockPayload.update).toHaveBeenCalledWith({
+        collection: 'posts',
+        id: 'pg-2',
+        data: { showOnFrontPage: false },
+      });
+      expect(mockPayload.update).toHaveBeenCalledWith({
+        collection: 'posts',
+        id: 'pg-3',
+        data: { showOnFrontPage: false },
+      });
+    });
+
+    it('should do nothing when no front-page posts exist', async () => {
+      const { syncDeletedFromFrontPage } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [],
+        hasNextPage: false,
+      });
+
+      const mockMysql = { query: vi.fn() };
+
+      const stats = await syncDeletedFromFrontPage(mockMysql, mockPayload as Payload);
+
+      expect(stats.fixed).toBe(0);
+      expect(mockMysql.query).not.toHaveBeenCalled();
+    });
+
+    it('should do nothing when all stories are active in MySQL', async () => {
+      const { syncDeletedFromFrontPage } = await import('./importPosts');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'pg-1', legacyId: 10 }],
+        hasNextPage: false,
+      });
+
+      const mockMysql = {
+        // legacyId 10 is active
+        query: vi.fn().mockResolvedValue([[{ id: 10 }]]),
+      };
+
+      const stats = await syncDeletedFromFrontPage(mockMysql, mockPayload as Payload);
+
+      expect(stats.fixed).toBe(0);
+    });
+
+    it('should paginate through all front-page posts', async () => {
+      const { syncDeletedFromFrontPage } = await import('./importPosts');
+
+      mockPayload.update = vi.fn().mockResolvedValue({});
+      // Page 1
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'pg-1', legacyId: 10 }],
+        hasNextPage: true,
+      });
+      // Page 2
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'pg-2', legacyId: 20 }],
+        hasNextPage: false,
+      });
+
+      const mockMysql = {
+        // Neither is active in MySQL
+        query: vi.fn().mockResolvedValue([[]]),
+      };
+
+      const stats = await syncDeletedFromFrontPage(mockMysql, mockPayload as Payload);
+
+      expect(stats.fixed).toBe(2);
+      expect(mockPayload.find).toHaveBeenCalledTimes(2);
+    });
+
+    it('should handle custom texts with offset IDs (>= 10000)', async () => {
+      const { syncDeletedFromFrontPage } = await import('./importPosts');
+
+      mockPayload.update = vi.fn().mockResolvedValue({});
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [
+          { id: 'pg-1', legacyId: 788 },   // real story
+          { id: 'pg-2', legacyId: 10001 },  // custom text (offset ID)
+        ],
+        hasNextPage: false,
+      });
+
+      const mockMysql = {
+        // Only legacyId 788 exists in stories table; 10001 doesn't exist
+        query: vi.fn().mockResolvedValue([[{ id: 788 }]]),
+      };
+
+      const stats = await syncDeletedFromFrontPage(mockMysql, mockPayload as Payload);
+
+      expect(stats.fixed).toBe(1);
+      expect(mockPayload.update).toHaveBeenCalledWith({
+        collection: 'posts',
+        id: 'pg-2',
+        data: { showOnFrontPage: false },
+      });
     });
   });
 });
