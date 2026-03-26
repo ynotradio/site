@@ -4,7 +4,8 @@ Pipeline configurations for Y-Not Radio CI/CD.
 
 ## Pipeline Files
 
-- **`pipeline.yml`** - Main CI: quality checks → tests → build → E2E (triggers on PRs)
+- **`pipeline.yml`** - Entry-point gate: checks for code changes, uploads `pipeline-ci.yml` if found, or skips for doc-only PRs
+- **`pipeline-ci.yml`** - Full CI steps: quality checks → tests → build → E2E (uploaded dynamically by `pipeline.yml`)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
 - **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
