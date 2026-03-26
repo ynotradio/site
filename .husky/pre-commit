@@ -13,4 +13,20 @@ if [ -f ~/.nvm/nvm.sh ]; then
   nvm use 22 2>/dev/null || true
 fi
 
+# Warn if Payload collection files are staged without a corresponding new migration.
+# This catches the common case of dev-mode schema drift before it reaches CI.
+STAGED_COLLECTIONS=$(git diff --cached --name-only | grep -E '^(payload\.config\.ts|payload/src/collections/.*\.ts)$' || true)
+if [ -n "$STAGED_COLLECTIONS" ]; then
+  NEW_MIGRATION=$(git diff --cached --name-only | grep -E '^payload/migrations/[0-9].*\.ts$' || true)
+  if [ -z "$NEW_MIGRATION" ]; then
+    echo ""
+    echo "⚠️  Payload collection files were changed but no new migration file was staged."
+    echo "   If you modified a collection schema, run:"
+    echo "     yarn payload:migrate:create"
+    echo "   then commit the generated file in payload/migrations/ before pushing."
+    echo "   (This warning does not block the commit.)"
+    echo ""
+  fi
+fi
+
 yarn lint-staged

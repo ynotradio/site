@@ -1,5 +1,5 @@
 [build]
-  command = "npm run payload:migrate && yarn build"
+  command = "yarn validate:migrations && yarn payload:migrate && yarn build"
   publish = ".next"
   ignore = "./scripts/netlify-ignore.sh"
 
