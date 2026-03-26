@@ -45,6 +45,7 @@ The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site rende
 | G | [Qwik](#g-qwik) | Resumable framework — near-zero JS until interaction |
 | H | [Remix](#h-remix) | Full-stack React framework built on web standards |
 | I | [Marko](#i-marko) | HTML-extended template language with fine-grained partial hydration |
+| J | [Elena](#j-elena) | Tiny progressive web components library (~2.6kB) |
 
 ---
 
@@ -927,6 +928,135 @@ test('renders both band names', async () => {
 
 ---
 
+## J. Elena
+
+**What it is:** A tiny (~2.6kB) progressive web components library from [Ariel Salminen](https://arielsalminen.com) ([getelena/elena](https://github.com/getelena/elena)). You define Custom Elements by extending `Elena(HTMLElement)` — a mixin that adds rendering, props, shadow DOM, event delegation, and lifecycle hooks. Static class fields (`tagName`, `props`, `shadow`, `styles`, `events`) configure the component's behavior. The `html` tagged template handles DOM diffing with a fast morph-style patcher. Almost no boilerplate: no decorators, no build-time transforms, no framework runtime — just 2.6kB of browser JavaScript.
+
+**Why consider it:** Elena is the lightest web-component option in this evaluation. Unlike Lit, which ships its own reactive system and template engine (~5kB), Elena's entire runtime is 2.6kB. It embraces the same "HTML loads first, JS enhances" philosophy as Enhance and Lit, but is even more minimal. Its `text` capture feature (automatically reads pre-existing text content from the custom element before first render) is unusually well-suited to a progressive enhancement scenario where the HTML can be server-rendered and the component script loads later. The `@elenajs/ssr` package can render components server-side, and its built-in Eleventy transform integration is a natural fit for 11ty-based architectures.
+
+**Netlify:** Static builds deploy to any CDN. SSR requires Node.js — via Netlify Functions or Edge Functions. There is no official Netlify adapter; deployment setup is manual. The `@elenajs/ssr` package is marked **experimental** and not yet production-ready.
+
+**Dependency footprint:** Zero runtime dependencies for `@elenajs/core` itself — the package.json lists only devDependencies (Rollup, Vitest, Playwright). The compiled output is self-contained. For a project, you'd also need a host framework for routing and page templates (e.g., 11ty), as Elena is a component library, not a site framework.
+
+**CSS approach:** Optional Shadow DOM via `static shadow = 'open'`. Styles can be passed as CSS strings or `CSSStyleSheet` objects via `static styles`, which are adopted via `adoptedStyleSheets` for zero-parse-cost reuse across instances. Without shadow mode, styles live in the document and are scoped by convention. Custom properties pierce Shadow DOM for theming.
+
+### MRM Example
+
+```
+src/
+  components/
+    mrm-match-card.js          ← Elena component (Custom Element)
+    mrm-bracket.js
+  pages/                        ← (Host framework — e.g. 11ty — provides routing)
+  style/
+    tokens.css
+```
+
+```js
+// src/components/mrm-match-card.js
+import { Elena, html } from '@elenajs/core';
+
+export default class MrmMatchCard extends Elena(HTMLElement) {
+  static tagName = 'mrm-match-card';
+  static props = [
+    'band-a-name',
+    'band-a-id',
+    'band-b-name',
+    'band-b-id',
+    'match-id',
+  ];
+  static shadow = 'open';
+  static styles = `
+    :host {
+      display: block;
+    }
+    .match-card {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 1rem;
+      padding: 2rem;
+      border: 2px solid var(--color-accent);
+      border-radius: var(--radius-lg);
+    }
+  `;
+
+  async vote(bandId) {
+    await fetch('/api/mrm-vote', {
+      method: 'POST',
+      body: JSON.stringify({ matchId: this['match-id'], bandId }),
+    });
+  }
+
+  render() {
+    return html`
+      <article class="match-card">
+        <div class="band">${this['band-a-name']}</div>
+        <span class="vs">vs</span>
+        <div class="band">${this['band-b-name']}</div>
+        <button @click=${() => this.vote(this['band-a-id'])}>
+          Vote ${this['band-a-name']}
+        </button>
+        <button @click=${() => this.vote(this['band-b-id'])}>
+          Vote ${this['band-b-name']}
+        </button>
+      </article>
+    `;
+  }
+}
+MrmMatchCard.define();
+```
+
+```html
+<!-- 11ty template: src/_includes/components/match-card.njk -->
+<!-- With @elenajs/ssr as an Eleventy transform, the component expands at build time -->
+<mrm-match-card
+  band-a-name="{{ match.bandA.name }}"
+  band-a-id="{{ match.bandA.id }}"
+  band-b-name="{{ match.bandB.name }}"
+  band-b-id="{{ match.bandB.id }}"
+  match-id="{{ match.id }}"
+></mrm-match-card>
+<script type="module" src="/components/mrm-match-card.js"></script>
+```
+
+```js
+// test/mrm-match-card.test.js
+import { describe, it, expect } from 'vitest';
+import '../src/components/mrm-match-card.js';
+
+function createElement(attrs = {}) {
+  const el = document.createElement('mrm-match-card');
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  document.body.appendChild(el);
+  return el;
+}
+
+describe('MrmMatchCard', () => {
+  it('renders both band names', async () => {
+    const el = createElement({ 'band-a-name': 'Radiohead', 'band-b-name': 'Muse' });
+    await el.updateComplete;
+    expect(el.shadowRoot.textContent).toContain('Radiohead');
+    expect(el.shadowRoot.textContent).toContain('Muse');
+  });
+});
+```
+
+**Tradeoffs:**
+- ✅ Smallest runtime of all options — 2.6kB with zero transitive runtime dependencies
+- ✅ Pure web standards — Custom Elements, Shadow DOM, `CSSStyleSheet` adoption, no framework runtime in production
+- ✅ Progressive enhancement by design — `text` capture reads pre-existing DOM before first render; works with server-rendered HTML
+- ✅ `@elenajs/ssr` + Eleventy transform integration — components can render server-side in 11ty templates
+- ✅ Vitest test suite with 100% coverage — well-tested core despite being pre-release
+- ✅ Built-in microtask batching and `updateComplete` promise — familiar async pattern
+- ⚠️ Not a full site framework — needs a host (11ty, Astro, or manual HTML) for routing and page templates; same position as Lit
+- ⚠️ `@elenajs/ssr` is explicitly marked **experimental** — not production-ready; APIs may change
+- ⚠️ All packages are pre-release (`1.0.0-rc.x`) — APIs are still stabilising
+- ❌ Almost no agent familiarity — Elena is effectively absent from Copilot/Claude training data; agent-generated code will require manual correction
+- ❌ Very small ecosystem — minimal third-party components, integrations, or community resources beyond the core repo
+- ❌ No Storybook integration — no official adapter; component testing relies on Vitest + happy-dom
+
+---
+
 ## CSS Strategy (Framework-Independent)
 
 Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
@@ -1011,6 +1141,7 @@ Vite is not a framework — it's a **build tool** (dev server + bundler) that mo
 | Qwik | **Vite** | Core build engine (Qwik City) |
 | Remix | **Vite** | Migrated to Vite in v2; official Vite plugin |
 | Marko | **Vite** | `@marko/vite` plugin; first-class integration |
+| Elena | Custom (Rollup) | `@elenajs/bundler` wraps Rollup; zero-config for component libraries |
 
 **What Vite gets us:** Instant HMR during development, fast production builds via Rollup, and native ES module support. For frameworks that use Vite (Astro, Qwik, Lit, Remix), the DX benefit is already baked in — you don't need to think about Vite separately.
 
@@ -1022,33 +1153,33 @@ For 11ty, Vite is optional and adds complexity that may not be needed for a stat
 
 ## Comparison Matrix
 
-| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko |
-|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|-------|
-| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ | 0kB |
-| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ | ~50 |
-| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite | Vite |
-| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ | ★★★☆☆ |
-| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast | Fast |
-| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ |
-| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) | Marko (`.marko`, HTML+) |
-| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules | Built-in `<style>` (class-prefixed) |
-| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders | Partial hydration (per-node) |
-| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) | Medium (Marko syntax) |
-| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ |
-| **Creative CSS ceiling** | High | High | High | High | High | High | High | High | High |
-| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large | Small (eBay-driven) |
+| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko | Elena |
+|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|-------|-------|
+| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ | 0kB | ~2.6kB per component |
+| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ | ~50 | ~0 runtime (+ host) |
+| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite | Vite | Rollup (custom) |
+| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ (via host; SSR experimental) |
+| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast | Fast | Fast |
+| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ | ★☆☆☆☆ |
+| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) | Marko (`.marko`, HTML+) | Web Components (Elena mixin) |
+| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules | Built-in `<style>` (class-prefixed) | Shadow DOM or light DOM |
+| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders | Partial hydration (per-node) | Progressive enhancement |
+| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) | Medium (Marko syntax) | Low (web standards) |
+| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ |
+| **Creative CSS ceiling** | High | High | High | High | High | High | High | High | High | High |
+| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large | Small (eBay-driven) | Minimal (pre-release) |
 
 ### Scoring by stated priority
 
-| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko |
-|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|-------|
-| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 | 4 |
-| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 | 3 |
-| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 | 5 |
-| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 | 2 |
-| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 | 3 |
-| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
-| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** | **85** |
+| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko | Elena |
+|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|-------|-------|
+| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 | 4 | 5 |
+| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 | 3 | 3 |
+| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 | 5 | 5 |
+| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 | 2 | 1 |
+| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 | 3 | 4 |
+| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** | **85** | **92** |
 
 *(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)*
 
@@ -1069,8 +1200,9 @@ Storybook is used in this project for component development and visual testing. 
 | **Qwik** | ★★☆☆☆ Experimental | No official integration. Qwik components can be wrapped as web components for basic Storybook usage, but `$()` boundaries and resumability don't translate to Storybook's rendering model. |
 | **Remix** | ★★★★☆ Good | Uses React components — works with `@storybook/react`. Route loaders/actions aren't testable in Storybook, but UI components are. Remix 3 (non-React) has no Storybook support yet. |
 | **Marko** | ★☆☆☆☆ None | No official Storybook adapter. Marko components are compiled `.marko` files with no Storybook renderer. Component isolation testing relies on `@marko/testing-library` (Node.js) rather than a browser-based tool. |
+| **Elena** | ★☆☆☆☆ None | No official Storybook adapter. Elena components are Custom Elements tested with Vitest + happy-dom. No browser component sandbox available. |
 
-**Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage. **Marko** and **Enhance** have no Storybook integration — testing requires Node.js-based rendering tools instead.
+**Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage. **Marko**, **Elena**, and **Enhance** have no Storybook integration — testing requires Node.js-based rendering tools instead.
 
 ---
 
@@ -1100,6 +1232,8 @@ Storybook is used in this project for component development and visual testing. 
 - **Low agent familiarity** — Copilot and Claude have limited Marko training data, increasing the risk of agent-generated errors
 
 Worth revisiting if the ecosystem matures, but not a frontrunner today.
+
+**Elena** has the smallest runtime footprint of any option here (2.6kB, zero transitive runtime deps) and the cleanest progressive enhancement story — HTML loads first, Elena hydrates only where needed, and the `text` capture feature means components work naturally with server-rendered markup. Its `@elenajs/ssr` package plus Eleventy transform integration makes it a natural pairing with 11ty, extending the strongest-scoring option in this evaluation with a capable component layer. The blockers are significant though: all packages are pre-release, `@elenajs/ssr` is experimental, agent familiarity is essentially zero, and the ecosystem is tiny. Like Lit, Elena is better evaluated as a **complementary component layer** within a 11ty or Astro site than as a standalone framework choice — and for that role, Lit's maturity, ecosystem, and `@storybook/web-components` support give it a meaningful edge today.
 
 ### A hybrid note
 
