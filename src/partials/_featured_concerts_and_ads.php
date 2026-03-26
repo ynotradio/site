@@ -54,5 +54,5 @@ if (count($featuredConcerts) > 0) {
 ?>
 <div class="feature-box">
     <h3>Follow Y-Not Radio on MixCloud</h3>
-    <iframe width="218" height="250" src="https://www.mixcloud.com/widget/follow/?dark=1&amp;u=%2Fynotradio%2F&amp;hide_followers=1" frameborder="0"></iframe>
+    <a href="https://www.mixcloud.com/ynotradio/" target="_blank" rel="noopener noreferrer">Follow us on Mixcloud!</a>
 </div>
