@@ -44,6 +44,7 @@ The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site rende
 | F | [Stencil](#f-stencil) | Web component compiler with SSG and TypeScript |
 | G | [Qwik](#g-qwik) | Resumable framework — near-zero JS until interaction |
 | H | [Remix](#h-remix) | Full-stack React framework built on web standards |
+| I | [Marko](#i-marko) | HTML-extended template language with fine-grained partial hydration |
 
 ---
 
@@ -807,6 +808,125 @@ test('renders both bands from loader data', () => {
 
 ---
 
+## I. Marko
+
+**What it is:** An HTML-extended template language created at eBay and open-sourced in 2014. Marko treats HTML as the primary language and adds just enough syntax for reactivity — state declarations, conditionals, loops, and event handlers — inline with the markup. Almost any valid HTML is valid Marko. The modern compiler (`runtime-tags`) applies **fine-grained partial hydration**: only the DOM nodes that are actually reactive receive JavaScript. Static markup ships as pure HTML with zero client-side code.
+
+**Why consider it:** Marko sits in a unique spot — it's closer to "enhanced HTML" than to a JavaScript framework. If the goal is minimal JS and an HTML-first authoring experience, Marko delivers both more aggressively than Astro (no island boundaries to draw) and more transparently than Qwik (no `$()` serialization rules). The template syntax is minimal enough that an agent or a new contributor who knows HTML can read it without knowing Marko specifically. It's been production-proven at eBay scale for over a decade.
+
+**Netlify:** Static builds deploy as-is to any CDN. SSR requires a Node.js adapter — Netlify Functions or Edge Functions work, but there is no official Netlify adapter (unlike Astro or Qwik). A static-first deployment with server-side forms handled by Netlify Functions is the most straightforward path.
+
+**Dependency footprint:** ~50 transitive deps for a Marko + Vite project (`marko`, `@marko/vite`, `vite`). Compiled output has no runtime framework code for static portions.
+
+**CSS approach:** Scoped `<style>` blocks co-located in `.marko` files, similar to Svelte and Astro. Supports vanilla CSS, custom properties, nesting. No Shadow DOM — styles are scoped via generated class name prefixes at compile time, so global theming and `@layer` work normally.
+
+### MRM Example
+
+```
+src/
+  pages/
+    madness.marko              ← Page template (SSR or SSG)
+  components/
+    match-card.marko           ← Component file
+    bracket.marko
+  style/
+    tokens.css                 ← Shared design tokens
+```
+
+```marko
+<!-- src/components/match-card.marko -->
+<!-- <let/voting=false> declares a reactive state variable in Marko syntax -->
+<let/voting=false>
+
+<article class="match-card">
+  <div class="band">${input.match.bandA.name}</div>
+  <span class="vs">vs</span>
+  <div class="band">${input.match.bandB.name}</div>
+  <form>
+    <button
+      type="button"
+      onClick() {
+        voting = true;
+        await fetch('/api/mrm-vote', {
+          method: 'POST',
+          body: JSON.stringify({ matchId: input.match.id, bandId: input.match.bandA.id }),
+        });
+        voting = false;
+      }
+    >Vote ${input.match.bandA.name}</button>
+    <button
+      type="button"
+      onClick() {
+        voting = true;
+        await fetch('/api/mrm-vote', {
+          method: 'POST',
+          body: JSON.stringify({ matchId: input.match.id, bandId: input.match.bandB.id }),
+        });
+        voting = false;
+      }
+    >Vote ${input.match.bandB.name}</button>
+  </form>
+  <if=voting><p class="status">Submitting…</p></if>
+</article>
+
+<style>
+  .match-card {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    padding: 2rem;
+    border: 2px solid var(--color-accent);
+    border-radius: var(--radius-lg);
+
+    & .vs {
+      font-weight: 700;
+      align-self: center;
+    }
+  }
+</style>
+```
+
+```marko
+<!-- src/pages/madness.marko -->
+<await(fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`).then(r => r.json()))>
+  <@then|{ docs }|>
+    <const/tournament=docs[0]>
+    <h1>Modern Rock Madness 2026</h1>
+    <match-card match=tournament.currentMatch />
+    <bracket rounds=tournament.rounds />
+  </@then>
+</await>
+```
+
+```ts
+// src/components/__tests__/match-card.test.ts
+import { render, screen } from '@marko/testing-library';
+import MatchCard from '../match-card.marko';
+
+test('renders both band names', async () => {
+  await render(MatchCard, {
+    match: { bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' },
+  });
+  expect(screen.getByText('Radiohead')).toBeInTheDocument();
+  expect(screen.getByText('Muse')).toBeInTheDocument();
+});
+```
+
+**Tradeoffs:**
+- ✅ Fine-grained partial hydration — only reactive DOM nodes ship JS; static content is pure HTML, no opt-in required
+- ✅ HTML-first syntax — `.marko` files look like HTML templates; minimal mental overhead for markup-heavy pages
+- ✅ Production-proven at eBay scale (powers eBay.com) — not a hobby project
+- ✅ Streaming SSR built-in — fast time-to-first-byte for large content pages
+- ✅ Scoped `<style>` without Shadow DOM — global CSS and `@layer` work normally
+- ✅ `@marko/testing-library` mirrors Testing Library API — familiar testing model
+- ⚠️ Smaller community and ecosystem than React, Astro, or Qwik — fewer third-party components and plugins
+- ⚠️ No official Netlify adapter — SSR deployment requires more manual wiring than Astro or Qwik
+- ❌ Lower agent familiarity — Marko's syntax and idioms are underrepresented in Copilot/Claude training data compared to React or Astro
+- ❌ No Storybook integration — no official adapter exists; component isolation testing requires alternative tooling
+- ❌ Relatively small community outside of eBay — ecosystem growth is slower than Astro or Qwik
+
+---
+
 ## CSS Strategy (Framework-Independent)
 
 Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
@@ -890,6 +1010,7 @@ Vite is not a framework — it's a **build tool** (dev server + bundler) that mo
 | Stencil | Custom (Rollup-based) | Own compiler; no Vite |
 | Qwik | **Vite** | Core build engine (Qwik City) |
 | Remix | **Vite** | Migrated to Vite in v2; official Vite plugin |
+| Marko | **Vite** | `@marko/vite` plugin; first-class integration |
 
 **What Vite gets us:** Instant HMR during development, fast production builds via Rollup, and native ES module support. For frameworks that use Vite (Astro, Qwik, Lit, Remix), the DX benefit is already baked in — you don't need to think about Vite separately.
 
@@ -901,33 +1022,33 @@ For 11ty, Vite is optional and adds complexity that may not be needed for a stat
 
 ## Comparison Matrix
 
-| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix |
-|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|
-| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ |
-| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ |
-| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite |
-| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ |
-| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast |
-| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ |
-| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) |
-| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules |
-| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders |
-| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) |
-| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ |
-| **Creative CSS ceiling** | High | High | High | High | High | High | High | High |
-| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large |
+| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko |
+|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|-------|
+| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ | 0kB |
+| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ | ~50 |
+| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite | Vite |
+| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ | ★★★☆☆ |
+| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast | Fast |
+| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ |
+| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) | Marko (`.marko`, HTML+) |
+| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules | Built-in `<style>` (class-prefixed) |
+| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders | Partial hydration (per-node) |
+| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) | Medium (Marko syntax) |
+| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ |
+| **Creative CSS ceiling** | High | High | High | High | High | High | High | High | High |
+| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large | Small (eBay-driven) |
 
 ### Scoring by stated priority
 
-| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix |
-|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|
-| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 |
-| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 |
-| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 |
-| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 |
-| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 |
-| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 |
-| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** |
+| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko |
+|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|-------|
+| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 | 4 |
+| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 | 3 |
+| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 | 5 |
+| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 | 2 |
+| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 | 3 |
+| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** | **85** |
 
 *(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)*
 
@@ -947,8 +1068,9 @@ Storybook is used in this project for component development and visual testing. 
 | **Stencil** | ★★★★☆ Good | Official `@stencil/storybook-plugin`. Well-documented integration for previewing and testing compiled web components. |
 | **Qwik** | ★★☆☆☆ Experimental | No official integration. Qwik components can be wrapped as web components for basic Storybook usage, but `$()` boundaries and resumability don't translate to Storybook's rendering model. |
 | **Remix** | ★★★★☆ Good | Uses React components — works with `@storybook/react`. Route loaders/actions aren't testable in Storybook, but UI components are. Remix 3 (non-React) has no Storybook support yet. |
+| **Marko** | ★☆☆☆☆ None | No official Storybook adapter. Marko components are compiled `.marko` files with no Storybook renderer. Component isolation testing relies on `@marko/testing-library` (Node.js) rather than a browser-based tool. |
 
-**Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage.
+**Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage. **Marko** and **Enhance** have no Storybook integration — testing requires Node.js-based rendering tools instead.
 
 ---
 
@@ -969,6 +1091,15 @@ Storybook is used in this project for component development and visual testing. 
 **Next.js** is the safe choice but carries the most weight for what is fundamentally a content site. It would make sense if the site had complex client-side state, real-time features, or heavy interactivity — but it doesn't.
 
 **Remix** scores similarly to Next.js — it's still React, still ~200+ dependencies, still ~90kB runtime. Its `<Form>`-based mutations are philosophically closer to HTMX and the web platform than Next.js's client components, and Remix 3's direction (decoupling from React entirely) is worth watching. But today, for a mostly-read-only content site, it offers the same React overhead without enough differentiation from Next.js to justify switching.
+
+**Marko** scores between Qwik and Remix — its fine-grained partial hydration is technically impressive (only reactive DOM nodes ship JS, without any island boundaries to draw), and its HTML-extended syntax has minimal cognitive overhead. The production pedigree at eBay is a real credibility signal. The blockers for this project are:
+
+- **Ecosystem size** — small community outside of eBay; fewer third-party components and plugins than Astro or Qwik
+- **No official Netlify SSR adapter** — more manual wiring required compared to Astro or Qwik
+- **No Storybook integration** — this project relies on Storybook for component development; Marko has no adapter
+- **Low agent familiarity** — Copilot and Claude have limited Marko training data, increasing the risk of agent-generated errors
+
+Worth revisiting if the ecosystem matures, but not a frontrunner today.
 
 ### A hybrid note
 
