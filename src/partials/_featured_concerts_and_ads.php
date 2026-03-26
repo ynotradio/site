@@ -53,6 +53,6 @@ if (count($featuredConcerts) > 0) {
 }
 ?>
 <div class="feature-box">
-    <h3>Follow Y-Not Radio on MixCloud</h3>
-    <a href="https://www.mixcloud.com/ynotradio/" target="_blank" rel="noopener noreferrer">Follow us on Mixcloud!</a>
+    <h3>Follow Y-Not Radio on Mixcloud</h3>
+    <iframe width="100%" height="180" src="https://www.mixcloud.com/widget/iframe/?feed=https%3A%2F%2Fwww.mixcloud.com%2Fynotradio%2F&amp;hide_cover=1&amp;mini=1&amp;light=1" frameborder="0" allow="autoplay"></iframe>
 </div>
