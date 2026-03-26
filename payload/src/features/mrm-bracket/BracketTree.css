@@ -170,9 +170,9 @@
 }
 
 .bracket-tree__region--2 .bracket-tree__round--2 {
-  position: relative;
+  position: absolute;
   left: 120px;
-  top: -444px;
+  top: -40px;
 }
 
 .bracket-tree__region--3 .bracket-tree__round--2 {
@@ -182,9 +182,9 @@
 }
 
 .bracket-tree__region--4 .bracket-tree__round--2 {
-  position: relative;
+  position: absolute;
   left: -120px;
-  top: -444px;
+  top: -40px;
 }
 
 /* Round 2 match spacing */
