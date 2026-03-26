@@ -1,8 +1,12 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { DJOrderClient } from './DJOrderClient';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const dndCallbacks = vi.hoisted(() => ({
+  onDragEnd: undefined as ((event: any) => void) | undefined,
+}));
 
 // Mock Payload UI components
 vi.mock('@payloadcms/ui', () => ({
@@ -34,9 +38,10 @@ vi.mock('./components/SortableItem', () => ({
 
 // Mock @dnd-kit/core
 vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dnd-context">{children}</div>
-  ),
+  DndContext: ({ children, onDragEnd }: { children: React.ReactNode; onDragEnd?: (event: any) => void }) => {
+    dndCallbacks.onDragEnd = onDragEnd;
+    return <div data-testid="dnd-context">{children}</div>;
+  },
   closestCenter: vi.fn(),
   KeyboardSensor: vi.fn(),
   PointerSensor: vi.fn(),
@@ -331,6 +336,86 @@ describe('DJOrderClient', () => {
         expect(activeItem.getAttribute('data-active')).toBe('true');
         expect(inactiveItem.getAttribute('data-active')).toBe('false');
       });
+    });
+  });
+
+  describe('Drag and Drop', () => {
+    it('should reorder DJs when dragged to a new position', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDjsResponse,
+      });
+
+      render(<DJOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('sortable-item-1')).toBeInTheDocument();
+      });
+
+      act(() => {
+        dndCallbacks.onDragEnd?.({ active: { id: '1' }, over: { id: '2' } });
+      });
+
+      // All items still rendered after reorder
+      expect(screen.getByTestId('sortable-item-1')).toBeInTheDocument();
+      expect(screen.getByTestId('sortable-item-2')).toBeInTheDocument();
+    });
+
+    it('should not change order when dragged onto itself', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDjsResponse,
+      });
+
+      render(<DJOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByText('DJ Alpha')).toBeInTheDocument();
+      });
+
+      act(() => {
+        dndCallbacks.onDragEnd?.({ active: { id: '1' }, over: { id: '1' } });
+      });
+
+      expect(screen.getByText('DJ Alpha')).toBeInTheDocument();
+    });
+
+    it('should not change order when dropped outside a sortable target', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDjsResponse,
+      });
+
+      render(<DJOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByText('DJ Alpha')).toBeInTheDocument();
+      });
+
+      act(() => {
+        dndCallbacks.onDragEnd?.({ active: { id: '1' }, over: null });
+      });
+
+      expect(screen.getByText('DJ Alpha')).toBeInTheDocument();
+    });
+
+    it('should clear success message when order changes after save', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ ok: true, json: async () => mockDjsResponse })
+        .mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      render(<DJOrderClient />);
+
+      await waitFor(() => expect(screen.getByText('DJ Alpha')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByRole('button', { name: /Save Order/i }));
+      await waitFor(() => expect(screen.getByText('DJ order saved successfully!')).toBeInTheDocument());
+
+      act(() => {
+        dndCallbacks.onDragEnd?.({ active: { id: '1' }, over: { id: '2' } });
+      });
+
+      expect(screen.queryByText('DJ order saved successfully!')).not.toBeInTheDocument();
     });
   });
 });

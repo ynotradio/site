@@ -311,4 +311,166 @@ describe('MusicBrainzRecordingField', () => {
       expect(screen.getByText(/\[5:54\]/)).toBeInTheDocument();
     });
   });
+
+  describe('resolveArtistName edge cases', () => {
+    it('resolves artist name when rawArtist has an id property', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Song' } as any;
+        return { value: { id: 'artist-doc-id' } } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ name: 'Artist From ID' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue([]);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith('/api/artists/artist-doc-id?depth=0');
+        expect(musicbrainzApi.searchRecordings).toHaveBeenCalledWith('Test Song', 'Artist From ID');
+      });
+    });
+
+    it('resolves artist name when rawArtist.value is an object with id', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Song' } as any;
+        return { value: { value: { id: 'nested-artist-id' } } } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ name: 'Nested Artist' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue([]);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith('/api/artists/nested-artist-id?depth=0');
+        expect(musicbrainzApi.searchRecordings).toHaveBeenCalledWith('Test Song', 'Nested Artist');
+      });
+    });
+
+    it('resolves artist name directly when rawArtist.value has a name', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Song' } as any;
+        return { value: { value: { name: 'Direct Name Artist' } } } as any;
+      });
+
+      const fetchMock = vi.fn();
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue([]);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchRecordings).toHaveBeenCalledWith(
+          'Test Song',
+          'Direct Name Artist',
+        );
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('searches without artist when artist field is empty', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Song' } as any;
+        return { value: null } as any;
+      });
+
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue([]);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchRecordings).toHaveBeenCalledWith('Test Song', undefined);
+      });
+    });
+
+    it('searches without artist when fetch returns non-ok response', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Song' } as any;
+        return { value: 'artist-fetch-fail-id' } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue([]);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchRecordings).toHaveBeenCalledWith('Test Song', undefined);
+      });
+    });
+  });
+
+  describe('formatRecordingInfo in search results', () => {
+    it('displays artist credit and disambiguation in result items', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'Test Song',
+          score: 100,
+          'artist-credit': [{ name: 'Test Artist', artist: { id: 'a1' } }],
+          disambiguation: 'live version',
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue(mockResults);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/by Test Artist/)).toBeInTheDocument();
+        expect(screen.getByText(/\(live version\)/)).toBeInTheDocument();
+      });
+    });
+
+    it('shows "Unknown Artist" when artist-credit is an empty array', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'Test Song',
+          score: 100,
+          'artist-credit': [],
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchRecordings).mockResolvedValue(mockResults);
+
+      render(<MusicBrainzRecordingField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        // artist-credit is truthy (non-null array) but empty, so getArtistName returns 'Unknown Artist'
+        expect(screen.getByText(/by Unknown Artist/)).toBeInTheDocument();
+      });
+    });
+  });
 });
