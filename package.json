@@ -53,7 +53,8 @@
     "integrity:check:publish-status": "tsx --import ./bin/preload-nextenv-fix.mjs bin/integrity-check-publish-status.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "validate-stories": "node scripts/validate-stories.mjs"
+    "validate-stories": "node scripts/validate-stories.mjs",
+    "validate:migrations": "bash scripts/validate-migrations.sh"
   },
   "author": "",
   "license": "ISC",
