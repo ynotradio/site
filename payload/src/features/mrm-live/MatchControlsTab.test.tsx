@@ -266,6 +266,127 @@ describe('MatchControlsTab', () => {
     });
   });
 
+  it('fetches the previous match when tournament and matchNumber > 1', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-t1' },
+    } as ReturnType<typeof useDocumentInfo>);
+
+    const matchWithTournament = {
+      ...LIVE_MATCH,
+      id: 'match-t1',
+      matchNumber: 3,
+      tournament: { id: 'tournament-42' },
+    };
+
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (String(url).includes('?where')) {
+        // Previous match lookup
+        return {
+          ok: true,
+          json: async () => ({ docs: [{ id: 'prev-match-id' }] }),
+        };
+      }
+      return { ok: true, json: async () => matchWithTournament };
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      const { calls } = (global.fetch as ReturnType<typeof vi.fn>).mock;
+      const prevFetch = calls.find(([url]: [string]) => String(url).includes('where[tournament]'));
+      expect(prevFetch).toBeDefined();
+    });
+  });
+
+  it('sets previousMatchId to null when previous match docs array is empty', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-t2' },
+    } as ReturnType<typeof useDocumentInfo>);
+
+    const matchWithTournament = {
+      ...LIVE_MATCH,
+      id: 'match-t2',
+      matchNumber: 3,
+      tournament: 'tournament-99',
+    };
+
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (String(url).includes('?where')) {
+        return { ok: true, json: async () => ({ docs: [] }) };
+      }
+      return { ok: true, json: async () => matchWithTournament };
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Radiohead')).toBeInTheDocument();
+    });
+
+    // Previous match lookup was made but returned no results — no errors
+    const { calls } = (global.fetch as ReturnType<typeof vi.fn>).mock;
+    const prevFetch = calls.find(([url]: [string]) => String(url).includes('where[tournament]'));
+    expect(prevFetch).toBeDefined();
+  });
+
+  it('skips previous match fetch when matchNumber is 1', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-t3' },
+    } as ReturnType<typeof useDocumentInfo>);
+
+    const firstMatch = {
+      ...LIVE_MATCH,
+      id: 'match-t3',
+      matchNumber: 1,
+      tournament: 'tournament-99',
+    };
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => firstMatch,
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Radiohead')).toBeInTheDocument();
+    });
+
+    // Only the match fetch itself, no previous-match query
+    const { calls } = (global.fetch as ReturnType<typeof vi.fn>).mock;
+    const prevFetch = calls.find(([url]: [string]) => String(url).includes('where[tournament]'));
+    expect(prevFetch).toBeUndefined();
+  });
+
+  it('handles failed previous match fetch gracefully', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-t4' },
+    } as ReturnType<typeof useDocumentInfo>);
+
+    const matchWithTournament = {
+      ...LIVE_MATCH,
+      id: 'match-t4',
+      matchNumber: 5,
+      tournament: 'tournament-99',
+    };
+
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (String(url).includes('?where')) {
+        return { ok: false };
+      }
+      return { ok: true, json: async () => matchWithTournament };
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Radiohead')).toBeInTheDocument();
+    });
+
+    // No error displayed — failed previous match fetch is silently ignored
+    expect(screen.queryByText(/Could not load/)).not.toBeInTheDocument();
+  });
+
   it('calls PATCH when Manual Vote is clicked on a live match', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 'match-1' },
