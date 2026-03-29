@@ -311,4 +311,271 @@ describe('MusicBrainzReleaseField', () => {
       expect(screen.getByText(/1975/)).toBeInTheDocument();
     });
   });
+
+  describe('resolveArtistName edge cases', () => {
+    it('passes undefined artist when artist field is null', async () => {
+      vi.mocked(useFormFields).mockReturnValue(null as any);
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      // Re-setup title mock since we override useFormFields for all calls
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return null as any;
+      });
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', undefined);
+      });
+    });
+
+    it('resolves artist name from object with id field', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { id: 'artist-object-id' } } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ name: 'Artist From Object ID' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith('/api/artists/artist-object-id?depth=0');
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith(
+          'Test Album',
+          'Artist From Object ID',
+        );
+      });
+    });
+
+    it('resolves artist name from nested value.name without fetching', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { value: { name: 'Nested Artist Name' } } } as any;
+      });
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith(
+          'Test Album',
+          'Nested Artist Name',
+        );
+      });
+    });
+
+    it('resolves artist by fetching from nested value.id', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { value: { id: 'nested-artist-id' } } } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ name: 'Nested ID Artist' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith('/api/artists/nested-artist-id?depth=0');
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', 'Nested ID Artist');
+      });
+    });
+
+    it('resolves artist by fetching from nested value as string', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { value: 'nested-string-artist-id' } } as any;
+      });
+
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ name: 'Nested String Artist' }),
+      });
+      vi.stubGlobal('fetch', fetchMock);
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(fetchMock).toHaveBeenCalledWith('/api/artists/nested-string-artist-id?depth=0');
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith(
+          'Test Album',
+          'Nested String Artist',
+        );
+      });
+    });
+
+    it('returns empty artist when nested value has no id or name', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { value: {} } } as any;
+      });
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', undefined);
+      });
+    });
+
+    it('returns empty artist when fetch returns not-ok', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { id: 'bad-artist-id' } } as any;
+      });
+
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }));
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', undefined);
+      });
+    });
+
+    it('returns empty artist when fetch throws', async () => {
+      let callCount = 0;
+      vi.mocked(useFormFields).mockImplementation(() => {
+        const call = callCount;
+        callCount += 1;
+        if (call % 2 === 0) return { value: 'Test Album' } as any;
+        return { value: { id: 'error-artist-id' } } as any;
+      });
+
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue([]);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(musicbrainzApi.searchReleases).toHaveBeenCalledWith('Test Album', undefined);
+      });
+    });
+  });
+
+  describe('formatReleaseInfo and getArtistName', () => {
+    it('displays artist credit names in search results', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'A Night at the Opera',
+          score: 100,
+          'artist-credit': [{ name: 'Queen' }, { name: 'Mercury' }],
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue(mockResults as any);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/by Queen, Mercury/)).toBeInTheDocument();
+      });
+    });
+
+    it('shows Unknown Artist for results with empty artist-credit array', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'Mystery Album',
+          score: 100,
+          'artist-credit': [],
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue(mockResults as any);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/by Unknown Artist/)).toBeInTheDocument();
+      });
+    });
+
+    it('displays disambiguation in search results', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'In Utero',
+          score: 100,
+          disambiguation: 'deluxe edition',
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue(mockResults as any);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/\(deluxe edition\)/)).toBeInTheDocument();
+      });
+    });
+
+    it('displays release group type in search results', async () => {
+      const mockResults = [
+        {
+          id: '1',
+          title: 'Thriller',
+          score: 100,
+          'release-group': { 'primary-type': 'Album' },
+        },
+      ];
+
+      vi.mocked(musicbrainzApi.searchReleases).mockResolvedValue(mockResults as any);
+
+      render(<MusicBrainzReleaseField path="musicbrainzId" />);
+      fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+      await waitFor(() => {
+        expect(screen.getByText(/\[Album\]/)).toBeInTheDocument();
+      });
+    });
+  });
 });
