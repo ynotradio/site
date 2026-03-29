@@ -185,6 +185,35 @@ describe('musicSlugify (Songs/Records)', () => {
 
     expect(result).toBeUndefined();
   });
+
+  it('should handle artist object with id (no name) via async DB lookup', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 1,
+      name: 'Led Zeppelin',
+    });
+
+    const result = await musicSlugify({
+      data: { artist: { id: 1 }, title: 'Stairway to Heaven' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('led-zeppelin--stairway-to-heaven');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({
+      collection: 'artists',
+      id: 1,
+    });
+  });
+
+  it('should return raw valueToSlugify when title and valueToSlugify both contain only special chars', () => {
+    const result = musicSlugify({
+      data: { title: '♪♫★' },
+      req: createMockReq(mockPayload) as any,
+      valueToSlugify: '♪♫★',
+    });
+
+    expect(result).toBe('♪♫★');
+    expect(result).not.toBeInstanceOf(Promise);
+  });
 });
 
 describe('setCdOfTheWeekSlugFromRecord', () => {
