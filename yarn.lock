@@ -309,10 +309,10 @@
   dependencies:
     css-tree "^3.0.0"
 
-"@chromatic-com/storybook@^5.0.2":
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.0.2.tgz#24464c0f0957f3f64db76b952a590f299b20b805"
-  integrity sha512-uLd5gyvcz8q83GI0rYWjml45ryO3ZJwZLretLEZvWFJ3UlFk5C5Km9cwRcKZgZp0F3zYwbb8nEe6PJdgA1eKxg==
+"@chromatic-com/storybook@^5.1.1":
+  version "5.1.1"
+  resolved "https://registry.yarnpkg.com/@chromatic-com/storybook/-/storybook-5.1.1.tgz#58293140d8958376080858367db2c918d1267e7a"
+  integrity sha512-BPoAXHM71XgeCK2u0jKr9i8apeQMm/Z9IWGyndA2FMijfQG9m8ox45DdWh/pxFkK5ClhGgirv5QwMhFIeHmThg==
   dependencies:
     "@neoconfetti/react" "^1.0.0"
     chromatic "^13.3.4"
