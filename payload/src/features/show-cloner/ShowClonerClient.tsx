@@ -12,6 +12,7 @@ import { useShows } from './hooks/useShows';
 import { useShowCloner } from './hooks/useShowCloner';
 import { useDateRanges } from './hooks/useDateRanges';
 import { groupShowsByDate, getShowsInRange } from './utils';
+import './ShowClonerClient.css';
 
 export const ShowClonerClient: React.FC = () => {
   const { setStepNav } = useStepNav();
@@ -75,10 +76,10 @@ export const ShowClonerClient: React.FC = () => {
 
   return (
     <Gutter>
-      <div style={{ maxWidth: '800px', paddingTop: '24px', paddingBottom: '24px' }}>
-        <div style={{ marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '24px', fontWeight: 600, marginBottom: '8px' }}>Show Cloner</h1>
-          <p style={{ color: '#666', fontSize: '14px', marginBottom: '16px' }}>
+      <div className="show-cloner">
+        <div className="show-cloner__header">
+          <h1 className="show-cloner__title">Show Cloner</h1>
+          <p className="show-cloner__description">
             Clone shows from a date range to another. Perfect for copying an entire week of
             programming to a new week.
           </p>
@@ -108,7 +109,7 @@ export const ShowClonerClient: React.FC = () => {
               onTargetStartDateChange={handleDateChange(setTargetStartDate)}
             />
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="show-cloner__footer">
               <CloneButton
                 cloning={cloning}
                 disabled={

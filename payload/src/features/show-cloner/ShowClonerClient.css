@@ -1,0 +1,26 @@
+.show-cloner {
+  max-width: 800px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.show-cloner__header {
+  margin-bottom: 24px;
+}
+
+.show-cloner__title {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.show-cloner__description {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.show-cloner__footer {
+  display: flex;
+  justify-content: flex-end;
+}

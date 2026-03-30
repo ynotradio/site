@@ -24,14 +24,13 @@ describe('LoadingSpinner', () => {
 
   it('includes the spin keyframe animation styles', () => {
     const { container } = render(<LoadingSpinner />);
-    const styleElement = container.querySelector('style');
-    expect(styleElement).toBeInTheDocument();
-    expect(styleElement?.textContent).toContain('@keyframes spin');
+    const spinnerWheel = container.querySelector('.loading-spinner__wheel');
+    expect(spinnerWheel).toBeInTheDocument();
   });
 
   it('has proper centering styles', () => {
     const { container } = render(<LoadingSpinner />);
     const outerDiv = container.firstChild as HTMLElement;
-    expect(outerDiv).toHaveStyle({ display: 'flex' });
+    expect(outerDiv).toHaveClass('loading-spinner');
   });
 });

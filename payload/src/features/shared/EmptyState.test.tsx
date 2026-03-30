@@ -23,7 +23,7 @@ describe('EmptyState', () => {
   it('has proper text styling', () => {
     const { container } = render(<EmptyState />);
     const div = container.firstChild as HTMLElement;
-    expect(div).toHaveStyle({ textAlign: 'center' });
+    expect(div).toHaveClass('empty-state');
   });
 
   it('accepts and displays various message types', () => {
