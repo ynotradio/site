@@ -1,0 +1,311 @@
+- generic [ref=e3]:
+  - generic [ref=e4]:
+    - banner "Storybook" [ref=e6]:
+      - heading "Storybook" [level=1] [ref=e7]
+      - img
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]:
+            - generic [ref=e13]:
+              - link "Skip to content" [ref=e14] [cursor=pointer]:
+                - /url: "#storybook-preview-wrapper"
+              - link "Storybook" [ref=e16] [cursor=pointer]:
+                - /url: ./
+                - img "Storybook" [ref=e17]
+              - switch "Settings" [ref=e22] [cursor=pointer]:
+                - img [ref=e23]
+            - generic [ref=e146]:
+              - generic [ref=e148] [cursor=pointer]:
+                - button "Open onboarding guide" [ref=e152]:
+                  - img [ref=e154]
+                  - strong [ref=e156]: Get started
+                - generic [ref=e157]:
+                  - button "Collapse onboarding guide" [expanded] [ref=e158]:
+                    - img [ref=e159]
+                  - button "35% completed" [ref=e161]:
+                    - generic [ref=e162]:
+                      - img [ref=e163]
+                      - img [ref=e165]
+                    - generic [ref=e168]: 35%
+              - list [ref=e170]:
+                - listitem [ref=e171]:
+                  - button "Open onboarding guide for Complete the onboarding survey" [ref=e172] [cursor=pointer]:
+                    - img [ref=e174]
+                    - generic [ref=e177]: Complete the onboarding survey
+                  - button "Open"
+                - listitem [ref=e178]:
+                  - button "Open onboarding guide for Change a story with Controls" [ref=e179] [cursor=pointer]:
+                    - img [ref=e181]
+                    - generic [ref=e184]: Change a story with Controls
+                - listitem [ref=e185]:
+                  - button "Open onboarding guide for Test your components" [ref=e186] [cursor=pointer]:
+                    - img [ref=e188]
+                    - generic [ref=e191]: Test your components
+                  - button "Start"
+          - generic [ref=e26]: Search for components
+          - search [ref=e27]:
+            - combobox "Search for components" [ref=e28]:
+              - generic:
+                - img
+              - searchbox "Search for components" [ref=e29]
+              - code: ⌃ K
+              - button "Tag filters" [ref=e193] [cursor=pointer]:
+                - img [ref=e194]
+            - button "Create a new story" [ref=e30] [cursor=pointer]:
+              - img [ref=e31]
+          - navigation "Stories" [ref=e34]:
+            - heading "Stories" [level=2] [ref=e35]
+            - generic [ref=e196]:
+              - generic [ref=e197]:
+                - button "Collapse" [expanded] [ref=e198] [cursor=pointer]:
+                  - img [ref=e200]
+                  - text: Components
+                - button "Expand all" [ref=e202] [cursor=pointer]:
+                  - img [ref=e203]
+              - button "Branding" [ref=e206] [cursor=pointer]:
+                - generic [ref=e207]:
+                  - img [ref=e209]
+                  - img [ref=e211]
+                - text: Branding
+              - button "Cells" [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]:
+                  - img [ref=e217]
+                  - img [ref=e219]
+                - text: Cells
+              - button "Dashboard" [ref=e222] [cursor=pointer]:
+                - generic [ref=e223]:
+                  - img [ref=e225]
+                  - img [ref=e227]
+                - text: Dashboard
+              - button "Providers" [ref=e230] [cursor=pointer]:
+                - generic [ref=e231]:
+                  - img [ref=e233]
+                  - img [ref=e235]
+                - text: Providers
+              - generic [ref=e237]:
+                - button "Collapse" [expanded] [ref=e238] [cursor=pointer]:
+                  - img [ref=e240]
+                  - text: Payload
+                - button "Expand all" [ref=e242] [cursor=pointer]:
+                  - img [ref=e243]
+              - button "Fields" [ref=e246] [cursor=pointer]:
+                - generic [ref=e247]:
+                  - img [ref=e249]
+                  - img [ref=e251]
+                - text: Fields
+              - button "Features" [expanded] [ref=e254] [cursor=pointer]:
+                - generic [ref=e255]:
+                  - img [ref=e257]
+                  - img [ref=e259]
+                - text: Features
+              - button "Shared" [expanded] [ref=e262] [cursor=pointer]:
+                - generic [ref=e263]:
+                  - img [ref=e265]
+                  - img [ref=e267]
+                - text: Shared
+              - button "EmptyState" [expanded] [ref=e270] [cursor=pointer]:
+                - generic [ref=e271]:
+                  - img [ref=e273]
+                  - img [ref=e275]
+                - text: EmptyState
+              - link "Docs" [ref=e278] [cursor=pointer]:
+                - /url: /?path=/docs/payload-features-shared-emptystate--docs
+                - img [ref=e280]
+                - text: Docs
+              - generic [ref=e282]:
+                - link "Default" [ref=e283] [cursor=pointer]:
+                  - /url: /?path=/story/payload-features-shared-emptystate--default
+                  - img [ref=e285]
+                  - text: Default
+                - link "Skip to content" [ref=e287] [cursor=pointer]:
+                  - /url: "#storybook-preview-wrapper"
+              - link "With Custom Message" [ref=e289] [cursor=pointer]:
+                - /url: /?path=/story/payload-features-shared-emptystate--with-custom-message
+                - img [ref=e291]
+                - text: With Custom Message
+              - link "No D Js" [ref=e294] [cursor=pointer]:
+                - /url: /?path=/story/payload-features-shared-emptystate--no-d-js
+                - img [ref=e296]
+                - text: No D Js
+              - button "LoadingSpinner" [ref=e299] [cursor=pointer]:
+                - generic [ref=e300]:
+                  - img [ref=e302]
+                  - img [ref=e304]
+                - text: LoadingSpinner
+              - button "RadioToolsNavLinks" [ref=e307] [cursor=pointer]:
+                - generic [ref=e308]:
+                  - img [ref=e310]
+                  - img [ref=e312]
+                - text: RadioToolsNavLinks
+              - generic [ref=e314]:
+                - button "Collapse" [expanded] [ref=e315] [cursor=pointer]:
+                  - img [ref=e317]
+                  - text: Features
+                - button "Expand all" [ref=e319] [cursor=pointer]:
+                  - img [ref=e320]
+              - button "DJOrder" [ref=e323] [cursor=pointer]:
+                - generic [ref=e324]:
+                  - img [ref=e326]
+                  - img [ref=e328]
+                - text: DJOrder
+              - button "DJ Order" [ref=e331] [cursor=pointer]:
+                - generic [ref=e332]:
+                  - img [ref=e334]
+                  - img [ref=e336]
+                - text: DJ Order
+              - button "Embed" [ref=e339] [cursor=pointer]:
+                - generic [ref=e340]:
+                  - img [ref=e342]
+                  - img [ref=e344]
+                - text: Embed
+              - button "MRM Bracket" [ref=e347] [cursor=pointer]:
+                - generic [ref=e348]:
+                  - img [ref=e350]
+                  - img [ref=e352]
+                - text: MRM Bracket
+              - button "MRM Live" [ref=e355] [cursor=pointer]:
+                - generic [ref=e356]:
+                  - img [ref=e358]
+                  - img [ref=e360]
+                - text: MRM Live
+              - button "ShowCloner" [ref=e363] [cursor=pointer]:
+                - generic [ref=e364]:
+                  - img [ref=e366]
+                  - img [ref=e368]
+                - text: ShowCloner
+              - button "Show Cloner" [ref=e371] [cursor=pointer]:
+                - generic [ref=e372]:
+                  - img [ref=e374]
+                  - img [ref=e376]
+                - text: Show Cloner
+              - generic [ref=e378]:
+                - button "Collapse" [expanded] [ref=e379] [cursor=pointer]:
+                  - img [ref=e381]
+                  - text: MRM
+                - button "Expand all" [ref=e383] [cursor=pointer]:
+                  - img [ref=e384]
+              - button "AdminBracketMatch" [ref=e387] [cursor=pointer]:
+                - generic [ref=e388]:
+                  - img [ref=e390]
+                  - img [ref=e392]
+                - text: AdminBracketMatch
+              - button "AdminScoreboard" [ref=e395] [cursor=pointer]:
+                - generic [ref=e396]:
+                  - img [ref=e398]
+                  - img [ref=e400]
+                - text: AdminScoreboard
+              - button "BracketMatch" [ref=e403] [cursor=pointer]:
+                - generic [ref=e404]:
+                  - img [ref=e406]
+                  - img [ref=e408]
+                - text: BracketMatch
+              - button "MatchCard" [ref=e411] [cursor=pointer]:
+                - generic [ref=e412]:
+                  - img [ref=e414]
+                  - img [ref=e416]
+                - text: MatchCard
+              - button "Scoreboard" [ref=e419] [cursor=pointer]:
+                - generic [ref=e420]:
+                  - img [ref=e422]
+                  - img [ref=e424]
+                - text: Scoreboard
+        - region "Component tests" [ref=e427]:
+          - generic [ref=e428]:
+            - heading "Component tests" [level=2] [ref=e429]
+            - generic [ref=e430] [cursor=pointer]:
+              - button "Run tests" [ref=e434]:
+                - img [ref=e436]
+                - text: Run tests
+              - button "Expand testing module" [ref=e440]:
+                - img [ref=e441]
+            - generic [ref=e443]:
+              - generic [ref=e446]:
+                - generic [ref=e447]: Visual tests
+                - button "Set up visual tests" [ref=e449]
+              - generic [ref=e451]:
+                - generic [ref=e452]:
+                  - generic [ref=e453]:
+                    - generic [ref=e454]: Run component tests
+                    - generic [ref=e455]: Not run
+                  - generic [ref=e456]:
+                    - switch "Watch mode" [ref=e457] [cursor=pointer]:
+                      - img [ref=e458]
+                    - button "Start test run" [ref=e461] [cursor=pointer]:
+                      - img [ref=e462]
+                - list [ref=e464]:
+                  - listitem [ref=e465]:
+                    - generic [ref=e466]:
+                      - checkbox "Interactions" [checked] [disabled] [ref=e468]
+                      - generic [ref=e469]: Interactions
+                    - button "Run tests to see results" [disabled] [ref=e470]
+                  - listitem [ref=e472]:
+                    - generic [ref=e473] [cursor=pointer]:
+                      - checkbox "Coverage" [ref=e475]
+                      - generic [ref=e476]: Coverage
+                    - button "Coverage unavailable, run tests first" [disabled] [ref=e477]
+                  - listitem [ref=e479]:
+                    - generic [ref=e480] [cursor=pointer]:
+                      - checkbox "Accessibility" [ref=e482]
+                      - generic [ref=e483]: Accessibility
+                    - button "Run tests to see accessibility results" [disabled] [ref=e484]
+    - separator "Sidebar resize handle" [ref=e55]
+  - generic [ref=e57]:
+    - region "Toolbar" [ref=e58]:
+      - heading "Toolbar" [level=2] [ref=e59]
+      - toolbar [ref=e60]:
+        - generic [ref=e61]:
+          - button "Reload story" [ref=e62] [cursor=pointer]:
+            - img [ref=e63]
+          - switch "Measure tool" [ref=e65] [cursor=pointer]:
+            - img [ref=e66]
+          - switch "Outline tool" [ref=e69] [cursor=pointer]:
+            - img [ref=e70]
+          - button "Viewport size" [ref=e72] [cursor=pointer]:
+            - img [ref=e73]
+          - button "Vision filter" [ref=e77] [cursor=pointer]:
+            - img [ref=e78]
+        - generic [ref=e82]:
+          - switch "Change zoom level" [ref=e83] [cursor=pointer]: 100%
+          - button "Enter full screen" [ref=e84] [cursor=pointer]:
+            - img [ref=e85]
+          - button "Share" [ref=e87] [cursor=pointer]:
+            - img [ref=e88]
+          - button "Open in editor" [ref=e486] [cursor=pointer]:
+            - img [ref=e487]
+    - main "Main preview area" [ref=e91]:
+      - heading "Main preview area" [level=2] [ref=e92]
+      - generic [ref=e93]:
+        - progressbar "Content is loading..." [ref=e95]
+        - generic [ref=e96]:
+          - link "Skip to sidebar" [ref=e97] [cursor=pointer]:
+            - /url: "#payload-features-shared-emptystate--default"
+          - iframe [ref=e101]:
+            
+  - generic [ref=e102]:
+    - separator "Addon panel resize handle" [ref=e103]
+    - region "Addon panel" [ref=e105]:
+      - heading "Addon panel" [level=2] [ref=e106]
+      - generic [ref=e107]:
+        - generic [ref=e108]:
+          - generic [ref=e109]:
+            - button "Move addon panel to right" [ref=e110] [cursor=pointer]:
+              - img [ref=e111]
+            - button "Hide addon panel" [ref=e114] [cursor=pointer]:
+              - img [ref=e115]
+          - generic [ref=e118]:
+            - button "Scroll backward" [disabled] [ref=e120]:
+              - img [ref=e121]
+            - tablist "Available addons" [ref=e124]:
+              - tab "Controls" [selected] [ref=e125] [cursor=pointer]:
+                - generic [ref=e127]: Controls
+              - tab "Actions" [ref=e128] [cursor=pointer]:
+                - generic [ref=e130]: Actions
+              - tab "Interactions" [ref=e131] [cursor=pointer]:
+                - generic [ref=e133]: Interactions
+              - tab "Visual tests" [ref=e134] [cursor=pointer]
+              - tab "Accessibility" [ref=e135] [cursor=pointer]:
+                - generic [ref=e137]: Accessibility
+              - tab "Code" [ref=e138] [cursor=pointer]
+            - button "Scroll forward" [ref=e140] [cursor=pointer]:
+              - img [ref=e141]
+        - tabpanel "Controls" [ref=e143]

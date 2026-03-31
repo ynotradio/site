@@ -1,0 +1,6 @@
+- generic [ref=e6]:
+  - generic [ref=e7]: Radio Tools
+  - link "🎧 DJ Order" [ref=e8] [cursor=pointer]:
+    - /url: /admin/dj-order
+  - link "📋 Show Cloner" [ref=e9] [cursor=pointer]:
+    - /url: /admin/show-cloner

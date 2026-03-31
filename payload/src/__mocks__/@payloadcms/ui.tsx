@@ -6,14 +6,12 @@ import React from 'react';
 let mockFieldValue = '';
 let mockFormFieldsValue: Record<string, any> = {};
 
-export const useField = (props: { path: string }) => {
-  return {
-    value: mockFieldValue,
-    setValue: (newValue: string) => {
-      mockFieldValue = newValue;
-    },
-  };
-};
+export const useField = () => ({
+  value: mockFieldValue,
+  setValue: (newValue: string) => {
+    mockFieldValue = newValue;
+  },
+});
 
 export const useFormFields = (selector?: (fields: any) => any) => {
   if (selector) {
@@ -23,41 +21,33 @@ export const useFormFields = (selector?: (fields: any) => any) => {
 };
 
 // Mock Gutter component (wraps content with padding)
-export const Gutter: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return <div style={{ padding: '0 var(--gutter-h, 25px)' }}>{children}</div>;
-};
+export const Gutter: React.FC<{ children: React.ReactNode }> = ({ children }) => <div style={{ padding: '0 var(--gutter-h, 25px)' }}>{children}</div>;
 
 // Mock useStepNav hook (for breadcrumbs)
-export const useStepNav = () => {
-  return {
-    setStepNav: () => {
-      // No-op in Storybook
-    },
-  };
-};
+export const useStepNav = () => ({
+  setStepNav: () => {
+    // No-op in Storybook
+  },
+});
 
 // Mock useDocumentInfo hook (for custom edit tabs)
-export const useDocumentInfo = () => {
-  return {
-    id: '1',
-    collectionSlug: 'mock-collection',
-    globalSlug: undefined,
-    data: {},
-  };
-};
+export const useDocumentInfo = () => ({
+  id: '1',
+  collectionSlug: 'mock-collection',
+  globalSlug: undefined,
+  data: {},
+});
 
 // Pre-populated document cache for useListRelationships
 let mockRelationshipDocuments: Record<string, Record<string, unknown>> = {};
 
 // Mock useListRelationships hook (for ThumbnailCell and relationship data)
-export const useListRelationships = () => {
-  return {
-    documents: mockRelationshipDocuments,
-    getRelationships: () => {
-      // No-op in Storybook
-    },
-  };
-};
+export const useListRelationships = () => ({
+  documents: mockRelationshipDocuments,
+  getRelationships: () => {
+    // No-op in Storybook
+  },
+});
 
 // Mock useNav hook (for nav open/close state)
 let mockNavOpen = true;
@@ -76,8 +66,10 @@ export const useNav = () => ({
 let mockPreferences: Record<string, unknown> = {};
 
 export const usePreferences = () => ({
-  getPreference: async <T>(key: string): Promise<T | null> =>
-    (mockPreferences[key] as T) ?? null,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getPreference: async <T extends unknown>(key: string): Promise<T | null> => (
+    (mockPreferences[key] as T) ?? null
+  ),
   setPreference: async (key: string, value: unknown) => {
     mockPreferences[key] = value;
   },
@@ -93,22 +85,20 @@ export const setMockNavPreference = (value: { open?: boolean } | null) => {
 };
 
 // Mock useConfig hook (for Payload config access)
-export const useConfig = () => {
-  return {
-    config: {
-      admin: {
-        components: {},
-      },
-      collections: [],
-      globals: [],
-      routes: {
-        admin: '/admin',
-        api: '/api',
-      },
-      serverURL: 'http://localhost:3000',
+export const useConfig = () => ({
+  config: {
+    admin: {
+      components: {},
     },
-  };
-};
+    collections: [],
+    globals: [],
+    routes: {
+      admin: '/admin',
+      api: '/api',
+    },
+    serverURL: 'http://localhost:3000',
+  },
+});
 
 // Helper to set mock values (used by stories)
 export const setMockFieldValue = (value: string) => {
