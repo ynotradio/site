@@ -7,6 +7,10 @@ env:
   NODE_VERSION: "22"
   PHP_VERSION: "7.4"
   CI: "true"
+  # Set to "true" by check-changes.sh for PR builds when no PHP/JS files changed.
+  # Enables steps to exit early and save build minutes.
+  SKIP_PHP: "false"
+  SKIP_JS: "false"
 
 steps:
   # Conditionally trigger Docker image builds when Dockerfiles change on main/master
@@ -78,10 +82,11 @@ steps:
     agents:
       queue: "default"
 
-  # PHP Lint (CodeSniffer)
+  # PHP Lint (CodeSniffer) — skipped on JS-only PRs
   - label: ":php: PHP Lint"
     key: "php-lint"
     command: |
+      if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
       cd src && \
       composer install --no-interaction --prefer-dist && \
       vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
@@ -92,10 +97,11 @@ steps:
     agents:
       queue: "default"
 
-  # PHP Unit Tests
+  # PHP Unit Tests — skipped on JS-only PRs
   - label: ":php: PHP Unit Tests"
     key: "php-test"
     command: |
+      if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
       docker-php-ext-install mysqli && \
       cd src && \
       composer install --no-interaction --prefer-dist && \
