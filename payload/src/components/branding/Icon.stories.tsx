@@ -42,3 +42,13 @@ export const InNavContext: Story = {
     ),
   ],
 };
+
+/**
+ * Shows the branding icon at a larger size to illustrate how the logo could appear
+ * in hero-style UI surfaces.
+ */
+export const Large: Story = {
+  args: {
+    size: 'large',
+  },
+};

@@ -22,7 +22,7 @@ fi
 echo "PR #${BUILDKITE_PULL_REQUEST}: checking for code changes vs origin/master..."
 git fetch origin master --depth=1 2>/dev/null || true
 
-CHANGED_FILES=$(git diff --name-only origin/master...HEAD 2>/dev/null || echo "DIFF_FAILED")
+CHANGED_FILES=$(git diff --name-only origin/master HEAD 2>/dev/null || echo "DIFF_FAILED")
 
 # If the diff fails (e.g. very shallow clone), run CI to be safe.
 if [ "$CHANGED_FILES" = "DIFF_FAILED" ]; then
