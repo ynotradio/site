@@ -117,7 +117,7 @@ steps:
         key: "check-display-names"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh display-names"
-        artifact_paths: ["/tmp/integrity-display-names.md"]
+        artifact_paths: ["integrity-display-names.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:
@@ -132,7 +132,7 @@ steps:
         key: "check-slugs"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh slugs"
-        artifact_paths: ["/tmp/integrity-slugs.md"]
+        artifact_paths: ["integrity-slugs.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:
@@ -147,7 +147,7 @@ steps:
         key: "check-musicbrainz"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh musicbrainz"
-        artifact_paths: ["/tmp/integrity-musicbrainz.md"]
+        artifact_paths: ["integrity-musicbrainz.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:
@@ -162,7 +162,7 @@ steps:
         key: "check-record-metadata"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh record-metadata"
-        artifact_paths: ["/tmp/integrity-record-metadata.md"]
+        artifact_paths: ["integrity-record-metadata.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:
@@ -177,7 +177,7 @@ steps:
         key: "check-ondemand-source"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh ondemand-source"
-        artifact_paths: ["/tmp/integrity-ondemand-source.md"]
+        artifact_paths: ["integrity-ondemand-source.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:
@@ -196,7 +196,7 @@ steps:
         key: "check-publish-status"
         timeout_in_minutes: 15
         command: "bash .buildkite/scripts/run-single-integrity-check.sh publish-status"
-        artifact_paths: ["/tmp/integrity-publish-status.md"]
+        artifact_paths: ["integrity-publish-status.md"]
         soft_fail: true
         plugins:
           - docker#v5.11.0:

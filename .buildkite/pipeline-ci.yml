@@ -16,7 +16,7 @@ steps:
   # Conditionally trigger Docker image builds when Dockerfiles change on main/master
   - label: ":docker: Trigger Image Builds"
     key: "trigger-image-builds"
-    branches: "main master"
+    branches: "master"
     command: |
       # Check if any Dockerfiles changed
       CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
@@ -139,3 +139,17 @@ steps:
     agents:
       queue: "default"
       docker: "true"
+
+  # === Failure annotation (same pattern as nightly/db-sync pipelines) ===
+  - wait: ~
+    continue_on_failure: true
+
+  - label: ":memo: Annotate on Failure"
+    command: |
+      buildkite-agent annotate \
+        "❌ CI failed. Check the failed steps above for details." \
+        --style "error" \
+        --context "ci-failure"
+    if: build.state == "failed"
+    agents:
+      queue: "default"

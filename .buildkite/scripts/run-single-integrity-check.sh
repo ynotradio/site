@@ -16,7 +16,8 @@ corepack enable && yarn install --immutable
 export DATABASE_URI="$NEON_PROD_DATABASE_URL"
 
 PRELOAD="--import ./bin/preload-nextenv-fix.mjs --import tsx"
-OUTPUT="/tmp/integrity-${CHECK_NAME}.md"
+# Write to workspace (not /tmp) so artifacts persist after Docker container exits.
+OUTPUT="integrity-${CHECK_NAME}.md"
 
 case "$CHECK_NAME" in
   display-names)
