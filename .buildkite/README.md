@@ -6,6 +6,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 
 - **`pipeline.yml`** - Entry-point gate: checks for code changes, uploads `pipeline-ci.yml` if found, or skips for doc-only PRs
 - **`pipeline-ci.yml`** - Full CI steps: quality checks → tests → build → E2E (uploaded dynamically by `pipeline.yml`)
+- **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: manual unblock gate → rsync + composer deploy to production (uploaded alongside `pipeline-ci.yml` on master pushes)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
 - **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
@@ -39,6 +40,12 @@ PROD_MYSQL_PASSWORD=<production-mysql-password>
 PROD_MYSQL_DATABASE=<production-mysql-database>  # default: ynot_site
 GITHUB_PR_TOKEN=<fine-grained-pat-with-issues-write>  # also used by storybook deploy
 GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
+
+# Legacy PHP deploy (pipeline-deploy-legacy.yml)
+DEPLOY_SSH_KEY=<ssh-private-key-for-production-server>
+DEPLOY_SSH_HOST=<production-server-hostname-or-ip>
+DEPLOY_SSH_KNOWN_HOSTS=<known-hosts-entry-from-ssh-keyscan>
+ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 ```
 
 ## Agent Requirements
@@ -83,6 +90,36 @@ GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
 5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
    `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `NEON_API_KEY`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
 6. Create a GitHub issue to track migration progress (note the issue number)
+
+### Legacy PHP Deploy Pipeline
+
+Automatically appended to every master-push build by `check-changes.sh`. No separate pipeline registration is needed — it runs as part of the main CI build.
+
+**How it works:**
+
+1. Merge a PR to `master` in the GitHub app (works from mobile 📱)
+2. Buildkite picks up the push, runs full CI (`pipeline-ci.yml`)
+3. The deploy pipeline (`pipeline-deploy-legacy.yml`) is uploaded at the same time
+4. A **block step** ("🚀 Deploy legacy site to production?") pauses the deploy until you manually unblock it from the Buildkite web UI or mobile app
+5. After unblocking, the deploy step:
+   - Installs `rsync` and `openssh-client` in the `composer:2` container
+   - Fetches `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, and `ENV_PHP_CONTENTS` from Buildkite secrets
+   - Runs `composer install --no-dev` locally in `src/`
+   - Creates a timestamped backup of `htdocs` on the server (keeps latest 15)
+   - Rsyncs `src/` to `~/htdocs/` on the production server
+   - Copies `.env.php` to `~/htdocs/.env`
+   - Runs `composer install --no-dev --optimize-autoloader` on the server
+
+**Required secrets** (add via Buildkite UI → Pipeline Settings → Secrets):
+
+| Secret | Description |
+|---|---|
+| `DEPLOY_SSH_KEY` | SSH private key for the production server (`bitnami` user) |
+| `DEPLOY_SSH_HOST` | Production server hostname or IP address |
+| `DEPLOY_SSH_KNOWN_HOSTS` | Known-hosts entry for the server (get with `ssh-keyscan <hostname>`) |
+| `ENV_PHP_CONTENTS` | Full contents of the production `.env.php` file |
+
+> **Note:** `bin/deploy.sh` and `bin/pre-deploy.sh` continue to work unchanged for local manual deploys.
 
 ## Troubleshooting
 
