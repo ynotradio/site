@@ -2058,15 +2058,15 @@
     "@storybook/global" "^5.0.0"
     axe-core "^4.2.0"
 
-"@storybook/addon-docs@^10.2.19":
-  version "10.2.19"
-  resolved "https://registry.yarnpkg.com/@storybook/addon-docs/-/addon-docs-10.2.19.tgz#e6071ee91b4c326176367621d0ea76c759a918cb"
-  integrity sha512-tXugthdzjX5AkGWDSP4pnRgA/CWlOaEKp/+y9JOGXHLQmm1GHjW+4brNvNkKbjBl06LALXwlcTOyU4lyVRDLAw==
+"@storybook/addon-docs@^10.3.2":
+  version "10.3.2"
+  resolved "https://registry.yarnpkg.com/@storybook/addon-docs/-/addon-docs-10.3.2.tgz#1a7b4cd432790b3a52973420e2c39a7b7e02a496"
+  integrity sha512-PCTFyClQCRVMoyK7YxIEOGDMsZdkwSZGvdAdPTYXnmrvn2NagbxmUntWXBgNkP1OcxTFPusEMJZbIDuCvZ3uJQ==
   dependencies:
     "@mdx-js/react" "^3.0.0"
-    "@storybook/csf-plugin" "10.2.19"
+    "@storybook/csf-plugin" "10.3.2"
     "@storybook/icons" "^2.0.1"
-    "@storybook/react-dom-shim" "10.2.19"
+    "@storybook/react-dom-shim" "10.3.2"
     react "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
     react-dom "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
     ts-dedent "^2.0.0"
@@ -2099,6 +2099,13 @@
   dependencies:
     unplugin "^2.3.5"
 
+"@storybook/csf-plugin@10.3.2":
+  version "10.3.2"
+  resolved "https://registry.yarnpkg.com/@storybook/csf-plugin/-/csf-plugin-10.3.2.tgz#b421e6f96b311133b3e9219b9f1c9bcf5ec4052a"
+  integrity sha512-ty2Jmq6850/haVnVMS4qYiuN8QbDS0lx5SHi54M/FeRabHG0BEtpvqSgMEj7h4vWL6zL0QmTXPzeyRqHQwcuPQ==
+  dependencies:
+    unplugin "^2.3.5"
+
 "@storybook/global@^5.0.0":
   version "5.0.0"
   resolved "https://registry.yarnpkg.com/@storybook/global/-/global-5.0.0.tgz#b793d34b94f572c1d7d9e0f44fac4e0dbc9572ed"
@@ -2124,6 +2131,11 @@
   version "10.2.19"
   resolved "https://registry.yarnpkg.com/@storybook/react-dom-shim/-/react-dom-shim-10.2.19.tgz#7971868fc0eb6a3101190251c46640b44fbdde28"
   integrity sha512-BXCEfBGVBRYBTYeBeH/PJsy0Bq5MERe/HiaylR+ah/XrvIr2Z9bkne1J8yYiXCjiyq5HQa7Bj11roz0+vyUaEw==
+
+"@storybook/react-dom-shim@10.3.2":
+  version "10.3.2"
+  resolved "https://registry.yarnpkg.com/@storybook/react-dom-shim/-/react-dom-shim-10.3.2.tgz#1a0b856d4cf94eb03ab88fb4902b16912ce81b05"
+  integrity sha512-a29scyTJqWpvXw64DadjocfLwAsO2Wx1zIeFp9ogI4LR3i6SAxnnakztLHLmi+DMTHKycm+REWT2NmsIYlVf5w==
 
 "@storybook/react-vite@10.2.19":
   version "10.2.19"
