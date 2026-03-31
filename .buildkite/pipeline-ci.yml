@@ -54,6 +54,9 @@ steps:
   - label: ":storybook: Storybook Build & Deploy"
     key: "storybook"
     command: |
+      export DEBIAN_FRONTEND=noninteractive
+      apt-get update >/dev/null
+      apt-get install -y git >/dev/null
       # Skip if no storybook-relevant files changed (saves Netlify credits + build time)
       if [ "$${BUILDKITE_PULL_REQUEST:-false}" != "false" ]; then
         # Ensure origin/master is available — Buildkite does a shallow clone of the PR
