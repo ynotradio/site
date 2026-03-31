@@ -7938,10 +7938,10 @@ stop-iteration-iterator@^1.1.0:
     es-errors "^1.3.0"
     internal-slot "^1.1.0"
 
-storybook@^10.3.2:
-  version "10.3.2"
-  resolved "https://registry.yarnpkg.com/storybook/-/storybook-10.3.2.tgz#c1ac0d5bfd020ce3f3ce03d24f245a94885d6add"
-  integrity sha512-c96wzWLLUf3GJvNeVekaoXaGtPZAmu8eZugZtkz8uUaNOE5/jwWKb5LAfT0UXW2XlpQmJC7LGnncmGw6hsmmXA==
+storybook@^10.3.3:
+  version "10.3.3"
+  resolved "https://registry.yarnpkg.com/storybook/-/storybook-10.3.3.tgz#3e692a3264fdb423daf6e98afda758b14a72136b"
+  integrity sha512-tMoRAts9EVqf+mEMPLC6z1DPyHbcPe+CV1MhLN55IKsl0HxNjvVGK44rVPSePbltPE6vIsn4bdRj6CCUt8SJwQ==
   dependencies:
     "@storybook/global" "^5.0.0"
     "@storybook/icons" "^2.0.1"
