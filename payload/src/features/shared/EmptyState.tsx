@@ -1,24 +1,14 @@
 'use client';
 
-// Empty state component
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React from 'react';
+import './EmptyState.css';
 
 interface EmptyStateProps {
   message?: string;
 }
 
 export const EmptyState = ({ message = 'No items found.' }: EmptyStateProps) => (
-  <div
-    style={{
-      textAlign: 'center',
-      padding: '20px',
-      color: '#666',
-      fontSize: '14px',
-    }}
-  >
-    {message}
-  </div>
+  <div className="empty-state">{message}</div>
 );
 
 export default EmptyState;

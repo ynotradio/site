@@ -29,7 +29,7 @@ const config: StorybookConfig = {
     return mergeConfig(config, {
       resolve: {
         alias: {
-          '@payloadcms/ui': resolve(__dirname, './mocks/@payloadcms/ui.tsx')
+          '@payloadcms/ui': resolve(__dirname, '../payload/src/__mocks__/@payloadcms/ui.tsx')
         }
       }
     });

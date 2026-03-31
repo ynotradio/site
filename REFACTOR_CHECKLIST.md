@@ -44,14 +44,13 @@ These components meet all PR #173 requirements:
    - ✅ Has: Test file + Story file
    - Used by: DJ Order tool
 
-7. [ ] **DJsListHeader.tsx** (40 lines)
-   - Missing: Test file + Story file
-   - Issues: Inline styles
+7. [x] **DJsListHeader.tsx** (40 lines) ✅ COMPLETED
+   - ✅ Has: Test file + Story file + CSS file
    - Used by: DJs collection list view
 
-8. [ ] **SortableItem.tsx** (59 lines)
-   - Missing: Test file + Story file
-   - Issues: Inline styles
+8. [x] **SortableItem.tsx** (59 lines) ✅ COMPLETED
+   - ✅ Has: Test file + Story file + CSS file
+   - Dynamic transform styles remain (required for DnD)
    - Path: `payload/src/features/dj-order/components/`
    - Used by: DJOrderClient
 
@@ -66,9 +65,9 @@ These components meet all PR #173 requirements:
      - Path: `payload/src/features/show-cloner/components/`
      - Used by: ShowClonerClient
 
-11. [ ] **client.tsx** (54 lines) - Embed feature
-     - Missing: Test file + Story file
-     - Issues: Inline styles
+11. [x] **client.tsx** (54 lines) - Embed feature ✅ COMPLETED
+     - ✅ Has: Test file + Story file
+     - No inline styles
      - Path: `payload/src/features/embed/`
      - Used by: Post content blocks
 
@@ -110,17 +109,28 @@ Components added after the original checklist that now have full test + story co
 
 ### Still Needs Tests/Stories
 
-- [ ] **MatchControlsPanels.tsx** (233 lines) – Missing: Test file + Story file
+- [x] **MatchControlsPanels.tsx** (233 lines) ✅ COMPLETED – Has: Test file + Story file
   - Path: `payload/src/features/mrm-live/`
   - Exports: `NavLinks`, `MatchCardHeader`, `MatchCardBody`, `ActionButtons`, `AdminLinks`
   - Used by: MatchControlsTab
 
+## ✅ New Completions (inline styles → CSS)
+
+Converted inline styles to CSS files across all affected components:
+
+- [x] **RadioToolsNavLinks.tsx** ✅ CSS extracted → `RadioToolsNavLinks.css`
+- [x] **EmptyState.tsx** ✅ CSS extracted → `EmptyState.css`
+- [x] **LoadingSpinner.tsx** ✅ CSS extracted → `LoadingSpinner.css` (removed `<style>` tag)
+- [x] **ShowClonerClient.tsx** ✅ CSS extracted → `ShowClonerClient.css`
+- [x] **SourceDateRangeSelector.tsx** ✅ CSS extracted → `SourceDateRangeSelector.css`
+- [x] **TargetDateSelector.tsx** ✅ CSS extracted → `TargetDateSelector.css`
+
 ## 🎯 Summary Statistics
 
 - **Total TSX files**: 21 (excluding .stories.tsx and .test.tsx)
-- **Fully compliant**: 14 (67%) ✅ +1 from previous (NavDefaultClosed)
-- **Need tests/stories**: 0 (0%) 🎉 All components covered
+- **Fully compliant**: 17 (81%) ✅
 - **Infrastructure (exempt)**: 4 (19%)
+- **Inline styles remaining**: 0 ✅ All extracted to CSS
 - **Over 300 lines**: 0 (0%) ✅ FIXED
 
 ## 📊 Issues Breakdown
@@ -130,6 +140,7 @@ Components added after the original checklist that now have full test + story co
 | Missing test files  | 0     | ✅ NONE               |
 | Missing story files | 0     | ✅ NONE               |
 | Over 300 lines      | 0     | ✅ NONE               |
+| Inline styles       | 0     | ✅ ALL EXTRACTED      |
 
 ## 🔧 Recommended Action Plan
 
@@ -157,6 +168,13 @@ Components added after the original checklist that now have full test + story co
 6. [x] Lint passes: `yarn lint` exits 0 (fixed multiple lint errors in ShowClonerClient.tsx and useDateRanges.ts)
 7. [x] Playwright E2E test added for Show Cloner tool (`e2e/show-cloner.spec.ts`)
 8. [x] Test coverage meets 80% target for show-cloner feature (81.57% statements)
+
+### Phase 4: Inline Styles → CSS ✅ COMPLETED
+
+9. [x] Extracted all inline styles to CSS files across shared and show-cloner components
+   - ✅ `RadioToolsNavLinks.css`, `EmptyState.css`, `LoadingSpinner.css`
+   - ✅ `ShowClonerClient.css`, `SourceDateRangeSelector.css`, `TargetDateSelector.css`
+   - ✅ Updated tests checking inline styles to check CSS classes instead
 
 ## 📝 Notes
 

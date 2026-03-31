@@ -2,6 +2,7 @@ import React from 'react';
 import { ShowRow } from './ShowRow';
 import { formatDateShort } from '../utils';
 import type { DateGroup } from '../types';
+import './SourceDateRangeSelector.css';
 
 interface SourceDateRangeSelectorProps {
   sourceStartDate: string;
@@ -20,40 +21,12 @@ export const SourceDateRangeSelector: React.FC<SourceDateRangeSelectorProps> = (
   onStartDateChange,
   onEndDateChange,
 }) => (
-  <div
-    style={{
-      padding: '16px',
-      marginBottom: '16px',
-      borderRadius: '8px',
-      border: '1px solid #ddd',
-      backgroundColor: '#fafafa',
-    }}
-  >
-    <div
-      style={{
-        fontSize: '13px',
-        fontWeight: 600,
-        marginBottom: '12px',
-        color: '#333',
-        textTransform: 'uppercase',
-        letterSpacing: '0.5px',
-      }}
-    >
-      Source Date Range (copy from)
-    </div>
+  <div className="date-range-selector">
+    <div className="date-range-selector__heading">Source Date Range (copy from)</div>
 
-    <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-      <div style={{ flex: 1 }}>
-        <label
-          htmlFor="source-start-date"
-          style={{
-            display: 'block',
-            fontSize: '13px',
-            fontWeight: 500,
-            marginBottom: '8px',
-            color: '#555',
-          }}
-        >
+    <div className="date-range-selector__row">
+      <div className="date-range-selector__field">
+        <label htmlFor="source-start-date" className="date-range-selector__label">
           Start Date
         </label>
         <input
@@ -61,29 +34,11 @@ export const SourceDateRangeSelector: React.FC<SourceDateRangeSelectorProps> = (
           type="date"
           value={sourceStartDate}
           onChange={(e) => onStartDateChange(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            fontSize: '14px',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            backgroundColor: '#fff',
-            color: '#333',
-            colorScheme: 'light',
-          }}
+          className="date-range-selector__input"
         />
       </div>
-      <div style={{ flex: 1 }}>
-        <label
-          htmlFor="source-end-date"
-          style={{
-            display: 'block',
-            fontSize: '13px',
-            fontWeight: 500,
-            marginBottom: '8px',
-            color: '#555',
-          }}
-        >
+      <div className="date-range-selector__field">
+        <label htmlFor="source-end-date" className="date-range-selector__label">
           End Date
         </label>
         <input
@@ -91,57 +46,24 @@ export const SourceDateRangeSelector: React.FC<SourceDateRangeSelectorProps> = (
           type="date"
           value={sourceEndDate}
           onChange={(e) => onEndDateChange(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 12px',
-            fontSize: '14px',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            backgroundColor: '#fff',
-            color: '#333',
-            colorScheme: 'light',
-          }}
+          className="date-range-selector__input"
         />
       </div>
     </div>
 
     {selectedRangeDateGroups.length > 0 && (
       <div>
-        <div
-          style={{
-            fontSize: '13px',
-            fontWeight: 500,
-            marginBottom: '8px',
-            color: '#333',
-          }}
-        >
+        <div className="date-range-selector__shows-heading">
           Shows in selected range ({selectedRangeShows} total):
         </div>
-        <div
-          style={{
-            maxHeight: '300px',
-            overflowY: 'auto',
-            border: '1px solid #e0e0e0',
-            borderRadius: '4px',
-            backgroundColor: '#fff',
-          }}
-        >
+        <div className="date-range-selector__shows-list">
           {selectedRangeDateGroups.map((group) => (
             <div key={group.date}>
-              <div
-                style={{
-                  padding: '8px 12px',
-                  backgroundColor: '#f5f5f5',
-                  borderBottom: '1px solid #e0e0e0',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#555',
-                }}
-              >
+              <div className="date-range-selector__date-group-header">
                 {group.dayName}, {formatDateShort(group.date)} ({group.shows.length} show
                 {group.shows.length !== 1 ? 's' : ''})
               </div>
-              <div style={{ padding: '4px 0' }}>
+              <div className="date-range-selector__date-group-rows">
                 {group.shows.map((show) => (
                   <ShowRow key={show.id} show={show} />
                 ))}
@@ -153,14 +75,7 @@ export const SourceDateRangeSelector: React.FC<SourceDateRangeSelectorProps> = (
     )}
 
     {sourceStartDate && sourceEndDate && selectedRangeShows === 0 && (
-      <div
-        style={{
-          padding: '12px',
-          textAlign: 'center',
-          color: '#666',
-          fontSize: '14px',
-        }}
-      >
+      <div className="date-range-selector__empty">
         No shows found in the selected date range.
       </div>
     )}
