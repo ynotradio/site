@@ -34,6 +34,12 @@ steps:
       - docker#v5.11.0:
           image: "node:22-slim"
           propagate-environment: true
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     agents:
       queue: "default"
 
@@ -47,12 +53,20 @@ steps:
           propagate-environment: true
     artifact_paths:
       - "coverage/**/*"
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     agents:
       queue: "default"
 
   # Storybook Build + Deploy Preview (deploys to Netlify via API, posts PR comment)
+  # soft_fail: Netlify deploy issues should not block PR merges
   - label: ":storybook: Storybook Build & Deploy"
     key: "storybook"
+    soft_fail: true
     command: |
       export DEBIAN_FRONTEND=noninteractive
       apt-get update >/dev/null
@@ -125,9 +139,21 @@ steps:
       queue: "default"
 
   # === E2E Integration Tests ===
+  # Only run after all fast checks pass — saves ~20 min on doomed builds.
   - label: ":playwright: E2E Tests"
     key: "e2e"
+    depends_on:
+      - "eslint"
+      - "vitest"
+      - "php-lint"
+      - "php-test"
     timeout_in_minutes: 20
+    retry:
+      automatic:
+        - exit_status: -1   # agent lost
+          limit: 2
+        - exit_status: 255  # infrastructure issue
+          limit: 1
     command: |
       echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
       

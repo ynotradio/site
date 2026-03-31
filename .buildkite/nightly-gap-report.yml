@@ -29,6 +29,12 @@ steps:
   - label: ":package: Import & :bar_chart: Gap Report"
     key: "import-and-gap-report"
     timeout_in_minutes: 30
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     command: |
       echo "--- :yarn: Installing dependencies"
       corepack enable && yarn install --immutable
