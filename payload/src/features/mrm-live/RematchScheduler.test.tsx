@@ -81,13 +81,12 @@ describe('RematchScheduler', () => {
     expect(screen.queryByRole('heading', { name: /schedule rematch/i })).not.toBeInTheDocument();
   });
 
-  it('does not call onConfirm when date is missing and confirm is clicked programmatically', async () => {
-    const onConfirm = vi.fn().mockResolvedValue(undefined);
-    render(<RematchScheduler saving={false} onConfirm={onConfirm} />);
+  it('shows Scheduling… text on confirm button when form is open and saving', () => {
+    const { rerender } = render(<RematchScheduler saving={false} onConfirm={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /schedule rematch/i }));
-    // Confirm button should be disabled without a date
-    const confirmBtn = screen.getByRole('button', { name: /confirm rematch/i });
-    expect(confirmBtn).toBeDisabled();
-    expect(onConfirm).not.toHaveBeenCalled();
+
+    rerender(<RematchScheduler saving onConfirm={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /scheduling/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /scheduling/i })).toBeDisabled();
   });
 });
