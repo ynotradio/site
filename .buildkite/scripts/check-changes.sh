@@ -24,7 +24,7 @@ fi
 echo "PR #${BUILDKITE_PULL_REQUEST}: checking for code changes vs origin/master..."
 git fetch origin master --depth=1 2>/dev/null || true
 
-CHANGED_FILES=$(git diff --name-only origin/master...HEAD 2>/dev/null || echo "DIFF_FAILED")
+CHANGED_FILES=$(git diff --name-only origin/master HEAD 2>/dev/null || echo "DIFF_FAILED")
 
 # If the diff fails (e.g. very shallow clone), run CI to be safe.
 if [ "$CHANGED_FILES" = "DIFF_FAILED" ]; then
@@ -65,5 +65,29 @@ fi
 echo "Code changes detected:"
 echo "$CODE_CHANGES"
 echo ""
-echo "Running full CI pipeline..."
-buildkite-agent pipeline upload .buildkite/pipeline-ci.yml
+
+# Set metadata about which ecosystems changed so pipeline steps can skip
+# unnecessary work (e.g. PHP lint on a JS-only PR).
+HAS_PHP=$(echo "$CODE_CHANGES" | grep -qE '^src/|\.php$' && echo "true" || echo "false")
+HAS_JS=$(echo "$CODE_CHANGES" | grep -qE '\.(tsx?|jsx?|mjs|cjs)$|^app/|^payload/|^\.storybook/|^e2e/|package\.json|yarn\.lock' && echo "true" || echo "false")
+HAS_DOCKER=$(echo "$CODE_CHANGES" | grep -qE 'Dockerfile|docker-compose|\.buildkite/' && echo "true" || echo "false")
+
+buildkite-agent meta-data set "has-php-changes" "$HAS_PHP"
+buildkite-agent meta-data set "has-js-changes" "$HAS_JS"
+buildkite-agent meta-data set "has-docker-changes" "$HAS_DOCKER"
+echo "Metadata: php=$HAS_PHP js=$HAS_JS docker=$HAS_DOCKER"
+
+# Derive skip flags (inverted: "false" changes → "true" skip)
+SKIP_PHP="false"
+SKIP_JS="false"
+[ "$HAS_PHP" = "false" ] && SKIP_PHP="true"
+[ "$HAS_JS" = "false" ] && SKIP_JS="true"
+
+echo "Running full CI pipeline... (skip_php=$SKIP_PHP skip_js=$SKIP_JS)"
+
+# Inject skip flags into the pipeline env block so steps can exit early.
+# For non-PR builds this function isn't called — defaults in pipeline-ci.yml are "false".
+sed \
+  -e "s/SKIP_PHP: \"false\"/SKIP_PHP: \"$SKIP_PHP\"/" \
+  -e "s/SKIP_JS: \"false\"/SKIP_JS: \"$SKIP_JS\"/" \
+  .buildkite/pipeline-ci.yml | buildkite-agent pipeline upload

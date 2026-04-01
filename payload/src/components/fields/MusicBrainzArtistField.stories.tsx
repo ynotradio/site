@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { setMockFieldValue, setMockFormFields, resetMocks } from '@/.storybook/mocks/@payloadcms/ui';
+import { setMockFieldValue, setMockFormFields, resetMocks } from '@payloadcms/ui';
 import { MusicBrainzArtistField } from './MusicBrainzArtistField';
 
 const meta = {
@@ -94,7 +94,8 @@ export const WithSelectedArtist: Story = {
   parameters: {
     docs: {
       description: {
-        story: 'This story shows the field with Radiohead already linked. The component displays a green success card with all the artist details and action buttons.',
+        story:
+          'This story shows the field with Radiohead already linked. The component displays a green success card with all the artist details and action buttons.',
       },
     },
   },

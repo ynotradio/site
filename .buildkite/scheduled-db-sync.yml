@@ -21,6 +21,12 @@ steps:
   - label: ":neon: Sync Production → Development"
     key: "db-sync"
     timeout_in_minutes: 5
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     command: |
       echo "--- :neon: Resetting development branch to match production"
       npx neonctl branches reset development \
