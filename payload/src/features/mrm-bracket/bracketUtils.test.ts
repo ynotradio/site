@@ -136,6 +136,11 @@ describe('getBandAbbr', () => {
     expect(getBandAbbr(null)).toBe('TBD');
     expect(getBandAbbr(undefined)).toBe('TBD');
   });
+
+  it('returns the string directly when band is a string', () => {
+    expect(getBandAbbr('Radiohead')).toBe('Radiohead');
+    expect(getBandAbbr('TBD')).toBe('TBD');
+  });
 });
 
 describe('getBandSeed', () => {
@@ -145,6 +150,14 @@ describe('getBandSeed', () => {
 
   it('returns empty string for null', () => {
     expect(getBandSeed(null)).toBe('');
+  });
+
+  it('returns empty string for undefined', () => {
+    expect(getBandSeed(undefined)).toBe('');
+  });
+
+  it('returns empty string when band is a string', () => {
+    expect(getBandSeed('Radiohead')).toBe('');
   });
 });
 
@@ -198,5 +211,36 @@ describe('getWinnerSlot', () => {
       winner: { id: 'b2', name: 'Nirvana', seed: 16, placement: 16 },
     });
     expect(getWinnerSlot(m)).toBe('2');
+  });
+
+  it('returns null when winner id matches neither band', () => {
+    const m = makeMatch(1, '1', 1, {
+      winner: { id: 'unknown', name: 'Unknown', seed: 9, placement: 9 },
+    });
+    expect(getWinnerSlot(m)).toBeNull();
+  });
+
+  it('returns null when band1 is null and winner does not match band2', () => {
+    const m = makeMatch(1, '1', 1, {
+      band1: null,
+      winner: { id: 'unknown', name: 'Unknown', seed: 9, placement: 9 },
+    });
+    expect(getWinnerSlot(m)).toBeNull();
+  });
+
+  it('returns null when band2 is null and winner does not match band1', () => {
+    const m = makeMatch(1, '1', 1, {
+      band2: null,
+      winner: { id: 'unknown', name: 'Unknown', seed: 9, placement: 9 },
+    });
+    expect(getWinnerSlot(m)).toBeNull();
+  });
+
+  it('returns 1 when band2 is null and winner matches band1', () => {
+    const m = makeMatch(1, '1', 1, {
+      band2: null,
+      winner: { id: 'b1', name: 'Radiohead', seed: 1, placement: 1 },
+    });
+    expect(getWinnerSlot(m)).toBe('1');
   });
 });
