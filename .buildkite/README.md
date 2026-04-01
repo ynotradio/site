@@ -101,9 +101,9 @@ Automatically appended to every master-push build by `check-changes.sh`. No sepa
 2. Buildkite picks up the push, runs full CI (`pipeline-ci.yml`)
 3. The deploy pipeline (`pipeline-deploy-legacy.yml`) is uploaded at the same time
 4. A **block step** ("🚀 Deploy legacy site to production?") pauses the deploy until you manually unblock it from the Buildkite web UI or mobile app
-5. After unblocking, the deploy step:
+5. After unblocking, the deploy step (via `.buildkite/scripts/deploy-legacy.sh`):
    - Installs `rsync` and `openssh-client` in the `composer:2` container
-   - Fetches `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, and `ENV_PHP_CONTENTS` from Buildkite secrets
+   - Fetches `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS`, and `ENV_PHP_CONTENTS` from Buildkite secrets
    - Runs `composer install --no-dev` locally in `src/`
    - Creates a timestamped backup of `htdocs` on the server (keeps latest 15)
    - Rsyncs `src/` to `~/htdocs/` on the production server
