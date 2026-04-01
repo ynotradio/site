@@ -1,38 +1,46 @@
 #!/bin/bash
 # .buildkite/hooks/pre-command
-# Runs before each command in a step
+# Runs before each command in a step.
+# Secrets are scoped by pipeline to follow the principle of least privilege.
 
 set -euo pipefail
 
-# Login to GHCR using Buildkite secrets
-echo "--- :docker: Logging into GHCR"
-GHCR_USERNAME=$(buildkite-agent secret get GHCR_USERNAME)
-GHCR_TOKEN=$(buildkite-agent secret get GHCR_TOKEN)
+# --- GHCR login (needed by CI and build-images pipelines) ---
+GHCR_USERNAME=$(buildkite-agent secret get GHCR_USERNAME 2>/dev/null || true)
+GHCR_TOKEN=$(buildkite-agent secret get GHCR_TOKEN 2>/dev/null || true)
 
 if [[ -n "$GHCR_TOKEN" && -n "$GHCR_USERNAME" ]]; then
+  echo "--- :docker: Logging into GHCR"
   echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
   echo "✅ Logged into GHCR"
 else
   echo "⚠️ GHCR credentials not found, skipping login"
 fi
 
-# Export Netlify and GitHub tokens for storybook deploy
-NETLIFY_AUTH_TOKEN=$(buildkite-agent secret get NETLIFY_AUTH_TOKEN 2>/dev/null || true)
-GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
-export NETLIFY_AUTH_TOKEN GITHUB_PR_TOKEN
+# --- Storybook / PR comment tokens (only for CI pipeline) ---
+if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"ci"* ]] || [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"site"* ]]; then
+  NETLIFY_AUTH_TOKEN=$(buildkite-agent secret get NETLIFY_AUTH_TOKEN 2>/dev/null || true)
+  GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
+  export NETLIFY_AUTH_TOKEN GITHUB_PR_TOKEN
+fi
 
-# Export production MySQL credentials and gap report config (for nightly-gap-report pipeline)
-PROD_MYSQL_HOST=$(buildkite-agent secret get PROD_MYSQL_HOST 2>/dev/null || true)
-PROD_MYSQL_USER=$(buildkite-agent secret get PROD_MYSQL_USER 2>/dev/null || true)
-PROD_MYSQL_PASSWORD=$(buildkite-agent secret get PROD_MYSQL_PASSWORD 2>/dev/null || true)
-PROD_MYSQL_DATABASE=$(buildkite-agent secret get PROD_MYSQL_DATABASE 2>/dev/null || true)
-NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
-GAP_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get GAP_REPORT_ISSUE_NUMBER 2>/dev/null || true)
-INTEGRITY_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get INTEGRITY_REPORT_ISSUE_NUMBER 2>/dev/null || true)
-NEON_API_KEY=$(buildkite-agent secret get NEON_API_KEY 2>/dev/null || true)
-export PROD_MYSQL_HOST PROD_MYSQL_USER PROD_MYSQL_PASSWORD PROD_MYSQL_DATABASE NEON_PROD_DATABASE_URL GAP_REPORT_ISSUE_NUMBER INTEGRITY_REPORT_ISSUE_NUMBER NEON_API_KEY
+# --- Production database / Neon credentials (only for nightly and db-sync pipelines) ---
+if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"nightly"* ]] || [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"gap-report"* ]] || [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"db-sync"* ]]; then
+  PROD_MYSQL_HOST=$(buildkite-agent secret get PROD_MYSQL_HOST 2>/dev/null || true)
+  PROD_MYSQL_USER=$(buildkite-agent secret get PROD_MYSQL_USER 2>/dev/null || true)
+  PROD_MYSQL_PASSWORD=$(buildkite-agent secret get PROD_MYSQL_PASSWORD 2>/dev/null || true)
+  PROD_MYSQL_DATABASE=$(buildkite-agent secret get PROD_MYSQL_DATABASE 2>/dev/null || true)
+  NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
+  GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
+  GAP_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get GAP_REPORT_ISSUE_NUMBER 2>/dev/null || true)
+  INTEGRITY_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get INTEGRITY_REPORT_ISSUE_NUMBER 2>/dev/null || true)
+  NEON_API_KEY=$(buildkite-agent secret get NEON_API_KEY 2>/dev/null || true)
+  export PROD_MYSQL_HOST PROD_MYSQL_USER PROD_MYSQL_PASSWORD PROD_MYSQL_DATABASE
+  export NEON_PROD_DATABASE_URL GITHUB_PR_TOKEN GAP_REPORT_ISSUE_NUMBER
+  export INTEGRITY_REPORT_ISSUE_NUMBER NEON_API_KEY
+fi
 
-# Setup E2E environment files if the script exists
+# --- E2E environment setup ---
 if [[ -f "./bin/setup-e2e-env.sh" ]]; then
   echo "--- Setting up E2E environment"
   ./bin/setup-e2e-env.sh

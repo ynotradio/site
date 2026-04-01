@@ -7,12 +7,16 @@ env:
   NODE_VERSION: "22"
   PHP_VERSION: "7.4"
   CI: "true"
+  # Set to "true" by check-changes.sh for PR builds when no PHP/JS files changed.
+  # Enables steps to exit early and save build minutes.
+  SKIP_PHP: "false"
+  SKIP_JS: "false"
 
 steps:
   # Conditionally trigger Docker image builds when Dockerfiles change on main/master
   - label: ":docker: Trigger Image Builds"
     key: "trigger-image-builds"
-    branches: "main master"
+    branches: "master"
     command: |
       # Check if any Dockerfiles changed
       CHANGED_FILES=$$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
@@ -34,6 +38,12 @@ steps:
       - docker#v5.11.0:
           image: "node:22-slim"
           propagate-environment: true
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     agents:
       queue: "default"
 
@@ -47,44 +57,21 @@ steps:
           propagate-environment: true
     artifact_paths:
       - "coverage/**/*"
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     agents:
       queue: "default"
 
   # Storybook Build + Deploy Preview (deploys to Netlify via API, posts PR comment)
+  # soft_fail: Netlify deploy issues should not block PR merges
   - label: ":storybook: Storybook Build & Deploy"
     key: "storybook"
-    command: |
-      export DEBIAN_FRONTEND=noninteractive
-      apt-get update >/dev/null
-      apt-get install -y git >/dev/null
-      # Skip if no storybook-relevant files changed (saves Netlify credits + build time)
-      if [ "$${BUILDKITE_PULL_REQUEST:-false}" != "false" ]; then
-        # Fetch the tip of master so we can diff against it. Buildkite shallow-clones
-        # only the PR branch, so origin/master won't exist otherwise.
-        # Use two-endpoint diff (no merge base needed — works with shallow clones).
-        git fetch origin master --depth=1 2>/dev/null || true
-        echo "HEAD: $$(git rev-parse HEAD)"
-        echo "origin/master: $$(git rev-parse origin/master 2>/dev/null || echo 'NOT FOUND')"
-        STORYBOOK_CHANGES=$$(git diff --name-only origin/master HEAD -- \
-          'app/' 'payload/src/' '.storybook/' 'package.json' 'yarn.lock' \
-          | grep -v '\.test\.\|\.spec\.' || true)
-      else
-        STORYBOOK_CHANGES=$$(git diff --name-only HEAD~1 HEAD -- \
-          'app/' 'payload/src/' '.storybook/' 'package.json' 'yarn.lock' \
-          | grep -v '\.test\.\|\.spec\.' || true)
-      fi
-
-      if [ -z "$$STORYBOOK_CHANGES" ]; then
-        echo "No storybook-relevant files changed — skipping build."
-        exit 0
-      fi
-      echo "Storybook-relevant changes detected:"
-      echo "$$STORYBOOK_CHANGES"
-
-      corepack enable && yarn install --immutable && yarn build-storybook
-      if [ "$${BUILDKITE_PULL_REQUEST:-false}" != "false" ]; then
-        node .buildkite/scripts/deploy-storybook.mjs storybook-static
-      fi
+    soft_fail: true
+    command: "bash .buildkite/scripts/build-storybook.sh"
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
@@ -95,10 +82,11 @@ steps:
     agents:
       queue: "default"
 
-  # PHP Lint (CodeSniffer)
+  # PHP Lint (CodeSniffer) — skipped on JS-only PRs
   - label: ":php: PHP Lint"
     key: "php-lint"
     command: |
+      if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
       cd src && \
       composer install --no-interaction --prefer-dist && \
       vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
@@ -109,10 +97,11 @@ steps:
     agents:
       queue: "default"
 
-  # PHP Unit Tests
+  # PHP Unit Tests — skipped on JS-only PRs
   - label: ":php: PHP Unit Tests"
     key: "php-test"
     command: |
+      if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
       docker-php-ext-install mysqli && \
       cd src && \
       composer install --no-interaction --prefer-dist && \
@@ -125,104 +114,22 @@ steps:
       queue: "default"
 
   # === E2E Integration Tests ===
+  # Only run after all fast checks pass — saves ~20 min on doomed builds.
   - label: ":playwright: E2E Tests"
     key: "e2e"
+    depends_on:
+      - "eslint"
+      - "vitest"
+      - "php-lint"
+      - "php-test"
     timeout_in_minutes: 20
-    command: |
-      echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-      
-      # Pull images in parallel, build Payload locally (esbuild binary mismatch in DinD)
-      echo "📦 Building and pulling images..."
-      docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
-      docker pull ghcr.io/ynotradio/site/playwright:latest &
-      docker build --load -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
-      wait
-      
-      # Start databases first
-      echo "🗄️ Starting databases..."
-      docker compose -f docker-compose.e2e.yml up -d postgres mysql
-      
-      # Wait for databases to be healthy
-      echo "⏳ Waiting for databases..."
-      for i in 1 2 3 4 5 6 7 8 9 10; do
-        sleep 3
-        PG=$$(docker compose -f docker-compose.e2e.yml ps postgres --format json | jq -r '.Health // "starting"')
-        MY=$$(docker compose -f docker-compose.e2e.yml ps mysql --format json | jq -r '.Health // "starting"')
-        echo "DB check $$i/10: postgres=$$PG mysql=$$MY"
-        [ "$$PG" = "healthy" ] && [ "$$MY" = "healthy" ] && break
-      done
-      
-      # Start Payload and PHP/Apache in parallel (they don't depend on each other)
-      echo "🚀 Starting Payload CMS and PHP/Apache..."
-      docker compose -f docker-compose.e2e.yml up -d payload phpfpm apache
-      
-      # Monitor Payload startup (migrate + seed + production server)
-      echo "⏳ Waiting for Payload to be healthy..."
-      for i in $$(seq 1 60); do
-        sleep 5
-        HEALTH=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        STATE=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.State // "unknown"' || echo "unknown")
-        
-        [ "$$HEALTH" = "healthy" ] && echo "✅ Payload is healthy! (check $$i)" && break
-        
-        # Detect container exit or unhealthy state
-        if [ "$$HEALTH" = "unhealthy" ] || [ "$$STATE" = "exited" ]; then
-          echo "❌ Payload container failed! state=$$STATE health=$$HEALTH"
-          docker compose -f docker-compose.e2e.yml logs payload --tail=200
-          exit 1
-        fi
-        
-        # If state is empty, container may have exited — check if it's still listed
-        if [ -z "$$STATE" ] || [ "$$STATE" = "unknown" ]; then
-          RUNNING=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r 'length // 0' || echo "0")
-          if [ "$$RUNNING" = "0" ] || [ -z "$$RUNNING" ]; then
-            echo "⚠️ Payload container not found (check $$i), checking logs..."
-            docker compose -f docker-compose.e2e.yml logs payload --tail=50
-          fi
-        fi
-        
-        # Log every 6th check (~30s)
-        if [ $$((i % 6)) -eq 0 ]; then
-          echo "Payload check $$i: state=$$STATE health=$$HEALTH"
-          docker compose -f docker-compose.e2e.yml logs payload --tail=5
-        fi
-      done
-      
-      # Fail fast if Payload never became healthy
-      PAYLOAD_FINAL=$$(docker compose -f docker-compose.e2e.yml ps payload --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-      if [ "$$PAYLOAD_FINAL" != "healthy" ]; then
-        echo "❌ Payload failed to become healthy after 300s (health=$$PAYLOAD_FINAL)"
-        docker compose -f docker-compose.e2e.yml logs payload --tail=100
-        docker compose -f docker-compose.e2e.yml down -v
-        exit 1
-      fi
-      
-      # Verify Apache is also healthy before running tests
-      echo "⏳ Checking Apache..."
-      for i in $$(seq 1 12); do
-        APACHE_HEALTH=$$(docker compose -f docker-compose.e2e.yml ps apache --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-        [ "$$APACHE_HEALTH" = "healthy" ] && echo "✅ Apache is healthy! (check $$i)" && break
-        [ $$((i % 3)) -eq 0 ] && echo "Apache check $$i: health=$$APACHE_HEALTH"
-        sleep 5
-      done
-      
-      # Fail fast if Apache never became healthy
-      APACHE_FINAL=$$(docker compose -f docker-compose.e2e.yml ps apache --format json 2>/dev/null | jq -r '.Health // "unknown"' || echo "unknown")
-      if [ "$$APACHE_FINAL" != "healthy" ]; then
-        echo "❌ Apache failed to become healthy after 60s (health=$$APACHE_FINAL)"
-        docker compose -f docker-compose.e2e.yml logs apache --tail=50
-        docker compose -f docker-compose.e2e.yml down -v
-        exit 1
-      fi
-      
-      # Run tests
-      echo "🎭 Running Playwright E2E tests..."
-      docker compose -f docker-compose.e2e.yml run --rm playwright
-      TEST_EXIT=$$?
-      
-      echo "📊 Test results: exit code $$TEST_EXIT"
-      docker compose -f docker-compose.e2e.yml down -v
-      exit $$TEST_EXIT
+    retry:
+      automatic:
+        - exit_status: -1   # agent lost
+          limit: 2
+        - exit_status: 255  # infrastructure issue
+          limit: 1
+    command: "bash .buildkite/scripts/run-e2e.sh"
     env:
       GHCR_USERNAME: "${GHCR_USERNAME}"
       GHCR_TOKEN: "${GHCR_TOKEN}"
@@ -232,3 +139,17 @@ steps:
     agents:
       queue: "default"
       docker: "true"
+
+  # === Failure annotation (same pattern as nightly/db-sync pipelines) ===
+  - wait: ~
+    continue_on_failure: true
+
+  - label: ":memo: Annotate on Failure"
+    command: |
+      buildkite-agent annotate \
+        "❌ CI failed. Check the failed steps above for details." \
+        --style "error" \
+        --context "ci-failure"
+    if: build.state == "failed"
+    agents:
+      queue: "default"

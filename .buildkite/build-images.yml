@@ -18,9 +18,6 @@ steps:
       - label: ":php: Build PHP-FPM Dev Image"
         key: "build-phpfpm"
         command: |
-          echo "--- :docker: Logging into GHCR"
-          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-          
           # Create short commit SHA (first 7 characters)
           SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
           
@@ -35,9 +32,12 @@ steps:
           echo "--- :docker: Pushing PHP-FPM image to GHCR"
           docker push ghcr.io/$${GHCR_ORG}/phpfpm-dev:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/phpfpm-dev:latest
-        env:
-          GHCR_USERNAME: "${GHCR_USERNAME}"
-          GHCR_TOKEN: "${GHCR_TOKEN}"
+        retry:
+          automatic:
+            - exit_status: -1
+              limit: 2
+            - exit_status: 255
+              limit: 1
         agents:
           queue: "default"
           docker: "true"
@@ -45,9 +45,6 @@ steps:
       - label: ":postgres: Build Postgres Seeded Image"
         key: "build-postgres"
         command: |
-          echo "--- :docker: Logging into GHCR"
-          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-          
           # Create short commit SHA (first 7 characters)
           SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
           
@@ -62,9 +59,12 @@ steps:
           echo "--- :docker: Pushing Postgres image to GHCR"
           docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/postgres-seeded:latest
-        env:
-          GHCR_USERNAME: "${GHCR_USERNAME}"
-          GHCR_TOKEN: "${GHCR_TOKEN}"
+        retry:
+          automatic:
+            - exit_status: -1
+              limit: 2
+            - exit_status: 255
+              limit: 1
         agents:
           queue: "default"
           docker: "true"
@@ -72,9 +72,6 @@ steps:
       - label: ":playwright: Build Playwright Image"
         key: "build-playwright"
         command: |
-          echo "--- :docker: Logging into GHCR"
-          echo "$$GHCR_TOKEN" | docker login ghcr.io -u "$$GHCR_USERNAME" --password-stdin
-          
           # Create short commit SHA (first 7 characters)
           SHORT_COMMIT=$${BUILDKITE_COMMIT:0:7}
           
@@ -89,9 +86,12 @@ steps:
           echo "--- :docker: Pushing Playwright image to GHCR"
           docker push ghcr.io/$${GHCR_ORG}/playwright:$$SHORT_COMMIT
           docker push ghcr.io/$${GHCR_ORG}/playwright:latest
-        env:
-          GHCR_USERNAME: "${GHCR_USERNAME}"
-          GHCR_TOKEN: "${GHCR_TOKEN}"
+        retry:
+          automatic:
+            - exit_status: -1
+              limit: 2
+            - exit_status: 255
+              limit: 1
         agents:
           queue: "default"
           docker: "true"

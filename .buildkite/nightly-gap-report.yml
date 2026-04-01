@@ -29,6 +29,12 @@ steps:
   - label: ":package: Import & :bar_chart: Gap Report"
     key: "import-and-gap-report"
     timeout_in_minutes: 30
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     command: |
       echo "--- :yarn: Installing dependencies"
       corepack enable && yarn install --immutable
@@ -101,95 +107,121 @@ steps:
     agents:
       queue: "default"
 
-  - label: ":stethoscope: Content Integrity Checks"
+  # --- Parallel integrity checks (each runs independently for speed) ---
+  - group: ":stethoscope: Content Integrity Checks"
     key: "integrity-checks"
     depends_on: "import-and-gap-report"
     allow_dependency_failure: true
-    timeout_in_minutes: 45
-    command: |
-      echo "--- :yarn: Installing dependencies"
-      corepack enable && yarn install --immutable
+    steps:
+      - label: ":bust_in_silhouette: Check display names"
+        key: "check-display-names"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh display-names"
+        artifact_paths: ["integrity-display-names.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+        agents:
+          queue: "default"
 
-      export DATABASE_URI="$$NEON_PROD_DATABASE_URL"
+      - label: ":link: Check slugs"
+        key: "check-slugs"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh slugs"
+        artifact_paths: ["integrity-slugs.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+        agents:
+          queue: "default"
 
-      echo "--- :bust_in_silhouette: Checking display names"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-display-names.ts \
-        --since 25h \
-        --output /tmp/integrity-display-names.md \
-        --verbose || true
+      - label: ":musical_note: Check MusicBrainz"
+        key: "check-musicbrainz"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh musicbrainz"
+        artifact_paths: ["integrity-musicbrainz.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+        agents:
+          queue: "default"
 
-      echo "--- :link: Checking slugs"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-slugs.ts \
-        --since 25h \
-        --output /tmp/integrity-slugs.md \
-        --verbose || true
+      - label: ":cd: Check record metadata"
+        key: "check-record-metadata"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh record-metadata"
+        artifact_paths: ["integrity-record-metadata.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+        agents:
+          queue: "default"
 
-      echo "--- :musical_note: Checking MusicBrainz associations"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-musicbrainz.ts \
-        --skip-type-check \
-        --since 25h \
-        --output /tmp/integrity-musicbrainz.md \
-        --verbose || true
+      - label: ":radio: Check OnDemand sources"
+        key: "check-ondemand-source"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh ondemand-source"
+        artifact_paths: ["integrity-ondemand-source.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+                - "PROD_MYSQL_HOST"
+                - "PROD_MYSQL_USER"
+                - "PROD_MYSQL_PASSWORD"
+                - "PROD_MYSQL_DATABASE"
+        agents:
+          queue: "default"
 
-      echo "--- :cd: Checking record metadata"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-record-metadata.ts \
-        --since 25h \
-        --output /tmp/integrity-record-metadata.md \
-        --verbose || true
+      - label: ":white_check_mark: Check publish status"
+        key: "check-publish-status"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh publish-status"
+        artifact_paths: ["integrity-publish-status.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_PROD_DATABASE_URL"
+                - "PROD_MYSQL_HOST"
+                - "PROD_MYSQL_USER"
+                - "PROD_MYSQL_PASSWORD"
+                - "PROD_MYSQL_DATABASE"
+        agents:
+          queue: "default"
 
-      echo "--- :radio: Checking OnDemand source fields"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-ondemand-source.ts \
-        --from prod-mysql \
-        --since 25h \
-        --output /tmp/integrity-ondemand-source.md \
-        --verbose || true
-
-      echo "--- :white_check_mark: Checking publish status"
-      node --import ./bin/preload-nextenv-fix.mjs --import tsx \
-        bin/integrity-check-publish-status.ts \
-        --from prod-mysql \
-        --since 25h \
-        --output /tmp/integrity-publish-status.md \
-        --verbose || true
-
-      echo "--- :bar_chart: Combining reports"
-      {
-        echo "# Nightly Content Integrity Report"
-        echo ""
-        echo "_Generated by Buildkite build #$${BUILDKITE_BUILD_NUMBER}_"
-        echo ""
-        for report in /tmp/integrity-display-names.md /tmp/integrity-slugs.md /tmp/integrity-musicbrainz.md /tmp/integrity-record-metadata.md /tmp/integrity-ondemand-source.md /tmp/integrity-publish-status.md; do
-          if [ -f "$$report" ]; then
-            echo ""
-            cat "$$report"
-            echo ""
-            echo "---"
-          fi
-        done
-      } > /tmp/integrity-combined-report.md
-
-      echo "--- :github: Posting integrity report"
-      if [ -n "$$INTEGRITY_REPORT_ISSUE_NUMBER" ]; then
-        node .buildkite/scripts/update-integrity-report-issue.mjs /tmp/integrity-combined-report.md
-      else
-        echo "⚠️ INTEGRITY_REPORT_ISSUE_NUMBER not set, skipping GitHub issue update"
-        cat /tmp/integrity-combined-report.md
-      fi
+  - label: ":bar_chart: Combine & Post Integrity Report"
+    key: "combine-integrity-report"
+    depends_on: "integrity-checks"
+    allow_dependency_failure: true
+    timeout_in_minutes: 5
+    command: "bash .buildkite/scripts/combine-integrity-reports.sh"
     plugins:
       - docker#v5.11.0:
           image: "node:22-slim"
           propagate-environment: true
           environment:
-            - "NEON_PROD_DATABASE_URL"
-            - "PROD_MYSQL_HOST"
-            - "PROD_MYSQL_USER"
-            - "PROD_MYSQL_PASSWORD"
-            - "PROD_MYSQL_DATABASE"
             - "GITHUB_PR_TOKEN"
             - "INTEGRITY_REPORT_ISSUE_NUMBER"
     agents:
