@@ -15,6 +15,8 @@ set -euo pipefail
 if [ "${BUILDKITE_PULL_REQUEST:-false}" = "false" ]; then
   echo "Not a PR build — running full CI pipeline."
   buildkite-agent pipeline upload .buildkite/pipeline-ci.yml
+  echo "Uploading legacy deploy pipeline..."
+  buildkite-agent pipeline upload .buildkite/pipeline-deploy-legacy.yml
   exit 0
 fi
 

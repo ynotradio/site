@@ -1,0 +1,36 @@
+# Legacy PHP Site — Production Deploy Pipeline
+#
+# Uploaded alongside pipeline-ci.yml for non-PR (master push) builds by
+# check-changes.sh. The block step depends on all CI checks passing, so
+# it only becomes unblockable after a green build.
+#
+# Mobile workflow: merge PR in GitHub app → CI runs → tap "Unblock" in
+# Buildkite app → deploy runs automatically.
+#
+# Required Buildkite secrets (set via Buildkite UI → Pipelines → Secrets):
+#   DEPLOY_SSH_KEY          — SSH private key for the production server
+#   DEPLOY_SSH_HOST         — Production server hostname or IP
+#   DEPLOY_SSH_KNOWN_HOSTS  — Known-hosts entry (get with: ssh-keyscan <hostname>)
+#   ENV_PHP_CONTENTS        — Full contents of the production .env.php file
+
+steps:
+  - block: ":rocket: Deploy legacy site to production?"
+    key: "deploy-legacy-gate"
+    depends_on:
+      - "eslint"
+      - "vitest"
+      - "php-lint"
+      - "php-test"
+    branches: "master"
+
+  - label: ":rocket: Deploy Legacy PHP Site"
+    key: "deploy-legacy"
+    depends_on: "deploy-legacy-gate"
+    branches: "master"
+    command: "bash .buildkite/scripts/deploy-legacy.sh"
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+    agents:
+      queue: "default"
