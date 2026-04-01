@@ -30,4 +30,28 @@ describe('Icon', () => {
     const { container } = render(<Icon />);
     expect(container.querySelector('.ynot-icon__image')).toBeInTheDocument();
   });
+
+  it('renders at default size (18px)', () => {
+    render(<Icon />);
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toHaveStyle({ height: '18px' });
+  });
+
+  it('renders at large size (36px)', () => {
+    render(<Icon size="large" />);
+    const img = screen.getByAltText('Y-Not Radio');
+    expect(img).toHaveStyle({ height: '36px' });
+  });
+
+  it('merges additional className onto the container', () => {
+    const { container } = render(<Icon className="extra-class" />);
+    const div = container.querySelector('.ynot-icon');
+    expect(div).toHaveClass('extra-class');
+  });
+
+  it('omits extra className when not provided', () => {
+    const { container } = render(<Icon />);
+    const div = container.querySelector('.ynot-icon');
+    expect(div?.className).toBe('ynot-icon');
+  });
 });

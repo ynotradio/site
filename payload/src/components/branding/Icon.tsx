@@ -23,7 +23,7 @@ interface IconProps {
  */
 export const Icon: React.FC<IconProps> = ({ size = 'default', className }) => {
   const dimension = ICON_SIZES[size];
-  const rootClasses = ['ynot-icon', className].filter(Boolean).join(' ');
+  const rootClasses = className ? `ynot-icon ${className}` : 'ynot-icon';
 
   return (
     <div className={rootClasses} aria-label="Y-Not Radio">
