@@ -84,6 +84,17 @@ describe('ShowRow', () => {
       render(<ShowRow show={noonShow} />);
       expect(screen.getByText('12:00 PM - 1:00 PM')).toBeInTheDocument();
     });
+
+    it('should render empty string for missing start or end time', () => {
+      const noTimeShow: Show = {
+        ...mockShow,
+        startTime: '',
+        endTime: '',
+      };
+      const { container } = render(<ShowRow show={noTimeShow} />);
+      const timeElement = container.querySelector('.show-row__time');
+      expect(timeElement?.textContent).toBe(' - ');
+    });
   });
 
   describe('Rendering', () => {

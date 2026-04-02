@@ -115,6 +115,28 @@ describe('useShows', () => {
     expect(result.current.shows[0].date).toBe('');
   });
 
+  it('defaults startTime and endTime to empty string when undefined', async () => {
+    const responseWithNoTimes = {
+      docs: [{ id: '4', date: '2024-01-15T05:00:00.000Z' }],
+      totalDocs: 1,
+      limit: 0,
+      totalPages: 1,
+      page: 1,
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => responseWithNoTimes,
+    });
+    const { result } = renderHook(() => useShows());
+
+    await act(async () => {
+      await result.current.loadShows();
+    });
+
+    expect(result.current.shows[0].startTime).toBe('');
+    expect(result.current.shows[0].endTime).toBe('');
+  });
+
   it('sets error on non-ok response', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
