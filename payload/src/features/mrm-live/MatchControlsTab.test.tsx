@@ -413,4 +413,60 @@ describe('MatchControlsTab', () => {
     );
     expect(patchCall).toBeDefined();
   });
+
+  it('displays fetch error message when main fetch fails', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-1' },
+    } as ReturnType<typeof useDocumentInfo>);
+    global.fetch = vi.fn().mockResolvedValue({ ok: false });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Could not load match data.')).toBeInTheDocument();
+    });
+  });
+
+  it('renders sponsor name and message when match has sponsor info', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-1' },
+    } as ReturnType<typeof useDocumentInfo>);
+    const sponsoredMatch = {
+      ...LIVE_MATCH,
+      sponsor: 'Acme Corp',
+      sponsorMessage: 'Presented by Acme!',
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => sponsoredMatch,
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Acme Corp')).toBeInTheDocument();
+      expect(screen.getByText('Presented by Acme!')).toBeInTheDocument();
+    });
+  });
+
+  it('renders sponsor without message when sponsorMessage is absent', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-1' },
+    } as ReturnType<typeof useDocumentInfo>);
+    const sponsoredMatch = {
+      ...LIVE_MATCH,
+      sponsor: 'Widget Co',
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => sponsoredMatch,
+    });
+
+    render(<MatchControlsTab />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Widget Co')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('paragraph')).not.toBeInTheDocument();
+  });
 });
