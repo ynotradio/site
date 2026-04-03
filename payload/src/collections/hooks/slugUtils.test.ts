@@ -13,6 +13,7 @@ import {
   slugifyText,
   slugifyHeadline,
   formatDatePrefix,
+  buildMusicSlug,
   musicSlugify,
   setCdOfTheWeekSlugFromRecord,
 } from './slugUtils';
@@ -213,6 +214,21 @@ describe('musicSlugify (Songs/Records)', () => {
 
     expect(result).toBe('♪♫★');
     expect(result).not.toBeInstanceOf(Promise);
+  });
+});
+
+describe('buildMusicSlug', () => {
+  it('returns title slug when artist name slugifies to empty string', () => {
+    // Artist name contains only special characters — slugifyText returns ''
+    expect(buildMusicSlug('♪♫★', 'my-song')).toBe('my-song');
+  });
+
+  it('returns artist--title when both slugify successfully', () => {
+    expect(buildMusicSlug('Miles Davis', 'kind-of-blue')).toBe('miles-davis--kind-of-blue');
+  });
+
+  it('returns title slug when artistName is empty string', () => {
+    expect(buildMusicSlug('', 'my-song')).toBe('my-song');
   });
 });
 
