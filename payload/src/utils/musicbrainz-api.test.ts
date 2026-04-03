@@ -186,6 +186,13 @@ describe('MusicBrainz API Utils', () => {
         const result = await searchReleases('Test Album');
         expect(result).toEqual([]);
       });
+
+      it('returns empty array on fetch exception', async () => {
+        fetchMock.mockRejectedValueOnce(new Error('Network error'));
+
+        const result = await searchReleases('Test Album');
+        expect(result).toEqual([]);
+      });
     });
 
     describe('searchRecordings', () => {
@@ -273,6 +280,13 @@ describe('MusicBrainz API Utils', () => {
         fetchMock.mockResolvedValueOnce({
           ok: false,
         });
+
+        const result = await searchRecordings('Test Song');
+        expect(result).toEqual([]);
+      });
+
+      it('returns empty array on fetch exception', async () => {
+        fetchMock.mockRejectedValueOnce(new Error('Network error'));
 
         const result = await searchRecordings('Test Song');
         expect(result).toEqual([]);
