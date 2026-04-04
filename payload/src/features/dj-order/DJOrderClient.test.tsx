@@ -418,4 +418,30 @@ describe('DJOrderClient', () => {
       expect(screen.queryByText('DJ order saved successfully!')).not.toBeInTheDocument();
     });
   });
+
+  describe('DJ field fallbacks', () => {
+    it('should use fallback displayName, sortOrder, and onAir when fields are missing', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...mockDjsResponse,
+          docs: [
+            { id: '10' }, // missing displayName → 'DJ #10', sortOrder → 0, onAir → true
+            { id: '11', displayName: '', sortOrder: undefined, onAir: undefined },
+          ],
+        }),
+      });
+
+      render(<DJOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByText('DJ #10')).toBeInTheDocument();
+        expect(screen.getByText('DJ #11')).toBeInTheDocument();
+      });
+
+      // Both DJs default to onAir=true, so their SortableItems are marked active
+      expect(screen.getByTestId('sortable-item-10').getAttribute('data-active')).toBe('true');
+      expect(screen.getByTestId('sortable-item-11').getAttribute('data-active')).toBe('true');
+    });
+  });
 });

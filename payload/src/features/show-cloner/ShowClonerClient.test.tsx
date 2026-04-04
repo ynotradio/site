@@ -258,4 +258,63 @@ describe('ShowClonerClient', () => {
       });
     });
   });
+
+  describe('selectedRangeShows fallback and success flow', () => {
+    it('falls back to empty array when source start date is cleared', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockShowsResponse,
+      });
+
+      render(<ShowClonerClient />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('source-date-range-selector')).toBeInTheDocument();
+      });
+
+      // Set both dates so shows are in range → CloneButton shows 2 shows
+      mockDateCallbacks.onStartDateChange?.('2024-01-15');
+      mockDateCallbacks.onEndDateChange?.('2024-01-16');
+
+      await waitFor(() => {
+        expect(screen.getByText('Clone 2 Shows')).toBeInTheDocument();
+      });
+
+      // Clearing sourceStartDate: ('' && sourceEndDate) is falsy → selectedRangeShows = []
+      mockDateCallbacks.onStartDateChange?.('');
+
+      await waitFor(() => {
+        expect(screen.getByText('Clone 0 Shows')).toBeInTheDocument();
+      });
+    });
+
+    it('shows success banner after a successful clone operation', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({ ok: true, json: async () => mockShowsResponse }) // initial load
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // POST show 1
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) }) // POST show 2
+        .mockResolvedValueOnce({ ok: true, json: async () => mockShowsResponse }); // reload
+
+      render(<ShowClonerClient />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('source-date-range-selector')).toBeInTheDocument();
+      });
+
+      // Set source range to match mock shows and a non-overlapping target date
+      mockDateCallbacks.onStartDateChange?.('2024-01-15');
+      mockDateCallbacks.onEndDateChange?.('2024-01-16');
+      mockDateCallbacks.onTargetStartDateChange?.('2024-06-01');
+
+      await waitFor(() => {
+        expect(screen.getByText('Clone 2 Shows')).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByTestId('clone-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('message-banner-success')).toBeInTheDocument();
+      });
+    });
+  });
 });
