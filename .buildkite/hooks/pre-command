@@ -31,12 +31,13 @@ if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"nightly"* ]] || [[ "${BUILDKITE_PIPELI
   PROD_MYSQL_PASSWORD=$(buildkite-agent secret get PROD_MYSQL_PASSWORD 2>/dev/null || true)
   PROD_MYSQL_DATABASE=$(buildkite-agent secret get PROD_MYSQL_DATABASE 2>/dev/null || true)
   NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
+  NEON_DEV_DATABASE_URL=$(buildkite-agent secret get NEON_DEV_DATABASE_URL 2>/dev/null || true)
   GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
   GAP_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get GAP_REPORT_ISSUE_NUMBER 2>/dev/null || true)
   INTEGRITY_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get INTEGRITY_REPORT_ISSUE_NUMBER 2>/dev/null || true)
   NEON_API_KEY=$(buildkite-agent secret get NEON_API_KEY 2>/dev/null || true)
   export PROD_MYSQL_HOST PROD_MYSQL_USER PROD_MYSQL_PASSWORD PROD_MYSQL_DATABASE
-  export NEON_PROD_DATABASE_URL GITHUB_PR_TOKEN GAP_REPORT_ISSUE_NUMBER
+  export NEON_PROD_DATABASE_URL NEON_DEV_DATABASE_URL GITHUB_PR_TOKEN GAP_REPORT_ISSUE_NUMBER
   export INTEGRITY_REPORT_ISSUE_NUMBER NEON_API_KEY
 fi
 
