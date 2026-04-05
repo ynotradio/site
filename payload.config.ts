@@ -22,6 +22,9 @@ import { OnDemand } from './payload/src/collections/OnDemand';
 import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
+import { YearEndPolls } from './payload/src/collections/YearEndPolls';
+import { YearEndPollCategories } from './payload/src/collections/YearEndPollCategories';
+import { YearEndPollVotes } from './payload/src/collections/YearEndPollVotes';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
 import { ModernRockMadnessTournaments } from './payload/src/collections/MadnessTournaments';
 import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands';
@@ -144,6 +147,9 @@ export default buildConfig({
     Posts,
     CdOfTheWeek,
     YearEndPollResults,
+    YearEndPolls,
+    YearEndPollCategories,
+    YearEndPollVotes,
     ModernRockMadnessTournaments,
     ModernRockMadnessGroups,
     ModernRockMadnessMatches,

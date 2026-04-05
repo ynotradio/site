@@ -28,9 +28,9 @@
 | 16       | Top11Contests                | `top11_contests`                   | 🔲 Todo     | Weekly contest config                                                                  |
 | 17       | Top11Results                 | `top11_results`                    | 🔲 Todo     | Published weekly results                                                               |
 | 18       | Top11Votes                   | `top11_votes`                      | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
-| 19       | YearEndPolls                 | `year_end_polls`                   | 🔲 Todo     | Annual poll config                                                                     |
-| 20       | YearEndPollCategories        | `year_end_poll_categories`         | 🔲 Todo     | Poll categories                                                                        |
-| 21       | YearEndPollVotes             | `year_end_poll_votes`              | 🔲 Todo     | User votes (PostgreSQL native)                                                         |
+| 19       | YearEndPolls                 | `year_end_polls`                   | ✅ Complete | Annual poll config                                                                     |
+| 20       | YearEndPollCategories        | `year_end_poll_categories`         | ✅ Complete | Poll categories with nominees and denormalized vote counts                             |
+| 21       | YearEndPollVotes             | `year_end_poll_votes`              | ✅ Complete | IP-based individual vote records                                                       |
 | 22       | ModernRockMadnessTournaments | `modern-rock-madness-tournaments`  | ✅ Complete | Tournament config                                                                      |
 | 23       | ModernRockMadnessGroups      | `modern-rock-madness-groups`       | ✅ Complete | Tournament participants — groups of one or more artists; optional name/image overrides |
 | 24       | ModernRockMadnessMatches     | `modern-rock-madness-matches`      | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |
@@ -39,8 +39,8 @@
 
 ### Summary
 
-- **Completed:** 20 collections (all core content types + Year End Poll Results + all 5 MRM collections)
-- **Remaining:** 6 collections (Top 11 voting system + Year End Poll voting system)
+- **Completed:** 23 collections (all core content types + Year End Poll Results + Year End Poll voting system + all 5 MRM collections)
+- **Remaining:** 3 collections (Top 11 voting system)
 
 ---
 
