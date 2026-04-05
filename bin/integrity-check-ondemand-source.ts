@@ -34,6 +34,9 @@ import {
   type PayloadSource,
 } from './integrity-check-ondemand-source-utils';
 
+// Skip Drizzle pushDevSchema — this script only reads/writes data, never alters schema
+process.env.PAYLOAD_MIGRATING = 'true';
+
 const PAGE_SIZE = 100;
 
 // ---------------------------------------------------------------------------

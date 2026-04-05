@@ -32,6 +32,9 @@ import {
 } from './content-integrity-utils';
 import { isMysqlRecordLive, resolvePostLegacyId } from './integrity-check-publish-status-utils';
 
+// Skip Drizzle pushDevSchema — this script only reads/writes data, never alters schema
+process.env.PAYLOAD_MIGRATING = 'true';
+
 const PAGE_SIZE = 100;
 
 // ---------------------------------------------------------------------------
@@ -61,33 +64,48 @@ async function fetchOnDemandDeleted(
 }
 
 /**
- * Fetch `deleted` value from the stories table for a single ID.
+ * Bulk-fetch MySQL `deleted` values for the stories table.
  */
-async function fetchStoryDeleted(
+async function fetchStoriesDeleted(
   mysqlConn: mysql.Connection,
-  mysqlId: number,
-): Promise<string | undefined> {
+  mysqlIds: number[],
+): Promise<Map<number, string>> {
+  if (mysqlIds.length === 0) return new Map();
+
+  const placeholders = mysqlIds.map(() => '?').join(',');
   const [rows] = await mysqlConn.query<mysql.RowDataPacket[]>(
-    'SELECT deleted FROM stories WHERE id = ?',
-    [mysqlId],
+    `SELECT id, deleted FROM stories WHERE id IN (${placeholders})`,
+    mysqlIds,
   );
-  return rows.length > 0 ? (rows[0].deleted as string) : undefined;
+
+  const map = new Map<number, string>();
+  for (const row of rows) {
+    map.set(row.id as number, row.deleted as string);
+  }
+  return map;
 }
 
 /**
- * Fetch `status` value from the custom_texts table for a single ID.
- * Returns synthetic deleted flag: 'n' if active, 'y' otherwise.
+ * Bulk-fetch MySQL `status` values from the custom_texts table.
+ * Returns synthetic deleted flags: 'n' if active, 'y' otherwise.
  */
-async function fetchCustomTextDeleted(
+async function fetchCustomTextsDeleted(
   mysqlConn: mysql.Connection,
-  mysqlId: number,
-): Promise<string | undefined> {
+  mysqlIds: number[],
+): Promise<Map<number, string>> {
+  if (mysqlIds.length === 0) return new Map();
+
+  const placeholders = mysqlIds.map(() => '?').join(',');
   const [rows] = await mysqlConn.query<mysql.RowDataPacket[]>(
-    'SELECT status FROM custom_texts WHERE id = ?',
-    [mysqlId],
+    `SELECT id, status FROM custom_texts WHERE id IN (${placeholders})`,
+    mysqlIds,
   );
-  if (rows.length === 0) return undefined;
-  return (rows[0].status as string) === 'active' ? 'n' : 'y';
+
+  const map = new Map<number, string>();
+  for (const row of rows) {
+    map.set(row.id as number, (row.status as string) === 'active' ? 'n' : 'y');
+  }
+  return map;
 }
 
 // ---------------------------------------------------------------------------
@@ -278,6 +296,27 @@ async function checkPostsStatus(
 
     if (batch.docs.length === 0) break;
 
+    // Partition docs by MySQL table and collect IDs for bulk fetch
+    const storyIds: number[] = [];
+    const customTextIds: number[] = [];
+    for (const doc of batch.docs) {
+      const legacyId = doc.legacyId as number | undefined;
+      if (legacyId == null) {
+        // eslint-disable-next-line no-continue
+        continue;
+      }
+      const { table, mysqlId } = resolvePostLegacyId(legacyId);
+      if (table === 'stories') {
+        storyIds.push(mysqlId);
+      } else {
+        customTextIds.push(mysqlId);
+      }
+    }
+
+    // Bulk-fetch MySQL deleted/status values
+    const storiesDeleted = await fetchStoriesDeleted(mysqlConn, storyIds);
+    const customTextsDeleted = await fetchCustomTextsDeleted(mysqlConn, customTextIds);
+
     for (const doc of batch.docs) {
       const legacyId = doc.legacyId as number | undefined;
       if (legacyId == null) {
@@ -289,13 +328,10 @@ async function checkPostsStatus(
       const identifier = (doc.headline as string) || `Post #${doc.id}`;
       const { table, mysqlId } = resolvePostLegacyId(legacyId);
 
-      // Fetch the MySQL deleted/status value
-      let deleted: string | undefined;
-      if (table === 'stories') {
-        deleted = await fetchStoryDeleted(mysqlConn, mysqlId);
-      } else {
-        deleted = await fetchCustomTextDeleted(mysqlConn, mysqlId);
-      }
+      // Look up the MySQL deleted/status value from bulk-fetched maps
+      const deleted = table === 'stories'
+        ? storiesDeleted.get(mysqlId)
+        : customTextsDeleted.get(mysqlId);
 
       if (deleted === undefined) {
         addResult(report, {

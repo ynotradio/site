@@ -41,7 +41,7 @@ async function findDocBySlug(
 /**
  * PostgreSQL/Neon target types for import scripts
  */
-export type PostgresTarget = 'local-postgres' | 'prod-neon';
+export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
 
 /**
  * Get the Payload instance configured for the specified target database
@@ -56,14 +56,27 @@ export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Pr
   });
 
   // Select database URL based on target
-  const databaseUri = target === 'prod-neon'
-    ? process.env.NEON_PROD_DATABASE_URL
-    : process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
+  let databaseUri: string | undefined;
+  if (target === 'prod-neon') {
+    databaseUri = process.env.NEON_PROD_DATABASE_URL;
+  } else if (target === 'dev-neon') {
+    databaseUri = process.env.NEON_DEV_DATABASE_URL;
+  } else {
+    databaseUri = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
+  }
 
   if (!databaseUri) {
+    let envVar: string;
+    if (target === 'prod-neon') {
+      envVar = 'NEON_PROD_DATABASE_URL';
+    } else if (target === 'dev-neon') {
+      envVar = 'NEON_DEV_DATABASE_URL';
+    } else {
+      envVar = 'NEON_DEV_DATABASE_URL or DATABASE_URI';
+    }
     throw new Error(
       `Database URI not found for target "${target}". `
-        + `Please set ${target === 'prod-neon' ? 'NEON_PROD_DATABASE_URL' : 'NEON_DEV_DATABASE_URL or DATABASE_URI'} in .env.local`,
+        + `Please set ${envVar} in .env.local`,
     );
   }
 
