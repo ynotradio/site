@@ -97,7 +97,6 @@ steps:
   - label: ":bar_chart: Gap Report"
     key: "gap-report"
     depends_on: "reset-dev-branch"
-    allow_dependency_failure: true
     timeout_in_minutes: 15
     command: |
       echo "--- :yarn: Installing dependencies"
