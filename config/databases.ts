@@ -30,7 +30,7 @@ export type MySQLSource = 'local-mysql' | 'prod-mysql';
 /**
  * PostgreSQL/Neon target types for import scripts
  */
-export type PostgresTarget = 'local-postgres' | 'prod-neon';
+export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
 
 /**
  * MySQL connection configuration
@@ -146,7 +146,17 @@ export function getNeonDatabaseUrl(target: PostgresTarget): string {
     return url;
   }
 
-  // Local postgres or dev neon
+  if (target === 'dev-neon') {
+    const url = process.env.NEON_DEV_DATABASE_URL;
+    if (!url) {
+      throw new Error(
+        'Development Neon URL not configured. Please set NEON_DEV_DATABASE_URL in .env.local',
+      );
+    }
+    return url;
+  }
+
+  // Local postgres
   const url = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
   if (!url) {
     throw new Error(
@@ -224,8 +234,8 @@ export function parseFromToArgs(args: string[]): {
       i += 2; // Skip both --from and its value
     } else if (arg === '--to') {
       const value = args[i + 1];
-      if (value !== 'local-postgres' && value !== 'prod-neon') {
-        throw new Error('--to must be "local-postgres" or "prod-neon"');
+      if (value !== 'local-postgres' && value !== 'prod-neon' && value !== 'dev-neon') {
+        throw new Error('--to must be "local-postgres", "prod-neon", or "dev-neon"');
       }
       to = value;
       i += 2; // Skip both --to and its value

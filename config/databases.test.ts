@@ -107,7 +107,7 @@ describe('databases', () => {
       const { parseFromToArgs } = await import('./databases');
 
       expect(() => parseFromToArgs(['--to', 'invalid'])).toThrow(
-        '--to must be "local-postgres" or "prod-neon"',
+        '--to must be "local-postgres", "prod-neon", or "dev-neon"',
       );
     });
   });

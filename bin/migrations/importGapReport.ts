@@ -23,6 +23,9 @@ import { getMySQLConfig, parseFromToArgs, type MySQLSource } from '../../config/
 import { getPayloadClient, type PostgresTarget } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
 
+// Skip Drizzle pushDevSchema — this script only reads data, never alters schema
+process.env.PAYLOAD_MIGRATING = 'true';
+
 const logger = createLogger('ImportGapReport');
 
 interface GapReportOptions {
@@ -101,7 +104,7 @@ Usage: tsx bin/migrations/importGapReport.ts [options]
 
 Options:
   --from SOURCE       MySQL source: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET         Payload target: 'prod-neon' (default) or 'local-postgres'
+  --to TARGET         Payload target: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
   --output, -o FILE   Output file path (default: stdout)
   --collection, -c    Filter to specific collection
   --limit, -l N       Limit missing records per collection (default: 50)
@@ -268,6 +271,7 @@ async function getPayloadLegacyIds(
       where: whereClause,
       limit,
       page,
+      depth: 0,
       select: {
         legacyId: true,
       },
