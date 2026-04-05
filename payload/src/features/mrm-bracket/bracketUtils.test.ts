@@ -243,4 +243,31 @@ describe('getWinnerSlot', () => {
     });
     expect(getWinnerSlot(m)).toBe('1');
   });
+
+  it('resolves winner id from string winner', () => {
+    const m = makeMatch(1, '1', 1, { winner: 'b1' as any });
+    expect(getWinnerSlot(m)).toBe('1');
+  });
+});
+
+describe('inferRegion edge cases', () => {
+  it('returns 5 for matchNum 0 (outside all ranges)', () => {
+    expect(inferRegion(0)).toBe(5);
+  });
+});
+
+describe('getBandSeed edge cases', () => {
+  it('returns empty string when band has no seed property', () => {
+    const band = { id: '1', name: 'Radiohead', placement: 1 } as any;
+    expect(getBandSeed(band)).toBe('');
+  });
+});
+
+describe('organizeForBracket edge cases', () => {
+  it('ignores matches with an invalid region number', () => {
+    const match = makeMatch(99, '2', 6 as any);
+    expect(() => organizeForBracket([match])).not.toThrow();
+    const layout = organizeForBracket([match]);
+    expect(layout.regions[1].round1).toHaveLength(0);
+  });
 });
