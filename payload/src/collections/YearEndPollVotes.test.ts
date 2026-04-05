@@ -50,18 +50,12 @@ describe('YearEndPollVotes', () => {
     expect(userIdField?.index).toBe(true);
   });
 
-  it('stores ipAddress for auditing', () => {
-    const allFields = flattenRowFields(YearEndPollVotes.fields);
-    const ipField = allFields.find((f) => f.name === 'ipAddress');
-    expect(ipField).toBeDefined();
-    expect(ipField?.type).toBe('text');
-  });
-
-  it('uses IP-based userId (not Auth0) — has ipAddress field unlike MRM votes', () => {
+  it('uses Auth0 userId for duplicate prevention (not IP address)', () => {
     const allFields = flattenRowFields(YearEndPollVotes.fields);
     const names = allFields.map((f) => f.name);
-    // YEP stores IP address separately for auditing; MRM doesn't need this
-    expect(names).toContain('ipAddress');
+    // Matches MRM Votes pattern: Auth0 sub claim stored in userId
+    expect(names).toContain('userId');
+    expect(names).not.toContain('ipAddress');
   });
 
   it('has no legacyId or migratedAt fields', () => {
@@ -79,13 +73,20 @@ describe('YearEndPollVotes', () => {
     );
   });
 
-  it('allows anyone to create a vote (public IP-based voting, no auth required)', () => {
+  it('requires authentication to create a vote (same as MRM Votes)', () => {
     const createFn = YearEndPollVotes.access?.create;
     expect(typeof createFn).toBe('function');
-    // Public voting — unauthenticated users can submit votes
+    // Unauthenticated users cannot vote
     expect((createFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
-      true,
+      false,
     );
+    // Authenticated users can vote
+    const mockUser = { id: '1', email: 'test@test.com', role: 'editor' };
+    expect(
+      (createFn as (args: { req: { user: typeof mockUser } }) => boolean)({
+        req: { user: mockUser },
+      }),
+    ).toBe(true);
   });
 
   it('has timestamps enabled', () => {

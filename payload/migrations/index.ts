@@ -2,6 +2,7 @@ import * as migration_20260111_021023 from './20260111_021023';
 import * as migration_20260303_185500_add_link_url_to_posts from './20260303_185500_add_link_url_to_posts';
 import * as migration_20260308_033000_add_slug_to_cdoftheweek from './20260308_033000_add_slug_to_cdoftheweek';
 import * as migration_20260313_191847_add_mrm_tables from './20260313_191847_add_mrm_tables';
+import * as migration_20260405_000000_add_year_end_poll_tables from './20260405_000000_add_year_end_poll_tables';
 export const migrations = [
   {
     up: migration_20260111_021023.up,
@@ -22,5 +23,10 @@ export const migrations = [
     up: migration_20260313_191847_add_mrm_tables.up,
     down: migration_20260313_191847_add_mrm_tables.down,
     name: '20260313_191847_add_mrm_tables',
+  },
+  {
+    up: migration_20260405_000000_add_year_end_poll_tables.up,
+    down: migration_20260405_000000_add_year_end_poll_tables.down,
+    name: '20260405_000000_add_year_end_poll_tables',
   },
 ];
