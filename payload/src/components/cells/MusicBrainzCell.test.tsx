@@ -1,6 +1,6 @@
 import React from 'react';
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import {
   MusicBrainzArtistCell,
   MusicBrainzReleaseCell,
@@ -82,6 +82,25 @@ describe('MusicBrainzCell', () => {
       );
       const link = screen.getByRole('link', { name: /view on musicbrainz/i });
       expect(link).toHaveAttribute('href', `https://musicbrainz.org/recording/${mbid}`);
+    });
+  });
+
+  describe('onClick stopPropagation', () => {
+    it('stops click propagation to prevent row navigation', () => {
+      const parentHandler = vi.fn();
+      render(
+        <div onClick={parentHandler} role="none">
+          <MusicBrainzArtistCell
+            cellData="f27ec8db-af05-4f36-916e-3d57f91ecf5e"
+            field={field}
+            collectionSlug="artists"
+            rowData={rowData}
+          />
+        </div>,
+      );
+      const link = screen.getByRole('link', { name: /view on musicbrainz/i });
+      fireEvent.click(link);
+      expect(parentHandler).not.toHaveBeenCalled();
     });
   });
 });
