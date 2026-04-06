@@ -38,9 +38,22 @@ async function findDocBySlug(
   return result.docs.length > 0 ? (result.docs[0].id as number) : null;
 }
 
-/**
- * PostgreSQL/Neon target types for import scripts
- */
+function getDatabaseUri(target: PostgresTarget): string {
+  if (target === 'prod-neon') {
+    const uri = process.env.NEON_PROD_DATABASE_URL;
+    if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_PROD_DATABASE_URL in .env.local`);
+    return uri;
+  }
+  if (target === 'dev-neon') {
+    const uri = process.env.NEON_DEV_DATABASE_URL;
+    if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL in .env.local`);
+    return uri;
+  }
+  const uri = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
+  if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL or DATABASE_URI in .env.local`);
+  return uri;
+}
+
 export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
 
 /**
@@ -56,29 +69,7 @@ export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Pr
   });
 
   // Select database URL based on target
-  let databaseUri: string | undefined;
-  if (target === 'prod-neon') {
-    databaseUri = process.env.NEON_PROD_DATABASE_URL;
-  } else if (target === 'dev-neon') {
-    databaseUri = process.env.NEON_DEV_DATABASE_URL;
-  } else {
-    databaseUri = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
-  }
-
-  if (!databaseUri) {
-    let envVar: string;
-    if (target === 'prod-neon') {
-      envVar = 'NEON_PROD_DATABASE_URL';
-    } else if (target === 'dev-neon') {
-      envVar = 'NEON_DEV_DATABASE_URL';
-    } else {
-      envVar = 'NEON_DEV_DATABASE_URL or DATABASE_URI';
-    }
-    throw new Error(
-      `Database URI not found for target "${target}". `
-        + `Please set ${envVar} in .env.local`,
-    );
-  }
+  const databaseUri = getDatabaseUri(target);
 
   logger.info(`Connecting to ${target} database...`);
 

@@ -42,40 +42,19 @@ const PAGE_SIZE = 100;
 // ---------------------------------------------------------------------------
 
 /**
- * Bulk-fetch MySQL `deleted` values for the ondemand table.
+ * Bulk-fetch MySQL `deleted` values from a table by IDs.
  */
-async function fetchOnDemandDeleted(
+async function fetchDeletedByIds(
   mysqlConn: mysql.Connection,
-  legacyIds: number[],
+  table: 'ondemand' | 'stories',
+  ids: number[],
 ): Promise<Map<number, string>> {
-  if (legacyIds.length === 0) return new Map();
+  if (ids.length === 0) return new Map();
 
-  const placeholders = legacyIds.map(() => '?').join(',');
+  const placeholders = ids.map(() => '?').join(',');
   const [rows] = await mysqlConn.query<mysql.RowDataPacket[]>(
-    `SELECT id, deleted FROM ondemand WHERE id IN (${placeholders})`,
-    legacyIds,
-  );
-
-  const map = new Map<number, string>();
-  for (const row of rows) {
-    map.set(row.id as number, row.deleted as string);
-  }
-  return map;
-}
-
-/**
- * Bulk-fetch MySQL `deleted` values for the stories table.
- */
-async function fetchStoriesDeleted(
-  mysqlConn: mysql.Connection,
-  mysqlIds: number[],
-): Promise<Map<number, string>> {
-  if (mysqlIds.length === 0) return new Map();
-
-  const placeholders = mysqlIds.map(() => '?').join(',');
-  const [rows] = await mysqlConn.query<mysql.RowDataPacket[]>(
-    `SELECT id, deleted FROM stories WHERE id IN (${placeholders})`,
-    mysqlIds,
+    `SELECT id, deleted FROM ${table} WHERE id IN (${placeholders})`,
+    ids,
   );
 
   const map = new Map<number, string>();
@@ -146,7 +125,7 @@ async function checkOnDemandStatus(
       .map((d) => d.legacyId as number | undefined)
       .filter((id): id is number => id != null);
 
-    const mysqlDeleted = await fetchOnDemandDeleted(mysqlConn, legacyIds);
+    const mysqlDeleted = await fetchDeletedByIds(mysqlConn, 'ondemand', legacyIds);
 
     for (const doc of batch.docs) {
       const legacyId = doc.legacyId as number | undefined;
@@ -314,7 +293,7 @@ async function checkPostsStatus(
     }
 
     // Bulk-fetch MySQL deleted/status values
-    const storiesDeleted = await fetchStoriesDeleted(mysqlConn, storyIds);
+    const storiesDeleted = await fetchDeletedByIds(mysqlConn, 'stories', storyIds);
     const customTextsDeleted = await fetchCustomTextsDeleted(mysqlConn, customTextIds);
 
     for (const doc of batch.docs) {
