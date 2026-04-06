@@ -176,6 +176,17 @@ Converted inline styles to CSS files across all affected components:
    - ✅ `ShowClonerClient.css`, `SourceDateRangeSelector.css`, `TargetDateSelector.css`
    - ✅ Updated tests checking inline styles to check CSS classes instead
 
+## 🔧 Recent Refactoring
+
+### Phase 5: Shared Hook Extraction ✅ COMPLETED
+
+- [x] **Extract `useResolveArtistName` hook** ✅
+  - Path: `payload/src/components/fields/useResolveArtistName.ts`
+  - Removed ~65 lines of identical `resolveArtistName` code from `MusicBrainzRecordingField.tsx` and `MusicBrainzReleaseField.tsx`
+  - Added `useResolveArtistName.test.ts` with 17 unit tests covering all resolution paths
+  - `MusicBrainzRecordingField` reduced: 291 → 227 lines
+  - `MusicBrainzReleaseField` reduced: 294 → 230 lines
+
 ## 📝 Notes
 
 - PR #173 established the coding standards

@@ -17,6 +17,7 @@ import {
   formatDuration,
   type MusicBrainzRecording,
 } from '../../utils/musicbrainz-api';
+import { useResolveArtistName } from './useResolveArtistName';
 
 import './MusicBrainzField.css';
 
@@ -57,73 +58,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     }
   }, [value, songTitle]);
 
-  const resolveArtistName = useCallback(async (): Promise<string> => {
-    const rawArtist = artistField?.value;
-
-    if (!rawArtist) {
-      return '';
-    }
-
-    if (
-      typeof rawArtist === 'object'
-      && 'name' in rawArtist
-      && typeof rawArtist.name === 'string'
-      && rawArtist.name.trim()
-    ) {
-      return rawArtist.name.trim();
-    }
-
-    let artistId = '';
-
-    if (typeof rawArtist === 'string' || typeof rawArtist === 'number') {
-      artistId = String(rawArtist);
-    } else if (
-      typeof rawArtist === 'object'
-      && 'id' in rawArtist
-      && typeof rawArtist.id === 'string'
-    ) {
-      artistId = rawArtist.id;
-    } else if (typeof rawArtist === 'object' && 'value' in rawArtist) {
-      const relationValue = rawArtist.value;
-
-      if (typeof relationValue === 'string' || typeof relationValue === 'number') {
-        artistId = String(relationValue);
-      } else if (
-        typeof relationValue === 'object'
-        && relationValue
-        && 'id' in relationValue
-        && typeof relationValue.id === 'string'
-      ) {
-        artistId = relationValue.id;
-      }
-
-      if (
-        typeof relationValue === 'object'
-        && relationValue
-        && 'name' in relationValue
-        && typeof relationValue.name === 'string'
-        && relationValue.name.trim()
-      ) {
-        return relationValue.name.trim();
-      }
-    }
-
-    if (!artistId) {
-      return '';
-    }
-
-    try {
-      const response = await fetch(`/api/artists/${artistId}?depth=0`);
-      if (!response.ok) {
-        return '';
-      }
-
-      const artistData = (await response.json()) as { name?: string };
-      return artistData.name?.trim() || '';
-    } catch {
-      return '';
-    }
-  }, [artistField?.value]);
+  const resolveArtistName = useResolveArtistName(artistField?.value);
 
   const searchMusicBrainz = useCallback(async () => {
     if (!songTitle?.trim()) {
