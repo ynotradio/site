@@ -114,6 +114,27 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
+  it('should return title-only slug when populated artist has empty name', () => {
+    const result = musicSlugify({
+      data: { artist: { id: 1, name: '' }, title: 'Some Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    // Empty artist name falls back to title-only slug
+    expect(result).toBe('some-song');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('should return title-only slug when populated artist has null name', () => {
+    const result = musicSlugify({
+      data: { artist: { id: 1, name: null }, title: 'Another Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('another-song');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
   it('should generate title-only slug when no artist (sync)', () => {
     const result = musicSlugify({
       data: { title: 'Unknown Song' },
