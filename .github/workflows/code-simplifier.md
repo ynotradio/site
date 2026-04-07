@@ -83,6 +83,7 @@ yarn test    # Must exit 0 — if it fails, fix the code or revert and do not pu
 ```
 
 If `yarn lint` fails:
+
 1. Read the exact error messages
 2. Fix the code to satisfy the linting rules
 3. Re-run `yarn lint` until it exits 0
@@ -91,6 +92,7 @@ If `yarn lint` fails:
 **Never push code that fails lint or tests. No exceptions.**
 
 Common ESLint pitfalls to avoid:
+
 - `no-confusing-arrow`: Arrow functions with ternary bodies need explicit braces. Use `(x) => { if (...) return ...; return ...; }` instead of `(x) => condition ? a : b`
 - `implicit-arrow-linebreak`: Arrow function body must start on the same line as `=>`
 - `function-paren-newline`: Function call parens must be consistent (avoid trailing newlines before `)`)
@@ -110,9 +112,10 @@ git push origin HEAD
 
 **PR Title**: `[code-simplifier] <concise description of specific changes>`  
 The title must describe what was actually simplified — not a generic message. Summarize the key change in a few words.
-  - Good: `[code-simplifier] Use Record type and filter-join for bracket classes`
-  - Good: `[code-simplifier] Extract repeated fetch logic into shared helper`
-  - Bad: `[code-simplifier] Simplify code for improved clarity`
+
+- Good: `[code-simplifier] Use Record type and filter-join for bracket classes`
+- Good: `[code-simplifier] Extract repeated fetch logic into shared helper`
+- Bad: `[code-simplifier] Simplify code for improved clarity`
 
 **Labels**: `refactoring`, `code-quality`, `automation`  
 **Expiration**: 7 days
