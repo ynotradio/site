@@ -7174,10 +7174,10 @@ postgres-range@^1.1.1:
   resolved "https://registry.yarnpkg.com/postgres-range/-/postgres-range-1.1.4.tgz#a59c5f9520909bcec5e63e8cf913a92e4c952863"
   integrity sha512-i/hbxIE9803Alj/6ytL7UHQxRvZkI9O4Sy+J3HGc4F4oo/2eQAjTSNJ0bfxyse3bH0nuVesCk+3IRLaMtG3H6w==
 
-postgres@^3.4.8:
-  version "3.4.8"
-  resolved "https://registry.yarnpkg.com/postgres/-/postgres-3.4.8.tgz#03394db9f0a04a21a52967dc867ae03d04294fc0"
-  integrity sha512-d+JFcLM17njZaOLkv6SCev7uoLaBtfK86vMUXhW1Z4glPWh4jozno9APvW/XKFJ3CCxVoC7OL38BqRydtu5nGg==
+postgres@^3.4.9:
+  version "3.4.9"
+  resolved "https://registry.yarnpkg.com/postgres/-/postgres-3.4.9.tgz#8e9a49cecb1b0e7d67a607f32a53ed54b3055271"
+  integrity sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw==
 
 prelude-ls@^1.2.1:
   version "1.2.1"
