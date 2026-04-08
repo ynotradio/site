@@ -213,5 +213,25 @@ describe('detectEmbedType', () => {
         originalUrl: url,
       });
     });
+
+    it('should return generic type for invalid Vimeo URL', () => {
+      const url = 'https://vimeo.com/invalid-no-id';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({
+        type: 'generic',
+        embedUrl: url,
+        originalUrl: url,
+      });
+    });
+
+    it('should return generic type for invalid SoundCloud URL', () => {
+      const url = 'https://soundcloud.com/';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({
+        type: 'generic',
+        embedUrl: url,
+        originalUrl: url,
+      });
+    });
   });
 });
