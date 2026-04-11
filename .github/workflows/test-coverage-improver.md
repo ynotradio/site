@@ -11,6 +11,8 @@ permissions:
   issues: read
   pull-requests: read
 
+timeout-minutes: 35
+
 network:
   allowed:
     - defaults
