@@ -30,9 +30,9 @@ describe('MusicBrainzArtistField', () => {
       setValue: mockSetValue,
     } as any);
 
-    vi.mocked(useFormFields).mockReturnValue({
-      value: 'Test Artist',
-    } as any);
+    vi.mocked(useFormFields).mockImplementation((selector: any) =>
+      selector([{ name: { value: 'Test Artist' } }, null]),
+    );
   });
 
   it('renders the search button', () => {

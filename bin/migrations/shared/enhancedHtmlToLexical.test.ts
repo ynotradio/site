@@ -360,6 +360,27 @@ describe('enhancedHtmlToLexical', () => {
     });
   });
 
+  describe('parseInlineHTML fallback', () => {
+    it('should handle paragraph containing only an empty bold tag', () => {
+      // <p><b></b></p>: parseInlineHTML('<b></b>') produces no nodes (empty formatted element)
+      // but html.trim() is truthy, triggering the fallback path
+      const result = convertHtmlToLexicalEnhanced('<p><b></b></p>');
+      expect(result.root).toBeDefined();
+      expect(result.root.type).toBe('root');
+    });
+
+    it('should handle paragraph containing only empty formatting tags', () => {
+      const result = convertHtmlToLexicalEnhanced('<p><strong></strong><em></em></p>');
+      expect(result.root).toBeDefined();
+    });
+
+    it('should handle paragraph with only a void element', () => {
+      // <img> inside a paragraph: parseInlineHTML('<img src="...">') produces no nodes
+      const result = convertHtmlToLexicalEnhanced('<p><img src="/test.jpg" alt=""/></p>');
+      expect(result.root).toBeDefined();
+    });
+  });
+
   describe('Unknown Elements', () => {
     it('should extract text content from unknown block elements', () => {
       const result = convertHtmlToLexicalEnhanced('<footer>Footer content</footer>');
