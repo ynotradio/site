@@ -138,6 +138,38 @@ describe('MusicBrainz API Utils', () => {
         const callUrl = fetchMock.mock.calls[0][0];
         expect(callUrl).toContain('limit=25');
       });
+
+      it('serializes concurrent requests via busy-wait when first holds the rate-limit lock', async () => {
+        vi.useFakeTimers();
+
+        // Prime the rate limiter: call once so lastRequestTime gets set to "now"
+        fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [] }) });
+        const prime = searchArtists('prime');
+        await vi.runAllTimersAsync();
+        await prime;
+
+        // Advance time by 500ms — less than MIN_REQUEST_INTERVAL (1000ms)
+        // so the next waitForRateLimit call will hold the lock while waiting
+        vi.advanceTimersByTime(500);
+
+        // Start two concurrent calls.
+        // p1: acquires lock, finds 500ms remaining, awaits setTimeout(500ms) → suspends
+        // p2: tries to acquire lock, sees requestInProgress=true, enters while-loop (lines 95-96)
+        fetchMock
+          .mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [{ id: '1' }] }) })
+          .mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [{ id: '2' }] }) });
+        const p1 = searchArtists('query1');
+        const p2 = searchArtists('query2');
+
+        await vi.runAllTimersAsync();
+        const [r1, r2] = await Promise.all([p1, p2]);
+
+        expect(r1).toEqual([{ id: '1' }]);
+        expect(r2).toEqual([{ id: '2' }]);
+        expect(fetchMock).toHaveBeenCalledTimes(3); // prime + 2 concurrent
+
+        vi.useRealTimers();
+      });
     });
 
     describe('searchReleases', () => {
