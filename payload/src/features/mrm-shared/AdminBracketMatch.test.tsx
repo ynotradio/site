@@ -101,4 +101,40 @@ describe('AdminBracketMatch', () => {
     );
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
+
+  it('renders empty string for band seed when seed is not provided', () => {
+    const { container } = render(
+      <AdminBracketMatch
+        band1={{ name: 'Radiohead' }}
+        band2={{ name: 'Nirvana' }}
+      />,
+    );
+    const seeds = container.querySelectorAll('.seed');
+    expect(seeds[0]).toHaveTextContent('');
+    expect(seeds[1]).toHaveTextContent('');
+  });
+
+  it('builds aria-label with Match fallback when matchLabel is omitted on link', () => {
+    render(
+      <AdminBracketMatch
+        band1={{ seed: 1, name: 'Radiohead' }}
+        band2={{ seed: 16, name: 'Nirvana' }}
+        href="/admin/collections/modern-rock-madness-matches/m1"
+      />,
+    );
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('aria-label', 'Match: Radiohead vs Nirvana');
+  });
+
+  it('builds aria-label with TBD fallback for null bands on link', () => {
+    render(
+      <AdminBracketMatch
+        band1={null}
+        band2={null}
+        href="/admin/collections/modern-rock-madness-matches/m1"
+      />,
+    );
+    const link = screen.getByRole('link');
+    expect(link).toHaveAttribute('aria-label', 'Match: TBD vs TBD');
+  });
 });

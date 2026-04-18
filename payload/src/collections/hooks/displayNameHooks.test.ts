@@ -95,6 +95,18 @@ describe('DJs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('DJ #New');
   });
 
+  it('should use fallback displayName when person IDs are given but no docs returned', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({ docs: [] });
+
+    const result = await generateDJDisplayName({
+      data: { person: [999], id: 42 },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('DJ #42');
+  });
+
   it('should handle person fetch error gracefully', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (mockPayload.find as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
@@ -200,6 +212,18 @@ describe('Songs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('Song #New');
   });
 
+  it('should use title-only displayName when artist ID lookup returns null', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await songHook({
+      data: { artist: 999, title: 'Mystery Song' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Mystery Song');
+  });
+
   it('should handle artist fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
@@ -280,6 +304,18 @@ describe('Records displayName beforeChange hook', () => {
     });
 
     expect(result.displayName).toBe('Record #New');
+  });
+
+  it('should use title-only displayName when artist ID lookup returns null', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await recordHook({
+      data: { artist: 999, title: 'Unknown Album' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Unknown Album');
   });
 
   it('should handle artist fetch error gracefully', async () => {
