@@ -48,6 +48,12 @@ export default defineConfig({
         'payload/src/features/mrm-live/**/*.tsx',
         'payload/src/features/mrm-shared/**/*.tsx',
         'payload/src/features/show-cloner/**/*.tsx',
+        'payload/src/collections/Ads.ts',
+        'payload/src/collections/Concerts.ts',
+        'payload/src/collections/Media.ts',
+        'payload/src/collections/People.ts',
+        'payload/src/collections/Venues.ts',
+        'payload/src/collections/Users.ts',
       ],
       exclude: [
         '**/*.test.ts',
