@@ -2069,10 +2069,10 @@
     react-dom "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
     ts-dedent "^2.0.0"
 
-"@storybook/addon-onboarding@^10.3.4":
-  version "10.3.4"
-  resolved "https://registry.yarnpkg.com/@storybook/addon-onboarding/-/addon-onboarding-10.3.4.tgz#b8c7d76c4de42555c1dd7725593eb4630f327825"
-  integrity sha512-59BgxVX3FJxS+cruvk7gfm/0azRJokDeHNNubEhgKIS8ih0ol9vJ7YbAJEP7QWOf22RghWtQSO0yMmTyZTPTyQ==
+"@storybook/addon-onboarding@^10.3.5":
+  version "10.3.5"
+  resolved "https://registry.yarnpkg.com/@storybook/addon-onboarding/-/addon-onboarding-10.3.5.tgz#27fb31d4ea6d400695b274d08b4785cb3293b4ca"
+  integrity sha512-s3/gIy9Tqxji27iclLY+KSk8kGeow1JxXMl1lPLyu8n6XVvv+tFrUPhAvUTs+fVenG6JQEWc0uzpYBdFRWbMtw==
 
 "@storybook/addon-vitest@^10.2.1":
   version "10.2.9"
