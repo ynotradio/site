@@ -190,6 +190,80 @@ describe('LiveMatchClient', () => {
     });
   });
 
+  it('shows "Closing…" on the Close Match button while the action is saving', async () => {
+    let resolvePatch!: () => void;
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      if (opts?.method === 'PATCH') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return new Promise<any>((resolve) => {
+          resolvePatch = () => resolve({ ok: true, json: async () => ({}) });
+        });
+      }
+      if (opts?.method === 'POST') {
+        return { ok: true, json: async () => ({}) };
+      }
+      return { ok: true, json: async () => ({ docs: [CLOSEABLE_MATCH], totalDocs: 1 }) };
+    });
+
+    render(<LiveMatchClient />);
+    await waitFor(() => screen.getByText('Close Match'));
+
+    fireEvent.click(screen.getByText('Close Match'));
+
+    await waitFor(() => {
+      expect(screen.getByText('Closing…')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      resolvePatch();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Closing…')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows "Extending…" on the Extend button while the action is saving', async () => {
+    let resolvePatch!: () => void;
+    global.fetch = vi.fn().mockImplementation(async (url: string, opts?: RequestInit) => {
+      if (opts?.method === 'PATCH') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return new Promise<any>((resolve) => {
+          resolvePatch = () => resolve({ ok: true, json: async () => ({}) });
+        });
+      }
+      if (opts?.method === 'POST') {
+        return { ok: true, json: async () => ({}) };
+      }
+      return { ok: true, json: async () => ({ docs: [OVERTIME_MATCH], totalDocs: 1 }) };
+    });
+
+    render(<LiveMatchClient />);
+    await waitFor(() => screen.getByText(/Extend Overtime/));
+
+    fireEvent.click(screen.getByText(/Extend Overtime/));
+
+    await waitFor(() => {
+      expect(screen.getByText('Extending…')).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      resolvePatch();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('Extending…')).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows an error banner when the API returns a non-ok response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) });
+    render(<LiveMatchClient />);
+    await waitFor(() => {
+      expect(screen.getByText(/Could not load match data/)).toBeInTheDocument();
+    });
+  });
+
   it('re-fetches match data at the configured poll interval', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     mockFetch([ACTIVE_MATCH]);
