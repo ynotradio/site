@@ -33,6 +33,11 @@ vi.mock('./musicbrainz', () => ({
   getArtistMbid: vi.fn(),
 }));
 
+// Mock payload.config for getPayloadClient success path
+vi.mock('../../../payload.config', () => ({
+  default: { db: {}, collections: [] },
+}));
+
 describe('payloadClient', () => {
   let mockPayload: Partial<Payload>;
   let mockGetArtistMbid: Mock;
@@ -91,10 +96,53 @@ describe('payloadClient', () => {
 
     it('should use DATABASE_URI fallback when NEON_DEV_DATABASE_URL is not set for local-postgres', async () => {
       process.env.DATABASE_URI = 'postgresql://local/fallback';
+      const { getPayload } = await import('payload');
+      const mockFallback = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockFallback);
+
       const { getPayloadClient } = await import('./payloadClient');
-      // Throws because payload.config dynamic import is not fully mocked here,
-      // but the env-var selection branch (DATABASE_URI fallback) is exercised before the throw
-      await expect(getPayloadClient('local-postgres')).rejects.toThrow();
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockFallback);
+      expect(process.env.DATABASE_URI).toBe('postgresql://local/fallback');
+    });
+
+    it('should return uri for prod-neon when NEON_PROD_DATABASE_URL is set', async () => {
+      process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+      const { getPayload } = await import('payload');
+      const mockProd = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockProd);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('prod-neon');
+
+      expect(result).toBe(mockProd);
+      expect(process.env.DATABASE_URI).toBe('postgresql://prod/db');
+    });
+
+    it('should return uri for dev-neon when NEON_DEV_DATABASE_URL is set', async () => {
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://dev/db';
+      const { getPayload } = await import('payload');
+      const mockDev = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockDev);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('dev-neon');
+
+      expect(result).toBe(mockDev);
+      expect(process.env.DATABASE_URI).toBe('postgresql://dev/db');
+    });
+
+    it('should connect successfully for local-postgres when NEON_DEV_DATABASE_URL is set', async () => {
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://local/dev';
+      const { getPayload } = await import('payload');
+      const mockLocal = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockLocal);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockLocal);
     });
   });
 
