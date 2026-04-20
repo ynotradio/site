@@ -19,6 +19,7 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
     <head>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
       <meta http-equiv="Content-Language" content="en-us"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
       <meta name="description" content="YNot Radio" />
       <meta name="keywords" content="Y-Not Radio, ynot radio, y-not, ynot, Y-Not Philly, ynot philly, Y100, Y100 Philadelphia, Y100 Philly, y100 rocks, Philadelphia music, Philly music, indie rock, Josh T. Landow, Josh Landow" />
       <meta name="author" content="YNot Radio" />
@@ -136,6 +137,9 @@ if ($on_air != '') {
 ?>
       </header>
       <nav>
+        <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+          <span>Menu</span>
+        </button>
         <ul>
         <?php
 $nav = array("index.php" => "Home", "concerts.php" => "Concerts", "top11.php" => "Top 11 @ 11", "music.php" => "New Music", "schedule.php" => "Schedule", "deejays.php" => "Dee Jays", "ondemand.php" => "On Demand", "cdoftheweek.php" => "CD of The Week", "ymail.php" => "Y-Mail", "donate.php" => "Donate");
