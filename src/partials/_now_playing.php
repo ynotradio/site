@@ -2,13 +2,15 @@
 $url_to_refresh = $_SERVER['REQUEST_URI'];
 header("Refresh: 30; URL=$url_to_refresh");
 
-// Query JSON data from live365 API
-$jsonData = file_get_contents('https://api.live365.com/station/a54553');
-$data = json_decode($jsonData, true);
+// Query JSON data from live365 API; @ suppresses SSL/network errors in dev environments
+$jsonData = @file_get_contents('https://api.live365.com/station/a54553');
+$data = ($jsonData !== false) ? json_decode($jsonData, true) : null;
 
-$currentTrack = $data['current-track'];
-$currentTrack['altText'] = "Album art for " . $currentTrack['artist'] . " - " . $currentTrack['title'];
-$lastPlayed = array_slice($data['last-played'], 0, 4);
+$currentTrack = $data['current-track'] ?? ['artist' => '', 'title' => 'Y-Not Radio', 'art' => ''];
+$artist = $currentTrack['artist'] ?? '';
+$title = $currentTrack['title'] ?? 'Y-Not Radio';
+$currentTrack['altText'] = $artist ? "Album art for $artist - $title" : 'Y-Not Radio';
+$lastPlayed = isset($data['last-played']) ? array_slice($data['last-played'], 0, 4) : [];
 
 ?>
 <!DOCTYPE html>
@@ -42,6 +44,22 @@ $lastPlayed = array_slice($data['last-played'], 0, 4);
       flex-shrink: 0;
     }
 
+    .ynot-np-artwork-placeholder {
+      width: 80px;
+      height: 80px;
+      background: #444;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ynot-np-offline {
+      padding: 0.75rem;
+      font-style: italic;
+      opacity: 0.75;
+    }
+
     .ynot-np-list {
       list-style-type: none;
       padding: 0;
@@ -71,24 +89,30 @@ $lastPlayed = array_slice($data['last-played'], 0, 4);
   </style>
 </head>
 <body>
+<?php if ($data === null): ?>
+  <p class="ynot-np-offline">Nothing playing right now.</p>
+<?php else: ?>
   <section class="ynot-np-container">
     <div class="ynot-np-artwork">
-      <img class="ynot-np-artwork-img" src="<?php echo $currentTrack['art']; ?>" alt="<?php echo $currentTrack['altText'] ?>" />
+      <?php if (!empty($currentTrack['art'])): ?>
+        <img class="ynot-np-artwork-img" src="<?php echo htmlspecialchars($currentTrack['art']); ?>" alt="<?php echo htmlspecialchars($currentTrack['altText']); ?>"/>
+      <?php else: ?>
+        <div class="ynot-np-artwork-placeholder"></div>
+      <?php endif; ?>
     </div>
     <ol class="ynot-np-list">
       <li class="ynot-np-track ynot-np-track--current">
-        <span class="ynot-np-track-artist"><?php echo $currentTrack['artist']; ?></span>
-        <span class="ynot-np-track-title"><?php echo $currentTrack['title']; ?></span>
+        <span class="ynot-np-track-artist"><?php echo htmlspecialchars($artist); ?></span>
+        <span class="ynot-np-track-title"><?php echo htmlspecialchars($title); ?></span>
       </li>
-      <?php
-      foreach ($lastPlayed as $track) {
-        echo '<li class="ynot-np-track">';
-        echo '<span class="ynot-np-track-artist">' . $track['artist'] . '</span>';
-        echo '<span class="ynot-np-track-title">' . $track['title'] . '</span>';
-        echo '</li>';
-      }
-      ?>
+      <?php foreach ($lastPlayed as $track): ?>
+        <li class="ynot-np-track">
+          <span class="ynot-np-track-artist"><?php echo htmlspecialchars($track['artist'] ?? ''); ?></span>
+          <span class="ynot-np-track-title"><?php echo htmlspecialchars($track['title'] ?? ''); ?></span>
+        </li>
+      <?php endforeach; ?>
     </ol>
   </section>
+<?php endif; ?>
 </body>
 </html>
