@@ -3,7 +3,7 @@ name: Code Refactoring Assistant
 description: Identifies and implements refactoring opportunities to improve code structure and reduce complexity
 on:
   schedule:
-    - cron: '0 4 * * 1' # Run weekly on Mondays at 4 AM UTC
+    - weekly
   workflow_dispatch:
 
 permissions:
