@@ -156,6 +156,44 @@ describe('useShowCloner', () => {
     expect(fetchedBodies[0].host).toBe('abc-uuid');
   });
 
+  it('handles string host id directly (not wrapped in object)', async () => {
+    const fetchedBodies: { host?: number | string }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const showWithStringHost: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', host: '99' }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithStringHost, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].host).toBe(99);
+  });
+
+  it('omits host from payload when host object has an empty id', async () => {
+    const fetchedBodies: { host?: number | string }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const showWithEmptyHostId: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', host: { id: '', displayName: 'Unknown' } }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithEmptyHostId, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].host).toBeUndefined();
+  });
+
   it('sets error on fetch failure', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
     const onComplete = vi.fn().mockResolvedValue(undefined);
