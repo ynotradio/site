@@ -130,34 +130,69 @@ if ($page_file == "yearendpoll.php") {
             <area shape="rect" coords="414,115,447,149" href="mobile.php" alt="mobile"/>
           </map>
         </div>
+        <?php
+require_once __DIR__ . '/_now_playing_data.php';
+$np = ynot_get_now_playing();
+$np_artist = $np['currentTrack']['artist'] ?? '';
+$np_title = $np['currentTrack']['title'] ?? 'Y-Not Radio';
+$np_marquee = $np['available'] && ($np_artist || $np_title)
+    ? trim($np_artist . ($np_artist && $np_title ? ' – ' : '') . $np_title)
+    : 'Y-Not Radio — Philadelphia\'s Real Alternative';
+$on_air = on_air();
+?>
         <div class="header-mobile">
+          <!-- Zone 1: Logo hero on textured concrete -->
           <a class="header-mobile__brand" href="<?php echo $base_path; ?>index.php" aria-label="Y-Not Radio home">
             <img src="<?php echo $base_path; ?>imgs/ynot-logo.svg" alt="Y-Not Radio"/>
           </a>
-          <div class="header-mobile__actions">
-            <a class="stream-btn stream-btn--primary" href="https://player.live365.com/ynotradio" target="_blank" rel="noopener">
-              <span class="stream-btn__icon" aria-hidden="true">▶</span>
-              <span>Listen Live</span>
+
+          <!-- Zone 2: Three-column action bar -->
+          <div class="header-mobile__actions" role="group" aria-label="Player controls">
+            <a class="action-btn action-btn--live" href="https://player.live365.com/ynotradio" target="_blank" rel="noopener">
+              <span class="action-btn__icon" aria-hidden="true">▶</span>
+              <span class="action-btn__label">Listen Live</span>
             </a>
-            <a class="stream-btn" href="https://api.live365.com/play/a54553.m3u" target="_blank" rel="noopener" aria-label="iTunes stream">
-              <span class="stream-btn__icon" aria-hidden="true">♪</span>
-              <span>iTunes</span>
-            </a>
-            <a class="stream-btn stream-btn--icon" href="https://www.facebook.com/ynotradio" target="_blank" rel="noopener" aria-label="Y-Not Radio on Facebook">
-              <span aria-hidden="true">f</span>
-            </a>
-            <a class="stream-btn stream-btn--icon" href="http://twitter.com/ynotradio" target="_blank" rel="noopener" aria-label="Y-Not Radio on Twitter">
-              <span aria-hidden="true">t</span>
-            </a>
+            <button type="button" class="action-btn action-btn--onair" aria-expanded="false" aria-controls="np-panel">
+              <span class="action-btn__row">
+                <span class="onair-dot" aria-hidden="true"></span>
+                <span class="action-btn__eyebrow">On Air</span>
+              </span>
+              <span class="action-btn__row">
+                <span class="action-btn__label"><?php echo htmlspecialchars($on_air !== '' ? $on_air : 'Y-Not Radio'); ?></span>
+                <span class="action-btn__chevron" aria-hidden="true">▾</span>
+              </span>
+            </button>
+            <button type="button" class="action-btn action-btn--menu" aria-expanded="false" aria-controls="mobile-drawer">
+              <span class="hamburger" aria-hidden="true"><span></span><span></span><span></span></span>
+              <span class="action-btn__label">Menu</span>
+            </button>
           </div>
-          <iframe class="header-mobile__np" src="<?php echo $base_path; ?>partials/_now_playing.php?compact=1" title="Now Playing on Y-Not Radio" scrolling="no" frameborder="0"></iframe>
+
+          <!-- Zone 2b: Now Playing expandable panel -->
+          <div id="np-panel" class="np-panel" hidden>
+            <div class="np-panel__inner">
+              <span class="np-panel__eyebrow">Now Playing</span>
+              <span class="np-panel__track">
+                <strong><?php echo htmlspecialchars($np_artist); ?></strong>
+                <?php if ($np_artist && $np_title): ?><span class="np-panel__sep"> – </span><?php endif; ?>
+                <em><?php echo htmlspecialchars($np_title); ?></em>
+              </span>
+            </div>
+          </div>
+
+          <!-- Zone 3: Persistent marquee strip -->
+          <div class="np-marquee" aria-live="off">
+            <span class="np-marquee__badge">Now Playing</span>
+            <div class="np-marquee__viewport">
+              <span class="np-marquee__text" data-default="<?php echo htmlspecialchars($np_marquee); ?>"><?php echo htmlspecialchars($np_marquee); ?></span>
+            </div>
+          </div>
         </div>
-      <?php
-$on_air = on_air();
+
+        <?php
 if ($on_air != '') {
     echo "<div id=\"on-air\">" . $on_air . "</div>";
 }
-
 ?>
       </header>
       <nav>
@@ -183,3 +218,35 @@ foreach ($nav as $url => $title) {
 ?>
         </ul>
       </nav>
+
+      <!-- Mobile slide-in drawer (rendered for all viewports; CSS hides on desktop) -->
+      <div class="mobile-drawer-overlay" hidden></div>
+      <aside id="mobile-drawer" class="mobile-drawer" aria-hidden="true" aria-label="Site menu">
+        <div class="mobile-drawer__logo">
+          <img src="<?php echo $base_path; ?>imgs/ynot-logo.svg" alt="Y-Not Radio"/>
+          <button type="button" class="mobile-drawer__close" aria-label="Close menu">&times;</button>
+        </div>
+        <?php if ($on_air != ''): ?>
+          <div class="mobile-drawer__onair">
+            <span class="mobile-drawer__onair-dot" aria-hidden="true"></span>
+            On Air: <?php echo htmlspecialchars($on_air); ?>
+          </div>
+        <?php endif; ?>
+        <div class="mobile-drawer__np">
+          <span class="mobile-drawer__np-label">Now Playing</span>
+          <span class="mobile-drawer__np-track">
+            <strong><?php echo htmlspecialchars($np_artist); ?></strong>
+            <?php if ($np_artist && $np_title): ?> – <?php endif; ?>
+            <em><?php echo htmlspecialchars($np_title); ?></em>
+          </span>
+        </div>
+        <nav class="mobile-drawer__nav" aria-label="Primary">
+          <?php foreach ($nav as $url => $title): ?>
+            <a href="<?php echo $base_path . $url; ?>"<?php if ($url == $page_file) echo ' class="active" aria-current="page"'; ?>><?php echo $title; ?></a>
+          <?php endforeach; ?>
+        </nav>
+        <div class="mobile-drawer__social">
+          <a href="https://www.facebook.com/ynotradio" target="_blank" rel="noopener" aria-label="Facebook">f</a>
+          <a href="http://twitter.com/ynotradio" target="_blank" rel="noopener" aria-label="Twitter">t</a>
+        </div>
+      </aside>

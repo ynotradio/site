@@ -1,21 +1,31 @@
 <?php
+require_once __DIR__ . '/_now_playing_data.php';
+
 $url_to_refresh = $_SERVER['REQUEST_URI'];
 header("Refresh: 30; URL=$url_to_refresh");
 
-// Compact mode renders fewer recent tracks for the small mobile iframe.
 $compact = !empty($_GET['compact']);
+$json = !empty($_GET['json']);
 $historyLimit = $compact ? 2 : 4;
 
-// Query JSON data from live365 API; @ suppresses SSL/network errors in dev environments
-$jsonData = @file_get_contents('https://api.live365.com/station/a54553');
-$data = ($jsonData !== false) ? json_decode($jsonData, true) : null;
-
-$currentTrack = $data['current-track'] ?? ['artist' => '', 'title' => 'Y-Not Radio', 'art' => ''];
+$np = ynot_get_now_playing();
+$currentTrack = $np['currentTrack'];
 $artist = $currentTrack['artist'] ?? '';
 $title = $currentTrack['title'] ?? 'Y-Not Radio';
-$currentTrack['altText'] = $artist ? "Album art for $artist - $title" : 'Y-Not Radio';
-$lastPlayed = isset($data['last-played']) ? array_slice($data['last-played'], 0, $historyLimit) : [];
+$lastPlayed = array_slice($np['lastPlayed'], 0, $historyLimit);
 
+// Lightweight JSON endpoint for the mobile marquee to fetch via same-origin AJAX,
+// or for any other consumer that wants the data without the iframe HTML wrapper.
+if ($json) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: max-age=10, public');
+    echo json_encode([
+        'available' => $np['available'],
+        'artist' => $artist,
+        'title' => $title,
+    ]);
+    return;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -107,7 +117,7 @@ $lastPlayed = isset($data['last-played']) ? array_slice($data['last-played'], 0,
   </style>
 </head>
 <body>
-<?php if ($data === null): ?>
+<?php if (!$np['available']): ?>
   <p class="ynot-np-offline">Nothing playing right now.</p>
 <?php else: ?>
   <section class="ynot-np-container">
