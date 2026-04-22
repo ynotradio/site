@@ -94,6 +94,12 @@ describe('Users', () => {
     expect(hiddenFn({ user: null })).toBe(true);
   });
 
+  it('hides from navigation for user object without role property', () => {
+    const hiddenFn = Users.admin?.hidden as (args: { user: unknown }) => boolean;
+    // An object that passes the typeof/null check but has no 'role' key
+    expect(hiddenFn({ user: { id: 42 } })).toBe(true);
+  });
+
   it('has role as a required select field with default editor', () => {
     const allFields = flattenRowFields(Users.fields);
     const roleField = allFields.find((f) => f.name === 'role');

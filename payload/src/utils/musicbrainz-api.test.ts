@@ -438,6 +438,34 @@ describe('MusicBrainz API Utils', () => {
         expect(result[0].id).toBe('first'); // original order preserved
       });
 
+      it('uses 0 as score fallback when score is missing during score comparison', async () => {
+        const releases = [
+          {
+            id: 'no-score',
+            title: 'Test Album',
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'has-score',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        // 80 (has-score) > 0 (no-score fallback) → has-score first
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
       it('returns empty array on API error', async () => {
         fetchMock.mockResolvedValueOnce({
           ok: false,
@@ -596,6 +624,31 @@ describe('MusicBrainz API Utils', () => {
         expect(result[0].id).toBe('3'); // score 95, no disambiguation
         expect(result[1].id).toBe('2'); // score 90, studio version
         expect(result[2].id).toBe('1'); // Live version last (despite highest score)
+      });
+
+      it('uses 0 as score fallback when score is missing during score comparison', async () => {
+        const recordings = [
+          {
+            id: 'no-score',
+            title: 'Test Song',
+            // no score field - should fall back to 0 in (b.score || 0) - (a.score || 0)
+          },
+          {
+            id: 'has-score',
+            title: 'Test Song',
+            score: 70,
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        const result = await searchRecordings('Test Song');
+        // 70 (has-score) > 0 (no-score fallback) → has-score first
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
       });
 
       it('returns empty array on API error', async () => {
