@@ -420,8 +420,9 @@ dt:after {
   display: none;
 }
 
-/* Desktop: hamburger is hidden */
-.nav-toggle {
+/* Desktop: hamburger and structured mobile header are hidden */
+.nav-toggle,
+.header-mobile {
   display: none;
 }
 
@@ -429,61 +430,152 @@ dt:after {
   border: none !important;
 }
 
-/* ── Mobile responsive overrides (<= 767px) ── */
-@media only screen and (max-width: 767px) {
-  /* Container loses its fixed border on tiny screens */
+/* ── Mobile / small-tablet responsive overrides (≤ 959px) ── */
+@media only screen and (max-width: 959px) {
+  /* Container loses its decorative white border on small screens */
   #container {
     border-width: 0;
     padding-left: 0;
     padding-right: 0;
   }
 
-  /* ── Header: stack logo → now-playing → on-air ── */
+  /* ── Header: swap bitmap+imagemap for a structured native layout ── */
   header {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
     height: auto;
     margin: 0;
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    border-radius: 0;
-    overflow: hidden;
-  }
-
-  /* Crop the 950×156 banner to show just the logo area on mobile */
-  header img {
-    min-width: 0;
-    width: 100%;
-    height: 80px;
-    object-fit: cover;
-    object-position: left center;
-    display: block;
-  }
-
-  header iframe {
-    position: static !important;
-    top: auto !important;
-    left: auto !important;
-    width: 100% !important;
-    height: 100px;
     border: none;
-    border-top: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0;
+    background: url('../imgs/header_background.png') repeat-x;
+    background-size: auto 100%;
+  }
+
+  /* Hide the desktop bitmap entirely on mobile */
+  .header-bitmap {
+    display: none;
+  }
+
+  /* Show the structured mobile header */
+  .header-mobile {
     display: block;
   }
 
+  .header-mobile__brand {
+    display: block;
+    padding: 16px 16px 12px;
+    background: url('../imgs/header_background.png') repeat-x;
+    background-size: auto 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  }
+
+  /* Black-on-concrete logo to match the desktop header treatment */
+  .header-mobile__brand img {
+    display: block;
+    width: auto;
+    height: 64px;
+    max-width: 80%;
+    margin: 0 auto;
+    /* Override the desktop `header img { min-width: 950px }` rule */
+    min-width: 0;
+  }
+
+  .header-mobile__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 0 10px 10px;
+    justify-content: center;
+  }
+
+  .stream-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 12px;
+    background: #555;
+    color: #fff;
+    font: bold 11px/1 Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    border: 1px solid rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+    -webkit-transition: background 0.2s linear;
+    transition: background 0.2s linear;
+  }
+
+  .stream-btn:hover,
+  .stream-btn:focus-visible {
+    background: black;
+    color: white;
+    text-decoration: none;
+    outline: none;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+  }
+
+  .stream-btn:focus-visible {
+    box-shadow: 0 0 0 2px #cc3333, inset 0 2px 5px rgba(0, 0, 0, 0.4);
+  }
+
+  .stream-btn--primary {
+    background: #cc3333;
+    border-color: #7a1f1f;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .stream-btn--primary:hover,
+  .stream-btn--primary:focus-visible {
+    background: #a82828;
+    color: white;
+  }
+
+  .stream-btn__icon {
+    font-size: 12px;
+    line-height: 1;
+  }
+
+  .stream-btn--icon {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    justify-content: center;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: Georgia, serif;
+    font-style: italic;
+  }
+
+  .header-mobile__np {
+    display: block;
+    position: static;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: 130px;
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.3);
+    background: #666;
+  }
+
+  /* On-air pill — matches the brand red used by .feature-box headlines */
   #on-air {
     position: static;
     left: auto;
     top: auto;
     max-width: none;
-    width: 100%;
-    padding: 5px 12px;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.9);
-    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    width: auto;
+    margin: 0;
+    padding: 6px 12px;
+    background: #cc3333;
+    color: #fff;
     font-size: 11px;
+    font-weight: bold;
+    text-align: center;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-top: 1px solid rgba(0, 0, 0, 0.3);
   }
 
   /* ── Collapsible nav ── */
@@ -497,38 +589,47 @@ dt:after {
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 10px 16px;
+    padding: 12px 16px;
     background: #555;
     color: #fff;
     border: none;
     border-bottom: 1px solid black;
-    font-size: 13px;
-    font-weight: bold;
     font-family: Verdana, sans-serif;
+    font-size: 12px;
+    font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
     cursor: pointer;
   }
 
+  .nav-toggle:focus-visible {
+    outline: 2px solid #cc3333;
+    outline-offset: -2px;
+  }
+
   .nav-toggle::after {
-    content: '▼';
-    font-size: 10px;
+    content: '▾';
+    font-size: 14px;
+    line-height: 1;
     margin-left: 8px;
-    display: inline-block;
     -webkit-transition: -webkit-transform 0.2s ease-out;
-    -moz-transition: -moz-transform 0.2s ease-out;
     transition: transform 0.2s ease-out;
   }
 
   .nav-toggle[aria-expanded="true"]::after {
     -webkit-transform: rotate(180deg);
-    -moz-transform: rotate(180deg);
     transform: rotate(180deg);
   }
 
+  /* JS-free fallback: menu starts open. JS will collapse it on init. */
   nav ul {
-    display: none;
+    display: block;
     background: #555;
+  }
+
+  nav ul.is-collapsed {
+    display: none;
   }
 
   nav ul.is-open {
@@ -538,7 +639,8 @@ dt:after {
   nav li {
     float: none;
     display: block;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.25);
   }
 
   nav li:last-child {
@@ -554,27 +656,32 @@ dt:after {
   }
 
   nav a {
-    padding: 11px 16px;
-    font-size: 13px;
+    padding: 12px 16px;
+    font-size: 12px;
     text-align: left;
     border: none;
     border-radius: 0;
     background: #555;
   }
 
-  nav a:hover {
+  nav a:hover,
+  nav a:focus-visible {
     background: #333;
     box-shadow: none;
     border: none;
+    outline: none;
   }
 
-  .active,
-  .active:hover,
-  nav a.active {
-    background: #333;
+  nav a:focus-visible {
+    box-shadow: inset 3px 0 0 #cc3333;
+  }
+
+  nav a.active,
+  nav a.active:hover {
+    background: #cc3333;
     box-shadow: none;
     color: #fff;
-    text-shadow: none;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
     border: none;
     border-radius: 0;
   }
@@ -613,6 +720,108 @@ dt:after {
 
   .inline .form-actions {
     padding-left: 0;
+  }
+
+  /* ── Tables: fit narrow viewports ── */
+  /* Neutralize fixed colgroup widths inherited from desktop tables */
+  table colgroup col {
+    width: auto !important;
+  }
+
+  table {
+    width: 100%;
+    font-size: 13px;
+    table-layout: auto;
+  }
+
+  table th,
+  table td {
+    padding: 6px 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Constrain media inside table cells so fixed-pixel widths don't push pages wide */
+  table td img,
+  table td iframe,
+  table td video,
+  table td embed,
+  table td object {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Allow wide content tables to scroll horizontally rather than overflow page */
+  .table-responsive,
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* On Demand: stack thumbnail above show details so 180px image + iframe + text fit */
+  table.ondemand,
+  table.ondemand tbody,
+  table.ondemand tr {
+    display: block;
+    width: 100%;
+  }
+
+  table.ondemand td {
+    display: block;
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 8px 0;
+    border: 0;
+  }
+
+  table.ondemand tr {
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 0;
+  }
+
+  table.ondemand td img {
+    display: block;
+    float: none;
+    margin: 0 auto 4px;
+    max-width: 240px;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  table.ondemand .t {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  /* Defensive: long tokens (URLs, raw JSON) must wrap rather than expand the page */
+  #content,
+  .content,
+  main {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* ── Main content padding so text doesn't kiss the viewport edges ── */
+  #content,
+  .content,
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Headings: tighten margins on small screens */
+  h1 { font-size: 24px; line-height: 1.2; }
+  h2 { font-size: 20px; line-height: 1.25; }
+  h3 { font-size: 17px; line-height: 1.3; }
+
+  /* Mixcloud / sidebar widgets stacked below content via grid.css.
+     No extra width override needed here. */
+
+  /* Footer: tighten and center */
+  footer {
+    padding: 16px 12px;
+    text-align: center;
   }
 }
 

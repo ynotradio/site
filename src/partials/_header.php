@@ -118,16 +118,40 @@ if ($page_file == "yearendpoll.php") {
       }(document, 'script', 'facebook-jssdk'));</script>
       <div id="container">
       <header>
-        <img src="<?php echo $base_path; ?>imgs/header_front_2022.png" alt="logo" usemap="#Map"/>
-        <iframe src="<?php echo $base_path; ?>partials/_now_playing.php" name="iradiophillyplaylist" scrolling="no" noresize="" frameborder="No" marginwidth="0" marginheight="0" width="445" height="125"></iframe>
-        <map name="Map">
-          <area shape="rect" coords="20,5,310,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
-          <area shape="rect" coords="340,10,452,85" href="https://player.live365.com/ynotradio" alt="Listen Live" target="_blank"/>
-          <area shape="rect" coords="337,93,447,102" href=" https://api.live365.com/play/a54553.m3u" target="_blank" alt="iTunes">
-          <area shape="rect" coords="328,115,372,149" href="https://www.facebook.com/ynotradio" alt="facebook" target="_blank"/>
-          <area shape="rect" coords="382,115,410,149" href="http://twitter.com/ynotradio" alt="twitter" target="_blank"/>
-          <area shape="rect" coords="414,115,447,149" href="mobile.php" alt="mobile"/>
-        </map>
+        <div class="header-bitmap">
+          <img src="<?php echo $base_path; ?>imgs/header_front_2022.png" alt="logo" usemap="#Map"/>
+          <iframe src="<?php echo $base_path; ?>partials/_now_playing.php" name="iradiophillyplaylist" scrolling="no" noresize="" frameborder="No" marginwidth="0" marginheight="0" width="445" height="125"></iframe>
+          <map name="Map">
+            <area shape="rect" coords="20,5,310,150" href="http://www.ynotradio.net" alt="Y-Not Radio"/>
+            <area shape="rect" coords="340,10,452,85" href="https://player.live365.com/ynotradio" alt="Listen Live" target="_blank"/>
+            <area shape="rect" coords="337,93,447,102" href=" https://api.live365.com/play/a54553.m3u" target="_blank" alt="iTunes">
+            <area shape="rect" coords="328,115,372,149" href="https://www.facebook.com/ynotradio" alt="facebook" target="_blank"/>
+            <area shape="rect" coords="382,115,410,149" href="http://twitter.com/ynotradio" alt="twitter" target="_blank"/>
+            <area shape="rect" coords="414,115,447,149" href="mobile.php" alt="mobile"/>
+          </map>
+        </div>
+        <div class="header-mobile">
+          <a class="header-mobile__brand" href="<?php echo $base_path; ?>index.php" aria-label="Y-Not Radio home">
+            <img src="<?php echo $base_path; ?>imgs/ynot-logo.svg" alt="Y-Not Radio"/>
+          </a>
+          <div class="header-mobile__actions">
+            <a class="stream-btn stream-btn--primary" href="https://player.live365.com/ynotradio" target="_blank" rel="noopener">
+              <span class="stream-btn__icon" aria-hidden="true">▶</span>
+              <span>Listen Live</span>
+            </a>
+            <a class="stream-btn" href="https://api.live365.com/play/a54553.m3u" target="_blank" rel="noopener" aria-label="iTunes stream">
+              <span class="stream-btn__icon" aria-hidden="true">♪</span>
+              <span>iTunes</span>
+            </a>
+            <a class="stream-btn stream-btn--icon" href="https://www.facebook.com/ynotradio" target="_blank" rel="noopener" aria-label="Y-Not Radio on Facebook">
+              <span aria-hidden="true">f</span>
+            </a>
+            <a class="stream-btn stream-btn--icon" href="http://twitter.com/ynotradio" target="_blank" rel="noopener" aria-label="Y-Not Radio on Twitter">
+              <span aria-hidden="true">t</span>
+            </a>
+          </div>
+          <iframe class="header-mobile__np" src="<?php echo $base_path; ?>partials/_now_playing.php?compact=1" title="Now Playing on Y-Not Radio" scrolling="no" frameborder="0"></iframe>
+        </div>
       <?php
 $on_air = on_air();
 if ($on_air != '') {

@@ -33,16 +33,19 @@
 .row .eleven  { grid-column: span 11; }
 .row .twelve  { grid-column: span 12; }
 
-/* Clearfix kept for any float-using legacy code */
-.row:before, .row:after, .clearfix:before, .clearfix:after { content: ""; display: table; }
-.row:after, .clearfix:after { clear: both; }
-.row, .clearfix { zoom: 1; }
+/* Clearfix kept for legacy non-grid `.clearfix` containers only.
+   NOTE: do NOT add :before/:after to `.row` — they become grid items
+   and break the column layout. */
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; }
+.clearfix { zoom: 1; }
 
 .first { padding-left: 0; }
 .last  { padding-right: 0; }
 
-/* ── Mobile: stack all columns ── */
-@media only screen and (max-width: 767px) {
+/* ── Mobile / small tablet: stack all columns (≤959px so the legacy
+   1000px-wide layout never tries to fit into a sub-1000 viewport) ── */
+@media only screen and (max-width: 959px) {
   body {
     -webkit-text-size-adjust: none;
     -ms-text-size-adjust: none;
