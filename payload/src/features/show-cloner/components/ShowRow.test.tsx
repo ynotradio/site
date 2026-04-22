@@ -95,6 +95,16 @@ describe('ShowRow', () => {
       const timeElement = container.querySelector('.show-row__time');
       expect(timeElement?.textContent).toBe(' - ');
     });
+
+    it('should default minutes to "00" when time string has no colon', () => {
+      const show: Show = {
+        ...mockShow,
+        startTime: '14',
+        endTime: '16',
+      };
+      render(<ShowRow show={show} />);
+      expect(screen.getByText('2:00 PM - 4:00 PM')).toBeInTheDocument();
+    });
   });
 
   describe('Rendering', () => {
