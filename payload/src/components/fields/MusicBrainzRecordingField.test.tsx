@@ -35,13 +35,9 @@ describe('MusicBrainzRecordingField', () => {
       setValue: mockSetValue,
     } as any);
 
-    // Default: return title="Test Song" and artist={name: "Test Artist"}
-    let callCount = 0;
-    vi.mocked(useFormFields).mockImplementation(() => {
-      const call = callCount;
-      callCount += 1;
-      if (call % 2 === 0) return { value: 'Test Song' } as any;
-      return { value: { name: 'Test Artist' } } as any;
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: 'Test Song' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
     });
   });
 
