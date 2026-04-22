@@ -469,4 +469,29 @@ describe('MatchControlsTab', () => {
     });
     expect(screen.queryByRole('paragraph')).not.toBeInTheDocument();
   });
+
+  it('shows action error banner inside panel when a PATCH action fails', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 'match-1' },
+    } as ReturnType<typeof useDocumentInfo>);
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      if (opts?.method === 'PATCH') {
+        return { ok: false };
+      }
+      return { ok: true, json: async () => LIVE_MATCH };
+    });
+
+    render(<MatchControlsTab />);
+    await waitFor(() => screen.getAllByText('Manual Vote'));
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByText('Manual Vote')[0]);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Manual vote failed\. Please try again\./),
+      ).toBeInTheDocument();
+    });
+  });
 });

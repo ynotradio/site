@@ -114,4 +114,18 @@ describe('BracketTree', () => {
     expect(container.querySelector('.bracket-tree__championship')).toBeInTheDocument();
     expect(container.querySelector('.bracket-tree__final')).toBeInTheDocument();
   });
+
+  it('renders semi-left match in the championship area', () => {
+    const semiLeft = makeMatch('m61', 61, '5', 5);
+    const { container } = render(<BracketTree matches={[semiLeft]} />);
+    expect(container.querySelector('.bracket-tree__semi--left')).toBeInTheDocument();
+  });
+
+  it('renders both semi-final matches in the championship area', () => {
+    const semiLeft = makeMatch('m61', 61, '5', 5);
+    const semiRight = makeMatch('m62', 62, '5', 5);
+    const { container } = render(<BracketTree matches={[semiLeft, semiRight]} />);
+    expect(container.querySelector('.bracket-tree__semi--left')).toBeInTheDocument();
+    expect(container.querySelector('.bracket-tree__semi--right')).toBeInTheDocument();
+  });
 });
