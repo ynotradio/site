@@ -46,12 +46,25 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
       <?php
       // Determine if we're in the /cp directory to adjust paths
       $base_path = (strpos($page_file, 'cp/') !== false || dirname($_SERVER['PHP_SELF']) == '/cp') ? "../" : "";
+      $style_dir = __DIR__ . '/../style/';
+      $style_files = [
+          'grid.css',
+          'typography.css',
+          'table.css',
+          'forms.css',
+          'buttons.css',
+          'classic.css',
+          'classic.date.css',
+          'classic.time.css',
+          'yearendpoll.css',
+      ];
 
-      // Cache busting: append file modification time as query string
-      $css_file = __DIR__ . '/../style/base.css';
-      $css_version = file_exists($css_file) ? filemtime($css_file) : time();
+      foreach ($style_files as $style_file) {
+          $style_path = $style_dir . $style_file;
+          $style_version = file_exists($style_path) ? filemtime($style_path) : time();
+          echo '<link href="' . $base_path . 'style/' . $style_file . '?v=' . $style_version . '" rel="stylesheet" type="text/css" media="all">' . "\n";
+      }
       ?>
-      <link href="<?php echo $base_path; ?>style/base.css?v=<?php echo $css_version; ?>" rel="stylesheet" type="text/css" media="all">
       <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php") {
     $madness_css = __DIR__ . '/../style/madness.css';
     $madness_version = file_exists($madness_css) ? filemtime($madness_css) : time();
@@ -59,17 +72,27 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
 }
 ?>
 
+      <?php
+      $js_dir = __DIR__ . '/../js/';
+      $common_js_files = [
+          'picker.js',
+          'picker.date.js',
+          'picker.time.js',
+          'legacy.js',
+          'init.js',
+      ];
+      ?>
       <!-- <script type="text/javascript" src="js/jquery-1.7.1.js"></script> -->
       <script type="text/javascript" src="https://code.jquery.com/jquery-1.7.1.min.js"></script>
       <!--http://code.jquery.com/jquery-1.7.1.min.js -->
-
-      <script src="<?php echo $base_path; ?>js/picker.js"></script>
-      <script src="<?php echo $base_path; ?>js/picker.date.js"></script>
-      <script src="<?php echo $base_path; ?>js/picker.time.js"></script>
-      <script src="<?php echo $base_path; ?>js/legacy.js"></script>
-      <script src="<?php echo $base_path; ?>js/init.js"></script>
+      <?php
+      foreach ($common_js_files as $js_file) {
+          $js_path = $js_dir . $js_file;
+          $js_version = file_exists($js_path) ? filemtime($js_path) : time();
+          echo '<script src="' . $base_path . 'js/' . $js_file . '?v=' . $js_version . '"></script>' . "\n";
+      }
+      ?>
       <?php if ($page_file == "madness.php" || $page_file == "madness_sandbox.php" || $page_file == "madness_view.php") {
-    $js_dir = __DIR__ . '/../js/';
     $js_comp_dir = $js_dir . 'components/';
     $bm_v = file_exists($js_comp_dir . 'mrm-bracket-match.js') ? filemtime($js_comp_dir . 'mrm-bracket-match.js') : time();
     $sb_v = file_exists($js_comp_dir . 'mrm-scoreboard.js') ? filemtime($js_comp_dir . 'mrm-scoreboard.js') : time();
@@ -97,7 +120,11 @@ if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
 }
 
 ?>
-      <script type="text/javascript" src="<?php echo $base_path; ?>js/common_functions.js"></script>
+      <?php
+      $common_functions_path = $js_dir . 'common_functions.js';
+      $common_functions_version = file_exists($common_functions_path) ? filemtime($common_functions_path) : time();
+      ?>
+      <script type="text/javascript" src="<?php echo $base_path; ?>js/common_functions.js?v=<?php echo $common_functions_version; ?>"></script>
 
     </head>
     <?php

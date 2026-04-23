@@ -93,17 +93,6 @@ if ($json) {
       overflow: hidden;
     }
 
-    .ynot-np-eyebrow {
-      display: block;
-      font-size: 9px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #cc3333;
-      text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
-      margin-bottom: 3px;
-    }
-
     .ynot-np-track {
       padding-bottom: 4px;
       white-space: nowrap;
@@ -139,7 +128,6 @@ if ($json) {
     </div>
     <ol class="ynot-np-list">
       <li class="ynot-np-track ynot-np-track--current">
-        <span class="ynot-np-eyebrow">Now Playing</span>
         <span class="ynot-np-track-artist"><?php echo htmlspecialchars($artist); ?></span>
         <span class="ynot-np-track-title"><?php echo htmlspecialchars($title); ?></span>
       </li>

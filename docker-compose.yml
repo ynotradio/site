@@ -41,7 +41,7 @@ services:
     networks:
       - app-tier
     env_file:
-      - .env.local
+      - .env.legacy.local
     volumes:
       - ./src:/app
   apache:
