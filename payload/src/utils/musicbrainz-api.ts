@@ -317,6 +317,16 @@ export async function searchRecordings(
 }
 
 /**
+ * Format a list of artist credits into a display string.
+ */
+export function getArtistCreditName(
+  credits: Array<{ name: string }> | undefined,
+): string {
+  if (!credits?.length) return 'Unknown Artist';
+  return credits.map((ac) => ac.name).join(', ');
+}
+
+/**
  * Format duration in milliseconds to MM:SS
  */
 export function formatDuration(ms?: number): string {

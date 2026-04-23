@@ -1,18 +1,11 @@
 'use client';
 
-/**
- * MusicBrainz Release Picker Field Component
- *
- * Custom field component for selecting a MusicBrainz release (album)
- * and populating the musicbrainzId field
- */
-
 import React, {
   useState, useCallback, useEffect, useRef,
 } from 'react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { useField, useFormFields } from '@payloadcms/ui';
-import { searchReleases, type MusicBrainzRelease } from '../../utils/musicbrainz-api';
+import { searchReleases, getArtistCreditName, type MusicBrainzRelease } from '../../utils/musicbrainz-api';
 import { useResolveArtistName } from './useResolveArtistName';
 
 import './MusicBrainzField.css';
@@ -25,10 +18,26 @@ interface MusicBrainzReleaseFieldProps {
   path: string;
 }
 
+function formatReleaseInfo(release: MusicBrainzRelease): string {
+  const parts = [];
+  if (release['artist-credit']) {
+    parts.push(`by ${getArtistCreditName(release['artist-credit'])}`);
+  }
+  if (release.disambiguation) {
+    parts.push(`(${release.disambiguation})`);
+  }
+  if (release['release-group']?.['primary-type']) {
+    parts.push(`[${release['release-group']['primary-type']}]`);
+  }
+  if (release.date) {
+    parts.push(release.date.split('-')[0]);
+  }
+  return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+}
+
 export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
 
-  // Try to get the album title and artist from the form context
   const titleField = useFormFields(([fields]) => fields?.title);
   const artistField = useFormFields(([fields]) => fields?.artist);
   const albumTitle = (titleField?.value as string | undefined) || '';
@@ -39,10 +48,8 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
   const [selectedRelease, setSelectedRelease] = useState<MusicBrainzRelease | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
-  // Load selected release data if value exists (only once on initial load)
   useEffect(() => {
     if (value && !initializedRef.current) {
       setSelectedRelease({
@@ -67,8 +74,6 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     setShowResults(true);
 
     try {
-      // Include artist name if available for better results.
-      // Relationship fields are commonly stored as IDs, so resolve when needed.
       const artistName = await resolveArtistName();
       const results = await searchReleases(albumTitle, artistName || undefined);
       setSearchResults(results);
@@ -102,31 +107,6 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
     initializedRef.current = false;
   }, [setValue]);
 
-  const getArtistName = (release: MusicBrainzRelease): string => {
-    if (release['artist-credit'] && release['artist-credit'].length > 0) {
-      return release['artist-credit'].map((ac) => ac.name).join(', ');
-    }
-    return 'Unknown Artist';
-  };
-
-  const formatReleaseInfo = (release: MusicBrainzRelease) => {
-    const parts = [];
-    if (release['artist-credit']) {
-      parts.push(`by ${getArtistName(release)}`);
-    }
-    if (release.disambiguation) {
-      parts.push(`(${release.disambiguation})`);
-    }
-    if (release['release-group']?.['primary-type']) {
-      parts.push(`[${release['release-group']['primary-type']}]`);
-    }
-    if (release.date) {
-      const year = release.date.split('-')[0];
-      parts.push(year);
-    }
-    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
-  };
-
   return (
     <div className="musicbrainz-field">
       {selectedRelease && value ? (
@@ -141,7 +121,7 @@ export const MusicBrainzReleaseField: React.FC<MusicBrainzReleaseFieldProps> = (
               )}
             </div>
             {selectedRelease['artist-credit'] && (
-              <div className="musicbrainz-artist">by {getArtistName(selectedRelease)}</div>
+              <div className="musicbrainz-artist">by {getArtistCreditName(selectedRelease['artist-credit'])}</div>
             )}
             {selectedRelease.disambiguation && (
               <div className="musicbrainz-disambiguation">{selectedRelease.disambiguation}</div>
