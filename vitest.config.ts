@@ -58,6 +58,8 @@ export default defineConfig({
         'payload/src/collections/People.ts',
         'payload/src/collections/Venues.ts',
         'payload/src/collections/Users.ts',
+        'app/api/v1/ondemand/route.ts',
+        'app/api/v1/ondemand/[id]/route.ts',
       ],
       exclude: [
         '**/*.test.ts',
