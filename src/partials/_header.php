@@ -168,15 +168,28 @@ $on_air = on_air();
             </button>
           </div>
 
-          <!-- Zone 2b: Now Playing expandable panel -->
+          <!-- Zone 2b: Recently played expandable panel -->
           <div id="np-panel" class="np-panel" hidden>
             <div class="np-panel__inner">
-              <span class="np-panel__eyebrow">Now Playing</span>
-              <span class="np-panel__track">
-                <strong><?php echo htmlspecialchars($np_artist); ?></strong>
-                <?php if ($np_artist && $np_title): ?><span class="np-panel__sep"> – </span><?php endif; ?>
-                <em><?php echo htmlspecialchars($np_title); ?></em>
-              </span>
+              <span class="np-panel__eyebrow">Recently Played</span>
+              <ol class="np-panel__list" data-recent-list>
+                <?php
+                $recent = array_slice($np['lastPlayed'], 0, 4);
+                if (empty($recent)) {
+                    echo '<li class="np-panel__empty">Track history unavailable</li>';
+                } else {
+                    foreach ($recent as $t) {
+                        $a = htmlspecialchars($t['artist'] ?? '');
+                        $ti = htmlspecialchars($t['title'] ?? '');
+                        echo '<li><strong>' . $a . '</strong>';
+                        if ($a && $ti) {
+                            echo ' <span class="np-panel__sep">–</span> ';
+                        }
+                        echo '<em>' . $ti . '</em></li>';
+                    }
+                }
+                ?>
+              </ol>
             </div>
           </div>
 

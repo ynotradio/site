@@ -2,7 +2,7 @@ $(document).ready(function() {
   $('.date').pickadate();
   $('.time').pickatime();
 
-  // ── Mobile header: On Air panel toggle ──
+  // ── Mobile header: Recently Played panel toggle ──
   var $headerMobile = $('.header-mobile');
   var $onAirBtn = $('.action-btn--onair');
   var $npPanel = $('#np-panel');
@@ -17,7 +17,8 @@ $(document).ready(function() {
       var open = !$npPanel.hasClass('is-open');
       $npPanel.toggleClass('is-open', open);
       $onAirBtn.attr('aria-expanded', String(open));
-      setMarqueePaused(open || $('body').hasClass('drawer-open'));
+      // Marquee stays visible alongside the recently-played panel — they show
+      // complementary info (current vs history). Only the drawer pauses it.
     });
   }
 
@@ -40,7 +41,7 @@ $(document).ready(function() {
     $overlay.removeClass('is-open');
     $menuBtn.attr('aria-expanded', 'false');
     $('body').removeClass('drawer-open');
-    setMarqueePaused($npPanel.hasClass('is-open'));
+    setMarqueePaused(false);
   }
 
   if ($drawer.length) {
@@ -55,15 +56,26 @@ $(document).ready(function() {
     });
   }
 
-  // ── Marquee: poll the JSON endpoint for fresh artist/title every 30s ──
+  // ── Marquee + Recently Played: poll JSON endpoint every 30s ──
   var $marqueeText = $('.np-marquee__text');
-  if ($marqueeText.length) {
+  var $recentList = $('[data-recent-list]');
+  if ($marqueeText.length || $recentList.length) {
     setInterval(function() {
       $.getJSON('partials/_now_playing.php?json=1').done(function(data) {
         if (!data || !data.available) return;
         var label = [data.artist, data.title].filter(Boolean).join(' – ');
-        if (label && label !== $marqueeText.text()) {
+        if (label && $marqueeText.length && label !== $marqueeText.text()) {
           $marqueeText.text(label);
+        }
+        if ($recentList.length && Array.isArray(data.lastPlayed) && data.lastPlayed.length) {
+          var html = data.lastPlayed.map(function(t) {
+            var a = $('<div/>').text(t.artist || '').html();
+            var ti = $('<div/>').text(t.title || '').html();
+            return '<li><strong>' + a + '</strong>' +
+              (a && ti ? ' <span class="np-panel__sep">–</span> ' : '') +
+              '<em>' + ti + '</em></li>';
+          }).join('');
+          $recentList.html(html);
         }
       });
     }, 30000);

@@ -17,12 +17,21 @@ $lastPlayed = array_slice($np['lastPlayed'], 0, $historyLimit);
 // Lightweight JSON endpoint for the mobile marquee to fetch via same-origin AJAX,
 // or for any other consumer that wants the data without the iframe HTML wrapper.
 if ($json) {
+    $jsonHistoryLimit = isset($_GET['history']) ? max(0, min(10, (int) $_GET['history'])) : 4;
+    $history = array_map(function ($t) {
+        return [
+            'artist' => $t['artist'] ?? '',
+            'title' => $t['title'] ?? '',
+        ];
+    }, array_slice($np['lastPlayed'], 0, $jsonHistoryLimit));
+
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: max-age=10, public');
     echo json_encode([
         'available' => $np['available'],
         'artist' => $artist,
         'title' => $title,
+        'lastPlayed' => $history,
     ]);
     return;
 }
