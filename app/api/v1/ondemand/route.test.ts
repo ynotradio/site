@@ -65,9 +65,7 @@ describe('GET /api/v1/ondemand', () => {
 
     await GET(makeRequest('?page=2&limit=5'));
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ page: 2, limit: 5 }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ page: 2, limit: 5 }));
   });
 
   it('filters by dj when ?dj param is provided', async () => {
@@ -98,9 +96,7 @@ describe('GET /api/v1/ondemand', () => {
 
     await GET(makeRequest('?limit=9999'));
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 100 }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ limit: 100 }));
   });
 
   it('uses depth 1', async () => {
@@ -108,9 +104,7 @@ describe('GET /api/v1/ondemand', () => {
 
     await GET(makeRequest());
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ depth: 1 }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ depth: 1 }));
   });
 
   it('sorts by date descending', async () => {
@@ -118,9 +112,7 @@ describe('GET /api/v1/ondemand', () => {
 
     await GET(makeRequest());
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ sort: '-date' }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ sort: '-date' }));
   });
 
   it('returns CORS header on successful response', async () => {
@@ -129,6 +121,14 @@ describe('GET /api/v1/ondemand', () => {
     const res = await GET(makeRequest());
 
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('*');
+  });
+
+  it('uses private Cache-Control to prevent CDN caching across pagination params', async () => {
+    mockFind.mockResolvedValue({ docs: [], totalDocs: 0, totalPages: 0, page: 1 });
+
+    const res = await GET(makeRequest());
+
+    expect(res.headers.get('Cache-Control')).toMatch(/\bprivate\b/);
   });
 
   it('returns 500 with error message when payload throws', async () => {
@@ -154,8 +154,6 @@ describe('GET /api/v1/ondemand', () => {
 
     await GET(makeRequest());
 
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ limit: 20 }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
   });
 });

@@ -53,15 +53,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       {
         headers: {
           ...corsHeaders,
-          'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+          // `private` prevents Netlify CDN caching; the CDN's netlify-vary header
+          // does not include page/limit/dj, so public caching would serve every
+          // pagination/filter request from the same cache entry.
+          'Cache-Control': 'private, max-age=60, stale-while-revalidate=300',
         },
       },
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
-    return NextResponse.json(
-      { error: message },
-      { status: 500, headers: corsHeaders },
-    );
+    return NextResponse.json({ error: message }, { status: 500, headers: corsHeaders });
   }
 }
