@@ -1043,6 +1043,16 @@ dt:after {
     padding: 16px 12px;
     text-align: center;
   }
+
+  /* Center the MixCloud follow widget (and any other feature-box iframe) */
+  .feature-box {
+    text-align: center;
+  }
+  .feature-box iframe {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
 }
 
 /* Respect reduced-motion preference */
