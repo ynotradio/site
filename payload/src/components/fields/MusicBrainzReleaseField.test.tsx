@@ -14,6 +14,10 @@ vi.mock('@payloadcms/ui', () => ({
 // Mock the MusicBrainz API
 vi.mock('../../utils/musicbrainz-api', () => ({
   searchReleases: vi.fn(),
+  getArtistCreditName: vi.fn((credits: Array<{ name: string }> | undefined) => {
+    if (!credits?.length) return 'Unknown Artist';
+    return credits.map((ac) => ac.name).join(', ');
+  }),
 }));
 
 const { useField, useFormFields } = await import('@payloadcms/ui');
