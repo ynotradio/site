@@ -72,7 +72,8 @@
           "_id",
           "_key",
           "_type",
-          "_ref"
+          "_ref",
+          "_status"
         ]
       }
     ],
