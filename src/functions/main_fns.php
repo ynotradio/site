@@ -185,6 +185,9 @@ function on_air(){
   // Try to get current on-air DJ from schedule
   try {
     $db = open_db();
+    if (!$db) {
+      return '';
+    }
     $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
     
     // Get today's schedule using local date, not UTC
@@ -193,7 +196,7 @@ function on_air(){
     
     // Find current time slot
     return find_current_slot($todaySchedule, date('H:i:s'));
-  } catch (Exception $e) {
+  } catch (\Throwable $e) {
     error_log("Error getting on-air DJ: " . $e->getMessage());
   }
   
