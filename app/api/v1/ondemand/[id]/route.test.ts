@@ -128,4 +128,24 @@ describe('GET /api/v1/ondemand/[id]', () => {
 
     expect(res.headers.get('Cache-Control')).toContain('public');
   });
+
+  it('returns 404 when payload throws an error containing "404"', async () => {
+    mockFindByID.mockRejectedValue(new Error('HTTP 404'));
+
+    const res = await GET(makeRequest(), makeParams('missing'));
+    const body = await res.json();
+
+    expect(res.status).toBe(404);
+    expect(body.error).toBe('Not found');
+  });
+
+  it('returns 500 with generic message when non-Error is thrown', async () => {
+    mockFindByID.mockRejectedValue('unexpected string error');
+
+    const res = await GET(makeRequest(), makeParams('abc123'));
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('Internal server error');
+  });
 });

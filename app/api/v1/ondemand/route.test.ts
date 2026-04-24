@@ -156,4 +156,38 @@ describe('GET /api/v1/ondemand', () => {
 
     expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
   });
+
+  it('uses default limit when limit param is non-numeric', async () => {
+    mockFind.mockResolvedValue({ docs: [], totalDocs: 0, totalPages: 0, page: 1 });
+
+    await GET(makeRequest('?limit=abc'));
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ limit: 20 }));
+  });
+
+  it('uses page 1 when page param is non-numeric', async () => {
+    mockFind.mockResolvedValue({ docs: [], totalDocs: 0, totalPages: 0, page: 1 });
+
+    await GET(makeRequest('?page=abc'));
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
+  });
+
+  it('uses page 1 when page param is 0', async () => {
+    mockFind.mockResolvedValue({ docs: [], totalDocs: 0, totalPages: 0, page: 1 });
+
+    await GET(makeRequest('?page=0'));
+
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }));
+  });
+
+  it('returns 500 with generic message when non-Error is thrown', async () => {
+    mockFind.mockRejectedValue('unexpected string error');
+
+    const res = await GET(makeRequest());
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.error).toBe('Internal server error');
+  });
 });
