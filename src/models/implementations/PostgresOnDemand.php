@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\OnDemand;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresOnDemand implements OnDemand {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     public function __construct(PDO $db) {
@@ -49,6 +52,9 @@ class PostgresOnDemand implements OnDemand {
         
         // Convert PostgreSQL timestamp to MySQL date format
         $result['date'] = $this->formatDate($result['date']);
+        if (isset($result['note'])) {
+            $result['note'] = $this->convertLexicalToHtml($result['note']);
+        }
         
         return $result;
     }
@@ -251,6 +257,9 @@ class PostgresOnDemand implements OnDemand {
             if (isset($row['date'])) {
                 $row['fdate'] = $this->formatDateShort($row['date']);
                 $row['date'] = $this->formatDate($row['date']);
+            }
+            if (isset($row['note'])) {
+                $row['note'] = $this->convertLexicalToHtml($row['note']);
             }
             return $row;
         }, $results);

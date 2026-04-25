@@ -63,3 +63,4 @@ build-*
 
 # Playwright MCP snapshots
 .playwright-mcp/
+docker-compose.override.yml
