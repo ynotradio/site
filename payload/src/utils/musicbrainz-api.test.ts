@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   formatDuration,
+  getArtistCreditName,
   searchArtists,
   searchReleases,
   searchRecordings,
@@ -666,6 +667,32 @@ describe('MusicBrainz API Utils', () => {
         const result = await searchRecordings('Test Song');
         expect(result).toEqual([]);
       });
+    });
+  });
+
+  describe('getArtistCreditName', () => {
+    it('returns Unknown Artist when credits is undefined', () => {
+      expect(getArtistCreditName(undefined)).toBe('Unknown Artist');
+    });
+
+    it('returns Unknown Artist when credits is an empty array', () => {
+      expect(getArtistCreditName([])).toBe('Unknown Artist');
+    });
+
+    it('returns the single artist name for a one-element array', () => {
+      expect(getArtistCreditName([{ name: 'Radiohead' }])).toBe('Radiohead');
+    });
+
+    it('joins multiple artist names with a comma and space', () => {
+      expect(
+        getArtistCreditName([{ name: 'Tom Petty' }, { name: 'The Heartbreakers' }]),
+      ).toBe('Tom Petty, The Heartbreakers');
+    });
+
+    it('joins three or more artist names', () => {
+      expect(
+        getArtistCreditName([{ name: 'A' }, { name: 'B' }, { name: 'C' }]),
+      ).toBe('A, B, C');
     });
   });
 });
