@@ -208,6 +208,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
             musicbrainzId: releaseMbid || undefined,
             legacyId: item.id,
             migratedAt: new Date().toISOString(),
+            _status: 'published' as const,
           },
         });
         recordId = newRecord.id;
@@ -290,6 +291,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
           date: item.date,
           legacyId: item.id,
           migratedAt: new Date().toISOString(),
+          _status: 'published' as const,
         },
       });
 

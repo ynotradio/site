@@ -141,6 +141,7 @@ async function importAd(payload: Payload, ad: Ad): Promise<boolean> {
         priority: ad.priority || 0,
         legacyId: ad.id,
         migratedAt: new Date().toISOString(),
+        _status: 'published' as const,
       },
     });
 

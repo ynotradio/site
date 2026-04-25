@@ -54,6 +54,8 @@ function getDatabaseUri(target: PostgresTarget): string {
   return uri;
 }
 
+export { getDatabaseUri };
+
 export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
 
 /**

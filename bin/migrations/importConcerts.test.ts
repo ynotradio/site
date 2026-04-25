@@ -189,6 +189,7 @@ describe('importConcerts', () => {
           featured: true,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });

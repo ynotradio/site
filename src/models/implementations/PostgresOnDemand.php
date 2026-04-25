@@ -34,7 +34,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r."order") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
@@ -85,7 +85,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r."order") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 od.source
             FROM ondemand od
@@ -210,7 +210,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r."order") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od

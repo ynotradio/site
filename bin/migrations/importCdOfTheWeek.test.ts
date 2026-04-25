@@ -163,6 +163,7 @@ describe('importCdOfTheWeek', () => {
           musicbrainzId: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
 
@@ -176,6 +177,7 @@ describe('importCdOfTheWeek', () => {
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -222,6 +224,7 @@ describe('importCdOfTheWeek', () => {
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });

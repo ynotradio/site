@@ -190,6 +190,7 @@ async function importDJ(payload: Payload, dj: Deejay): Promise<boolean> {
         sortOrder: dj.sort,
         legacyId: dj.id,
         migratedAt: new Date().toISOString(),
+        _status: 'published' as const,
       },
     });
 
