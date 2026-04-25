@@ -47,8 +47,8 @@ function parseArgs(): ImportOptions {
 
     if (arg === '--to') {
       const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
+      if (toValue !== 'prod-neon' && toValue !== 'local-postgres' && toValue !== 'dev-neon') {
+        throw new Error('--to must be "prod-neon", "dev-neon" or "local-postgres"');
       }
       options.to = toValue;
       i += 1;
