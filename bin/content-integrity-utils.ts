@@ -12,7 +12,14 @@ import fs from 'node:fs';
 // Types
 // ---------------------------------------------------------------------------
 
-export type CheckName = 'display-names' | 'slugs' | 'musicbrainz' | 'record-metadata' | 'ondemand-source' | 'publish-status';
+export type CheckName =
+  | 'display-names'
+  | 'slugs'
+  | 'musicbrainz'
+  | 'record-metadata'
+  | 'ondemand-source'
+  | 'publish-status'
+  | 'djs';
 
 export interface CliOptions {
   checks: CheckName[] | 'all';
@@ -112,7 +119,15 @@ export interface IntegrityReport {
 // CLI argument parsing
 // ---------------------------------------------------------------------------
 
-const VALID_CHECKS: CheckName[] = ['display-names', 'slugs', 'musicbrainz', 'record-metadata', 'ondemand-source', 'publish-status'];
+const VALID_CHECKS: CheckName[] = [
+  'display-names',
+  'slugs',
+  'musicbrainz',
+  'record-metadata',
+  'ondemand-source',
+  'publish-status',
+  'djs',
+];
 
 export function parseArgs(argv: string[]): CliOptions {
   const args = argv.slice(2);
