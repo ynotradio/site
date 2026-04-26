@@ -351,6 +351,16 @@ nav a:hover {
   height: 100px;
 }
 
+/* Lexical note paragraphs collapse visually to match the legacy MySQL frontend */
+.ondemand td > div p {
+  margin: 0;
+  display: inline;
+}
+.ondemand td > div p + p {
+  display: block;
+  margin-top: 0.4em;
+}
+
 .pagination {
   padding: 20px;
 }

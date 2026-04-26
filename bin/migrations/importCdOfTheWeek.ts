@@ -47,8 +47,8 @@ function parseArgs(): ImportOptions {
 
     if (arg === '--to') {
       const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
+      if (toValue !== 'prod-neon' && toValue !== 'local-postgres' && toValue !== 'dev-neon') {
+        throw new Error('--to must be "prod-neon", "dev-neon" or "local-postgres"');
       }
       options.to = toValue;
       i += 1;
@@ -208,6 +208,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
             musicbrainzId: releaseMbid || undefined,
             legacyId: item.id,
             migratedAt: new Date().toISOString(),
+            _status: 'published' as const,
           },
         });
         recordId = newRecord.id;
@@ -290,6 +291,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
           date: item.date,
           legacyId: item.id,
           migratedAt: new Date().toISOString(),
+          _status: 'published' as const,
         },
       });
 

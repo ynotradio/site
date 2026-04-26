@@ -93,11 +93,10 @@ describe('Concerts', () => {
     expect(titleField?.required).toBeFalsy();
   });
 
-  it('has featured checkbox with default false', () => {
+  it('does not include a featured field (removed)', () => {
     const allFields = flattenRowFields(Concerts.fields);
     const featuredField = allFields.find((f) => f.name === 'featured');
-    expect(featuredField?.type).toBe('checkbox');
-    expect(featuredField?.defaultValue).toBe(false);
+    expect(featuredField).toBeUndefined();
   });
 
   it('has ticketUrl field', () => {

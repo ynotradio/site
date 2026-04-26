@@ -3,15 +3,17 @@
  * Import on-demand content from MySQL to Payload CMS PostgreSQL database
  *
  * Usage:
- *   tsx bin/migrations/importOnDemand.ts --to prod-neon --start-id 100
+ *   tsx bin/migrations/importOnDemand.ts --from prod-mysql --to prod-neon --start-id 100
  *
  * Options:
- *   --to        Target database: 'prod-neon' (default) or 'local-postgres'
+ *   --from      Source MySQL: 'local-mysql' (default) or 'prod-mysql'
+ *   --to        Target Postgres: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
  *   --start-id  Optional ID to start import from (for incremental imports)
  */
 
+import * as mysql from 'mysql2/promise';
 import type { Payload } from 'payload';
-import { connectToDatabase, getActiveOnDemand, type OnDemand } from './database';
+import { getActiveOnDemand, type OnDemand } from './database';
 import {
   getPayloadClient,
   findDJByDisplayName,
@@ -21,6 +23,11 @@ import {
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { importImageFromUrl } from './shared/mediaImporter';
 import { convertHtmlToLexical } from './shared/importUtils';
+import {
+  getMySQLConfig,
+  parseFromToArgs,
+  type MySQLSource,
+} from '../../config/databases';
 import type { PostgresTarget } from './shared/payloadClient';
 
 const logger = createLogger('OnDemandImport');
@@ -33,6 +40,7 @@ interface ImportStats {
 }
 
 interface ImportOptions {
+  from: MySQLSource;
   to: PostgresTarget;
   startId?: number;
 }
@@ -42,21 +50,13 @@ interface ImportOptions {
  */
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
-  const options: ImportOptions = {
-    to: 'prod-neon',
-  };
+  const { from, to } = parseFromToArgs(args);
+  const options: ImportOptions = { from, to };
 
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
 
-    if (arg === '--to') {
-      const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
-      }
-      options.to = toValue;
-      i += 1;
-    } else if (arg === '--start-id') {
+    if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
       if (Number.isNaN(startId) || startId < 0) {
         throw new Error('--start-id must be a positive number');
@@ -68,13 +68,14 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/migrations/importOnDemand.ts [options]
 
 Options:
-  --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
+  --from SOURCE    Source MySQL: 'local-mysql' (default) or 'prod-mysql'
+  --to TARGET      Target Postgres: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importOnDemand.ts --to prod-neon
-  tsx bin/migrations/importOnDemand.ts --to local-postgres --start-id 100
+  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to prod-neon --start-id 527
+  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to dev-neon --start-id 527
       `);
       process.exit(0);
     }
@@ -166,15 +167,12 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
       }
     }
 
-    // Note: We're not populating the songs relationship for now
-    // The songs field in MySQL contains free-form text that doesn't map to Song records
-    // Songs would need to be created/matched separately
-
     // Convert note text to Lexical richText format
-    // Provide default if empty since description might be required in UI
+    // Leave description undefined when empty so the frontend doesn't render
+    // a placeholder where production showed nothing.
     const description = item.note && item.note.trim()
       ? convertHtmlToLexical(item.note)
-      : convertHtmlToLexical('<p>No description available.</p>');
+      : undefined;
 
     // Create on-demand record with relationships
     await payload.create({
@@ -184,12 +182,13 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
         description,
         djs: djIds.length > 0 ? djIds : undefined,
         artists: artistIds.length > 0 ? artistIds : undefined,
-        // songs: not populated - would require parsing and creating Song records
+        // songs (relationship): populated via separate backfill from MySQL free-text list
         audioUrl: item.audio_url || undefined,
         image: imageId,
         date: item.date,
         legacyId: item.id,
         migratedAt: new Date().toISOString(),
+        _status: 'published' as const,
       },
     });
 
@@ -206,6 +205,7 @@ async function importOnDemandItem(payload: Payload, item: OnDemand): Promise<boo
  */
 async function importOnDemand(options: ImportOptions): Promise<void> {
   logger.info('Starting on-demand import...');
+  logger.info(`Source: ${options.from}`);
   logger.info(`Target: ${options.to}`);
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
@@ -223,8 +223,9 @@ async function importOnDemand(options: ImportOptions): Promise<void> {
 
   try {
     // Connect to MySQL (source)
-    logger.info('Connecting to MySQL database...');
-    mysqlConnection = await connectToDatabase();
+    logger.info(`Connecting to MySQL (${options.from})...`);
+    const mysqlConfig = getMySQLConfig(options.from);
+    mysqlConnection = await mysql.createConnection(mysqlConfig);
 
     // Connect to Payload (destination)
     payload = await getPayloadClient(options.to);

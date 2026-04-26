@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\CdOfTheWeek;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,12 +12,9 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresCdOfTheWeek implements CdOfTheWeek {
-    private PDO $db;
+    use ConvertsLexicalToHtml;
 
-    // Lexical text format bit flags
-    private const FORMAT_BOLD = 1;
-    private const FORMAT_ITALIC = 2;
-    private const FORMAT_UNDERLINE = 8;
+    private PDO $db;
 
     public function __construct(PDO $db) {
         $this->db = $db;
@@ -35,7 +33,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             SELECT 
                 c.id,
                 c.date,
-                c.reviewer,
+                COALESCE(p.name, '') as reviewer,
                 c.review,
                 r.title,
                 r.label,
@@ -51,7 +49,8 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN records r ON c.record_id = r.id
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
-            WHERE c._status IN ('published', 'draft')
+            LEFT JOIN people p ON c.reviewer_id = p.id
+            WHERE c._status = 'published'
             ORDER BY c.date DESC, c.id DESC
             LIMIT 1
         ");
@@ -80,7 +79,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             SELECT 
                 c.id,
                 c.date,
-                c.reviewer,
+                COALESCE(p.name, '') as reviewer,
                 c.review,
                 r.title,
                 r.label,
@@ -96,6 +95,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN records r ON c.record_id = r.id
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
+            LEFT JOIN people p ON c.reviewer_id = p.id
             WHERE c.id = :id
         ");
         
@@ -123,7 +123,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             SELECT 
                 c.id,
                 c.date,
-                c.reviewer,
+                COALESCE(p.name, '') as reviewer,
                 c.review,
                 r.title,
                 r.label,
@@ -139,7 +139,8 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN records r ON c.record_id = r.id
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
-            WHERE c._status IN ('published', 'draft')
+            LEFT JOIN people p ON c.reviewer_id = p.id
+            WHERE c._status = 'published'
             ORDER BY c.date DESC, c.id DESC
             LIMIT :limit
         ");
@@ -230,156 +231,5 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
     private function formatDate(string $timestamp): string {
         $date = new \DateTime($timestamp);
         return $date->format('Y-m-d');
-    }
-
-    /**
-     * Convert Lexical JSON format to HTML
-     * Payload CMS stores content in Lexical JSON format, but the frontend expects HTML
-     * 
-     * @param string $lexicalJson Lexical JSON string
-     * @return string HTML content
-     */
-    private function convertLexicalToHtml(string $lexicalJson): string {
-        // Try to decode as JSON first
-        $lexical = json_decode($lexicalJson, true);
-        
-        // If it's not valid JSON, assume it's already HTML
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            error_log("PostgresCdOfTheWeek: Content is not valid JSON, treating as HTML: " . 
-                substr($lexicalJson, 0, 100));
-            return $lexicalJson;
-        }
-        
-        try {
-            if (!isset($lexical['root']['children'])) {
-                error_log("PostgresCdOfTheWeek: Invalid Lexical structure, missing root.children");
-                return $lexicalJson; // Return original if structure is unexpected
-            }
-            
-            $html = '';
-            foreach ($lexical['root']['children'] as $node) {
-                $html .= $this->convertLexicalNodeToHtml($node);
-            }
-            
-            return $html;
-        } catch (\Exception $e) {
-            // If conversion fails, return original content
-            error_log("PostgresCdOfTheWeek: Failed to convert Lexical to HTML: " . $e->getMessage());
-            return $lexicalJson;
-        }
-    }
-
-    /**
-     * Convert a single Lexical node to HTML
-     * 
-     * @param array $node Lexical node
-     * @return string HTML representation
-     */
-    private function convertLexicalNodeToHtml(array $node): string {
-        $type = $node['type'] ?? '';
-        
-        switch ($type) {
-            case 'paragraph':
-                $content = $this->convertLexicalChildren($node);
-                return "<p>$content</p>\n";
-                
-            case 'heading':
-                $tag = $node['tag'] ?? 'h2';
-                $content = $this->convertLexicalChildren($node);
-                return "<$tag>$content</$tag>\n";
-                
-            case 'list':
-                $listType = $node['listType'] ?? 'bullet';
-                $tag = $listType === 'number' ? 'ol' : 'ul';
-                $content = $this->convertLexicalChildren($node);
-                return "<$tag>$content</$tag>\n";
-                
-            case 'listitem':
-                $content = $this->convertLexicalChildren($node);
-                return "<li>$content</li>\n";
-                
-            case 'link':
-                $rawUrl = $node['url'] ?? '';
-                // Validate URL first, then apply fallback if invalid
-                $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
-                $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-                $content = $this->convertLexicalChildren($node);
-                return "<a href=\"$url\">$content</a>";
-                
-            case 'text':
-                $text = $node['text'] ?? '';
-                $format = $node['format'] ?? 0;
-                
-                // Apply text formatting using defined constants
-                if ($format & self::FORMAT_BOLD) {
-                    $text = "<strong>$text</strong>";
-                }
-                if ($format & self::FORMAT_ITALIC) {
-                    $text = "<em>$text</em>";
-                }
-                if ($format & self::FORMAT_UNDERLINE) {
-                    $text = "<u>$text</u>";
-                }
-                
-                return $text;
-                
-            default:
-                // For unknown types, try to render children
-                return $this->convertLexicalChildren($node);
-        }
-    }
-
-    /**
-     * Convert children of a Lexical node to HTML
-     * 
-     * @param array $node Lexical node with children
-     * @return string HTML representation of children
-     */
-    private function convertLexicalChildren(array $node): string {
-        if (!isset($node['children']) || !is_array($node['children'])) {
-            return '';
-        }
-        
-        $html = '';
-        foreach ($node['children'] as $child) {
-            $html .= $this->convertLexicalNodeToHtml($child);
-        }
-        
-        return $html;
-    }
-
-    /**
-     * Validate URL to prevent XSS attacks
-     * Only allows http, https, and relative URLs
-     * 
-     * @param string $url URL to validate
-     * @return bool True if URL is valid and safe
-     */
-    private function isValidUrl(string $url): bool {
-        // Allow relative URLs
-        if (substr($url, 0, 1) === '/') {
-            return true;
-        }
-        
-        // Allow anchors
-        if (substr($url, 0, 1) === '#') {
-            return true;
-        }
-        
-        // Parse the URL
-        $parsed = parse_url($url);
-        
-        if ($parsed === false) {
-            return false;
-        }
-        
-        // If there's a scheme, it must be http or https
-        if (isset($parsed['scheme'])) {
-            $scheme = strtolower($parsed['scheme']);
-            return $scheme === 'http' || $scheme === 'https';
-        }
-        
-        // No scheme means relative URL - allowed
-        return true;
     }
 }

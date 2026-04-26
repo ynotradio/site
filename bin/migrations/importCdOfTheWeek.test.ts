@@ -87,7 +87,7 @@ describe('importCdOfTheWeek', () => {
 
       process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
+      expect(() => parseArgs()).toThrow('--to must be "prod-neon", "dev-neon" or "local-postgres"');
     });
   });
 
@@ -163,6 +163,7 @@ describe('importCdOfTheWeek', () => {
           musicbrainzId: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
 
@@ -176,6 +177,7 @@ describe('importCdOfTheWeek', () => {
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -222,6 +224,7 @@ describe('importCdOfTheWeek', () => {
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });

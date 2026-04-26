@@ -3,32 +3,42 @@
 // These could be integrated into templates in a future update
 
 function display_on_demand($ondemand) {
-  echo "<br><b>Headline: </b>". $ondemand['headline'].
-    "<br><b>Songs Performed: </b>". $ondemand['songs'].
+  $songs = trim((string)($ondemand['songs'] ?? '')) !== '' ? $ondemand['songs'] : 'n/a';
+  echo "<br><b>Headline: </b>". htmlspecialchars((string)($ondemand['headline'] ?? '')).
+    "<br><b>Songs Performed: </b>". htmlspecialchars($songs).
     "<br><b>Note: </b>". $ondemand['note'].
-    "<br><b>Image: </b><br><img src=\"". $ondemand['image']. "\"height=100px> ".
-    "<br><b>Date: </b>". $ondemand['date'].
-    "<br><b>Audio ID: </b>". $ondemand['audio_url'];
+    "<br><b>Image: </b><br><img src=\"". htmlspecialchars((string)($ondemand['image'] ?? '')). "\"height=100px> ".
+    "<br><b>Date: </b>". htmlspecialchars((string)($ondemand['date'] ?? '')).
+    "<br><b>Audio ID: </b>". htmlspecialchars((string)($ondemand['audio_url'] ?? ''));
 }
 
 function on_demand_player($id) {
   global $onDemandModel;
-  
+
   $cleanId = filter_var($id, FILTER_SANITIZE_NUMBER_INT);
   $entry = $onDemandModel->getById($cleanId);
-  
+
   if (!$entry) {
     echo "<div class=\"center error\">Something went wrong, go back and try again.</div>";
   } else {
     $date = new DateTime($entry['date']);
     $formattedDate = $date->format('m/d/y');
-    
-    echo "<tr>\n<td><img src=\"" . $entry['image']. "\"></td>\n".
-      "<td>\n<div class='t'><strong>". $entry['headline']."</strong></div>\n".
+    $rawImage = trim((string)($entry['image'] ?? ''));
+    $placeholder = '/ynot-logo.svg';
+    $imageSrc = $rawImage !== '' ? $rawImage : $placeholder;
+    $imageSrcAttr = htmlspecialchars($imageSrc, ENT_QUOTES, 'UTF-8');
+    $placeholderAttr = htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8');
+    $imgTag = "<img src=\"$imageSrcAttr\" alt=\"\" "
+      . "onerror=\"this.onerror=null;this.src='$placeholderAttr';\">";
+
+    $songs = trim((string)($entry['songs'] ?? '')) !== '' ? $entry['songs'] : 'n/a';
+
+    echo "<tr>\n<td>" . $imgTag . "</td>\n".
+      "<td>\n<div class='t'><strong>". htmlspecialchars((string)($entry['headline'] ?? ''))."</strong></div>\n".
       "<div>". $entry['note']. "</div>\n".
-      "<div>Songs Performed: ".$entry['songs']. "</div>\n".
+      "<div>Songs Performed: ". htmlspecialchars($songs). "</div>\n".
       "<div>Date: ".$formattedDate. "</div>\n".
-      "<div><iframe src=\"https://www.opendrive.com/player/". $entry['audio_url'] ."\" height=\"40\" width=\"370\" style=\"border:0\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\"></iframe>\n</div>\n</tr>";
+      "<div><iframe src=\"https://www.opendrive.com/player/". htmlspecialchars((string)($entry['audio_url'] ?? ''), ENT_QUOTES, 'UTF-8') ."\" height=\"40\" width=\"370\" style=\"border:0\" scrolling=\"no\" frameborder=\"0\" allowtransparency=\"true\"></iframe>\n</div>\n</tr>";
   }
 }
 

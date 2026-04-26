@@ -31,9 +31,8 @@ class PostgresConcert implements Concert {
                 c.venue_id,
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
-                c.featured,
                 v.name as venue,
-                string_agg(a.name, ', ' ORDER BY cr.order) as artist,
+                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -51,7 +50,7 @@ class PostgresConcert implements Concert {
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             WHERE c.id = :id
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.featured, 
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
         ");
         
@@ -62,11 +61,8 @@ class PostgresConcert implements Concert {
             return null;
         }
         
-        // Convert PostgreSQL timestamp to MySQL date format
         $result['date'] = $this->formatDate($result['date']);
-        
-        // Convert featured boolean to Yes/No string
-        $result['featured'] = $result['featured'] ? 'Yes' : 'No';
+        $result['featured'] = 'No';
         
         return $result;
     }
@@ -85,9 +81,8 @@ class PostgresConcert implements Concert {
                 c.venue_id,
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
-                c.featured,
                 v.name as venue,
-                string_agg(a.name, ', ' ORDER BY cr.order) as artist,
+                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -104,7 +99,7 @@ class PostgresConcert implements Concert {
                 LIMIT 1
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.featured, 
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date DESC
             LIMIT :limit
@@ -130,9 +125,8 @@ class PostgresConcert implements Concert {
                 c.venue_id,
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
-                c.featured,
                 v.name as venue,
-                string_agg(a.name, ', ' ORDER BY cr.order) as artist,
+                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -151,7 +145,7 @@ class PostgresConcert implements Concert {
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             WHERE c.date::date >= CURRENT_DATE
               AND c._status = 'published'
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.featured, 
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date ASC
             LIMIT :limit
@@ -170,48 +164,9 @@ class PostgresConcert implements Concert {
      * @return array Array of featured concert entries
      */
     public function getFeatured(int $limit = 5): array {
-        $stmt = $this->db->prepare("
-            SELECT 
-                c.id,
-                c.date,
-                c.venue_id,
-                c.ticket_info as ticketinfo,
-                c.ticket_url as ticketurl,
-                c.featured,
-                v.name as venue,
-                string_agg(a.name, ', ' ORDER BY cr.order) as artist,
-                COALESCE(a_first.website, '') as band_url,
-                COALESCE(a_first_photo.url, '') as band_pic_url,
-                'n' as deleted
-            FROM concerts c
-            LEFT JOIN venues v ON c.venue_id = v.id
-            LEFT JOIN concerts_rels cr ON c.id = cr.parent_id AND cr.path = 'artists'
-            LEFT JOIN artists a ON cr.artists_id = a.id
-            LEFT JOIN LATERAL (
-                SELECT ar.id, ar.website, ar.photo_id
-                FROM concerts_rels crr
-                JOIN artists ar ON crr.artists_id = ar.id
-                WHERE crr.parent_id = c.id AND crr.path = 'artists'
-                ORDER BY crr.order
-                LIMIT 1
-            ) a_first ON true
-            LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
-            WHERE c.date::date >= CURRENT_DATE 
-                AND c.featured = true
-                AND c._status = 'published'
-                AND a_first_photo.url IS NOT NULL
-                AND a_first_photo.url LIKE 'http%'
-                AND c.ticket_info != 'SOLD OUT'
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.featured, 
-                     v.name, a_first.website, a_first_photo.url
-            ORDER BY c.date ASC
-            LIMIT :limit
-        ");
-        
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
-        
-        return $this->formatResults($stmt->fetchAll());
+        // Featured concerts have been removed from the Payload schema.
+        // Method retained to satisfy the Concert interface; always returns [].
+        return [];
     }
 
     /**
@@ -299,7 +254,7 @@ class PostgresConcert implements Concert {
     private function formatResults(array $results): array {
         return array_map(function($row) {
             $row['date'] = $this->formatDate($row['date']);
-            $row['featured'] = $row['featured'] ? 'Yes' : 'No';
+            $row['featured'] = 'No';
             return $row;
         }, $results);
     }

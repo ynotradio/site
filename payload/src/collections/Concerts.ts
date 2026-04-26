@@ -12,10 +12,9 @@ export const Concerts: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['artists', 'date', 'venue', 'featured', '_status', 'updatedAt'],
+    defaultColumns: ['title', 'artists', 'date', 'venue', '_status', 'updatedAt'],
     group: 'Events',
-    description:
-      'Concert listings. Toggle "Featured" in the sidebar to promote a show on the homepage.',
+    description: 'Concert listings.',
   },
   defaultSort: '-date',
   access: {
@@ -76,15 +75,6 @@ export const Concerts: CollectionConfig = {
       admin: {
         description: 'Link to the ticket purchase page — visitors see a "Buy Tickets" button',
         placeholder: 'https://',
-      },
-    },
-    {
-      name: 'featured',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description: 'When checked, this concert is promoted on the homepage',
       },
     },
     {
