@@ -94,6 +94,26 @@ describe('MusicBrainzReleaseField', () => {
     expect(screen.getByText('Unknown Album')).toBeInTheDocument();
   });
 
+  it('disables the search button when album title is empty', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
+  it('disables the search button when album title is whitespace-only', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '   ' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
   it('performs search when button is clicked', async () => {
     const mockResults = [
       { id: '1', title: 'Album One', score: 100 },

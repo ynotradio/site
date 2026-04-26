@@ -99,6 +99,26 @@ describe('MusicBrainzRecordingField', () => {
     expect(screen.getByText('Unknown Song')).toBeInTheDocument();
   });
 
+  it('disables the search button when song title is empty', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
+  it('disables the search button when song title is whitespace-only', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '   ' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
   it('performs search when button is clicked', async () => {
     const mockResults = [
       { id: '1', title: 'Song One', score: 100 },
