@@ -57,7 +57,12 @@ trait ConvertsLexicalToHtml
 
         switch ($type) {
             case 'paragraph':
-                return '<p>' . $this->convertLexicalChildren($node) . "</p>\n";
+                $content = $this->convertLexicalChildren($node);
+                $format = $node['format'] ?? '';
+                if ($format === 'center') {
+                    return "<p style=\"text-align: center;\">$content</p>\n";
+                }
+                return '<p>' . $content . "</p>\n";
 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';

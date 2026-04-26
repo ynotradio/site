@@ -56,6 +56,27 @@ describe('enhancedHtmlToLexical', () => {
       expect(italicNode).toBeDefined();
     });
 
+    it('should preserve link when wrapped in bold tag', () => {
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><b><a href="https://example.com/vote">VOTE HERE</a></b></p>',
+      );
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.fields.url).toBe('https://example.com/vote');
+      // The link text should inherit bold format from the wrapping <b>
+      expect(linkNode.children[0].format).toBe(1);
+      expect(linkNode.children[0].text).toBe('VOTE HERE');
+    });
+
+    it('should preserve link when wrapped in italic tag', () => {
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><em><a href="https://example.com">italic link</a></em></p>',
+      );
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.children[0].format).toBe(2); // italic
+    });
+
     it('should handle combined formatting', () => {
       const result = convertHtmlToLexicalEnhanced(
         '<p><strong><em>Bold and italic</em></strong></p>',
@@ -241,10 +262,29 @@ describe('enhancedHtmlToLexical', () => {
       expect(result.root.children[0].children[0].text).toContain('Nested');
     });
 
-    it('should strip center tags but keep content', () => {
+    it('should set format:center on paragraph inside <center> tag', () => {
       const html = '<center><p>Centered text</p></center>';
       const result = convertHtmlToLexicalEnhanced(html);
       expect(result.root.children[0].children[0].text).toContain('Centered');
+      expect(result.root.children[0].format).toBe('center');
+    });
+
+    it('should create centered paragraph for inline content directly in <center>', () => {
+      const html = '<center><b><a href="https://example.com/vote">VOTE HERE</a></b></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      expect(result.root.children[0].format).toBe('center');
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.fields.url).toBe('https://example.com/vote');
+      // Link text should carry the bold format inherited from the wrapping <b>
+      expect(linkNode.children[0].format).toBe(1);
+    });
+
+    it('should apply format:center to heading inside <center>', () => {
+      const html = '<center><h2>Centered heading</h2></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      expect(result.root.children[0].type).toBe('heading');
+      expect(result.root.children[0].format).toBe('center');
     });
   });
 

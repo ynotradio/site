@@ -203,6 +203,11 @@ class PostgresCustomText implements CustomText {
                     return $this->convertTableMarkupToHtml($content);
                 }
                 
+                $format = $node['format'] ?? '';
+                if ($format === 'center') {
+                    return "<p style=\"text-align: center;\">$content</p>\n";
+                }
+                
                 return "<p>$content</p>\n";
                 
             case 'heading':
