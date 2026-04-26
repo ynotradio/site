@@ -61,6 +61,11 @@ trait ConvertsLexicalToHtml
 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';
+                // Whitelist heading tags to prevent injection
+                $allowedTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
+                if (!in_array($tag, $allowedTags, true)) {
+                    $tag = 'h2';
+                }
                 return "<$tag>" . $this->convertLexicalChildren($node) . "</$tag>\n";
 
             case 'list':
@@ -83,6 +88,9 @@ trait ConvertsLexicalToHtml
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = (int)($node['format'] ?? 0);
+
+                // Escape text content to prevent XSS
+                $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
 
                 if ($format & self::$LEXICAL_FORMAT_BOLD) {
                     $text = "<strong>$text</strong>";

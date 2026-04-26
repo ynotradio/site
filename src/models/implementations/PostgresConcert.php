@@ -144,7 +144,7 @@ class PostgresConcert implements Concert {
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             WHERE c.date::date >= CURRENT_DATE
-              AND c._status = 'published'
+              AND c._status IN ('published', 'draft')
             GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date ASC
