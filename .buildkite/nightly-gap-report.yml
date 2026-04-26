@@ -230,6 +230,21 @@ steps:
         agents:
           queue: "default"
 
+      - label: ":microphone: Check DJ data quality"
+        key: "check-djs"
+        timeout_in_minutes: 15
+        command: "bash .buildkite/scripts/run-single-integrity-check.sh djs"
+        artifact_paths: ["integrity-djs.md"]
+        soft_fail: true
+        plugins:
+          - docker#v5.11.0:
+              image: "node:22-slim"
+              propagate-environment: true
+              environment:
+                - "NEON_DEV_DATABASE_URL"
+        agents:
+          queue: "default"
+
   - label: ":bar_chart: Combine & Post Integrity Report"
     key: "combine-integrity-report"
     depends_on: "integrity-checks"

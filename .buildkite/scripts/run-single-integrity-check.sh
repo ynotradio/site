@@ -4,7 +4,7 @@
 # Usage: run-single-integrity-check.sh <check-name>
 #
 # Supported checks:
-#   display-names, slugs, musicbrainz, record-metadata, ondemand-source, publish-status
+#   display-names, slugs, musicbrainz, record-metadata, ondemand-source, publish-status, djs
 
 set -euo pipefail
 
@@ -49,6 +49,11 @@ case "$CHECK_NAME" in
     echo "--- :white_check_mark: Checking publish status"
     node $PRELOAD bin/integrity-check-publish-status.ts \
       --from prod-mysql --since 25h --output "$OUTPUT" --verbose
+    ;;
+  djs)
+    echo "--- :microphone: Checking DJ data quality"
+    node $PRELOAD bin/integrity-check-djs.ts \
+      --since 25h --output "$OUTPUT" --verbose
     ;;
   *)
     echo "❌ Unknown check: $CHECK_NAME"
