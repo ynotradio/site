@@ -204,11 +204,7 @@ class PostgresCustomText implements CustomText {
                 }
                 
                 $format = $node['format'] ?? '';
-                if ($format === 'center') {
-                    return "<p style=\"text-align: center;\">$content</p>\n";
-                }
-                
-                return "<p>$content</p>\n";
+                return $this->wrapInBlock('p', $content, $format);
                 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';
