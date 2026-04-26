@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Story;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresStory implements Story {
+    use ConvertsLexicalToHtml;
+    
     private PDO $db;
 
     // Lexical text format bit flags
@@ -294,7 +297,8 @@ class PostgresStory implements Story {
         switch ($type) {
             case 'paragraph':
                 $content = $this->convertLexicalChildren($node);
-                return "<p>$content</p>\n";
+                $format = $node['format'] ?? '';
+                return $this->wrapInBlock('p', $content, $format);
                 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';

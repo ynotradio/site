@@ -203,7 +203,8 @@ class PostgresCustomText implements CustomText {
                     return $this->convertTableMarkupToHtml($content);
                 }
                 
-                return "<p>$content</p>\n";
+                $format = $node['format'] ?? '';
+                return $this->wrapInBlock('p', $content, $format);
                 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';

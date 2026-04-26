@@ -236,35 +236,52 @@ function parseInlineElements(html: string): any[] {
 function parseHtmlToLexicalNodes(htmlInput: string): any[] {
   const nodes: any[] = [];
 
-  // Remove <center> tags but keep content (use local copy to avoid mutating parameter)
-  const html = htmlInput.replace(/<\/?center>/gi, '');
+  // Normalize <p align="center">...</p> to <center>...</center> so both
+  // patterns are handled by the same code path below.
+  const normalizedHtml = htmlInput.replace(
+    /<p\s[^>]*align\s*=\s*["']center["'][^>]*>([\s\S]*?)<\/p>/gi,
+    '<center>$1</center>',
+  );
 
-  // Split by paragraph and br tags
-  const segments = html.split(/<\/?p>|<br\s*\/?>/gi).filter((s) => s.trim());
+  // Split on <center>...</center> blocks to preserve alignment metadata.
+  // Each alternating element in the resulting array is either plain HTML or
+  // a full "<center>...</center>" string.
+  const parts = normalizedHtml.split(/(<center>[\s\S]*?<\/center>)/gi);
 
-  for (const segment of segments) {
-    const trimmedSegment = segment.trim();
-    if (!trimmedSegment) {
-      // Skip empty segments
-    } else {
-      const children = parseInlineElements(trimmedSegment);
+  for (const part of parts) {
+    const isCentered = /^<center>/i.test(part);
+    const content = isCentered ? part.replace(/<\/?center>/gi, '') : part;
 
-      if (children.length > 0) {
-        nodes.push({
-          type: 'paragraph',
-          format: '',
-          indent: 0,
-          version: 1,
-          children,
-          direction: 'ltr',
-        });
+    if (content.trim()) {
+      const format = isCentered ? 'center' : '';
+
+      // Split by paragraph and br tags
+      const segments = content.split(/<\/?p>|<br\s*\/?>/gi).filter((s) => s.trim());
+
+      for (const segment of segments) {
+        const trimmedSegment = segment.trim();
+        if (trimmedSegment) {
+          const children = parseInlineElements(trimmedSegment);
+
+          if (children.length > 0) {
+            nodes.push({
+              type: 'paragraph',
+              format,
+              indent: 0,
+              version: 1,
+              children,
+              direction: 'ltr',
+            });
+          }
+        }
       }
     }
   }
 
   // If no paragraphs were created, wrap everything in one
-  if (nodes.length === 0 && html.trim()) {
-    const children = parseInlineElements(html.trim());
+  if (nodes.length === 0 && htmlInput.trim()) {
+    const plain = htmlInput.replace(/<\/?center>/gi, '');
+    const children = parseInlineElements(plain.trim());
     if (children.length > 0) {
       nodes.push({
         type: 'paragraph',

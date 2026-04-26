@@ -156,6 +156,33 @@ describe('convertHtmlToLexical', () => {
     expect(result.root.children[0].direction).toBe('ltr');
   });
 
+  it('should set format:center on paragraph wrapped in <center> tags', () => {
+    const result = convertHtmlToLexical('<center><b><a href="https://example.com/vote">VOTE HERE</a></b></center>');
+    expect(result.root.children[0].format).toBe('center');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+  });
+
+  it('should set format:center for <p align="center"> paragraphs', () => {
+    const result = convertHtmlToLexical('<p align="center">Centered text</p>');
+    expect(result.root.children[0].format).toBe('center');
+    expect(result.root.children[0].children[0].text).toBe('Centered text');
+  });
+
+  it('should keep non-centered paragraphs with empty format', () => {
+    const result = convertHtmlToLexical('<p>Normal paragraph</p>');
+    expect(result.root.children[0].format).toBe('');
+  });
+
+  it('should handle mixed centered and non-centered content', () => {
+    const result = convertHtmlToLexical(
+      '<p>Normal text</p><center>Centered text</center><p>Normal again</p>',
+    );
+    expect(result.root.children[0].format).toBe('');
+    expect(result.root.children[1].format).toBe('center');
+    expect(result.root.children[2].format).toBe('');
+  });
+
   it('should return minimal paragraph when parsing yields no nodes', () => {
     // <br> only produces no paragraph nodes since all split segments are empty
     const result = convertHtmlToLexical('<br>');

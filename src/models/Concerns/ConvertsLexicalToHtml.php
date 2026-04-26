@@ -57,7 +57,9 @@ trait ConvertsLexicalToHtml
 
         switch ($type) {
             case 'paragraph':
-                return '<p>' . $this->convertLexicalChildren($node) . "</p>\n";
+                $content = $this->convertLexicalChildren($node);
+                $format = $node['format'] ?? '';
+                return $this->wrapInBlock('p', $content, $format);
 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';
@@ -121,6 +123,23 @@ trait ConvertsLexicalToHtml
         }
 
         return $html;
+    }
+
+    /**
+     * Wrap text content in a block element (p, h1-h6) with optional text alignment.
+     * 
+     * @param string $tag HTML tag name (p, h1-h6)
+     * @param string $content HTML content
+     * @param string $format Optional text alignment (left, center, right, justify)
+     * @return string Formatted HTML block element
+     */
+    private function wrapInBlock(string $tag, string $content, string $format = ''): string
+    {
+        $style = '';
+        if ($format && in_array($format, ['left', 'center', 'right', 'justify'], true)) {
+            $style = " style=\"text-align: {$format};\"";
+        }
+        return "<{$tag}{$style}>{$content}</{$tag}>\n";
     }
 
     /**
