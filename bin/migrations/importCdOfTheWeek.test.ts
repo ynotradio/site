@@ -87,7 +87,7 @@ describe('importCdOfTheWeek', () => {
 
       process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
+      expect(() => parseArgs()).toThrow('--to must be "prod-neon", "dev-neon" or "local-postgres"');
     });
   });
 
