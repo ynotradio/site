@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Music;
+use YNotRadio\Models\MusicSortUtils;
 use PDO;
 use PDOException;
 
@@ -108,7 +109,12 @@ class PostgresMusic implements Music {
             }
             $grouped[$date][] = $row;
         }
-        
+
+        // Sort each date group by artist (ignoring leading articles), then by song title
+        foreach ($grouped as $date => $entries) {
+            $grouped[$date] = MusicSortUtils::sortEntries($entries);
+        }
+
         return $grouped;
     }
 
