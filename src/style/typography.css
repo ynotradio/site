@@ -193,15 +193,33 @@ nav a:hover {
   border-radius: 4px 4px 0 0;
   padding-bottom: 10px;
   box-shadow: 0 0px 8px #B6B6B6;
+  container-type: inline-size;
 }
 
 .feature-box h3 {
   background-color: #CC3333;
   border-radius: 4px 4px 0 0;
   color: white;
+  font-size: 14px;
+  line-height: 1.4;
   margin: 10px 0;
   padding: 3px 6px;
-  text-shadow: 0.1em 0.1em black
+  text-shadow: 0.1em 0.1em black;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Container queries: reduce font size only for very narrow containers (mobile) */
+@container (width < 280px) {
+  .feature-box h3 {
+    font-size: 12px;
+  }
+}
+
+/* For long headlines (like "Rodney Anonymous Tells You How To Live"), 
+   use smaller font to prevent wrapping in narrow containers */
+.feature-box h3.long-headline {
+  font-size: 13px;
 }
 
 .feature-box img {
