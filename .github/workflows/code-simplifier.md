@@ -3,7 +3,7 @@ name: Code Simplifier
 description: Analyzes recently modified code and creates pull requests with simplifications that improve clarity and maintainability while preserving functionality
 on:
   schedule:
-    - cron: '0 2 * * *' # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:
