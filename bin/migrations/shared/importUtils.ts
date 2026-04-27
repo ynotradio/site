@@ -64,150 +64,165 @@ export function generateMusicSlug(artistName: string, title: string): string {
 function parseInlineElements(html: string): any[] {
   const nodes: any[] = [];
 
-  // Match opening tags with their content
-  const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
+  // First, split on <br> tags to handle line breaks as separate nodes
+  const brParts = html.split(/<br\s*\/?>/gi);
 
-  // Track last processed position
-  let lastProcessedIndex = 0;
+  for (let brIndex = 0; brIndex < brParts.length; brIndex++) {
+    const partHtml = brParts[brIndex];
 
-  const matches = [];
-  let match = tagRegex.exec(html);
-  while (match !== null) {
-    matches.push({
-      start: match.index,
-      end: match.index + match[0].length,
-      tag: match[1],
-      attributes: match[2],
-      innerHtml: match[3],
-      fullMatch: match[0],
-    });
-    match = tagRegex.exec(html);
-  }
+    // Match opening tags with their content in this part
+    const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
 
-  // Process text and tags in order
-  for (const m of matches) {
-    // Add any plain text before this tag
-    if (m.start > lastProcessedIndex) {
-      const plainText = html.substring(lastProcessedIndex, m.start);
-      // Normalize whitespace but preserve at least one space where there was any
+    // Track last processed position
+    let lastProcessedIndex = 0;
+
+    const matches = [];
+    let match = tagRegex.exec(partHtml);
+    while (match !== null) {
+      matches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        tag: match[1],
+        attributes: match[2],
+        innerHtml: match[3],
+        fullMatch: match[0],
+      });
+      match = tagRegex.exec(partHtml);
+    }
+
+    // Process text and tags in order
+    for (const m of matches) {
+      // Add any plain text before this tag
+      if (m.start > lastProcessedIndex) {
+        const plainText = partHtml.substring(lastProcessedIndex, m.start);
+        // Normalize whitespace but preserve at least one space where there was any
+        const normalizedText = plainText.replace(/\s+/g, ' ');
+        if (normalizedText && normalizedText !== ' ') {
+          nodes.push({
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: normalizedText,
+            type: 'text',
+            version: 1,
+          });
+        } else if (normalizedText === ' ' && nodes.length > 0) {
+          // Add a space to the previous node if it doesn't already end with one
+          const lastNode = nodes[nodes.length - 1];
+          if (lastNode.text && !lastNode.text.endsWith(' ')) {
+            lastNode.text += ' ';
+          }
+        }
+      }
+
+      // Process the tag
+      const tag = m.tag.toLowerCase();
+      const { innerHtml } = m;
+
+      if (tag === 'a') {
+        // Extract href
+        const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
+        const href = hrefMatch ? hrefMatch[1] : '';
+
+        // Get link text (may contain nested formatting)
+        const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
+
+        if (linkText && href) {
+          const absoluteUrl = toAbsoluteUrl(href);
+          // Extract target attribute
+          const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
+          const target = targetMatch ? targetMatch[1] : null;
+
+          nodes.push({
+            type: 'link',
+            format: '',
+            indent: 0,
+            version: 3,
+            fields: {
+              linkType: 'custom',
+              url: absoluteUrl,
+              newTab: target === '_blank' || target === '_new',
+            },
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: linkText,
+                type: 'text',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+          });
+        }
+      } else if (tag === 'b' || tag === 'strong') {
+        // Check if inner content has links or other tags
+        if (innerHtml.includes('<')) {
+          // Recursively parse inner content
+          const innerNodes = parseInlineElements(innerHtml);
+          nodes.push(...innerNodes);
+        } else {
+          // Plain bold text
+          nodes.push({
+            detail: 0,
+            format: 1, // Bold
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          });
+        }
+      } else if (tag === 'em' || tag === 'i') {
+        // Plain italic text
+        nodes.push({
+          detail: 0,
+          format: 2, // Italic
+          mode: 'normal',
+          style: '',
+          text: innerHtml.replace(/<[^>]*>/g, '').trim(),
+          type: 'text',
+          version: 1,
+        });
+      }
+
+      lastProcessedIndex = m.end;
+    }
+
+    // Add any remaining plain text in this part
+    if (lastProcessedIndex < partHtml.length) {
+      const plainText = partHtml.substring(lastProcessedIndex);
+      // Normalize whitespace but preserve meaningful content
       const normalizedText = plainText.replace(/\s+/g, ' ');
-      if (normalizedText && normalizedText !== ' ') {
+      if (normalizedText.trim()) {
+        // If text starts with whitespace and there's a previous node, add leading space
+        const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
+        const cleanText = normalizedText.trim();
+        if (leadingSpace && nodes.length > 0) {
+          const lastNode = nodes[nodes.length - 1];
+          if (lastNode.text && !lastNode.text.endsWith(' ')) {
+            lastNode.text += ' ';
+          }
+        }
         nodes.push({
           detail: 0,
           format: 0,
           mode: 'normal',
           style: '',
-          text: normalizedText,
-          type: 'text',
-          version: 1,
-        });
-      } else if (normalizedText === ' ' && nodes.length > 0) {
-        // Add a space to the previous node if it doesn't already end with one
-        const lastNode = nodes[nodes.length - 1];
-        if (lastNode.text && !lastNode.text.endsWith(' ')) {
-          lastNode.text += ' ';
-        }
-      }
-    }
-
-    // Process the tag
-    const tag = m.tag.toLowerCase();
-    const { innerHtml } = m;
-
-    if (tag === 'a') {
-      // Extract href
-      const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
-      const href = hrefMatch ? hrefMatch[1] : '';
-
-      // Get link text (may contain nested formatting)
-      const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
-
-      if (linkText && href) {
-        const absoluteUrl = toAbsoluteUrl(href);
-        // Extract target attribute
-        const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
-        const target = targetMatch ? targetMatch[1] : null;
-
-        nodes.push({
-          type: 'link',
-          format: '',
-          indent: 0,
-          version: 3,
-          fields: {
-            linkType: 'custom',
-            url: absoluteUrl,
-            newTab: target === '_blank' || target === '_new',
-          },
-          children: [
-            {
-              detail: 0,
-              format: 0,
-              mode: 'normal',
-              style: '',
-              text: linkText,
-              type: 'text',
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-        });
-      }
-    } else if (tag === 'b' || tag === 'strong') {
-      // Check if inner content has links or other tags
-      if (innerHtml.includes('<')) {
-        // Recursively parse inner content
-        const innerNodes = parseInlineElements(innerHtml);
-        nodes.push(...innerNodes);
-      } else {
-        // Plain bold text
-        nodes.push({
-          detail: 0,
-          format: 1, // Bold
-          mode: 'normal',
-          style: '',
-          text: innerHtml.trim(),
+          text: cleanText,
           type: 'text',
           version: 1,
         });
       }
-    } else if (tag === 'em' || tag === 'i') {
-      // Plain italic text
-      nodes.push({
-        detail: 0,
-        format: 2, // Italic
-        mode: 'normal',
-        style: '',
-        text: innerHtml.replace(/<[^>]*>/g, '').trim(),
-        type: 'text',
-        version: 1,
-      });
     }
 
-    lastProcessedIndex = m.end;
-  }
-
-  // Add any remaining plain text
-  if (lastProcessedIndex < html.length) {
-    const plainText = html.substring(lastProcessedIndex);
-    // Normalize whitespace but preserve meaningful content
-    const normalizedText = plainText.replace(/\s+/g, ' ');
-    if (normalizedText.trim()) {
-      // If text starts with whitespace and there's a previous node, add leading space
-      const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
-      const cleanText = normalizedText.trim();
-      if (leadingSpace && nodes.length > 0) {
-        const lastNode = nodes[nodes.length - 1];
-        if (lastNode.text && !lastNode.text.endsWith(' ')) {
-          lastNode.text += ' ';
-        }
-      }
+    // Add linebreak node after each <br> (except after the last part)
+    if (brIndex < brParts.length - 1) {
       nodes.push({
-        detail: 0,
-        format: 0,
-        mode: 'normal',
-        style: '',
-        text: cleanText,
-        type: 'text',
+        type: 'linebreak',
         version: 1,
       });
     }
@@ -215,7 +230,10 @@ function parseInlineElements(html: string): any[] {
 
   // Fallback: if no nodes created, just strip all tags
   if (nodes.length === 0 && html.trim()) {
-    const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const text = html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (text) {
       nodes.push({
         type: 'text',
@@ -255,8 +273,9 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
     if (content.trim()) {
       const format = isCentered ? 'center' : '';
 
-      // Split by paragraph and br tags
-      const segments = content.split(/<\/?p>|<br\s*\/?>/gi).filter((s) => s.trim());
+      // Split by paragraph tags only (NOT by <br> tags)
+      // parseInlineElements now handles <br> tags and converts them to linebreak nodes
+      const segments = content.split(/<\/?p>/gi).filter((s) => s.trim());
 
       for (const segment of segments) {
         const trimmedSegment = segment.trim();
