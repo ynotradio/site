@@ -26,6 +26,7 @@ export default defineConfig({
         'payload/src/cloudinary/generateFileURL.ts',
         'payload/src/utils/auth.ts',
         'payload/src/utils/createAdminView.tsx',
+        'payload/src/utils/date-formatting.ts',
         'payload/src/utils/musicbrainz-api.ts',
         'payload/src/collections/Artists.ts',
         'payload/src/collections/DJs.ts',
