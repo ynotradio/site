@@ -226,6 +226,17 @@ describe('musicSlugify (Songs/Records)', () => {
     });
   });
 
+  it('should return title-only slug when artist DB lookup returns record with no name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 1 });
+
+    const result = await musicSlugify({
+      data: { artist: 1, title: 'Mystery Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('mystery-song');
+  });
+
   it('should return raw valueToSlugify when title and valueToSlugify both contain only special chars', () => {
     const result = musicSlugify({
       data: { title: '♪♫★' },
@@ -321,6 +332,21 @@ describe('setCdOfTheWeekSlugFromRecord', () => {
 
     expect(result.slug).toBeUndefined();
     expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('should leave slug unchanged when found record has no slug', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 10,
+      // no slug field
+    });
+
+    const result = await setCdOfTheWeekSlugFromRecord({
+      data: { record: 10, date: '2026-01-15' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.slug).toBeUndefined();
   });
 
   it('should handle record fetch error gracefully', async () => {
