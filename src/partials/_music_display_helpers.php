@@ -42,7 +42,7 @@ function display_all_music() {
         foreach ($entries as $music_info) {
             echo "<dd>";
             if ($music_info['url']) {
-                echo $music_info['artist'] . " &mdash; <a href=\"" . $music_info['url']. "\" target=_new>" . $music_info['song'] . "</a>";
+                echo $music_info['artist'] . " &mdash; <a href=\"" . $music_info['url']. "\" target=\"_blank\" rel=\"noopener noreferrer\">" . $music_info['song'] . "</a>";
             } else {
                 echo $music_info['artist'] . " &mdash; " . $music_info['song'];
             }
