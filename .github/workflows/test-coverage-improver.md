@@ -3,7 +3,7 @@ name: Test Coverage Improver
 description: Systematically analyzes test coverage and adds meaningful tests to improve coverage in under-tested areas
 on:
   schedule:
-    - cron: '0 3 * * *' # Run daily at 3 AM UTC
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
 permissions:
