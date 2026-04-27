@@ -54,6 +54,16 @@ describe('RematchScheduler', () => {
     expect(durationArg).toBe(45);
   });
 
+  it('does not call onConfirm when confirm button is clicked without a date', async () => {
+    const onConfirm = vi.fn();
+    render(<RematchScheduler saving={false} onConfirm={onConfirm} />);
+    fireEvent.click(screen.getByRole('button', { name: /schedule rematch/i }));
+
+    // Date is empty by default so canConfirm is false; click the disabled button directly
+    fireEvent.click(screen.getByRole('button', { name: /confirm rematch/i }));
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
   it('closes the form after successful confirmation', async () => {
     const onConfirm = vi.fn().mockResolvedValue(undefined);
     render(<RematchScheduler saving={false} onConfirm={onConfirm} />);

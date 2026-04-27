@@ -117,6 +117,17 @@ describe('TournamentBracketTab', () => {
     });
   });
 
+  it('shows error banner when API returns non-ok response', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 't1', name: 'MRM 2025' },
+    } as ReturnType<typeof useDocumentInfo>);
+    global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+    render(<TournamentBracketTab />);
+    await waitFor(() => {
+      expect(screen.getByText(/Could not load bracket data/)).toBeInTheDocument();
+    });
+  });
+
   it('fetches matches for the specific tournament ID', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 'tournament-42', name: 'MRM 2025' },
