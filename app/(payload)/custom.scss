@@ -43,3 +43,13 @@ html[data-theme='light'] {
   height: 18px;
 }
 
+/*
+ * Slug field: ensure the label-wrapper (containing the Unlock button) stacks
+ * above the validation error tooltip (z-index: 3) so the button stays clickable
+ * even when a "This field is required" error is shown. See #591.
+ */
+.slug-field-component .label-wrapper {
+  position: relative;
+  z-index: 4;
+}
+
