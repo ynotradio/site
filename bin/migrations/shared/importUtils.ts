@@ -57,6 +57,14 @@ export function generateMusicSlug(artistName: string, title: string): string {
   return titleSlug;
 }
 
+function appendSpaceToLastNode(nodes: any[]): void {
+  if (nodes.length === 0) return;
+  const lastNode = nodes[nodes.length - 1];
+  if (lastNode.text && !lastNode.text.endsWith(' ')) {
+    lastNode.text += ' ';
+  }
+}
+
 /**
  * Parse inline HTML elements recursively
  * Handles nested tags like <b><a href="...">text</a></b>
@@ -67,13 +75,10 @@ function parseInlineElements(html: string): any[] {
   // First, split on <br> tags to handle line breaks as separate nodes
   const brParts = html.split(/<br\s*\/?>/gi);
 
-  for (let brIndex = 0; brIndex < brParts.length; brIndex++) {
-    const partHtml = brParts[brIndex];
-
+  for (const [brIndex, partHtml] of brParts.entries()) {
     // Match opening tags with their content in this part
     const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
 
-    // Track last processed position
     let lastProcessedIndex = 0;
 
     const matches = [];
@@ -85,7 +90,6 @@ function parseInlineElements(html: string): any[] {
         tag: match[1],
         attributes: match[2],
         innerHtml: match[3],
-        fullMatch: match[0],
       });
       match = tagRegex.exec(partHtml);
     }
@@ -95,7 +99,6 @@ function parseInlineElements(html: string): any[] {
       // Add any plain text before this tag
       if (m.start > lastProcessedIndex) {
         const plainText = partHtml.substring(lastProcessedIndex, m.start);
-        // Normalize whitespace but preserve at least one space where there was any
         const normalizedText = plainText.replace(/\s+/g, ' ');
         if (normalizedText && normalizedText !== ' ') {
           nodes.push({
@@ -107,12 +110,8 @@ function parseInlineElements(html: string): any[] {
             type: 'text',
             version: 1,
           });
-        } else if (normalizedText === ' ' && nodes.length > 0) {
-          // Add a space to the previous node if it doesn't already end with one
-          const lastNode = nodes[nodes.length - 1];
-          if (lastNode.text && !lastNode.text.endsWith(' ')) {
-            lastNode.text += ' ';
-          }
+        } else if (normalizedText === ' ') {
+          appendSpaceToLastNode(nodes);
         }
       }
 
@@ -121,16 +120,13 @@ function parseInlineElements(html: string): any[] {
       const { innerHtml } = m;
 
       if (tag === 'a') {
-        // Extract href
         const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
         const href = hrefMatch ? hrefMatch[1] : '';
 
-        // Get link text (may contain nested formatting)
         const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
 
         if (linkText && href) {
           const absoluteUrl = toAbsoluteUrl(href);
-          // Extract target attribute
           const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
           const target = targetMatch ? targetMatch[1] : null;
 
@@ -159,13 +155,9 @@ function parseInlineElements(html: string): any[] {
           });
         }
       } else if (tag === 'b' || tag === 'strong') {
-        // Check if inner content has links or other tags
         if (innerHtml.includes('<')) {
-          // Recursively parse inner content
-          const innerNodes = parseInlineElements(innerHtml);
-          nodes.push(...innerNodes);
+          nodes.push(...parseInlineElements(innerHtml));
         } else {
-          // Plain bold text
           nodes.push({
             detail: 0,
             format: 1, // Bold
@@ -177,7 +169,6 @@ function parseInlineElements(html: string): any[] {
           });
         }
       } else if (tag === 'em' || tag === 'i') {
-        // Plain italic text
         nodes.push({
           detail: 0,
           format: 2, // Italic
@@ -195,24 +186,17 @@ function parseInlineElements(html: string): any[] {
     // Add any remaining plain text in this part
     if (lastProcessedIndex < partHtml.length) {
       const plainText = partHtml.substring(lastProcessedIndex);
-      // Normalize whitespace but preserve meaningful content
       const normalizedText = plainText.replace(/\s+/g, ' ');
       if (normalizedText.trim()) {
-        // If text starts with whitespace and there's a previous node, add leading space
-        const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
-        const cleanText = normalizedText.trim();
-        if (leadingSpace && nodes.length > 0) {
-          const lastNode = nodes[nodes.length - 1];
-          if (lastNode.text && !lastNode.text.endsWith(' ')) {
-            lastNode.text += ' ';
-          }
+        if (plainText.match(/^\s/)) {
+          appendSpaceToLastNode(nodes);
         }
         nodes.push({
           detail: 0,
           format: 0,
           mode: 'normal',
           style: '',
-          text: cleanText,
+          text: normalizedText.trim(),
           type: 'text',
           version: 1,
         });
