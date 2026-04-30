@@ -723,6 +723,28 @@ async function seedMrmFresh() {
     /* eslint-enable no-await-in-loop */
     console.log('   ✅ Round 1 bands assigned');
 
+    // ── Shows for date-filter E2E tests ────────────────────────────────────
+    // Two fixed dates in the far future to avoid conflicts with other data.
+    // Shows are stored at noon UTC to match Payload's dayOnly picker normalization,
+    // ensuring the admin list date filter (exact equality) works correctly.
+    console.log('📻 Seeding shows for date-filter tests...');
+    const SHOW_DATE_A = '2030-06-15T12:00:00.000Z'; // 2 shows on this date
+    const SHOW_DATE_B = '2030-06-22T12:00:00.000Z'; // 1 show on this date
+
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_A, startTime: '06:11', endTime: '08:11' },
+    });
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_A, startTime: '10:22', endTime: '12:22' },
+    });
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_B, startTime: '14:33', endTime: '16:33' },
+    });
+    console.log('   ✅ Created 3 test shows (2 on 2030-06-15, 1 on 2030-06-22)');
+
     console.log('\n✅ Fresh MRM tournament seeded successfully!\n');
     console.log('📊 Summary:');
     console.log('   Tournament: Modern Rock Madness 2026 (active)');
@@ -730,6 +752,7 @@ async function seedMrmFresh() {
     console.log('   Matches: 63 (match 1 currently running, rest in future)');
     console.log('   Winners: none (fresh tournament)');
     console.log('   Votes: none (fresh tournament)');
+    console.log('   Shows: 3 (for date-filter E2E tests)');
     console.log('\n🎭 Run e2e tests: yarn test:e2e');
 
     process.exit(0);
