@@ -34,7 +34,10 @@ export function slugifyHeadline(headline: string): string {
 /**
  * Resolve the artist name from data, handling both populated objects and IDs.
  */
-async function resolveArtistName(data: Record<string, unknown>, payload: Payload): Promise<string> {
+export async function resolveArtistName(
+  data: Record<string, unknown>,
+  payload: Payload,
+): Promise<string> {
   const artist = data?.artist;
   if (!artist) return '';
 
@@ -107,8 +110,63 @@ export const musicSlugify: Slugify = ({ data, req, valueToSlugify }) => {
     return buildMusicSlug(String((artist as { name: unknown }).name || ''), titleSlug);
   }
 
-  // Artist is an ID — need async DB lookup, returns a Promise
-  return resolveArtistName(data, req.payload).then((name) => buildMusicSlug(name, titleSlug));
+  // Artist is an ID — check if data.slug was pre-computed synchronously by the
+  // generateMusicSlugBeforeChangeHook (collection hook runs before field hooks).
+  // This avoids returning a Promise, which Payload's generateSlug wrapper does not await,
+  // causing data.slug to be set to a Promise object and failing text field validation.
+  const precomputedSlug = data?.slug;
+  if (typeof precomputedSlug === 'string' && precomputedSlug) {
+    return precomputedSlug;
+  }
+
+  // Fall back to async DB lookup. Only reached when musicSlugify is called outside of
+  // the normal collection save flow (e.g. direct API usage without the collection hook).
+  const artistData = data as Record<string, unknown>;
+  return resolveArtistName(artistData, req.payload).then((name) => buildMusicSlug(name, titleSlug));
+};
+
+/**
+ * Collection beforeChange hook for Songs and Records.
+ *
+ * Pre-computes the artist--title slug BEFORE Payload's field-level generateSlug hook runs.
+ * This is required because Payload's generateSlug wrapper does NOT await a Promise returned
+ * by a custom Slugify function, causing data.slug to be set to a Promise object (which fails
+ * text field validation) whenever the artist is a numeric ID and needs a DB lookup.
+ *
+ * By resolving the artist name here (async, before field hooks) and setting data.slug,
+ * musicSlugify can later return the pre-computed value synchronously.
+ *
+ * Skips when:
+ * - The user has manually unlocked the slug (data.generateSlug === false)
+ * - There is no title to slugify
+ * - The artist is already a populated object with a name (musicSlugify handles that synchronously)
+ */
+export const generateMusicSlugBeforeChangeHook: CollectionBeforeChangeHook = async ({
+  data,
+  req,
+}) => {
+  const updatedData = data;
+
+  // Respect the user's manual slug override (Unlock button sets generateSlug = false)
+  if (updatedData.generateSlug === false) return updatedData;
+
+  const title = updatedData?.title;
+  if (!title) return updatedData;
+
+  const titleSlug = slugifyText(String(title));
+  if (!titleSlug) return updatedData;
+
+  const artist = updatedData?.artist;
+  if (!artist) return updatedData;
+
+  // Populated artist with name — musicSlugify handles this synchronously; nothing to do here
+  if (typeof artist === 'object' && artist !== null && 'name' in artist) return updatedData;
+
+  // Artist is a numeric ID (or object without name) — resolve name asynchronously now
+  const artistName = await resolveArtistName(updatedData as Record<string, unknown>, req.payload);
+  updatedData.slug = buildMusicSlug(artistName, titleSlug);
+
+  return updatedData;
 };
 
 export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({ data, req }) => {

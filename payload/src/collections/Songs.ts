@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify } from './hooks/slugUtils';
+import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
@@ -25,7 +25,7 @@ export const Songs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   hooks: {
-    beforeChange: [generateMusicDisplayName('Song')],
+    beforeChange: [generateMusicSlugBeforeChangeHook, generateMusicDisplayName('Song')],
   },
   fields: [
     {

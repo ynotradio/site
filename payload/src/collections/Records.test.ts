@@ -119,7 +119,7 @@ describe('Records', () => {
     expect(Records.admin?.defaultColumns).toContain('releaseDate');
   });
 
-  it('has a beforeChange hook for display name generation', () => {
-    expect(Records.hooks?.beforeChange).toHaveLength(1);
+  it('has beforeChange hooks for slug generation and display name generation', () => {
+    expect(Records.hooks?.beforeChange).toHaveLength(2);
   });
 });
