@@ -467,6 +467,35 @@ describe('MusicBrainz API Utils', () => {
         expect(result[1].id).toBe('no-score');
       });
 
+      it('covers score comparison when b has no score and a has score', async () => {
+        const releases = [
+          {
+            id: 'has-score',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'no-score',
+            title: 'Test Album',
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        // Comparator called as (has-score, no-score): b.score=undefined (→0), a.score=80 (→80)
+        // Result: 0 - 80 = -80 → has-score remains first
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
       it('returns empty array on API error', async () => {
         fetchMock.mockResolvedValueOnce({
           ok: false,
@@ -650,6 +679,59 @@ describe('MusicBrainz API Utils', () => {
         // 70 (has-score) > 0 (no-score fallback) → has-score first
         expect(result[0].id).toBe('has-score');
         expect(result[1].id).toBe('no-score');
+      });
+
+      it('covers score comparison when b has no score and a has score', async () => {
+        const recordings = [
+          {
+            id: 'has-score',
+            title: 'Test Song',
+            score: 70,
+          },
+          {
+            id: 'no-score',
+            title: 'Test Song',
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        // Comparator called as (has-score, no-score): b.score=undefined (→0), a.score=70 (→70)
+        // Result: 0 - 70 = -70 → has-score remains first
+        const result = await searchRecordings('Test Song');
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
+      it('handles recording without disambiguation as first element in input', async () => {
+        const recordings = [
+          {
+            id: 'no-disambiguation',
+            title: 'Test Song',
+            score: 90,
+          },
+          {
+            id: 'live',
+            title: 'Test Song',
+            score: 100,
+            disambiguation: 'live at venue',
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        // Comparator called as (no-disambiguation, live): a.disambiguation is undefined
+        // → a.disambiguation?.toLowerCase() short-circuits to undefined → aIsLive = 0
+        // bIsLive = 1, aIsLive !== bIsLive → live goes to bottom
+        const result = await searchRecordings('Test Song');
+        expect(result[0].id).toBe('no-disambiguation');
+        expect(result[1].id).toBe('live');
       });
 
       it('returns empty array on API error', async () => {
