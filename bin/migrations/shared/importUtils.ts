@@ -48,13 +48,8 @@ export function generateSlug(text: string): string {
  */
 export function generateMusicSlug(artistName: string, title: string): string {
   const titleSlug = generateSlug(title);
-  if (artistName) {
-    const artistSlug = generateSlug(artistName);
-    if (artistSlug) {
-      return `${artistSlug}--${titleSlug}`;
-    }
-  }
-  return titleSlug;
+  const artistSlug = generateSlug(artistName);
+  return artistSlug ? `${artistSlug}--${titleSlug}` : titleSlug;
 }
 
 function appendSpaceToLastNode(nodes: any[]): void {
@@ -262,20 +257,16 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
       const segments = content.split(/<\/?p>/gi).filter((s) => s.trim());
 
       for (const segment of segments) {
-        const trimmedSegment = segment.trim();
-        if (trimmedSegment) {
-          const children = parseInlineElements(trimmedSegment);
-
-          if (children.length > 0) {
-            nodes.push({
-              type: 'paragraph',
-              format,
-              indent: 0,
-              version: 1,
-              children,
-              direction: 'ltr',
-            });
-          }
+        const children = parseInlineElements(segment.trim());
+        if (children.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format,
+            indent: 0,
+            version: 1,
+            children,
+            direction: 'ltr',
+          });
         }
       }
     }
@@ -300,73 +291,28 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
   return nodes;
 }
 
-/**
- * Convert HTML content to Lexical JSON format
- * Preserves links, formatting (bold, italic), and basic structure
- *
- * @param html - HTML string to convert
- * @returns Lexical JSON structure
- */
-export function convertHtmlToLexical(html: string): any {
-  if (!html || html.trim() === '') {
-    // Return a minimal valid Lexical structure with an empty paragraph
-    // Lexical requires at least one node in children
-    return {
-      root: {
-        type: 'root',
-        format: '',
-        indent: 0,
+function makeEmptyParagraph(): any {
+  return {
+    type: 'paragraph',
+    format: '',
+    indent: 0,
+    version: 1,
+    children: [
+      {
+        type: 'text',
+        format: 0,
         version: 1,
-        children: [
-          {
-            type: 'paragraph',
-            format: '',
-            indent: 0,
-            version: 1,
-            children: [
-              {
-                type: 'text',
-                format: 0,
-                version: 1,
-                text: '',
-                mode: 'normal',
-                style: '',
-                detail: 0,
-              },
-            ],
-            direction: 'ltr',
-          },
-        ],
-        direction: 'ltr',
+        text: '',
+        mode: 'normal',
+        style: '',
+        detail: 0,
       },
-    };
-  }
+    ],
+    direction: 'ltr',
+  };
+}
 
-  // Parse HTML into Lexical nodes
-  const children = parseHtmlToLexicalNodes(html);
-
-  // If parsing resulted in empty children, add a minimal paragraph
-  if (children.length === 0) {
-    children.push({
-      type: 'paragraph',
-      format: '',
-      indent: 0,
-      version: 1,
-      children: [
-        {
-          type: 'text',
-          format: 0,
-          version: 1,
-          text: '',
-          mode: 'normal',
-          style: '',
-          detail: 0,
-        },
-      ],
-      direction: 'ltr',
-    });
-  }
-
+function makeLexicalRoot(children: any[]): any {
   return {
     root: {
       type: 'root',
@@ -377,6 +323,26 @@ export function convertHtmlToLexical(html: string): any {
       direction: 'ltr',
     },
   };
+}
+
+/**
+ * Convert HTML content to Lexical JSON format
+ * Preserves links, formatting (bold, italic), and basic structure
+ *
+ * @param html - HTML string to convert
+ * @returns Lexical JSON structure
+ */
+export function convertHtmlToLexical(html: string): any {
+  if (!html?.trim()) {
+    return makeLexicalRoot([makeEmptyParagraph()]);
+  }
+
+  const children = parseHtmlToLexicalNodes(html);
+  if (children.length === 0) {
+    children.push(makeEmptyParagraph());
+  }
+
+  return makeLexicalRoot(children);
 }
 
 /**
