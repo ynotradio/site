@@ -84,6 +84,55 @@ describe('ModernRockMadnessMatches', () => {
     expect((readFn as () => boolean)()).toBe(true);
   });
 
+  it('restricts create to admin and editor roles', () => {
+    const createFn = ModernRockMadnessMatches.access?.create as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(createFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'dj' } } })).toBe(false);
+    expect(createFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts update to admin and editor roles', () => {
+    const updateFn = ModernRockMadnessMatches.access?.update as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(updateFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(updateFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(updateFn({ req: { user: { role: 'readonly' } } })).toBe(false);
+    expect(updateFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts delete to admin role only', () => {
+    const deleteFn = ModernRockMadnessMatches.access?.delete as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('winner filterOptions returns all bands when sibling data has band1 and band2', () => {
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const winner = allFields.find((f) => f.name === 'winner');
+    const filterOptions = winner?.filterOptions as (args: {
+      siblingData: { band1?: string; band2?: string };
+    }) => unknown;
+    const result = filterOptions({ siblingData: { band1: 'id-1', band2: 'id-2' } });
+    expect(result).toEqual({ id: { in: ['id-1', 'id-2'] } });
+  });
+
+  it('winner filterOptions returns empty filter when siblingData has no bands', () => {
+    const allFields = flattenRowFields(ModernRockMadnessMatches.fields);
+    const winner = allFields.find((f) => f.name === 'winner');
+    const filterOptions = winner?.filterOptions as (args: { siblingData: unknown }) => unknown;
+    expect(filterOptions({ siblingData: {} })).toEqual({ id: { equals: '' } });
+    expect(filterOptions({ siblingData: { band1: null, band2: undefined } })).toEqual({
+      id: { equals: '' },
+    });
+  });
+
   it('has timestamps enabled', () => {
     expect(ModernRockMadnessMatches.timestamps).toBe(true);
   });

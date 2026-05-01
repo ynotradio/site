@@ -52,11 +52,23 @@ describe('ModernRockMadnessMatchEvents', () => {
   });
 
   it('restricts read access to admin and editor roles', () => {
-    const readFn = ModernRockMadnessMatchEvents.access?.read;
-    expect(typeof readFn).toBe('function');
-    expect((readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
-      false,
-    );
+    const readFn = ModernRockMadnessMatchEvents.access?.read as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(readFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(readFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(readFn({ req: { user: { role: 'dj' } } })).toBe(false);
+    expect(readFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts create to admin and editor roles', () => {
+    const createFn = ModernRockMadnessMatchEvents.access?.create as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(createFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'dj' } } })).toBe(false);
+    expect(createFn({ req: { user: null } })).toBe(false);
   });
 
   it('has timestamps enabled', () => {
