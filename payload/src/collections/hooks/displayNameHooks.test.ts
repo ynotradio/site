@@ -329,4 +329,23 @@ describe('Records displayName beforeChange hook', () => {
 
     expect(result.displayName).toBe('Test Album');
   });
+
+  it('should look up artist by id when artist is an object without name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 1,
+      name: 'Pink Floyd',
+    });
+
+    const result = await recordHook({
+      data: { artist: { id: 1 }, title: 'The Dark Side of the Moon' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Pink Floyd - The Dark Side of the Moon');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({
+      collection: 'artists',
+      id: 1,
+    });
+  });
 });
