@@ -24,7 +24,7 @@ function on_demand_player($id) {
     $date = new DateTime($entry['date']);
     $formattedDate = $date->format('m/d/y');
     $rawImage = trim((string)($entry['image'] ?? ''));
-    $placeholder = '/ynot-logo.svg';
+    $placeholder = '/imgs/ondemand-placeholder.png';
     $imageSrc = $rawImage !== '' ? $rawImage : $placeholder;
     $imageSrcAttr = htmlspecialchars($imageSrc, ENT_QUOTES, 'UTF-8');
     $placeholderAttr = htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8');
