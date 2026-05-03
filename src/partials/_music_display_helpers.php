@@ -14,13 +14,16 @@ function humanize_date(string $iso_date): string {
         return $iso_date;
     }
     $day = (int) $dt->format('j');
-    $suffix = match (true) {
-        $day >= 11 && $day <= 13 => 'th',
-        $day % 10 === 1           => 'st',
-        $day % 10 === 2           => 'nd',
-        $day % 10 === 3           => 'rd',
-        default                   => 'th',
-    };
+    if ($day >= 11 && $day <= 13) {
+        $suffix = 'th';
+    } else {
+        switch ($day % 10) {
+            case 1:  $suffix = 'st'; break;
+            case 2:  $suffix = 'nd'; break;
+            case 3:  $suffix = 'rd'; break;
+            default: $suffix = 'th'; break;
+        }
+    }
     return $dt->format('F ') . $day . $suffix . $dt->format(', Y');
 }
 

@@ -430,11 +430,6 @@ footer a:hover {
   font-weight: bold;
 }
 
-#control_panel dt:before,
-dt:after {
-  content: " -- ";
-}
-
 #control_panel td {
   vertical-align: top;
 }
