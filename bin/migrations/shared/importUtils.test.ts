@@ -262,6 +262,38 @@ describe('convertHtmlToLexical', () => {
     expect(linkNode).toBeDefined();
     expect(linkNode.fields.url).toBe('https://www.ynotradio.net/artists/miles-davis');
   });
+
+  it('should set newTab=true for link with target="_blank"', () => {
+    const result = convertHtmlToLexical('<a href="http://example.com" target="_blank">click here</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should set newTab=true for link with target="_new"', () => {
+    const result = convertHtmlToLexical('<a href="http://example.com" target="_new">click here</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should convert <i> tag to italic text node', () => {
+    const result = convertHtmlToLexical('<i>italic text</i>');
+    const italicNode = result.root.children[0].children.find((c: any) => c.format === 2);
+    expect(italicNode).toBeDefined();
+    expect(italicNode.text).toBe('italic text');
+  });
+
+  it('should not create a trailing text node for whitespace-only trailing content', () => {
+    // Covers line 190 false branch: normalizedText.trim() is empty (only whitespace remains)
+    const result = convertHtmlToLexical('<strong>bold</strong>   ');
+    const children = result.root.children[0].children;
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(boldNode).toBeDefined();
+    // No plain text node should be added for the trailing whitespace
+    const plainTextNodes = children.filter((c: any) => c.type === 'text' && c.format === 0);
+    expect(plainTextNodes).toHaveLength(0);
+  });
 });
 
 describe('getStatusFromDeleted', () => {
