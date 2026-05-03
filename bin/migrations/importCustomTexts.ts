@@ -262,23 +262,34 @@ async function importCustomTexts(options: ImportOptions): Promise<void> {
   }
 }
 
-// CLI setup
-const program = new Command();
+function isMainModule(): boolean {
+  if (typeof import.meta !== 'undefined' && import.meta.url) {
+    return import.meta.url === `file://${process.argv[1]}`;
+  }
+  return require.main === module;
+}
 
-program
-  .name('importCustomTexts')
-  .description('Import custom_texts from MySQL to Payload CMS')
-  .option('--env <environment>', 'Target environment (dev or prod)', 'dev')
-  .action(async (options) => {
-    try {
-      await importCustomTexts({
-        env: options.env,
-      });
-      process.exit(0);
-    } catch (error) {
-      logger.error('Import failed:', error);
-      process.exit(1);
-    }
-  });
+// CLI setup — only runs when executed directly, not when imported by tests
+if (isMainModule()) {
+  const program = new Command();
 
-program.parse(process.argv);
+  program
+    .name('importCustomTexts')
+    .description('Import custom_texts from MySQL to Payload CMS')
+    .option('--env <environment>', 'Target environment (dev or prod)', 'dev')
+    .action(async (options) => {
+      try {
+        await importCustomTexts({
+          env: options.env,
+        });
+        process.exit(0);
+      } catch (error) {
+        logger.error('Import failed:', error);
+        process.exit(1);
+      }
+    });
+
+  program.parse(process.argv);
+}
+
+export { importCustomText, importCustomTexts };

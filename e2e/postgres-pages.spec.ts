@@ -31,6 +31,7 @@ const POSTGRES_PAGES = [
   { path: 'cdoftheweek.php', flag: 'use_postgres_cdoftheweek' },
   { path: 'deejays.php', flag: 'use_postgres_deejays' },
   { path: 'ondemand.php', flag: 'use_postgres_ondemand' },
+  { path: 'donate.php', flag: 'use_postgres_customtext' },
 ] as const;
 
 test.describe('Postgres-backed PHP pages', () => {
@@ -73,5 +74,19 @@ test.describe('Postgres-backed PHP pages', () => {
     // "see other reviews" archive section.
     const mainPanel = page.locator('.row').first();
     await expect(mainPanel).not.toContainText(/error loading the CD of the Week/i);
+  });
+
+  test('donate.php displays donation content from Postgres', async ({ page }) => {
+    const url = `${LEGACY_BASE_URL}/donate.php?ff=use_postgres_customtext`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    const errors = checkForPhpErrors(await page.content());
+    expect(errors, `Found PHP errors on donate.php: ${errors.join(', ')}`).toEqual([]);
+    // The h1 title should be visible (comes from the 'donate' post headline)
+    await expect(page.locator('h1').first()).toBeVisible();
+    // The content area must contain meaningful text, not be blank
+    const contentArea = page.locator('.content').first();
+    const contentText = await contentArea.innerText();
+    expect(contentText.trim().length, 'Donate page content area should not be blank').toBeGreaterThan(0);
   });
 });

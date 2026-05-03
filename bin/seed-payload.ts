@@ -376,7 +376,45 @@ async function seed() {
       },
     });
 
-    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}"`);
+    // Create donate custom text page (standalone page, not a front-page story)
+    const donatePost = await payload.create({
+      collection: 'posts',
+      data: {
+        headline: 'Support Y-Not Radio',
+        slug: 'donate',
+        content: {
+          root: {
+            type: 'root',
+            children: [
+              {
+                type: 'paragraph',
+                children: [
+                  {
+                    type: 'text',
+                    text: 'Y-Not Radio is a free, independent online radio station supported entirely by listeners like you. Your donation helps keep the music playing 24/7.',
+                  },
+                ],
+              },
+              {
+                type: 'paragraph',
+                children: [
+                  {
+                    type: 'text',
+                    text: 'Every dollar goes directly toward server costs, licensing fees, and keeping Y-Not Radio on the air. Thank you for your support!',
+                  },
+                ],
+              },
+            ],
+          },
+        },
+        startDate: '2000-01-01T00:00:00.000Z',
+        endDate: '2099-12-31T23:59:59.999Z',
+        showOnFrontPage: false,
+        _status: 'published',
+      },
+    });
+
+    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}", "${donatePost.headline}" (donate page)`);
 
     // Create sample DJs first (for Shows)
     console.log('🎧 Creating sample DJs...');
@@ -1303,7 +1341,7 @@ async function seed() {
     console.log('   Records: 2');
     console.log('   Songs: 3');
     console.log('   Concerts: 3');
-    console.log('   Posts: 3');
+    console.log('   Posts: 4 (3 stories + 1 donate page)');
     console.log('   Shows: 2');
     console.log('   MRM Tournament: 1 (Modern Rock Madness 2025, complete)');
     console.log('   MRM Bands: 64 (all 4 regions, from ynot_db.sql)');
