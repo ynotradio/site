@@ -11,6 +11,16 @@
  *     site uses https://i.imgur.com/MARUqpa.jpg. Create a media record
  *     pointing at that URL and link Judy (id=75) to it.
  *
+ *  3. Issue #596: Sort order parity with prod. The two-column deejays page
+ *     splits the SQL result by index (even → left, odd → right). Prod
+ *     shows Adrienne in left col position 2 and Joey O. in right col
+ *     position 1; dev has them swapped because Adrienne's sort_order=1
+ *     (odd) and Joey O.'s sort_order=2 (even). Swap their sort_order so
+ *     they land in the matching columns.
+ *
+ *  4. Issue #596: Display name parity — prod calls Emily K. "Em K.".
+ *     Update both the DJ display_name and the linked person name.
+ *
  * Idempotent. Run with --env dev (default) or --env prod.
  */
 
@@ -109,12 +119,91 @@ async function fixJudyPhoto(payload: any, dryRun: boolean): Promise<void> {
   }
 }
 
+async function fixSortOrderSwap(payload: any, dryRun: boolean): Promise<void> {
+  const db = payload.db.drizzle.session.client;
+  const { rows } = await db.query(
+    "SELECT id, display_name, sort_order FROM djs WHERE display_name IN ('Adrienne', 'Joey O.') AND COALESCE(on_air, true) = true ORDER BY display_name",
+  );
+  const adrienne = rows.find((r: any) => r.display_name === 'Adrienne');
+  const joey = rows.find((r: any) => r.display_name === 'Joey O.');
+  if (!adrienne || !joey) {
+    logger.warn('Could not find both Adrienne and Joey O. on-air rows — skip swap.');
+    return;
+  }
+  if (adrienne.sort_order === 2 && joey.sort_order === 1) {
+    logger.info('Sort order already swapped (Adrienne=2, Joey O.=1) — skip.');
+    return;
+  }
+  if (adrienne.sort_order !== 1 || joey.sort_order !== 2) {
+    logger.warn(
+      `Unexpected sort_order state Adrienne=${adrienne.sort_order} JoeyO.=${joey.sort_order} — skip swap to avoid clobbering manual edits.`,
+    );
+    return;
+  }
+  logger.info(`Swapping sort_order: Adrienne (id=${adrienne.id}) 1→2, Joey O. (id=${joey.id}) 2→1`);
+  if (!dryRun) {
+    // Use a temporary value to avoid the unique-ish constraint pattern, if any.
+    await db.query('UPDATE djs SET sort_order = 9999, updated_at = NOW() WHERE id = $1', [
+      adrienne.id,
+    ]);
+    await db.query('UPDATE djs SET sort_order = 1, updated_at = NOW() WHERE id = $1', [joey.id]);
+    await db.query('UPDATE djs SET sort_order = 2, updated_at = NOW() WHERE id = $1', [
+      adrienne.id,
+    ]);
+  }
+}
+
+async function fixEmilyToEm(payload: any, dryRun: boolean): Promise<void> {
+  const db = payload.db.drizzle.session.client;
+  const { rows: djRows } = await db.query(
+    "SELECT id, display_name FROM djs WHERE display_name IN ('Emily K.', 'Em K.') LIMIT 1",
+  );
+  const dj = djRows[0];
+  if (!dj) {
+    logger.warn('Could not find Emily K. / Em K. DJ row — skip.');
+    return;
+  }
+  if (dj.display_name === 'Em K.') {
+    logger.info(`DJ display_name already "Em K." (id=${dj.id}) — skip.`);
+  } else {
+    logger.info(`Renaming DJ id=${dj.id} display_name "Emily K." → "Em K."`);
+    if (!dryRun) {
+      await db.query("UPDATE djs SET display_name = 'Em K.', updated_at = NOW() WHERE id = $1", [
+        dj.id,
+      ]);
+    }
+  }
+  // Update linked person row that drives the rendered <h2>.
+  const { rows: peopleRows } = await db.query(
+    `SELECT p.id, p.name FROM people p
+     JOIN djs_rels dr ON dr.people_id = p.id
+     WHERE dr.parent_id = $1 AND dr.path = 'person'`,
+    [dj.id],
+  );
+  for (const person of peopleRows) {
+    if (person.name === 'Em K.') {
+      logger.info(`Person id=${person.id} already "Em K." — skip.`);
+    } else if (person.name !== 'Emily K.') {
+      logger.warn(`Skipping person id=${person.id} with unexpected name "${person.name}".`);
+    } else {
+      logger.info(`Renaming person id=${person.id} "Emily K." → "Em K."`);
+      if (!dryRun) {
+        await db.query("UPDATE people SET name = 'Em K.', updated_at = NOW() WHERE id = $1", [
+          person.id,
+        ]);
+      }
+    }
+  }
+}
+
 async function run(options: Options) {
   logger.info(`Starting deejays admin fixes (env=${options.env}, dryRun=${options.dryRun})`);
   process.env.PAYLOAD_MIGRATING = 'true';
   const payload = await getPayloadClient(options.env);
   await fixDuplicateJosh(payload, options.dryRun);
   await fixJudyPhoto(payload, options.dryRun);
+  await fixSortOrderSwap(payload, options.dryRun);
+  await fixEmilyToEm(payload, options.dryRun);
   logger.info('Done.');
 }
 
