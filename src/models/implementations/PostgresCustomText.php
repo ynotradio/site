@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\CustomText;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 
 /**
@@ -10,6 +11,8 @@ use PDO;
  * Reads from Neon PostgreSQL database (posts collection, type='custom_text')
  */
 class PostgresCustomText implements CustomText {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     // Lexical text format bit flags

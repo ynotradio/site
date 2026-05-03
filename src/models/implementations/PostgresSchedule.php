@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Schedule;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresSchedule implements Schedule {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     // Lexical text format bit flags
