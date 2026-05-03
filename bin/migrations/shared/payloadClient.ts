@@ -39,24 +39,36 @@ async function findDocBySlug(
 }
 
 function getDatabaseUri(target: PostgresTarget): string {
-  if (target === 'prod-neon') {
+  if (target === 'prod-neon' || target === 'prod') {
     const uri = process.env.NEON_PROD_DATABASE_URL;
-    if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_PROD_DATABASE_URL in .env.local`);
+    if (!uri) {
+      throw new Error(
+        `Database URI not found for target "${target}". Please set NEON_PROD_DATABASE_URL in .env.local`,
+      );
+    }
     return uri;
   }
-  if (target === 'dev-neon') {
+  if (target === 'dev-neon' || target === 'dev') {
     const uri = process.env.NEON_DEV_DATABASE_URL;
-    if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL in .env.local`);
+    if (!uri) {
+      throw new Error(
+        `Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL in .env.local`,
+      );
+    }
     return uri;
   }
   const uri = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
-  if (!uri) throw new Error(`Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL or DATABASE_URI in .env.local`);
+  if (!uri) {
+    throw new Error(
+      `Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL or DATABASE_URI in .env.local`,
+    );
+  }
   return uri;
 }
 
 export { getDatabaseUri };
 
-export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
+export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon' | 'dev' | 'prod';
 
 /**
  * Get the Payload instance configured for the specified target database
@@ -64,6 +76,12 @@ export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
  * @param target - 'prod-neon' for production Neon, 'local-postgres' for local/dev
  */
 export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Promise<Payload> {
+  // NOTE: Scripts that call this must run with
+  //   `yarn tsx --import ./bin/preload-nextenv-fix.mjs <script>.ts`
+  // Otherwise payload's collection imports transitively load `bin/loadEnv.js`,
+  // which crashes under tsx because of an @next/env default-export interop bug.
+  // See bin/preload-nextenv-fix.mjs for the full explanation.
+
   // Load environment variables from .env.local with override
   dotenv.config({
     path: path.resolve(process.cwd(), '.env.local'),
@@ -93,10 +111,7 @@ export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Pr
  * Find or create an artist by name
  * Returns the artist ID
  */
-export async function findOrCreateArtist(
-  payload: Payload,
-  name: string,
-): Promise<number> {
+export async function findOrCreateArtist(payload: Payload, name: string): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
 
@@ -158,7 +173,9 @@ export async function findOrCreateArtist(
     logger.debug(`Created artist: ${cleanName}`);
     return newArtist.id;
   } catch (error: any) {
-    logger.debug(`Error creating artist "${name}": status=${error.status}, errors=${JSON.stringify(error.data?.errors)}`);
+    logger.debug(
+      `Error creating artist "${name}": status=${error.status}, errors=${JSON.stringify(error.data?.errors)}`,
+    );
 
     const isMbidError = isFieldError(error, 'musicbrainzId');
     const isSlugError = isFieldError(error, 'slug');
@@ -172,7 +189,9 @@ export async function findOrCreateArtist(
         limit: 1,
       });
       if (retryExisting.docs.length > 0) {
-        logger.debug(`Found existing artist after race condition: "${name}" (id: ${retryExisting.docs[0].id})`);
+        logger.debug(
+          `Found existing artist after race condition: "${name}" (id: ${retryExisting.docs[0].id})`,
+        );
         return retryExisting.docs[0].id;
       }
     }
@@ -219,10 +238,7 @@ export async function findOrCreateArtist(
  * Find or create a venue by name
  * Returns the venue ID
  */
-export async function findOrCreateVenue(
-  payload: Payload,
-  name: string,
-): Promise<number> {
+export async function findOrCreateVenue(payload: Payload, name: string): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
 
@@ -328,10 +344,7 @@ export async function findOrCreatePerson(
  * Find a DJ by legacy ID
  * Returns the DJ ID or null if not found
  */
-export async function findDJByLegacyId(
-  payload: Payload,
-  legacyId: number,
-): Promise<number | null> {
+export async function findDJByLegacyId(payload: Payload, legacyId: number): Promise<number | null> {
   const existing = await payload.find({
     collection: 'djs',
     where: { legacyId: { equals: legacyId } },
@@ -363,10 +376,7 @@ export async function findOrCreateRecord(
   const existing = await payload.find({
     collection: 'records',
     where: {
-      and: [
-        { title: { equals: title } },
-        { artist: { equals: artistId } },
-      ],
+      and: [{ title: { equals: title } }, { artist: { equals: artistId } }],
     },
     limit: 1,
   });
@@ -398,7 +408,9 @@ export async function findOrCreateRecord(
       try {
         const artist = await payload.findByID({ collection: 'artists', id: artistId });
         artistName = artist?.name || '';
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       const slug = generateMusicSlug(artistName, title);
       const id = await findDocBySlug(payload, 'records', slug);
@@ -514,7 +526,9 @@ export async function findOrCreateSong(
         try {
           const artist = await payload.findByID({ collection: 'artists', id: artistId });
           artistName = artist?.name || '';
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
 
       const slug = generateMusicSlug(artistName, cleanTitle);
