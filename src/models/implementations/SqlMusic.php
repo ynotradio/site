@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Music;
+use YNotRadio\Models\MusicSortUtils;
 use mysqli;
 
 class SqlMusic implements Music {
@@ -68,7 +69,7 @@ class SqlMusic implements Music {
                 }
             }
             
-            $grouped_music[$date] = $entries;
+            $grouped_music[$date] = MusicSortUtils::sortEntries($entries);
         }
         
         return $grouped_music;
