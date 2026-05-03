@@ -53,11 +53,40 @@ describe('ModernRockMadnessVotes', () => {
   });
 
   it('restricts read access to admin and editor roles', () => {
-    const readFn = ModernRockMadnessVotes.access?.read;
-    expect(typeof readFn).toBe('function');
-    expect((readFn as (args: { req: { user: null } }) => boolean)({ req: { user: null } })).toBe(
-      false,
-    );
+    const readFn = ModernRockMadnessVotes.access?.read as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(readFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(readFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(readFn({ req: { user: { role: 'dj' } } })).toBe(false);
+    expect(readFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('allows any authenticated user to create a vote', () => {
+    const createFn = ModernRockMadnessVotes.access?.create as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(createFn({ req: { user: { id: 'auth0|123' } } })).toBe(true);
+    expect(createFn({ req: { user: null } })).toBe(false);
+    expect(createFn({ req: { user: undefined } })).toBe(false);
+  });
+
+  it('restricts update to admin role only', () => {
+    const updateFn = ModernRockMadnessVotes.access?.update as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(updateFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(updateFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(updateFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts delete to admin role only', () => {
+    const deleteFn = ModernRockMadnessVotes.access?.delete as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: null } })).toBe(false);
   });
 
   it('has timestamps enabled', () => {
