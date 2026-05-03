@@ -571,5 +571,25 @@ describe('CustomDashboard', () => {
         expect(screen.queryByText('Special Events')).not.toBeInTheDocument();
       });
     });
+
+    it('hides Special Events when response has no docs property', async () => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockReturnValue(
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({}),
+          } as Response),
+        ),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Special Events')).not.toBeInTheDocument();
+      });
+    });
   });
 });
