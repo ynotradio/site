@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { normalizeShowDate } from './hooks/showDateHooks';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
@@ -20,6 +21,9 @@ export const Shows: CollectionConfig = {
     },
   },
   defaultSort: '-date',
+  hooks: {
+    beforeChange: [normalizeShowDate],
+  },
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -39,6 +43,7 @@ export const Shows: CollectionConfig = {
             description: 'Show date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '40%',
           },

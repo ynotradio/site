@@ -474,9 +474,11 @@ async function seed() {
 
     const showDate1 = new Date();
     showDate1.setDate(showDate1.getDate() + 7);
+    showDate1.setUTCHours(12, 0, 0, 0); // noon UTC to match Payload dayOnly picker normalization
 
     const showDate2 = new Date();
     showDate2.setDate(showDate2.getDate() + 8);
+    showDate2.setUTCHours(12, 0, 0, 0); // noon UTC to match Payload dayOnly picker normalization
 
     await payload.create({
       collection: 'shows',

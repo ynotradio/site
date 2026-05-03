@@ -254,3 +254,92 @@ test.describe('MRM Payload Admin — Matches', () => {
     await captureScreenshot(page, testInfo, '18-Admin-MRM-Match-Controls-View');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Shows collection — date filter
+// ---------------------------------------------------------------------------
+
+/**
+ * These tests verify that the admin list date filter returns the correct shows
+ * when filtering by date.  They rely on 3 shows seeded by seed:mrm:fresh:
+ *   - 2030-06-15: startTime 06:11 and 10:22
+ *   - 2030-06-22: startTime 14:33
+ *
+ * The Shows collection stores dates at noon UTC (via the normalizeShowDate hook
+ * + pickerAppearance: 'dayOnly'), so the filter URL uses T12:00:00.000Z.
+ */
+test.describe('Shows Collection — Date Filter', () => {
+  const SHOW_DATE_A = '2030-06-15T12:00:00.000Z';
+  const SHOW_DATE_B = '2030-06-22T12:00:00.000Z';
+  const SHOW_DATE_EMPTY = '2030-01-01T12:00:00.000Z';
+
+  test.beforeEach(async ({ page }) => {
+    await loginToPayload(page);
+  });
+
+  test('unfiltered Shows list shows all seeded shows', async ({ page }, testInfo) => {
+    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/shows`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
+
+    // All three seeded show times should be visible in the list
+    await expect(page.getByText('06:11')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('10:22')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('14:33')).toBeVisible({ timeout: 15000 });
+
+    await captureScreenshot(page, testInfo, '20-Shows-Unfiltered-List');
+  });
+
+  test('date filter returns only shows for the selected date (2 shows)', async ({
+    page,
+  }, testInfo) => {
+    await page.goto(
+      `${PAYLOAD_BASE_URL}/admin/collections/shows?where[date][equals]=${SHOW_DATE_A}`,
+      { waitUntil: 'networkidle', timeout: 30000 },
+    );
+
+    // Both shows for date A should be visible
+    await expect(page.getByText('06:11')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('10:22')).toBeVisible({ timeout: 15000 });
+
+    // Show for date B must NOT appear
+    await expect(page.getByText('14:33')).not.toBeVisible({ timeout: 5000 });
+
+    await captureScreenshot(page, testInfo, '21-Shows-Filtered-DateA');
+  });
+
+  test('date filter returns only shows for a different date (1 show)', async ({
+    page,
+  }, testInfo) => {
+    await page.goto(
+      `${PAYLOAD_BASE_URL}/admin/collections/shows?where[date][equals]=${SHOW_DATE_B}`,
+      { waitUntil: 'networkidle', timeout: 30000 },
+    );
+
+    // Only the show for date B should be visible
+    await expect(page.getByText('14:33')).toBeVisible({ timeout: 15000 });
+
+    // Shows for date A must NOT appear
+    await expect(page.getByText('06:11')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('10:22')).not.toBeVisible({ timeout: 5000 });
+
+    await captureScreenshot(page, testInfo, '22-Shows-Filtered-DateB');
+  });
+
+  test('date filter returns empty result for a date with no shows', async ({
+    page,
+  }, testInfo) => {
+    await page.goto(
+      `${PAYLOAD_BASE_URL}/admin/collections/shows?where[date][equals]=${SHOW_DATE_EMPTY}`,
+      { waitUntil: 'networkidle', timeout: 30000 },
+    );
+
+    // None of the seeded show times should be visible
+    await expect(page.getByText('06:11')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('10:22')).not.toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('14:33')).not.toBeVisible({ timeout: 5000 });
+
+    await captureScreenshot(page, testInfo, '23-Shows-Filtered-Empty');
+  });
+});
