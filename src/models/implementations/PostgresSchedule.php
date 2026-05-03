@@ -26,26 +26,42 @@ class PostgresSchedule implements Schedule {
     }
 
     /**
+     * Build the SQL expression that produces the schedule "host" string for
+     * display. When a show has both a name (e.g., "Britspotting") and a host
+     * person (e.g., "Matt McGrath"), legacy production renders these joined
+     * with " w/ " — "Britspotting w/ Matt McGrath". Either side may be empty.
+     *
+     * Uses CONCAT_WS so NULL values are skipped automatically:
+     *   - both present  → "Show Name w/ Host"
+     *   - host only     → "Host"
+     *   - name only     → "Show Name"
+     *   - neither       → ""
+     */
+    private function buildHostExpression(): string {
+        return "COALESCE(NULLIF(CONCAT_WS(' w/ ', "
+             . "NULLIF(s.name, ''), "
+             . "(SELECT string_agg(p.name, ', ' ORDER BY dr.order) "
+             . " FROM djs_rels dr "
+             . " JOIN people p ON dr.people_id = p.id "
+             . " WHERE dr.parent_id = s.host_id AND dr.path = 'person')"
+             . "), ''), '') as host";
+    }
+
+    /**
      * Get a specific schedule entry by ID
      * 
      * @param int $id The ID of the schedule entry to retrieve
      * @return array|null The schedule data or null if not found
      */
     public function getById(int $id): ?array {
+        $hostExpr = $this->buildHostExpression();
         $stmt = $this->db->prepare("
             SELECT 
                 s.id,
                 s.date,
                 s.start_time as start_time,
                 s.end_time as end_time,
-                COALESCE(
-                    (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
-                     FROM djs_rels dr
-                     JOIN people p ON dr.people_id = p.id
-                     WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    s.name,
-                    ''
-                ) as host,
+                {$hostExpr},
                 COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
@@ -70,20 +86,14 @@ class PostgresSchedule implements Schedule {
      * @return array Array of schedule entries
      */
     public function getByDate(string $date): array {
+        $hostExpr = $this->buildHostExpression();
         $stmt = $this->db->prepare("
             SELECT 
                 s.id,
                 s.date,
                 s.start_time as start_time,
                 s.end_time as end_time,
-                COALESCE(
-                    (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
-                     FROM djs_rels dr
-                     JOIN people p ON dr.people_id = p.id
-                     WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    s.name,
-                    ''
-                ) as host,
+                {$hostExpr},
                 COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
@@ -124,6 +134,7 @@ class PostgresSchedule implements Schedule {
      * @return array Array of schedule entries grouped by date
      */
     private function getScheduleGroupedByDate(?int $limit): array {
+        $hostExpr = $this->buildHostExpression();
         // Build query to get all entries with date info in one go
         $query = "
             SELECT 
@@ -132,14 +143,7 @@ class PostgresSchedule implements Schedule {
                 TO_CHAR(s.date, 'MM/DD/YY') as fdate,
                 s.start_time as start_time,
                 s.end_time as end_time,
-                COALESCE(
-                    (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
-                     FROM djs_rels dr
-                     JOIN people p ON dr.people_id = p.id
-                     WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                    s.name,
-                    ''
-                ) as host,
+                {$hostExpr},
                 COALESCE(s.note::text, '') as note,
                 'n' as deleted
             FROM shows s
@@ -165,14 +169,7 @@ class PostgresSchedule implements Schedule {
                     TO_CHAR(s.date, 'MM/DD/YY') as fdate,
                     s.start_time as start_time,
                     s.end_time as end_time,
-                    COALESCE(
-                        (SELECT string_agg(p.name, ', ' ORDER BY dr.order)
-                         FROM djs_rels dr
-                         JOIN people p ON dr.people_id = p.id
-                         WHERE dr.parent_id = s.host_id AND dr.path = 'person'),
-                        s.name,
-                        ''
-                    ) as host,
+                    {$hostExpr},
                     COALESCE(s.note::text, '') as note,
                     'n' as deleted
                 FROM shows s
