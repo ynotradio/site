@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Deejay;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresDeejay implements Deejay {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     public function __construct(PDO $db) {
@@ -241,105 +244,20 @@ class PostgresDeejay implements Deejay {
 
     /**
      * Format a single result to match MySQL output format
-     * Converts Lexical JSON description to plain text for display
-     * 
+     * Converts Lexical JSON description to HTML for display
+     *
      * @param array $row Raw database result
      * @return array Formatted result
      */
     private function formatResult(array $row): array {
-        // Convert Lexical JSON description to plain text for 'show' field
+        // Convert Lexical JSON description to HTML for 'show' field
         if (isset($row['description'])) {
-            $row['show'] = $this->convertLexicalToText($row['description']);
+            $row['show'] = $this->convertLexicalToHtml($row['description']);
             unset($row['description']);
         } else {
             $row['show'] = '';
         }
-        
+
         return $row;
-    }
-
-    /**
-     * Convert Lexical JSON format to plain text
-     * Payload CMS stores content in Lexical JSON format, but the frontend expects plain text
-     * 
-     * @param string $lexicalJson Lexical JSON string
-     * @return string Plain text content
-     */
-    private function convertLexicalToText(string $lexicalJson): string {
-        // Try to decode as JSON first
-        $lexical = json_decode($lexicalJson, true);
-        
-        // If it's not valid JSON, assume it's already text
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return $lexicalJson;
-        }
-        
-        try {
-            if (!isset($lexical['root']['children'])) {
-                return $lexicalJson; // Return original if structure is unexpected
-            }
-            
-            $text = '';
-            foreach ($lexical['root']['children'] as $node) {
-                $text .= $this->extractTextFromNode($node);
-            }
-            
-            return trim($text);
-        } catch (\Exception $e) {
-            // If conversion fails, return original content
-            error_log("PostgresDeejay: Failed to convert Lexical to text: " . $e->getMessage());
-            return $lexicalJson;
-        }
-    }
-
-    /**
-     * Extract plain text from a Lexical node
-     * 
-     * @param array $node Lexical node
-     * @return string Plain text
-     */
-    private function extractTextFromNode(array $node): string {
-        $type = $node['type'] ?? '';
-        
-        switch ($type) {
-            case 'paragraph':
-            case 'heading':
-            case 'listitem':
-                $text = $this->extractTextFromChildren($node);
-                // Add line break after paragraphs and list items
-                return $text . "\n";
-                
-            case 'list':
-                return $this->extractTextFromChildren($node);
-                
-            case 'text':
-                return $node['text'] ?? '';
-                
-            case 'link':
-                return $this->extractTextFromChildren($node);
-                
-            default:
-                // For unknown types, try to extract text from children
-                return $this->extractTextFromChildren($node);
-        }
-    }
-
-    /**
-     * Extract text from children of a Lexical node
-     * 
-     * @param array $node Lexical node with children
-     * @return string Combined text from all children
-     */
-    private function extractTextFromChildren(array $node): string {
-        if (!isset($node['children']) || !is_array($node['children'])) {
-            return '';
-        }
-        
-        $text = '';
-        foreach ($node['children'] as $child) {
-            $text .= $this->extractTextFromNode($child);
-        }
-        
-        return $text;
     }
 }
