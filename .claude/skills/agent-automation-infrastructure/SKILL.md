@@ -8,10 +8,12 @@ description: Current state of CI/CD automation infrastructure, pre-built Docker 
 ## Bootstrap: Run This First (Every Session)
 
 ```bash
-bash bin/agent-helpers/bootstrap.sh
+source bin/agent-helpers/bootstrap.sh
 ```
 
-**Why**: The coding-agent sandbox clones the repo but does NOT run `yarn install`. Without `node_modules`, commands like `yarn lint`, `yarn test`, and `yarn test:e2e` fail with "command not found".
+**Why**: The coding-agent sandbox clones the repo but does NOT run `yarn install`. Without `node_modules`, commands like `yarn lint`, `yarn test`, and `yarn test:e2e` fail with "command not found". The script also checks the Node.js version and activates `nvm` if the version is wrong — **use `source`, not `bash`**, so the Node.js switch takes effect in your current shell session.
+
+**If the script emits a `❌ BLOCKER` message**, stop immediately and report the blocker. Do not continue investigating.
 
 **Timing** (measured on GitHub-hosted runner, March 2026):
 
@@ -161,8 +163,8 @@ Stop and report if:
 ### Standard Agent Workflow
 
 ```bash
-# 1. Bootstrap (once at session start)
-bash bin/agent-helpers/bootstrap.sh
+# 1. Bootstrap (once at session start — use source, not bash)
+source bin/agent-helpers/bootstrap.sh
 
 # 2. Make code changes
 
