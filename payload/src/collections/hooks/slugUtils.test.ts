@@ -18,6 +18,8 @@ import {
   generateMusicSlugBeforeChangeHook,
   resolveArtistName,
   setCdOfTheWeekSlugFromRecord,
+  postSlugify,
+  cdSlugify,
 } from './slugUtils';
 
 // Helper to create a mock request object
@@ -566,5 +568,87 @@ describe('setCdOfTheWeekSlugFromRecord', () => {
     });
 
     expect(result.slug).toBeUndefined();
+  });
+});
+
+describe('postSlugify', () => {
+  const req = createMockReq({}) as never;
+
+  it('builds YYYY-MM-DD--headline from headline + startDate', () => {
+    const result = postSlugify({
+      data: { headline: 'Hello World', startDate: '2025-01-15T00:00:00.000Z' },
+      req,
+    });
+    expect(result).toBe('2025-01-15--hello-world');
+  });
+
+  it('omits the date prefix when startDate is missing', () => {
+    const result = postSlugify({
+      data: { headline: 'No Date Post' },
+      req,
+    });
+    expect(result).toBe('no-date-post');
+  });
+
+  it('honors a user-typed slug via valueToSlugify', () => {
+    const result = postSlugify({
+      data: { headline: 'Hello World', startDate: '2025-01-15T00:00:00.000Z' },
+      req,
+      valueToSlugify: 'My Custom Slug',
+    });
+    expect(result).toBe('my-custom-slug');
+  });
+
+  it('returns undefined when neither headline nor valueToSlugify is present', () => {
+    expect(postSlugify({ data: {}, req })).toBeUndefined();
+  });
+
+  it('strips HTML tags from headlines', () => {
+    const result = postSlugify({
+      data: { headline: '<em>Bold</em> News', startDate: '2025-02-20T00:00:00.000Z' },
+      req,
+    });
+    expect(result).toBe('2025-02-20--bold-news');
+  });
+});
+
+describe('cdSlugify', () => {
+  const req = createMockReq({}) as never;
+
+  it('returns the precomputed slug from data.slug synchronously', () => {
+    const result = cdSlugify({
+      data: { slug: '2025-01-15--some-record' },
+      req,
+    });
+    expect(result).toBe('2025-01-15--some-record');
+  });
+
+  it('falls back to slugified valueToSlugify when no precomputed slug exists', () => {
+    const result = cdSlugify({
+      data: {},
+      req,
+      valueToSlugify: 'Manual Override',
+    });
+    expect(result).toBe('manual-override');
+  });
+
+  it('returns undefined when nothing is available', () => {
+    expect(cdSlugify({ data: {}, req })).toBeUndefined();
+  });
+});
+
+describe('setCdOfTheWeekSlugFromRecord override guard', () => {
+  it('respects the user override when generateSlug is false', async () => {
+    const findByID = vi.fn();
+    const result = await setCdOfTheWeekSlugFromRecord({
+      data: { generateSlug: false, slug: 'manual-slug', record: 1, date: '2025-01-15' },
+      req: createMockReq({ findByID }) as never,
+      operation: 'update',
+      collection: { slug: 'cdoftheweek' } as never,
+      context: {} as never,
+    } as never);
+
+    expect(findByID).not.toHaveBeenCalled();
+    expect((result as { slug: string }).slug).toBe('manual-slug');
   });
 });

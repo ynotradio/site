@@ -30,7 +30,7 @@ export const Artists: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       name: 'bio',
       type: 'richText',
