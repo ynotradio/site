@@ -196,6 +196,210 @@ async function fixEmilyToEm(payload: any, dryRun: boolean): Promise<void> {
   }
 }
 
+/**
+ * Issue: Concert titles + sold-out status parity with prod (ynotradio.net).
+ *
+ * The legacy import left some concerts with NULL/empty `title` (so the public
+ * page shows just the artist names joined) and some with stale `ticket_info`
+ * (mostly missing SOLD OUT badges or stale "Tickets Available"). This applies
+ * the canonical mapping confirmed against legacy production for all currently
+ * visible concerts.
+ *
+ * Match by (date::date, venue.name) so timezone offsets in `concerts.date`
+ * (mixed 00:00 UTC vs 04:00 UTC) don't affect lookup. Idempotent: only writes
+ * when current value differs.
+ */
+interface ConcertFix {
+  date: string; // YYYY-MM-DD
+  venue: string;
+  title?: string;
+  ticketInfo?: string;
+}
+
+const CONCERT_FIXES: ConcertFix[] = [
+  // Title fixes (and combined title/ticket_info where applicable)
+  {
+    date: '2026-05-03',
+    venue: 'Ardmore Music Hall',
+    title: 'Brian Fallon (Sing Us Home After Party)',
+  },
+  { date: '2026-05-09', venue: 'First Unitarian Church', title: 'Gladie w/ Noun' },
+  { date: '2026-05-11', venue: 'Union Transfer', title: 'Iron & Wine' },
+  { date: '2026-05-12', venue: 'The Fillmore', title: 'Courtney Barnett w/ Momma' },
+  { date: '2026-05-15', venue: 'Ukie Club', title: 'Mal Blum and Oceanator' },
+  { date: '2026-05-15', venue: 'Ardmore Music Hall', title: 'Southern Culture on the Skids' },
+  { date: '2026-05-22', venue: 'Union Transfer', title: 'Toadies w/ Local H' },
+  { date: '2026-05-29', venue: 'PhilaMOCA', title: 'Tim Kasher (of Cursive)' },
+  { date: '2026-05-29', venue: "Johnny Brenda's", title: 'Just Mustard & Miss Grit' },
+  { date: '2026-05-31', venue: 'The Fillmore', title: 'Ben Folds and A Piano' },
+  {
+    date: '2026-06-06',
+    venue: 'TLA',
+    title: 'Pete Yorn (Musicforthemorningafter 25th Anniversary / Solo Acoustic)',
+  },
+  { date: '2026-06-08', venue: 'Mann Skyline Stage', title: 'Amyl and The Sniffers' },
+  {
+    date: '2026-06-23',
+    venue: 'Franklin Music Hall',
+    title: 'Black Country, New Road w/ Horsegirl',
+  },
+  {
+    date: '2026-06-23',
+    venue: 'The Fillmore',
+    title: 'Spoon & The Beths',
+    ticketInfo: 'Tickets Available',
+  },
+  { date: '2026-06-25', venue: 'Underground Arts', title: 'of Montreal' },
+  {
+    date: '2026-06-26',
+    venue: 'Mann Center',
+    title: 'The Strokes w/ Thundercat & Hamilton Leithauser',
+    ticketInfo: 'SOLD OUT',
+  },
+  { date: '2026-06-28', venue: 'The Met', title: 'The Human League w/ Soft Cell & Alison Moyet' },
+  { date: '2026-07-10', venue: 'Union Transfer', title: 'American Football w/ IAN SWEET' },
+  {
+    date: '2026-07-10',
+    venue: 'Kung Fu Necktie',
+    title: "Y-Not Radio's Swell 16 Celebration w/ WAAX and The Blackburns",
+  },
+  { date: '2026-07-15', venue: 'Xfinity Mobile Arena', title: 'Tame Impala w/ Djo' },
+  {
+    date: '2026-07-17',
+    venue: 'Borgata Event Center (Atlantic City)',
+    title: '"Weird Al" Yankovic',
+  },
+  {
+    date: '2026-07-17',
+    venue: 'Mann Center',
+    title: 'Death Cab For Cutie w/ Japanese Breakfast',
+    ticketInfo: 'Tickets Available',
+  },
+  { date: '2026-07-23', venue: 'Underground Arts', title: 'Man Man w/ Death Valley Girls' },
+  {
+    date: '2026-07-24',
+    venue: 'Dell Music Center',
+    title: 'Make The World Better Concert w/ Pavement and Ratboys',
+  },
+  {
+    date: '2026-07-25',
+    venue: 'Dell Music Center',
+    title: 'Make The World Better Concert w/ Kurt Vile and They Are Gutting A Body of Water',
+  },
+  { date: '2026-07-28', venue: 'The Met', title: 'Metric w/ Broken Social Scene and Stars' },
+  { date: '2026-08-01', venue: 'The Met', title: 'Tori Amos w/ Bartees Strange' },
+  {
+    date: '2026-08-04',
+    venue: 'Wind Creek Steel Stage (Bethlehem, PA)',
+    title: '"Weird Al" Yankovic',
+  },
+  {
+    date: '2026-08-13',
+    venue: 'Lincoln Financial Field',
+    title: 'Foo Fighters w/ Queens of The Stone Age & Mannequin Pussy',
+  },
+  {
+    date: '2026-09-05',
+    venue: 'Mann Center',
+    title: 'Empire of The Sun',
+    ticketInfo: 'Tickets Available',
+  },
+  {
+    date: '2026-09-06',
+    venue: 'Xfinity Mobile Arena',
+    title: 'Lily Allen (performing West End Girl)',
+    ticketInfo: 'Tickets Available',
+  },
+  {
+    date: '2026-09-29',
+    venue: 'Xfinity Mobile Arena',
+    title: 'Weezer w/ The Shins and Silversun Pickups',
+    ticketInfo: 'Tickets Available',
+  },
+  { date: '2026-11-07', venue: "Johnny Brenda's", title: 'Teen Jesus and The Jean Teasers' },
+  // Ticket-info-only fixes
+  { date: '2026-05-12', venue: 'The Foundry', ticketInfo: 'SOLD OUT' },
+  { date: '2026-05-15', venue: 'Union Transfer', ticketInfo: 'SOLD OUT' },
+  { date: '2026-05-16', venue: 'Union Transfer', ticketInfo: 'SOLD OUT' },
+  { date: '2026-05-17', venue: 'Union Transfer', ticketInfo: 'Tickets Available' },
+  { date: '2026-07-29', venue: 'Freedom Mortgage Pavilion', ticketInfo: 'Tickets Available' },
+  { date: '2026-09-25', venue: 'The Fillmore', ticketInfo: 'Tickets Available' },
+  { date: '2026-09-26', venue: 'The Fillmore', ticketInfo: 'Tickets Available' },
+  { date: '2026-10-12', venue: 'Union Transfer', ticketInfo: 'Tickets Available' },
+  { date: '2026-10-13', venue: 'Union Transfer', ticketInfo: 'Tickets Available' },
+];
+
+async function fixConcertTitlesAndStatuses(payload: any, dryRun: boolean): Promise<void> {
+  const db = payload.db.drizzle.session.client;
+  let updated = 0;
+  let skipped = 0;
+  let missing = 0;
+
+  for (const fix of CONCERT_FIXES) {
+    const { rows } = await db.query(
+      `SELECT c.id, c.title, c.ticket_info
+         FROM concerts c
+         JOIN venues v ON v.id = c.venue_id
+        WHERE c.date::date = $1::date AND v.name = $2 AND c._status = 'published'`,
+      [fix.date, fix.venue],
+    );
+    if (rows.length === 0) {
+      logger.warn(`MISSING concert ${fix.date} @ ${fix.venue} — skipping (legacy import gap).`);
+      missing += 1;
+    } else {
+      if (rows.length > 1) {
+        logger.warn(
+          `Multiple concerts on ${fix.date} @ ${fix.venue} (${rows.length}) — applying to all.`,
+        );
+      }
+
+      // eslint-disable-next-line no-restricted-syntax
+      for (const row of rows) {
+        const sets: string[] = [];
+        const params: any[] = [];
+        let p = 1;
+        const label = `concert id=${row.id} (${fix.date} @ ${fix.venue})`;
+
+        if (fix.title !== undefined && row.title !== fix.title) {
+          sets.push(`title = $${p}`);
+          params.push(fix.title);
+          p += 1;
+        }
+        if (fix.ticketInfo !== undefined && row.ticket_info !== fix.ticketInfo) {
+          sets.push(`ticket_info = $${p}`);
+          params.push(fix.ticketInfo);
+          p += 1;
+        }
+
+        if (sets.length === 0) {
+          logger.info(`${label} already correct — skip.`);
+          skipped += 1;
+        } else {
+          const summary = sets
+            .map((s) => s.split(' = ')[0])
+            .map((field) => {
+              if (field === 'title') return `title="${fix.title}" (was: ${row.title === null ? 'NULL' : `"${row.title}"`})`;
+              if (field === 'ticket_info') return `ticket_info="${fix.ticketInfo}" (was: "${row.ticket_info}")`;
+              return field;
+            })
+            .join(', ');
+
+          logger.info(`${label} → ${summary}`);
+          if (!dryRun) {
+            params.push(row.id);
+            await db.query(
+              `UPDATE concerts SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${p}`,
+              params,
+            );
+          }
+          updated += 1;
+        }
+      }
+    }
+  }
+  logger.info(`Concert fixes: ${updated} updated, ${skipped} already-correct, ${missing} missing.`);
+}
+
 async function run(options: Options) {
   logger.info(`Starting deejays admin fixes (env=${options.env}, dryRun=${options.dryRun})`);
   process.env.PAYLOAD_MIGRATING = 'true';
@@ -204,6 +408,7 @@ async function run(options: Options) {
   await fixJudyPhoto(payload, options.dryRun);
   await fixSortOrderSwap(payload, options.dryRun);
   await fixEmilyToEm(payload, options.dryRun);
+  await fixConcertTitlesAndStatuses(payload, options.dryRun);
   logger.info('Done.');
 }
 
