@@ -1,8 +1,9 @@
 import type { CollectionConfig } from 'payload';
+import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
-import { slugifyHeadline, formatDatePrefix } from './hooks/slugUtils';
+import { postSlugify } from './hooks/slugUtils';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -47,32 +48,7 @@ export const Posts: CollectionConfig = {
         description: 'Post headline (max 100 characters)',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        position: 'sidebar',
-        description: 'URL-friendly slug (auto-generated as YYYY-MM-DD--headline)',
-      },
-      hooks: {
-        beforeValidate: [
-          ({ data, operation, value }) => {
-            if (operation === 'create' && !value && data?.headline) {
-              const headlineSlug = slugifyHeadline(data.headline);
-              if (!headlineSlug) return value;
-              const dateStr = data.startDate
-                ? formatDatePrefix(new Date(data.startDate as string))
-                : '';
-              return dateStr ? `${dateStr}--${headlineSlug}` : headlineSlug;
-            }
-            return value;
-          },
-        ],
-      },
-    },
+    slugField({ useAsSlug: 'headline', slugify: postSlugify }),
     {
       type: 'row',
       fields: [

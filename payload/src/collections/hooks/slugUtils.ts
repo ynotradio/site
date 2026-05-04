@@ -172,6 +172,9 @@ export const generateMusicSlugBeforeChangeHook: CollectionBeforeChangeHook = asy
 export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({ data, req }) => {
   const updatedData = data;
 
+  // Respect the user's manual slug override (Unlock button sets generateSlug = false)
+  if (updatedData.generateSlug === false) return updatedData;
+
   if (!updatedData.record) return updatedData;
 
   let recordId = updatedData.record;
@@ -196,4 +199,45 @@ export const setCdOfTheWeekSlugFromRecord: CollectionBeforeChangeHook = async ({
   }
 
   return updatedData;
+};
+
+/**
+ * Custom slugify function for Posts (Stories).
+ * Generates "YYYY-MM-DD--headline" format slugs synchronously from headline + startDate.
+ */
+export const postSlugify: Slugify = ({ data, valueToSlugify }) => {
+  const headline = data?.headline;
+  if (!headline) {
+    return valueToSlugify ? slugifyHeadline(String(valueToSlugify)) : undefined;
+  }
+
+  // Honor a user-typed slug (valueToSlugify diverged from headline)
+  if (valueToSlugify && String(valueToSlugify) !== String(headline)) {
+    return slugifyHeadline(String(valueToSlugify));
+  }
+
+  const headlineSlug = slugifyHeadline(String(headline));
+  if (!headlineSlug) return undefined;
+
+  const dateStr = data?.startDate
+    ? formatDatePrefix(new Date(data.startDate as string))
+    : '';
+  return dateStr ? `${dateStr}--${headlineSlug}` : headlineSlug;
+};
+
+/**
+ * Custom slugify function for CdOfTheWeek.
+ * Returns the slug pre-computed by setCdOfTheWeekSlugFromRecord (collection beforeChange hook
+ * runs before field hooks). Falls back to valueToSlugify if no precomputed slug exists.
+ *
+ * IMPORTANT: Returns synchronously because Payload's generateSlug wrapper does NOT await
+ * Promise results; the async record lookup must happen in the collection-level hook.
+ */
+export const cdSlugify: Slugify = ({ data, valueToSlugify }) => {
+  const precomputedSlug = data?.slug;
+  if (typeof precomputedSlug === 'string' && precomputedSlug) {
+    return precomputedSlug;
+  }
+  if (valueToSlugify) return slugifyText(String(valueToSlugify));
+  return undefined;
 };

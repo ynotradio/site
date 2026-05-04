@@ -28,7 +28,7 @@ export const Venues: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       type: 'row',
       fields: [

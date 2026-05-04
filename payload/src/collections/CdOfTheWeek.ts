@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload';
+import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
-import { setCdOfTheWeekSlugFromRecord } from './hooks/slugUtils';
+import { setCdOfTheWeekSlugFromRecord, cdSlugify } from './hooks/slugUtils';
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
@@ -39,17 +40,7 @@ export const CdOfTheWeek: CollectionConfig = {
         description: 'Select the album to review — create it in Records first if needed',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      unique: true,
-      index: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Auto-generated from the associated record slug',
-      },
-    },
+    slugField({ useAsSlug: 'date', slugify: cdSlugify }),
     {
       type: 'row',
       fields: [

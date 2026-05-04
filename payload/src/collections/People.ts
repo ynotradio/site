@@ -29,7 +29,7 @@ export const People: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       name: 'bio',
       type: 'richText',

@@ -74,60 +74,18 @@ describe('Posts', () => {
     expect(slugField?.index).toBe(true);
   });
 
-  it('auto-generates slug from headline and startDate on create', () => {
+  it('uses postSlugify for slug generation', () => {
     const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
     const slugField = fields.find((f) => f.name === 'slug') as {
-      hooks?: { beforeValidate?: Function[] };
+      custom?: { slugify?: unknown };
     };
-    const hookFn = slugField?.hooks?.beforeValidate?.[0];
-    expect(typeof hookFn).toBe('function');
-
-    // Auto-generates slug with date prefix on create when value is empty
-    const result = hookFn?.({
-      data: { headline: 'Hello World', startDate: '2025-01-15T00:00:00.000Z' },
-      operation: 'create',
-      value: undefined,
-    });
-    expect(result).toMatch(/^2025-01-15--hello-world/);
-
-    // Does not override existing value
-    const existing = hookFn?.({
-      data: { headline: 'Hello World' },
-      operation: 'create',
-      value: 'existing-slug',
-    });
-    expect(existing).toBe('existing-slug');
-
-    // Does not auto-generate on update
-    const update = hookFn?.({
-      data: { headline: 'Hello World' },
-      operation: 'update',
-      value: undefined,
-    });
-    expect(update).toBeUndefined();
-
-    // Handles missing headline
-    const noHeadline = hookFn?.({
-      data: {},
-      operation: 'create',
-      value: undefined,
-    });
-    expect(noHeadline).toBeUndefined();
+    expect(typeof slugField?.custom?.slugify).toBe('function');
   });
 
-  it('generates slug without date prefix when startDate is absent', () => {
+  it('exposes generateSlug checkbox companion to the slug field', () => {
     const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
-    const slugField = fields.find((f) => f.name === 'slug') as {
-      hooks?: { beforeValidate?: Function[] };
-    };
-    const hookFn = slugField?.hooks?.beforeValidate?.[0];
-
-    const result = hookFn?.({
-      data: { headline: 'No Date Post' },
-      operation: 'create',
-      value: undefined,
-    });
-    expect(result).toBe('no-date-post');
+    const checkbox = fields.find((f) => f.name === 'generateSlug') as { type?: string };
+    expect(checkbox?.type).toBe('checkbox');
   });
 
   it('has startDate as a required date field', () => {
