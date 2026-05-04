@@ -343,57 +343,50 @@ async function fixConcertTitlesAndStatuses(payload: any, dryRun: boolean): Promi
         WHERE c.date::date = $1::date AND v.name = $2 AND c._status = 'published'`,
       [fix.date, fix.venue],
     );
+
     if (rows.length === 0) {
       logger.warn(`MISSING concert ${fix.date} @ ${fix.venue} — skipping (legacy import gap).`);
       missing += 1;
-    } else {
-      if (rows.length > 1) {
-        logger.warn(
-          `Multiple concerts on ${fix.date} @ ${fix.venue} (${rows.length}) — applying to all.`,
-        );
+      // eslint-disable-next-line no-continue
+      continue;
+    }
+
+    if (rows.length > 1) {
+      logger.warn(
+        `Multiple concerts on ${fix.date} @ ${fix.venue} (${rows.length}) — applying to all.`,
+      );
+    }
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const row of rows) {
+      const sets: string[] = [];
+      const params: any[] = [];
+      const changes: string[] = [];
+      const label = `concert id=${row.id} (${fix.date} @ ${fix.venue})`;
+
+      if (fix.title !== undefined && row.title !== fix.title) {
+        sets.push(`title = $${params.length + 1}`);
+        params.push(fix.title);
+        changes.push(`title="${fix.title}" (was: ${row.title === null ? 'NULL' : `"${row.title}"`})`);
+      }
+      if (fix.ticketInfo !== undefined && row.ticket_info !== fix.ticketInfo) {
+        sets.push(`ticket_info = $${params.length + 1}`);
+        params.push(fix.ticketInfo);
+        changes.push(`ticket_info="${fix.ticketInfo}" (was: "${row.ticket_info}")`);
       }
 
-      // eslint-disable-next-line no-restricted-syntax
-      for (const row of rows) {
-        const sets: string[] = [];
-        const params: any[] = [];
-        let p = 1;
-        const label = `concert id=${row.id} (${fix.date} @ ${fix.venue})`;
-
-        if (fix.title !== undefined && row.title !== fix.title) {
-          sets.push(`title = $${p}`);
-          params.push(fix.title);
-          p += 1;
+      if (sets.length === 0) {
+        logger.info(`${label} already correct — skip.`);
+        skipped += 1;
+      } else {
+        logger.info(`${label} → ${changes.join(', ')}`);
+        if (!dryRun) {
+          await db.query(
+            `UPDATE concerts SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${params.length + 1}`,
+            [...params, row.id],
+          );
         }
-        if (fix.ticketInfo !== undefined && row.ticket_info !== fix.ticketInfo) {
-          sets.push(`ticket_info = $${p}`);
-          params.push(fix.ticketInfo);
-          p += 1;
-        }
-
-        if (sets.length === 0) {
-          logger.info(`${label} already correct — skip.`);
-          skipped += 1;
-        } else {
-          const summary = sets
-            .map((s) => s.split(' = ')[0])
-            .map((field) => {
-              if (field === 'title') return `title="${fix.title}" (was: ${row.title === null ? 'NULL' : `"${row.title}"`})`;
-              if (field === 'ticket_info') return `ticket_info="${fix.ticketInfo}" (was: "${row.ticket_info}")`;
-              return field;
-            })
-            .join(', ');
-
-          logger.info(`${label} → ${summary}`);
-          if (!dryRun) {
-            params.push(row.id);
-            await db.query(
-              `UPDATE concerts SET ${sets.join(', ')}, updated_at = NOW() WHERE id = $${p}`,
-              params,
-            );
-          }
-          updated += 1;
-        }
+        updated += 1;
       }
     }
   }
