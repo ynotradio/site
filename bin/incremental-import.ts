@@ -266,8 +266,9 @@ async function getNewRecordCounts(
 
   for (const { key, table } of tables) {
     const lastId = lastIds[key as keyof LastImportIds] as number;
+    // cdotw and ondemand use 'no'/'yes'; other tables use 'n'/'y'.
     const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      `SELECT COUNT(*) as count FROM ${table} WHERE deleted = 'n' AND id > ?`,
+      `SELECT COUNT(*) as count FROM ${table} WHERE deleted NOT IN ('y', 'yes') AND id > ?`,
       [lastId],
     );
     counts[key] = rows[0]?.count || 0;
@@ -516,7 +517,7 @@ async function main() {
       extraArgs: ['--sync-active'],
     },
     { key: 'ondemand', script: 'bin/migrations/importOnDemand.ts', count: newCounts.ondemand },
-    { key: 'cdotw', script: 'bin/migrations/importCdotw.ts', count: newCounts.cdotw },
+    { key: 'cdotw', script: 'bin/migrations/importCdOfTheWeek.ts', count: newCounts.cdotw },
     { key: 'ads', script: 'bin/migrations/importAds.ts', count: newCounts.ads },
     { key: 'djs', script: 'bin/migrations/importDJs.ts', count: newCounts.djs },
     { key: 'schedule', script: 'bin/migrations/importSchedule.ts', count: newCounts.schedule },
