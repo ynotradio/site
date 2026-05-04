@@ -1,5 +1,10 @@
 [build]
-  command = "yarn validate:migrations && yarn payload:migrate && yarn build"
+  # `yes |` auto-accepts Payload's "dev mode detected" interactive prompt,
+  # which defaults to No on non-interactive CI and silently skips pending
+  # migrations (causing the build to hang until Netlify times out).
+  # `--forceAcceptWarning` alone does NOT suppress this specific prompt.
+  # Do not remove the `yes |` prefix.
+  command = "yarn validate:migrations && yes | yarn payload:migrate && yarn build"
   publish = ".next"
   ignore = "./scripts/netlify-ignore.sh"
 
