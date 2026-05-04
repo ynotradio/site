@@ -187,6 +187,12 @@ Converted inline styles to CSS files across all affected components:
   - `MusicBrainzRecordingField` reduced: 291 → 227 lines
   - `MusicBrainzReleaseField` reduced: 294 → 230 lines
 
+## ✅ New Completions (hooks)
+
+- [x] **showDateHooks.ts** ✅ Test added
+  - Path: `payload/src/collections/hooks/`
+  - 9 unit tests covering: string dates, Date objects, calendar date preservation, field spreading, idempotency, and missing/null/empty date values
+
 ## 📝 Notes
 
 - PR #173 established the coding standards
