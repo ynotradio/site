@@ -6,6 +6,10 @@ const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  // Hide from internal-link / relationship pickers in rich-text editors.
+  // Editors should select images via the upload field, not via internal links.
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Media File',
     plural: 'Media Files',

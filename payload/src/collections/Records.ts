@@ -6,13 +6,23 @@ import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUti
 
 export const Records: CollectionConfig = {
   slug: 'records',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Record',
     plural: 'Records',
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'coverImage', 'artist', 'musicbrainzId', 'label', 'releaseDate', 'updatedAt'],
+    defaultColumns: [
+      'displayName',
+      'coverImage',
+      'artist',
+      'musicbrainzId',
+      'label',
+      'releaseDate',
+      'updatedAt',
+    ],
     group: 'Music',
     description:
       'Albums and EPs. Referenced by Songs and CD of the Week — create the record first, then link it.',

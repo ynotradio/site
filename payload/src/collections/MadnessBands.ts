@@ -3,6 +3,8 @@ import { hasRole } from '../utils/auth';
 
 export const ModernRockMadnessGroups: CollectionConfig = {
   slug: 'modern-rock-madness-groups',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Group',
     plural: 'Groups',
