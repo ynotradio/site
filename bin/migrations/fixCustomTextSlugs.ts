@@ -8,21 +8,24 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Command } from 'commander';
 import mysql from 'mysql2/promise';
-import { getPayloadClient } from './shared/payloadClient';
-import { getLegacyDbConfig } from '../../config/databases';
+import { getPayloadClient, type PostgresTarget } from './shared/payloadClient';
+import { getMySQLConfig, type MySQLSource } from '../../config/databases';
 import { createLogger } from './shared/logger';
 
 const logger = createLogger('FixCustomTextSlugs');
 
 interface Options {
-  env: 'dev' | 'prod';
+  from: MySQLSource;
+  to: PostgresTarget;
   dryRun: boolean;
 }
 
 async function run(options: Options) {
-  logger.info(`Starting slug realignment (env=${options.env}, dryRun=${options.dryRun})`);
+  logger.info(
+    `Starting slug realignment (from=${options.from}, to=${options.to}, dryRun=${options.dryRun})`,
+  );
 
-  const cfg = getLegacyDbConfig();
+  const cfg = getMySQLConfig(options.from);
   const conn = await mysql.createConnection({
     host: cfg.host,
     port: cfg.port,
@@ -37,7 +40,7 @@ async function run(options: Options) {
   await conn.end();
 
   process.env.PAYLOAD_MIGRATING = 'true';
-  const payload = await getPayloadClient(options.env);
+  const payload = await getPayloadClient(options.to);
 
   let updated = 0;
   let alreadyOk = 0;
@@ -81,7 +84,9 @@ async function run(options: Options) {
           await payload.update({
             collection: 'posts',
             id: post.id,
-            data: { slug: target },
+            // generateSlug: false prevents the slugField hook from re-deriving
+            // the slug from headline + startDate on every update.
+            data: { slug: target, generateSlug: false },
           });
         }
         updated++;
@@ -96,11 +101,12 @@ async function run(options: Options) {
 
 const program = new Command();
 program
-  .option('--env <env>', 'dev or prod', 'dev')
+  .option('--from <source>', 'MySQL source: local-mysql or prod-mysql', 'local-mysql')
+  .option('--to <target>', 'Postgres target: local-postgres, dev-neon, or prod-neon', 'dev-neon')
   .option('--dry-run', 'do not write changes', false)
   .action(async (opts) => {
     try {
-      await run({ env: opts.env, dryRun: !!opts.dryRun });
+      await run({ from: opts.from, to: opts.to, dryRun: !!opts.dryRun });
       process.exit(0);
     } catch (e) {
       logger.error('Failed:', e);

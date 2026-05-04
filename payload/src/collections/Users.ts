@@ -17,6 +17,8 @@ const hasRole = (user: unknown, role: AppUserRole): boolean => {
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'User',
     plural: 'Users',

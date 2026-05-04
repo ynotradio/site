@@ -3,6 +3,8 @@ import { hasRole } from '../utils/auth';
 
 export const ModernRockMadnessMatches: CollectionConfig = {
   slug: 'modern-rock-madness-matches',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Match',
     plural: 'Matches',

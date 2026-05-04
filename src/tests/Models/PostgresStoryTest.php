@@ -322,6 +322,30 @@ class PostgresStoryTest extends TestCase
         );
     }
 
+    /**
+     * Empty paragraph nodes (Enter on a blank line in the editor) should
+     * render as <p><br></p> so they produce a visible blank line. Browsers
+     * collapse plain <p></p> to zero height, which surprises content editors.
+     */
+    public function testEmptyParagraphRendersAsParagraphWithBr(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'type' => 'root',
+                'children' => [
+                    ['type' => 'paragraph', 'children' => [['type' => 'text', 'text' => 'before']]],
+                    ['type' => 'paragraph', 'children' => []],
+                    ['type' => 'paragraph', 'children' => [['type' => 'text', 'text' => 'after']]],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString('<p><br></p>', $html);
+        $this->assertStringNotContainsString('<p></p>', $html);
+    }
+
     // ─── isValidUrl tests ────────────────────────────────────────────────
 
     /**

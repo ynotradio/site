@@ -6,13 +6,22 @@ import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUti
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Song',
     plural: 'Songs',
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'artist', 'musicbrainzId', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
+    defaultColumns: [
+      'displayName',
+      'artist',
+      'musicbrainzId',
+      'releaseDate',
+      'featureOnNewMusic',
+      'updatedAt',
+    ],
     group: 'Music',
     description:
       'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',

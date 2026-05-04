@@ -77,12 +77,14 @@ async function importCustomText(
 
       // Strip out upload nodes (images) since they have placeholder IDs that fail validation
       // Images will need to be re-added manually or via a separate import process
-      const stripUploadNodes = (nodes: any[]): any[] => nodes.filter((node) => node.type !== 'upload').map((node) => {
-        if (node.children && Array.isArray(node.children)) {
-          return { ...node, children: stripUploadNodes(node.children) };
-        }
-        return node;
-      });
+      const stripUploadNodes = (nodes: any[]): any[] => nodes
+        .filter((node) => node.type !== 'upload')
+        .map((node) => {
+          if (node.children && Array.isArray(node.children)) {
+            return { ...node, children: stripUploadNodes(node.children) };
+          }
+          return node;
+        });
 
       content.root.children = stripUploadNodes(content.root.children);
 
@@ -102,22 +104,26 @@ async function importCustomText(
             format: '',
             indent: 0,
             version: 1,
-            children: [{
-              type: 'paragraph',
-              format: '',
-              indent: 0,
-              version: 1,
-              children: [{
-                type: 'text',
-                text: '(No content available)',
-                format: 0,
-                mode: 'normal',
-                style: '',
-                detail: 0,
+            children: [
+              {
+                type: 'paragraph',
+                format: '',
+                indent: 0,
                 version: 1,
-              }],
-              direction: 'ltr',
-            }],
+                children: [
+                  {
+                    type: 'text',
+                    text: '(No content available)',
+                    format: 0,
+                    mode: 'normal',
+                    style: '',
+                    detail: 0,
+                    version: 1,
+                  },
+                ],
+                direction: 'ltr',
+              },
+            ],
             direction: 'ltr',
           },
         };
@@ -131,22 +137,26 @@ async function importCustomText(
           format: '',
           indent: 0,
           version: 1,
-          children: [{
-            type: 'paragraph',
-            format: '',
-            indent: 0,
-            version: 1,
-            children: [{
-              type: 'text',
-              text: '(No content available)',
-              format: 0,
-              mode: 'normal',
-              style: '',
-              detail: 0,
+          children: [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
               version: 1,
-            }],
-            direction: 'ltr',
-          }],
+              children: [
+                {
+                  type: 'text',
+                  text: '(No content available)',
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  detail: 0,
+                  version: 1,
+                },
+              ],
+              direction: 'ltr',
+            },
+          ],
           direction: 'ltr',
         },
       };
@@ -162,6 +172,9 @@ async function importCustomText(
         headline,
         content,
         slug,
+        // generateSlug: false ensures the postSlugify hook doesn't overwrite
+        // our permalink-derived slug with a date-prefixed value.
+        generateSlug: false,
         startDate: '2000-01-01T00:00:00.000Z', // Always visible content
         endDate: '2099-12-31T23:59:59.999Z', // Far future date
         showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
@@ -222,7 +235,9 @@ async function importCustomTexts(options: ImportOptions): Promise<void> {
       // Progress indicator every 10 items
       if ((i + 1) % 10 === 0) {
         const percentage = Math.round(((i + 1) / stats.total) * 100);
-        logger.info(`Progress: ${i + 1}/${stats.total} (${percentage}%) - Custom text ${customText.id}`);
+        logger.info(
+          `Progress: ${i + 1}/${stats.total} (${percentage}%) - Custom text ${customText.id}`,
+        );
       }
 
       const result = await importCustomText(payload, customText);

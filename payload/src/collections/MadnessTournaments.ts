@@ -4,6 +4,8 @@ import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 export const ModernRockMadnessTournaments: CollectionConfig = {
   slug: 'modern-rock-madness-tournaments',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Tournament',
     plural: 'Tournaments',

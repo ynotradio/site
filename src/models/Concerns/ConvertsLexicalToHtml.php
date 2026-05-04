@@ -139,6 +139,17 @@ trait ConvertsLexicalToHtml
         if ($format && in_array($format, ['left', 'center', 'right', 'justify'], true)) {
             $style = " style=\"text-align: {$format};\"";
         }
+
+        // Empty paragraph blocks (Lexical produces these when an editor presses
+        // Enter on a blank line) are typically collapsed to zero-height by
+        // browsers / our CSS, so a content editor pressing Enter to create
+        // visual spacing sees no effect. Emit <p><br></p> for empty <p> blocks
+        // so blank lines render as actual blank lines, matching the WYSIWYG
+        // behavior content editors expect from TinyMCE / CKEditor.
+        if ($tag === 'p' && trim($content) === '') {
+            return "<{$tag}{$style}><br></{$tag}>\n";
+        }
+
         return "<{$tag}{$style}>{$content}</{$tag}>\n";
     }
 

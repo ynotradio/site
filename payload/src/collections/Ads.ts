@@ -3,6 +3,8 @@ import { hasRole, adminOnlyCondition } from '../utils/auth';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Advertisement',
     plural: 'Advertisements',

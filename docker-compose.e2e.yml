@@ -48,6 +48,11 @@ services:
       - DATABASE_URI=postgresql://${POSTGRES_USER:-ynot_postgres_user}:${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}@postgres:5432/${POSTGRES_DB:-ynot_payload_dev}
       - DATABASE_SSL=disable
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-dev_payload_secret_not_for_production}
+      # Allow CORS/CSRF from the docker-network hostname Playwright uses
+      # (http://payload:3000) in addition to the default localhost origins.
+      # Without this, authenticated POSTs from the admin UI return 403.
+      - PAYLOAD_CORS=http://localhost:3000,http://localhost:3002,http://payload:3000
+      - PAYLOAD_CSRF=http://localhost:3000,http://localhost:3002,http://payload:3000
     depends_on:
       postgres:
         condition: service_healthy
@@ -160,6 +165,11 @@ services:
     volumes:
       - ./e2e:/app/e2e:ro
       - ./playwright.config.ts:/app/playwright.config.ts:ro
+      # Writable mounts so Playwright artifacts (traces, screenshots, video,
+      # HTML report) survive after the container exits and can be uploaded
+      # by Buildkite's artifact_paths step.
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
     environment:
       - CI=true
       - SKIP_PAYLOAD_SEED=true

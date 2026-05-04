@@ -270,6 +270,8 @@ const TextContentBlock: Block = {
  */
 export const YearEndPollResults: CollectionConfig = {
   slug: 'year-end-poll-results',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Year End Poll Result',
     plural: 'Year End Poll Results',

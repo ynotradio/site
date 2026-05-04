@@ -101,7 +101,7 @@ class PostgresConcert implements Concert {
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
-            ORDER BY c.date DESC
+            ORDER BY c.date DESC, c.legacy_id DESC, c.id DESC
             LIMIT :limit
         ");
         
@@ -147,7 +147,7 @@ class PostgresConcert implements Concert {
               AND c._status = 'published'
             GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
                      v.name, a_first.website, a_first_photo.url
-            ORDER BY c.date ASC
+            ORDER BY c.date ASC, c.legacy_id ASC, c.id ASC
             LIMIT :limit
         ");
         
