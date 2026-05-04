@@ -97,6 +97,60 @@ describe('cloudinaryAdapter', () => {
       expect(card.filename).toBe('dev/uploads/1234-abcd');
     });
 
+    it('skips null size entries in sizes object', async () => {
+      vi.mocked(cloudinaryMock.uploader.upload_stream).mockImplementation(
+        (_options: any, callback: any) => ({
+          end: () => callback(null, { public_id: 'dev/uploads/1234-abcd' }),
+        }),
+      );
+
+      const adapter = adapterFactory({} as any);
+      const card: any = { filename: 'old-card' };
+      const data: any = { sizes: { thumbnail: null, card } };
+
+      await adapter.handleUpload({
+        data,
+        file: { buffer: Buffer.from('image') } as any,
+        collection: {} as any,
+        req: {} as any,
+      });
+
+      expect(card.filename).toBe('dev/uploads/1234-abcd');
+    });
+
+    it('uses prod/uploads folder when NODE_ENV is production', async () => {
+      const originalEnv = process.env.NODE_ENV;
+      vi.resetModules();
+      process.env.NODE_ENV = 'production';
+
+      try {
+        const { cloudinaryAdapter: prodAdapter } = await import('./adapter');
+        vi.mocked(cloudinaryMock.uploader.upload_stream).mockImplementation(
+          (_options: any, callback: any) => ({
+            end: () => callback(null, { public_id: 'prod/uploads/1234-abcd' }),
+          }),
+        );
+
+        const adapter = prodAdapter({} as any);
+        const data: any = {};
+
+        await adapter.handleUpload({
+          data,
+          file: { buffer: Buffer.from('image') } as any,
+          collection: {} as any,
+          req: {} as any,
+        });
+
+        expect(cloudinaryMock.uploader.upload_stream).toHaveBeenCalledWith(
+          expect.objectContaining({ folder: 'prod/uploads' }),
+          expect.any(Function),
+        );
+      } finally {
+        process.env.NODE_ENV = originalEnv;
+        vi.resetModules();
+      }
+    });
+
     it('rejects when cloudinary upload returns an error', async () => {
       const uploadError = new Error('Cloudinary upload failed');
       vi.mocked(cloudinaryMock.uploader.upload_stream).mockImplementation(
