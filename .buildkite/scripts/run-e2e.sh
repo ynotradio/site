@@ -88,6 +88,11 @@ if [ "$APACHE_FINAL" != "healthy" ]; then
   exit 1
 fi
 
+# --- Pre-create writable artifact dirs so the playwright container (running
+# as root in the bind mount) can write to them and host can read them back.
+mkdir -p test-results playwright-report
+chmod -R 0777 test-results playwright-report
+
 # --- Run tests
 echo "🎭 Running Playwright E2E tests..."
 docker compose -f docker-compose.e2e.yml run --rm playwright

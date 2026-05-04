@@ -160,6 +160,11 @@ services:
     volumes:
       - ./e2e:/app/e2e:ro
       - ./playwright.config.ts:/app/playwright.config.ts:ro
+      # Writable mounts so Playwright artifacts (traces, screenshots, video,
+      # HTML report) survive after the container exits and can be uploaded
+      # by Buildkite's artifact_paths step.
+      - ./test-results:/app/test-results
+      - ./playwright-report:/app/playwright-report
     environment:
       - CI=true
       - SKIP_PAYLOAD_SEED=true
