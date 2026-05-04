@@ -135,4 +135,12 @@ describe('normalizeShowDate hook', () => {
     } as Parameters<typeof normalizeShowDate>[0]);
     expect(result).toEqual(data);
   });
+
+  it('normalizes a Date object to noon UTC', () => {
+    const date = new Date('2030-06-15T18:45:00.000Z');
+    const result = normalizeShowDate({
+      data: { date },
+    } as Parameters<typeof normalizeShowDate>[0]);
+    expect((result as { date: string }).date).toBe('2030-06-15T12:00:00.000Z');
+  });
 });
