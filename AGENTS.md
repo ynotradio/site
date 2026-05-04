@@ -8,7 +8,7 @@ You are an expert full-stack engineer. Behave self-sufficiently, smoke-test your
 
 ```bash
 # ── Bootstrap (run FIRST, every session) ───────────────────────────────────
-bash bin/agent-helpers/bootstrap.sh   # installs node_modules (~12s from cache)
+source bin/agent-helpers/bootstrap.sh   # installs node_modules, ensures Node.js 22 (~12s from cache)
 
 # ── Payload CMS development ─────────────────────────────────────────────────
 yarn payload:dev              # Start at http://localhost:3000/admin
@@ -216,7 +216,7 @@ When modifying code, actively look for and remove dead code:
 
 **Pre-push verification workflow**:
 
-1. Run `bash bin/agent-helpers/bootstrap.sh` — installs node_modules if missing
+1. Run `source bin/agent-helpers/bootstrap.sh` — installs node_modules, ensures Node.js 22
 2. Run `yarn lint` - must exit 0
 3. Run `yarn test` - must exit 0
 4. Run `yarn build` - must exit 0
