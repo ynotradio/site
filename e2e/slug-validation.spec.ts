@@ -39,6 +39,18 @@ test.describe('Slug field validation UX', () => {
     });
 
     await test.step('Attempt save without filling required fields to trigger validation', async () => {
+      // Touch the Title field (type then clear) so the client-side useField
+      // validator runs and marks Title (and the auto-generated slug) invalid.
+      // In production builds the initial form state has `valid: undefined`,
+      // so without first dirtying a required field, validateForm() short-circuits
+      // and the form submits to the server, which returns a generic 400 with no
+      // per-field error info — no tooltip would appear.
+      const titleInput = page.locator('#field-title');
+      await titleInput.click();
+      await titleInput.fill('x');
+      await titleInput.fill('');
+      await titleInput.blur();
+
       await page.getByRole('button', { name: /save/i }).click();
       // Wait for the validation error to appear on the slug field
       await page.waitForSelector('.field-error.tooltip--show', {
