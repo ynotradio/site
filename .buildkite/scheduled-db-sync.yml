@@ -18,11 +18,43 @@ env:
   NEON_ORG_ID: "org-cool-hat-59377226"
 
 steps:
-  - label: ":no_entry_sign: Pipeline disabled"
+  - label: ":neon: Sync Production → Development"
+    key: "db-sync"
+    timeout_in_minutes: 5
+    retry:
+      automatic:
+        - exit_status: -1
+          limit: 2
+        - exit_status: 255
+          limit: 1
     command: |
-      echo "This pipeline is intentionally disabled."
-      echo "Production cut over to Postgres on 2026-05-03; nightly MySQL→Neon import"
-      echo "and gap report are no longer required."
-      echo "Re-enable by restoring the original steps from git history if needed."
+      echo "--- :neon: Resetting development branch to match production"
+      npx neonctl branches reset development \
+        --parent \
+        --api-key "$$NEON_API_KEY" \
+        --project-id "$$NEON_PROJECT_ID" \
+        --org-id "$$NEON_ORG_ID"
+      echo "✅ Development branch reset to production"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "NEON_API_KEY"
+            - "NEON_PROJECT_ID"
+            - "NEON_ORG_ID"
+    agents:
+      queue: "default"
+
+  - wait: ~
+    continue_on_failure: true
+
+  - label: ":memo: Annotate on Failure"
+    command: |
+      buildkite-agent annotate \
+        "⚠️ Database sync failed. Check the logs above for details." \
+        --style "warning" \
+        --context "db-sync-failure"
+    if: build.state == "failed"
     agents:
       queue: "default"
