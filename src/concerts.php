@@ -4,6 +4,7 @@ $page_file = "concerts.php";
 $page_title = "Concerts";
 
 require ("functions/main_fns.php");
+require ("functions/concert_title.php");
 require ("models/ConcertFactory.php");
 require ("partials/_header.php");
 
@@ -27,7 +28,7 @@ use YNotRadio\Models\ConcertFactory;
       $fdate = date('D m/d', strtotime($concert['date']));
       
       echo "<tr><td>" . $fdate . "</td>\n".
-        "<td>" . $concert['artist'] . "</td>\n".
+        "<td>" . sanitize_concert_title_html($concert['artist']) . "</td>\n".
         "<td>" . $concert['venue'] . "</td>\n";
       
       if ($concert['ticketurl'] && $concert['ticketinfo'] != "SOLD OUT") {

@@ -1,5 +1,28 @@
-import type { CollectionConfig } from 'payload';
+import type { CollectionConfig, FieldHook } from 'payload';
+import {
+  BoldFeature,
+  InlineToolbarFeature,
+  ItalicFeature,
+  LinkFeature,
+  ParagraphFeature,
+  lexicalEditor,
+} from '@payloadcms/richtext-lexical';
+import type { SerializedEditorState } from 'lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import {
+  convertConcertTitleToHtml,
+  convertConcertTitleToPlain,
+} from '../utils/concertTitle';
+
+const syncTitleHtml: FieldHook = ({ siblingData }) => {
+  const { title } = siblingData as { title?: SerializedEditorState | null };
+  return convertConcertTitleToHtml(title);
+};
+
+const syncTitlePlain: FieldHook = ({ siblingData }) => {
+  const { title } = siblingData as { title?: SerializedEditorState | null };
+  return convertConcertTitleToPlain(title);
+};
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
@@ -11,8 +34,8 @@ export const Concerts: CollectionConfig = {
     drafts: true,
   },
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'artists', 'date', 'venue', '_status', 'updatedAt'],
+    useAsTitle: 'titlePlain',
+    defaultColumns: ['titlePlain', 'artists', 'date', 'venue', '_status', 'updatedAt'],
     group: 'Events',
     description: 'Concert listings.',
   },
@@ -26,9 +49,41 @@ export const Concerts: CollectionConfig = {
   fields: [
     {
       name: 'title',
+      type: 'richText',
+      editor: lexicalEditor({
+        features: () => [
+          ParagraphFeature(),
+          BoldFeature(),
+          ItalicFeature(),
+          LinkFeature(),
+          InlineToolbarFeature(),
+        ],
+      }),
+      admin: {
+        description:
+          'Optional custom title for the concert (falls back to artist names). Supports bold, italics, and links.',
+      },
+    },
+    {
+      name: 'titleHtml',
       type: 'text',
       admin: {
-        description: 'Optional custom title for the concert (falls back to artist names)',
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncTitleHtml],
+      },
+    },
+    {
+      name: 'titlePlain',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncTitlePlain],
       },
     },
     {
