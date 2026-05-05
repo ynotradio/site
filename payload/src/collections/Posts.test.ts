@@ -153,6 +153,7 @@ describe('Posts', () => {
       editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
     };
 
+    // eslint-disable-next-line no-underscore-dangle -- Payload uses `_config` internally
     const featuresCallback = contentField?.editor?._config?.features;
     expect(typeof featuresCallback).toBe('function');
 
