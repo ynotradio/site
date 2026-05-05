@@ -133,7 +133,11 @@ Lets you deploy any PR's head commit to production by applying the
    - Slug: `y-not-radio-deploy-pr` (must match the slug used by the GitHub workflow)
    - Repository: `https://github.com/ynotradio/site`
    - Configuration path: `.buildkite/pipeline-deploy-pr.yml`
-   - Disable webhooks (this pipeline is triggered exclusively via the REST API)
+   - GitHub provider settings: leave "Build branches" **enabled** (Buildkite's API
+     rejects branch builds with `422 Branches have been disabled for this pipeline`
+     when this is off, even for API-triggered builds). Disable all the
+     `Build pull requests`/`Build tags`/etc. webhook triggers so only the REST
+     API can start a build.
    - Add the same four `DEPLOY_*` / `ENV_PHP_CONTENTS` secrets as the legacy deploy pipeline
 2. Create a Buildkite REST API token with `write_builds` scope
 3. Add it to the GitHub repo as the `BUILDKITE_API_TOKEN` Actions secret
