@@ -1,0 +1,25 @@
+# PR-to-Production Deploy Pipeline
+#
+# Triggered via the Buildkite REST API by the GitHub Actions workflow
+# .github/workflows/deploy-pr-on-label.yml when a PR is labeled
+# `deploy-to-prod`. The workflow passes the PR's head SHA so this pipeline
+# deploys exactly that commit — no CI gate, no branch filter.
+#
+# Configure the Buildkite pipeline (e.g. y-not-radio-deploy-pr) to read
+# its steps from this file. Reuses deploy-legacy.sh so the deploy logic
+# stays in one place.
+#
+# Required Buildkite secrets (same as pipeline-deploy-legacy.yml):
+#   DEPLOY_SSH_KEY, DEPLOY_SSH_HOST, DEPLOY_SSH_KNOWN_HOSTS, ENV_PHP_CONTENTS
+
+steps:
+  - label: ":rocket: Deploy PR to Production"
+    key: "deploy-pr"
+    command: "bash .buildkite/scripts/deploy-legacy.sh"
+    plugins:
+      - docker#v5.11.0:
+          image: "composer:2"
+          propagate-environment: true
+          mount-buildkite-agent: true
+    agents:
+      queue: "default"
