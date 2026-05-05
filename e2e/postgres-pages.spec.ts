@@ -76,6 +76,20 @@ test.describe('Postgres-backed PHP pages', () => {
     await expect(mainPanel).not.toContainText(/error loading the CD of the Week/i);
   });
 
+  test('concerts.php preserves rich-text formatting (italic) in titles', async ({ page }) => {
+    // Pete Yorn concert in production uses an italic album title in the
+    // concert title — verifies the title_html column flows through the
+    // PHP sanitizer with <em> intact.
+    const url = `${LEGACY_BASE_URL}/concerts.php?ff=use_postgres_concerts`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    const peteYornCell = page.locator('td', { hasText: /Pete Yorn/ }).first();
+    if ((await peteYornCell.count()) === 0) {
+      test.skip(true, 'Pete Yorn concert not present (likely past); skipping italic assertion.');
+    }
+    await expect(peteYornCell.locator('em')).toBeVisible();
+  });
+
   test('donate.php displays donation content from Postgres', async ({ page }) => {
     const url = `${LEGACY_BASE_URL}/donate.php?ff=use_postgres_customtext`;
     const status = await gotoPhp(page, url);

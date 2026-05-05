@@ -32,7 +32,7 @@ class PostgresConcert implements Concert {
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
                 v.name as venue,
-                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
+                COALESCE(NULLIF(c.title_html, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -50,7 +50,7 @@ class PostgresConcert implements Concert {
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             WHERE c.id = :id
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title_html,
                      v.name, a_first.website, a_first_photo.url
         ");
         
@@ -82,7 +82,7 @@ class PostgresConcert implements Concert {
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
                 v.name as venue,
-                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
+                COALESCE(NULLIF(c.title_html, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -99,7 +99,7 @@ class PostgresConcert implements Concert {
                 LIMIT 1
             ) a_first ON true
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title_html,
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date DESC, c.legacy_id DESC, c.id DESC
             LIMIT :limit
@@ -126,7 +126,7 @@ class PostgresConcert implements Concert {
                 c.ticket_info as ticketinfo,
                 c.ticket_url as ticketurl,
                 v.name as venue,
-                COALESCE(NULLIF(c.title, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
+                COALESCE(NULLIF(c.title_html, ''), string_agg(a.name, ', ' ORDER BY cr.order)) as artist,
                 COALESCE(a_first.website, '') as band_url,
                 COALESCE(a_first_photo.url, '') as band_pic_url,
                 'n' as deleted
@@ -145,7 +145,7 @@ class PostgresConcert implements Concert {
             LEFT JOIN media a_first_photo ON a_first.photo_id = a_first_photo.id
             WHERE c.date::date >= CURRENT_DATE
               AND c._status = 'published'
-            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title,
+            GROUP BY c.id, c.date, c.venue_id, c.ticket_info, c.ticket_url, c.title_html,
                      v.name, a_first.website, a_first_photo.url
             ORDER BY c.date ASC, c.legacy_id ASC, c.id ASC
             LIMIT :limit

@@ -12,8 +12,8 @@ describe('Concerts', () => {
     expect(Concerts.labels?.plural).toBe('Concerts');
   });
 
-  it('uses title as admin title', () => {
-    expect(Concerts.admin?.useAsTitle).toBe('title');
+  it('uses titlePlain as admin title', () => {
+    expect(Concerts.admin?.useAsTitle).toBe('titlePlain');
   });
 
   it('is grouped under Events', () => {
@@ -86,11 +86,24 @@ describe('Concerts', () => {
     expect(venueField?.required).toBe(true);
   });
 
-  it('has title as an optional text field', () => {
+  it('has title as an optional richText field', () => {
     const allFields = flattenRowFields(Concerts.fields);
     const titleField = allFields.find((f) => f.name === 'title');
-    expect(titleField?.type).toBe('text');
+    expect(titleField?.type).toBe('richText');
     expect(titleField?.required).toBeFalsy();
+  });
+
+  it('has titleHtml and titlePlain hidden mirror fields with beforeChange hooks', () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    ['titleHtml', 'titlePlain'].forEach((name) => {
+      const field = allFields.find((f) => f.name === name);
+      expect(field?.type).toBe('text');
+      const admin = field?.admin as { hidden?: boolean; readOnly?: boolean } | undefined;
+      expect(admin?.hidden).toBe(true);
+      expect(admin?.readOnly).toBe(true);
+      const hooks = field?.hooks as { beforeChange?: unknown[] } | undefined;
+      expect(hooks?.beforeChange?.length ?? 0).toBeGreaterThan(0);
+    });
   });
 
   it('does not include a featured field (removed)', () => {
