@@ -46,7 +46,7 @@ fi
 # plugin's container via propagate-environment. The new `buildkite-agent
 # secret get` API needs the per-job Unix socket which isn't mounted into
 # plugin containers, so it can't run inside docker.
-if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"deploy"* ]]; then
+if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"deploy"* ]] || [[ "${BUILDKITE_STEP_KEY:-}" == *"deploy"* ]]; then
   DEPLOY_SSH_KEY=$(buildkite-agent secret get DEPLOY_SSH_KEY 2>/dev/null || true)
   DEPLOY_SSH_KNOWN_HOSTS=$(buildkite-agent secret get DEPLOY_SSH_KNOWN_HOSTS 2>/dev/null || true)
   DEPLOY_SSH_HOST=$(buildkite-agent secret get DEPLOY_SSH_HOST 2>/dev/null || true)
