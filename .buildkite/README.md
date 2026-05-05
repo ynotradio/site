@@ -7,6 +7,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 - **`pipeline.yml`** - Entry-point gate: checks for code changes, uploads `pipeline-ci.yml` if found, or skips for doc-only PRs
 - **`pipeline-ci.yml`** - Full CI steps: quality checks → tests → build → E2E (uploaded dynamically by `pipeline.yml`)
 - **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: manual unblock gate → rsync + composer deploy to production (uploaded alongside `pipeline-ci.yml` on master pushes)
+- **`pipeline-deploy-pr.yml`** - PR-to-production deploy: triggered via Buildkite REST API by `.github/workflows/deploy-pr-on-label.yml` when a PR is labeled `deploy-to-prod` (no CI gate, no branch filter — deploys exactly the PR head SHA)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
 - **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
@@ -112,14 +113,38 @@ Automatically appended to every master-push build by `check-changes.sh`. No sepa
 
 **Required secrets** (add via Buildkite UI → Pipeline Settings → Secrets):
 
-| Secret | Description |
-|---|---|
-| `DEPLOY_SSH_KEY` | SSH private key for the production server (`bitnami` user) |
-| `DEPLOY_SSH_HOST` | Production server hostname or IP address |
+| Secret                   | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| `DEPLOY_SSH_KEY`         | SSH private key for the production server (`bitnami` user)           |
+| `DEPLOY_SSH_HOST`        | Production server hostname or IP address                             |
 | `DEPLOY_SSH_KNOWN_HOSTS` | Known-hosts entry for the server (get with `ssh-keyscan <hostname>`) |
-| `ENV_PHP_CONTENTS` | Full contents of the production `.env.php` file |
+| `ENV_PHP_CONTENTS`       | Full contents of the production `.env.php` file                      |
 
 > **Note:** `bin/deploy.sh` and `bin/pre-deploy.sh` continue to work unchanged for local manual deploys.
+
+### PR-to-Production Deploy Pipeline
+
+Lets you deploy any PR's head commit to production by applying the
+`deploy-to-prod` label on GitHub. Skips CI and branch filters — use with care.
+
+**One-time setup:**
+
+1. New Buildkite pipeline: "Y-Not Radio - Deploy PR"
+   - Slug: `y-not-radio-deploy-pr` (must match the slug used by the GitHub workflow)
+   - Repository: `https://github.com/ynotradio/site`
+   - Configuration path: `.buildkite/pipeline-deploy-pr.yml`
+   - Disable webhooks (this pipeline is triggered exclusively via the REST API)
+   - Add the same four `DEPLOY_*` / `ENV_PHP_CONTENTS` secrets as the legacy deploy pipeline
+2. Create a Buildkite REST API token with `write_builds` scope
+3. Add it to the GitHub repo as the `BUILDKITE_API_TOKEN` Actions secret
+4. Create the `deploy-to-prod` label in the GitHub repo
+
+**How it works:**
+
+1. Apply the `deploy-to-prod` label to any open PR
+2. `.github/workflows/deploy-pr-on-label.yml` POSTs to the Buildkite REST API to create a build at the PR head SHA
+3. The Buildkite pipeline runs `deploy-legacy.sh` (same script as the master deploy)
+4. The workflow removes the label so re-applying re-triggers the deploy, and comments on the PR with the build URL
 
 ## Troubleshooting
 
