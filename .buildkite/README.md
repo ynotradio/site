@@ -6,7 +6,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 
 - **`pipeline.yml`** - Entry-point gate: checks for code changes, uploads `pipeline-ci.yml` if found, or skips for doc-only PRs
 - **`pipeline-ci.yml`** - Full CI steps: quality checks → tests → build → E2E (uploaded dynamically by `pipeline.yml`)
-- **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: manual unblock gate → rsync + composer deploy to production (uploaded alongside `pipeline-ci.yml` on master pushes)
+- **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: rsync + composer deploy to production, runs automatically after CI passes on master pushes (uploaded alongside `pipeline-ci.yml`)
 - **`pipeline-deploy-pr.yml`** - PR-to-production deploy: triggered via Buildkite REST API by `.github/workflows/deploy-pr-on-label.yml` when a PR is labeled `deploy-to-prod` (no CI gate, no branch filter — deploys exactly the PR head SHA)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
@@ -101,10 +101,10 @@ Automatically appended to every master-push build by `check-changes.sh`. No sepa
 1. Merge a PR to `master` in the GitHub app (works from mobile 📱)
 2. Buildkite picks up the push, runs full CI (`pipeline-ci.yml`)
 3. The deploy pipeline (`pipeline-deploy-legacy.yml`) is uploaded at the same time
-4. A **block step** ("🚀 Deploy legacy site to production?") pauses the deploy until you manually unblock it from the Buildkite web UI or mobile app
-5. After unblocking, the deploy step (via `.buildkite/scripts/deploy-legacy.sh`):
+4. Once `eslint`, `vitest`, `php-lint`, and `php-test` all pass, the deploy step runs automatically — no manual unblock. (A red CI build blocks the deploy via `depends_on`.)
+5. The deploy step (via `.buildkite/scripts/deploy-legacy.sh`):
    - Installs `rsync` and `openssh-client` in the `composer:2` container
-   - Fetches `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS`, and `ENV_PHP_CONTENTS` from Buildkite secrets
+   - Reads `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS`, and `ENV_PHP_CONTENTS` from env vars (fetched in the agent's pre-command hook from Buildkite secrets)
    - Runs `composer install --no-dev` locally in `src/`
    - Creates a timestamped backup of `htdocs` on the server (keeps latest 15)
    - Rsyncs `src/` to `~/htdocs/` on the production server
