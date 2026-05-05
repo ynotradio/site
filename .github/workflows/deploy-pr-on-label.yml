@@ -42,12 +42,22 @@ jobs:
             '{commit: $commit, branch: $branch, message: $message,
               author: {name: $author_name, email: $author_email},
               env: {DEPLOY_PR_NUMBER: $pr}}')
-          response=$(curl -fsS -X POST \
+          echo "Request payload:"
+          echo "$payload" | jq .
+          http_code=$(curl -sS -o /tmp/bk-response.json -w "%{http_code}" -X POST \
             "https://api.buildkite.com/v2/organizations/tj-nicolaides/pipelines/y-not-radio-deploy-pr/builds" \
             -H "Authorization: Bearer ${BUILDKITE_API_TOKEN}" \
             -H "Content-Type: application/json" \
             -d "$payload")
-          web_url=$(echo "$response" | jq -r '.web_url')
+          echo "HTTP $http_code"
+          echo "Response body:"
+          cat /tmp/bk-response.json
+          echo
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Buildkite API rejected the request."
+            exit 1
+          fi
+          web_url=$(jq -r '.web_url' /tmp/bk-response.json)
           echo "Triggered Buildkite build: $web_url"
           echo "web_url=$web_url" >> "$GITHUB_OUTPUT"
 
