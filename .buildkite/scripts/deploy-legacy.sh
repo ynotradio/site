@@ -12,14 +12,18 @@ apk add --no-cache rsync openssh-client
 echo "--- :key: Configuring SSH"
 mkdir -p ~/.ssh
 chmod 700 ~/.ssh
-buildkite-agent secret get DEPLOY_SSH_KEY > ~/.ssh/deploy_key
+: "${DEPLOY_SSH_KEY:?DEPLOY_SSH_KEY env var missing — pre-command hook should have fetched it}"
+: "${DEPLOY_SSH_KNOWN_HOSTS:?DEPLOY_SSH_KNOWN_HOSTS env var missing}"
+: "${DEPLOY_SSH_HOST:?DEPLOY_SSH_HOST env var missing}"
+: "${ENV_PHP_CONTENTS:?ENV_PHP_CONTENTS env var missing}"
+printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
 chmod 600 ~/.ssh/deploy_key
-buildkite-agent secret get DEPLOY_SSH_KNOWN_HOSTS >> ~/.ssh/known_hosts
+printf '%s\n' "$DEPLOY_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
 chmod 644 ~/.ssh/known_hosts
-DEPLOY_HOST="$(buildkite-agent secret get DEPLOY_SSH_HOST)"
+DEPLOY_HOST="$DEPLOY_SSH_HOST"
 
 echo "--- :key: Writing .env.php from secret"
-buildkite-agent secret get ENV_PHP_CONTENTS > .env.php
+printf '%s\n' "$ENV_PHP_CONTENTS" > .env.php
 
 echo "--- :composer: Running composer install (no-dev)"
 cd src

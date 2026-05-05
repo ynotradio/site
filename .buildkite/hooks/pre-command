@@ -41,6 +41,19 @@ if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"nightly"* ]] || [[ "${BUILDKITE_PIPELI
   export INTEGRITY_REPORT_ISSUE_NUMBER NEON_API_KEY
 fi
 
+# --- Legacy PHP deploy secrets (only for the legacy + PR deploy pipelines) ---
+# Fetched here on the agent host so they're available inside the docker
+# plugin's container via propagate-environment. The new `buildkite-agent
+# secret get` API needs the per-job Unix socket which isn't mounted into
+# plugin containers, so it can't run inside docker.
+if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"deploy"* ]]; then
+  DEPLOY_SSH_KEY=$(buildkite-agent secret get DEPLOY_SSH_KEY 2>/dev/null || true)
+  DEPLOY_SSH_KNOWN_HOSTS=$(buildkite-agent secret get DEPLOY_SSH_KNOWN_HOSTS 2>/dev/null || true)
+  DEPLOY_SSH_HOST=$(buildkite-agent secret get DEPLOY_SSH_HOST 2>/dev/null || true)
+  ENV_PHP_CONTENTS=$(buildkite-agent secret get ENV_PHP_CONTENTS 2>/dev/null || true)
+  export DEPLOY_SSH_KEY DEPLOY_SSH_KNOWN_HOSTS DEPLOY_SSH_HOST ENV_PHP_CONTENTS
+fi
+
 # --- E2E environment setup ---
 if [[ -f "./bin/setup-e2e-env.sh" ]]; then
   echo "--- Setting up E2E environment"
