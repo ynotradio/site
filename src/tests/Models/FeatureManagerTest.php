@@ -16,18 +16,13 @@ use YNotRadio\Models\FeatureManager;
 class FeatureManagerTest extends TestCase
 {
     /**
-     * Test that a feature enabled in config returns true
+     * Test that a feature disabled in config returns false
      */
-    public function testFeatureEnabledInConfig(): void
+    public function testFeatureDisabledInConfig(): void
     {
-        // Note: This test relies on the actual config file
-        // If all features are false in src/config/features.php, we'll test that behavior
-        
-        // Since we know use_postgres_concerts exists in config and is false by default
-        // We test the fallback behavior
-        $result = FeatureManager::isEnabled('use_postgres_concerts');
-        
-        // Should be false since it's false in the config file
+        // use_postgres_ondemand is still false in src/config/features.php — exercises the disabled path.
+        $result = FeatureManager::isEnabled('use_postgres_ondemand');
+
         $this->assertFalse($result);
     }
     
@@ -45,14 +40,14 @@ class FeatureManagerTest extends TestCase
      */
     public function testEnvironmentVariableOverridesConfig(): void
     {
-        // Set an environment variable that overrides the config
-        putenv('USE_POSTGRES_CONCERTS=true');
-        
-        $result = FeatureManager::isEnabled('use_postgres_concerts');
+        // Set an environment variable that overrides the config (use_postgres_ondemand defaults to false)
+        putenv('USE_POSTGRES_ONDEMAND=true');
+
+        $result = FeatureManager::isEnabled('use_postgres_ondemand');
         $this->assertTrue($result);
-        
+
         // Clean up
-        putenv('USE_POSTGRES_CONCERTS');
+        putenv('USE_POSTGRES_ONDEMAND');
     }
     
     /**
