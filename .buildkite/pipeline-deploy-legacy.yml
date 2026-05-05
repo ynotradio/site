@@ -32,9 +32,14 @@ steps:
       - docker#v5.11.0:
           image: "composer:2"
           propagate-environment: true
-          # Required: deploy-legacy.sh shells out to `buildkite-agent secret get`
-          # to read DEPLOY_SSH_KEY/DEPLOY_SSH_HOST/DEPLOY_SSH_KNOWN_HOSTS/ENV_PHP_CONTENTS.
-          # docker plugin v5 defaults this to false; without it the script exits 127.
-          mount-buildkite-agent: true
+          # Secrets are fetched in .buildkite/hooks/pre-command (on the agent
+          # host, where the Job API socket is available) and exported as env
+          # vars. propagate-environment only forwards BUILDKITE_*; list the
+          # custom vars explicitly so the docker plugin passes them through.
+          environment:
+            - "DEPLOY_SSH_KEY"
+            - "DEPLOY_SSH_HOST"
+            - "DEPLOY_SSH_KNOWN_HOSTS"
+            - "ENV_PHP_CONTENTS"
     agents:
       queue: "default"
