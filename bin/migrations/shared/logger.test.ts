@@ -434,6 +434,34 @@ describe('logger', () => {
 
         expect(markdown).toContain('Title with \\| pipe');
       });
+
+      it('includes error categories but skips error details when results array is empty', () => {
+        const stats = createExtendedStats();
+        // Simulate stats.errors > 0 without actual result entries (edge case in manual stats manipulation)
+        stats.errors = 1;
+        stats.total = 1;
+        stats.errorCategoryCounts[ErrorCategory.VALIDATION_ERROR] = 1;
+
+        const markdown = generateStatsMarkdown(stats, 'Posts');
+
+        expect(markdown).toContain('### Error Categories');
+        expect(markdown).not.toContain('### Error Details');
+      });
+    });
+
+    describe('logExtendedSummary - edge cases', () => {
+      it('logs error categories but skips sample errors when results array is empty', () => {
+        const stats = createExtendedStats();
+        // Simulate stats.errors > 0 without actual result entries
+        stats.errors = 1;
+        stats.total = 1;
+        stats.errorCategoryCounts[ErrorCategory.VALIDATION_ERROR] = 1;
+
+        logExtendedSummary(stats);
+
+        expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('Error Categories:'));
+        expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('Sample Errors:'));
+      });
     });
   });
 });

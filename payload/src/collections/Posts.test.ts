@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Posts } from './Posts';
 import { flattenRowFields } from './testUtils';
+
+vi.mock('@payloadcms/richtext-lexical', () => ({
+  lexicalEditor: vi.fn((config) => ({ _type: 'lexical', _config: config })),
+  BlocksFeature: vi.fn((config) => ({ _type: 'blocks', ...config })),
+}));
 
 describe('Posts', () => {
   it('has the correct slug', () => {
@@ -140,5 +145,24 @@ describe('Posts', () => {
   it('includes headline and slug in listSearchableFields', () => {
     expect(Posts.admin?.listSearchableFields).toContain('headline');
     expect(Posts.admin?.listSearchableFields).toContain('slug');
+  });
+
+  it('configures content field editor with EmbedFeature appended to default features', () => {
+    const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
+    const contentField = fields.find((f) => f.name === 'content') as {
+      editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
+    };
+
+    const featuresCallback = contentField?.editor?._config?.features;
+    expect(typeof featuresCallback).toBe('function');
+
+    const mockDefaultFeatures = [{ id: 'paragraph' }, { id: 'text' }];
+    const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
+
+    expect(result).toHaveLength(3);
+    expect(result[0]).toEqual({ id: 'paragraph' });
+    expect(result[1]).toEqual({ id: 'text' });
+    // EmbedFeature() is the third entry (BlocksFeature mock returns { _type: 'blocks', ... })
+    expect((result[2] as any)._type).toBe('blocks');
   });
 });
