@@ -4,7 +4,9 @@ export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, 
   const updatedData = data;
 
   if (updatedData.person && Array.isArray(updatedData.person) && updatedData.person.length > 0) {
-    const personIds = updatedData.person.map((p: any) => (typeof p === 'object' ? p.id : p));
+    const personIds = updatedData.person.map(
+      (p: unknown) => (typeof p === 'object' && p !== null && 'id' in p ? (p as { id: unknown }).id : p),
+    );
 
     try {
       const people = await req.payload.find({
@@ -18,7 +20,9 @@ export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, 
       });
 
       if (people.docs.length > 0) {
-        updatedData.displayName = people.docs.map((p: any) => p.name).join(', ');
+        updatedData.displayName = people.docs.map(
+          (p: { name?: unknown }) => String(p.name || ''),
+        ).join(', ');
       }
     } catch (error) {
       if (process.env.NODE_ENV !== 'production') {
