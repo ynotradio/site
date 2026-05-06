@@ -14,15 +14,13 @@ import {
   convertConcertTitleToPlain,
 } from '../utils/concertTitle';
 
-const syncTitleHtml: FieldHook = ({ siblingData }) => {
-  const { title } = siblingData as { title?: SerializedEditorState | null };
-  return convertConcertTitleToHtml(title);
-};
+const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
+  (siblingData as { title?: SerializedEditorState | null }).title,
+);
 
-const syncTitlePlain: FieldHook = ({ siblingData }) => {
-  const { title } = siblingData as { title?: SerializedEditorState | null };
-  return convertConcertTitleToPlain(title);
-};
+const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlain(
+  (siblingData as { title?: SerializedEditorState | null }).title,
+);
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
