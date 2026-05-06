@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Concerts } from './Concerts';
 import { flattenRowFields } from './testUtils';
+
+vi.mock('@payloadcms/richtext-lexical', () => ({
+  lexicalEditor: vi.fn((config) => ({ _type: 'lexical', _config: config })),
+  BoldFeature: vi.fn(() => ({ _type: 'bold' })),
+  InlineToolbarFeature: vi.fn(() => ({ _type: 'inlineToolbar' })),
+  ItalicFeature: vi.fn(() => ({ _type: 'italic' })),
+  LinkFeature: vi.fn(() => ({ _type: 'link' })),
+  ParagraphFeature: vi.fn(() => ({ _type: 'paragraph' })),
+}));
 
 describe('Concerts', () => {
   it('has the correct slug', () => {
@@ -127,5 +136,37 @@ describe('Concerts', () => {
 
   it('has timestamps enabled', () => {
     expect(Concerts.timestamps).toBe(true);
+  });
+
+  it('syncTitleHtml hook returns empty string for null title', () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const titleHtmlField = allFields.find((f) => f.name === 'titleHtml');
+    const hooks = titleHtmlField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = hook!({ siblingData: { title: null } });
+    expect(result).toBe('');
+  });
+
+  it('syncTitlePlain hook returns empty string for null title', () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const titlePlainField = allFields.find((f) => f.name === 'titlePlain');
+    const hooks = titlePlainField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = hook!({ siblingData: { title: null } });
+    expect(result).toBe('');
+  });
+
+  it('title field lexical editor features callback returns all 5 features', () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const titleField = allFields.find((f) => f.name === 'title') as {
+      editor?: { _config?: { features?: () => unknown[] } };
+    };
+    // eslint-disable-next-line no-underscore-dangle -- Payload uses `_config` internally
+    const featuresCallback = titleField?.editor?._config?.features;
+    expect(typeof featuresCallback).toBe('function');
+    const result = featuresCallback!();
+    expect(result).toHaveLength(5);
   });
 });
