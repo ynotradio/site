@@ -7,7 +7,7 @@ return [
     'use_postgres_concerts' => true,
     'use_postgres_ondemand' => true,
     'use_postgres_deejays' => true,
-    'use_postgres_music' => false,
+    'use_postgres_music' => true,
     'use_postgres_stories' => false,
     'use_postgres_cdoftheweek' => true,
     'use_postgres_schedule' => false,
