@@ -14,12 +14,14 @@ import {
   convertConcertTitleToPlain,
 } from '../utils/concertTitle';
 
+type ConcertSiblingData = { title?: SerializedEditorState | null };
+
 const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
-  (siblingData as { title?: SerializedEditorState | null }).title,
+  (siblingData as ConcertSiblingData).title,
 );
 
 const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlain(
-  (siblingData as { title?: SerializedEditorState | null }).title,
+  (siblingData as ConcertSiblingData).title,
 );
 
 export const Concerts: CollectionConfig = {
