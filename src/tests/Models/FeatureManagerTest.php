@@ -20,8 +20,8 @@ class FeatureManagerTest extends TestCase
      */
     public function testFeatureDisabledInConfig(): void
     {
-        // use_postgres_ondemand is still false in src/config/features.php — exercises the disabled path.
-        $result = FeatureManager::isEnabled('use_postgres_ondemand');
+        // use_postgres_music is still false in src/config/features.php — exercises the disabled path.
+        $result = FeatureManager::isEnabled('use_postgres_music');
 
         $this->assertFalse($result);
     }
@@ -40,14 +40,14 @@ class FeatureManagerTest extends TestCase
      */
     public function testEnvironmentVariableOverridesConfig(): void
     {
-        // Set an environment variable that overrides the config (use_postgres_ondemand defaults to false)
-        putenv('USE_POSTGRES_ONDEMAND=true');
+        // Set an environment variable that overrides the config (use_postgres_music defaults to false)
+        putenv('USE_POSTGRES_MUSIC=true');
 
-        $result = FeatureManager::isEnabled('use_postgres_ondemand');
+        $result = FeatureManager::isEnabled('use_postgres_music');
         $this->assertTrue($result);
 
         // Clean up
-        putenv('USE_POSTGRES_ONDEMAND');
+        putenv('USE_POSTGRES_MUSIC');
     }
     
     /**
