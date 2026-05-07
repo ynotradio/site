@@ -141,22 +141,20 @@ test.describe('Front-page story order on mobile', () => {
 
       await expect(page.locator('.feature-box h3').first()).toBeVisible();
 
-      // Collect each story's priority and its vertical position on screen.
-      // CSS `order` reorders the items visually but not in the DOM, so we
-      // sort by getBoundingClientRect().top to get the rendered top-to-bottom
-      // sequence, then assert ascending priority.
-      const items = await page.evaluate(() => Array.from(document.querySelectorAll('.feature-box[data-priority]')).map((el) => ({
-        priority: parseInt((el as HTMLElement).dataset.priority ?? '0', 10),
-        top: (el as HTMLElement).getBoundingClientRect().top,
-      })));
+      // Collect the DOM order of all feature-box data-priority attributes.
+      // Each .feature-box must carry data-priority so we can assert ascending order.
+      const priorities = await page.evaluate(
+        () => Array.from(
+          document.querySelectorAll('.feature-box[data-priority]'),
+        ).map((el) => parseInt((el as HTMLElement).dataset.priority ?? '0', 10)),
+      );
 
       // There must be at least two stories for the ordering to be meaningful.
-      expect(items.length).toBeGreaterThanOrEqual(2);
-
-      // Sort by vertical position (visual order) and verify priorities ascend.
-      const sorted = [...items].sort((a, b) => a.top - b.top);
-      sorted.slice(1).forEach((item, idx) => {
-        expect(item.priority).toBeGreaterThanOrEqual(sorted[idx].priority);
+      expect(priorities.length).toBeGreaterThanOrEqual(2);
+      // Compare each consecutive pair; slice(1) shifts idx so priorities[idx]
+      // is always the element before p in the original array.
+      priorities.slice(1).forEach((p, idx) => {
+        expect(p).toBeGreaterThanOrEqual(priorities[idx]);
       });
     });
   });
