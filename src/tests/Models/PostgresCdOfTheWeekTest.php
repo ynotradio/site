@@ -47,7 +47,10 @@ class PostgresCdOfTheWeekTest extends TestCase
         $mockStmt = $this->createMock(PDOStatement::class);
         $mockStmt->expects($this->once())
             ->method('execute')
-            ->with(['id' => 1])
+            ->with([
+                'id' => 1,
+                'legacy_id' => 1,
+            ])
             ->willReturn(true);
         
         $mockStmt->expects($this->once())
@@ -74,6 +77,10 @@ class PostgresCdOfTheWeekTest extends TestCase
         $mockStmt = $this->createMock(PDOStatement::class);
         $mockStmt->expects($this->once())
             ->method('execute')
+            ->with([
+                'id' => 999,
+                'legacy_id' => 999,
+            ])
             ->willReturn(true);
         
         $mockStmt->expects($this->once())

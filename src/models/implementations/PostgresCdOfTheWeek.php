@@ -96,10 +96,14 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
             LEFT JOIN artists a ON r.artist_id = a.id
             LEFT JOIN media m ON r.cover_image_id = m.id
             LEFT JOIN people p ON c.reviewer_id = p.id
-            WHERE c.id = :id
+            WHERE (c.id = :id OR c.legacy_id = :legacy_id)
+              AND c._status = 'published'
         ");
         
-        $stmt->execute(['id' => $id]);
+        $stmt->execute([
+            'id' => $id,
+            'legacy_id' => $id,
+        ]);
         $result = $stmt->fetch();
         
         if (!$result) {
