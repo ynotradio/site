@@ -2,8 +2,8 @@
 
 return [
     'use_new_cd_of_the_week' => true,
-    'use_new_ads' => false,
-    'use_postgres_ads' => false,
+    'use_new_ads' => true,
+    'use_postgres_ads' => true,
     'use_postgres_concerts' => true,
     'use_postgres_ondemand' => true,
     'use_postgres_deejays' => true,
