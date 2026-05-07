@@ -93,6 +93,98 @@ describe('convertConcertTitleToHtml', () => {
     ]);
     expect(convertConcertTitleToHtml(state)).toContain('href="#"');
   });
+
+  it('renders autolink with safe rel attributes', () => {
+    const state = paragraph([
+      {
+        type: 'autolink',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        fields: { url: 'https://ynotradio.com' },
+        children: [text('ynotradio.com')],
+      },
+    ]);
+    const html = convertConcertTitleToHtml(state);
+    expect(html).toContain('href="https://ynotradio.com"');
+    expect(html).toContain('rel="nofollow noopener noreferrer"');
+    expect(html).not.toContain('target=');
+  });
+
+  it('blocks unsafe autolink URLs', () => {
+    const state = paragraph([
+      {
+        type: 'autolink',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        // eslint-disable-next-line no-script-url
+        fields: { url: 'javascript:void(0)' },
+        children: [text('click')],
+      },
+    ]);
+    expect(convertConcertTitleToHtml(state)).toContain('href="#"');
+  });
+
+  it('uses # when link url is undefined', () => {
+    const state = paragraph([
+      {
+        type: 'link',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        fields: {},
+        children: [text('no url')],
+      },
+    ]);
+    expect(convertConcertTitleToHtml(state)).toContain('href="#"');
+  });
+
+  it('uses # when link url is empty string', () => {
+    const state = paragraph([
+      {
+        type: 'link',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        fields: { url: '' },
+        children: [text('empty')],
+      },
+    ]);
+    expect(convertConcertTitleToHtml(state)).toContain('href="#"');
+  });
+
+  it('uses # when link has no fields property', () => {
+    const state = paragraph([
+      {
+        type: 'link',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        children: [text('no fields')],
+      },
+    ]);
+    expect(convertConcertTitleToHtml(state)).toContain('href="#"');
+  });
+
+  it('uses # when autolink has no fields property', () => {
+    const state = paragraph([
+      {
+        type: 'autolink',
+        version: 3,
+        format: '',
+        indent: 0,
+        direction: 'ltr',
+        children: [text('no fields')],
+      },
+    ]);
+    expect(convertConcertTitleToHtml(state)).toContain('href="#"');
+  });
 });
 
 describe('convertConcertTitleToPlain', () => {
