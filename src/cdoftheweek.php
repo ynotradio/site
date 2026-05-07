@@ -63,10 +63,8 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
             }
         }
     } catch (Exception $e) {
-        error_log("Error in CD of the Week implementation [" . get_class($e) . "]: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        error_log("Error in CD of the Week implementation: " . $e->getMessage());
         echo "<p>Sorry, there was an error loading the CD of the Week. Please try again later.</p>";
-        // DEBUG: remove before merging
-        echo "<!-- DEBUG exception: " . get_class($e) . ": " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . " -->\n";
     }
     ?>
   </div>
@@ -90,10 +88,8 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
         }
         echo '</table>';
     } catch (Exception $e) {
-        error_log("Error in CD of the Week cover art implementation [" . get_class($e) . "]: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+        error_log("Error in CD of the Week cover art implementation: " . $e->getMessage());
         echo "<p>Sorry, there was an error loading the past reviews. Please try again later.</p>";
-        // DEBUG: remove before merging
-        echo "<!-- DEBUG cover art exception: " . get_class($e) . ": " . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . " -->\n";
     }
     ?>
   </div>

@@ -6,38 +6,32 @@ namespace YNotRadio\Models;
 require_once __DIR__ . '/FeatureManager.php';
 require_once __DIR__ . '/CdOfTheWeek.php';
 require_once __DIR__ . '/implementations/SqlCdOfTheWeek.php';
-require_once __DIR__ . '/implementations/GraphQLCdOfTheWeek.php';
 require_once __DIR__ . '/implementations/PostgresCdOfTheWeek.php';
 require_once __DIR__ . '/../lib/Database.php';
 
 use YNotRadio\Models\FeatureManager;
 use YNotRadio\Models\Implementations\SqlCdOfTheWeek;
-use YNotRadio\Models\Implementations\GraphQLCdOfTheWeek;
 use YNotRadio\Models\Implementations\PostgresCdOfTheWeek;
 use YNotRadio\Lib\Database;
 
 class CdOfTheWeekFactory {
     public static function create($db) {
-        // Check if PostgreSQL CD of the Week feature is enabled
-        if (FeatureManager::isEnabled('use_postgres_cdoftheweek')) {
-            // Get PostgreSQL connection and return PostgreSQL implementation
+        // use_new_cd_of_the_week and use_postgres_cdoftheweek both mean
+        // "use the Postgres/Payload implementation" — the GraphQL path was
+        // never implemented and has been removed.
+        $usePostgres = FeatureManager::isEnabled('use_postgres_cdoftheweek')
+            || FeatureManager::isEnabled('use_new_cd_of_the_week');
+
+        if ($usePostgres) {
             try {
                 $pgDb = Database::getPostgres();
-                error_log("CdOfTheWeekFactory: Postgres connection obtained, using PostgresCdOfTheWeek");
                 return new PostgresCdOfTheWeek($pgDb);
             } catch (\PDOException $e) {
-                // Fall back to MySQL if PostgreSQL connection fails
-                error_log("CdOfTheWeekFactory: PostgreSQL connection failed [" . get_class($e) . "], falling back to MySQL: " . $e->getMessage());
+                error_log("CdOfTheWeekFactory: PostgreSQL connection failed, falling back to MySQL: " . $e->getMessage());
                 return new SqlCdOfTheWeek($db);
             }
         }
-        
-        // Check for legacy GraphQL feature flag
-        if (FeatureManager::isEnabled('use_new_cd_of_the_week')) {
-            return new GraphQLCdOfTheWeek($db);
-        }
-        
-        // Default to MySQL implementation
+
         return new SqlCdOfTheWeek($db);
     }
 } 
