@@ -119,3 +119,43 @@ test.describe('Front-page headline font sizes', () => {
     expect(postgresCount).toBeGreaterThan(0);
   });
 });
+
+// ── Mobile story order ────────────────────────────────────────────────────
+// Regression: stories were displayed in the wrong order on mobile because the
+// two-column layout split stories into odd/even groups that stacked incorrectly
+// (1, 3, 5 … then 2, 4, 6 …) when columns collapsed to a single stack.
+// The fix renders stories in a single flat container so they always appear in
+// priority order on both desktop and mobile.
+test.describe('Front-page story order on mobile', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  const backends: Array<[string, string]> = [
+    ['MySQL', `${LEGACY_BASE_URL}/`],
+    ['Postgres', `${LEGACY_BASE_URL}/?ff=use_postgres_stories`],
+  ];
+
+  backends.forEach(([backend, url]) => {
+    test(`${backend} backend: stories appear in priority order on mobile`, async ({ page }) => {
+      const status = await gotoPhp(page, url);
+      expect(status).toBe(200);
+
+      await expect(page.locator('.feature-box h3').first()).toBeVisible();
+
+      // Collect the DOM order of all feature-box data-priority attributes.
+      // Each .feature-box must carry data-priority so we can assert ascending order.
+      const priorities = await page.evaluate(
+        () => Array.from(
+          document.querySelectorAll('.feature-box[data-priority]'),
+        ).map((el) => parseInt((el as HTMLElement).dataset.priority ?? '0', 10)),
+      );
+
+      // There must be at least two stories for the ordering to be meaningful.
+      expect(priorities.length).toBeGreaterThanOrEqual(2);
+      // Compare each consecutive pair; slice(1) shifts idx so priorities[idx]
+      // is always the element before p in the original array.
+      priorities.slice(1).forEach((p, idx) => {
+        expect(p).toBeGreaterThanOrEqual(priorities[idx]);
+      });
+    });
+  });
+});
