@@ -23,10 +23,11 @@ class CdOfTheWeekFactory {
             // Get PostgreSQL connection and return PostgreSQL implementation
             try {
                 $pgDb = Database::getPostgres();
+                error_log("CdOfTheWeekFactory: Postgres connection obtained, using PostgresCdOfTheWeek");
                 return new PostgresCdOfTheWeek($pgDb);
             } catch (\PDOException $e) {
                 // Fall back to MySQL if PostgreSQL connection fails
-                error_log("PostgreSQL connection failed, falling back to MySQL: " . $e->getMessage());
+                error_log("CdOfTheWeekFactory: PostgreSQL connection failed [" . get_class($e) . "], falling back to MySQL: " . $e->getMessage());
                 return new SqlCdOfTheWeek($db);
             }
         }
