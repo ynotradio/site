@@ -39,8 +39,8 @@ describe('Concerts', () => {
     expect((Concerts.versions as { drafts?: boolean })?.drafts).toBe(true);
   });
 
-  it('sorts by date descending', () => {
-    expect(Concerts.defaultSort).toBe('-date');
+  it('sorts by date ascending', () => {
+    expect(Concerts.defaultSort).toBe('date');
   });
 
   it('has public read access', () => {
@@ -102,6 +102,22 @@ describe('Concerts', () => {
     expect(titleField?.required).toBeFalsy();
   });
 
+  it('includes titlePlain and artistsText in listSearchableFields', () => {
+    expect(Concerts.admin?.listSearchableFields).toContain('titlePlain');
+    expect(Concerts.admin?.listSearchableFields).toContain('artistsText');
+  });
+
+  it('has artistsText as a hidden readOnly text field with a beforeChange hook', () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    expect(artistsTextField?.type).toBe('text');
+    const admin = artistsTextField?.admin as { hidden?: boolean; readOnly?: boolean } | undefined;
+    expect(admin?.hidden).toBe(true);
+    expect(admin?.readOnly).toBe(true);
+    const hooks = artistsTextField?.hooks as { beforeChange?: unknown[] } | undefined;
+    expect(hooks?.beforeChange?.length ?? 0).toBeGreaterThan(0);
+  });
+
   it('has titleHtml and titlePlain hidden mirror fields with beforeChange hooks', () => {
     const allFields = flattenRowFields(Concerts.fields);
     ['titleHtml', 'titlePlain'].forEach((name) => {
@@ -136,6 +152,61 @@ describe('Concerts', () => {
 
   it('has timestamps enabled', () => {
     expect(Concerts.timestamps).toBe(true);
+  });
+
+  it('syncArtistsText hook returns empty string when artists is empty', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = await hook!({ siblingData: { artists: [] }, req: { payload: { find: vi.fn() } } });
+    expect(result).toBe('');
+  });
+
+  it('syncArtistsText hook fetches and joins artist names', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: 'Band A' }, { name: 'Band B' }] });
+    const result = await hook!({
+      siblingData: { artists: [1, 2] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Band A, Band B');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'artists', where: { id: { in: [1, 2] } } }),
+    );
+  });
+
+  it('syncArtistsText hook handles artist objects (already populated)', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: 'Band A' }] });
+    const result = await hook!({
+      siblingData: { artists: [{ id: 1, name: 'Band A' }] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Band A');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: [1] } } }),
+    );
+  });
+
+  it('syncArtistsText hook returns empty string on fetch error', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockRejectedValue(new Error('DB error'));
+    const result = await hook!({
+      siblingData: { artists: [1] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
   });
 
   it('syncTitleHtml hook returns empty string for null title', () => {

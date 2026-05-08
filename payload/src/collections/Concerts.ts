@@ -22,6 +22,26 @@ const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlai
   (siblingData as { title?: SerializedEditorState | null }).title,
 );
 
+const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
+  const raw = (siblingData as { artists?: unknown[] }).artists ?? [];
+  if (!raw.length) return '';
+  const ids = raw.map((a) => {
+    if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;
+    return a;
+  });
+  try {
+    const { docs } = await req.payload.find({
+      collection: 'artists',
+      where: { id: { in: ids } },
+      limit: ids.length,
+      depth: 0,
+    });
+    return docs.map((a: { name?: unknown }) => String(a.name ?? '')).join(', ');
+  } catch {
+    return '';
+  }
+};
+
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
   labels: {
@@ -34,10 +54,11 @@ export const Concerts: CollectionConfig = {
   admin: {
     useAsTitle: 'titlePlain',
     defaultColumns: ['titlePlain', 'artists', 'date', 'venue', '_status', 'updatedAt'],
+    listSearchableFields: ['titlePlain', 'artistsText'],
     group: 'Events',
     description: 'Concert listings.',
   },
-  defaultSort: '-date',
+  defaultSort: 'date',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -82,6 +103,17 @@ export const Concerts: CollectionConfig = {
       },
       hooks: {
         beforeChange: [syncTitlePlain],
+      },
+    },
+    {
+      name: 'artistsText',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncArtistsText],
       },
     },
     {
