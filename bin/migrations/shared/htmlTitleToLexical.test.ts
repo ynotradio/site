@@ -55,4 +55,34 @@ describe('htmlTitleToLexical', () => {
     const state = htmlTitleToLexical('<span class="x">Hello <em>there</em></span>');
     expect(convertConcertTitleToHtml(state)).toBe('Hello <em>there</em>');
   });
+
+  it('handles null input gracefully', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const state = htmlTitleToLexical(null as any);
+    expect(convertConcertTitleToPlain(state)).toBe('');
+  });
+
+  it('treats <strong> like <b>', () => {
+    const state = htmlTitleToLexical('<strong>Loud</strong> Show');
+    expect(convertConcertTitleToHtml(state)).toContain('<strong>Loud</strong>');
+  });
+
+  it('drops empty <a> links with no children', () => {
+    const state = htmlTitleToLexical('Before <a href="https://example.com"></a> After');
+    expect(convertConcertTitleToPlain(state)).toBe('Before  After');
+    expect(convertConcertTitleToHtml(state)).not.toContain('<a');
+  });
+
+  it('handles <a> with no href attribute', () => {
+    const state = htmlTitleToLexical('<a>bare link text</a>');
+    const html = convertConcertTitleToHtml(state);
+    expect(html).toContain('bare link text');
+    // empty href is sanitized to # by concertTitle renderer
+    expect(html).toContain('href="#"');
+  });
+
+  it('ignores comment nodes', () => {
+    const state = htmlTitleToLexical('Hello <!-- a comment --> World');
+    expect(convertConcertTitleToPlain(state)).toBe('Hello  World');
+  });
 });
