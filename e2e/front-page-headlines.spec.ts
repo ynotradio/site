@@ -119,3 +119,93 @@ test.describe('Front-page headline font sizes', () => {
     expect(postgresCount).toBeGreaterThan(0);
   });
 });
+
+/**
+ * Regression coverage for the front-page two-column story layout.
+ *
+ * History: PR #670 replaced the two-column DOM with a CSS Grid container,
+ * which forced row-aligned heights on desktop (visual regression). PR #672
+ * reverted that. This suite locks in the desired behaviour:
+ *
+ *  - Desktop (≥960px): two columns flow independently — at least one
+ *    (left, right) pair of feature-boxes has DIFFERENT y-positions
+ *    (would fail under a row-major CSS grid).
+ *  - Mobile (≤959px): feature-boxes render in strict priority order,
+ *    achieved via `display: contents` on the column wrappers + inline
+ *    flex `order` on each `.feature-box`.
+ */
+test.describe('Front-page story layout', () => {
+  type Box = { x: number; y: number; priority: number };
+
+  async function getStoryBoxes(page: import('@playwright/test').Page): Promise<Box[]> {
+    return page.evaluate(() => {
+      const els = document.querySelectorAll('.stories-container .feature-box');
+      return Array.from(els).map((el) => {
+        const r = (el as HTMLElement).getBoundingClientRect();
+        return {
+          x: Math.round(r.x),
+          y: Math.round(r.y),
+          priority: Number((el as HTMLElement).dataset.priority ?? '0'),
+        };
+      });
+    });
+  }
+
+  (['mysql', 'postgres'] as const).forEach((backend) => {
+    const url = backend === 'postgres'
+      ? `${LEGACY_BASE_URL}/?ff=use_postgres_stories`
+      : `${LEGACY_BASE_URL}/`;
+
+    test.describe(`${backend} backend`, () => {
+      test.describe('desktop @ 1440×900 — independent column flow', () => {
+        test.use({ viewport: { width: 1440, height: 900 } });
+
+        test('feature-boxes form two columns whose heights are NOT row-aligned', async ({
+          page,
+        }) => {
+          await gotoPhp(page, url);
+          await expect(page.locator('.stories-container .feature-box').first()).toBeVisible();
+
+          const boxes = await getStoryBoxes(page);
+          expect(boxes.length).toBeGreaterThanOrEqual(2);
+
+          // Exactly two distinct x-positions (two columns).
+          const xs = [...new Set(boxes.map((b) => b.x))].sort((a, b) => a - b);
+          expect(xs.length).toBe(2);
+
+          // Independent column flow: at least one (left, right) pair must have
+          // different y-positions. Under a row-major CSS grid (the PR #670
+          // regression) every left/right pair would share a y. We assert that
+          // the second left-column box and the second right-column box do NOT
+          // share the same y — the column heights flow independently.
+          const left = boxes.filter((b) => b.x === xs[0]).sort((a, b) => a.y - b.y);
+          const right = boxes.filter((b) => b.x === xs[1]).sort((a, b) => a.y - b.y);
+          expect(left.length).toBeGreaterThanOrEqual(2);
+          expect(right.length).toBeGreaterThanOrEqual(2);
+          expect(Math.abs(left[1].y - right[1].y)).toBeGreaterThan(5);
+        });
+      });
+
+      test.describe('mobile @ 375×800 — strict priority order', () => {
+        test.use({ viewport: { width: 375, height: 800 } });
+
+        test('feature-boxes render top-to-bottom in ascending priority', async ({ page }) => {
+          await gotoPhp(page, url);
+          await expect(page.locator('.stories-container .feature-box').first()).toBeVisible();
+
+          const boxes = await getStoryBoxes(page);
+          expect(boxes.length).toBeGreaterThanOrEqual(2);
+
+          // All in a single column on mobile.
+          const xs = [...new Set(boxes.map((b) => b.x))];
+          expect(xs.length).toBe(1);
+
+          // Sorted by visual y-position, priorities must be strictly ascending.
+          const visualOrder = [...boxes].sort((a, b) => a.y - b.y).map((b) => b.priority);
+          const sortedAsc = [...visualOrder].sort((a, b) => a - b);
+          expect(visualOrder).toEqual(sortedAsc);
+        });
+      });
+    });
+  });
+});

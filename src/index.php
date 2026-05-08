@@ -17,12 +17,20 @@ $story_groups = $storyModel->getAll();
 ?>
 <div class="row">
   <div class="nine columns">
-    <div class="row">
-      <div class="six columns">
-        <?php display_stories($story_groups[0]) ?>
+    <!--
+      Two-column DOM preserves desktop's independent column flow (each
+      column's heights stack independently). On mobile (≤959px), CSS
+      collapses the .stories-col wrappers via `display: contents` so the
+      .feature-box divs become direct flex children of .stories-container,
+      where the inline `order` style interleaves them back into strict
+      priority order (1, 2, 3, …).
+    -->
+    <div class="stories-container">
+      <div class="stories-col">
+        <?php display_stories($story_groups[0], 0, 2) ?>
       </div>
-      <div class="six columns">
-        <?php display_stories($story_groups[1])?>
+      <div class="stories-col">
+        <?php display_stories($story_groups[1], 1, 2) ?>
       </div>
     </div>
   </div>

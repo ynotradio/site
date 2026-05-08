@@ -237,6 +237,38 @@ nav a:hover {
   margin: 0;
 }
 
+/* Front-page two-column story layout.
+   Desktop: flex row of two .stories-col children, each flowing independently
+   (mirrors the legacy `.row > .six.columns` layout — heights are NOT
+   row-aligned, unlike a CSS grid).
+   Mobile: collapse the .stories-col wrappers with `display: contents` so
+   .feature-box becomes a direct flex child of .stories-container, and use
+   the inline `order` style emitted by display_stories() to interleave
+   stories back into strict priority order (1, 2, 3, …). */
+.stories-container {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 -10px;
+}
+
+.stories-col {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 10px;
+}
+
+@media only screen and (max-width: 959px) {
+  .stories-container {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+  }
+
+  .stories-col {
+    display: contents;
+  }
+}
+
 .ads {
   padding-top: 10px;
 }
