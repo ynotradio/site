@@ -323,6 +323,9 @@ class PostgresStory implements Story {
                 $content = $this->convertLexicalChildren($node);
                 return "<a href=\"$url\">$content</a>";
                 
+            case 'linebreak':
+                return '<br>';
+
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;
