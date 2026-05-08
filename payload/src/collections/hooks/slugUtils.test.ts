@@ -307,6 +307,15 @@ describe('resolveArtistName', () => {
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
+  it('returns empty string when populated artist has null name', async () => {
+    const result = await resolveArtistName(
+      { artist: { id: 1, name: null } },
+      mockPayload as Payload,
+    );
+    expect(result).toBe('');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
   it('performs DB lookup when artist is a numeric ID', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
       id: 7,
@@ -601,6 +610,16 @@ describe('postSlugify', () => {
 
   it('returns undefined when neither headline nor valueToSlugify is present', () => {
     expect(postSlugify({ data: {}, req })).toBeUndefined();
+  });
+
+  it('returns slugified valueToSlugify when headline is absent', () => {
+    const result = postSlugify({ data: {}, req, valueToSlugify: 'Custom Title' });
+    expect(result).toBe('custom-title');
+  });
+
+  it('returns undefined when headline slugifies to empty string', () => {
+    const result = postSlugify({ data: { headline: '<br><br>' }, req });
+    expect(result).toBeUndefined();
   });
 
   it('strips HTML tags from headlines', () => {
