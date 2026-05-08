@@ -30,8 +30,7 @@ function display_stories($stories)
     $formatted_headline = format_headline_with_breaks($info['headline']);
     // Add 'long-headline' class for headlines longer than 35 characters
     $headlineClass = strlen($info['headline']) > 35 ? ' class="long-headline"' : '';
-    $priority = isset($info['priority']) ? intval($info['priority']) : 0;
-    echo "<div class=\"feature-box\" data-priority=\"{$priority}\">" .
+    echo "<div class=\"feature-box\">" .
       "<h3{$headlineClass}>" . $formatted_headline . "</h3>\n";
     display_pic($info['pic_url'], $info['pic']);
     echo "<div class=\"clearfix\">" . $info['story'] . "</div>\n</div>";
