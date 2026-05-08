@@ -119,3 +119,45 @@ test.describe('Front-page headline font sizes', () => {
     expect(postgresCount).toBeGreaterThan(0);
   });
 });
+
+// ── Mobile story order ────────────────────────────────────────────────────
+// Regression: stories were displayed in the wrong order on mobile because the
+// two-column layout split stories into odd/even groups that stacked incorrectly
+// (1, 3, 5 … then 2, 4, 6 …) when columns collapsed to a single stack.
+// The fix renders stories in a single flat container so they always appear in
+// priority order on both desktop and mobile.
+test.describe('Front-page story order on mobile', () => {
+  test.use({ viewport: { width: 375, height: 667 } });
+
+  const backends: Array<[string, string]> = [
+    ['MySQL', `${LEGACY_BASE_URL}/`],
+    ['Postgres', `${LEGACY_BASE_URL}/?ff=use_postgres_stories`],
+  ];
+
+  backends.forEach(([backend, url]) => {
+    test(`${backend} backend: stories appear in priority order on mobile`, async ({ page }) => {
+      const status = await gotoPhp(page, url);
+      expect(status).toBe(200);
+
+      await expect(page.locator('.feature-box h3').first()).toBeVisible();
+
+      // Collect each story's priority and its vertical position on screen.
+      // CSS `order` reorders the items visually but not in the DOM, so we
+      // sort by getBoundingClientRect().top to get the rendered top-to-bottom
+      // sequence, then assert ascending priority.
+      const items = await page.evaluate(() => Array.from(document.querySelectorAll('.feature-box[data-priority]')).map((el) => ({
+        priority: parseInt((el as HTMLElement).dataset.priority ?? '0', 10),
+        top: (el as HTMLElement).getBoundingClientRect().top,
+      })));
+
+      // There must be at least two stories for the ordering to be meaningful.
+      expect(items.length).toBeGreaterThanOrEqual(2);
+
+      // Sort by vertical position (visual order) and verify priorities ascend.
+      const sorted = [...items].sort((a, b) => a.top - b.top);
+      sorted.slice(1).forEach((item, idx) => {
+        expect(item.priority).toBeGreaterThanOrEqual(sorted[idx].priority);
+      });
+    });
+  });
+});

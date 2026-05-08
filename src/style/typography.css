@@ -237,6 +237,26 @@ nav a:hover {
   margin: 0;
 }
 
+/* Two-column layout for front-page stories on desktop; single column on mobile
+   so stories always display in priority order when stacked.
+   margin: 0 -10px mirrors .row .row behaviour; padding on items mirrors .columns. */
+.stories-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  margin: 0 -10px;
+}
+
+.stories-container > .feature-box {
+  padding: 0 10px;
+}
+
+@media only screen and (max-width: 959px) {
+  .stories-container {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ads {
   padding-top: 10px;
 }
