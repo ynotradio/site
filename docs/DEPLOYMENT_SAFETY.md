@@ -8,39 +8,31 @@ This checklist ensures the production PHP site remains stable and can roll back 
 
 ## Pre-Deployment Checks
 
-### 1. Verify Feature Flags (MOST IMPORTANT)
+### 1. Feature Flags Are Server-Managed
 
-Check the production `.env` file (deployed from `.env.php` via `bin/deploy.sh`):
+As of the `bin/deploy.sh` merge-instead-of-replace change, deploys
+**preserve** whatever `USE_POSTGRES_*` values are currently in the
+production `.env`. Your local `.env.php` flag values are ignored at
+deploy time — only secrets and other config keys are pushed.
 
-```bash
-ssh ynotradio 'cat ~/htdocs/.env | grep USE_POSTGRES'
-```
-
-**MUST be:**
-
-```
-USE_POSTGRES_CONCERTS=false
-USE_POSTGRES_ONDEMAND=false
-USE_POSTGRES_DEEJAYS=false
-USE_POSTGRES_MUSIC=false
-USE_POSTGRES_STORIES=false
-USE_POSTGRES_CDOFTHEWEEK=false
-USE_POSTGRES_SCHEDULE=false
-USE_POSTGRES_CUSTOMTEXT=false
-```
-
-❌ **If ANY are `true`, STOP. Production will break.**
-
-### 2. Verify Local Changes Don't Include Postgres Flags
+To inspect or change a flag, edit the production `.env` directly:
 
 ```bash
-# In your local repo, before deploying
-git diff main .env.php | grep USE_POSTGRES
+ssh ynotradio 'sudo cat /opt/bitnami/apache/htdocs/.env | grep USE_POSTGRES'
+
+# To flip a flag:
+ssh ynotradio 'sudo sed -i "s/^USE_POSTGRES_FOO=.*/USE_POSTGRES_FOO=true/" /opt/bitnami/apache/htdocs/.env'
 ```
 
-**Should return nothing** (no changes to postgres flags)
+A full pre-deploy backup is automatically saved to
+`/opt/bitnami/apache/htdocs/.env.predeploy` on every deploy, so you
+can roll back the env file with one command if a deploy goes wrong:
 
-### 3. Check Database Connections
+```bash
+ssh ynotradio 'sudo cp /opt/bitnami/apache/htdocs/.env.predeploy /opt/bitnami/apache/htdocs/.env'
+```
+
+### 2. Check Database Connections
 
 **Production PHP must connect to:**
 
@@ -52,7 +44,7 @@ ssh ynotradio 'cat ~/htdocs/.env | grep DB_HOST'
 
 **Should be:** Production MySQL hostname (NOT `mysql` or `localhost`)
 
-### 4. Verify No Payload/Next.js Files in PHP Directory
+### 3. Verify No Payload/Next.js Files in PHP Directory
 
 ```bash
 ssh ynotradio 'ls ~/htdocs/.env* 2>/dev/null'
