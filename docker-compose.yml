@@ -42,15 +42,6 @@ services:
       - app-tier
     env_file:
       - .env.example
-    environment:
-      USE_POSTGRES_CONCERTS: 'false'
-      USE_POSTGRES_ONDEMAND: 'false'
-      USE_POSTGRES_DEEJAYS: 'false'
-      USE_POSTGRES_MUSIC: 'true'
-      USE_POSTGRES_STORIES: 'false'
-      USE_POSTGRES_CDOFTHEWEEK: 'false'
-      USE_POSTGRES_SCHEDULE: 'false'
-      USE_POSTGRES_CUSTOMTEXT: 'false'
     volumes:
       - ./src:/app
   apache:

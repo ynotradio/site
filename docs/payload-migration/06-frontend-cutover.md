@@ -2,6 +2,16 @@
 
 [← Back to Index](./README.md)
 
+> **⚠️ Historical document.** The cutover described here is now complete. The
+> `USE_POSTGRES_*` feature flags have been dissolved — every factory is hardcoded
+> to its production data source. As of cutover completion:
+>
+> - **Postgres-backed (via Payload):** Concerts, OnDemand, Deejays, Music, CdOfTheWeek, Ads, Modern Rock Madness
+> - **MySQL-backed (still on legacy admin):** Stories, Schedule, CustomText
+>
+> The phase narrative below is preserved for project history. See
+> [CUTOVER_COMPLETE.md](./CUTOVER_COMPLETE.md) for the post-cutover summary.
+
 ---
 
 ## Overview
@@ -12,12 +22,12 @@ The frontend cutover is a gradual process that moves the PHP site from reading M
 
 ## Current Status (March 2026)
 
-| Phase | Status | Notes |
-|-------|--------|-------|
-| Phase 1: Parallel Systems | ✅ **DONE** | Data synced, integrity validated, nightly sync running |
+| Phase                                | Status      | Notes                                                        |
+| ------------------------------------ | ----------- | ------------------------------------------------------------ |
+| Phase 1: Parallel Systems            | ✅ **DONE** | Data synced, integrity validated, nightly sync running       |
 | Phase 2: Feature Flag Infrastructure | ✅ **DONE** | `FeatureManager.php` + 11 flags + 8 Postgres factories built |
-| Phase 3: Incremental Flag Enablement | **NEXT** | All flags currently `false` — ready to start flipping |
-| Phase 4: Full Cutover | Planned | Remove MySQL fallback code |
+| Phase 3: Incremental Flag Enablement | **NEXT**    | All flags currently `false` — ready to start flipping        |
+| Phase 4: Full Cutover                | Planned     | Remove MySQL fallback code                                   |
 
 > **Note:** MRM (Modern Rock Madness) is already running on Postgres in production — it's the first collection fully cut over.
 
@@ -71,23 +81,24 @@ The frontend cutover is a gradual process that moves the PHP site from reading M
 **Goal:** Enable Postgres feature flags one collection at a time, validate, and monitor
 
 **Testing approach:** Use URL param overrides to validate each collection before enabling by default:
+
 ```
 https://ynotradio.com/concerts.php?ff=use_postgres_concerts
 ```
 
 **Migration Order (by risk level):**
 
-| Priority | Page | Risk | Flag | Validation |
-|----------|------|------|------|------------|
-| 0 | Modern Rock Madness | — | `use_postgres_madness` | ✅ Already running on Postgres in prod |
-| 1 | Concert calendar | Low | `use_postgres_concerts` | Verify dates/venues match MySQL |
-| 2 | DJs listing | Low | `use_postgres_deejays` | Compare profile data and photos |
-| 3 | On Demand | Low | `use_postgres_ondemand` | Verify audio links and metadata |
-| 4 | Show schedule | Medium | `use_postgres_schedule` | Time formatting, day assignments |
-| 5 | CD of the Week | Medium | `use_postgres_cdoftheweek` | Rich text rendering, cover images |
-| 6 | New Music | Medium | `use_postgres_music` | Verify streaming/purchase links |
-| 7 | Stories/Posts | Medium | `use_postgres_stories` | Content blocks, embedded media |
-| 8 | Custom Text | Low | `use_postgres_customtext` | Static content blocks |
+| Priority | Page                | Risk   | Flag                       | Validation                             |
+| -------- | ------------------- | ------ | -------------------------- | -------------------------------------- |
+| 0        | Modern Rock Madness | —      | `use_postgres_madness`     | ✅ Already running on Postgres in prod |
+| 1        | Concert calendar    | Low    | `use_postgres_concerts`    | Verify dates/venues match MySQL        |
+| 2        | DJs listing         | Low    | `use_postgres_deejays`     | Compare profile data and photos        |
+| 3        | On Demand           | Low    | `use_postgres_ondemand`    | Verify audio links and metadata        |
+| 4        | Show schedule       | Medium | `use_postgres_schedule`    | Time formatting, day assignments       |
+| 5        | CD of the Week      | Medium | `use_postgres_cdoftheweek` | Rich text rendering, cover images      |
+| 6        | New Music           | Medium | `use_postgres_music`       | Verify streaming/purchase links        |
+| 7        | Stories/Posts       | Medium | `use_postgres_stories`     | Content blocks, embedded media         |
+| 8        | Custom Text         | Low    | `use_postgres_customtext`  | Static content blocks                  |
 
 **Per-Collection Checklist:**
 

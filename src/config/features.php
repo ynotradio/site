@@ -1,15 +1,8 @@
 <?php
 
-return [
-    'use_new_cd_of_the_week' => true,
-    'use_new_ads' => true,
-    'use_postgres_ads' => true,
-    'use_postgres_concerts' => true,
-    'use_postgres_ondemand' => true,
-    'use_postgres_deejays' => true,
-    'use_postgres_music' => true,
-    'use_postgres_stories' => false,
-    'use_postgres_cdoftheweek' => true,
-    'use_postgres_schedule' => false,
-    'use_postgres_customtext' => false,
-];
+// Reserved for future feature flags. The legacy USE_POSTGRES_* flags were
+// dissolved when the Payload migration completed: each model factory now
+// hardcodes its data source (Postgres for migrated collections, MySQL for the
+// few remaining legacy ones). Add new flags here as needed.
+return [];
+

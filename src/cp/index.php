@@ -19,21 +19,16 @@ if (!$_SESSION["logged_in"]) {
         <tr>
           <td width="275px">
             <dt>Ads</dt>
-              <dd><a href="ad_add.php">Add an Ad</a></dd>
-              <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
-              <dd><a href="ads_order.php">Order Ads</a></dd>
+              <dd>Edit in <a href="/admin/collections/ads">Payload &rarr; Ads</a></dd>
             <dt>CD of The Week</dt>
-              <dd><a href="cdotw_add.php">Add CD Of The Week</a></dd>
-              <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a></dd>
+              <dd>Edit in <a href="/admin/collections/cd-of-the-week">Payload &rarr; CD of The Week</a></dd>
             <dt>Concerts</dt>
-              <dd><a href="concert_add.php">Add a Concert</a></dd>
-              <dd><a href="concert_view_all.php">View all Concerts</a></dd>
+              <dd>Edit in <a href="/admin/collections/concerts">Payload &rarr; Concerts</a></dd>
             <dt>Custom Text Pages</dt>
               <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
               <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
             <dt>Deejays</dt>
-              <dd><a href="deejay_add.php">Add a Deejay</a></dd>
-              <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
+              <dd>Edit in <a href="/admin/collections/deejays">Payload &rarr; Deejays</a></dd>
             <dt>Experiments</dt>
               <dd><a href="experiments.php">Manage Feature Flags</a></dd>
             <dt>Images</dt>
@@ -41,11 +36,9 @@ if (!$_SESSION["logged_in"]) {
           </td>
           <td width="275px">
             <dt>New Music</dt>
-              <dd><a href="music_add.php">Add New Music</a></dd>
-              <dd><a href="music_view_all.php">View all New Music</a></dd>
+              <dd>Edit in <a href="/admin/collections/music">Payload &rarr; New Music</a></dd>
             <dt>On Demand</dt>
-              <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
-              <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>
+              <dd>Edit in <a href="/admin/collections/on-demand">Payload &rarr; On Demand</a></dd>
             <dt>Schedule</dt>
               <dd><a href="schedule_add.php">Add to Schedule</a></dd>
               <dd><a href="schedule_view_all.php">View Schedule</a></dd>

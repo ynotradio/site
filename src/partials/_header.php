@@ -4,12 +4,6 @@ if ($page_file != "logout.php") {
     login_check();
 }
 
-// CP pages always use MySQL — they're legacy and will be replaced by Payload CMS
-if (strpos($_SERVER['SCRIPT_NAME'] ?? '', '/cp/') !== false) {
-    require_once __DIR__ . '/../models/FeatureManager.php';
-    \YNotRadio\Models\FeatureManager::setCpContext();
-}
-
 #error_reporting( E_ALL);
 #ini_set('display_errors', '1 ');
 

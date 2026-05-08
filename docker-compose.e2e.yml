@@ -108,7 +108,6 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-ynot_postgres_user}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dev_postgres_password_not_secret}
       - POSTGRES_SSL_MODE=disable
-      - USE_POSTGRES_SCHEDULE=false
       # Payload admin links (browser-accessible URL)
       - PAYLOAD_PUBLIC_SERVER_URL=http://localhost:3000
       # Auth0 dummy config
