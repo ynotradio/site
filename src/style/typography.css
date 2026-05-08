@@ -237,24 +237,55 @@ nav a:hover {
   margin: 0;
 }
 
-/* Two-column layout for front-page stories on desktop; single column on mobile
-   so stories always display in priority order when stacked.
-   margin: 0 -10px mirrors .row .row behaviour; padding on items mirrors .columns. */
+/* Two-column layout for front-page stories.
+   Flexbox with align-items: flex-start lets each column grow independently
+   (no forced row-height alignment) while preserving the original gutter.
+   margin: 0 -10px mirrors .row .row; padding on .col-stories mirrors .columns. */
 .stories-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: start;
+  display: flex;
+  align-items: flex-start;
   margin: 0 -10px;
 }
 
-.stories-container > .feature-box {
+.col-stories {
+  flex: 0 0 50%;
   padding: 0 10px;
 }
 
+/* On mobile, dissolve the two column divs so individual stories become direct
+   flex children of .stories-container, then sort them by priority via `order`. */
 @media only screen and (max-width: 959px) {
   .stories-container {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
   }
+
+  .col-stories {
+    display: contents;
+  }
+
+  /* Assign each story its own order slot so they render in priority sequence. */
+  .feature-box[data-priority="1"]  { order: 1; }
+  .feature-box[data-priority="2"]  { order: 2; }
+  .feature-box[data-priority="3"]  { order: 3; }
+  .feature-box[data-priority="4"]  { order: 4; }
+  .feature-box[data-priority="5"]  { order: 5; }
+  .feature-box[data-priority="6"]  { order: 6; }
+  .feature-box[data-priority="7"]  { order: 7; }
+  .feature-box[data-priority="8"]  { order: 8; }
+  .feature-box[data-priority="9"]  { order: 9; }
+  .feature-box[data-priority="10"] { order: 10; }
+  .feature-box[data-priority="11"] { order: 11; }
+  .feature-box[data-priority="12"] { order: 12; }
+  .feature-box[data-priority="13"] { order: 13; }
+  .feature-box[data-priority="14"] { order: 14; }
+  .feature-box[data-priority="15"] { order: 15; }
+  .feature-box[data-priority="16"] { order: 16; }
+  .feature-box[data-priority="17"] { order: 17; }
+  .feature-box[data-priority="18"] { order: 18; }
+  .feature-box[data-priority="19"] { order: 19; }
+  .feature-box[data-priority="20"] { order: 20; }
 }
 
 .ads {

@@ -14,24 +14,12 @@ $story_groups = $storyModel->getAll();
 
 
 /*----- CONTENT ------*/
-
-// Interleave story groups so priority order is preserved on both desktop
-// (two-column grid) and mobile (single-column stack).
-$interleaved_stories = [];
-$max_stories = max(count($story_groups[0]), count($story_groups[1]));
-for ($idx = 0; $idx < $max_stories; $idx++) {
-    if (isset($story_groups[0][$idx])) {
-        $interleaved_stories[] = $story_groups[0][$idx];
-    }
-    if (isset($story_groups[1][$idx])) {
-        $interleaved_stories[] = $story_groups[1][$idx];
-    }
-}
 ?>
 <div class="row">
   <div class="nine columns">
     <div class="stories-container">
-      <?php display_stories($interleaved_stories) ?>
+      <div class="col-stories"><?php display_stories($story_groups[0]) ?></div>
+      <div class="col-stories"><?php display_stories($story_groups[1]) ?></div>
     </div>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
