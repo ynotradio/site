@@ -29,10 +29,6 @@ if (!$_SESSION["logged_in"]) {
               <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
             <dt>Deejays</dt>
               <dd>Edit in <a href="/admin/collections/deejays">Payload &rarr; Deejays</a></dd>
-            <dt>Experiments</dt>
-              <dd><a href="experiments.php">Manage Feature Flags</a></dd>
-            <dt>Images</dt>
-              <dd><a href="image_view_all.php">View all Images</a></dd>
           </td>
           <td width="275px">
             <dt>New Music</dt>
