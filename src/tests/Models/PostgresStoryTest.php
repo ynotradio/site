@@ -346,6 +346,38 @@ class PostgresStoryTest extends TestCase
         $this->assertStringNotContainsString('<p></p>', $html);
     }
 
+    /**
+     * Soft line breaks (Shift+Enter in the Payload editor) emit standalone
+     * `linebreak` nodes interleaved with text siblings inside a paragraph.
+     * Without an explicit converter case they fall through to the default
+     * arm and yield an empty string, collapsing adjacent text runs together
+     * (e.g. "Foo FightersYour Favorite Toy" instead of "Foo Fighters<br>Your
+     * Favorite Toy"). Regression: see CD of the Week front-page story.
+     */
+    public function testLinebreakNodeRendersAsBrBetweenTextRuns(): void
+    {
+        $lexical = json_encode([
+            'root' => [
+                'type' => 'root',
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => 'Foo Fighters'],
+                            ['type' => 'linebreak'],
+                            ['type' => 'text', 'text' => 'Your Favorite Toy'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->callConvertLexicalToHtml($lexical);
+
+        $this->assertStringContainsString('Foo Fighters<br>Your Favorite Toy', $html);
+        $this->assertStringNotContainsString('Foo FightersYour Favorite Toy', $html);
+    }
+
     // ─── isValidUrl tests ────────────────────────────────────────────────
 
     /**
