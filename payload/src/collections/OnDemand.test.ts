@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { OnDemand } from './OnDemand';
 import { flattenRowFields } from './testUtils';
 
@@ -156,5 +156,145 @@ describe('OnDemand', () => {
     expect(OnDemand.admin?.defaultColumns).toContain('date');
     expect(OnDemand.admin?.defaultColumns).toContain('djs');
     expect(OnDemand.admin?.defaultColumns).toContain('_status');
+  });
+
+  it('includes headline, artistsText and songsText in listSearchableFields', () => {
+    expect(OnDemand.admin?.listSearchableFields).toContain('headline');
+    expect(OnDemand.admin?.listSearchableFields).toContain('artistsText');
+    expect(OnDemand.admin?.listSearchableFields).toContain('songsText');
+  });
+
+  it('has artistsText as a hidden readOnly text field with a beforeChange hook', () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const artistsTextField = fields.find((f) => f.name === 'artistsText');
+    expect(artistsTextField?.type).toBe('text');
+    const admin = artistsTextField?.admin as { hidden?: boolean; readOnly?: boolean } | undefined;
+    expect(admin?.hidden).toBe(true);
+    expect(admin?.readOnly).toBe(true);
+    const hooks = artistsTextField?.hooks as { beforeChange?: unknown[] } | undefined;
+    expect(hooks?.beforeChange?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('has songsText as a hidden readOnly text field with a beforeChange hook', () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const songsTextField = fields.find((f) => f.name === 'songsText');
+    expect(songsTextField?.type).toBe('text');
+    const admin = songsTextField?.admin as { hidden?: boolean; readOnly?: boolean } | undefined;
+    expect(admin?.hidden).toBe(true);
+    expect(admin?.readOnly).toBe(true);
+    const hooks = songsTextField?.hooks as { beforeChange?: unknown[] } | undefined;
+    expect(hooks?.beforeChange?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('syncArtistsText hook returns empty string when artists is empty', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const artistsTextField = fields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = await hook!({ siblingData: { artists: [] }, req: { payload: { find: vi.fn() } } });
+    expect(result).toBe('');
+  });
+
+  it('syncArtistsText hook fetches and joins artist names', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const artistsTextField = fields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: 'The National' }, { name: 'Phoebe Bridgers' }] });
+    const result = await hook!({
+      siblingData: { artists: [1, 2] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('The National, Phoebe Bridgers');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'artists', where: { id: { in: [1, 2] } } }),
+    );
+  });
+
+  it('syncArtistsText hook handles object-form artist entries', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const artistsTextField = fields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: 'The National' }] });
+    const result = await hook!({
+      siblingData: { artists: [{ id: 1, name: 'The National' }] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('The National');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { in: [1] } } }),
+    );
+  });
+
+  it('syncArtistsText hook returns empty string on fetch error', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const artistsTextField = fields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockRejectedValue(new Error('DB error'));
+    const result = await hook!({
+      siblingData: { artists: [1] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
+  });
+
+  it('syncSongsText hook returns empty string when songs is empty', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const songsTextField = fields.find((f) => f.name === 'songsText');
+    const hooks = songsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = await hook!({ siblingData: { songs: [] }, req: { payload: { find: vi.fn() } } });
+    expect(result).toBe('');
+  });
+
+  it('syncSongsText hook fetches and joins song displayNames', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const songsTextField = fields.find((f) => f.name === 'songsText');
+    const hooks = songsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({
+      docs: [
+        { displayName: 'The National — Bloodbuzz Ohio' },
+        { displayName: 'Phoebe Bridgers — Savior Complex' },
+      ],
+    });
+    const result = await hook!({
+      siblingData: { songs: [10, 11] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('The National — Bloodbuzz Ohio, Phoebe Bridgers — Savior Complex');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'songs', where: { id: { in: [10, 11] } } }),
+    );
+  });
+
+  it('syncSongsText hook falls back to title when displayName is missing', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const songsTextField = fields.find((f) => f.name === 'songsText');
+    const hooks = songsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ title: 'Bloodbuzz Ohio' }] });
+    const result = await hook!({
+      siblingData: { songs: [10] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Bloodbuzz Ohio');
+  });
+
+  it('syncSongsText hook returns empty string on fetch error', async () => {
+    const fields = flattenRowFields(OnDemand.fields as Record<string, unknown>[]);
+    const songsTextField = fields.find((f) => f.name === 'songsText');
+    const hooks = songsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockRejectedValue(new Error('DB error'));
+    const result = await hook!({
+      siblingData: { songs: [10] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
   });
 });

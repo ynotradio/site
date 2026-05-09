@@ -1,8 +1,27 @@
-import type { CollectionConfig } from 'payload';
+import type { CollectionConfig, FieldHook } from 'payload';
 import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { setCdOfTheWeekSlugFromRecord, cdSlugify } from './hooks/slugUtils';
+
+const syncRecordText: FieldHook = async ({ siblingData, req }) => {
+  const raw = (siblingData as { record?: unknown }).record;
+  if (!raw) return '';
+  const id = typeof raw === 'object' && raw !== null && 'id' in raw
+    ? (raw as { id: unknown }).id
+    : raw;
+  try {
+    const { docs } = await req.payload.find({
+      collection: 'records',
+      where: { id: { equals: id } },
+      limit: 1,
+      depth: 0,
+    });
+    return String(docs[0]?.displayName ?? docs[0]?.title ?? '');
+  } catch {
+    return '';
+  }
+};
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
@@ -16,6 +35,7 @@ export const CdOfTheWeek: CollectionConfig = {
   admin: {
     useAsTitle: 'date',
     defaultColumns: ['date', 'record', 'reviewer', '_status', 'updatedAt'],
+    listSearchableFields: ['recordText'],
     group: 'Music',
     description:
       'Weekly album reviews. Pick a record, write the review, and set the date — only one should be current at a time.',
@@ -38,6 +58,17 @@ export const CdOfTheWeek: CollectionConfig = {
       required: true,
       admin: {
         description: 'Select the album to review — create it in Records first if needed',
+      },
+    },
+    {
+      name: 'recordText',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncRecordText],
       },
     },
     slugField({ useAsSlug: 'date', slugify: cdSlugify }),
