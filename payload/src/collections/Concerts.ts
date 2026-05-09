@@ -14,7 +14,7 @@ import {
   convertConcertTitleToPlain,
 } from '../utils/concertTitle';
 
-type ConcertSiblingData = { title?: SerializedEditorState | null };
+type ConcertSiblingData = { title?: SerializedEditorState | null; artists?: unknown[] };
 
 const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
   (siblingData as ConcertSiblingData).title,
@@ -25,9 +25,9 @@ const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlai
 );
 
 const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
-  const raw = (siblingData as { artists?: unknown[] }).artists ?? [];
-  if (!raw.length) return '';
-  const ids = raw.map((a) => {
+  const { artists = [] } = siblingData as ConcertSiblingData;
+  if (!artists.length) return '';
+  const ids = artists.map((a) => {
     if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;
     return a;
   });
@@ -38,7 +38,7 @@ const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
       limit: ids.length,
       depth: 0,
     });
-    return docs.map((a: { name?: unknown }) => String(a.name ?? '')).join(', ');
+    return docs.map((a: { name?: string }) => a.name ?? '').join(', ');
   } catch {
     return '';
   }
@@ -62,7 +62,7 @@ export const Concerts: CollectionConfig = {
   },
   defaultSort: 'date',
   access: {
-    read: () => true, // Public read access
+    read: () => true,
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
