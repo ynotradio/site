@@ -92,14 +92,14 @@ All collections imported to prod Neon. Over 6,370 records validated via integrit
 
 Six integrity check scripts (`bin/integrity-check-*.ts`) run with `--fix` against prod:
 
-| Check | Fixed | Failures |
-|-------|-------|----------|
-| display-names | 599 | 0 |
-| ondemand-source | 520 | 0 |
-| publish-status | 543 | 0 |
-| record-metadata | 813 | 11 (coverImage — acceptable) |
-| slugs | 7,138 | 34 (uniqueness conflicts — resolved) |
-| musicbrainz | 331 | 6 (niche local artists — acceptable) |
+| Check           | Fixed | Failures                             |
+| --------------- | ----- | ------------------------------------ |
+| display-names   | 599   | 0                                    |
+| ondemand-source | 520   | 0                                    |
+| publish-status  | 543   | 0                                    |
+| record-metadata | 813   | 11 (coverImage — acceptable)         |
+| slugs           | 7,138 | 34 (uniqueness conflicts — resolved) |
+| musicbrainz     | 331   | 6 (niche local artists — acceptable) |
 
 #### Artist Data Cleanup — Complete (March 2026)
 
@@ -119,38 +119,21 @@ Six integrity check scripts (`bin/integrity-check-*.ts`) run with `--fix` agains
 
 - [x] `scheduled-db-sync.yml` copies prod Neon → dev Neon every Monday at 2 AM UTC
 
-#### Feature Flags Infrastructure — Built (March 2026)
+#### Feature Flags Infrastructure — Dissolved (post-cutover)
 
-- [x] `src/config/features.php` — 11 flags for all collections (all currently `false`)
-- [x] `src/models/FeatureManager.php` — 3-tier override: URL param (`?ff=use_postgres_concerts`), cookie, env var
-- [x] CP pages suppress Postgres flags by default (safety measure)
+The `USE_POSTGRES_*` feature flag system has been removed. Every factory now hardcodes
+its data source:
+
+- **Postgres-backed (via Payload):** Concerts, OnDemand, Deejays, Music, CdOfTheWeek, Ads, Modern Rock Madness
+- **MySQL-backed (legacy admin):** Stories, Schedule, CustomText
+
+`src/config/features.php` is empty and `FeatureManager` is retained only for any future
+non-data-source flags.
 
 #### PHP Postgres Models — Complete (March 2026)
 
-Readonly Postgres implementations with Cloudinary image support for all content collections:
-
-- [x] `ConcertFactory.php`
-- [x] `DeejayFactory.php`
-- [x] `MusicFactory.php`
-- [x] `OnDemandFactory.php`
-- [x] `ScheduleFactory.php`
-- [x] `CdOfTheWeekFactory.php`
-- [x] `CustomTextFactory.php`
-- [x] `StoryFactory.php`
-
-> **Note:** `AdFactory` remains MySQL-only. Ads load independently and won't break when other content switches to Postgres.
-
----
-
-### 🚧 Next Up: Incremental Flag Enablement
-
-The parallel systems are running, data is synced and validated, feature flags are built, and PHP Postgres models are ready. The next step is to enable feature flags one collection at a time in production.
-
-- [ ] Enable `use_postgres_concerts` on production (lowest risk — validate with `?ff=use_postgres_concerts` first)
-- [ ] Enable `use_postgres_deejays` on production
-- [ ] Enable remaining collection flags incrementally
-- [ ] Monitor error rates and page load times after each flag flip
-- [ ] Remove MySQL fallback code after all flags stable
+Readonly Postgres implementations with Cloudinary image support for all migrated content
+collections live in `src/models/implementations/Postgres*.php`.
 
 ---
 
@@ -217,6 +200,7 @@ The parallel systems are running, data is synced and validated, feature flags ar
 ## Known Issues & Blockers
 
 None. All systems operational:
+
 - Production data import complete and validated
 - Nightly sync running successfully
 - All integrity checks passing (minor acceptable failures: 11 coverImage, 6 niche MusicBrainz artists)

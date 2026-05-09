@@ -57,16 +57,6 @@ POSTGRES_USER=ynot_postgres_user
 POSTGRES_PASSWORD=ynot_postgres_pass
 POSTGRES_SSL_MODE=disable
 
-# Enable Postgres mode for legacy PHP site
-USE_POSTGRES_CONCERTS=true
-USE_POSTGRES_ONDEMAND=true
-USE_POSTGRES_DEEJAYS=true
-USE_POSTGRES_MUSIC=true
-USE_POSTGRES_STORIES=true
-USE_POSTGRES_CDOFTHEWEEK=true
-USE_POSTGRES_SCHEDULE=true
-USE_POSTGRES_CUSTOMTEXT=true
-
 # Force seasonal features open for E2E testing
 FORCE_YEAR_END_POLL_OPEN=true
 

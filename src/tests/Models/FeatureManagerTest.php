@@ -16,12 +16,12 @@ use YNotRadio\Models\FeatureManager;
 class FeatureManagerTest extends TestCase
 {
     /**
-     * Test that a feature disabled in config returns false
+     * Test that a feature missing from config returns false
      */
-    public function testFeatureDisabledInConfig(): void
+    public function testFeatureMissingFromConfig(): void
     {
-        // use_postgres_stories is still false in src/config/features.php — exercises the disabled path.
-        $result = FeatureManager::isEnabled('use_postgres_stories');
+        // Generic feature name not present in src/config/features.php — exercises the disabled path.
+        $result = FeatureManager::isEnabled('disabled_feature_xyz');
 
         $this->assertFalse($result);
     }
@@ -40,14 +40,14 @@ class FeatureManagerTest extends TestCase
      */
     public function testEnvironmentVariableOverridesConfig(): void
     {
-        // Set an environment variable that overrides the config (use_postgres_stories defaults to false)
-        putenv('USE_POSTGRES_STORIES=true');
+        // Set an environment variable for a feature that's not in the config (defaults to false)
+        putenv('SOME_FEATURE=true');
 
-        $result = FeatureManager::isEnabled('use_postgres_stories');
+        $result = FeatureManager::isEnabled('some_feature');
         $this->assertTrue($result);
 
         // Clean up
-        putenv('USE_POSTGRES_STORIES');
+        putenv('SOME_FEATURE');
     }
     
     /**

@@ -1,5 +1,11 @@
 # PostgreSQL Concert Model Implementation
 
+> **⚠️ Historical document.** As of the USE*POSTGRES*\* flag dissolution, `ConcertFactory`
+> is hardcoded to Postgres — the flag, the MySQL `SqlConcert` implementation, and the
+> fallback logic described below have all been removed. See `src/models/ConcertFactory.php`
+> for the current implementation. The architecture and schema notes below remain accurate
+> for understanding `PostgresConcert.php`.
+
 ## Overview
 
 This implementation provides a PostgreSQL-backed read model for concerts that queries the Neon PostgreSQL database created by Payload CMS. It maintains backward compatibility with the existing MySQL implementation while allowing a seamless transition to PostgreSQL.
@@ -48,10 +54,12 @@ You can enable PostgreSQL concerts in four ways (in priority order):
    - Example: `http://example.com/concerts.php?ff=use_postgres_concerts`
 
 3. **Environment Variable** (Persistent, via .env file):
+
    ```bash
    # In src/partials/.env or .env.local
    USE_POSTGRES_CONCERTS=true
    ```
+
    - Accepts: `true`, `1`, `yes`, `on` (case-insensitive)
    - Overrides config file setting
 
@@ -89,12 +97,12 @@ The PostgreSQL implementation reads from the Payload CMS schema:
 
 ### Key Differences from MySQL
 
-| Aspect | MySQL | PostgreSQL |
-|--------|-------|------------|
-| Date field | `date` (DATE) | `date` (TIMESTAMP) |
-| Featured field | `featured` (VARCHAR) 'Yes'/'No' | `featured` (BOOLEAN) |
-| Soft deletes | `deleted` (VARCHAR) 'y'/'n' | No soft deletes in Payload |
-| Artists | Single `artist` field | Many-to-many via `concerts_rels` |
+| Aspect         | MySQL                           | PostgreSQL                       |
+| -------------- | ------------------------------- | -------------------------------- |
+| Date field     | `date` (DATE)                   | `date` (TIMESTAMP)               |
+| Featured field | `featured` (VARCHAR) 'Yes'/'No' | `featured` (BOOLEAN)             |
+| Soft deletes   | `deleted` (VARCHAR) 'y'/'n'     | No soft deletes in Payload       |
+| Artists        | Single `artist` field           | Many-to-many via `concerts_rels` |
 
 ## Data Transformation
 
@@ -120,12 +128,14 @@ This design ensures data integrity and leverages Payload's validation and hooks.
 ### Manual Testing
 
 1. **Test with MySQL** (default):
+
    ```bash
    # Visit concerts page
    curl http://localhost:8080/concerts.php
    ```
 
 2. **Test with PostgreSQL** (feature flag):
+
    ```bash
    # Enable via URL parameter
    curl http://localhost:8080/concerts.php?ff=use_postgres_concerts
@@ -153,21 +163,25 @@ try {
 ## Migration Path
 
 ### Phase 1: Parallel Testing (Current)
+
 - Feature flag disabled by default
 - MySQL is primary data source
 - Test PostgreSQL with feature flag in dev/staging
 
 ### Phase 2: Gradual Rollout
+
 - Enable for subset of users via cookie/URL
 - Monitor error logs for issues
 - Compare query performance
 
 ### Phase 3: Full Migration
+
 - Enable feature flag by default
 - Keep MySQL as fallback
 - Monitor for 30 days
 
 ### Phase 4: Complete Cutover
+
 - Remove MySQL implementation (optional)
 - Remove feature flag (optional)
 - PostgreSQL becomes sole data source
@@ -177,6 +191,7 @@ try {
 ### Query Optimization
 
 The PostgreSQL implementation uses:
+
 - `LATERAL` joins for efficient first-artist selection
 - `string_agg()` for artist name aggregation
 - Indexes on `date`, `featured`, and foreign keys
