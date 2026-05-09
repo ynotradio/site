@@ -322,7 +322,15 @@ class PostgresStory implements Story {
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $content = $this->convertLexicalChildren($node);
                 return "<a href=\"$url\">$content</a>";
-                
+
+            case 'linebreak':
+                // Soft line breaks (Shift+Enter in the Payload editor) are
+                // emitted as standalone `linebreak` nodes with no children.
+                // Without this case the default arm would call
+                // convertLexicalChildren() and yield an empty string,
+                // collapsing adjacent text runs together.
+                return '<br>';
+
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;
