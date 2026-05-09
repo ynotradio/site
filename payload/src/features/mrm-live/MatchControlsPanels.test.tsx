@@ -222,6 +222,16 @@ describe('MatchCardBody', () => {
     expect(screen.getByLabelText('Nirvana placeholder')).toBeInTheDocument();
   });
 
+  it('renders band image when band has an image URL', () => {
+    const band1WithImage = { ...BAND1, image: { url: 'https://example.com/radiohead.jpg' } };
+    const match = makeLiveMatch({ band1: band1WithImage as any });
+    render(<MatchCardBody match={match} saving={false} onManualVote={onManualVote} />);
+    const img = screen.getByRole('img', { name: 'Radiohead' });
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/radiohead.jpg');
+    expect(screen.queryByLabelText('Radiohead placeholder')).not.toBeInTheDocument();
+  });
+
   it('renders 50%/50% when both bands have zero votes', () => {
     const match = makeLiveMatch({ band1Votes: 0, band2Votes: 0 });
     render(<MatchCardBody match={match} saving={false} onManualVote={onManualVote} />);

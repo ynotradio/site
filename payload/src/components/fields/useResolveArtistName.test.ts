@@ -19,6 +19,12 @@ describe('useResolveArtistName', () => {
     expect(name).toBe('');
   });
 
+  it('returns empty string when artistFieldValue is a non-object non-primitive (e.g. a function)', async () => {
+    const { result } = renderHook(() => useResolveArtistName(() => 'noop'));
+    const name = await act(() => result.current());
+    expect(name).toBe('');
+  });
+
   it('resolves artist name directly when value has a name property', async () => {
     const { result } = renderHook(() => useResolveArtistName({ name: 'Direct Artist' }));
     const name = await act(() => result.current());
