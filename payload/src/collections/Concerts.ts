@@ -14,7 +14,7 @@ import {
   convertConcertTitleToPlain,
 } from '../utils/concertTitle';
 
-type ConcertSiblingData = { title?: SerializedEditorState | null; artists?: unknown[] };
+type ConcertSiblingData = { title?: SerializedEditorState | null; artists?: unknown[] | null };
 
 const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
   (siblingData as ConcertSiblingData).title,
@@ -25,7 +25,7 @@ const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlai
 );
 
 const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
-  const { artists = [] } = siblingData as ConcertSiblingData;
+  const artists = (siblingData as ConcertSiblingData).artists ?? [];
   if (!artists.length) return '';
   const ids = artists.map((a) => {
     if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;

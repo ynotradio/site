@@ -294,6 +294,28 @@ describe('convertHtmlToLexical', () => {
     const plainTextNodes = children.filter((c: any) => c.type === 'text' && c.format === 0);
     expect(plainTextNodes).toHaveLength(0);
   });
+
+  it('should not append space when appendSpaceToLastNode is called with empty nodes array', () => {
+    // Covers the nodes.length === 0 early-return branch in appendSpaceToLastNode.
+    // A leading space before the first tag calls appendSpaceToLastNode with an empty nodes list.
+    const result = convertHtmlToLexical(' <strong>bold</strong>');
+    const children = result.root.children[0].children;
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(boldNode).toBeDefined();
+    expect(boldNode.text).toBe('bold');
+  });
+
+  it('should not append space to link node (no text property) when followed by space and inline element', () => {
+    // Covers the false branch of appendSpaceToLastNode where lastNode.text is falsy (link nodes
+    // have no top-level .text; space after link should not crash or modify the link node).
+    const result = convertHtmlToLexical('<a href="http://example.com">click</a> <strong>bold</strong>');
+    const children = result.root.children[0].children;
+    const linkNode = children.find((c: any) => c.type === 'link');
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(linkNode).toBeDefined();
+    expect(boldNode).toBeDefined();
+    expect(boldNode.text).toBe('bold');
+  });
 });
 
 describe('getStatusFromDeleted', () => {
