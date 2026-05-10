@@ -4,13 +4,10 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { setCdOfTheWeekSlugFromRecord, cdSlugify } from './hooks/slugUtils';
 
-const isObjectLike = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
 const syncRecordText: FieldHook = async ({ siblingData, req }) => {
   const raw = (siblingData as { record?: unknown }).record;
   if (!raw) return '';
-  const id = isObjectLike(raw) && 'id' in raw
+  const id = typeof raw === 'object' && raw !== null && 'id' in raw
     ? (raw as { id: unknown }).id
     : raw;
   try {
