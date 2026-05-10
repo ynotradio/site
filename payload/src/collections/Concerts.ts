@@ -14,7 +14,7 @@ import {
   convertConcertTitleToPlain,
 } from '../utils/concertTitle';
 
-type ConcertSiblingData = { title?: SerializedEditorState | null };
+type ConcertSiblingData = { title?: SerializedEditorState | null; artists?: unknown[] | null };
 
 const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
   (siblingData as ConcertSiblingData).title,
@@ -24,17 +24,13 @@ const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlai
   (siblingData as ConcertSiblingData).title,
 );
 
-const extractArtistId = (entry: unknown): unknown => {
-  if (typeof entry === 'object' && entry !== null && 'id' in entry) {
-    return (entry as { id: unknown }).id;
-  }
-  return entry;
-};
-
 const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
-  const raw = (siblingData as { artists?: unknown[] }).artists ?? [];
-  if (!raw.length) return '';
-  const ids = raw.map(extractArtistId);
+  const artists = (siblingData as ConcertSiblingData).artists ?? [];
+  if (!artists.length) return '';
+  const ids = artists.map((a) => {
+    if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;
+    return a;
+  });
   try {
     const { docs } = await req.payload.find({
       collection: 'artists',
@@ -42,7 +38,7 @@ const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
       limit: ids.length,
       depth: 0,
     });
-    return docs.map((a: { name?: unknown }) => String(a.name ?? '')).join(', ');
+    return docs.map((a: { name?: string }) => a.name ?? '').join(', ');
   } catch {
     return '';
   }
