@@ -24,13 +24,17 @@ const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlai
   (siblingData as ConcertSiblingData).title,
 );
 
+const extractArtistId = (entry: unknown): unknown => {
+  if (typeof entry === 'object' && entry !== null && 'id' in entry) {
+    return (entry as { id: unknown }).id;
+  }
+  return entry;
+};
+
 const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
   const raw = (siblingData as { artists?: unknown[] }).artists ?? [];
   if (!raw.length) return '';
-  const ids = raw.map((a) => {
-    if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;
-    return a;
-  });
+  const ids = raw.map(extractArtistId);
   try {
     const { docs } = await req.payload.find({
       collection: 'artists',
@@ -62,7 +66,7 @@ export const Concerts: CollectionConfig = {
   },
   defaultSort: 'date',
   access: {
-    read: () => true, // Public read access
+    read: () => true,
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
