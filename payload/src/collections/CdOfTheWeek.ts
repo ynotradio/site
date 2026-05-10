@@ -39,6 +39,7 @@ export const CdOfTheWeek: CollectionConfig = {
     group: 'Music',
     description:
       'Weekly album reviews. Pick a record, write the review, and set the date — only one should be current at a time.',
+    groupBy: true,
   },
   defaultSort: '-date',
   access: {

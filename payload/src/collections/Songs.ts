@@ -25,6 +25,7 @@ export const Songs: CollectionConfig = {
     group: 'Music',
     description:
       'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',
+    groupBy: true,
   },
   defaultSort: '-releaseDate',
   access: {

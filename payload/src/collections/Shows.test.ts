@@ -16,8 +16,8 @@ describe('Shows', () => {
     expect(Shows.admin?.group).toBe('Radio');
   });
 
-  it('sorts by date descending by default', () => {
-    expect(Shows.defaultSort).toBe('-date');
+  it('sorts by date ascending by default', () => {
+    expect(Shows.defaultSort).toBe('date');
   });
 
   it('has timestamps enabled', () => {

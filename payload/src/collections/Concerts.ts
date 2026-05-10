@@ -59,6 +59,7 @@ export const Concerts: CollectionConfig = {
     listSearchableFields: ['titlePlain', 'artistsText'],
     group: 'Events',
     description: 'Concert listings.',
+    groupBy: true,
   },
   defaultSort: 'date',
   access: {

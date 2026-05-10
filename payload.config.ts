@@ -66,6 +66,15 @@ if (isProduction && !isBuild && !payloadSecret) {
 export default buildConfig({
   secret: payloadSecret || 'development-secret',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  queryPresets: {
+    access: {
+      create: ({ req }) => Boolean(req.user),
+      read: ({ req }) => Boolean(req.user),
+      update: ({ req }) => Boolean(req.user),
+      delete: ({ req }) => Boolean(req.user),
+    },
+    constraints: {},
+  },
   admin: {
     user: Users.slug,
     // Auto-login for development: Pre-fills credentials but user must click login

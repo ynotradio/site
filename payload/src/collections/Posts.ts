@@ -27,7 +27,7 @@ export const Posts: CollectionConfig = {
     ],
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
-
+    groupBy: true,
     description:
       'Front-page stories. Each story is visible on the site between its start and end dates.',
   },

@@ -58,6 +58,7 @@ export const OnDemand: CollectionConfig = {
     group: 'Radio',
     description:
       'Archived recordings for on-demand listening. Link an audio source and tag the DJs and artists.',
+    groupBy: true,
   },
   defaultSort: '-date',
   access: {

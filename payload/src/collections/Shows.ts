@@ -15,12 +15,12 @@ export const Shows: CollectionConfig = {
     group: 'Radio',
     description:
       'Weekly show schedule. Each entry is one time slot. Use Show Cloner to copy a full week to new dates.',
-
+    groupBy: true,
     components: {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },
   },
-  defaultSort: '-date',
+  defaultSort: 'date',
   hooks: {
     beforeChange: [normalizeShowDate],
   },
