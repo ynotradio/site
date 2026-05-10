@@ -33,6 +33,8 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 | Skill                               | When to Use                                                                                                                   |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **testing-pr-changes**              | Before submitting any PR. Success criteria and proof requirements.                                                            |
+| **payload**                         | When working on Payload collections, fields, hooks, access control, queries, adapters, jobs queue, endpoints, or plugins.   |
+| **cms-migration**                   | When migrating data from another CMS (WordPress, Contentful, Strapi, etc.) into Payload collections.                         |
 | **payload-migration-workflow**      | When working on Payload collections, data models, or PHP→Payload migration.                                                   |
 | **code-quality-standards**          | When writing new TypeScript/React code. Airbnb style, React 19, Next.js 15 patterns.                                          |
 | **test-story-coupling**             | When creating components. Ensures matching test and story files exist.                                                        |
@@ -52,6 +54,8 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
    - Components? → `test-story-coupling`
    - Adding dependencies? → `dependency-best-practices`
    - TypeScript/React code? → `code-quality-standards`
+   - Working on Payload CMS features? → `payload`
+   - Migrating external CMS data to Payload? → `cms-migration`
    - Payload CMS? → `payload-migration-workflow`
    - Creating a PR? → `testing-pr-changes` (ALWAYS)
    - E2E test failures? → `e2e-debugging-workflow`
