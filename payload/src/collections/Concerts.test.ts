@@ -209,6 +209,56 @@ describe('Concerts', () => {
     expect(result).toBe('');
   });
 
+  it('syncArtistsText hook returns empty string when artists is undefined (null-coalescing branch)', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const result = await hook!({
+      siblingData: {},
+      req: { payload: { find: vi.fn() } },
+    });
+    expect(result).toBe('');
+  });
+
+  it('syncArtistsText hook returns empty string when artists is null (null-coalescing branch)', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const result = await hook!({
+      siblingData: { artists: null },
+      req: { payload: { find: vi.fn() } },
+    });
+    expect(result).toBe('');
+  });
+
+  it('syncArtistsText hook handles artist with null name (null-coalescing branch in map)', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: null }, { name: 'Band B' }] });
+    const result = await hook!({
+      siblingData: { artists: [1, 2] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe(', Band B');
+  });
+
+  it('syncArtistsText hook handles artist with undefined name (null-coalescing branch in map)', async () => {
+    const allFields = flattenRowFields(Concerts.fields);
+    const artistsTextField = allFields.find((f) => f.name === 'artistsText');
+    const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ id: 1 }] });
+    const result = await hook!({
+      siblingData: { artists: [1] },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
+  });
+
   it('syncTitleHtml hook returns empty string for null title', () => {
     const allFields = flattenRowFields(Concerts.fields);
     const titleHtmlField = allFields.find((f) => f.name === 'titleHtml');
