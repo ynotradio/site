@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CdOfTheWeek } from './CdOfTheWeek';
 import { flattenRowFields } from './testUtils';
 
@@ -110,5 +110,88 @@ describe('CdOfTheWeek', () => {
 
   it('has a beforeChange hook registered', () => {
     expect(CdOfTheWeek.hooks?.beforeChange).toHaveLength(1);
+  });
+
+  it('has recordText in listSearchableFields', () => {
+    expect(CdOfTheWeek.admin?.listSearchableFields).toContain('recordText');
+  });
+
+  it('has recordText as a hidden readOnly text field with a beforeChange hook', () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    expect(recordTextField?.type).toBe('text');
+    const admin = recordTextField?.admin as { hidden?: boolean; readOnly?: boolean } | undefined;
+    expect(admin?.hidden).toBe(true);
+    expect(admin?.readOnly).toBe(true);
+    const hooks = recordTextField?.hooks as { beforeChange?: unknown[] } | undefined;
+    expect(hooks?.beforeChange?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  it('syncRecordText hook returns empty string when record is absent', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    expect(typeof hook).toBe('function');
+    const result = await hook!({ siblingData: {}, req: { payload: { find: vi.fn() } } });
+    expect(result).toBe('');
+  });
+
+  it('syncRecordText hook fetches displayName from records collection', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ displayName: 'Radiohead — OK Computer' }] });
+    const result = await hook!({
+      siblingData: { record: 42 },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Radiohead — OK Computer');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'records', where: { id: { equals: 42 } } }),
+    );
+  });
+
+  it('syncRecordText hook handles object-form record (already populated)', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ displayName: 'Nirvana — Nevermind' }] });
+    const result = await hook!({
+      siblingData: { record: { id: 7, title: 'Nevermind' } },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Nirvana — Nevermind');
+    expect(mockFind).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: { equals: 7 } } }),
+    );
+  });
+
+  it('syncRecordText hook falls back to title when displayName is missing', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{ title: 'Nevermind' }] });
+    const result = await hook!({
+      siblingData: { record: 7 },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('Nevermind');
+  });
+
+  it('syncRecordText hook returns empty string on fetch error', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockRejectedValue(new Error('DB error'));
+    const result = await hook!({
+      siblingData: { record: 1 },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
   });
 });
