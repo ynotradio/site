@@ -73,6 +73,8 @@ export default buildConfig({
       update: ({ req }) => Boolean(req.user),
       delete: ({ req }) => Boolean(req.user),
     },
+    // No custom constraints — use Payload's built-in defaults:
+    // "Only Me", "Everyone", and "Specific Users"
     constraints: {},
   },
   admin: {
