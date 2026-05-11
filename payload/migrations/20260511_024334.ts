@@ -72,16 +72,20 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   `);
 
   await db.execute(sql`
-    ALTER TABLE "payload_query_presets_rels"
-      ADD CONSTRAINT IF NOT EXISTS "payload_query_presets_rels_parent_fk"
-        FOREIGN KEY ("parent_id") REFERENCES "public"."payload_query_presets"("id")
-        ON DELETE cascade ON UPDATE no action;
+    DO $$ BEGIN
+      ALTER TABLE "payload_query_presets_rels"
+        ADD CONSTRAINT "payload_query_presets_rels_parent_fk"
+          FOREIGN KEY ("parent_id") REFERENCES "public"."payload_query_presets"("id")
+          ON DELETE cascade ON UPDATE no action;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
   `);
   await db.execute(sql`
-    ALTER TABLE "payload_query_presets_rels"
-      ADD CONSTRAINT IF NOT EXISTS "payload_query_presets_rels_users_fk"
-        FOREIGN KEY ("users_id") REFERENCES "public"."users"("id")
-        ON DELETE cascade ON UPDATE no action;
+    DO $$ BEGIN
+      ALTER TABLE "payload_query_presets_rels"
+        ADD CONSTRAINT "payload_query_presets_rels_users_fk"
+          FOREIGN KEY ("users_id") REFERENCES "public"."users"("id")
+          ON DELETE cascade ON UPDATE no action;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
   `);
 
   await db.execute(sql`
