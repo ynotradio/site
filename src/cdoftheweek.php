@@ -27,9 +27,9 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
             if ($cd) {
                 $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
                 $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
-                if (!empty($cd['band'])) {
+                if (!empty($cd['band']) && preg_match('/^https?:\/\//i', $cd['band'])) {
                     $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
-                    $coverImage = '<a href="' . $artistUrl . '" target=_new>' . $coverImage . '</a>';
+                    $coverImage = '<a href="' . $artistUrl . '" target="_blank" rel="noopener noreferrer">' . $coverImage . '</a>';
                 }
                 echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                      "<div class='review'> " . $coverImage . "\n" .
@@ -58,9 +58,9 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                 foreach ($latestCds as $cd) {
                     $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
                     $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
-                    if (!empty($cd['band'])) {
+                    if (!empty($cd['band']) && preg_match('/^https?:\/\//i', $cd['band'])) {
                         $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
-                        $coverImage = '<a href="' . $artistUrl . '" target=_new>' . $coverImage . '</a>';
+                        $coverImage = '<a href="' . $artistUrl . '" target="_blank" rel="noopener noreferrer">' . $coverImage . '</a>';
                     }
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                          "<div class='review'> " . $coverImage . "\n" .
