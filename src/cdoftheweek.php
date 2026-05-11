@@ -49,7 +49,7 @@ function renderCdCoverImage(string $imageUrl, ?string $artistUrl, string $altTex
                     $cd['artist'] . ' - ' . $cd['title'] . ' album cover'
                 );
                 echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
-                     "<div class='review'> " . $coverImage . "\n" .
+                     "<div class=\"review\"> " . $coverImage . "\n" .
                      $cd['review'] . "</div>\n" .
                      "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
             }
@@ -79,7 +79,7 @@ function renderCdCoverImage(string $imageUrl, ?string $artistUrl, string $altTex
                         $cd['artist'] . ' - ' . $cd['title'] . ' album cover'
                     );
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
-                         "<div class='review'> " . $coverImage . "\n" .
+                         "<div class=\"review\"> " . $coverImage . "\n" .
                          $cd['review'] . "</div>\n" .
                          "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
                     
