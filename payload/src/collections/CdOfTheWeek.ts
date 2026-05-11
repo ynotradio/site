@@ -40,6 +40,11 @@ export const CdOfTheWeek: CollectionConfig = {
     description:
       'Weekly album reviews. Pick a record, write the review, and set the date — only one should be current at a time.',
     groupBy: true,
+    components: {
+      beforeList: [
+        '/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader',
+      ],
+    },
   },
   defaultSort: '-date',
   access: {

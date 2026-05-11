@@ -14,6 +14,9 @@ export const RadioToolsNavLinks: React.FC = () => (
     <Link href="/admin/show-cloner" className="radio-tools-nav__link">
       📋 Show Cloner
     </Link>
+    <Link href="/admin/cd-of-the-week-wizard" className="radio-tools-nav__link">
+      💿 New CD of the Week + Album
+    </Link>
   </div>
 );
 

@@ -34,6 +34,7 @@ import { TimeCell as TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1 } from '../../../
 import { TimePickerField as TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb } from '../../../payload/src/components/fields/TimePickerField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
 import { TournamentBracketTab as TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27 } from '../../../payload/src/features/mrm-bracket/TournamentBracketTab'
 import { MatchControlsTab as MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953 } from '../../../payload/src/features/mrm-live/MatchControlsTab'
 import { QueryPresetsAccessCell as QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
@@ -50,6 +51,7 @@ import { RadioToolsNavLinks as RadioToolsNavLinks_35d4e33fc5eb5565bf9002df2a9ab1
 import { NavDefaultClosed as NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631 } from '../../../payload/src/components/providers/NavDefaultClosed'
 import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
 import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } from '../../../payload/src/features/show-cloner'
+import { CdOfTheWeekWizardTool as CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f } from '../../../payload/src/features/cd-of-the-week-wizard'
 import { LiveMatchTool as LiveMatchTool_8e09218c140287dbcfa6d389b5910882 } from '../../../payload/src/features/mrm-live'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -91,6 +93,7 @@ export const importMap = {
   "/payload/src/components/fields/TimePickerField#TimePickerField": TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
   "/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab": TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27,
   "/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab": MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953,
   "@payloadcms/next/client#QueryPresetsAccessCell": QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40,
@@ -107,6 +110,7 @@ export const importMap = {
   "/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed": NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631,
   "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
+  "/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool": CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f,
   "/payload/src/features/mrm-live#LiveMatchTool": LiveMatchTool_8e09218c140287dbcfa6d389b5910882,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

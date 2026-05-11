@@ -1,0 +1,25 @@
+.cdotw-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  padding-right: 16px;
+}
+
+.cdotw-list-header__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #0969da;
+  border-radius: 4px;
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+.cdotw-list-header__link:hover {
+  background-color: #0860ca;
+}

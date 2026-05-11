@@ -116,6 +116,14 @@ export default buildConfig({
             title: 'Show Cloner',
           },
         },
+        CdOfTheWeekWizard: {
+          Component: '/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool',
+          path: '/cd-of-the-week-wizard',
+          exact: true,
+          meta: {
+            title: 'New CD of the Week + Album',
+          },
+        },
         MRMLive: {
           Component: '/payload/src/features/mrm-live#LiveMatchTool',
           path: '/mrm-live',
