@@ -6,6 +6,7 @@ import * as migration_20260504_020436_slug_field_consistency from './20260504_02
 import * as migration_20260505_140811_concert_title_richtext from './20260505_140811_concert_title_richtext';
 import * as migration_20260508_152000_concert_artists_text from './20260508_152000_concert_artists_text';
 import * as migration_20260509_172217_cdoftheweek_ondemand_search_text from './20260509_172217_cdoftheweek_ondemand_search_text';
+import * as migration_20260511_024334 from './20260511_024334';
 
 export const migrations = [
   {
@@ -31,7 +32,7 @@ export const migrations = [
   {
     up: migration_20260504_020436_slug_field_consistency.up,
     down: migration_20260504_020436_slug_field_consistency.down,
-    name: '20260504_020436_slug_field_consistency'
+    name: '20260504_020436_slug_field_consistency',
   },
   {
     up: migration_20260505_140811_concert_title_richtext.up,
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20260509_172217_cdoftheweek_ondemand_search_text.up,
     down: migration_20260509_172217_cdoftheweek_ondemand_search_text.down,
     name: '20260509_172217_cdoftheweek_ondemand_search_text',
+  },
+  {
+    up: migration_20260511_024334.up,
+    down: migration_20260511_024334.down,
+    name: '20260511_024334'
   },
 ];
