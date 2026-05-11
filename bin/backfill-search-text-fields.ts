@@ -37,6 +37,10 @@ interface BackfillStats {
   errors: number;
 }
 
+type DocOutcome =
+  | { skip: true; warn?: string }
+  | { skip: false; data: Record<string, unknown>; dryRunLog: string };
+
 const VALID_TARGETS: PostgresTarget[] = ['local-postgres', 'prod-neon', 'dev-neon', 'dev', 'prod'];
 const VALID_COLLECTIONS: TargetCollection[] = ['cdoftheweek', 'ondemand'];
 const PAGE_SIZE = 100;
@@ -102,83 +106,55 @@ function parseArgs(): CliOptions {
   };
 }
 
-async function backfillCdOfTheWeek(payload: Payload, dryRun: boolean): Promise<BackfillStats> {
-  const stats: BackfillStats = {
-    scanned: 0,
-    updated: 0,
-    skipped: 0,
-    errors: 0,
+function cdOfTheWeekHandler(doc: Record<string, unknown>): DocOutcome {
+  if (!isBlank(doc.recordText)) return { skip: true };
+  const raw = doc.record;
+  const recordId = typeof raw === 'object' && raw !== null && 'id' in raw
+    ? (raw as { id: unknown }).id
+    : raw;
+  if (!recordId) return { skip: true, warn: `⚠️  cdoftheweek:${doc.id} has no record relation; skipping` };
+  return {
+    skip: false,
+    data: { record: recordId },
+    dryRunLog: `[DRY RUN] cdoftheweek:${doc.id} -> regenerate recordText from record ${recordId}`,
   };
-  let page = 1;
-  let hasNextPage = true;
-
-  while (hasNextPage) {
-    const result = await payload.find({
-      collection: 'cdoftheweek',
-      page,
-      limit: PAGE_SIZE,
-      depth: 0,
-      sort: 'id',
-      overrideAccess: true,
-    });
-
-    for (const doc of result.docs as Array<Record<string, unknown>>) {
-      stats.scanned += 1;
-      const needsBackfill = isBlank(doc.recordText);
-      if (!needsBackfill) {
-        stats.skipped += 1;
-      } else {
-        const rawRecord = doc.record;
-        const recordId = typeof rawRecord === 'object' && rawRecord !== null && 'id' in rawRecord
-          ? (rawRecord as { id: unknown }).id
-          : rawRecord;
-
-        if (!recordId) {
-          console.warn(`⚠️  cdoftheweek:${doc.id} has no record relation; skipping`);
-          stats.skipped += 1;
-        } else if (dryRun) {
-          console.log(`[DRY RUN] cdoftheweek:${doc.id} -> regenerate recordText from record ${recordId}`);
-          stats.updated += 1;
-        } else {
-          try {
-            const updateData: Record<string, unknown> = { record: recordId };
-            await payload.update({
-              collection: 'cdoftheweek',
-              id: doc.id as number,
-              data: updateData,
-              depth: 0,
-              overrideAccess: true,
-            });
-            stats.updated += 1;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(`❌ Failed cdoftheweek:${doc.id} - ${message}`);
-            stats.errors += 1;
-          }
-        }
-      }
-    }
-
-    hasNextPage = result.hasNextPage;
-    page += 1;
-  }
-
-  return stats;
 }
 
-async function backfillOnDemand(payload: Payload, dryRun: boolean): Promise<BackfillStats> {
-  const stats: BackfillStats = {
-    scanned: 0,
-    updated: 0,
-    skipped: 0,
-    errors: 0,
+function onDemandHandler(doc: Record<string, unknown>): DocOutcome {
+  if (!isBlank(doc.artistsText) && !isBlank(doc.songsText)) return { skip: true };
+  const data: Record<string, unknown> = {};
+  if ('artists' in doc) data.artists = doc.artists;
+  if ('songs' in doc) data.songs = doc.songs;
+  if (Object.keys(data).length === 0) {
+    return { skip: true, warn: `⚠️  ondemand:${doc.id} has no artists/songs fields to resave; skipping` };
+  }
+  return {
+    skip: false,
+    data,
+    dryRunLog: `[DRY RUN] ondemand:${doc.id} -> regenerate artistsText/songsText`,
   };
+}
+
+const HANDLERS: Record<TargetCollection, (doc: Record<string, unknown>) => DocOutcome> = {
+  cdoftheweek: cdOfTheWeekHandler,
+  ondemand: onDemandHandler,
+};
+
+async function backfillCollection(
+  payload: Payload,
+  collection: TargetCollection,
+  dryRun: boolean,
+): Promise<BackfillStats> {
+  const stats: BackfillStats = {
+    scanned: 0, updated: 0, skipped: 0, errors: 0,
+  };
+  const handleDoc = HANDLERS[collection];
   let page = 1;
   let hasNextPage = true;
 
   while (hasNextPage) {
     const result = await payload.find({
-      collection: 'ondemand',
+      collection,
       page,
       limit: PAGE_SIZE,
       depth: 0,
@@ -188,35 +164,27 @@ async function backfillOnDemand(payload: Payload, dryRun: boolean): Promise<Back
 
     for (const doc of result.docs as Array<Record<string, unknown>>) {
       stats.scanned += 1;
-      const needsBackfill = isBlank(doc.artistsText) || isBlank(doc.songsText);
-      if (!needsBackfill) {
+      const outcome = handleDoc(doc);
+      if (outcome.skip) {
+        if (outcome.warn) console.warn(outcome.warn);
         stats.skipped += 1;
+      } else if (dryRun) {
+        console.log(outcome.dryRunLog);
+        stats.updated += 1;
       } else {
-        const data: Record<string, unknown> = {};
-        if ('artists' in doc) data.artists = doc.artists;
-        if ('songs' in doc) data.songs = doc.songs;
-
-        if (Object.keys(data).length === 0) {
-          console.warn(`⚠️  ondemand:${doc.id} has no artists/songs fields to resave; skipping`);
-          stats.skipped += 1;
-        } else if (dryRun) {
-          console.log(`[DRY RUN] ondemand:${doc.id} -> regenerate artistsText/songsText`);
+        try {
+          await payload.update({
+            collection,
+            id: doc.id as number,
+            data: outcome.data,
+            depth: 0,
+            overrideAccess: true,
+          });
           stats.updated += 1;
-        } else {
-          try {
-            await payload.update({
-              collection: 'ondemand',
-              id: doc.id as number,
-              data,
-              depth: 0,
-              overrideAccess: true,
-            });
-            stats.updated += 1;
-          } catch (error) {
-            const message = error instanceof Error ? error.message : String(error);
-            console.error(`❌ Failed ondemand:${doc.id} - ${message}`);
-            stats.errors += 1;
-          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(`❌ Failed ${collection}:${doc.id} - ${message}`);
+          stats.errors += 1;
         }
       }
     }
@@ -248,9 +216,7 @@ async function main(): Promise<void> {
   let totalErrors = 0;
 
   for (const collection of options.collections) {
-    const stats = collection === 'cdoftheweek'
-      ? await backfillCdOfTheWeek(payload, options.dryRun)
-      : await backfillOnDemand(payload, options.dryRun);
+    const stats = await backfillCollection(payload, collection, options.dryRun);
 
     totalErrors += stats.errors;
     printCollectionSummary(collection, stats);
