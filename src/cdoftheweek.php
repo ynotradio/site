@@ -12,10 +12,11 @@ $GLOBALS['db'] = open_db();
 
 $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
 
-function buildCdCoverImage(string $imageUrl, ?string $artistUrl): string
+function renderCdCoverImage(string $imageUrl, ?string $artistUrl, string $altText): string
 {
     $safeImageUrl = htmlspecialchars($imageUrl, ENT_QUOTES);
-    $coverImage = '<img src="' . $safeImageUrl . '" height="200">';
+    $safeAltText = htmlspecialchars($altText, ENT_QUOTES);
+    $coverImage = '<img src="' . $safeImageUrl . '" height="200" alt="' . $safeAltText . '">';
 
     if (
         !empty($artistUrl)
@@ -42,7 +43,11 @@ function buildCdCoverImage(string $imageUrl, ?string $artistUrl): string
         if ($cd_id) {
             $cd = $cdOfTheWeek->getById($cd_id);
             if ($cd) {
-                $coverImage = buildCdCoverImage($cd['cd_pic_url'], $cd['band'] ?? null);
+                $coverImage = renderCdCoverImage(
+                    $cd['cd_pic_url'],
+                    $cd['band'] ?? null,
+                    $cd['artist'] . ' - ' . $cd['title'] . ' album cover'
+                );
                 echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                      "<div class='review'> " . $coverImage . "\n" .
                      $cd['review'] . "</div>\n" .
@@ -68,7 +73,11 @@ function buildCdCoverImage(string $imageUrl, ?string $artistUrl): string
                 
                 // Display each CD of the week for the latest date
                 foreach ($latestCds as $cd) {
-                    $coverImage = buildCdCoverImage($cd['cd_pic_url'], $cd['band'] ?? null);
+                    $coverImage = renderCdCoverImage(
+                        $cd['cd_pic_url'],
+                        $cd['band'] ?? null,
+                        $cd['artist'] . ' - ' . $cd['title'] . ' album cover'
+                    );
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                          "<div class='review'> " . $coverImage . "\n" .
                          $cd['review'] . "</div>\n" .
