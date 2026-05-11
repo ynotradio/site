@@ -187,6 +187,14 @@ Converted inline styles to CSS files across all affected components:
   - `MusicBrainzRecordingField` reduced: 291 → 227 lines
   - `MusicBrainzReleaseField` reduced: 294 → 230 lines
 
+### Phase 6: Shared Fetch Helper Extraction ✅ COMPLETED
+
+- [x] **Extract `fetchMusicBrainz` helper in `musicbrainz-api.ts`** ✅
+  - Path: `payload/src/utils/musicbrainz-api.ts`
+  - Removed duplicated fetch+rate-limit+error-handling pattern from `searchArtists`, `searchReleases`, and `searchRecordings`
+  - File reduced: 338 → 278 lines (18% reduction)
+  - All 3 search functions simplified to: build query → call helper → sort results
+
 ## ✅ New Completions (hooks)
 
 - [x] **showDateHooks.ts** ✅ Test added
