@@ -25,8 +25,14 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
         if ($cd_id) {
             $cd = $cdOfTheWeek->getById($cd_id);
             if ($cd) {
+                $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
+                $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
+                if (!empty($cd['band'])) {
+                    $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
+                    $coverImage = '<a href="' . $artistUrl . '" target=_new>' . $coverImage . '</a>';
+                }
                 echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
-                     "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $cd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
+                     "<div class='review'> " . $coverImage . "\n" .
                      $cd['review'] . "</div>\n" .
                      "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
             }
@@ -50,9 +56,14 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                 
                 // Display each CD of the week for the latest date
                 foreach ($latestCds as $cd) {
-                    $displayCd = $cdOfTheWeek->getById((int) $cd['id']) ?: $cd;
+                    $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
+                    $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
+                    if (!empty($cd['band'])) {
+                        $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
+                        $coverImage = '<a href="' . $artistUrl . '" target=_new>' . $coverImage . '</a>';
+                    }
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
-                         "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $displayCd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
+                         "<div class='review'> " . $coverImage . "\n" .
                          $cd['review'] . "</div>\n" .
                          "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
                     

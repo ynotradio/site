@@ -33,6 +33,20 @@ interface ImportOptions {
   startId?: number;
 }
 
+interface ExistingCdOfTheWeekDoc {
+  id: number | string;
+  artistUrl?: string | null;
+}
+
+function normalizeArtistUrl(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^www\./i.test(trimmed)) return `https://${trimmed}`;
+  return undefined;
+}
+
 /**
  * Parse command line arguments
  */
@@ -80,9 +94,12 @@ Examples:
 }
 
 /**
- * Check if a CD of the Week entry with the given legacy ID already exists
+ * Get CD of the Week entry by legacy ID
  */
-async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<boolean> {
+async function getExistingCdOfTheWeek(
+  payload: Payload,
+  legacyId: number,
+): Promise<ExistingCdOfTheWeekDoc | null> {
   const existing = await payload.find({
     collection: 'cdoftheweek',
     where: {
@@ -90,10 +107,14 @@ async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<bo
         equals: legacyId,
       },
     },
+    select: {
+      id: true,
+      artistUrl: true,
+    },
     limit: 1,
   });
 
-  return existing.docs.length > 0;
+  return (existing.docs[0] as ExistingCdOfTheWeekDoc | undefined) ?? null;
 }
 
 /**
@@ -110,9 +131,23 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       return false;
     }
 
+    const artistUrl = normalizeArtistUrl(item.band);
+    const existingCd = await getExistingCdOfTheWeek(payload, item.id);
+
     // Check if already imported
-    if (await cdOfTheWeekExists(payload, item.id)) {
-      logger.debug(`CD of the Week ${item.id} already exists, skipping`);
+    if (existingCd) {
+      if (artistUrl && !existingCd.artistUrl) {
+        await payload.update({
+          collection: 'cdoftheweek',
+          id: existingCd.id,
+          data: {
+            artistUrl,
+          },
+        });
+        logger.debug(`Backfilled artist URL for existing CD of the Week ${item.id}`);
+      } else {
+        logger.debug(`CD of the Week ${item.id} already exists, skipping`);
+      }
       return false;
     }
 
@@ -286,6 +321,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
         collection: 'cdoftheweek',
         data: {
           record: recordId as any,
+          artistUrl,
           review,
           reviewer: reviewerId,
           date: item.date,
