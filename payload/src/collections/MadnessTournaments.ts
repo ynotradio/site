@@ -6,6 +6,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
   slug: 'modern-rock-madness-tournaments',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Tournament',
     plural: 'Tournaments',
@@ -18,6 +19,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     defaultColumns: ['name', 'year', 'status', 'startDate', 'updatedAt'],
     group: 'Modern Rock Madness',
     description: 'Annual Modern Rock Madness tournament configuration.',
+    groupBy: true,
     components: {
       views: {
         edit: {

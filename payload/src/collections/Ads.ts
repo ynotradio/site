@@ -5,6 +5,7 @@ export const Ads: CollectionConfig = {
   slug: 'ads',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Advertisement',
     plural: 'Advertisements',
@@ -18,6 +19,7 @@ export const Ads: CollectionConfig = {
     group: 'Marketing',
     description:
       'Site advertisements. Each ad is visible between its start and end dates. Higher priority appears first.',
+    groupBy: true,
   },
   defaultSort: ['-startDate', '-priority'],
   access: {

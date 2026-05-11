@@ -5,6 +5,7 @@ import { generateDJDisplayName } from './hooks/displayNameHooks';
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
+  enableQueryPresets: true,
   labels: {
     singular: 'DJ',
     plural: 'DJs',
@@ -18,7 +19,7 @@ export const DJs: CollectionConfig = {
     group: 'Radio',
     description:
       'DJ profiles shown on the website. Toggle "On Air" to control visibility. Use the DJ Order tool to set listing position.',
-
+    groupBy: true,
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
     },

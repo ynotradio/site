@@ -5,6 +5,7 @@ import { normalizeShowDate } from './hooks/showDateHooks';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
+  enableQueryPresets: true,
   labels: {
     singular: 'Show',
     plural: 'Shows',

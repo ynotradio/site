@@ -10,6 +10,7 @@ export const Media: CollectionConfig = {
   // Editors should select images via the upload field, not via internal links.
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Media File',
     plural: 'Media Files',
@@ -51,6 +52,7 @@ export const Media: CollectionConfig = {
     defaultColumns: ['filename', 'alt', 'filesize', 'updatedAt'],
     group: 'Content',
     description: 'Shared image library. Upload images here, then select them from any collection.',
+    groupBy: true,
   },
   fields: [
     {

@@ -4,6 +4,7 @@ import { hasRole } from '../utils/auth';
 
 export const Venues: CollectionConfig = {
   slug: 'venues',
+  enableQueryPresets: true,
   labels: {
     singular: 'Venue',
     plural: 'Venues',
@@ -13,6 +14,7 @@ export const Venues: CollectionConfig = {
     defaultColumns: ['name', 'city', 'updatedAt'],
     group: 'Events',
     description: 'Concert venues. Create a venue here, then select it when adding a concert.',
+    groupBy: true,
   },
   defaultSort: 'name',
   access: {

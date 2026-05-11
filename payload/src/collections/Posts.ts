@@ -7,6 +7,7 @@ import { postSlugify } from './hooks/slugUtils';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  enableQueryPresets: true,
   labels: {
     singular: 'Story',
     plural: 'Stories',

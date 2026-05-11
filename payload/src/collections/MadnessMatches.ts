@@ -5,6 +5,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
   slug: 'modern-rock-madness-matches',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Match',
     plural: 'Matches',
@@ -14,6 +15,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
     defaultColumns: ['matchNumber', 'round', 'region', 'band1', 'band2', 'startTime', 'winner'],
     group: 'Modern Rock Madness',
     description: 'Tournament bracket matchups (63 matches per tournament).',
+    groupBy: true,
     components: {
       views: {
         edit: {

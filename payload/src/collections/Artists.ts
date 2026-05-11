@@ -5,6 +5,7 @@ import { hasRole } from '../utils/auth';
 
 export const Artists: CollectionConfig = {
   slug: 'artists',
+  enableQueryPresets: true,
   labels: {
     singular: 'Artist',
     plural: 'Artists',
@@ -15,6 +16,7 @@ export const Artists: CollectionConfig = {
     group: 'Music',
     description:
       'Bands and artists. Referenced by Songs, Concerts, and Records — create the artist first, then link.',
+    groupBy: true,
   },
   defaultSort: 'name',
   access: {

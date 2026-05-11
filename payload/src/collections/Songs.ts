@@ -6,6 +6,7 @@ import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUti
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  enableQueryPresets: true,
   enableRichTextLink: false,
   enableRichTextRelationship: false,
   labels: {

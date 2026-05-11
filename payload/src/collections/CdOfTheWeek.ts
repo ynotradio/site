@@ -25,6 +25,7 @@ const syncRecordText: FieldHook = async ({ siblingData, req }) => {
 
 export const CdOfTheWeek: CollectionConfig = {
   slug: 'cdoftheweek',
+  enableQueryPresets: true,
   labels: {
     singular: 'CD of the Week',
     plural: 'CDs of the Week',

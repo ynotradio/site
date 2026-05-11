@@ -5,6 +5,7 @@ import { hasRole, adminOnlyCondition } from '../utils/auth';
 
 export const People: CollectionConfig = {
   slug: 'people',
+  enableQueryPresets: true,
   labels: {
     singular: 'Person',
     plural: 'People',
@@ -15,6 +16,7 @@ export const People: CollectionConfig = {
     group: 'People',
     description:
       'Real people behind DJs and reviewers. Create a person here, then link them from a DJ profile.',
+    groupBy: true,
   },
   access: {
     read: () => true, // Public read access
