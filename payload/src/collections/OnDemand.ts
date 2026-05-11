@@ -44,6 +44,7 @@ const syncSongsText: FieldHook = async ({ siblingData, req }) => {
 
 export const OnDemand: CollectionConfig = {
   slug: 'ondemand',
+  enableQueryPresets: true,
   labels: {
     singular: 'On Demand Recording',
     plural: 'On Demand Recordings',
@@ -58,6 +59,7 @@ export const OnDemand: CollectionConfig = {
     group: 'Radio',
     description:
       'Archived recordings for on-demand listening. Link an audio source and tag the DJs and artists.',
+    groupBy: true,
   },
   defaultSort: '-date',
   access: {

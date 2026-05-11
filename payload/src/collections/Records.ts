@@ -8,6 +8,7 @@ export const Records: CollectionConfig = {
   slug: 'records',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Record',
     plural: 'Records',
@@ -26,6 +27,7 @@ export const Records: CollectionConfig = {
     group: 'Music',
     description:
       'Albums and EPs. Referenced by Songs and CD of the Week — create the record first, then link it.',
+    groupBy: true,
   },
   defaultSort: '-releaseDate',
   access: {

@@ -272,6 +272,7 @@ export const YearEndPollResults: CollectionConfig = {
   slug: 'year-end-poll-results',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Year End Poll Result',
     plural: 'Year End Poll Results',
@@ -284,7 +285,7 @@ export const YearEndPollResults: CollectionConfig = {
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
     description: 'Year-end poll results and staff picks pages.',
-
+    groupBy: true,
     hidden: true, // Temporarily hidden from navigation
   },
   access: {

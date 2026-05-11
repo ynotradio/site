@@ -5,6 +5,7 @@ export const ModernRockMadnessMatchEvents: CollectionConfig = {
   slug: 'modern-rock-madness-match-events',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Match Event',
     plural: 'Match Events',
@@ -13,6 +14,7 @@ export const ModernRockMadnessMatchEvents: CollectionConfig = {
     defaultColumns: ['match', 'eventType', 'createdAt'],
     group: 'Modern Rock Madness',
     description: 'Audit log for match admin actions (overtime, rematch, admin vote, close).',
+    groupBy: true,
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),

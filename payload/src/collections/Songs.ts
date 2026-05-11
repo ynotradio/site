@@ -6,6 +6,7 @@ import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUti
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  enableQueryPresets: true,
   enableRichTextLink: false,
   enableRichTextRelationship: false,
   labels: {
@@ -25,6 +26,7 @@ export const Songs: CollectionConfig = {
     group: 'Music',
     description:
       'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',
+    groupBy: true,
   },
   defaultSort: '-releaseDate',
   access: {

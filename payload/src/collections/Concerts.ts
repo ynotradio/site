@@ -46,6 +46,7 @@ const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
+  enableQueryPresets: true,
   labels: {
     singular: 'Concert',
     plural: 'Concerts',
@@ -59,6 +60,7 @@ export const Concerts: CollectionConfig = {
     listSearchableFields: ['titlePlain', 'artistsText'],
     group: 'Events',
     description: 'Concert listings.',
+    groupBy: true,
   },
   defaultSort: 'date',
   access: {
