@@ -12,6 +12,23 @@ $GLOBALS['db'] = open_db();
 
 $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
 
+function buildCdCoverImage(string $imageUrl, ?string $artistUrl): string
+{
+    $safeImageUrl = htmlspecialchars($imageUrl, ENT_QUOTES);
+    $coverImage = '<img src="' . $safeImageUrl . '" height="200">';
+
+    if (
+        !empty($artistUrl)
+        && filter_var($artistUrl, FILTER_VALIDATE_URL)
+        && preg_match('/^https?:\/\//i', $artistUrl)
+    ) {
+        $safeArtistUrl = htmlspecialchars($artistUrl, ENT_QUOTES);
+        $coverImage = '<a href="' . $safeArtistUrl . '" target="_blank" rel="noopener noreferrer">' . $coverImage . '</a>';
+    }
+
+    return $coverImage;
+}
+
 /*----- CONTENT ------*/
 ?>
 <div class="row">
@@ -25,12 +42,7 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
         if ($cd_id) {
             $cd = $cdOfTheWeek->getById($cd_id);
             if ($cd) {
-                $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
-                $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
-                if (!empty($cd['band']) && preg_match('/^https?:\/\//i', $cd['band'])) {
-                    $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
-                    $coverImage = '<a href="' . $artistUrl . '" target="_blank" rel="noopener noreferrer">' . $coverImage . '</a>';
-                }
+                $coverImage = buildCdCoverImage($cd['cd_pic_url'], $cd['band'] ?? null);
                 echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                      "<div class='review'> " . $coverImage . "\n" .
                      $cd['review'] . "</div>\n" .
@@ -56,12 +68,7 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                 
                 // Display each CD of the week for the latest date
                 foreach ($latestCds as $cd) {
-                    $coverImageUrl = htmlspecialchars($cd['cd_pic_url'], ENT_QUOTES);
-                    $coverImage = '<img src="' . $coverImageUrl . '" height="200">';
-                    if (!empty($cd['band']) && preg_match('/^https?:\/\//i', $cd['band'])) {
-                        $artistUrl = htmlspecialchars($cd['band'], ENT_QUOTES);
-                        $coverImage = '<a href="' . $artistUrl . '" target="_blank" rel="noopener noreferrer">' . $coverImage . '</a>';
-                    }
+                    $coverImage = buildCdCoverImage($cd['cd_pic_url'], $cd['band'] ?? null);
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                          "<div class='review'> " . $coverImage . "\n" .
                          $cd['review'] . "</div>\n" .
