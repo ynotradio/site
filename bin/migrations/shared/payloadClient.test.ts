@@ -259,6 +259,20 @@ describe('payloadClient', () => {
       });
     });
 
+    it('should skip MusicBrainz update when existing artist already has musicbrainzId', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'existing-with-mbid', musicbrainzId: 'mbid-already-set' }],
+      });
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Known Artist');
+
+      expect(artistId).toBe('existing-with-mbid');
+      expect(mockPayload.update).not.toHaveBeenCalled();
+      expect(mockGetArtistMbid).not.toHaveBeenCalled();
+    });
+
     it('should handle slug validation error by finding existing artist', async () => {
       const { findOrCreateArtist } = await import('./payloadClient');
 
@@ -953,6 +967,24 @@ describe('payloadClient', () => {
       expect(recordId).toBe('record-no-artist');
     });
 
+    it('should handle slug conflict when artist has no name', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 5 }); // no name field
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-nameless-artist' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Nameless Artist Album', 5);
+
+      expect(recordId).toBe('record-nameless-artist');
+    });
+
     it('should rethrow non-slug errors', async () => {
       const { findOrCreateRecord } = await import('./payloadClient');
 
@@ -1020,6 +1052,24 @@ describe('payloadClient', () => {
 
       expect(songId).toBe('song-no-artist');
       expect(mockPayload.findByID).not.toHaveBeenCalled();
+    });
+
+    it('should handle slug conflict when artist has no name', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 10 }); // no name field
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-nameless-artist' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Nameless Artist Song', 10);
+
+      expect(songId).toBe('song-nameless-artist');
     });
 
     it('should rethrow non-slug errors in song creation', async () => {
