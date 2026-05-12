@@ -26,8 +26,8 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      */
     public function getCurrent(): ?array {
         $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
-        // Cloudinary transformations: fill and crop to 200x200, auto quality/format
-        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        // Cloudinary transformations: fill/crop + device pixel ratio + improved auto quality/format
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,dpr_auto,q_auto:good,f_auto/";
         
         $stmt = $this->db->prepare("
             SELECT 
@@ -72,8 +72,8 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      */
     public function getById(int $id): ?array {
         $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
-        // Cloudinary transformations: fill and crop to 200x200, auto quality/format
-        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,q_auto,f_auto/";
+        // Cloudinary transformations: fill/crop + device pixel ratio + improved auto quality/format
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_200,h_200,dpr_auto,q_auto:good,f_auto/";
         
         $stmt = $this->db->prepare("
             SELECT 
@@ -116,8 +116,8 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
      */
     public function getAll(int $limit = 64): array {
         $cloudName = getenv('CLOUDINARY_CLOUD_NAME') ?: '';
-        // Cloudinary transformations: fill and crop to 100x100, auto quality/format for thumbnails
-        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_100,h_100,q_auto,f_auto/";
+        // Cloudinary transformations: fill/crop + device pixel ratio + improved auto quality/format for thumbnails
+        $cloudinaryBase = "https://res.cloudinary.com/{$cloudName}/image/upload/c_fill,w_100,h_100,dpr_auto,q_auto:good,f_auto/";
         
         $stmt = $this->db->prepare("
             SELECT 

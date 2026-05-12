@@ -56,6 +56,11 @@ class PostgresCdOfTheWeekTest extends TestCase
 
         $this->mockDb->expects($this->once())
             ->method('prepare')
+            ->with($this->logicalAnd(
+                $this->stringContains('dpr_auto'),
+                $this->stringContains('q_auto:good'),
+                $this->stringContains('w_200,h_200')
+            ))
             ->willReturn($mockStmt);
 
         $result = $this->cdOfTheWeek->getById(1);
@@ -82,6 +87,11 @@ class PostgresCdOfTheWeekTest extends TestCase
 
         $this->mockDb->expects($this->once())
             ->method('prepare')
+            ->with($this->logicalAnd(
+                $this->stringContains('dpr_auto'),
+                $this->stringContains('q_auto:good'),
+                $this->stringContains('w_200,h_200')
+            ))
             ->willReturn($mockStmt);
 
         $result = $this->cdOfTheWeek->getById(999);
@@ -117,7 +127,12 @@ class PostgresCdOfTheWeekTest extends TestCase
 
         $this->mockDb->expects($this->once())
             ->method('prepare')
-            ->with($this->stringContains('ORDER BY c.date DESC'))
+            ->with($this->logicalAnd(
+                $this->stringContains('ORDER BY c.date DESC'),
+                $this->stringContains('dpr_auto'),
+                $this->stringContains('q_auto:good'),
+                $this->stringContains('w_200,h_200')
+            ))
             ->willReturn($mockStmt);
 
         $result = $this->cdOfTheWeek->getCurrent();
@@ -143,6 +158,11 @@ class PostgresCdOfTheWeekTest extends TestCase
 
         $this->mockDb->expects($this->once())
             ->method('prepare')
+            ->with($this->logicalAnd(
+                $this->stringContains('dpr_auto'),
+                $this->stringContains('q_auto:good'),
+                $this->stringContains('w_200,h_200')
+            ))
             ->willReturn($mockStmt);
 
         $result = $this->cdOfTheWeek->getCurrent();
