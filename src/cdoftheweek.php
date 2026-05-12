@@ -50,8 +50,9 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                 
                 // Display each CD of the week for the latest date
                 foreach ($latestCds as $cd) {
+                    $displayCd = $cdOfTheWeek->getById((int) $cd['id']) ?: $cd;
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
-                         "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $cd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
+                         "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $displayCd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
                          $cd['review'] . "</div>\n" .
                          "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
                     
