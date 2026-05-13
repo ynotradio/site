@@ -38,6 +38,11 @@ interface ExistingCdOfTheWeekDoc {
   artistUrl?: string | null;
 }
 
+interface ExistingArtistDoc {
+  id: number | string;
+  website?: string | null;
+}
+
 function normalizeArtistUrl(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
   const trimmed = raw.trim();
@@ -117,6 +122,41 @@ async function getExistingCdOfTheWeek(
   return (existing.docs[0] as ExistingCdOfTheWeekDoc | undefined) ?? null;
 }
 
+async function backfillArtistWebsite(
+  payload: Payload,
+  artistName: string,
+  website: string | undefined,
+): Promise<boolean> {
+  if (!website) return false;
+
+  const existingArtist = await payload.find({
+    collection: 'artists',
+    where: {
+      name: {
+        equals: artistName,
+      },
+    },
+    select: {
+      id: true,
+      website: true,
+    },
+    limit: 1,
+  });
+
+  const artist = (existingArtist.docs[0] as ExistingArtistDoc | undefined) ?? null;
+  if (!artist || artist.website) return false;
+
+  await payload.update({
+    collection: 'artists',
+    id: artist.id,
+    data: {
+      website,
+    },
+  });
+
+  return true;
+}
+
 /**
  * Import a single CD of the Week entry
  */
@@ -136,6 +176,8 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
 
     // Check if already imported
     if (existingCd) {
+      let updatedExisting = false;
+
       if (artistUrl && !existingCd.artistUrl) {
         await payload.update({
           collection: 'cdoftheweek',
@@ -144,8 +186,16 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
             artistUrl,
           },
         });
-        logger.debug(`Backfilled artist URL for existing CD of the Week ${item.id}`);
-      } else {
+        updatedExisting = true;
+        logger.info(`Backfilled cdoftheweek.artistUrl for legacy CD ${item.id}`);
+      }
+
+      if (await backfillArtistWebsite(payload, item.artist, artistUrl)) {
+        updatedExisting = true;
+        logger.info(`Backfilled artists.website for "${item.artist}" from legacy CD ${item.id}`);
+      }
+
+      if (!updatedExisting) {
         logger.debug(`CD of the Week ${item.id} already exists, skipping`);
       }
       return false;

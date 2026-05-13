@@ -114,6 +114,7 @@ export async function connectToDatabase() {
   try {
     const connection = await mysql.createConnection({
       host: dbConfig.host,
+      port: dbConfig.port,
       database: dbConfig.database,
       user: dbConfig.user,
       password: dbConfig.password,
