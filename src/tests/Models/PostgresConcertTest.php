@@ -140,7 +140,7 @@ class PostgresConcertTest extends TestCase
             ->with($this->callback(function ($sql) {
                 return str_contains(
                     $sql,
-                    "(c.date AT TIME ZONE 'UTC')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date"
+                    "(c.date AT TIME ZONE 'America/New_York')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date"
                 );
             }))
             ->willReturn($mockStmt);

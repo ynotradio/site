@@ -54,7 +54,7 @@ class PostgresConcert implements Concert {
     public function getUpcoming(int $limit = 500): array {
         $stmt = $this->db->prepare(
             $this->concertSelectSql() . "
-            WHERE (c.date AT TIME ZONE 'UTC')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date
+            WHERE (c.date AT TIME ZONE 'America/New_York')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date
               AND c._status = 'published'
             " . $this->concertGroupBySql() . "
             ORDER BY c.date ASC, c.legacy_id ASC, c.id ASC
