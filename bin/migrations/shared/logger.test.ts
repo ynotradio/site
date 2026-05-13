@@ -409,6 +409,16 @@ describe('logger', () => {
         expect(markdown).toContain('| 1 | Bad Post | validation_error | Field missing |');
       });
 
+      it('should handle error with empty message in error details table', () => {
+        const stats = createExtendedStats();
+        recordError(stats, 2, 'Empty Msg Post', ErrorCategory.DATABASE_ERROR, '');
+
+        const markdown = generateStatsMarkdown(stats, 'Posts');
+
+        expect(markdown).toContain('### Error Details');
+        expect(markdown).toContain('| 2 | Empty Msg Post | database_error |  |');
+      });
+
       it('should truncate error details when there are more than 20 errors', () => {
         const stats = createExtendedStats();
         for (let i = 1; i <= 25; i++) {
