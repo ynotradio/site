@@ -177,3 +177,67 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+@media only screen and (max-width: 767px) {
+  .concerts-table-wrapper {
+    overflow-x: visible;
+  }
+
+  .concerts-table {
+    border: 0;
+    table-layout: auto;
+  }
+
+  .concerts-table colgroup,
+  .concerts-table thead {
+    display: none;
+  }
+
+  .concerts-table tbody,
+  .concerts-table tr,
+  .concerts-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .concerts-table tr {
+    margin-bottom: 8px;
+    border: 1px solid darkGray;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+  }
+
+  .concerts-table.table-striped tbody tr:nth-child(odd) td {
+    background-color: lightgray;
+  }
+
+  .concerts-table.table-striped tbody tr:nth-child(even) td {
+    background-color: #fff;
+  }
+
+  .concerts-table td {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    border-left: 0 !important;
+    border-top: 1px solid #d6d6d6 !important;
+    padding: 6px 10px;
+  }
+
+  .concerts-table tr td:first-child {
+    border-top: 0 !important;
+  }
+
+  .concerts-table td::before {
+    content: attr(data-label);
+    display: inline-block;
+    flex: 0 0 64px;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 0;
+  }
+}
