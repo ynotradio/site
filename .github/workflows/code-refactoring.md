@@ -115,7 +115,9 @@ git push origin HEAD
 
 ## Verification
 
-- [x] All checks pass locally before push
+- [x] `yarn lint` exits 0
+- [x] `yarn test` exits 0
+- [x] Screenshot attached below — N/A (code-only refactoring, no UI affected)
 
 Addresses: [Checklist item]
 ```
