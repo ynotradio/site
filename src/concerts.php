@@ -22,7 +22,7 @@ use YNotRadio\Models\ConcertFactory;
     // Display upcoming concerts in a table
     echo '<div class="table-responsive concerts-table-wrapper">';
     echo '<table class="table table-striped table-bordered-horizontal table-condensed concerts-table">';
-    echo '<colgroup><col class="concerts-col-date"><col class="concerts-col-artist"><col class="concerts-col-venue"><col class="concerts-col-ticket"></colgroup>';
+    echo '<colgroup><col class="concerts-col-date"><col><col class="concerts-col-venue"><col class="concerts-col-ticket"></colgroup>';
     echo "<thead><tr><th>Date</th><th>Artist</th><th>Venue</th><th>Ticket Info</th></tr></thead>\n";
     
     foreach ($upcomingConcerts as $concert) {
