@@ -3,12 +3,15 @@
  * Backfill script for mirror text fields and related data:
  * - cdoftheweek.recordText (searchable)
  * - cdoftheweek.artistUrl (from linked Record → Artist.website)
+ * - artists.website (from linked CD of the Week if artist has no URL)
  * - ondemand.artistsText
  * - ondemand.songsText
  *
  * Existing rows created before these fields/hooks were introduced may have blank values.
  * This script re-saves relationship fields to trigger beforeChange hooks and populate them.
- * For CD of the Week records, also populates artistUrl from the linked artist's website.
+ * For CD of the Week records:
+ * - populates artistUrl from the linked artist's website
+ * - updates the artist's website if blank and cdoftheweek has an artistUrl
  *
  * Usage:
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
@@ -24,7 +27,7 @@ import { getPayloadClient, type PostgresTarget } from './migrations/shared/paylo
 
 /* eslint-disable no-console */
 
-type TargetCollection = 'cdoftheweek' | 'ondemand';
+type TargetCollection = 'cdoftheweek' | 'ondemand' | 'artists';
 
 interface CliOptions {
   target: PostgresTarget;
@@ -42,10 +45,15 @@ interface BackfillStats {
 
 type DocOutcome =
   | { skip: true; warn?: string }
-  | { skip: false; data: Record<string, unknown>; dryRunLog: string };
+  | {
+    skip: false;
+    data: Record<string, unknown>;
+    dryRunLog: string;
+    artistUpdateData?: { artistId: string | number; website: string; artistName: string };
+  };
 
 const VALID_TARGETS: PostgresTarget[] = ['local-postgres', 'prod-neon', 'dev-neon', 'dev', 'prod'];
-const VALID_COLLECTIONS: TargetCollection[] = ['cdoftheweek', 'ondemand'];
+const VALID_COLLECTIONS: TargetCollection[] = ['cdoftheweek', 'ondemand', 'artists'];
 const PAGE_SIZE = 100;
 
 function isBlank(value: unknown): boolean {
@@ -139,22 +147,42 @@ function cdOfTheWeekHandler(doc: Record<string, unknown>): DocOutcome {
     logs.push(`regenerate recordText from record ${recordId}`);
   }
 
-  if (artistUrlBlank && typeof raw === 'object' && raw !== null) {
+  let artistUpdateData:
+  | { artistId: string | number; website: string; artistName: string }
+  | undefined;
+
+  if (typeof raw === 'object' && raw !== null) {
     const recordArtist = (raw as Record<string, unknown>).artist;
-    if (recordArtist && typeof recordArtist === 'object' && 'website' in recordArtist) {
-      const { website } = (recordArtist as Record<string, unknown>);
-      if (!isBlank(website)) {
-        updateData.artistUrl = website;
-        const artistName = (recordArtist as Record<string, unknown>).name || 'unknown artist';
-        logs.push(`populate artistUrl from ${artistName}.website = ${website}`);
+    if (recordArtist && typeof recordArtist === 'object') {
+      const artistId = 'id' in recordArtist ? (recordArtist as Record<string, unknown>).id : null;
+      const artistName = (recordArtist as Record<string, unknown>).name || 'unknown artist';
+      const artistWebsite = (recordArtist as Record<string, unknown>).website;
+
+      // If CD of the Week has an artistUrl but the artist doesn't have a website, sync it
+      if (!isBlank(doc.artistUrl) && isBlank(artistWebsite) && artistId) {
+        artistUpdateData = {
+          artistId,
+          website: String(doc.artistUrl),
+          artistName,
+        };
+        logs.push(`sync artist ${artistName} website from CD of Week artistUrl = ${doc.artistUrl}`);
+      }
+
+      // If artistUrl is blank, populate from artist.website
+      if (artistUrlBlank && !isBlank(artistWebsite)) {
+        updateData.artistUrl = artistWebsite;
+        logs.push(`populate artistUrl from ${artistName}.website = ${artistWebsite}`);
       }
     }
   }
+
+  if (logs.length === 0) return { skip: true };
 
   return {
     skip: false,
     data: updateData,
     dryRunLog: `[DRY RUN] cdoftheweek:${doc.id} -> ${logs.join('; ')}`,
+    artistUpdateData,
   };
 }
 
@@ -176,9 +204,18 @@ function onDemandHandler(doc: Record<string, unknown>): DocOutcome {
   };
 }
 
+function artistsHandler(doc: Record<string, unknown>): DocOutcome {
+  // Artists are updated from CD of the Week records, not directly
+  // Skip if website is already present
+  if (!isBlank(doc.website)) return { skip: true };
+  // Otherwise also skip - artists will be updated via CD of the Week backfill
+  return { skip: true };
+}
+
 const HANDLERS: Record<TargetCollection, (doc: Record<string, unknown>) => DocOutcome> = {
   cdoftheweek: cdOfTheWeekHandler,
   ondemand: onDemandHandler,
+  artists: artistsHandler,
 };
 
 async function backfillCollection(
@@ -222,6 +259,10 @@ async function backfillCollection(
         stats.skipped += 1;
       } else if (dryRun) {
         console.log(outcome.dryRunLog);
+        if (outcome.artistUpdateData) {
+          const { artistId, website, artistName } = outcome.artistUpdateData;
+          console.log(`[DRY RUN] artists:${artistId} -> update ${artistName}.website = ${website}`);
+        }
         stats.updated += 1;
       } else {
         try {
@@ -233,6 +274,24 @@ async function backfillCollection(
             overrideAccess: true,
           });
           stats.updated += 1;
+
+          // Also update artist if needed
+          if (outcome.artistUpdateData) {
+            const { artistId, website } = outcome.artistUpdateData;
+            try {
+              await payload.update({
+                collection: 'artists',
+                id: artistId,
+                data: { website },
+                depth: 0,
+                overrideAccess: true,
+              });
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              console.error(`❌ Failed to update artist:${artistId} - ${message}`);
+              stats.errors += 1;
+            }
+          }
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
           console.error(`❌ Failed ${collection}:${doc.id} - ${message}`);
