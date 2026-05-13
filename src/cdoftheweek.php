@@ -7,10 +7,7 @@ require ("functions/main_fns.php");
 require ("partials/_header.php");
 require_once ("models/CdOfTheWeekFactory.php");
 
-// Initialize database connection
-$GLOBALS['db'] = open_db();
-
-$cd_id = isset($_GET['id']) ? $_GET['id'] : null;
+$cd_id = $_GET['id'] ?? null;
 
 /*----- CONTENT ------*/
 ?>
@@ -19,8 +16,7 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
     <h1>CD of The Week</h1>
     <?php 
     try {
-        $db = open_db(); // Get database connection
-        $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create($db);
+        $cdOfTheWeek = \YNotRadio\Models\CdOfTheWeekFactory::create(open_db());
         
         if ($cd_id) {
             $cd = $cdOfTheWeek->getById($cd_id);
@@ -31,33 +27,25 @@ $cd_id = isset($_GET['id']) ? $_GET['id'] : null;
                      "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
             }
         } else {
-            // Get the most recent date
             $current = $cdOfTheWeek->getCurrent();
             if ($current) {
                 $latestDate = $current['date'];
-                
-                // Get all CDs with the latest date
-                $latestCds = [];
-                $allCds = $cdOfTheWeek->getAll();
-                foreach ($allCds as $cd) {
-                    if ($cd['date'] == $latestDate) {
-                        $latestCds[] = $cd;
-                    }
-                }
-                
+                $latestCds = array_values(array_filter(
+                    $cdOfTheWeek->getAll(),
+                    fn($cd) => $cd['date'] == $latestDate
+                ));
+
                 // Display the date once
                 echo "Week of " . date('n/j/y', strtotime($latestDate));
-                
-                // Display each CD of the week for the latest date
-                foreach ($latestCds as $cd) {
+
+                $lastIndex = count($latestCds) - 1;
+                foreach ($latestCds as $i => $cd) {
                     $displayCd = $cdOfTheWeek->getById((int) $cd['id']) ?: $cd;
                     echo "<h3>" . $cd['artist'] . " - <em>" . $cd['title'] . "</em> (" . $cd['label'] . ")</h3>\n" .
                          "<div class='review'> <a href=\"" . $cd['band'] . "\" target=_new><img src=\"" . $displayCd['cd_pic_url'] . "\" height=\"200\"> </a>\n" .
                          $cd['review'] . "</div>\n" .
                          "<div class=\"footnote\">Review by " . $cd['reviewer'] . "</div>\n";
-                    
-                    // Add some spacing between multiple reviews
-                    if (end($latestCds) !== $cd) {
+                    if ($i < $lastIndex) {
                         echo "<hr class=\"review-separator\">\n";
                     }
                 }
