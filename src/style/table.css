@@ -218,11 +218,18 @@
 
   .concerts-table td {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     gap: 8px;
     border-left: 0 !important;
     border-top: 1px solid #d6d6d6 !important;
     padding: 6px 10px;
+  }
+
+  .concerts-table td .concerts-cell-value {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   .concerts-table tr td:first-child {
