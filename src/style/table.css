@@ -81,6 +81,28 @@
   margin: 0 auto;
 }
 
+.concerts-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.concerts-table .concerts-col-date {
+  width: 100px;
+}
+
+.concerts-table .concerts-col-venue {
+  width: 175px;
+}
+
+.concerts-table .concerts-col-ticket {
+  width: 150px;
+}
+
+.concerts-table th,
+.concerts-table td {
+  word-break: normal;
+}
+
 .no-header {
   border-radius: 0;
 }
@@ -130,4 +152,37 @@
 
 .year_end_staff_pick td ol {
   font-size: 12px;
+}
+
+@media only screen and (max-width: 959px) {
+  .concerts-table {
+    table-layout: auto;
+  }
+
+  .concerts-table th,
+  .concerts-table td {
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  .concerts-table .concerts-col-date {
+    width: 92px;
+  }
+
+  .concerts-table .concerts-col-venue {
+    width: 135px;
+  }
+
+  .concerts-table .concerts-col-ticket {
+    width: 105px;
+  }
+
+  .concerts-table td a {
+    word-break: normal;
+  }
+
+  .concerts-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

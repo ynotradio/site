@@ -20,9 +20,10 @@ use YNotRadio\Models\ConcertFactory;
     $upcomingConcerts = $concertModel->getUpcoming();
     
     // Display upcoming concerts in a table
-    echo '<table class="table table-striped table-bordered-horizontal table-condensed">';
-    echo '<col width="100"><col><col width="175"><col width="150">';
-    echo "<thead><tr><th width=\"100px\">Date</th><th>Artist</th><th width=\"150px\">Venue</th><th width=\"125px\">Ticket Info</th></tr></thead>\n";
+    echo '<div class="table-responsive concerts-table-wrapper">';
+    echo '<table class="table table-striped table-bordered-horizontal table-condensed concerts-table">';
+    echo '<colgroup><col class="concerts-col-date"><col class="concerts-col-artist"><col class="concerts-col-venue"><col class="concerts-col-ticket"></colgroup>';
+    echo "<thead><tr><th>Date</th><th>Artist</th><th>Venue</th><th>Ticket Info</th></tr></thead>\n";
     
     foreach ($upcomingConcerts as $concert) {
       $fdate = date('D m/d', strtotime($concert['date']));
@@ -43,6 +44,7 @@ use YNotRadio\Models\ConcertFactory;
     }
     
     echo '</table>';
+    echo '</div>';
     ?>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>

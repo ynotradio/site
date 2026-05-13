@@ -118,4 +118,35 @@ class PostgresConcertTest extends TestCase
         $result = $this->concert->getFeatured(5);
         $this->assertSame([], $result);
     }
+
+    /**
+     * Test getUpcoming uses timezone-safe date filtering and returns rows
+     */
+    public function testGetUpcomingUsesTimezoneSafeDateFilter(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('bindValue')
+            ->with(':limit', 500, PDO::PARAM_INT);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+        $mockStmt->expects($this->once())
+            ->method('fetchAll')
+            ->willReturn([]);
+
+        $this->mockDb->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) {
+                return str_contains(
+                    $sql,
+                    "(c.date AT TIME ZONE 'UTC')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date"
+                );
+            }))
+            ->willReturn($mockStmt);
+
+        $result = $this->concert->getUpcoming();
+
+        $this->assertSame([], $result);
+    }
 }
