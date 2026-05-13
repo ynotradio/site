@@ -88,6 +88,12 @@ describe('CdOfTheWeek', () => {
     expect(reviewerField?.relationTo).toBe('people');
   });
 
+  it('has artistUrl as a text field for album image links', () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const artistUrlField = fields.find((f) => f.name === 'artistUrl');
+    expect(artistUrlField?.type).toBe('text');
+  });
+
   it('has review as a richText field', () => {
     const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
     const reviewField = fields.find((f) => f.name === 'review');

@@ -102,6 +102,14 @@ export const CdOfTheWeek: CollectionConfig = {
       ],
     },
     {
+      name: 'artistUrl',
+      type: 'text',
+      admin: {
+        description: 'Artist website URL used when visitors click the album image',
+        placeholder: 'https://artist-site.example',
+      },
+    },
+    {
       name: 'review',
       type: 'richText',
       editor: lexicalEditor(),
