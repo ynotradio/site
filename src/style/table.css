@@ -98,11 +98,6 @@
   width: 150px;
 }
 
-.concerts-table th,
-.concerts-table td {
-  word-break: normal;
-}
-
 .no-header {
   border-radius: 0;
 }
@@ -175,10 +170,6 @@
 
   .concerts-table .concerts-col-ticket {
     width: 105px;
-  }
-
-  .concerts-table td a {
-    word-break: normal;
   }
 
   .concerts-table-wrapper {
