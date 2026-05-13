@@ -107,6 +107,20 @@ describe('DJs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('DJ #42');
   });
 
+  it('should handle person with null name, joining non-null names', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [{ id: 1, name: null }, { id: 2, name: 'Jane Smith' }],
+    });
+
+    const result = await generateDJDisplayName({
+      data: { person: [1, 2] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe(', Jane Smith');
+  });
+
   it('should handle person fetch error gracefully', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     (mockPayload.find as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));

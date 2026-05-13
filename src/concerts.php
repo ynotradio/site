@@ -20,29 +20,31 @@ use YNotRadio\Models\ConcertFactory;
     $upcomingConcerts = $concertModel->getUpcoming();
     
     // Display upcoming concerts in a table
-    echo '<table class="table table-striped table-bordered-horizontal table-condensed">';
-    echo '<col width="100"><col><col width="175"><col width="150">';
-    echo "<thead><tr><th width=\"100px\">Date</th><th>Artist</th><th width=\"150px\">Venue</th><th width=\"125px\">Ticket Info</th></tr></thead>\n";
+    echo '<div class="table-responsive concerts-table-wrapper">';
+    echo '<table class="table table-striped table-bordered-horizontal table-condensed concerts-table">';
+    echo '<colgroup><col class="concerts-col-date"><col><col class="concerts-col-venue"><col class="concerts-col-ticket"></colgroup>';
+    echo "<thead><tr><th>Date</th><th>Artist</th><th>Venue</th><th>Ticket Info</th></tr></thead>\n";
     
     foreach ($upcomingConcerts as $concert) {
       $fdate = date('D m/d', strtotime($concert['date']));
       
-      echo "<tr><td>" . $fdate . "</td>\n".
-        "<td>" . sanitize_concert_title_html($concert['artist']) . "</td>\n".
-        "<td>" . $concert['venue'] . "</td>\n";
+      echo "<tr><td data-label=\"Date\"><span class=\"concerts-cell-value\">" . $fdate . "</span></td>\n".
+        "<td data-label=\"Artist\"><span class=\"concerts-cell-value\">" . sanitize_concert_title_html($concert['artist']) . "</span></td>\n".
+        "<td data-label=\"Venue\"><span class=\"concerts-cell-value\">" . $concert['venue'] . "</span></td>\n";
       
       if ($concert['ticketurl'] && $concert['ticketinfo'] != "SOLD OUT") {
-        echo "<td><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></td>\n";
+        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
       } elseif ($concert['ticketurl'] && $concert['ticketinfo'] == "SOLD OUT") {
-        echo "<td class=\"soldout\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></td>\n";
+        echo "<td data-label=\"Ticket Info\" class=\"soldout\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
       } else {
-        echo "<td>". $concert['ticketinfo'] . "</td>\n";
+        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\">". $concert['ticketinfo'] . "</span></td>\n";
       }
       
       echo "</tr>\n";
     }
     
     echo '</table>';
+    echo '</div>';
     ?>
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>

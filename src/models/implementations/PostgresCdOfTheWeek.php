@@ -38,7 +38,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.title,
                 r.label,
                 a.name as artist,
-                COALESCE(a.website, '') as band,
+                COALESCE(c.artist_url, a.website, '') as band,
                 CASE 
                     WHEN m.filename IS NOT NULL AND m.filename != '' 
                     THEN '$cloudinaryBase' || m.filename
@@ -84,7 +84,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.title,
                 r.label,
                 a.name as artist,
-                COALESCE(a.website, '') as band,
+                COALESCE(c.artist_url, a.website, '') as band,
                 CASE 
                     WHEN m.filename IS NOT NULL AND m.filename != '' 
                     THEN '$cloudinaryBase' || m.filename
@@ -128,7 +128,7 @@ class PostgresCdOfTheWeek implements CdOfTheWeek {
                 r.title,
                 r.label,
                 a.name as artist,
-                COALESCE(a.website, '') as band,
+                COALESCE(c.artist_url, a.website, '') as band,
                 CASE 
                     WHEN m.filename IS NOT NULL AND m.filename != '' 
                     THEN '$cloudinaryBase' || m.filename

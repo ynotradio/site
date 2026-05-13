@@ -88,6 +88,12 @@ describe('CdOfTheWeek', () => {
     expect(reviewerField?.relationTo).toBe('people');
   });
 
+  it('has artistUrl as a text field for album image links', () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const artistUrlField = fields.find((f) => f.name === 'artistUrl');
+    expect(artistUrlField?.type).toBe('text');
+  });
+
   it('has review as a richText field', () => {
     const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
     const reviewField = fields.find((f) => f.name === 'review');
@@ -190,6 +196,19 @@ describe('CdOfTheWeek', () => {
     const mockFind = vi.fn().mockRejectedValue(new Error('DB error'));
     const result = await hook!({
       siblingData: { record: 1 },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
+  });
+
+  it('syncRecordText hook returns empty string when doc has neither displayName nor title', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{}] });
+    const result = await hook!({
+      siblingData: { record: 5 },
       req: { payload: { find: mockFind } },
     });
     expect(result).toBe('');
