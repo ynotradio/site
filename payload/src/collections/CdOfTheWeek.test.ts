@@ -194,4 +194,17 @@ describe('CdOfTheWeek', () => {
     });
     expect(result).toBe('');
   });
+
+  it('syncRecordText hook returns empty string when doc has neither displayName nor title', async () => {
+    const fields = flattenRowFields(CdOfTheWeek.fields as Record<string, unknown>[]);
+    const recordTextField = fields.find((f) => f.name === 'recordText');
+    const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
+    const hook = hooks?.beforeChange?.[0];
+    const mockFind = vi.fn().mockResolvedValue({ docs: [{}] });
+    const result = await hook!({
+      siblingData: { record: 5 },
+      req: { payload: { find: mockFind } },
+    });
+    expect(result).toBe('');
+  });
 });
