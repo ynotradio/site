@@ -1,12 +1,14 @@
 #!/usr/bin/env tsx
 /**
- * One-time backfill script for searchable mirror text fields:
- * - cdoftheweek.recordText
+ * Backfill script for mirror text fields and related data:
+ * - cdoftheweek.recordText (searchable)
+ * - cdoftheweek.artistUrl (from linked Record → Artist.website)
  * - ondemand.artistsText
  * - ondemand.songsText
  *
  * Existing rows created before these fields/hooks were introduced may have blank values.
  * This script re-saves relationship fields to trigger beforeChange hooks and populate them.
+ * For CD of the Week records, also populates artistUrl from the linked artist's website.
  *
  * Usage:
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
@@ -14,7 +16,7 @@
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
  *   bin/backfill-search-text-fields.ts --to prod-neon --dry-run
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
- *   bin/backfill-search-text-fields.ts --collection ondemand
+ *   bin/backfill-search-text-fields.ts --to dev-neon --limit 20
  */
 
 import type { Payload } from 'payload';
@@ -28,6 +30,7 @@ interface CliOptions {
   target: PostgresTarget;
   dryRun: boolean;
   collections: TargetCollection[];
+  limit?: number;
 }
 
 interface BackfillStats {
@@ -58,6 +61,7 @@ Options:
   --to <target>                local-postgres | prod-neon | dev-neon | dev | prod (default: prod-neon)
   --collection <collection>    cdoftheweek | ondemand (repeatable; default: both)
   --dry-run                    Show what would be updated without saving
+  --limit <number>             Limit records processed (for testing)
   --help                       Show this help
 `);
 }
@@ -66,6 +70,7 @@ function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   let target: PostgresTarget = 'prod-neon';
   let dryRun = false;
+  let limit: number | undefined;
   const collections: TargetCollection[] = [];
 
   for (let i = 0; i < args.length; i += 1) {
@@ -92,6 +97,15 @@ function parseArgs(): CliOptions {
       }
       collections.push(value as TargetCollection);
       i += 1;
+    } else if (arg === '--limit') {
+      const value = args[i + 1];
+      const parsed = parseInt(value, 10);
+      if (!value || Number.isNaN(parsed) || parsed < 1) {
+        console.error('Error: --limit must be a positive integer');
+        process.exit(1);
+      }
+      limit = parsed;
+      i += 1;
     } else {
       console.error(`Unknown argument: ${arg}`);
       printUsage();
@@ -103,20 +117,44 @@ function parseArgs(): CliOptions {
     target,
     dryRun,
     collections: collections.length > 0 ? [...new Set(collections)] : VALID_COLLECTIONS,
+    limit,
   };
 }
 
 function cdOfTheWeekHandler(doc: Record<string, unknown>): DocOutcome {
-  if (!isBlank(doc.recordText)) return { skip: true };
+  const recordTextBlank = isBlank(doc.recordText);
+  const artistUrlBlank = isBlank(doc.artistUrl);
+
+  if (recordTextBlank && artistUrlBlank) return { skip: true };
+
   const raw = doc.record;
-  const recordId = typeof raw === 'object' && raw !== null && 'id' in raw
-    ? (raw as { id: unknown }).id
-    : raw;
+  const recordId = typeof raw === 'object' && raw !== null && 'id' in raw ? (raw as { id: unknown }).id : raw;
+
   if (!recordId) return { skip: true, warn: `⚠️  cdoftheweek:${doc.id} has no record relation; skipping` };
+
+  const updateData: Record<string, unknown> = { record: recordId };
+  const logs: string[] = [];
+
+  if (recordTextBlank) {
+    logs.push(`regenerate recordText from record ${recordId}`);
+  }
+
+  if (artistUrlBlank && typeof raw === 'object' && raw !== null) {
+    const recordArtist = (raw as Record<string, unknown>).artist;
+    if (recordArtist && typeof recordArtist === 'object' && 'website' in recordArtist) {
+      const { website } = (recordArtist as Record<string, unknown>);
+      if (!isBlank(website)) {
+        updateData.artistUrl = website;
+        const artistName = (recordArtist as Record<string, unknown>).name || 'unknown artist';
+        logs.push(`populate artistUrl from ${artistName}.website = ${website}`);
+      }
+    }
+  }
+
   return {
     skip: false,
-    data: { record: recordId },
-    dryRunLog: `[DRY RUN] cdoftheweek:${doc.id} -> regenerate recordText from record ${recordId}`,
+    data: updateData,
+    dryRunLog: `[DRY RUN] cdoftheweek:${doc.id} -> ${logs.join('; ')}`,
   };
 }
 
@@ -126,7 +164,10 @@ function onDemandHandler(doc: Record<string, unknown>): DocOutcome {
   if ('artists' in doc) data.artists = doc.artists;
   if ('songs' in doc) data.songs = doc.songs;
   if (Object.keys(data).length === 0) {
-    return { skip: true, warn: `⚠️  ondemand:${doc.id} has no artists/songs fields to resave; skipping` };
+    return {
+      skip: true,
+      warn: `⚠️  ondemand:${doc.id} has no artists/songs fields to resave; skipping`,
+    };
   }
   return {
     skip: false,
@@ -144,26 +185,37 @@ async function backfillCollection(
   payload: Payload,
   collection: TargetCollection,
   dryRun: boolean,
+  limit?: number,
 ): Promise<BackfillStats> {
   const stats: BackfillStats = {
-    scanned: 0, updated: 0, skipped: 0, errors: 0,
+    scanned: 0,
+    updated: 0,
+    skipped: 0,
+    errors: 0,
   };
   const handleDoc = HANDLERS[collection];
   let page = 1;
   let hasNextPage = true;
 
   while (hasNextPage) {
+    const depth = collection === 'cdoftheweek' ? 2 : 0;
     const result = await payload.find({
       collection,
       page,
       limit: PAGE_SIZE,
-      depth: 0,
+      depth,
       sort: 'id',
       overrideAccess: true,
     });
 
     for (const doc of result.docs as Array<Record<string, unknown>>) {
       stats.scanned += 1;
+
+      if (limit && stats.scanned > limit) {
+        hasNextPage = false;
+        break;
+      }
+
       const outcome = handleDoc(doc);
       if (outcome.skip) {
         if (outcome.warn) console.warn(outcome.warn);
@@ -211,12 +263,15 @@ async function main(): Promise<void> {
   console.log(`\n🔄 Backfilling searchable text fields${modeLabel}`);
   console.log(`   target: ${options.target}`);
   console.log(`   collections: ${options.collections.join(', ')}`);
+  if (options.limit) {
+    console.log(`   limit: ${options.limit}`);
+  }
 
   const payload = await getPayloadClient(options.target);
   let totalErrors = 0;
 
   for (const collection of options.collections) {
-    const stats = await backfillCollection(payload, collection, options.dryRun);
+    const stats = await backfillCollection(payload, collection, options.dryRun, options.limit);
 
     totalErrors += stats.errors;
     printCollectionSummary(collection, stats);
