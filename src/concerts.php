@@ -28,16 +28,16 @@ use YNotRadio\Models\ConcertFactory;
     foreach ($upcomingConcerts as $concert) {
       $fdate = date('D m/d', strtotime($concert['date']));
       
-      echo "<tr><td data-label=\"Date\">" . $fdate . "</td>\n".
-        "<td data-label=\"Artist\">" . sanitize_concert_title_html($concert['artist']) . "</td>\n".
-        "<td data-label=\"Venue\">" . $concert['venue'] . "</td>\n";
+      echo "<tr><td data-label=\"Date\"><span class=\"concerts-cell-value\">" . $fdate . "</span></td>\n".
+        "<td data-label=\"Artist\"><span class=\"concerts-cell-value\">" . sanitize_concert_title_html($concert['artist']) . "</span></td>\n".
+        "<td data-label=\"Venue\"><span class=\"concerts-cell-value\">" . $concert['venue'] . "</span></td>\n";
       
       if ($concert['ticketurl'] && $concert['ticketinfo'] != "SOLD OUT") {
-        echo "<td data-label=\"Ticket Info\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></td>\n";
+        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
       } elseif ($concert['ticketurl'] && $concert['ticketinfo'] == "SOLD OUT") {
-        echo "<td data-label=\"Ticket Info\" class=\"soldout\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></td>\n";
+        echo "<td data-label=\"Ticket Info\" class=\"soldout\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
       } else {
-        echo "<td data-label=\"Ticket Info\">". $concert['ticketinfo'] . "</td>\n";
+        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\">". $concert['ticketinfo'] . "</span></td>\n";
       }
       
       echo "</tr>\n";
