@@ -32,12 +32,11 @@ use YNotRadio\Models\ConcertFactory;
         "<td data-label=\"Artist\"><span class=\"concerts-cell-value\">" . sanitize_concert_title_html($concert['artist']) . "</span></td>\n".
         "<td data-label=\"Venue\"><span class=\"concerts-cell-value\">" . $concert['venue'] . "</span></td>\n";
       
-      if ($concert['ticketurl'] && $concert['ticketinfo'] != "SOLD OUT") {
-        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
-      } elseif ($concert['ticketurl'] && $concert['ticketinfo'] == "SOLD OUT") {
-        echo "<td data-label=\"Ticket Info\" class=\"soldout\"><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>". $concert['ticketinfo'] . "</a></span></td>\n";
+      if ($concert['ticketurl']) {
+        $soldout_class = $concert['ticketinfo'] === "SOLD OUT" ? ' class="soldout"' : '';
+        echo "<td data-label=\"Ticket Info\"{$soldout_class}><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>" . $concert['ticketinfo'] . "</a></span></td>\n";
       } else {
-        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\">". $concert['ticketinfo'] . "</span></td>\n";
+        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\">" . $concert['ticketinfo'] . "</span></td>\n";
       }
       
       echo "</tr>\n";
