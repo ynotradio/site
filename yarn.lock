@@ -1554,10 +1554,10 @@
   resolved "https://registry.yarnpkg.com/@neoconfetti/react/-/react-1.0.0.tgz#9a619d980a2285a829b1f8c78ca6484f0364a370"
   integrity sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==
 
-"@netlify/functions@^5.2.0":
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/@netlify/functions/-/functions-5.2.0.tgz#49416c735ee6717a3fa6c99f46083b1af01ddbee"
-  integrity sha512-Pj93qeQd1tkQ5xm9gWJZmBf/1riLYqYHc0OzFukrJomrj82Ott53Rr/Q88H1ms5cF+P5QXRKWmA2JSxSybKfjA==
+"@netlify/functions@^5.2.1":
+  version "5.2.1"
+  resolved "https://registry.yarnpkg.com/@netlify/functions/-/functions-5.2.1.tgz#d5f8a7e1d55338abd2bd87b0b1b624baa96da813"
+  integrity sha512-F1CCXeWC/4E/mj8La38WwFJ6oyymTBeIWYO87nyjN0L8mvb0tugcMsu+V6QkUllMtnBezdM0ApCaY+eWGmnj+g==
   dependencies:
     "@netlify/types" "2.6.0"
 
