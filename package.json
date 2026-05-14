@@ -63,7 +63,7 @@
     "@benborla29/mcp-server-mysql": "^2.0.8",
     "@chromatic-com/storybook": "^5.1.2",
     "@netlify/plugin-nextjs": "^5.15.11",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.60.0",
     "@storybook/addon-a11y": "^10.3.6",
     "@storybook/addon-docs": "^10.3.6",
     "@storybook/addon-onboarding": "^10.3.6",
@@ -78,8 +78,8 @@
     "@types/react": "19.2.14",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@vitest/browser-playwright": "^4.1.5",
-    "@vitest/coverage-v8": "^4.1.5",
+    "@vitest/browser-playwright": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.6",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -100,7 +100,7 @@
     "tsx": "^4.20.3",
     "typescript": "^6.0.3",
     "vite": "^7.3.1",
-    "vitest": "^4.1.5"
+    "vitest": "^4.1.6"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
