@@ -102,7 +102,18 @@ Check what's been completed:
 10. Create PR: `[test-coverage-improver] Add tests for [component]`
     - Labels: `automation`, `testing`
     - Draft: true
-    - Brief description: what was tested, verification status
+    - Brief description:
+      ```markdown
+      ## Changes
+
+      - [Specific tests added, component name, what is covered]
+
+      ## Verification
+
+      - [x] `yarn lint` exits 0
+      - [x] `yarn test` exits 0
+      - [x] Screenshot attached below — N/A (test-only change, no UI affected)
+      ```
 11. Comment on discussion with progress update
 
 **Important**: Write meaningful tests that validate functionality. Your tests speak for themselves - no proof-of-work summaries.

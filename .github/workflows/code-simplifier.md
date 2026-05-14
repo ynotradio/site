@@ -129,7 +129,9 @@ The title must describe what was actually simplified — not a generic message. 
 
 ## Verification
 
-- [x] All checks pass locally before push
+- [x] `yarn lint` exits 0
+- [x] `yarn test` exits 0
+- [x] Screenshot attached below — N/A (code-only change, no UI affected)
 ```
 
 **Important**: Your code speaks for itself. No summaries, action plans, or documentation as proof of work.

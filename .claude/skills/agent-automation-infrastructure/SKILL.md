@@ -34,6 +34,17 @@ The runner's Yarn cache (`~/.cache/yarn`, ~4 GB) persists across jobs on the sam
 | `yarn build` | Next.js | Needs DATABASE_URI |
 | `node_modules/.bin/tsc --noEmit` | TypeScript | Type-check only |
 
+## Screenshot Requirements by Agent Type
+
+| Agent | Environment | Screenshot required? |
+|-------|-------------|---------------------|
+| Interactive Copilot agent (issue/PR response) | GitHub-hosted runner, Docker + Playwright available | **Yes** — always for UI/API changes |
+| code-simplifier workflow | `node:lts-alpine`, no Docker | **No** — code-only, mark as N/A |
+| test-coverage-improver workflow | `node:lts-alpine`, no Docker | **No** — test-only, mark as N/A |
+| code-refactoring workflow | `node:lts-alpine`, no Docker | **No** — code-only, mark as N/A |
+
+For interactive agents: `docker compose up -d` (legacy PHP) uses local builds and **always works** without GHCR auth. Use it to get `http://localhost:8080` for screenshots. Payload screenshots require either the GHCR seeded image or the public-image fallback below.
+
 ## Pre-built Docker Images
 
 Four pre-built images are available at GHCR for running services:
@@ -57,6 +68,8 @@ docker pull ghcr.io/ynotradio/site/postgres-seeded:latest
 ```
 
 This works when the running workflow's `GITHUB_TOKEN` has `packages: read` permission. As of March 2026, all three automated agent workflows (`.github/workflows/*.lock.yml`) include `packages: read` in the `agent` job. **The interactive Copilot coding agent** (responding to issues/PRs) runs under a different token that may not have this permission — if `docker pull` still fails with "denied" after login, fall back to the manual workaround below.
+
+> **Key distinction**: `docker compose up -d` (legacy PHP stack) builds from **local Dockerfiles** — no GHCR auth needed, always works. GHCR auth is only required for the pre-built Payload/Playwright images.
 
 ### Fallback When GHCR Is Inaccessible
 
