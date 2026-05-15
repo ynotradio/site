@@ -472,11 +472,12 @@ async function main(): Promise<void> {
     port: mysqlConfig.port,
   });
 
-  const reportTitle = scope === 'posts'
-    ? 'Publish Status (Stories + Custom Texts)'
-    : scope === 'ondemand'
-      ? 'Publish Status (OnDemand)'
-      : 'Publish Status (OnDemand + Stories)';
+  let reportTitle = 'Publish Status (OnDemand + Stories)';
+  if (scope === 'posts') {
+    reportTitle = 'Publish Status (Stories + Custom Texts)';
+  } else if (scope === 'ondemand') {
+    reportTitle = 'Publish Status (OnDemand)';
+  }
   const report = emptyReport('publish-status', reportTitle);
   const startTime = Date.now();
 
