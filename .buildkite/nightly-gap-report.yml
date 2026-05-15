@@ -5,7 +5,7 @@
 # 3. Resets the Neon development branch from production
 # 4. Generates a gap report comparing MySQL vs dev Neon (post-reset snapshot of prod)
 # 5. Updates the GitHub issue body with the gap report
-# 6. Runs the remaining nightly integrity check against the dev Neon branch
+# 6. Runs the remaining nightly integrity check against the dev branch after reset-to-prod
 #
 # Note: Configure this as a scheduled build in Buildkite UI:
 # Schedule: 0 3 * * * (cron format: daily at 3 AM UTC)
