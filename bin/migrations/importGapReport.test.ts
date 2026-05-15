@@ -15,7 +15,7 @@ vi.mock('../../config/databases', () => ({
   }),
   parseFromToArgs: vi.fn().mockReturnValue({
     from: 'local-mysql',
-    to: 'prod-neon',
+    to: 'production-db',
   }),
 }));
 
@@ -47,7 +47,7 @@ describe('importGapReport', () => {
       const options = parseArgs();
 
       expect(options.from).toBe('local-mysql');
-      expect(options.to).toBe('prod-neon');
+      expect(options.to).toBe('production-db');
       expect(options.limit).toBe(50);
       expect(options.verbose).toBe(false);
       expect(options.outputFile).toBeUndefined();

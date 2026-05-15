@@ -209,7 +209,10 @@ export function getDatabaseUrl(target: SupportedPostgresTarget): string {
   return url;
 }
 
-// Temporary compatibility export for scripts that still import the old helper name.
+/**
+ * @deprecated Temporary compatibility export during the database provider cutover.
+ * Prefer getDatabaseUrl in new code.
+ */
 export const getNeonDatabaseUrl = getDatabaseUrl;
 
 /**

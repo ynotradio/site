@@ -51,7 +51,8 @@ export type PostgresTarget = SupportedPostgresTarget;
 /**
  * Get the Payload instance configured for the specified target database
  *
- * @param target - 'production-db' for production, 'preview-db' for previews, or 'local-postgres' for local/dev
+ * @param target - 'production-db' for production, 'preview-db' for previews,
+ * or 'local-postgres' for local/dev
  */
 export async function getPayloadClient(target: PostgresTarget = 'production-db'): Promise<Payload> {
   // NOTE: Scripts that call this must run with

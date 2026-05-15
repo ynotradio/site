@@ -63,23 +63,23 @@ describe('importDJs', () => {
   });
 
   describe('parseArgs', () => {
-    it('should default to prod-neon target', async () => {
+    it('should default to production-db target', async () => {
       const { parseArgs } = await import('./importDJs');
 
       process.argv = ['node', 'script.ts'];
       const options = parseArgs();
 
-      expect(options.to).toBe('prod-neon');
+      expect(options.to).toBe('production-db');
       expect(options.startId).toBeUndefined();
     });
 
-    it('should parse --to prod-neon argument', async () => {
+    it('should normalize legacy --to prod-neon argument', async () => {
       const { parseArgs } = await import('./importDJs');
 
       process.argv = ['node', 'script.ts', '--to', 'prod-neon'];
       const options = parseArgs();
 
-      expect(options.to).toBe('prod-neon');
+      expect(options.to).toBe('production-db');
     });
 
     it('should parse --to local-postgres argument', async () => {
@@ -105,7 +105,7 @@ describe('importDJs', () => {
 
       process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
+      expect(() => parseArgs()).toThrow('--to must be "production-db", "preview-db", or "local-postgres"');
     });
   });
 

@@ -6,10 +6,10 @@
  * and links them to DJ records.
  *
  * Usage:
- *   tsx bin/migrations/importSchedule.ts --to prod-neon --start-id 100
+ *   tsx bin/migrations/importSchedule.ts --to production-db --start-id 100
  *
  * Options:
- *   --to        Target database: 'prod-neon' (default) or 'local-postgres'
+ *   --to        Target database: 'production-db' (default), 'preview-db', or 'local-postgres'
  *   --start-id  Optional ID to start import from (for incremental imports)
  */
 
@@ -53,7 +53,7 @@ interface ImportOptions {
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
   const options: ImportOptions = {
-    to: 'prod-neon',
+    to: 'production-db',
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -61,10 +61,15 @@ function parseArgs(): ImportOptions {
 
     if (arg === '--to') {
       const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
+      if (toValue === 'prod-neon' || toValue === 'production-db') {
+        options.to = 'production-db';
+      } else if (toValue === 'dev-neon' || toValue === 'preview-db') {
+        options.to = 'preview-db';
+      } else if (toValue === 'local-postgres') {
+        options.to = toValue;
+      } else {
+        throw new Error('--to must be "production-db", "preview-db", or "local-postgres"');
       }
-      options.to = toValue;
       i += 1;
     } else if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
@@ -86,15 +91,15 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/migrations/importSchedule.ts [options]
 
 Options:
-  --env ENV            Environment to import to: 'dev' (default) or 'prod'
+  --to TARGET          Target database: 'production-db' (default), 'preview-db', or 'local-postgres'
   --start-id ID        Optional ID to start import from (for incremental imports)
   --start-date DATE    Optional date to start import from (YYYY-MM-DD format)
   --help, -h           Show this help message
 
 Examples:
-  tsx bin/migrations/importSchedule.ts --to prod-neon
+  tsx bin/migrations/importSchedule.ts --to production-db
   tsx bin/migrations/importSchedule.ts --to local-postgres --start-id 1000
-  tsx bin/migrations/importSchedule.ts --to prod-neon --start-date 2025-12-01
+  tsx bin/migrations/importSchedule.ts --to production-db --start-date 2025-12-01
       `);
       process.exit(0);
     }

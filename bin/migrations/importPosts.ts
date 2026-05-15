@@ -3,11 +3,11 @@
  * Import posts (stories and custom text) from MySQL to Payload CMS PostgreSQL database
  *
  * Usage:
- *   tsx bin/migrations/importPosts.ts --to prod-neon --start-id 100
- *   tsx bin/migrations/importPosts.ts --to prod-neon --sync-active
+ *   tsx bin/migrations/importPosts.ts --to production-db --start-id 100
+ *   tsx bin/migrations/importPosts.ts --to production-db --sync-active
  *
  * Options:
- *   --to            Target database: 'prod-neon' (default) or 'local-postgres'
+ *   --to            Target database: 'production-db' (default), 'preview-db', or 'local-postgres'
  *   --start-id      Optional ID to start import from (for incremental imports)
  *   --sync-active   Refresh currently-visible stories: compares MySQL active stories
  *                   with PG and re-imports any that have changed (headline, content,
@@ -47,7 +47,7 @@ interface ImportOptions {
 function parseArgs(): ImportOptions {
   const args = process.argv.slice(2);
   const options: ImportOptions = {
-    to: 'prod-neon',
+    to: 'production-db',
   };
 
   for (let i = 0; i < args.length; i += 1) {
@@ -55,10 +55,15 @@ function parseArgs(): ImportOptions {
 
     if (arg === '--to') {
       const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
+      if (toValue === 'prod-neon' || toValue === 'production-db') {
+        options.to = 'production-db';
+      } else if (toValue === 'dev-neon' || toValue === 'preview-db') {
+        options.to = 'preview-db';
+      } else if (toValue === 'local-postgres') {
+        options.to = toValue;
+      } else {
+        throw new Error('--to must be "production-db", "preview-db", or "local-postgres"');
       }
-      options.to = toValue;
       i += 1;
     } else if (arg === '--start-id') {
       const startId = parseInt(args[i + 1], 10);
@@ -74,15 +79,15 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/migrations/importPosts.ts [options]
 
 Options:
-  --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
+  --to TARGET      Target database: 'production-db' (default), 'preview-db', or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
   --sync-active    Refresh currently-visible stories that have changed in MySQL
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importPosts.ts --to prod-neon
+  tsx bin/migrations/importPosts.ts --to production-db
   tsx bin/migrations/importPosts.ts --to local-postgres --start-id 100
-  tsx bin/migrations/importPosts.ts --to prod-neon --sync-active
+  tsx bin/migrations/importPosts.ts --to production-db --sync-active
       `);
       process.exit(0);
     }

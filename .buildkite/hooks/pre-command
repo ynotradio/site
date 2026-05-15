@@ -35,13 +35,16 @@ if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"nightly"* ]] || [[ "${BUILDKITE_PIPELI
   NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
   NEON_DEV_DATABASE_URL=$(buildkite-agent secret get NEON_DEV_DATABASE_URL 2>/dev/null || true)
 
-  if [[ -z "$PRODUCTION_DATABASE_URL" ]]; then
-    PRODUCTION_DATABASE_URL="$NEON_PROD_DATABASE_URL"
+  resolved_production_database_url="${PRODUCTION_DATABASE_URL:-$NEON_PROD_DATABASE_URL}"
+  resolved_preview_database_url="${PREVIEW_DATABASE_URL:-$NEON_DEV_DATABASE_URL}"
+
+  if [[ -z "$resolved_production_database_url" ]] || [[ -z "$resolved_preview_database_url" ]]; then
+    echo "❌ PRODUCTION_DATABASE_URL and PREVIEW_DATABASE_URL must be configured for nightly/db-sync pipelines"
+    exit 1
   fi
 
-  if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
-    PREVIEW_DATABASE_URL="$NEON_DEV_DATABASE_URL"
-  fi
+  PRODUCTION_DATABASE_URL="$resolved_production_database_url"
+  PREVIEW_DATABASE_URL="$resolved_preview_database_url"
 
   # Temporary compatibility aliases during cutover.
   if [[ -z "$NEON_PROD_DATABASE_URL" ]]; then

@@ -3,11 +3,11 @@
  * Import on-demand content from MySQL to Payload CMS PostgreSQL database
  *
  * Usage:
- *   tsx bin/migrations/importOnDemand.ts --from prod-mysql --to prod-neon --start-id 100
+ *   tsx bin/migrations/importOnDemand.ts --from prod-mysql --to production-db --start-id 100
  *
  * Options:
  *   --from      Source MySQL: 'local-mysql' (default) or 'prod-mysql'
- *   --to        Target Postgres: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
+ *   --to        Target Postgres: 'production-db' (default), 'preview-db', or 'local-postgres'
  *   --start-id  Optional ID to start import from (for incremental imports)
  */
 
@@ -69,13 +69,13 @@ Usage: tsx bin/migrations/importOnDemand.ts [options]
 
 Options:
   --from SOURCE    Source MySQL: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET      Target Postgres: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
+  --to TARGET      Target Postgres: 'production-db' (default), 'preview-db', or 'local-postgres'
   --start-id ID    Optional ID to start import from (for incremental imports)
   --help, -h       Show this help message
 
 Examples:
-  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to prod-neon --start-id 527
-  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to dev-neon --start-id 527
+  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to production-db --start-id 527
+  tsx bin/migrations/importOnDemand.ts --from prod-mysql --to preview-db --start-id 527
       `);
       process.exit(0);
     }

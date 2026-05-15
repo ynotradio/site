@@ -12,7 +12,8 @@
  * Options:
  *   --collection <name>  Collection to regenerate (can be specified multiple times)
  *   --all                Regenerate all collections with slugs
- *   --to <target>        Target database: 'local-postgres', 'production-db' (default), or 'preview-db'
+ *   --to <target>        Target database: 'local-postgres',
+ *                        'production-db' (default), or 'preview-db'
  *   --dry-run            Preview changes without saving
  */
 
