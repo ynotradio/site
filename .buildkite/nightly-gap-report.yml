@@ -17,7 +17,7 @@
 #   PROD_MYSQL_PASSWORD    — Production MySQL password
 #   PROD_MYSQL_DATABASE    — Production MySQL database name (default: ynot_site)
 #   NEON_PROD_DATABASE_URL — Production Neon/PostgreSQL connection string (import target)
-#   NEON_DEV_DATABASE_URL  — Development Neon branch (used by gap report & integrity check post-reset)
+#   NEON_DEV_DATABASE_URL  — Development Neon branch (used by the post-reset integrity check step)
 #   GITHUB_PR_TOKEN              — Fine-grained PAT with issues:write permission
 #   GAP_REPORT_ISSUE_NUMBER      — GitHub issue number to update with results
 #   INTEGRITY_REPORT_ISSUE_NUMBER — GitHub issue number for integrity report
