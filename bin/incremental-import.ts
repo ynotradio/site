@@ -570,8 +570,9 @@ async function main() {
 
   for (const result of results) {
     const status = result.success ? '✅' : '❌';
+    const label = COLLECTION_LABELS[result.collection] || result.collection;
     console.log(
-      `${status} ${result.collection.padEnd(15)} - Imported: ${result.imported}, Skipped: ${result.skipped}, Errors: ${result.errors}`,
+      `${status} ${label.padEnd(30)} - Imported: ${result.imported}, Skipped: ${result.skipped}, Errors: ${result.errors}`,
     );
 
     // Show details for items with skips or errors

@@ -133,7 +133,7 @@ Example output:
    TOTAL:      17
 
 ✅ Import Summary
-   Posts: 13 imported, 0 skipped
+   Posts (Stories + Custom Texts): 13 imported, 0 skipped
    Schedule: 4 imported, 0 skipped
    ...
 ```

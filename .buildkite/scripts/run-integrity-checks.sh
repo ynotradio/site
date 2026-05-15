@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # .buildkite/scripts/run-integrity-checks.sh
-# Runs the remaining nightly content integrity check against Neon prod, combines reports,
+# Runs the remaining nightly content integrity check (publish-status only) against Neon prod,
+# combines reports,
 # and posts the result to a GitHub issue.
 # Called by nightly-gap-report.yml — extracted from inline YAML for readability.
 
