@@ -162,60 +162,6 @@ const COLLECTIONS: CollectionConfig[] = [
     deletedFilter: "status = 'active'",
     legacyIdField: 'legacyId',
   },
-  {
-    name: 'Songs (Music)',
-    mysqlTable: 'music',
-    payloadCollection: 'songs',
-    idField: 'id',
-    identifierField: 'song',
-    deletedFilter: "deleted = 'n'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'Concerts',
-    mysqlTable: 'concerts',
-    payloadCollection: 'concerts',
-    idField: 'id',
-    identifierField: 'artist',
-    deletedFilter: "deleted != 'Y'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'On Demand',
-    mysqlTable: 'ondemand',
-    payloadCollection: 'ondemand',
-    idField: 'id',
-    identifierField: 'headline',
-    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'CD of the Week',
-    mysqlTable: 'cdotw',
-    payloadCollection: 'cdoftheweek',
-    idField: 'id',
-    identifierField: 'title',
-    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'Ads (Sponsors)',
-    mysqlTable: 'ads',
-    payloadCollection: 'ads',
-    idField: 'id',
-    identifierField: 'name',
-    deletedFilter: "deleted = 'n'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'DJs',
-    mysqlTable: 'deejays',
-    payloadCollection: 'djs',
-    idField: 'id',
-    identifierField: 'name',
-    // DJs table has no deleted column, import all
-    legacyIdField: 'legacyId',
-  },
 ];
 
 /**

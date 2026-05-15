@@ -5,7 +5,7 @@
 # 3. Resets the Neon development branch from production
 # 4. Generates a gap report comparing MySQL vs dev Neon (post-reset snapshot of prod)
 # 5. Updates the GitHub issue body with the gap report
-# 6. Runs integrity checks against the dev Neon branch
+# 6. Runs the remaining nightly integrity check against the dev branch after reset-to-prod
 #
 # Note: Configure this as a scheduled build in Buildkite UI:
 # Schedule: 0 3 * * * (cron format: daily at 3 AM UTC)
@@ -17,7 +17,7 @@
 #   PROD_MYSQL_PASSWORD    — Production MySQL password
 #   PROD_MYSQL_DATABASE    — Production MySQL database name (default: ynot_site)
 #   NEON_PROD_DATABASE_URL — Production Neon/PostgreSQL connection string (import target)
-#   NEON_DEV_DATABASE_URL  — Development Neon branch (used by gap report & integrity checks post-reset)
+#   NEON_DEV_DATABASE_URL  — Development Neon branch (used by the post-reset integrity check step)
 #   GITHUB_PR_TOKEN              — Fine-grained PAT with issues:write permission
 #   GAP_REPORT_ISSUE_NUMBER      — GitHub issue number to update with results
 #   INTEGRITY_REPORT_ISSUE_NUMBER — GitHub issue number for integrity report
@@ -126,91 +126,12 @@ steps:
     agents:
       queue: "default"
 
-  # --- Parallel integrity checks (each runs independently for speed) ---
-  - group: ":stethoscope: Content Integrity Checks"
+  # --- Remaining nightly integrity check for legacy-backed posts ---
+  - group: ":stethoscope: Content Integrity Check"
     key: "integrity-checks"
     depends_on: "reset-dev-branch"
     allow_dependency_failure: true
     steps:
-      - label: ":bust_in_silhouette: Check display names"
-        key: "check-display-names"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh display-names"
-        artifact_paths: ["integrity-display-names.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
-        agents:
-          queue: "default"
-
-      - label: ":link: Check slugs"
-        key: "check-slugs"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh slugs"
-        artifact_paths: ["integrity-slugs.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
-        agents:
-          queue: "default"
-
-      - label: ":musical_note: Check MusicBrainz"
-        key: "check-musicbrainz"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh musicbrainz"
-        artifact_paths: ["integrity-musicbrainz.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
-        agents:
-          queue: "default"
-
-      - label: ":cd: Check record metadata"
-        key: "check-record-metadata"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh record-metadata"
-        artifact_paths: ["integrity-record-metadata.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
-        agents:
-          queue: "default"
-
-      - label: ":radio: Check OnDemand sources"
-        key: "check-ondemand-source"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh ondemand-source"
-        artifact_paths: ["integrity-ondemand-source.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
-                - "PROD_MYSQL_HOST"
-                - "PROD_MYSQL_USER"
-                - "PROD_MYSQL_PASSWORD"
-                - "PROD_MYSQL_DATABASE"
-        agents:
-          queue: "default"
-
       - label: ":white_check_mark: Check publish status"
         key: "check-publish-status"
         timeout_in_minutes: 15
@@ -227,21 +148,6 @@ steps:
                 - "PROD_MYSQL_USER"
                 - "PROD_MYSQL_PASSWORD"
                 - "PROD_MYSQL_DATABASE"
-        agents:
-          queue: "default"
-
-      - label: ":microphone: Check DJ data quality"
-        key: "check-djs"
-        timeout_in_minutes: 15
-        command: "bash .buildkite/scripts/run-single-integrity-check.sh djs"
-        artifact_paths: ["integrity-djs.md"]
-        soft_fail: true
-        plugins:
-          - docker#v5.11.0:
-              image: "node:22-slim"
-              propagate-environment: true
-              environment:
-                - "NEON_DEV_DATABASE_URL"
         agents:
           queue: "default"
 

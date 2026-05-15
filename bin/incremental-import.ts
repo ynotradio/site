@@ -28,13 +28,8 @@ import {
 } from '../config/databases';
 
 interface LastImportIds {
-  music: number;
-  concerts: number;
-  posts: number;
-  ondemand: number;
-  cdotw: number;
-  ads: number;
-  djs: number;
+  stories: number;
+  customTexts: number;
   schedule: number;
   lastUpdated: string;
 }
@@ -62,13 +57,7 @@ interface ImportResult {
 const TRACKING_FILE = path.join(process.cwd(), '.last-import-ids.json');
 
 const COLLECTION_LABELS: Record<string, string> = {
-  Music: 'Songs',
-  Concerts: 'Concerts',
-  Posts: 'Posts (Stories)',
-  OnDemand: 'On Demand',
-  Cdotw: 'CD of the Week',
-  Ads: 'Ads (Sponsors)',
-  DJs: 'DJs',
+  Posts: 'Posts (Stories + Custom Texts)',
   Schedule: 'Schedule',
 };
 
@@ -219,7 +208,13 @@ function loadLastImportIds(): LastImportIds | null {
 
   try {
     const data = fs.readFileSync(TRACKING_FILE, 'utf-8');
-    return JSON.parse(data) as LastImportIds;
+    const parsed = JSON.parse(data) as Partial<LastImportIds> & { posts?: number };
+    return {
+      stories: typeof parsed.stories === 'number' ? parsed.stories : 0,
+      customTexts: typeof parsed.customTexts === 'number' ? parsed.customTexts : 0,
+      schedule: typeof parsed.schedule === 'number' ? parsed.schedule : 0,
+      lastUpdated: parsed.lastUpdated || new Date().toISOString(),
+    };
   } catch (error) {
     console.warn('Failed to load tracking file, starting fresh');
     return null;
@@ -250,39 +245,34 @@ async function getMaxId(connection: mysql.Connection, table: string): Promise<nu
 async function getNewRecordCounts(
   connection: mysql.Connection,
   lastIds: LastImportIds,
-): Promise<Record<string, number>> {
-  const counts: Record<string, number> = {};
-
-  // Count new records for each collection
-  const tables = [
-    { key: 'music', table: 'music' },
-    { key: 'concerts', table: 'concerts' },
-    { key: 'posts', table: 'stories' },
-    { key: 'ondemand', table: 'ondemand' },
-    { key: 'cdotw', table: 'cdotw' },
-    { key: 'ads', table: 'ads' },
-    { key: 'schedule', table: 'schedule' },
-  ];
-
-  for (const { key, table } of tables) {
-    const lastId = lastIds[key as keyof LastImportIds] as number;
-    // cdotw and ondemand use 'no'/'yes'; other tables use 'n'/'y'.
-    const [rows] = await connection.query<mysql.RowDataPacket[]>(
-      `SELECT COUNT(*) as count FROM ${table} WHERE deleted NOT IN ('y', 'yes') AND id > ?`,
-      [lastId],
-    );
-    counts[key] = rows[0]?.count || 0;
-  }
-
-  // DJs don't have deleted column
-  const lastDjId = lastIds.djs;
-  const [djRows] = await connection.query<mysql.RowDataPacket[]>(
-    'SELECT COUNT(*) as count FROM deejays WHERE id > ?',
-    [lastDjId],
+): Promise<Record<string, { count: number; maxId: number }>> {
+  const [storyRows] = await connection.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) as count, COALESCE(MAX(id), 0) as maxId FROM stories WHERE deleted = 'n' AND id > ?",
+    [lastIds.stories],
   );
-  counts.djs = djRows[0]?.count || 0;
+  const [customTextRows] = await connection.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) as count, COALESCE(MAX(id), 0) as maxId FROM custom_texts WHERE status = 'active' AND id > ?",
+    [lastIds.customTexts],
+  );
+  const [scheduleRows] = await connection.query<mysql.RowDataPacket[]>(
+    "SELECT COUNT(*) as count, COALESCE(MAX(id), 0) as maxId FROM schedule WHERE deleted = 'n' AND id > ?",
+    [lastIds.schedule],
+  );
 
-  return counts;
+  return {
+    stories: {
+      count: storyRows[0]?.count || 0,
+      maxId: storyRows[0]?.maxId || 0,
+    },
+    customTexts: {
+      count: customTextRows[0]?.count || 0,
+      maxId: customTextRows[0]?.maxId || 0,
+    },
+    schedule: {
+      count: scheduleRows[0]?.count || 0,
+      maxId: scheduleRows[0]?.maxId || 0,
+    },
+  };
 }
 
 /**
@@ -292,7 +282,7 @@ function runImportScript(
   script: string,
   from: MySQLSource,
   to: PostgresTarget,
-  startId: number,
+  startId: number | undefined,
   verbose: boolean,
   extraArgs?: string[],
 ): Promise<ImportResult> {
@@ -307,10 +297,11 @@ function runImportScript(
       script,
       '--to',
       to,
-      '--start-id',
-      startId.toString(),
       ...(extraArgs ?? []),
     ];
+    if (startId !== undefined) {
+      args.push('--start-id', startId.toString());
+    }
 
     // Pass MySQL config as env vars so child scripts' getLegacyDbConfig() picks up
     // the correct connection (prod-mysql vs local-mysql)
@@ -393,7 +384,7 @@ function runImportScript(
 
       // Extract max ID from output (scripts should log this)
       const maxIdMatch = output.match(/Highest imported ID:\s*(\d+)/);
-      const newMaxId = maxIdMatch ? parseInt(maxIdMatch[1], 10) : startId;
+      const newMaxId = maxIdMatch ? parseInt(maxIdMatch[1], 10) : (startId ?? 0);
 
       resolve({
         collection: path.basename(script, '.ts').replace('import', ''),
@@ -426,15 +417,10 @@ async function main() {
   let lastIds: LastImportIds;
 
   if (options.reset) {
-    console.log('⚠️  Reset requested - starting from ID 0 for all collections');
+    console.log('⚠️  Reset requested - starting from ID 0 for remaining nightly collections');
     lastIds = {
-      music: 0,
-      concerts: 0,
-      posts: 0,
-      ondemand: 0,
-      cdotw: 0,
-      ads: 0,
-      djs: 0,
+      stories: 0,
+      customTexts: 0,
       schedule: 0,
       lastUpdated: new Date().toISOString(),
     };
@@ -446,13 +432,8 @@ async function main() {
     } else {
       console.log('📋 No tracking file found - starting fresh');
       lastIds = {
-        music: 0,
-        concerts: 0,
-        posts: 0,
-        ondemand: 0,
-        cdotw: 0,
-        ads: 0,
-        djs: 0,
+        stories: 0,
+        customTexts: 0,
         schedule: 0,
         lastUpdated: new Date().toISOString(),
       };
@@ -461,13 +442,8 @@ async function main() {
 
   console.log();
   console.log('Last imported IDs:');
-  console.log(`   Music:      ${lastIds.music}`);
-  console.log(`   Concerts:   ${lastIds.concerts}`);
-  console.log(`   Posts:      ${lastIds.posts}`);
-  console.log(`   On Demand:  ${lastIds.ondemand}`);
-  console.log(`   CD of Week: ${lastIds.cdotw}`);
-  console.log(`   Ads:        ${lastIds.ads}`);
-  console.log(`   DJs:        ${lastIds.djs}`);
+  console.log(`   Stories:      ${lastIds.stories}`);
+  console.log(`   Custom Texts: ${lastIds.customTexts}`);
   console.log(`   Schedule:   ${lastIds.schedule}`);
   console.log();
 
@@ -478,53 +454,42 @@ async function main() {
 
   // Check for new records
   const newCounts = await getNewRecordCounts(connection, lastIds);
-  const totalNew = Object.values(newCounts).reduce((sum, count) => sum + count, 0);
+  const totalNew = Object.values(newCounts).reduce((sum, count) => sum + count.count, 0);
 
   console.log();
   console.log('📊 New records available:');
-  console.log(`   Music:      ${newCounts.music}`);
-  console.log(`   Concerts:   ${newCounts.concerts}`);
-  console.log(`   Posts:      ${newCounts.posts}`);
-  console.log(`   On Demand:  ${newCounts.ondemand}`);
-  console.log(`   CD of Week: ${newCounts.cdotw}`);
-  console.log(`   Ads:        ${newCounts.ads}`);
-  console.log(`   DJs:        ${newCounts.djs}`);
-  console.log(`   Schedule:   ${newCounts.schedule}`);
+  console.log(`   Stories:      ${newCounts.stories.count}`);
+  console.log(`   Custom Texts: ${newCounts.customTexts.count}`);
+  console.log(`   Schedule:     ${newCounts.schedule.count}`);
   console.log(`   TOTAL:      ${totalNew}`);
   console.log();
-
-  if (totalNew === 0) {
-    console.log('✅ No new records to import!');
-    if (options.output) {
-      const markdown = generateMarkdownSummary([], 0, 0, 0, options, true);
-      fs.writeFileSync(options.output, markdown);
-      console.log(`📄 Summary written to: ${options.output}`);
-    }
-    await connection.end();
-    return;
-  }
 
   // Run imports for collections with new records
   const results: ImportResult[] = [];
 
   const imports = [
-    { key: 'music', script: 'bin/migrations/importMusic.ts', count: newCounts.music },
-    { key: 'concerts', script: 'bin/migrations/importConcerts.ts', count: newCounts.concerts },
     {
       key: 'posts',
       script: 'bin/migrations/importPosts.ts',
-      count: newCounts.posts,
-      extraArgs: ['--sync-active'],
+      count: newCounts.stories.count + newCounts.customTexts.count,
+      extraArgs: [
+        '--sync-active',
+        '--stories-start-id',
+        String(lastIds.stories + 1),
+        '--custom-texts-start-id',
+        String(lastIds.customTexts + 1),
+      ],
     },
-    { key: 'ondemand', script: 'bin/migrations/importOnDemand.ts', count: newCounts.ondemand },
-    { key: 'cdotw', script: 'bin/migrations/importCdOfTheWeek.ts', count: newCounts.cdotw },
-    { key: 'ads', script: 'bin/migrations/importAds.ts', count: newCounts.ads },
-    { key: 'djs', script: 'bin/migrations/importDJs.ts', count: newCounts.djs },
-    { key: 'schedule', script: 'bin/migrations/importSchedule.ts', count: newCounts.schedule },
+    {
+      key: 'schedule',
+      script: 'bin/migrations/importSchedule.ts',
+      count: newCounts.schedule.count,
+      startId: lastIds.schedule + 1,
+    },
   ];
 
   for (const {
-    key, script, count, extraArgs,
+    key, script, count, extraArgs, startId: configuredStartId,
   } of imports) {
     // Always run posts with --sync-active even if no new records
     const hasNewRecords = count > 0;
@@ -534,12 +499,14 @@ async function main() {
       console.log(`⏭️  Skipping ${key} (no new records)`);
     } else {
       const startId = hasNewRecords
-        ? (lastIds[key as keyof LastImportIds] as number) + 1
+        ? configuredStartId
         : undefined;
 
       console.log();
       console.log('═'.repeat(80));
-      if (hasNewRecords && hasSyncActive) {
+      if (key === 'posts' && hasSyncActive) {
+        console.log('Running: bin/migrations/importPosts.ts (stories/custom texts incremental + sync-active)');
+      } else if (hasNewRecords && hasSyncActive) {
         console.log(`Running: ${script} (starting from ID ${startId}, + sync-active)`);
       } else if (hasNewRecords) {
         console.log(`Running: ${script} (starting from ID ${startId})`);
@@ -552,16 +519,20 @@ async function main() {
         script,
         options.from,
         options.to,
-        startId ?? (lastIds[key as keyof LastImportIds] as number),
+        startId,
         options.verbose,
         extraArgs,
       );
       results.push(result);
 
-      // Update tracking with new max ID
-      const lastId = lastIds[key as keyof LastImportIds];
-      if (hasNewRecords && result.success && result.newMaxId > lastId) {
-        lastIds[key as keyof LastImportIds] = result.newMaxId as never;
+      // Update tracking with source max IDs for the remaining nightly imports
+      if (hasNewRecords && result.success) {
+        if (key === 'posts') {
+          lastIds.stories = newCounts.stories.maxId;
+          lastIds.customTexts = newCounts.customTexts.maxId;
+        } else if (key === 'schedule') {
+          lastIds.schedule = newCounts.schedule.maxId;
+        }
       }
 
       // Show skip/error details if present
@@ -599,8 +570,9 @@ async function main() {
 
   for (const result of results) {
     const status = result.success ? '✅' : '❌';
+    const label = COLLECTION_LABELS[result.collection] || result.collection;
     console.log(
-      `${status} ${result.collection.padEnd(15)} - Imported: ${result.imported}, Skipped: ${result.skipped}, Errors: ${result.errors}`,
+      `${status} ${label.padEnd(30)} - Imported: ${result.imported}, Skipped: ${result.skipped}, Errors: ${result.errors}`,
     );
 
     // Show details for items with skips or errors

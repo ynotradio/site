@@ -47,8 +47,10 @@ case "$CHECK_NAME" in
     ;;
   publish-status)
     echo "--- :white_check_mark: Checking publish status"
+    # Stories/Custom Texts still originate in legacy MySQL, so publish-status
+    # continues comparing posts in Payload against the MySQL source of truth.
     node $PRELOAD bin/integrity-check-publish-status.ts \
-      --from prod-mysql --since 25h --output "$OUTPUT" --verbose
+      --from prod-mysql --collection posts --since 25h --output "$OUTPUT" --verbose
     ;;
   djs)
     echo "--- :microphone: Checking DJ data quality"
