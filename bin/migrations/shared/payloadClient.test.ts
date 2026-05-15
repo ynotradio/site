@@ -59,38 +59,47 @@ describe('payloadClient', () => {
     const savedEnv: Record<string, string | undefined> = {};
 
     beforeEach(() => {
+      savedEnv.PRODUCTION_DATABASE_URL = process.env.PRODUCTION_DATABASE_URL;
+      savedEnv.PREVIEW_DATABASE_URL = process.env.PREVIEW_DATABASE_URL;
+      savedEnv.LOCAL_DATABASE_URL = process.env.LOCAL_DATABASE_URL;
       savedEnv.NEON_PROD_DATABASE_URL = process.env.NEON_PROD_DATABASE_URL;
       savedEnv.NEON_DEV_DATABASE_URL = process.env.NEON_DEV_DATABASE_URL;
       savedEnv.DATABASE_URI = process.env.DATABASE_URI;
+      delete process.env.PRODUCTION_DATABASE_URL;
+      delete process.env.PREVIEW_DATABASE_URL;
+      delete process.env.LOCAL_DATABASE_URL;
       delete process.env.NEON_PROD_DATABASE_URL;
       delete process.env.NEON_DEV_DATABASE_URL;
       delete process.env.DATABASE_URI;
     });
 
     afterEach(() => {
+      process.env.PRODUCTION_DATABASE_URL = savedEnv.PRODUCTION_DATABASE_URL;
+      process.env.PREVIEW_DATABASE_URL = savedEnv.PREVIEW_DATABASE_URL;
+      process.env.LOCAL_DATABASE_URL = savedEnv.LOCAL_DATABASE_URL;
       process.env.NEON_PROD_DATABASE_URL = savedEnv.NEON_PROD_DATABASE_URL;
       process.env.NEON_DEV_DATABASE_URL = savedEnv.NEON_DEV_DATABASE_URL;
       process.env.DATABASE_URI = savedEnv.DATABASE_URI;
     });
 
-    it('should throw when NEON_PROD_DATABASE_URL is not set for prod-neon target', async () => {
+    it('should throw when production target env is not set', async () => {
       const { getPayloadClient } = await import('./payloadClient');
-      await expect(getPayloadClient('prod-neon')).rejects.toThrow(
-        'Database URI not found for target "prod-neon"',
+      await expect(getPayloadClient('production-db')).rejects.toThrow(
+        'Production database URL not configured',
       );
     });
 
-    it('should throw when neither NEON_DEV_DATABASE_URL nor DATABASE_URI is set for local-postgres', async () => {
+    it('should throw when no local database env is set for local-postgres', async () => {
       const { getPayloadClient } = await import('./payloadClient');
       await expect(getPayloadClient('local-postgres')).rejects.toThrow(
-        'Database URI not found for target "local-postgres"',
+        'Local database URL not configured',
       );
     });
 
-    it('should throw when NEON_DEV_DATABASE_URL is not set for dev-neon target', async () => {
+    it('should throw when preview target env is not set', async () => {
       const { getPayloadClient } = await import('./payloadClient');
-      await expect(getPayloadClient('dev-neon')).rejects.toThrow(
-        'Database URI not found for target "dev-neon"',
+      await expect(getPayloadClient('preview-db')).rejects.toThrow(
+        'Preview database URL not configured',
       );
     });
 
@@ -107,34 +116,34 @@ describe('payloadClient', () => {
       expect(process.env.DATABASE_URI).toBe('postgresql://local/fallback');
     });
 
-    it('should return uri for prod-neon when NEON_PROD_DATABASE_URL is set', async () => {
-      process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+    it('should return uri for production-db when PRODUCTION_DATABASE_URL is set', async () => {
+      process.env.PRODUCTION_DATABASE_URL = 'postgresql://prod/db';
       const { getPayload } = await import('payload');
       const mockProd = { find: vi.fn(), create: vi.fn() };
       (getPayload as Mock).mockResolvedValueOnce(mockProd);
 
       const { getPayloadClient } = await import('./payloadClient');
-      const result = await getPayloadClient('prod-neon');
+      const result = await getPayloadClient('production-db');
 
       expect(result).toBe(mockProd);
       expect(process.env.DATABASE_URI).toBe('postgresql://prod/db');
     });
 
-    it('should return uri for dev-neon when NEON_DEV_DATABASE_URL is set', async () => {
-      process.env.NEON_DEV_DATABASE_URL = 'postgresql://dev/db';
+    it('should return uri for preview-db when PREVIEW_DATABASE_URL is set', async () => {
+      process.env.PREVIEW_DATABASE_URL = 'postgresql://preview/db';
       const { getPayload } = await import('payload');
       const mockDev = { find: vi.fn(), create: vi.fn() };
       (getPayload as Mock).mockResolvedValueOnce(mockDev);
 
       const { getPayloadClient } = await import('./payloadClient');
-      const result = await getPayloadClient('dev-neon');
+      const result = await getPayloadClient('preview-db');
 
       expect(result).toBe(mockDev);
-      expect(process.env.DATABASE_URI).toBe('postgresql://dev/db');
+      expect(process.env.DATABASE_URI).toBe('postgresql://preview/db');
     });
 
-    it('should connect successfully for local-postgres when NEON_DEV_DATABASE_URL is set', async () => {
-      process.env.NEON_DEV_DATABASE_URL = 'postgresql://local/dev';
+    it('should connect successfully for local-postgres when DATABASE_URI is set', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/dev';
       const { getPayload } = await import('payload');
       const mockLocal = { find: vi.fn(), create: vi.fn() };
       (getPayload as Mock).mockResolvedValueOnce(mockLocal);
@@ -143,6 +152,19 @@ describe('payloadClient', () => {
       const result = await getPayloadClient('local-postgres');
 
       expect(result).toBe(mockLocal);
+    });
+
+    it('should normalize legacy aliases for backwards compatibility', async () => {
+      process.env.NEON_PROD_DATABASE_URL = 'postgresql://legacy-prod/db';
+      const { getPayload } = await import('payload');
+      const mockLegacy = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockLegacy);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('prod-neon');
+
+      expect(result).toBe(mockLegacy);
+      expect(process.env.DATABASE_URI).toBe('postgresql://legacy-prod/db');
     });
   });
 

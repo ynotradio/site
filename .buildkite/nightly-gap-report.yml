@@ -1,11 +1,11 @@
 # Buildkite Pipeline for Nightly Import & Gap Report
 #
-# 1. Runs incremental import (prod MySQL → prod Neon) to import new records
+# 1. Runs incremental import (prod MySQL → production database) to import new records
 # 2. Posts an import summary as a comment on the tracking GitHub issue
-# 3. Resets the Neon development branch from production
-# 4. Generates a gap report comparing MySQL vs dev Neon (post-reset snapshot of prod)
+# 3. Refreshes the preview database from a production snapshot using pg_dump/psql
+# 4. Generates a gap report comparing MySQL vs preview database
 # 5. Updates the GitHub issue body with the gap report
-# 6. Runs integrity checks against the dev Neon branch
+# 6. Runs integrity checks against the preview database
 #
 # Note: Configure this as a scheduled build in Buildkite UI:
 # Schedule: 0 3 * * * (cron format: daily at 3 AM UTC)
@@ -16,17 +16,14 @@
 #   PROD_MYSQL_USER        — Production MySQL username
 #   PROD_MYSQL_PASSWORD    — Production MySQL password
 #   PROD_MYSQL_DATABASE    — Production MySQL database name (default: ynot_site)
-#   NEON_PROD_DATABASE_URL — Production Neon/PostgreSQL connection string (import target)
-#   NEON_DEV_DATABASE_URL  — Development Neon branch (used by gap report & integrity checks post-reset)
+#   PRODUCTION_DATABASE_URL — Production PostgreSQL connection string (import target)
+#   PREVIEW_DATABASE_URL    — Preview PostgreSQL connection string (used by gap report & integrity checks)
 #   GITHUB_PR_TOKEN              — Fine-grained PAT with issues:write permission
 #   GAP_REPORT_ISSUE_NUMBER      — GitHub issue number to update with results
 #   INTEGRITY_REPORT_ISSUE_NUMBER — GitHub issue number for integrity report
-#   NEON_API_KEY                   — Neon API key (for dev branch reset)
 
 env:
   NODE_VERSION: "22"
-  NEON_PROJECT_ID: "flat-bird-55654203"
-  NEON_ORG_ID: "org-cool-hat-59377226"
 
 steps:
   - label: ":package: Incremental Import"
@@ -42,10 +39,10 @@ steps:
       echo "--- :yarn: Installing dependencies"
       corepack enable && yarn install --immutable
 
-      echo "--- :package: Running incremental import (prod-mysql → prod-neon)"
+      echo "--- :package: Running incremental import (prod-mysql → production-db)"
       node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/incremental-import.ts \
         --from prod-mysql \
-        --to prod-neon \
+        --to production-db \
         --reset \
         --output /tmp/import-summary.md \
         --verbose
@@ -65,47 +62,40 @@ steps:
             - "PROD_MYSQL_USER"
             - "PROD_MYSQL_PASSWORD"
             - "PROD_MYSQL_DATABASE"
-            - "NEON_PROD_DATABASE_URL"
+            - "PRODUCTION_DATABASE_URL"
             - "GITHUB_PR_TOKEN"
             - "GAP_REPORT_ISSUE_NUMBER"
     agents:
       queue: "default"
 
-  - label: ":neon: Reset dev branch from production"
-    key: "reset-dev-branch"
+  - label: ":database: Refresh preview database"
+    key: "refresh-preview-db"
     depends_on: "import"
-    timeout_in_minutes: 5
+    timeout_in_minutes: 15
     command: |
-      echo "--- :neon: Resetting development branch to match production"
-      npx neonctl branches reset development \
-        --parent \
-        --api-key "$$NEON_API_KEY" \
-        --project-id "$$NEON_PROJECT_ID" \
-        --org-id "$$NEON_ORG_ID"
-      echo "✅ Development branch reset to production"
+      bash .buildkite/scripts/refresh-preview-database.sh
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "postgres:16"
           propagate-environment: true
           environment:
-            - "NEON_API_KEY"
-            - "NEON_PROJECT_ID"
-            - "NEON_ORG_ID"
+            - "PRODUCTION_DATABASE_URL"
+            - "PREVIEW_DATABASE_URL"
     agents:
       queue: "default"
 
   - label: ":bar_chart: Gap Report"
     key: "gap-report"
-    depends_on: "reset-dev-branch"
+    depends_on: "refresh-preview-db"
     timeout_in_minutes: 15
     command: |
       echo "--- :yarn: Installing dependencies"
       corepack enable && yarn install --immutable
 
-      echo "--- :bar_chart: Running gap report (prod-mysql vs dev-neon)"
+      echo "--- :bar_chart: Running gap report (prod-mysql vs preview-db)"
       node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/migrations/importGapReport.ts \
         --from prod-mysql \
-        --to dev-neon \
+        --to preview-db \
         --output /tmp/gap-report.md \
         --verbose
 
@@ -120,7 +110,7 @@ steps:
             - "PROD_MYSQL_USER"
             - "PROD_MYSQL_PASSWORD"
             - "PROD_MYSQL_DATABASE"
-            - "NEON_DEV_DATABASE_URL"
+            - "PREVIEW_DATABASE_URL"
             - "GITHUB_PR_TOKEN"
             - "GAP_REPORT_ISSUE_NUMBER"
     agents:
@@ -129,7 +119,7 @@ steps:
   # --- Parallel integrity checks (each runs independently for speed) ---
   - group: ":stethoscope: Content Integrity Checks"
     key: "integrity-checks"
-    depends_on: "reset-dev-branch"
+    depends_on: "refresh-preview-db"
     allow_dependency_failure: true
     steps:
       - label: ":bust_in_silhouette: Check display names"
@@ -143,7 +133,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
         agents:
           queue: "default"
 
@@ -158,7 +148,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
         agents:
           queue: "default"
 
@@ -173,7 +163,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
         agents:
           queue: "default"
 
@@ -188,7 +178,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
         agents:
           queue: "default"
 
@@ -203,7 +193,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
                 - "PROD_MYSQL_HOST"
                 - "PROD_MYSQL_USER"
                 - "PROD_MYSQL_PASSWORD"
@@ -222,7 +212,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
                 - "PROD_MYSQL_HOST"
                 - "PROD_MYSQL_USER"
                 - "PROD_MYSQL_PASSWORD"
@@ -241,7 +231,7 @@ steps:
               image: "node:22-slim"
               propagate-environment: true
               environment:
-                - "NEON_DEV_DATABASE_URL"
+                - "PREVIEW_DATABASE_URL"
         agents:
           queue: "default"
 

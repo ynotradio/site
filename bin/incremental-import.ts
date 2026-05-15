@@ -11,7 +11,7 @@
  *
  * Options:
  *   --from       MySQL source: 'local-mysql' (default) or 'prod-mysql'
- *   --to         Neon target: 'prod-neon' (default) or 'local-postgres'
+ *   --to         Database target: 'production-db' (default), 'preview-db', or 'local-postgres'
  *   --reset      Reset tracking and import everything from scratch
  *   --verbose    Show detailed output including skip reasons
  */
@@ -184,21 +184,21 @@ Usage: tsx bin/incremental-import.ts [options]
 
 Options:
   --from SOURCE  MySQL source: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET    Neon target: 'prod-neon' (default) or 'local-postgres'
+  --to TARGET    Database target: 'production-db' (default), 'preview-db', or 'local-postgres'
   --reset        Reset tracking and import all data
   --output FILE  Write markdown summary to file (for CI posting)
   --verbose      Show detailed output including skip reasons
   --help, -h     Show this help message
 
 Examples:
-  # Import from local Docker MySQL to production Neon (default)
+  # Import from local Docker MySQL to the configured production database (default)
   tsx bin/incremental-import.ts
 
-  # Import from production MySQL to production Neon
-  tsx bin/incremental-import.ts --from prod-mysql --to prod-neon
+  # Import from production MySQL to the configured production database
+  tsx bin/incremental-import.ts --from prod-mysql --to production-db
 
   # Reset and re-import everything, save summary
-  tsx bin/incremental-import.ts --from prod-mysql --to prod-neon --reset --output /tmp/import-summary.md
+  tsx bin/incremental-import.ts --from prod-mysql --to production-db --reset --output /tmp/import-summary.md
       `);
       process.exit(0);
     } else {

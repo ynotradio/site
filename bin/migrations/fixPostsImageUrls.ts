@@ -36,13 +36,17 @@ async function main() {
   console.log('Connecting to MySQL...');
   const mysqlConn = await connectToDatabase();
 
-  // Connect to Neon via pg
-  const neonUrl = process.env.NEON_PROD_DATABASE_URL || process.env.DATABASE_URI;
-  if (!neonUrl) {
-    throw new Error('NEON_PROD_DATABASE_URL or DATABASE_URI must be set');
+  // Connect to the production database via pg
+  const productionUrl = process.env.PRODUCTION_DATABASE_URL
+    || process.env.NEON_PROD_DATABASE_URL
+    || process.env.DATABASE_URI;
+  if (!productionUrl) {
+    throw new Error(
+      'PRODUCTION_DATABASE_URL, NEON_PROD_DATABASE_URL, or DATABASE_URI must be set',
+    );
   }
-  console.log('Connecting to Neon...');
-  const pgClient = new Client({ connectionString: neonUrl });
+  console.log('Connecting to production database...');
+  const pgClient = new Client({ connectionString: productionUrl });
   await pgClient.connect();
 
   // Fetch all stories from MySQL with pic and pic_url

@@ -17,9 +17,9 @@
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
  *   bin/backfill-search-text-fields.ts --to local-postgres
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
- *   bin/backfill-search-text-fields.ts --to prod-neon --dry-run
+ *   bin/backfill-search-text-fields.ts --to production-db --dry-run
  *   yarn tsx --import ./bin/preload-nextenv-fix.mjs
- *   bin/backfill-search-text-fields.ts --to dev-neon --limit 20
+ *   bin/backfill-search-text-fields.ts --to preview-db --limit 20
  */
 
 import type { Payload } from 'payload';
@@ -52,7 +52,15 @@ type DocOutcome =
     artistUpdateData?: { artistId: string | number; website: string; artistName: string };
   };
 
-const VALID_TARGETS: PostgresTarget[] = ['local-postgres', 'prod-neon', 'dev-neon', 'dev', 'prod'];
+const VALID_TARGETS: PostgresTarget[] = [
+  'local-postgres',
+  'production-db',
+  'preview-db',
+  'prod-neon',
+  'dev-neon',
+  'dev',
+  'prod',
+];
 const VALID_COLLECTIONS: TargetCollection[] = ['cdoftheweek', 'ondemand', 'artists'];
 const PAGE_SIZE = 100;
 
@@ -66,7 +74,7 @@ Usage:
   tsx --import ./bin/preload-nextenv-fix.mjs bin/backfill-search-text-fields.ts [options]
 
 Options:
-  --to <target>                local-postgres | prod-neon | dev-neon | dev | prod (default: prod-neon)
+  --to <target>                local-postgres | production-db | preview-db | prod-neon | dev-neon | dev | prod (default: production-db)
   --collection <collection>    cdoftheweek | ondemand (repeatable; default: both)
   --dry-run                    Show what would be updated without saving
   --limit <number>             Limit records processed (for testing)
@@ -76,7 +84,7 @@ Options:
 
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
-  let target: PostgresTarget = 'prod-neon';
+  let target: PostgresTarget = 'production-db';
   let dryRun = false;
   let limit: number | undefined;
   const collections: TargetCollection[] = [];

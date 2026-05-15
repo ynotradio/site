@@ -40,6 +40,7 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 | **test-story-coupling**             | When creating components. Ensures matching test and story files exist.                                                        |
 | **dependency-best-practices**       | When adding packages. Approved libraries and security practices.                                                              |
 | **agent-automation-infrastructure** | When dealing with slow builds or Docker issues. Pre-built images available.                                                   |
+| **netlify-database-cutover**       | When replacing Neon with Netlify Databases, updating DB env vars, or changing preview refresh/import automation.              |
 | **detecting-agent-environment**     | When creating environment-aware scripts. CI/CD vs local detection.                                                            |
 | **storybook-best-practices**        | When creating `.stories.tsx` files. Payload UI mocking, provider wrapping.                                                    |
 | **e2e-debugging-workflow**          | When E2E tests fail. Playwright debugging, selector issues, local verification.                                               |
@@ -61,6 +62,7 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
    - E2E test failures? → `e2e-debugging-workflow`
    - Writing/adding e2e tests? → `playwright-ci-workflow`
    - Build/Docker issues? → `agent-automation-infrastructure`
+   - Netlify Database / Neon cutover? → `netlify-database-cutover`
    - Storybook stories? → `storybook-best-practices`
    - Building UI / designing layouts? → `elegant-ui-design`
 

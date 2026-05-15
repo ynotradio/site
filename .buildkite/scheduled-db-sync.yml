@@ -1,26 +1,21 @@
 # Buildkite Pipeline for Scheduled Database Sync
-# This pipeline resets the Neon development branch from production.
+# This pipeline refreshes the preview database from production.
 #
 # Schedule: Weekly on Monday at 2:00 AM UTC
-# Purpose: Sync production database to development for testing
+# Purpose: Sync production database to preview for testing
 #
-# Note: The nightly pipeline also resets dev from prod after each import.
+# Note: The nightly pipeline also refreshes preview from production after each import.
 # This weekly pipeline serves as a safety net in case the nightly run
-# is skipped or fails before reaching the reset step.
+# is skipped or fails before reaching the refresh step.
 #
 # Configure as a scheduled build in Buildkite UI:
 # Schedule: 0 2 * * 1 (cron format: Monday at 2 AM UTC)
 # Branch: master
 
-env:
-  NODE_VERSION: "22"
-  NEON_PROJECT_ID: "flat-bird-55654203"
-  NEON_ORG_ID: "org-cool-hat-59377226"
-
 steps:
-  - label: ":neon: Sync Production → Development"
+  - label: ":database: Sync Production → Preview"
     key: "db-sync"
-    timeout_in_minutes: 5
+    timeout_in_minutes: 15
     retry:
       automatic:
         - exit_status: -1
@@ -28,21 +23,14 @@ steps:
         - exit_status: 255
           limit: 1
     command: |
-      echo "--- :neon: Resetting development branch to match production"
-      npx neonctl branches reset development \
-        --parent \
-        --api-key "$$NEON_API_KEY" \
-        --project-id "$$NEON_PROJECT_ID" \
-        --org-id "$$NEON_ORG_ID"
-      echo "✅ Development branch reset to production"
+      bash .buildkite/scripts/refresh-preview-database.sh
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "postgres:16"
           propagate-environment: true
           environment:
-            - "NEON_API_KEY"
-            - "NEON_PROJECT_ID"
-            - "NEON_ORG_ID"
+            - "PRODUCTION_DATABASE_URL"
+            - "PREVIEW_DATABASE_URL"
     agents:
       queue: "default"
 

@@ -17,11 +17,11 @@ The incremental import system tracks the last imported MySQL ID for each collect
 On first run, the script will start from ID 0 for all collections:
 
 ```bash
-# Import from local Docker MySQL to production Neon (default)
+# Import from local Docker MySQL to the configured production database (default)
 yarn import:incremental
 
 # Or explicitly specify source and target
-yarn import:incremental --from local-mysql --to prod-neon
+yarn import:incremental --from local-mysql --to production-db
 ```
 
 This creates `.last-import-ids.json` with the highest imported IDs.
@@ -42,10 +42,10 @@ The script will:
 
 ### Import from Production MySQL
 
-To import from production MySQL to production Neon:
+To import from production MySQL to the configured production database:
 
 ```bash
-yarn import:incremental --from prod-mysql --to prod-neon
+yarn import:incremental --from prod-mysql --to production-db
 ```
 
 **Note**: Requires `.env.production.mysql` with production MySQL credentials.
@@ -55,7 +55,7 @@ yarn import:incremental --from prod-mysql --to prod-neon
 To start over and import all records:
 
 ```bash
-yarn import:incremental --from local-mysql --to prod-neon --reset
+yarn import:incremental --from local-mysql --to production-db --reset
 ```
 
 ## Command Line Options
@@ -63,7 +63,7 @@ yarn import:incremental --from local-mysql --to prod-neon --reset
 | Option | Description |
 | ------ | ----------- |
 | `--from SOURCE` | MySQL source: `local-mysql` (default) or `prod-mysql` |
-| `--to TARGET` | Neon target: `prod-neon` (default) or `local-postgres` |
+| `--to TARGET` | Database target: `production-db` (default), `preview-db`, or `local-postgres` |
 | `--reset` | Reset tracking and import all data |
 | `--verbose` | Show detailed output including skip reasons |
 
@@ -114,7 +114,7 @@ The individual import scripts already skip records where `legacyId` exists in Pa
 
 The script provides clear output showing:
 
-- MySQL source and Neon target
+- MySQL source and database target
 - Last imported IDs from tracking file
 - New records available in MySQL
 - Import progress for each collection
@@ -125,7 +125,7 @@ Example output:
 ```
 🚀 Incremental Import Script
    MySQL Source: local-mysql
-   Neon Target:  prod-neon
+   Database Target: production-db
    Tracking file: .last-import-ids.json
 
 📋 Loaded last import IDs from 2026-01-11T05:00:00.000Z

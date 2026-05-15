@@ -2,7 +2,7 @@
 
 **Generated:** 2026-01-25T04:33:58.323Z
 **MySQL Source:** local-mysql
-**Payload Target:** prod-neon
+**Payload Target:** production-db
 
 ## Summary
 
@@ -85,8 +85,8 @@ To import missing records, run:
 
 ```bash
 # Incremental import (recommended)
-tsx bin/incremental-import.ts --from prod-mysql --to prod-neon --verbose
+tsx bin/incremental-import.ts --from prod-mysql --to production-db --verbose
 
 # Or reset and reimport specific collections
-tsx bin/incremental-import.ts --from prod-mysql --to prod-neon --reset
+tsx bin/incremental-import.ts --from prod-mysql --to production-db --reset
 ```

@@ -104,7 +104,7 @@ Usage: tsx bin/migrations/importGapReport.ts [options]
 
 Options:
   --from SOURCE       MySQL source: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET         Payload target: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
+  --to TARGET         Payload target: 'production-db' (default), 'preview-db', or 'local-postgres'
   --output, -o FILE   Output file path (default: stdout)
   --collection, -c    Filter to specific collection
   --limit, -l N       Limit missing records per collection (default: 50)

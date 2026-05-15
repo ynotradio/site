@@ -7,12 +7,12 @@
  * Usage:
  *   tsx bin/regenerate-slugs.ts --collection songs --to local-postgres
  *   tsx bin/regenerate-slugs.ts --all --to local-postgres --dry-run
- *   tsx bin/regenerate-slugs.ts --collection posts --to prod-neon
+ *   tsx bin/regenerate-slugs.ts --collection posts --to production-db
  *
  * Options:
  *   --collection <name>  Collection to regenerate (can be specified multiple times)
  *   --all                Regenerate all collections with slugs
- *   --to <target>        Target database: 'local-postgres' or 'prod-neon' (default)
+ *   --to <target>        Target database: 'local-postgres', 'production-db' (default), or 'preview-db'
  *   --dry-run            Preview changes without saving
  */
 
@@ -189,14 +189,14 @@ Usage:
   tsx bin/regenerate-slugs.ts --all [--to <target>] [--dry-run]
 
 Collections: ${VALID_COLLECTIONS.join(', ')}
-Targets:     local-postgres, prod-neon (default)
+Targets:     local-postgres, production-db (default), preview-db
 `);
 }
 
 function parseArgs(): CliOptions {
   const args = process.argv.slice(2);
   const collections: string[] = [];
-  let target: PostgresTarget = 'prod-neon';
+  let target: PostgresTarget = 'production-db';
   let dryRun = false;
   let all = false;
 
@@ -221,8 +221,17 @@ function parseArgs(): CliOptions {
         break;
       case '--to':
         i++;
-        if (args[i] !== 'local-postgres' && args[i] !== 'prod-neon') {
-          console.error('Error: --to must be "local-postgres" or "prod-neon"');
+        if (
+          args[i] !== 'local-postgres'
+          && args[i] !== 'production-db'
+          && args[i] !== 'preview-db'
+          && args[i] !== 'prod-neon'
+          && args[i] !== 'dev-neon'
+        ) {
+          console.error(
+            'Error: --to must be "local-postgres", "production-db", or "preview-db" '
+              + '(legacy aliases: "prod-neon", "dev-neon")',
+          );
           process.exit(1);
         }
         target = args[i] as PostgresTarget;

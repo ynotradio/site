@@ -7,6 +7,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import type { Payload } from 'payload';
 import { getPayload } from 'payload';
+
+import { getDatabaseUrl, type SupportedPostgresTarget } from '../../../config/databases';
 import { createLogger } from './logger';
 import { getArtistMbid } from './musicbrainz';
 import { generateSlug, generateMusicSlug, stripHtmlTags } from './importUtils';
@@ -39,43 +41,19 @@ async function findDocBySlug(
 }
 
 function getDatabaseUri(target: PostgresTarget): string {
-  if (target === 'prod-neon' || target === 'prod') {
-    const uri = process.env.NEON_PROD_DATABASE_URL;
-    if (!uri) {
-      throw new Error(
-        `Database URI not found for target "${target}". Please set NEON_PROD_DATABASE_URL in .env.local`,
-      );
-    }
-    return uri;
-  }
-  if (target === 'dev-neon' || target === 'dev') {
-    const uri = process.env.NEON_DEV_DATABASE_URL;
-    if (!uri) {
-      throw new Error(
-        `Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL in .env.local`,
-      );
-    }
-    return uri;
-  }
-  const uri = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
-  if (!uri) {
-    throw new Error(
-      `Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL or DATABASE_URI in .env.local`,
-    );
-  }
-  return uri;
+  return getDatabaseUrl(target);
 }
 
 export { getDatabaseUri };
 
-export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon' | 'dev' | 'prod';
+export type PostgresTarget = SupportedPostgresTarget;
 
 /**
  * Get the Payload instance configured for the specified target database
  *
- * @param target - 'prod-neon' for production Neon, 'local-postgres' for local/dev
+ * @param target - 'production-db' for production, 'preview-db' for previews, or 'local-postgres' for local/dev
  */
-export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Promise<Payload> {
+export async function getPayloadClient(target: PostgresTarget = 'production-db'): Promise<Payload> {
   // NOTE: Scripts that call this must run with
   //   `yarn tsx --import ./bin/preload-nextenv-fix.mjs <script>.ts`
   // Otherwise payload's collection imports transitively load `bin/loadEnv.js`,

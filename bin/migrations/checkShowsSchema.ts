@@ -4,7 +4,12 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
 
-const sql = postgres(process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI!);
+const sql = postgres(
+  process.env.LOCAL_DATABASE_URL
+    || process.env.DATABASE_URI
+    || process.env.PREVIEW_DATABASE_URL
+    || process.env.NEON_DEV_DATABASE_URL!,
+);
 
 async function checkSchema() {
   console.log('Checking shows table schema...');

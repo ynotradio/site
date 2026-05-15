@@ -88,20 +88,20 @@ Usage: tsx bin/quick-import.ts [options]
 
 Options:
   --from SOURCE    MySQL source: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET      Neon target: 'prod-neon' (default) or 'local-postgres'
+  --to TARGET      Database target: 'production-db' (default), 'preview-db', or 'local-postgres'
   --months NUM     Number of months back to import (default: 3, ignored if --all is set)
   --all            Import all data regardless of date
   --help, -h       Show this help message
 
 Examples:
-  # Import last 3 months from local Docker MySQL to production Neon
+  # Import last 3 months from local Docker MySQL to the configured production database
   tsx bin/quick-import.ts
 
-  # Import from production MySQL to production Neon
-  tsx bin/quick-import.ts --from prod-mysql --to prod-neon --months 6
+  # Import from production MySQL to the configured production database
+  tsx bin/quick-import.ts --from prod-mysql --to production-db --months 6
 
   # Import all data
-  tsx bin/quick-import.ts --from local-mysql --to prod-neon --all
+  tsx bin/quick-import.ts --from local-mysql --to production-db --all
       `);
       process.exit(0);
     } else {

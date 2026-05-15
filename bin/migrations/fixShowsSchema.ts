@@ -13,7 +13,10 @@ import { sql } from 'drizzle-orm';
 // Load environment
 dotenv.config({ path: '.env.local' });
 
-const DATABASE_URI = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
+const DATABASE_URI = process.env.LOCAL_DATABASE_URL
+  || process.env.DATABASE_URI
+  || process.env.PREVIEW_DATABASE_URL
+  || process.env.NEON_DEV_DATABASE_URL;
 
 if (!DATABASE_URI) {
   throw new Error('DATABASE_URI not found in environment');

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # .buildkite/scripts/run-integrity-checks.sh
-# Runs 6 content integrity checks against Neon prod, combines reports,
+# Runs content integrity checks against the configured production database, combines reports,
 # and posts the result to a GitHub issue.
 # Called by nightly-gap-report.yml — extracted from inline YAML for readability.
 
@@ -9,7 +9,7 @@ set -euo pipefail
 echo "--- :yarn: Installing dependencies"
 corepack enable && yarn install --immutable
 
-export DATABASE_URI="$NEON_PROD_DATABASE_URL"
+export DATABASE_URI="${PRODUCTION_DATABASE_URL:?PRODUCTION_DATABASE_URL must be set}"
 
 PRELOAD="--import ./bin/preload-nextenv-fix.mjs --import tsx"
 

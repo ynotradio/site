@@ -33,7 +33,7 @@ describe('databases', () => {
       const result = parseFromToArgs([]);
 
       expect(result.from).toBe('local-mysql');
-      expect(result.to).toBe('prod-neon');
+      expect(result.to).toBe('production-db');
     });
 
     it('should parse --from local-mysql', async () => {
@@ -52,12 +52,21 @@ describe('databases', () => {
       expect(result.from).toBe('prod-mysql');
     });
 
-    it('should parse --to prod-neon', async () => {
+    it('should parse --to production-db', async () => {
       const { parseFromToArgs } = await import('./databases');
 
-      const result = parseFromToArgs(['--to', 'prod-neon']);
+      const result = parseFromToArgs(['--to', 'production-db']);
 
-      expect(result.to).toBe('prod-neon');
+      expect(result.to).toBe('production-db');
+    });
+
+    it('should normalize legacy --to aliases', async () => {
+      const { parseFromToArgs } = await import('./databases');
+
+      expect(parseFromToArgs(['--to', 'prod-neon']).to).toBe('production-db');
+      expect(parseFromToArgs(['--to', 'prod']).to).toBe('production-db');
+      expect(parseFromToArgs(['--to', 'dev-neon']).to).toBe('preview-db');
+      expect(parseFromToArgs(['--to', 'dev']).to).toBe('preview-db');
     });
 
     it('should parse --to local-postgres', async () => {
@@ -92,7 +101,7 @@ describe('databases', () => {
       const result = parseFromToArgs(['--unknown', 'value', '--from', 'prod-mysql']);
 
       expect(result.from).toBe('prod-mysql');
-      expect(result.to).toBe('prod-neon');
+      expect(result.to).toBe('production-db');
     });
 
     it('should throw error for invalid --from value', async () => {
@@ -107,7 +116,7 @@ describe('databases', () => {
       const { parseFromToArgs } = await import('./databases');
 
       expect(() => parseFromToArgs(['--to', 'invalid'])).toThrow(
-        '--to must be "local-postgres", "prod-neon", or "dev-neon"',
+        '--to must be "local-postgres", "production-db", or "preview-db"',
       );
     });
   });
@@ -184,70 +193,90 @@ describe('databases', () => {
     });
   });
 
-  describe('getNeonDatabaseUrl', () => {
-    it('should throw error for prod-neon without URL', async () => {
+  describe('getDatabaseUrl', () => {
+    it('should throw error for production-db without URL', async () => {
       const fs = await import('fs');
       (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
+      delete process.env.PRODUCTION_DATABASE_URL;
       delete process.env.NEON_PROD_DATABASE_URL;
 
-      const { getNeonDatabaseUrl } = await import('./databases');
+      const { getDatabaseUrl } = await import('./databases');
 
-      expect(() => getNeonDatabaseUrl('prod-neon')).toThrow(
-        'Production Neon URL not configured',
+      expect(() => getDatabaseUrl('production-db')).toThrow(
+        'Production database URL not configured',
       );
     });
 
-    it('should return prod Neon URL from environment', async () => {
+    it('should return production URL from provider-neutral env first', async () => {
       const fs = await import('fs');
       (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
+      process.env.PRODUCTION_DATABASE_URL = 'postgres://prod:password@database.example.com/db';
       process.env.NEON_PROD_DATABASE_URL = 'postgres://prod:password@neon.example.com/db';
 
-      const { getNeonDatabaseUrl } = await import('./databases');
+      const { getDatabaseUrl } = await import('./databases');
 
-      const url = getNeonDatabaseUrl('prod-neon');
+      const url = getDatabaseUrl('production-db');
 
-      expect(url).toBe('postgres://prod:password@neon.example.com/db');
+      expect(url).toBe('postgres://prod:password@database.example.com/db');
+    });
+
+    it('should return preview URL from provider-neutral env first', async () => {
+      const fs = await import('fs');
+      (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
+
+      process.env.PREVIEW_DATABASE_URL = 'postgres://preview:password@database.example.com/db';
+      process.env.NEON_DEV_DATABASE_URL = 'postgres://preview:password@neon.example.com/db';
+
+      const { getDatabaseUrl } = await import('./databases');
+
+      const url = getDatabaseUrl('preview-db');
+
+      expect(url).toBe('postgres://preview:password@database.example.com/db');
     });
 
     it('should throw error for local-postgres without URL', async () => {
       const fs = await import('fs');
       (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
+      delete process.env.LOCAL_DATABASE_URL;
+      delete process.env.PREVIEW_DATABASE_URL;
       delete process.env.NEON_DEV_DATABASE_URL;
       delete process.env.DATABASE_URI;
 
-      const { getNeonDatabaseUrl } = await import('./databases');
+      const { getDatabaseUrl } = await import('./databases');
 
-      expect(() => getNeonDatabaseUrl('local-postgres')).toThrow(
-        'Development database URL not configured',
+      expect(() => getDatabaseUrl('local-postgres')).toThrow(
+        'Local database URL not configured',
       );
     });
 
-    it('should return local postgres URL from NEON_DEV_DATABASE_URL', async () => {
+    it('should return local postgres URL from LOCAL_DATABASE_URL', async () => {
       const fs = await import('fs');
       (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
-      process.env.NEON_DEV_DATABASE_URL = 'postgres://dev:password@localhost/dev_db';
+      process.env.LOCAL_DATABASE_URL = 'postgres://local:password@localhost/local_db';
 
-      const { getNeonDatabaseUrl } = await import('./databases');
+      const { getDatabaseUrl } = await import('./databases');
 
-      const url = getNeonDatabaseUrl('local-postgres');
+      const url = getDatabaseUrl('local-postgres');
 
-      expect(url).toBe('postgres://dev:password@localhost/dev_db');
+      expect(url).toBe('postgres://local:password@localhost/local_db');
     });
 
     it('should return local postgres URL from DATABASE_URI as fallback', async () => {
       const fs = await import('fs');
       (fs.existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
 
+      delete process.env.LOCAL_DATABASE_URL;
+      delete process.env.PREVIEW_DATABASE_URL;
       delete process.env.NEON_DEV_DATABASE_URL;
       process.env.DATABASE_URI = 'postgres://fallback:password@localhost/fallback_db';
 
-      const { getNeonDatabaseUrl } = await import('./databases');
+      const { getDatabaseUrl } = await import('./databases');
 
-      const url = getNeonDatabaseUrl('local-postgres');
+      const url = getDatabaseUrl('local-postgres');
 
       expect(url).toBe('postgres://fallback:password@localhost/fallback_db');
     });

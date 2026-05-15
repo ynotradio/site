@@ -15,21 +15,28 @@ Environment variables are loaded from `.env.local` which is gitignored and never
 
 ## Required Environment Variables
 
-### PostgreSQL (for PHP concerts feature)
+### PostgreSQL Runtime and Automation
 
 ```bash
-POSTGRES_HOST=your-database-host.neon.tech
+POSTGRES_HOST=your-database-host.example.com
 POSTGRES_PORT=5432
 POSTGRES_DATABASE=your_database_name
 POSTGRES_USER=your_username
 POSTGRES_PASSWORD=your_password
 POSTGRES_SSL_MODE=require  # or 'disable' for local dev
+DATABASE_URI=postgresql://user:pass@host:5432/dbname
+LOCAL_DATABASE_URL=postgresql://user:pass@localhost:5432/dbname
+PRODUCTION_DATABASE_URL=postgresql://user:pass@prod-host:5432/dbname
+PREVIEW_DATABASE_URL=postgresql://user:pass@preview-host:5432/dbname
+
+# Deprecated compatibility aliases during cutover
+NEON_PROD_DATABASE_URL=postgresql://user:pass@prod-host:5432/dbname
+NEON_DEV_DATABASE_URL=postgresql://user:pass@preview-host:5432/dbname
 ```
 
 ### Payload CMS / Node.js
 
 ```bash
-DATABASE_URI=postgresql://user:pass@host:5432/dbname
 PAYLOAD_SECRET=your-secret-key
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
@@ -46,26 +53,13 @@ DB_PASSWORD=root
 DB_NAME=ynot_site
 ```
 
-### Feature Flags (Optional)
+### Target Topology
 
-Feature flags can be set via environment variables to enable Postgres mode for specific models. These override the defaults in `src/config/features.php`.
-
-```bash
-# Set any of these to 'true', '1', 'yes', or 'on' to enable
-USE_POSTGRES_CONCERTS=true
-USE_POSTGRES_ONDEMAND=true
-USE_POSTGRES_DEEJAYS=true
-USE_POSTGRES_MUSIC=true
-USE_POSTGRES_STORIES=true
-USE_POSTGRES_CDOFTHEWEEK=true
-USE_POSTGRES_SCHEDULE=true
-USE_POSTGRES_CUSTOMTEXT=true
-```
-
-**Priority Order:**
-1. Runtime flags (cookie `FF` or URL parameter `ff`) - highest priority
-2. Environment variables (from `.env`) - overrides config file
-3. Config file (`src/config/features.php`) - default values
+- `DATABASE_URI` — active runtime connection for the current environment
+- `LOCAL_DATABASE_URL` — explicit local development override
+- `PRODUCTION_DATABASE_URL` — automation target for imports and refresh jobs
+- `PREVIEW_DATABASE_URL` — automation target for preview refresh, gap reports, and integrity checks
+- `NEON_*` — temporary compatibility aliases only
 
 ## How It Works
 
@@ -156,7 +150,7 @@ For GitHub Actions or similar:
 - Restart containers: `docker-compose restart phpfpm`
 
 ### Connection errors to PostgreSQL
-- Verify Neon endpoint ID is extracted correctly
+- Verify the correct runtime or automation URL is set for the environment you are testing
 - Check SSL mode matches your environment
 - Test connection: `docker-compose exec phpfpm php -r "new PDO('pgsql:host=...', 'user', 'pass');"`
 
@@ -168,3 +162,4 @@ For GitHub Actions or similar:
 
 - [PostgreSQL Concert Model](./POSTGRES_CONCERT_MODEL.md)
 - [Payload Migration Plan](./payload-migration/README.md)
+- [Netlify Database Cutover](./NETLIFY_DATABASE_CUTOVER.md)

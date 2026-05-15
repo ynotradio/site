@@ -17,12 +17,12 @@ Identify which DJs have issues without making any changes.
 # Against local database (via DATABASE_URI env var)
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
 
-# Against dev Neon
-DATABASE_URI="$NEON_DEV_DATABASE_URL" \
+# Against preview database
+DATABASE_URI="${PREVIEW_DATABASE_URL:-$NEON_DEV_DATABASE_URL}" \
   node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
 
-# Against production Neon
-DATABASE_URI="$NEON_PROD_DATABASE_URL" \
+# Against production database
+DATABASE_URI="${PRODUCTION_DATABASE_URL:-$NEON_PROD_DATABASE_URL}" \
   node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
 ```
 

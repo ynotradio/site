@@ -129,7 +129,7 @@ When ready to switch production from MySQL → Postgres:
 1. **Final data sync** (during maintenance window)
 
    ```bash
-   yarn import --from prod-mysql --to prod-neon
+    yarn import:incremental --from prod-mysql --to production-db --reset
    ```
 
 2. **Verify data parity**
@@ -158,7 +158,7 @@ When ready to switch production from MySQL → Postgres:
 ## Current Status
 
 **Production MySQL:** ✅ Active, primary data source
-**Production Neon Postgres:** ⏸️ Receiving imports, NOT used by site
+**Production Postgres target:** ⏸️ Receiving imports, NOT used by site
 **Feature Flags:** ✅ All false (MySQL mode)
 **Rollback Time:** ~30 seconds (toggle feature flags)
 

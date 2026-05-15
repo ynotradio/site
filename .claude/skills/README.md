@@ -139,6 +139,17 @@ Comprehensive development guidance for Payload projects. Covers:
 
 **Use when:** Working on Payload CMS implementation details, debugging Payload behavior, or building advanced Payload features.
 
+### netlify-database-cutover
+
+Provider-cutover guidance for replacing Neon with Netlify Databases. Covers:
+
+- Provider-neutral database env vars and target naming
+- Preview refresh strategy without Neon branch resets
+- Buildkite/automation touchpoints that must change together
+- Rollback expectations during the soak period
+
+**Use when:** Replacing Neon, updating database target names, or modifying preview refresh/import automation during the Netlify Database cutover.
+
 ### cms-migration
 
 Interactive workflow for designing Payload collections from source CMS data. Covers:

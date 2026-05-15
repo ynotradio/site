@@ -24,21 +24,41 @@ if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"ci"* ]] || [[ "${BUILDKITE_PIPELINE_SL
   export NETLIFY_AUTH_TOKEN GITHUB_PR_TOKEN
 fi
 
-# --- Production database / Neon credentials (only for nightly and db-sync pipelines) ---
+# --- Production / preview database credentials (only for nightly and db-sync pipelines) ---
 if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"nightly"* ]] || [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"gap-report"* ]] || [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"db-sync"* ]]; then
   PROD_MYSQL_HOST=$(buildkite-agent secret get PROD_MYSQL_HOST 2>/dev/null || true)
   PROD_MYSQL_USER=$(buildkite-agent secret get PROD_MYSQL_USER 2>/dev/null || true)
   PROD_MYSQL_PASSWORD=$(buildkite-agent secret get PROD_MYSQL_PASSWORD 2>/dev/null || true)
   PROD_MYSQL_DATABASE=$(buildkite-agent secret get PROD_MYSQL_DATABASE 2>/dev/null || true)
+  PRODUCTION_DATABASE_URL=$(buildkite-agent secret get PRODUCTION_DATABASE_URL 2>/dev/null || true)
+  PREVIEW_DATABASE_URL=$(buildkite-agent secret get PREVIEW_DATABASE_URL 2>/dev/null || true)
   NEON_PROD_DATABASE_URL=$(buildkite-agent secret get NEON_PROD_DATABASE_URL 2>/dev/null || true)
   NEON_DEV_DATABASE_URL=$(buildkite-agent secret get NEON_DEV_DATABASE_URL 2>/dev/null || true)
+
+  if [[ -z "$PRODUCTION_DATABASE_URL" ]]; then
+    PRODUCTION_DATABASE_URL="$NEON_PROD_DATABASE_URL"
+  fi
+
+  if [[ -z "$PREVIEW_DATABASE_URL" ]]; then
+    PREVIEW_DATABASE_URL="$NEON_DEV_DATABASE_URL"
+  fi
+
+  # Temporary compatibility aliases during cutover.
+  if [[ -z "$NEON_PROD_DATABASE_URL" ]]; then
+    NEON_PROD_DATABASE_URL="$PRODUCTION_DATABASE_URL"
+  fi
+
+  if [[ -z "$NEON_DEV_DATABASE_URL" ]]; then
+    NEON_DEV_DATABASE_URL="$PREVIEW_DATABASE_URL"
+  fi
+
   GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
   GAP_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get GAP_REPORT_ISSUE_NUMBER 2>/dev/null || true)
   INTEGRITY_REPORT_ISSUE_NUMBER=$(buildkite-agent secret get INTEGRITY_REPORT_ISSUE_NUMBER 2>/dev/null || true)
-  NEON_API_KEY=$(buildkite-agent secret get NEON_API_KEY 2>/dev/null || true)
   export PROD_MYSQL_HOST PROD_MYSQL_USER PROD_MYSQL_PASSWORD PROD_MYSQL_DATABASE
+  export PRODUCTION_DATABASE_URL PREVIEW_DATABASE_URL
   export NEON_PROD_DATABASE_URL NEON_DEV_DATABASE_URL GITHUB_PR_TOKEN GAP_REPORT_ISSUE_NUMBER
-  export INTEGRITY_REPORT_ISSUE_NUMBER NEON_API_KEY
+  export INTEGRITY_REPORT_ISSUE_NUMBER
 fi
 
 # --- Legacy PHP deploy secrets (only for the legacy + PR deploy pipelines) ---

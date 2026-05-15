@@ -2,20 +2,22 @@
  * Centralized database configuration for import scripts
  *
  * This module provides clear, explicit database connection configuration
- * replacing the ambiguous --env dev|prod flags with explicit --from/--to targets.
+ * replacing provider-specific target names with provider-neutral --from/--to targets.
  *
  * Database Targets:
  * - local-mysql: Local Docker MySQL container (for development)
  * - prod-mysql: Production MySQL (read-only, for imports)
  * - local-postgres: Local PostgreSQL (for development)
- * - prod-neon: Production Neon PostgreSQL (import target, safe until feature flags flip)
+ * - production-db: Production PostgreSQL target (Neon today, Netlify Database during cutover)
+ * - preview-db: Preview / staging PostgreSQL target used for deploy previews and integrity checks
  *
  * Environment Files:
  * - .env.local: Local development (Docker containers)
  * - .env.production.mysql: Production MySQL credentials (read-only)
  *
- * The Payload CMS connection is configured separately via .env.local
- * using DATABASE_URI, NEON_DEV_DATABASE_URL, and NEON_PROD_DATABASE_URL
+ * The Payload CMS runtime connection is configured via DATABASE_URI.
+ * Explicit automation targets use PRODUCTION_DATABASE_URL and PREVIEW_DATABASE_URL.
+ * NEON_* variables remain as temporary compatibility fallbacks during cutover.
  */
 
 import * as dotenv from 'dotenv';
@@ -28,9 +30,11 @@ import * as path from 'path';
 export type MySQLSource = 'local-mysql' | 'prod-mysql';
 
 /**
- * PostgreSQL/Neon target types for import scripts
+ * PostgreSQL target types for import scripts
  */
-export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon';
+export type PostgresTarget = 'local-postgres' | 'production-db' | 'preview-db';
+export type LegacyPostgresTarget = 'prod-neon' | 'dev-neon' | 'prod' | 'dev';
+export type SupportedPostgresTarget = PostgresTarget | LegacyPostgresTarget;
 
 /**
  * MySQL connection configuration
@@ -48,7 +52,19 @@ export interface MySQLConfig {
  * These take precedence over .env file values
  */
 const shellEnvOverrides: Record<string, string> = {};
-const overridableVars = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD', 'DB_PORT'];
+const overridableVars = [
+  'DB_HOST',
+  'DB_NAME',
+  'DB_USER',
+  'DB_PASSWORD',
+  'DB_PORT',
+  'DATABASE_URI',
+  'LOCAL_DATABASE_URL',
+  'PREVIEW_DATABASE_URL',
+  'PRODUCTION_DATABASE_URL',
+  'NEON_DEV_DATABASE_URL',
+  'NEON_PROD_DATABASE_URL',
+];
 overridableVars.forEach((key) => {
   if (process.env[key] !== undefined) {
     shellEnvOverrides[key] = process.env[key] as string;
@@ -127,45 +143,74 @@ export function getMySQLConfig(source: MySQLSource): MySQLConfig {
 }
 
 /**
- * Get the Neon database URL for the specified target
+ * Normalize legacy target aliases to provider-neutral target names
  *
- * @param target - 'local-postgres' or 'prod-neon'
+ * @param target - supported target or legacy alias
+ * @returns Normalized target name
+ */
+export function normalizePostgresTarget(target: SupportedPostgresTarget): PostgresTarget {
+  if (target === 'prod-neon' || target === 'prod') {
+    return 'production-db';
+  }
+
+  if (target === 'dev-neon' || target === 'dev') {
+    return 'preview-db';
+  }
+
+  return target;
+}
+
+/**
+ * Get the database URL for the specified target
+ *
+ * @param target - supported target or legacy alias
  * @returns Database connection string
  */
-export function getNeonDatabaseUrl(target: PostgresTarget): string {
-  // Load .env.local for Neon URLs
+export function getDatabaseUrl(target: SupportedPostgresTarget): string {
+  // Load .env.local for database URLs
   loadEnvFile('.env.local');
 
-  if (target === 'prod-neon') {
-    const url = process.env.NEON_PROD_DATABASE_URL;
+  const normalizedTarget = normalizePostgresTarget(target);
+
+  if (normalizedTarget === 'production-db') {
+    const url = process.env.PRODUCTION_DATABASE_URL || process.env.NEON_PROD_DATABASE_URL;
     if (!url) {
       throw new Error(
-        'Production Neon URL not configured. Please set NEON_PROD_DATABASE_URL in .env.local',
+        'Production database URL not configured. '
+          + 'Please set PRODUCTION_DATABASE_URL (preferred) or NEON_PROD_DATABASE_URL in .env.local',
       );
     }
     return url;
   }
 
-  if (target === 'dev-neon') {
-    const url = process.env.NEON_DEV_DATABASE_URL;
+  if (normalizedTarget === 'preview-db') {
+    const url = process.env.PREVIEW_DATABASE_URL || process.env.NEON_DEV_DATABASE_URL;
     if (!url) {
       throw new Error(
-        'Development Neon URL not configured. Please set NEON_DEV_DATABASE_URL in .env.local',
+        'Preview database URL not configured. '
+          + 'Please set PREVIEW_DATABASE_URL (preferred) or NEON_DEV_DATABASE_URL in .env.local',
       );
     }
     return url;
   }
 
   // Local postgres
-  const url = process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
+  const url = process.env.LOCAL_DATABASE_URL
+    || process.env.DATABASE_URI
+    || process.env.PREVIEW_DATABASE_URL
+    || process.env.NEON_DEV_DATABASE_URL;
   if (!url) {
     throw new Error(
-      'Development database URL not configured. '
-        + 'Please set DATABASE_URI or NEON_DEV_DATABASE_URL in .env.local',
+      'Local database URL not configured. '
+        + 'Please set LOCAL_DATABASE_URL, DATABASE_URI, PREVIEW_DATABASE_URL, '
+        + 'or NEON_DEV_DATABASE_URL in .env.local',
     );
   }
   return url;
 }
+
+// Temporary compatibility export for scripts that still import the old helper name.
+export const getNeonDatabaseUrl = getDatabaseUrl;
 
 /**
  * Legacy compatibility: Get dbConfig for existing scripts
@@ -220,7 +265,7 @@ export function parseFromToArgs(args: string[]): {
   to: PostgresTarget;
 } {
   let from: MySQLSource = 'local-mysql';
-  let to: PostgresTarget = 'prod-neon';
+  let to: PostgresTarget = 'production-db';
 
   let i = 0;
   while (i < args.length) {
@@ -233,11 +278,22 @@ export function parseFromToArgs(args: string[]): {
       from = value;
       i += 2; // Skip both --from and its value
     } else if (arg === '--to') {
-      const value = args[i + 1];
-      if (value !== 'local-postgres' && value !== 'prod-neon' && value !== 'dev-neon') {
-        throw new Error('--to must be "local-postgres", "prod-neon", or "dev-neon"');
+      const value = args[i + 1] as SupportedPostgresTarget | undefined;
+      if (
+        value !== 'local-postgres'
+        && value !== 'production-db'
+        && value !== 'preview-db'
+        && value !== 'prod-neon'
+        && value !== 'dev-neon'
+        && value !== 'prod'
+        && value !== 'dev'
+      ) {
+        throw new Error(
+          '--to must be "local-postgres", "production-db", or "preview-db" '
+            + '(legacy aliases: "prod-neon", "dev-neon", "prod", "dev")',
+        );
       }
-      to = value;
+      to = normalizePostgresTarget(value);
       i += 2; // Skip both --to and its value
     } else {
       i += 1; // Move to next argument

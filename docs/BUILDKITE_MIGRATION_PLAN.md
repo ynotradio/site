@@ -19,7 +19,7 @@ Migration from GitHub Actions to Buildkite for CI/CD. All pipeline configuration
 
 ### Environment Variables (in Buildkite)
 - `GHCR_USERNAME` / `GHCR_TOKEN` - GitHub Container Registry
-- `NEON_PROD_DATABASE_URL` / `NEON_DEV_DATABASE_URL` - Databases
+- `PRODUCTION_DATABASE_URL` / `PREVIEW_DATABASE_URL` - Databases
 - `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` - E2E tests
 - `CODECOV_TOKEN` - Optional
 
@@ -37,4 +37,4 @@ Migration from GitHub Actions to Buildkite for CI/CD. All pipeline configuration
 4. Enable webhooks for pull requests
 5. Trigger a manual build or test PR to verify
 
-See `.buildkite/README.md` for detailed pipeline configuration.
+See `.buildkite/README.md` and `docs/NETLIFY_DATABASE_CUTOVER.md` for detailed pipeline configuration.

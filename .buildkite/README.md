@@ -9,8 +9,8 @@ Pipeline configurations for Y-Not Radio CI/CD.
 - **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: rsync + composer deploy to production, runs automatically after CI passes on master pushes (uploaded alongside `pipeline-ci.yml`)
 - **`pipeline-deploy-pr.yml`** - PR-to-production deploy: triggered via Buildkite REST API by `.github/workflows/deploy-pr-on-label.yml` when a PR is labeled `deploy-to-prod` (no CI gate, no branch filter — deploys exactly the PR head SHA)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
-- **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
-- **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
+- **`scheduled-db-sync.yml`** - Weekly production→preview database refresh via pg_dump/psql (Monday 2 AM UTC, safety net)
+- **`nightly-gap-report.yml`** - Nightly import + gap report + preview refresh: imports from prod MySQL → production DB, refreshes preview DB from production, posts import summary and gap report
 
 ## Required Environment Variables
 
@@ -22,9 +22,12 @@ GHCR_USERNAME=<github-username>
 GHCR_TOKEN=<github-token-with-packages-write>
 
 # Databases
+PRODUCTION_DATABASE_URL=<production-url>
+PREVIEW_DATABASE_URL=<preview-url>
+
+# Deprecated temporary aliases during cutover (optional if the generic vars above are set)
 NEON_PROD_DATABASE_URL=<production-url>
-NEON_DEV_DATABASE_URL=<development-url>
-NEON_API_KEY=<neon-api-key>  # for dev branch reset (neonctl)
+NEON_DEV_DATABASE_URL=<preview-url>
 
 # Cloudinary (for E2E tests)
 CLOUDINARY_CLOUD_NAME=<cloud-name>
@@ -80,7 +83,7 @@ ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 2. Configuration path: `.buildkite/scheduled-db-sync.yml`
 3. Disable webhooks
 4. Build Schedule: `0 2 * * 1` on `master`
-5. Add secret: `NEON_API_KEY`
+5. Add secrets: `PRODUCTION_DATABASE_URL`, `PREVIEW_DATABASE_URL`
 
 ### Nightly Import & Gap Report
 
@@ -89,7 +92,7 @@ ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 3. Disable webhooks
 4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
 5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
-   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `NEON_API_KEY`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
+   `PROD_MYSQL_DATABASE`, `PRODUCTION_DATABASE_URL`, `PREVIEW_DATABASE_URL`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
 6. Create a GitHub issue to track migration progress (note the issue number)
 
 ### Legacy PHP Deploy Pipeline

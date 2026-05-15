@@ -46,12 +46,16 @@ const coerceList = (value: string): string[] => value
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
-const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
+const databaseUri = process.env.DATABASE_URI
+  ?? process.env.LOCAL_DATABASE_URL
+  ?? process.env.PREVIEW_DATABASE_URL
+  ?? process.env.NEON_DEV_DATABASE_URL;
 
 // Only require DATABASE_URI when not during build phase
 if (!databaseUri && !isBuild) {
   throw new Error(
-    'DATABASE_URI (or NEON_DEV_DATABASE_URL) is not defined. Update your .env.local file.',
+    'DATABASE_URI is not defined. Set DATABASE_URI (preferred), LOCAL_DATABASE_URL, '
+      + 'PREVIEW_DATABASE_URL, or NEON_DEV_DATABASE_URL in your environment.',
   );
 }
 

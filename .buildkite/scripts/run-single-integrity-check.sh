@@ -13,7 +13,7 @@ CHECK_NAME="${1:?Usage: run-single-integrity-check.sh <check-name>}"
 echo "--- :yarn: Installing dependencies"
 corepack enable && yarn install --immutable
 
-export DATABASE_URI="$NEON_DEV_DATABASE_URL"
+export DATABASE_URI="${PREVIEW_DATABASE_URL:?PREVIEW_DATABASE_URL must be set}"
 
 PRELOAD="--import ./bin/preload-nextenv-fix.mjs --import tsx"
 # Write to workspace (not /tmp) so artifacts persist after Docker container exits.
