@@ -36,6 +36,7 @@ import { isMysqlRecordLive, resolvePostLegacyId } from './integrity-check-publis
 process.env.PAYLOAD_MIGRATING = 'true';
 
 const PAGE_SIZE = 100;
+type PublishStatusScope = 'all' | 'posts' | 'ondemand';
 
 // ---------------------------------------------------------------------------
 // MySQL helpers
@@ -430,6 +431,18 @@ function parseMysqlSource(argv: string[]): MySQLSource {
   return 'prod-mysql';
 }
 
+function parseScope(argv: string[]): PublishStatusScope {
+  const args = argv.slice(2);
+  for (let i = 0; i < args.length; i += 1) {
+    if (args[i] === '--collection') {
+      const value = args[i + 1];
+      if (value === 'posts' || value === 'ondemand' || value === 'all') return value;
+      throw new Error('--collection must be "posts", "ondemand", or "all"');
+    }
+  }
+  return 'all';
+}
+
 // ---------------------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------------------
@@ -437,6 +450,7 @@ function parseMysqlSource(argv: string[]): MySQLSource {
 async function main(): Promise<void> {
   const options = parseArgs(process.argv);
   const from = parseMysqlSource(process.argv);
+  const scope = parseScope(process.argv);
 
   const mode = options.fix ? '🔧 FIX MODE' : '👀 DRY RUN';
   console.log(`\n📋 Publish Status Integrity Check — ${mode}`);
@@ -444,6 +458,7 @@ async function main(): Promise<void> {
   if (options.since) console.log(`   Since: ${options.since}`);
   if (options.verbose) console.log('   Verbose: on');
   console.log(`   MySQL source: ${from}`);
+  console.log(`   Collection scope: ${scope}`);
 
   const payload = await getPayload({ config });
 
@@ -457,33 +472,42 @@ async function main(): Promise<void> {
     port: mysqlConfig.port,
   });
 
-  const report = emptyReport('publish-status', 'Publish Status (OnDemand + Stories)');
+  const reportTitle = scope === 'posts'
+    ? 'Publish Status (Stories + Custom Texts)'
+    : scope === 'ondemand'
+      ? 'Publish Status (OnDemand)'
+      : 'Publish Status (OnDemand + Stories)';
+  const report = emptyReport('publish-status', reportTitle);
   const startTime = Date.now();
 
   try {
-    console.log('\n⏳ Checking OnDemand publish status...');
-    const odCount = await checkOnDemandStatus(
-      payload,
-      mysqlConn,
-      report,
-      options.limit,
-      options.fix,
-      options.verbose,
-      options.since,
-    );
-    console.log(`   Checked ${odCount} OnDemand records`);
+    if (scope === 'all' || scope === 'ondemand') {
+      console.log('\n⏳ Checking OnDemand publish status...');
+      const odCount = await checkOnDemandStatus(
+        payload,
+        mysqlConn,
+        report,
+        options.limit,
+        options.fix,
+        options.verbose,
+        options.since,
+      );
+      console.log(`   Checked ${odCount} OnDemand records`);
+    }
 
-    console.log('\n⏳ Checking Posts (Stories) publish status...');
-    const postsCount = await checkPostsStatus(
-      payload,
-      mysqlConn,
-      report,
-      options.limit,
-      options.fix,
-      options.verbose,
-      options.since,
-    );
-    console.log(`   Checked ${postsCount} Posts records`);
+    if (scope === 'all' || scope === 'posts') {
+      console.log('\n⏳ Checking Posts (Stories + Custom Texts) publish status...');
+      const postsCount = await checkPostsStatus(
+        payload,
+        mysqlConn,
+        report,
+        options.limit,
+        options.fix,
+        options.verbose,
+        options.since,
+      );
+      console.log(`   Checked ${postsCount} Posts records`);
+    }
   } finally {
     await mysqlConn.end();
   }

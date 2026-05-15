@@ -2,7 +2,7 @@
 
 ## Overview
 
-The incremental import system tracks the last imported MySQL ID for each collection and only imports **new** records on subsequent runs. This is much faster than re-checking all records from the last 3 months.
+The incremental import system tracks the last imported MySQL ID for the collections that still need nightly sync and only imports **new** records on subsequent runs.
 
 ## Files
 
@@ -14,7 +14,7 @@ The incremental import system tracks the last imported MySQL ID for each collect
 
 ### First Time Setup
 
-On first run, the script will start from ID 0 for all collections:
+On first run, the script will start from ID 0 for Stories, Custom Texts, and Schedule:
 
 ```bash
 # Import from local Docker MySQL to production Neon (default)
@@ -75,13 +75,9 @@ The script maintains a JSON file with last imported IDs:
 
 ```json
 {
-  "music": 5421,
-  "concerts": 4486,
-  "posts": 647,
-  "ondemand": 519,
-  "cdotw": 839,
-  "ads": 55,
-  "djs": 78,
+  "stories": 647,
+  "customTexts": 251,
+  "schedule": 1842,
   "lastUpdated": "2026-01-11T05:00:00.000Z"
 }
 ```
@@ -106,8 +102,8 @@ The individual import scripts already skip records where `legacyId` exists in Pa
 
 ## Recommended Workflow
 
-1. **Initial import**: Use `yarn import:quick --all` to import everything
-2. **Daily updates**: Use `yarn import:incremental` to catch new records
+1. **Initial import**: Use the full import scripts when bringing a collection over
+2. **Daily updates**: Use `yarn import:incremental` to catch new Stories, Custom Texts, and Schedule records
 3. **After manual DB changes**: Use `--reset` if tracking gets out of sync
 
 ## Output
@@ -117,7 +113,7 @@ The script provides clear output showing:
 - MySQL source and Neon target
 - Last imported IDs from tracking file
 - New records available in MySQL
-- Import progress for each collection
+- Import progress for Stories, Custom Texts, and Schedule
 - Final summary with updated tracking
 
 Example output:
@@ -131,15 +127,14 @@ Example output:
 📋 Loaded last import IDs from 2026-01-11T05:00:00.000Z
 
 📊 New records available:
-   Music:      1
-   Concerts:   9
-   Posts:      105
-   DJs:        6
-   TOTAL:      122
+   Stories:      12
+   Custom Texts: 1
+   Schedule:     4
+   TOTAL:      17
 
 ✅ Import Summary
-   Music: 1 imported, 0 skipped
-   Concerts: 9 imported, 0 skipped
+   Posts: 13 imported, 0 skipped
+   Schedule: 4 imported, 0 skipped
    ...
 ```
 

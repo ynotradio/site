@@ -48,7 +48,7 @@ case "$CHECK_NAME" in
   publish-status)
     echo "--- :white_check_mark: Checking publish status"
     node $PRELOAD bin/integrity-check-publish-status.ts \
-      --from prod-mysql --since 25h --output "$OUTPUT" --verbose
+      --from prod-mysql --collection posts --since 25h --output "$OUTPUT" --verbose
     ;;
   djs)
     echo "--- :microphone: Checking DJ data quality"

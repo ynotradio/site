@@ -112,8 +112,8 @@ Six integrity check scripts (`bin/integrity-check-*.ts`) run with `--fix` agains
 #### Nightly Sync — Running (March 2026)
 
 - [x] `nightly-gap-report.yml` Buildkite pipeline runs daily at 3 AM UTC
-- [x] Incremental import from prod MySQL → prod Neon
-- [x] 6 integrity checks run after each sync
+- [x] Nightly sync limited to Schedule, Stories, and Custom Texts
+- [x] Publish-status integrity check runs after each sync for migrated posts
 
 #### Weekly Dev DB Sync — Running (March 2026)
 

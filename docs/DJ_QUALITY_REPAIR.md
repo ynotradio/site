@@ -81,14 +81,14 @@ Steps:
 
 ## Automated Prevention
 
-These checks are now integrated into the **nightly gap report** pipeline (`.buildkite/nightly-gap-report.yml`):
+This check was integrated into the nightly gap report pipeline during the DJ cleanup work:
 
-- A new step `:microphone: Check DJ data quality` runs as part of the integrity checks
+- A dedicated `:microphone: Check DJ data quality` step was added to the integrity checks
 - Orphaned DJs are detected and reported
 - Duplicate display names are flagged
 - Reports are combined and posted as GitHub issue comments
 
-This ensures these issues will be caught automatically in the future.
+The standalone script remains available for manual runs even though nightly integrity checks now focus on the collections still syncing from MySQL.
 
 ## Related Documentation
 

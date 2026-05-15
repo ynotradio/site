@@ -82,6 +82,23 @@ describe('importPosts', () => {
 
       expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
     });
+
+    it('should parse separate story and custom text start IDs', async () => {
+      const { parseArgs } = await import('./importPosts');
+
+      process.argv = [
+        'node',
+        'script.ts',
+        '--stories-start-id',
+        '700',
+        '--custom-texts-start-id',
+        '220',
+      ];
+      const options = parseArgs();
+
+      expect(options.storiesStartId).toBe(700);
+      expect(options.customTextsStartId).toBe(220);
+    });
   });
 
   describe('importPost', () => {
