@@ -89,6 +89,97 @@ async function fetchCustomTextsDeleted(
 }
 
 // ---------------------------------------------------------------------------
+// Shared status check/fix helper
+// ---------------------------------------------------------------------------
+
+async function applyStatusCheck(
+  payload: Payload,
+  report: CheckReport,
+  docId: number | string,
+  collection: 'ondemand' | 'posts',
+  legacyId: number,
+  identifier: string,
+  deleted: string | undefined,
+  skipDetail: string,
+  currentStatus: string | undefined,
+  fix: boolean,
+  verbose: boolean,
+): Promise<void> {
+  if (deleted === undefined) {
+    addResult(report, {
+      id: docId,
+      collection,
+      identifier,
+      field: '_status',
+      status: 'skipped',
+      detail: skipDetail,
+    });
+    if (verbose) console.log(`  ⏭️  [${collection} ${legacyId}] ${identifier} — MySQL record not found`);
+    return;
+  }
+
+  const shouldPublish = isMysqlRecordLive(deleted);
+  const expectedStatus = shouldPublish ? 'published' : 'draft';
+
+  if (currentStatus === expectedStatus) {
+    addResult(report, {
+      id: docId, collection, identifier, field: '_status', status: 'ok',
+    });
+    if (verbose) console.log(`  ✅ [${collection} ${legacyId}] ${identifier} — _status=${currentStatus}`);
+  } else if (shouldPublish && currentStatus !== 'published') {
+    if (fix) {
+      try {
+        await payload.update({ collection, id: docId, data: { _status: 'published' } });
+        addResult(report, {
+          id: docId,
+          collection,
+          identifier,
+          field: '_status',
+          status: 'fixed',
+          currentValue: currentStatus || '(unknown)',
+          expectedValue: 'published',
+        });
+        if (verbose) console.log(`  🔧 [${collection} ${legacyId}] ${identifier} — ${currentStatus} → published`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        addResult(report, {
+          id: docId,
+          collection,
+          identifier,
+          field: '_status',
+          status: 'fix-failed',
+          currentValue: currentStatus || '(unknown)',
+          expectedValue: 'published',
+          detail: msg,
+        });
+        if (verbose) console.log(`  💥 [${collection} ${legacyId}] ${identifier} — fix failed: ${msg}`);
+      }
+    } else {
+      addResult(report, {
+        id: docId,
+        collection,
+        identifier,
+        field: '_status',
+        status: 'mismatch',
+        currentValue: currentStatus || '(unknown)',
+        expectedValue: 'published',
+      });
+      if (verbose) console.log(`  ⚠️  [${collection} ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`);
+    }
+  } else {
+    addResult(report, {
+      id: docId,
+      collection,
+      identifier,
+      field: '_status',
+      status: 'ok',
+      detail: 'Deleted in MySQL, draft status acceptable',
+    });
+    if (verbose) console.log(`  ✅ [${collection} ${legacyId}] ${identifier} — deleted in MySQL, draft is OK`);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Check logic — OnDemand
 // ---------------------------------------------------------------------------
 
@@ -116,12 +207,11 @@ async function checkOnDemandStatus(
       page,
       sort: 'id',
       depth: 0,
-      draft: true, // include draft records
+      draft: true,
     });
 
     if (batch.docs.length === 0) break;
 
-    // Bulk-fetch MySQL deleted values
     const legacyIds = batch.docs
       .map((d) => d.legacyId as number | undefined)
       .filter((id): id is number => id != null);
@@ -135,103 +225,19 @@ async function checkOnDemandStatus(
         continue;
       }
 
-      const currentStatus = (doc as Record<string, unknown>)._status as string | undefined;
-      const deleted = mysqlDeleted.get(legacyId);
-      const identifier = (doc.headline as string) || `OnDemand #${doc.id}`;
-
-      if (deleted === undefined) {
-        addResult(report, {
-          id: doc.id,
-          collection: 'ondemand',
-          identifier,
-          field: '_status',
-          status: 'skipped',
-          detail: `No MySQL record found for legacyId=${legacyId}`,
-        });
-        if (verbose) console.log(`  ⏭️  [ondemand ${legacyId}] ${identifier} — MySQL record not found`);
-      } else {
-        const shouldPublish = isMysqlRecordLive(deleted);
-        const expectedStatus = shouldPublish ? 'published' : 'draft';
-
-        if (currentStatus === expectedStatus) {
-          addResult(report, {
-            id: doc.id,
-            collection: 'ondemand',
-            identifier,
-            field: '_status',
-            status: 'ok',
-          });
-          if (verbose) console.log(`  ✅ [ondemand ${legacyId}] ${identifier} — _status=${currentStatus}`);
-        } else if (shouldPublish && currentStatus !== 'published') {
-          // Record is live in MySQL but not published in Payload
-          if (fix) {
-            try {
-              await payload.update({
-                collection: 'ondemand',
-                id: doc.id,
-                data: { _status: 'published' },
-              });
-              addResult(report, {
-                id: doc.id,
-                collection: 'ondemand',
-                identifier,
-                field: '_status',
-                status: 'fixed',
-                currentValue: currentStatus || '(unknown)',
-                expectedValue: 'published',
-              });
-              if (verbose) {
-                console.log(
-                  `  🔧 [ondemand ${legacyId}] ${identifier} — ${currentStatus} → published`,
-                );
-              }
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              addResult(report, {
-                id: doc.id,
-                collection: 'ondemand',
-                identifier,
-                field: '_status',
-                status: 'fix-failed',
-                currentValue: currentStatus || '(unknown)',
-                expectedValue: 'published',
-                detail: msg,
-              });
-              if (verbose) console.log(`  💥 [ondemand ${legacyId}] ${identifier} — fix failed: ${msg}`);
-            }
-          } else {
-            addResult(report, {
-              id: doc.id,
-              collection: 'ondemand',
-              identifier,
-              field: '_status',
-              status: 'mismatch',
-              currentValue: currentStatus || '(unknown)',
-              expectedValue: 'published',
-            });
-            if (verbose) {
-              console.log(
-                `  ⚠️  [ondemand ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`,
-              );
-            }
-          }
-        } else {
-          // Record is deleted in MySQL; leave as-is (we only promote to published)
-          addResult(report, {
-            id: doc.id,
-            collection: 'ondemand',
-            identifier,
-            field: '_status',
-            status: 'ok',
-            detail: 'Deleted in MySQL, draft status acceptable',
-          });
-          if (verbose) {
-            console.log(
-              `  ✅ [ondemand ${legacyId}] ${identifier} — deleted in MySQL, draft is OK`,
-            );
-          }
-        }
-      }
+      await applyStatusCheck(
+        payload,
+        report,
+        doc.id,
+        'ondemand',
+        legacyId,
+        (doc.headline as string) || `OnDemand #${doc.id}`,
+        mysqlDeleted.get(legacyId),
+        `No MySQL record found for legacyId=${legacyId}`,
+        (doc as Record<string, unknown>)._status as string | undefined,
+        fix,
+        verbose,
+      );
 
       processed += 1;
     }
@@ -271,12 +277,11 @@ async function checkPostsStatus(
       page,
       sort: 'id',
       depth: 0,
-      draft: true, // include draft records
+      draft: true,
     });
 
     if (batch.docs.length === 0) break;
 
-    // Partition docs by MySQL table and collect IDs for bulk fetch
     const storyIds: number[] = [];
     const customTextIds: number[] = [];
     for (const doc of batch.docs) {
@@ -293,7 +298,6 @@ async function checkPostsStatus(
       }
     }
 
-    // Bulk-fetch MySQL deleted/status values
     const storiesDeleted = await fetchDeletedByIds(mysqlConn, 'stories', storyIds);
     const customTextsDeleted = await fetchCustomTextsDeleted(mysqlConn, customTextIds);
 
@@ -304,106 +308,24 @@ async function checkPostsStatus(
         continue;
       }
 
-      const currentStatus = (doc as Record<string, unknown>)._status as string | undefined;
-      const identifier = (doc.headline as string) || `Post #${doc.id}`;
       const { table, mysqlId } = resolvePostLegacyId(legacyId);
-
-      // Look up the MySQL deleted/status value from bulk-fetched maps
       const deleted = table === 'stories'
         ? storiesDeleted.get(mysqlId)
         : customTextsDeleted.get(mysqlId);
 
-      if (deleted === undefined) {
-        addResult(report, {
-          id: doc.id,
-          collection: 'posts',
-          identifier,
-          field: '_status',
-          status: 'skipped',
-          detail: `No MySQL record found in ${table} for id=${mysqlId} (legacyId=${legacyId})`,
-        });
-        if (verbose) {
-          console.log(
-            `  ⏭️  [posts ${legacyId}] ${identifier} — MySQL record not found in ${table}`,
-          );
-        }
-      } else {
-        const shouldPublish = isMysqlRecordLive(deleted);
-        const expectedStatus = shouldPublish ? 'published' : 'draft';
-
-        if (currentStatus === expectedStatus) {
-          addResult(report, {
-            id: doc.id,
-            collection: 'posts',
-            identifier,
-            field: '_status',
-            status: 'ok',
-          });
-          if (verbose) console.log(`  ✅ [posts ${legacyId}] ${identifier} — _status=${currentStatus}`);
-        } else if (shouldPublish && currentStatus !== 'published') {
-          if (fix) {
-            try {
-              await payload.update({
-                collection: 'posts',
-                id: doc.id,
-                data: { _status: 'published' },
-              });
-              addResult(report, {
-                id: doc.id,
-                collection: 'posts',
-                identifier,
-                field: '_status',
-                status: 'fixed',
-                currentValue: currentStatus || '(unknown)',
-                expectedValue: 'published',
-              });
-              if (verbose) {
-                console.log(
-                  `  🔧 [posts ${legacyId}] ${identifier} — ${currentStatus} → published`,
-                );
-              }
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              addResult(report, {
-                id: doc.id,
-                collection: 'posts',
-                identifier,
-                field: '_status',
-                status: 'fix-failed',
-                currentValue: currentStatus || '(unknown)',
-                expectedValue: 'published',
-                detail: msg,
-              });
-              if (verbose) console.log(`  💥 [posts ${legacyId}] ${identifier} — fix failed: ${msg}`);
-            }
-          } else {
-            addResult(report, {
-              id: doc.id,
-              collection: 'posts',
-              identifier,
-              field: '_status',
-              status: 'mismatch',
-              currentValue: currentStatus || '(unknown)',
-              expectedValue: 'published',
-            });
-            if (verbose) {
-              console.log(
-                `  ⚠️  [posts ${legacyId}] ${identifier} — _status=${currentStatus}, should be published`,
-              );
-            }
-          }
-        } else {
-          addResult(report, {
-            id: doc.id,
-            collection: 'posts',
-            identifier,
-            field: '_status',
-            status: 'ok',
-            detail: 'Deleted in MySQL, draft status acceptable',
-          });
-          if (verbose) console.log(`  ✅ [posts ${legacyId}] ${identifier} — deleted in MySQL, draft is OK`);
-        }
-      }
+      await applyStatusCheck(
+        payload,
+        report,
+        doc.id,
+        'posts',
+        legacyId,
+        (doc.headline as string) || `Post #${doc.id}`,
+        deleted,
+        `No MySQL record found in ${table} for id=${mysqlId} (legacyId=${legacyId})`,
+        (doc as Record<string, unknown>)._status as string | undefined,
+        fix,
+        verbose,
+      );
 
       processed += 1;
     }
