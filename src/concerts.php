@@ -19,7 +19,6 @@ use YNotRadio\Models\ConcertFactory;
     $concertModel = ConcertFactory::create(open_db());
     $upcomingConcerts = $concertModel->getUpcoming();
     
-    // Display upcoming concerts in a table
     echo '<div class="table-responsive concerts-table-wrapper">';
     echo '<table class="table table-striped table-bordered-horizontal table-condensed concerts-table">';
     echo '<colgroup><col class="concerts-col-date"><col><col class="concerts-col-venue"><col class="concerts-col-ticket"></colgroup>';
@@ -34,10 +33,12 @@ use YNotRadio\Models\ConcertFactory;
       
       if ($concert['ticketurl']) {
         $soldout_class = $concert['ticketinfo'] === "SOLD OUT" ? ' class="soldout"' : '';
-        echo "<td data-label=\"Ticket Info\"{$soldout_class}><span class=\"concerts-cell-value\"><a href=\"" . $concert['ticketurl'] . "\" target=_new>" . $concert['ticketinfo'] . "</a></span></td>\n";
+        $ticket_content = '<a href="' . $concert['ticketurl'] . '" target=_new>' . $concert['ticketinfo'] . '</a>';
       } else {
-        echo "<td data-label=\"Ticket Info\"><span class=\"concerts-cell-value\">" . $concert['ticketinfo'] . "</span></td>\n";
+        $soldout_class = '';
+        $ticket_content = $concert['ticketinfo'];
       }
+      echo "<td data-label=\"Ticket Info\"{$soldout_class}><span class=\"concerts-cell-value\">{$ticket_content}</span></td>\n";
       
       echo "</tr>\n";
     }
