@@ -493,4 +493,20 @@ describe('MusicBrainzRecordingField', () => {
       });
     });
   });
+
+  it('guards against search when song title is empty (covers early-return branch)', async () => {
+    let callCount = 0;
+    vi.mocked(useFormFields).mockImplementation(() => {
+      const call = callCount;
+      callCount += 1;
+      if (call % 2 === 0) return { value: '' } as any;
+      return { value: { name: 'Test Artist' } } as any;
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+
+    fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+    expect(vi.mocked(musicbrainzApi.searchRecordings)).not.toHaveBeenCalled();
+  });
 });
