@@ -218,12 +218,8 @@ async function checkOnDemandStatus(
 
     const mysqlDeleted = await fetchDeletedByIds(mysqlConn, 'ondemand', legacyIds);
 
-    for (const doc of batch.docs) {
-      const legacyId = doc.legacyId as number | undefined;
-      if (legacyId == null) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
+    for (const doc of batch.docs.filter((d) => d.legacyId != null)) {
+      const legacyId = doc.legacyId as number;
 
       await applyStatusCheck(
         payload,
@@ -284,12 +280,9 @@ async function checkPostsStatus(
 
     const storyIds: number[] = [];
     const customTextIds: number[] = [];
-    for (const doc of batch.docs) {
-      const legacyId = doc.legacyId as number | undefined;
-      if (legacyId == null) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
+    const docsWithLegacyId = batch.docs.filter((d) => d.legacyId != null);
+    for (const doc of docsWithLegacyId) {
+      const legacyId = doc.legacyId as number;
       const { table, mysqlId } = resolvePostLegacyId(legacyId);
       if (table === 'stories') {
         storyIds.push(mysqlId);
@@ -301,13 +294,8 @@ async function checkPostsStatus(
     const storiesDeleted = await fetchDeletedByIds(mysqlConn, 'stories', storyIds);
     const customTextsDeleted = await fetchCustomTextsDeleted(mysqlConn, customTextIds);
 
-    for (const doc of batch.docs) {
-      const legacyId = doc.legacyId as number | undefined;
-      if (legacyId == null) {
-        // eslint-disable-next-line no-continue
-        continue;
-      }
-
+    for (const doc of docsWithLegacyId) {
+      const legacyId = doc.legacyId as number;
       const { table, mysqlId } = resolvePostLegacyId(legacyId);
       const deleted = table === 'stories'
         ? storiesDeleted.get(mysqlId)
@@ -341,28 +329,24 @@ async function checkPostsStatus(
 // CLI argument parsing — extends standard args with --from for MySQL source
 // ---------------------------------------------------------------------------
 
-function parseMysqlSource(argv: string[]): MySQLSource {
+function findFlagValue(argv: string[], flag: string): string | undefined {
   const args = argv.slice(2);
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--from') {
-      const value = args[i + 1];
-      if (value === 'local-mysql' || value === 'prod-mysql') return value;
-      throw new Error('--from must be "local-mysql" or "prod-mysql"');
-    }
-  }
-  return 'prod-mysql';
+  const idx = args.indexOf(flag);
+  return idx >= 0 ? args[idx + 1] : undefined;
+}
+
+function parseMysqlSource(argv: string[]): MySQLSource {
+  const value = findFlagValue(argv, '--from');
+  if (value == null) return 'prod-mysql';
+  if (value === 'local-mysql' || value === 'prod-mysql') return value;
+  throw new Error('--from must be "local-mysql" or "prod-mysql"');
 }
 
 function parseScope(argv: string[]): PublishStatusScope {
-  const args = argv.slice(2);
-  for (let i = 0; i < args.length; i += 1) {
-    if (args[i] === '--collection') {
-      const value = args[i + 1];
-      if (value === 'posts' || value === 'ondemand' || value === 'all') return value;
-      throw new Error('--collection must be "posts", "ondemand", or "all"');
-    }
-  }
-  return 'all';
+  const value = findFlagValue(argv, '--collection');
+  if (value == null) return 'all';
+  if (value === 'posts' || value === 'ondemand' || value === 'all') return value;
+  throw new Error('--collection must be "posts", "ondemand", or "all"');
 }
 
 // ---------------------------------------------------------------------------
@@ -394,13 +378,12 @@ async function main(): Promise<void> {
     port: mysqlConfig.port,
   });
 
-  let reportTitle = 'Publish Status (OnDemand + Stories)';
-  if (scope === 'posts') {
-    reportTitle = 'Publish Status (Stories + Custom Texts)';
-  } else if (scope === 'ondemand') {
-    reportTitle = 'Publish Status (OnDemand)';
-  }
-  const report = emptyReport('publish-status', reportTitle);
+  const reportTitles: Record<PublishStatusScope, string> = {
+    all: 'Publish Status (OnDemand + Stories)',
+    posts: 'Publish Status (Stories + Custom Texts)',
+    ondemand: 'Publish Status (OnDemand)',
+  };
+  const report = emptyReport('publish-status', reportTitles[scope]);
   const startTime = Date.now();
 
   try {
