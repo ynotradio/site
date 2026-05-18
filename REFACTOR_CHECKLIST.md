@@ -201,7 +201,15 @@ Converted inline styles to CSS files across all affected components:
   - Path: `payload/src/collections/hooks/`
   - 9 unit tests covering: string dates, Date objects, calendar date preservation, field spreading, idempotency, and missing/null/empty date values
 
-## 📝 Notes
+### Phase 7: Utility File Size Reduction ✅ COMPLETED
+
+- [x] **Extract `bracketDefinitions.ts` from `scaffoldTournamentMatches.ts`** ✅
+  - Path: `payload/src/collections/hooks/bracketDefinitions.ts`
+  - Extracted all pure computation: types, constants (`TOTAL_MATCHES`, `STANDARD_SLOTS`, `ROUNDS`), and functions (`buildScheduleSlots`, `generateBracketDefinitions`)
+  - `scaffoldTournamentMatches.ts` reduced: 334 → 60 lines (82% reduction)
+  - `bracketDefinitions.ts`: 270 lines (pure logic, no Payload dependency)
+  - Test updated to import from `bracketDefinitions.ts` for pure functions, `scaffoldTournamentMatches.ts` for the hook
+  - All 38 existing tests pass unchanged
 
 - PR #173 established the coding standards
 - Current refactoring reduced ShowClonerClient from 606 to 126 lines (79% reduction)
