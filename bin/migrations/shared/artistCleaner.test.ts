@@ -204,6 +204,11 @@ describe('parseArtistNames', () => {
     expect(parseArtistNames('Artist (from The Band)')).toEqual(['Artist', 'The Band']);
   });
 
+  it('should ignore "(of   )" pattern when band name is only whitespace', () => {
+    // Regex backtracks to capture the trailing space, but trim() yields empty — no extra artist
+    expect(parseArtistNames('Artist (of   )')).toEqual(['Artist']);
+  });
+
   it('should handle mixed delimiters', () => {
     expect(parseArtistNames('Artist1, Artist2 and Artist3')).toEqual([
       'Artist1',
