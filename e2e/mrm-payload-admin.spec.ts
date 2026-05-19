@@ -30,29 +30,9 @@ const test = baseTest.extend({
   },
 });
 
-async function openTournamentEditPage(page: Page, request: APIRequestContext) {
-  const response = await request.get(
-    `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments?limit=1&sort=-startDate`,
-  );
-  expect(response.ok()).toBeTruthy();
-
-  const data = await response.json() as { docs?: Array<{ id?: string | number }> };
-  const tournamentId = data.docs?.[0]?.id;
-  expect(tournamentId).toBeTruthy();
-
-  await page.goto(
-    `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments/${tournamentId}`,
-    {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    },
-  );
-  await page.waitForURL(`**/modern-rock-madness-tournaments/${tournamentId}**`, { timeout: 30000 });
-}
-
 async function getLatestTournamentFromApi(
   request: APIRequestContext,
-): Promise<{ id: string | number; name: string; status?: string }> {
+): Promise<{ id: string | number; status?: string }> {
   const response = await request.get(
     `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments?limit=1&sort=-startDate`,
   );
@@ -63,13 +43,24 @@ async function getLatestTournamentFromApi(
   };
   const tournament = data.docs?.[0];
   expect(tournament?.id).toBeTruthy();
-  expect(tournament?.name).toBeTruthy();
 
   return {
     id: tournament!.id!,
-    name: tournament!.name!,
     status: tournament!.status,
   };
+}
+
+async function openTournamentEditPage(page: Page, request: APIRequestContext) {
+  const { id: tournamentId } = await getLatestTournamentFromApi(request);
+
+  await page.goto(
+    `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments/${tournamentId}`,
+    {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    },
+  );
+  await page.waitForURL(`**/modern-rock-madness-tournaments/${tournamentId}**`, { timeout: 30000 });
 }
 
 async function openTournamentListPage(page: Page) {
@@ -105,16 +96,25 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     const tournament = await getLatestTournamentFromApi(request);
     await openTournamentListPage(page);
 
-    await expect(page.getByText(tournament.name)).toBeVisible({ timeout: 15000 });
+    await expect(
+      page.locator(
+        `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
+      ),
+    ).toBeVisible({ timeout: 15000 });
   });
 
   test('tournament row shows active status', async ({ page, request }) => {
     const tournament = await getLatestTournamentFromApi(request);
     await openTournamentListPage(page);
 
-    await expect(page.getByText(tournament.name)).toBeVisible({ timeout: 15000 });
-    const pageContent = await page.content();
-    expect(pageContent.toLowerCase()).toContain((tournament.status ?? 'active').toLowerCase());
+    const editLink = page.locator(
+      `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
+    );
+    await expect(editLink).toBeVisible({ timeout: 15000 });
+
+    const row = editLink.locator('xpath=ancestor::tr[1]');
+    await expect(row).toBeVisible({ timeout: 15000 });
+    await expect(row).toContainText(/active/i);
   });
 
   test('clicking a tournament opens the edit page', async ({ page, request }, testInfo) => {
