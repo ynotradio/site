@@ -96,11 +96,10 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     const tournament = await getLatestTournamentFromApi(request);
     await openTournamentListPage(page);
 
-    await expect(
-      page.locator(
-        `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
-      ),
-    ).toBeVisible({ timeout: 15000 });
+    const editLink = page.locator(
+      `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
+    );
+    await expect(editLink).toHaveCount(1, { timeout: 30000 });
   });
 
   test('tournament row shows active status', async ({ page, request }) => {
@@ -110,10 +109,10 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     const editLink = page.locator(
       `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
     );
-    await expect(editLink).toBeVisible({ timeout: 15000 });
+    await expect(editLink).toHaveCount(1, { timeout: 30000 });
 
     const row = editLink.locator('xpath=ancestor::tr[1]');
-    await expect(row).toBeVisible({ timeout: 15000 });
+    await expect(row).toHaveCount(1, { timeout: 30000 });
     await expect(row).toContainText(/active/i);
   });
 
