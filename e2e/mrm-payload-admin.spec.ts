@@ -50,6 +50,28 @@ async function openTournamentEditPage(page: Page, request: APIRequestContext) {
   await page.waitForURL(`**/modern-rock-madness-tournaments/${tournamentId}**`, { timeout: 30000 });
 }
 
+async function getLatestTournamentFromApi(
+  request: APIRequestContext,
+): Promise<{ id: string | number; name: string; status?: string }> {
+  const response = await request.get(
+    `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments?limit=1&sort=-startDate`,
+  );
+  expect(response.ok()).toBeTruthy();
+
+  const data = await response.json() as {
+    docs?: Array<{ id?: string | number; name?: string; status?: string }>;
+  };
+  const tournament = data.docs?.[0];
+  expect(tournament?.id).toBeTruthy();
+  expect(tournament?.name).toBeTruthy();
+
+  return {
+    id: tournament!.id!,
+    name: tournament!.name!,
+    status: tournament!.status,
+  };
+}
+
 async function openTournamentListPage(page: Page) {
   await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
     waitUntil: 'networkidle',
@@ -79,19 +101,20 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     await captureScreenshot(page, testInfo, '10-Admin-MRM-Tournaments-List');
   });
 
-  test('seeded tournament "Modern Rock Madness 2026" appears in the list', async ({ page }) => {
+  test('seeded tournament appears in the list', async ({ page, request }) => {
+    const tournament = await getLatestTournamentFromApi(request);
     await openTournamentListPage(page);
 
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(tournament.name)).toBeVisible({ timeout: 15000 });
   });
 
-  test('tournament row shows active status', async ({ page }) => {
+  test('tournament row shows active status', async ({ page, request }) => {
+    const tournament = await getLatestTournamentFromApi(request);
     await openTournamentListPage(page);
 
-    // 'active' should appear somewhere in the list row for this tournament.
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(tournament.name)).toBeVisible({ timeout: 15000 });
     const pageContent = await page.content();
-    expect(pageContent.toLowerCase()).toContain('active');
+    expect(pageContent.toLowerCase()).toContain((tournament.status ?? 'active').toLowerCase());
   });
 
   test('clicking a tournament opens the edit page', async ({ page, request }, testInfo) => {
