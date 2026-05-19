@@ -4,8 +4,8 @@ import {
   buildScheduleSlots,
   STANDARD_SLOTS,
   TOTAL_MATCHES,
-  scaffoldTournamentMatches,
-} from './scaffoldTournamentMatches';
+} from './bracketDefinitions';
+import { scaffoldTournamentMatches } from './scaffoldTournamentMatches';
 
 const START_DATE = '2025-03-24T00:00:00.000Z'; // Monday
 
