@@ -132,4 +132,14 @@ describe('MrmBracketMatch', () => {
     expect(el.querySelector('dl')).toBeTruthy();
     expect(el.querySelectorAll('dt').length).toBe(2);
   });
+
+  it('is safe to re-import when element is already registered', () => {
+    const modulePath = require.resolve('../../src/js/components/mrm-bracket-match.js');
+    delete require.cache[modulePath];
+
+    // Re-requiring must not throw even though 'mrm-bracket-match' is already in the registry
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
+    expect(() => { require('../../src/js/components/mrm-bracket-match.js'); }).not.toThrow();
+    expect(customElements.get('mrm-bracket-match')).toBeDefined();
+  });
 });
