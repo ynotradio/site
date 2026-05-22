@@ -74,6 +74,8 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
   const [inputText, setInputText] = useState(() => stored24hToDisplay(value || ''));
   const [open, setOpen] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(-1);
+  // True only while the user is actively typing — suppresses prefix filtering on open
+  const [isEditing, setIsEditing] = useState(false);
 
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,10 +88,11 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
   }, [value]);
 
   const filtered = useMemo(() => {
+    if (!isEditing) return ALL_TIMES;
     const q = inputText.trim().toLowerCase().replace(/\s/g, '');
     if (!q) return ALL_TIMES;
     return ALL_TIMES.filter((t) => t.startsWith(q));
-  }, [inputText]);
+  }, [inputText, isEditing]);
 
   const selectedDisplay = stored24hToDisplay(value || '');
 
@@ -102,20 +105,23 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
       }
       setOpen(false);
       setFocusedIdx(-1);
+      setIsEditing(false);
     },
     [setValue],
   );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputText(e.target.value);
+    setIsEditing(true);
     setOpen(true);
     setFocusedIdx(0);
   };
 
   const handleInputFocus = () => {
+    setIsEditing(false);
     setOpen(true);
-    setFocusedIdx(filtered.findIndex((t) => t === selectedDisplay));
-    // Select all text so user can immediately type a replacement
+    // Scroll to the currently selected time in the full list
+    setFocusedIdx(ALL_TIMES.findIndex((t) => t === selectedDisplay));
     inputRef.current?.select();
   };
 
