@@ -1,80 +1,117 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TimePickerField } from './TimePickerField';
 
-vi.mock('@payloadcms/ui', () => ({
-  useField: vi.fn(),
-}));
+vi.mock('@payloadcms/ui', () => ({ useField: vi.fn() }));
 
 const { useField } = await import('@payloadcms/ui');
 
 describe('TimePickerField', () => {
   const mockSetValue = vi.fn();
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   const setup = (value: string) => {
     vi.mocked(useField).mockReturnValue({ value, setValue: mockSetValue } as any);
     render(<TimePickerField path="startTime" />);
   };
 
-  it('renders hour, minute, and AM/PM selects', () => {
-    setup('09:00');
-    expect(screen.getByLabelText('Hour')).toBeInTheDocument();
-    expect(screen.getByLabelText('Minute')).toBeInTheDocument();
-    expect(screen.getByLabelText('AM or PM')).toBeInTheDocument();
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('shows 9 AM for 09:00', () => {
+  // ── Display ────────────────────────────────────────────────────────────────
+
+  it('shows 9:00am for stored 09:00', () => {
     setup('09:00');
-    expect(screen.getByLabelText<HTMLSelectElement>('Hour').value).toBe('9');
-    expect(screen.getByLabelText<HTMLSelectElement>('Minute').value).toBe('0');
-    expect(screen.getByLabelText<HTMLSelectElement>('AM or PM').value).toBe('AM');
+    expect(screen.getByRole('textbox')).toHaveValue('9:00am');
   });
 
-  it('shows 2 PM for 14:30', () => {
+  it('shows 2:30pm for stored 14:30', () => {
     setup('14:30');
-    expect(screen.getByLabelText<HTMLSelectElement>('Hour').value).toBe('2');
-    expect(screen.getByLabelText<HTMLSelectElement>('Minute').value).toBe('30');
-    expect(screen.getByLabelText<HTMLSelectElement>('AM or PM').value).toBe('PM');
+    expect(screen.getByRole('textbox')).toHaveValue('2:30pm');
   });
 
-  it('shows 12 AM for 00:00 (midnight)', () => {
+  it('shows 12:00am for stored 00:00 (midnight)', () => {
     setup('00:00');
-    expect(screen.getByLabelText<HTMLSelectElement>('Hour').value).toBe('12');
-    expect(screen.getByLabelText<HTMLSelectElement>('AM or PM').value).toBe('AM');
+    expect(screen.getByRole('textbox')).toHaveValue('12:00am');
   });
 
-  it('shows 12 PM for 12:00 (noon)', () => {
+  it('shows 12:00pm for stored 12:00 (noon)', () => {
     setup('12:00');
-    expect(screen.getByLabelText<HTMLSelectElement>('Hour').value).toBe('12');
-    expect(screen.getByLabelText<HTMLSelectElement>('AM or PM').value).toBe('PM');
+    expect(screen.getByRole('textbox')).toHaveValue('12:00pm');
   });
 
-  it('calls setValue with correct 24h value when hour changes', () => {
-    setup('09:00');
-    fireEvent.change(screen.getByLabelText('Hour'), { target: { value: '10' } });
-    expect(mockSetValue).toHaveBeenCalledWith('10:00');
+  it('shows empty string for no value', () => {
+    setup('');
+    expect(screen.getByRole('textbox')).toHaveValue('');
   });
 
-  it('calls setValue with correct 24h value when switching to PM', () => {
-    setup('09:00');
-    fireEvent.change(screen.getByLabelText('AM or PM'), { target: { value: 'PM' } });
-    expect(mockSetValue).toHaveBeenCalledWith('21:00');
+  // ── Dropdown ───────────────────────────────────────────────────────────────
+
+  it('opens dropdown on focus and shows time options', () => {
+    setup('');
+    fireEvent.focus(screen.getByRole('textbox'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByText('12:00am')).toBeInTheDocument();
   });
 
-  it('calls setValue with correct 24h value when minute changes', () => {
-    setup('14:00');
-    fireEvent.change(screen.getByLabelText('Minute'), { target: { value: '30' } });
+  it('filters options as user types', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '9:' } });
+    expect(screen.getByText('9:00am')).toBeInTheDocument();
+    expect(screen.queryByText('10:00am')).not.toBeInTheDocument();
+  });
+
+  it('shows all 96 slots when input is empty and open', () => {
+    setup('');
+    fireEvent.focus(screen.getByRole('textbox'));
+    expect(screen.getAllByRole('option')).toHaveLength(96);
+  });
+
+  // ── Selection ─────────────────────────────────────────────────────────────
+
+  it('calls setValue with 24h value when an option is clicked', () => {
+    setup('');
+    fireEvent.focus(screen.getByRole('textbox'));
+    fireEvent.mouseDown(screen.getByText('9:00am'));
+    expect(mockSetValue).toHaveBeenCalledWith('09:00');
+  });
+
+  it('calls setValue with 24h value for a PM slot', () => {
+    setup('');
+    fireEvent.focus(screen.getByRole('textbox'));
+    fireEvent.mouseDown(screen.getByText('2:30pm'));
     expect(mockSetValue).toHaveBeenCalledWith('14:30');
   });
 
-  it('handles empty/undefined value gracefully', () => {
+  // ── Keyboard ──────────────────────────────────────────────────────────────
+
+  it('commits typed value on Enter', () => {
     setup('');
-    expect(screen.getByLabelText<HTMLSelectElement>('Hour').value).toBe('12');
-    expect(screen.getByLabelText<HTMLSelectElement>('AM or PM').value).toBe('AM');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '10:30am' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockSetValue).toHaveBeenCalledWith('10:30');
+  });
+
+  it('commits typed 24h value without am/pm suffix', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '14:00' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockSetValue).toHaveBeenCalledWith('14:00');
+  });
+
+  it('closes dropdown on Escape', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Escape' });
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
   });
 });

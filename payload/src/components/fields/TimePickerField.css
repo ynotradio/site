@@ -1,83 +1,104 @@
-/* Payload wraps our component in .field-type__wrap which uses flex-direction: column.
-   We use !important on the layout-critical rules to escape that cascade. */
+.tp-wrap {
+  position: relative;
+  display: inline-block;
+}
 
-.time-picker {
-  display: inline-flex !important;
-  flex-direction: row !important;
-  align-items: stretch;
+.tp-input {
+  all: unset;
+  display: block;
+  box-sizing: border-box;
+  width: 110px;
   height: 40px;
+  padding: 0 12px;
   border: 1px solid var(--theme-elevation-150);
   border-radius: var(--style-radius-s, 4px);
   background: var(--theme-input-bg);
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: border-color 0.1s, box-shadow 0.1s;
-}
-
-.time-picker:focus-within {
-  border-color: var(--theme-elevation-400);
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.18);
-}
-
-.time-picker__select {
-  /* Reset all browser and Payload defaults */
-  all: unset;
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  box-sizing: border-box;
-  padding: 0 22px 0 10px;
-  cursor: pointer;
+  color: var(--theme-elevation-800);
   font-family: var(--font-body);
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
-  color: var(--theme-elevation-800);
-  background-color: transparent;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  border-right: 1px solid var(--theme-elevation-100);
-  appearance: none;
-  -webkit-appearance: none;
-  transition: background-color 0.1s;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+  cursor: text;
+  transition: border-color 0.1s, box-shadow 0.1s;
 }
 
-.time-picker__select:focus {
-  background-color: var(--theme-elevation-50);
+.tp-input::selection {
+  background: var(--theme-elevation-200);
+}
+
+.tp-input:hover {
+  border-color: var(--theme-elevation-250);
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.18);
+}
+
+.tp-input:focus {
+  border-color: var(--theme-elevation-400);
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.18);
   outline: none;
 }
 
-.time-picker__select:last-child {
-  border-right: none;
+.tp-input--open {
+  border-color: var(--theme-elevation-400);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-.time-picker__select--hour {
-  width: 52px;
+.tp-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 9999;
+  width: 160px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--theme-bg);
+  border: 1px solid var(--theme-elevation-200);
+  border-top: none;
+  border-radius: 0 0 var(--style-radius-s, 4px) var(--style-radius-s, 4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  scroll-behavior: smooth;
+
+  /* Custom scrollbar — thin, unobtrusive */
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-elevation-200) transparent;
 }
 
-.time-picker__select--minute {
-  width: 52px;
+.tp-dropdown::-webkit-scrollbar {
+  width: 4px;
 }
 
-.time-picker__select--ampm {
-  width: 60px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--theme-elevation-600);
-  padding-left: 8px;
+.tp-dropdown::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.time-picker__colon {
-  display: flex !important;
-  align-items: center;
-  height: 100%;
-  padding: 0 1px;
+.tp-dropdown::-webkit-scrollbar-thumb {
+  background: var(--theme-elevation-200);
+  border-radius: 2px;
+}
+
+.tp-option {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  font-family: var(--font-body);
   font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--theme-elevation-400);
-  pointer-events: none;
-  user-select: none;
-  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-elevation-800);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.08s;
+}
+
+.tp-option:hover,
+.tp-option--focused {
+  background: var(--theme-elevation-100);
+}
+
+.tp-option--selected {
+  font-weight: 600;
+  color: var(--theme-elevation-1000);
+  background: var(--theme-elevation-50);
 }
