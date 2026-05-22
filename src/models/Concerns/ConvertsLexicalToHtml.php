@@ -90,9 +90,8 @@ trait ConvertsLexicalToHtml
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = (int)($node['format'] ?? 0);
-
-                // Escape text content to prevent XSS
-                $text = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+                // Preserve legacy inline HTML imported as Lexical text
+                // (e.g. <font>, comments, and old <a>/<strong> fragments).
 
                 if ($format & self::$LEXICAL_FORMAT_BOLD) {
                     $text = "<strong>$text</strong>";

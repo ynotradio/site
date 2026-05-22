@@ -8,8 +8,7 @@ require ("models/StoryFactory.php");
 require ("partials/_story_display_helpers.php");
 require ("partials/_header.php");
 
-$db = open_db();
-$storyModel = \YNotRadio\Models\StoryFactory::create($db);
+$storyModel = \YNotRadio\Models\StoryFactory::create();
 $story_groups = $storyModel->getAll();
 
 
