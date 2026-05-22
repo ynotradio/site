@@ -4,7 +4,7 @@ import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
 import type { TextFieldClientProps } from 'payload';
-import { useField, FieldLabel } from '@payloadcms/ui';
+import { useField, FieldLabel, mergeFieldStyles } from '@payloadcms/ui';
 import './TimePickerField.css';
 
 type TimePickerFieldProps = TextFieldClientProps;
@@ -179,9 +179,10 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ field, path })
   }, []);
 
   const inputId = `tp-${path}`;
+  const fieldStyles = useMemo(() => mergeFieldStyles(field), [field]);
 
   return (
-    <div className="tp-wrap" ref={wrapRef}>
+    <div className="tp-wrap" ref={wrapRef} style={fieldStyles}>
       {label && <FieldLabel htmlFor={inputId} label={label} required={required} />}
       <input
         ref={inputRef}

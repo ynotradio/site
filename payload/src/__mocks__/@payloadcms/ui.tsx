@@ -6,6 +6,8 @@ import React from 'react';
 let mockFieldValue = '';
 let mockFormFieldsValue: Record<string, any> = {};
 
+export const mergeFieldStyles = () => ({});
+
 type FieldLabelProps = { label?: string; required?: boolean; htmlFor?: string };
 
 export const FieldLabel: React.FC<FieldLabelProps> = ({ label, required }) => (

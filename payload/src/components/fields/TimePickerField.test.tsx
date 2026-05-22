@@ -5,6 +5,7 @@ import { TimePickerField } from './TimePickerField';
 
 vi.mock('@payloadcms/ui', () => ({
   useField: vi.fn(),
+  mergeFieldStyles: () => ({}),
   FieldLabel: ({ label, required }: { label?: string; required?: boolean }) => (
     <label>
       {label}
