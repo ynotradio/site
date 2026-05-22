@@ -266,4 +266,22 @@ describe('MrmMatchCard', () => {
       false,
     );
   });
+
+  it('is safe to re-import when element is already registered', () => {
+    const modulePath = require.resolve('../../src/js/components/mrm-match-card.js');
+    delete require.cache[modulePath];
+
+    // Re-requiring must not throw even though 'mrm-match-card' is already in the registry
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
+    expect(() => { require('../../src/js/components/mrm-match-card.js'); }).not.toThrow();
+    expect(customElements.get('mrm-match-card')).toBeDefined();
+  });
+
+  it('attributeChangedCallback is a no-op when shadowRoot is null', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
+    const { MrmMatchCard } = require('../../src/js/components/mrm-match-card.js');
+    const el = { shadowRoot: null } as any;
+    MrmMatchCard.prototype.attributeChangedCallback.call(el);
+    // No assertion needed — we just verify it does not throw
+  });
 });
