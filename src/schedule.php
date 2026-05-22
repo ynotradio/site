@@ -7,8 +7,7 @@ require ("functions/main_fns.php");
 require ("models/ScheduleFactory.php");
 require ("partials/_header.php");
 
-$db = open_db();
-$scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
+$scheduleModel = \YNotRadio\Models\ScheduleFactory::create();
 
 /*----- CONTENT ------*/
 ?>
@@ -56,4 +55,3 @@ $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
 <?php require ("partials/_footer.php"); ?>
-

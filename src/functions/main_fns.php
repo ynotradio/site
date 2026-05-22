@@ -184,11 +184,7 @@ function on_air(){
   
   // Try to get current on-air DJ from schedule
   try {
-    $db = open_db();
-    if (!$db) {
-      return '';
-    }
-    $scheduleModel = \YNotRadio\Models\ScheduleFactory::create($db);
+    $scheduleModel = \YNotRadio\Models\ScheduleFactory::create();
     
     // Get today's schedule using local date, not UTC
     // This avoids timezone issues where gmdate() can give the next day in UTC while date() is still in local time
