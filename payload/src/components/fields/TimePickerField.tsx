@@ -41,7 +41,13 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
   );
 
   return (
-    <div className="time-picker" role="group" aria-label="Time">
+    // eslint-disable-next-line react/forbid-dom-props
+    <div
+      className="time-picker"
+      role="group"
+      aria-label="Time"
+      style={{ display: 'inline-flex', flexDirection: 'row' }}
+    >
       <select
         className="time-picker__select time-picker__select--hour"
         value={hours12}
