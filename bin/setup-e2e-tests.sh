@@ -47,7 +47,12 @@ echo "🐳 Step 4/7: Starting Docker services..."
 # Use CI-specific compose override if in CI environment (uses pre-built images)
 if [ "${CI:-false}" = "true" ] && [ -f "docker-compose.ci.yml" ]; then
   echo "Using pre-built Docker images (CI mode)"
-  docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache
+  if docker compose -f docker-compose.yml -f docker-compose.ci.yml up -d postgres mysql phpfpm apache; then
+    echo "✅ Started services with pre-built images"
+  else
+    echo "⚠️  Pre-built image startup failed, falling back to local Dockerfile builds"
+    docker compose up -d postgres mysql phpfpm apache
+  fi
 else
   docker compose up -d postgres mysql phpfpm apache
 fi

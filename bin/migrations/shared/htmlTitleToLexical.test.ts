@@ -36,7 +36,7 @@ describe('htmlTitleToLexical', () => {
   it('preserves <br>', () => {
     const state = htmlTitleToLexical("Y-Not Radio's Swell 16<br>w/ WAAX");
     const html = convertConcertTitleToHtml(state);
-    expect(html).toMatch(/Y-Not Radio's Swell 16<br\s*\/?>w\/ WAAX/);
+    expect(html).toMatch(/Y-Not Radio(?:'|&#39;)s Swell 16<br\s*\/?>w\/ WAAX/);
   });
 
   it('converts <a> with safe URL', () => {

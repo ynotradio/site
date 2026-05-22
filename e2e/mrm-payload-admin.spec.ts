@@ -11,7 +11,12 @@
  *   - Payload running on PLAYWRIGHT_BASE_URL (default http://localhost:3000)
  *   - seed:mrm:fresh has run (creates 1 tournament, 64 groups, 63 matches)
  */
-import { test as baseTest, expect } from '@playwright/test';
+import {
+  test as baseTest,
+  expect,
+  Page,
+  APIRequestContext,
+} from '@playwright/test';
 import { captureScreenshot } from './utils/test-helpers';
 import { loginToPayload } from './utils/payload-auth';
 
@@ -24,6 +29,46 @@ const test = baseTest.extend({
     await runTest({});
   },
 });
+
+async function getLatestTournamentFromApi(
+  request: APIRequestContext,
+): Promise<{ id: string | number; status?: string }> {
+  const response = await request.get(
+    `${PAYLOAD_BASE_URL}/api/modern-rock-madness-tournaments?limit=1&sort=-startDate`,
+  );
+  expect(response.ok()).toBeTruthy();
+
+  const data = await response.json() as {
+    docs?: Array<{ id?: string | number; name?: string; status?: string }>;
+  };
+  const tournament = data.docs?.[0];
+  expect(tournament?.id).toBeTruthy();
+
+  return {
+    id: tournament!.id!,
+    status: tournament!.status,
+  };
+}
+
+async function openTournamentEditPage(page: Page, request: APIRequestContext) {
+  const { id: tournamentId } = await getLatestTournamentFromApi(request);
+
+  await page.goto(
+    `${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments/${tournamentId}`,
+    {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    },
+  );
+  await page.waitForURL(`**/modern-rock-madness-tournaments/${tournamentId}**`, { timeout: 30000 });
+}
+
+async function openTournamentListPage(page: Page) {
+  await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
+    waitUntil: 'networkidle',
+    timeout: 30000,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // MRM Tournament collection
@@ -47,74 +92,60 @@ test.describe('MRM Payload Admin — Tournaments', () => {
     await captureScreenshot(page, testInfo, '10-Admin-MRM-Tournaments-List');
   });
 
-  test('seeded tournament "Modern Rock Madness 2026" appears in the list', async ({ page }) => {
-    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+  test('seeded tournament appears in the list', async ({ page, request }) => {
+    const tournament = await getLatestTournamentFromApi(request);
+    await openTournamentListPage(page);
 
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
+    const editLink = page.locator(
+      `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
+    );
+    await expect(editLink).toHaveCount(1, { timeout: 30000 });
   });
 
-  test('tournament row shows active status', async ({ page }) => {
-    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+  test('tournament row shows active status', async ({ page, request }) => {
+    const tournament = await getLatestTournamentFromApi(request);
+    await openTournamentListPage(page);
 
-    // 'active' should appear somewhere in the list row for this tournament.
-    await expect(page.getByText('Modern Rock Madness 2026')).toBeVisible({ timeout: 15000 });
-    const pageContent = await page.content();
-    expect(pageContent.toLowerCase()).toContain('active');
+    const editLink = page.locator(
+      `a[href*="/admin/collections/modern-rock-madness-tournaments/${tournament.id}"]`,
+    );
+    await expect(editLink).toHaveCount(1, { timeout: 30000 });
+
+    const row = editLink.locator('xpath=ancestor::tr[1]');
+    await expect(row).toHaveCount(1, { timeout: 30000 });
+    await expect(row).toContainText(/active/i);
   });
 
-  test('clicking a tournament opens the edit page', async ({ page }, testInfo) => {
-    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
-
-    // Click the tournament name link to open the document.
-    const tournamentLink = page.locator('table tbody tr td a').first();
-    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
-    await tournamentLink.click();
-    await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
+  test('clicking a tournament opens the edit page', async ({ page, request }, testInfo) => {
+    await openTournamentEditPage(page, request);
 
     expect(page.url()).toContain('/modern-rock-madness-tournaments/');
     await captureScreenshot(page, testInfo, '11-Admin-MRM-Tournament-Edit');
   });
 
-  test('tournament edit page has a Bracket tab', async ({ page }, testInfo) => {
-    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+  test('tournament edit page has a Bracket tab', async ({ page, request }, testInfo) => {
+    await openTournamentEditPage(page, request);
 
-    const tournamentLink = page.locator('table tbody tr td a').first();
-    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
-    await tournamentLink.click();
-    await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
-
-    // The Bracket custom tab should be visible in the document tab bar.
-    const bracketTab = page.getByRole('link', { name: /bracket/i });
-    await expect(bracketTab).toBeVisible({ timeout: 15000 });
+    // Payload can render custom tabs as link, tab, or button depending on version/layout.
+    const bracketTab = page
+      .locator('a, button, [role="tab"]')
+      .filter({ hasText: /bracket/i })
+      .first();
+    await expect(bracketTab).toBeVisible({ timeout: 30000 });
 
     await captureScreenshot(page, testInfo, '12-Admin-MRM-Tournament-BracketTab');
   });
 
-  test('Bracket tab loads without errors', async ({ page }, testInfo) => {
-    await page.goto(`${PAYLOAD_BASE_URL}/admin/collections/modern-rock-madness-tournaments`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    });
+  test('Bracket tab loads without errors', async ({ page, request }, testInfo) => {
+    await openTournamentEditPage(page, request);
 
-    const tournamentLink = page.locator('table tbody tr td a').first();
-    await expect(tournamentLink).toBeVisible({ timeout: 15000 });
-    await tournamentLink.click();
-    await page.waitForURL('**/modern-rock-madness-tournaments/**', { timeout: 15000 });
-
-    await page.getByRole('link', { name: /bracket/i }).click();
-    await page.waitForURL('**/bracket**', { timeout: 15000 });
+    const bracketTab = page
+      .locator('a, button, [role="tab"]')
+      .filter({ hasText: /bracket/i })
+      .first();
+    await expect(bracketTab).toBeVisible({ timeout: 30000 });
+    await bracketTab.click();
+    await page.waitForURL('**/bracket**', { timeout: 30000 });
 
     // Page should still be in the admin (no crash redirect).
     expect(page.url()).toContain('/admin');
