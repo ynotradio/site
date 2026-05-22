@@ -3,16 +3,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { TimePickerField } from './TimePickerField';
 
-vi.mock('@payloadcms/ui', () => ({ useField: vi.fn() }));
+vi.mock('@payloadcms/ui', () => ({
+  useField: vi.fn(),
+  FieldLabel: ({ label, required }: { label?: string; required?: boolean }) => (
+    <label>
+      {label}
+      {required && <span>*</span>}
+    </label>
+  ),
+}));
 
 const { useField } = await import('@payloadcms/ui');
+
+const mockField = { type: 'text' as const, label: 'Start time', required: true, name: 'startTime' };
 
 describe('TimePickerField', () => {
   const mockSetValue = vi.fn();
 
   const setup = (value: string) => {
     vi.mocked(useField).mockReturnValue({ value, setValue: mockSetValue } as any);
-    render(<TimePickerField path="startTime" />);
+    render(<TimePickerField path="startTime" field={mockField as any} />);
   };
 
   beforeEach(() => {

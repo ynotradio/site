@@ -3,12 +3,11 @@
 import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
-import { useField } from '@payloadcms/ui';
+import type { TextFieldClientProps } from 'payload';
+import { useField, FieldLabel } from '@payloadcms/ui';
 import './TimePickerField.css';
 
-interface TimePickerFieldProps {
-  path: string;
-}
+type TimePickerFieldProps = TextFieldClientProps;
 
 // All 15-min slots across the day, formatted as display strings
 const ALL_TIMES: string[] = Array.from({ length: 96 }, (_, i) => {
@@ -68,7 +67,9 @@ function parseInput(raw: string): string | null {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
+export const TimePickerField: React.FC<TimePickerFieldProps> = ({ field, path }) => {
+  const label = typeof field?.label === 'string' ? field.label : undefined;
+  const required = field?.required ?? false;
   const { value, setValue } = useField<string>({ path });
 
   const [inputText, setInputText] = useState(() => stored24hToDisplay(value || ''));
@@ -177,15 +178,19 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const inputId = `tp-${path}`;
+
   return (
     <div className="tp-wrap" ref={wrapRef}>
+      {label && <FieldLabel htmlFor={inputId} label={label} required={required} />}
       <input
         ref={inputRef}
+        id={inputId}
         type="text"
         className={`tp-input${open ? ' tp-input--open' : ''}`}
         value={inputText}
         placeholder="9:00am"
-        aria-label="Time"
+        aria-label={label ?? 'Time'}
         aria-autocomplete="list"
         autoComplete="off"
         onChange={handleInputChange}

@@ -52,9 +52,9 @@ export const Shows: CollectionConfig = {
         {
           name: 'startTime',
           type: 'text',
+          label: 'Start time',
           required: true,
           admin: {
-            description: 'Start time',
             width: '30%',
             components: {
               Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
@@ -65,9 +65,9 @@ export const Shows: CollectionConfig = {
         {
           name: 'endTime',
           type: 'text',
+          label: 'End time',
           required: true,
           admin: {
-            description: 'End time',
             width: '30%',
             components: {
               Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
