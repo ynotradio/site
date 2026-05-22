@@ -4,7 +4,8 @@ import React, {
   useState, useRef, useEffect, useCallback, useMemo,
 } from 'react';
 import type { TextFieldClientProps } from 'payload';
-import { useField, FieldLabel, mergeFieldStyles } from '@payloadcms/ui';
+import { useField, FieldLabel } from '@payloadcms/ui';
+import { mergeFieldStyles } from '@payloadcms/ui/shared';
 import './TimePickerField.css';
 
 type TimePickerFieldProps = TextFieldClientProps;
