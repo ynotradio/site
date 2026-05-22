@@ -41,7 +41,7 @@ export const TimePickerField: React.FC<TimePickerFieldProps> = ({ path }) => {
   );
 
   return (
-    <div className="time-picker" role="group">
+    <div className="time-picker" role="group" aria-label="Time">
       <select
         className="time-picker__select time-picker__select--hour"
         value={hours12}

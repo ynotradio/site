@@ -1,48 +1,82 @@
+/* Outer container — single unified border, like a single input */
 .time-picker {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.time-picker__select {
-  appearance: none;
-  background: var(--theme-input-bg, var(--theme-elevation-50));
+  display: inline-flex;
+  align-items: stretch;
   border: 1px solid var(--theme-border-color, var(--theme-elevation-200));
   border-radius: 4px;
-  color: var(--theme-text, var(--theme-elevation-1000));
-  font-size: 13px;
-  font-family: inherit;
-  line-height: 1;
-  padding: 6px 28px 6px 8px;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
+  overflow: hidden;
+  background: var(--theme-input-bg, var(--theme-elevation-50));
   transition: border-color 0.15s ease;
 }
 
-.time-picker__select:focus {
+.time-picker:focus-within {
   border-color: var(--theme-success-500, #3b82f6);
+}
+
+/* Individual segments share no external border — only internal dividers */
+.time-picker__select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--theme-border-color, var(--theme-elevation-200));
+  color: var(--theme-text, var(--theme-elevation-1000));
+  font-size: 14px;
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  padding: 7px 20px 7px 10px;
+  cursor: pointer;
+  /* Custom caret — tight, no extra space */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.time-picker__select:focus {
   outline: none;
+  background-color: var(--theme-elevation-100, rgba(0, 0, 0, 0.04));
+}
+
+/* Last segment (AM/PM) has no right divider */
+.time-picker__select:last-child {
+  border-right: none;
 }
 
 .time-picker__select--hour {
-  width: 72px;
+  width: 54px;
+  text-align: center;
 }
 
 .time-picker__select--minute {
-  width: 72px;
+  width: 54px;
+  text-align: center;
 }
 
 .time-picker__select--ampm {
-  width: 70px;
+  width: 58px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--theme-text-muted, var(--theme-elevation-500));
+  padding-left: 8px;
+  padding-right: 22px;
+}
+
+/* The colon separator is drawn purely in CSS — no DOM node */
+.time-picker__select--hour {
+  padding-right: 6px;
 }
 
 .time-picker__colon {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--theme-text, var(--theme-elevation-1000));
-  line-height: 1;
-  padding-bottom: 1px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--theme-text-muted, var(--theme-elevation-500));
+  background: transparent;
   user-select: none;
+  pointer-events: none;
 }
