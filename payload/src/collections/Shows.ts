@@ -3,25 +3,6 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { normalizeShowDate } from './hooks/showDateHooks';
 
-function formatShowTitle(
-  date: string | Date | null | undefined,
-  startTime?: string,
-  endTime?: string,
-): string {
-  if (!date) return 'Untitled show';
-  const d = new Date(date);
-  const datePart = d.toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-  if (!startTime) return datePart;
-  const timePart = endTime ? `${startTime}–${endTime}` : startTime;
-  return `${datePart} · ${timePart}`;
-}
-
 export const Shows: CollectionConfig = {
   slug: 'shows',
   enableQueryPresets: true,
@@ -30,7 +11,7 @@ export const Shows: CollectionConfig = {
     plural: 'Shows',
   },
   admin: {
-    useAsTitle: 'title',
+    useAsTitle: 'date',
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'name', 'updatedAt'],
     group: 'Radio',
     description:
@@ -43,12 +24,6 @@ export const Shows: CollectionConfig = {
   defaultSort: 'date',
   hooks: {
     beforeChange: [normalizeShowDate],
-    afterRead: [
-      ({ doc }) => ({
-        ...doc,
-        title: formatShowTitle(doc.date, doc.startTime, doc.endTime),
-      }),
-    ],
   },
   access: {
     read: () => true, // Public read access
@@ -57,12 +32,6 @@ export const Shows: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   fields: [
-    {
-      name: 'title',
-      type: 'text',
-      virtual: true,
-      admin: { hidden: true },
-    },
     {
       type: 'row',
       fields: [
