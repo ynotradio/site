@@ -12,7 +12,7 @@ export const ShowsListHeader: React.FC = () => {
     if (Array.from(searchParams.keys()).some((k) => k.startsWith('where'))) return;
 
     const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
     const iso = today.toISOString();
 
     const params = new URLSearchParams(searchParams.toString());
