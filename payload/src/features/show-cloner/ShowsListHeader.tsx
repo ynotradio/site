@@ -9,7 +9,7 @@ export const ShowsListHeader: React.FC = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (searchParams.has('where')) return;
+    if (Array.from(searchParams.keys()).some((k) => k.startsWith('where'))) return;
 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
