@@ -26,6 +26,7 @@
     }
   },
   "include": [
+    "middleware.ts",
     "bin/**/*.ts",
     "config/**/*.ts",
     "test/**/*.ts",
