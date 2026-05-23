@@ -17,7 +17,7 @@ export const ShowsListHeader: React.FC = () => {
 
     const params = new URLSearchParams(searchParams.toString());
     params.set('where[or][0][and][0][date][greater_than_equal]', iso);
-    params.set('sort', '-startTime');
+    params.set('sort', 'startTime');
     params.set('groupBy', 'date');
     if (!params.has('limit')) params.set('limit', '10');
     router.replace(`?${params.toString()}`);

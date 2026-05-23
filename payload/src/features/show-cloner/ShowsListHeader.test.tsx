@@ -51,7 +51,7 @@ describe('ShowsListHeader', () => {
 
     const redirectUrl = mockReplace.mock.calls[0][0] as string;
     const params = new URLSearchParams(redirectUrl.slice(1));
-    expect(params.get('sort')).toBe('-startTime');
+    expect(params.get('sort')).toBe('startTime');
     expect(params.get('groupBy')).toBe('date');
     expect(params.has('where[or][0][and][0][date][greater_than_equal]')).toBe(true);
   });
