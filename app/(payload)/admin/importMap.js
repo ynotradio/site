@@ -30,10 +30,19 @@ import { MusicBrainzRecordingCell as MusicBrainzRecordingCell_24d82142d38adfa7da
 import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
 import { MusicBrainzReleaseCell as MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
+import { TimeCell as TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1 } from '../../../payload/src/components/cells/TimeCell'
+import { TimePickerField as TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb } from '../../../payload/src/components/fields/TimePickerField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { TournamentBracketTab as TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27 } from '../../../payload/src/features/mrm-bracket/TournamentBracketTab'
 import { MatchControlsTab as MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953 } from '../../../payload/src/features/mrm-live/MatchControlsTab'
+import { QueryPresetsAccessCell as QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsWhereCell as QueryPresetsWhereCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsWhereField as QueryPresetsWhereField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsColumnsCell as QueryPresetsColumnsCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsColumnField as QueryPresetsColumnField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsGroupByCell as QueryPresetsGroupByCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { QueryPresetsGroupByField as QueryPresetsGroupByField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
 import { Icon as Icon_b60ecf12ac563c9d63b2827d1268ac0d } from '../../../payload/src/components/branding/Icon'
 import { Logo as Logo_7d5c0eb777646cee89558767757b099d } from '../../../payload/src/components/branding/Logo'
 import { CustomDashboard as CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a } from '../../../payload/src/components/dashboard/CustomDashboard'
@@ -44,6 +53,7 @@ import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } fro
 import { LiveMatchTool as LiveMatchTool_8e09218c140287dbcfa6d389b5910882 } from '../../../payload/src/features/mrm-live'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/next/client#SlugField": SlugField_2b8867833a34864a02ddf429b0728a40,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -77,10 +87,19 @@ export const importMap = {
   "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
   "/payload/src/components/cells/MusicBrainzCell#MusicBrainzReleaseCell": MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
+  "/payload/src/components/cells/TimeCell#TimeCell": TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1,
+  "/payload/src/components/fields/TimePickerField#TimePickerField": TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab": TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27,
   "/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab": MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953,
+  "@payloadcms/next/client#QueryPresetsAccessCell": QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsWhereCell": QueryPresetsWhereCell_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsWhereField": QueryPresetsWhereField_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsColumnsCell": QueryPresetsColumnsCell_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsColumnField": QueryPresetsColumnField_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsGroupByCell": QueryPresetsGroupByCell_2b8867833a34864a02ddf429b0728a40,
+  "@payloadcms/next/client#QueryPresetsGroupByField": QueryPresetsGroupByField_2b8867833a34864a02ddf429b0728a40,
   "/payload/src/components/branding/Icon#Icon": Icon_b60ecf12ac563c9d63b2827d1268ac0d,
   "/payload/src/components/branding/Logo#Logo": Logo_7d5c0eb777646cee89558767757b099d,
   "/payload/src/components/dashboard/CustomDashboard#CustomDashboard": CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a,
