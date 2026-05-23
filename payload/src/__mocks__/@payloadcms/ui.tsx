@@ -6,6 +6,24 @@ import React from 'react';
 let mockFieldValue = '';
 let mockFormFieldsValue: Record<string, any> = {};
 
+export const mergeFieldStyles = () => ({});
+
+type FieldLabelProps = { label?: string; required?: boolean; htmlFor?: string };
+
+export const FieldLabel: React.FC<FieldLabelProps> = ({ label, required }) => (
+  <label
+    style={{
+      display: 'block',
+      marginBottom: 4,
+      fontSize: 13,
+      fontWeight: 500,
+    }}
+  >
+    {label}
+    {required && <span style={{ color: 'red', marginLeft: 2 }}>*</span>}
+  </label>
+);
+
 export const useField = () => ({
   value: mockFieldValue,
   setValue: (newValue: string) => {
@@ -21,7 +39,9 @@ export const useFormFields = (selector?: (fields: any) => any) => {
 };
 
 // Mock Gutter component (wraps content with padding)
-export const Gutter: React.FC<{ children: React.ReactNode }> = ({ children }) => <div style={{ padding: '0 var(--gutter-h, 25px)' }}>{children}</div>;
+export const Gutter: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div style={{ padding: '0 var(--gutter-h, 25px)' }}>{children}</div>
+);
 
 // Mock useStepNav hook (for breadcrumbs)
 export const useStepNav = () => ({
@@ -66,17 +86,16 @@ export const useNav = () => ({
 let mockPreferences: Record<string, unknown> = {};
 
 export const usePreferences = () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  getPreference: async <T extends unknown>(key: string): Promise<T | null> => (
-    (mockPreferences[key] as T) ?? null
-  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, max-len, implicit-arrow-linebreak
+  getPreference: async <T extends unknown>(key: string): Promise<T | null> => (mockPreferences[key] as T) ?? null, // prettier-ignore
   setPreference: async (key: string, value: unknown) => {
     mockPreferences[key] = value;
   },
 });
 
 // Helper to set mock nav preferences for stories
-export const setMockNavPreference = (value: { open?: boolean } | null) => {
+type NavPref = { open?: boolean } | null;
+export const setMockNavPreference = (value: NavPref) => {
   if (value === null) {
     delete mockPreferences.nav;
   } else {

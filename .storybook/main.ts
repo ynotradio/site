@@ -29,7 +29,8 @@ const config: StorybookConfig = {
     return mergeConfig(config, {
       resolve: {
         alias: {
-          '@payloadcms/ui': resolve(__dirname, '../payload/src/__mocks__/@payloadcms/ui.tsx')
+          '@payloadcms/ui/shared': resolve(__dirname, '../payload/src/__mocks__/@payloadcms/ui-shared.tsx'),
+          '@payloadcms/ui': resolve(__dirname, '../payload/src/__mocks__/@payloadcms/ui.tsx'),
         }
       }
     });

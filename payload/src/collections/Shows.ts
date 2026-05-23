@@ -12,7 +12,7 @@ export const Shows: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'date',
-    defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
+    defaultColumns: ['date', 'startTime', 'endTime', 'host', 'name', 'updatedAt'],
     group: 'Radio',
     description:
       'Weekly show schedule. Each entry is one time slot. Use Show Cloner to copy a full week to new dates.',
@@ -52,21 +52,27 @@ export const Shows: CollectionConfig = {
         {
           name: 'startTime',
           type: 'text',
+          label: 'Start time',
           required: true,
           admin: {
-            description: 'Start time',
-            placeholder: 'HH:MM',
             width: '30%',
+            components: {
+              Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
+              Cell: '/payload/src/components/cells/TimeCell#TimeCell',
+            },
           },
         },
         {
           name: 'endTime',
           type: 'text',
+          label: 'End time',
           required: true,
           admin: {
-            description: 'End time',
-            placeholder: 'HH:MM',
             width: '30%',
+            components: {
+              Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
+              Cell: '/payload/src/components/cells/TimeCell#TimeCell',
+            },
           },
         },
       ],
