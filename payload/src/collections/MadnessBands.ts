@@ -22,7 +22,7 @@ export const ModernRockMadnessGroups: CollectionConfig = {
     read: () => true,
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

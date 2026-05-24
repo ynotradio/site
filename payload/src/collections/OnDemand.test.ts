@@ -52,10 +52,10 @@ describe('OnDemand', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('allows only admin to delete', () => {
+  it('allows admin and editor to delete', () => {
     const deleteFn = OnDemand.access?.delete as (args: { req: { user: unknown } }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(deleteFn({ req: { user: { role: 'dj' } } })).toBe(false);
   });
 
@@ -192,7 +192,10 @@ describe('OnDemand', () => {
     const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
     const hook = hooks?.beforeChange?.[0];
     expect(typeof hook).toBe('function');
-    const result = await hook!({ siblingData: { artists: [] }, req: { payload: { find: vi.fn() } } });
+    const result = await hook!({
+      siblingData: { artists: [] },
+      req: { payload: { find: vi.fn() } },
+    });
     expect(result).toBe('');
   });
 
@@ -201,7 +204,9 @@ describe('OnDemand', () => {
     const artistsTextField = fields.find((f) => f.name === 'artistsText');
     const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
     const hook = hooks?.beforeChange?.[0];
-    const mockFind = vi.fn().mockResolvedValue({ docs: [{ name: 'The National' }, { name: 'Phoebe Bridgers' }] });
+    const mockFind = vi
+      .fn()
+      .mockResolvedValue({ docs: [{ name: 'The National' }, { name: 'Phoebe Bridgers' }] });
     const result = await hook!({
       siblingData: { artists: [1, 2] },
       req: { payload: { find: mockFind } },
@@ -223,9 +228,7 @@ describe('OnDemand', () => {
       req: { payload: { find: mockFind } },
     });
     expect(result).toBe('The National');
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: { in: [1] } } }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: [1] } } }));
   });
 
   it('syncArtistsText hook returns empty string on fetch error', async () => {
@@ -353,8 +356,6 @@ describe('OnDemand', () => {
       req: { payload: { find: mockFind } },
     });
     expect(result).toBe('Artist — Song Title');
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: { in: [10] } } }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: [10] } } }));
   });
 });

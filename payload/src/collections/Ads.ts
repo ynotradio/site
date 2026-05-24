@@ -26,7 +26,7 @@ export const Ads: CollectionConfig = {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

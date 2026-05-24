@@ -47,10 +47,10 @@ describe('Records', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('allows only admin to delete', () => {
+  it('allows admin and editor to delete', () => {
     const deleteFn = Records.access?.delete as (args: { req: { user: unknown } }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
   });
 
   it('has title as a required text field with index', () => {

@@ -51,10 +51,10 @@ describe('CdOfTheWeek', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('allows only admin to delete', () => {
+  it('allows admin and editor to delete', () => {
     const deleteFn = CdOfTheWeek.access?.delete as (args: { req: { user: unknown } }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
   });
 
   it('has record as a required relationship to records', () => {
@@ -148,7 +148,9 @@ describe('CdOfTheWeek', () => {
     const recordTextField = fields.find((f) => f.name === 'recordText');
     const hooks = recordTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
     const hook = hooks?.beforeChange?.[0];
-    const mockFind = vi.fn().mockResolvedValue({ docs: [{ displayName: 'Radiohead — OK Computer' }] });
+    const mockFind = vi
+      .fn()
+      .mockResolvedValue({ docs: [{ displayName: 'Radiohead — OK Computer' }] });
     const result = await hook!({
       siblingData: { record: 42 },
       req: { payload: { find: mockFind } },
