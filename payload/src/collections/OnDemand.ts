@@ -36,7 +36,9 @@ const syncSongsText: FieldHook = async ({ siblingData, req }) => {
       limit: ids.length,
       depth: 0,
     });
-    return docs.map((s: { displayName?: unknown; title?: unknown }) => String(s.displayName ?? s.title ?? '')).join(', ');
+    return docs
+      .map((s: { displayName?: unknown; title?: unknown }) => String(s.displayName ?? s.title ?? ''))
+      .join(', ');
   } catch {
     return '';
   }
@@ -66,7 +68,7 @@ export const OnDemand: CollectionConfig = {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor', 'dj']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

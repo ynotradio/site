@@ -9,20 +9,22 @@ import {
 } from '@payloadcms/richtext-lexical';
 import type { SerializedEditorState } from 'lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
-import {
-  convertConcertTitleToHtml,
-  convertConcertTitleToPlain,
-} from '../utils/concertTitle';
+import { convertConcertTitleToHtml, convertConcertTitleToPlain } from '../utils/concertTitle';
 
-type ConcertSiblingData = { title?: SerializedEditorState | null; artists?: unknown[] | null };
+type ConcertSiblingData = {
+  title?: SerializedEditorState | null;
+  artists?: unknown[] | null;
+};
 
-const syncTitleHtml: FieldHook = ({ siblingData }) => convertConcertTitleToHtml(
-  (siblingData as ConcertSiblingData).title,
-);
+const syncTitleHtml: FieldHook = ({ siblingData }) => {
+  const data = siblingData as ConcertSiblingData;
+  return convertConcertTitleToHtml(data.title);
+};
 
-const syncTitlePlain: FieldHook = ({ siblingData }) => convertConcertTitleToPlain(
-  (siblingData as ConcertSiblingData).title,
-);
+const syncTitlePlain: FieldHook = ({ siblingData }) => {
+  const data = siblingData as ConcertSiblingData;
+  return convertConcertTitleToPlain(data.title);
+};
 
 const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
   const artists = (siblingData as ConcertSiblingData).artists ?? [];
@@ -67,7 +69,7 @@ export const Concerts: CollectionConfig = {
     read: () => true,
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

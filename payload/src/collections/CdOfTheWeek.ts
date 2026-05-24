@@ -7,9 +7,7 @@ import { setCdOfTheWeekSlugFromRecord, cdSlugify } from './hooks/slugUtils';
 const syncRecordText: FieldHook = async ({ siblingData, req }) => {
   const raw = (siblingData as { record?: unknown }).record;
   if (!raw) return '';
-  const id = typeof raw === 'object' && raw !== null && 'id' in raw
-    ? (raw as { id: unknown }).id
-    : raw;
+  const id = typeof raw === 'object' && raw !== null && 'id' in raw ? (raw as { id: unknown }).id : raw;
   try {
     const { docs } = await req.payload.find({
       collection: 'records',
@@ -47,7 +45,7 @@ export const CdOfTheWeek: CollectionConfig = {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
     beforeChange: [setCdOfTheWeekSlugFromRecord],
