@@ -63,10 +63,10 @@ describe('Concerts', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('requires admin role to delete', () => {
+  it('requires admin or editor role to delete', () => {
     const deleteFn = Concerts.access?.delete as (args: { req: { user: unknown } }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(deleteFn({ req: { user: null } })).toBe(false);
   });
 
@@ -160,7 +160,10 @@ describe('Concerts', () => {
     const hooks = artistsTextField?.hooks as { beforeChange?: ((args: unknown) => unknown)[] };
     const hook = hooks?.beforeChange?.[0];
     expect(typeof hook).toBe('function');
-    const result = await hook!({ siblingData: { artists: [] }, req: { payload: { find: vi.fn() } } });
+    const result = await hook!({
+      siblingData: { artists: [] },
+      req: { payload: { find: vi.fn() } },
+    });
     expect(result).toBe('');
   });
 
@@ -191,9 +194,7 @@ describe('Concerts', () => {
       req: { payload: { find: mockFind } },
     });
     expect(result).toBe('Band A');
-    expect(mockFind).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: { in: [1] } } }),
-    );
+    expect(mockFind).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: [1] } } }));
   });
 
   it('syncArtistsText hook returns empty string on fetch error', async () => {

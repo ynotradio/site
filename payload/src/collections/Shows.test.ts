@@ -43,10 +43,10 @@ describe('Shows', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('allows only admin to delete', () => {
+  it('allows admin and editor to delete', () => {
     const deleteFn = Shows.access?.delete as (args: { req: { user: unknown } }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(deleteFn({ req: { user: { role: 'dj' } } })).toBe(false);
   });
 
@@ -87,9 +87,7 @@ describe('Shows', () => {
   it('shows the Show Cloner in the before-list slot', () => {
     const components = Shows.admin?.components as Record<string, unknown> | undefined;
     expect(components?.beforeList).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('ShowsListHeader'),
-      ]),
+      expect.arrayContaining([expect.stringContaining('ShowsListHeader')]),
     );
   });
 

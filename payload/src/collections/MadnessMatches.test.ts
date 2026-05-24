@@ -104,12 +104,12 @@ describe('ModernRockMadnessMatches', () => {
     expect(updateFn({ req: { user: null } })).toBe(false);
   });
 
-  it('restricts delete to admin role only', () => {
+  it('restricts delete to admin and editor roles', () => {
     const deleteFn = ModernRockMadnessMatches.access?.delete as (args: {
       req: { user: unknown };
     }) => boolean;
     expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
-    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(false);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(deleteFn({ req: { user: null } })).toBe(false);
   });
 
