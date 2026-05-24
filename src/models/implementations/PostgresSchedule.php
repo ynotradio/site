@@ -20,103 +20,57 @@ class PostgresSchedule implements Schedule {
     }
 
     public function getById(int $id): ?array {
-        $stmt = $this->db->prepare("
-            SELECT
-                s.id,
-                (s.date AT TIME ZONE 'America/New_York')::date::text AS date,
-                trim(to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMDay')) AS day,
-                to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMMonth DD, YYYY') AS fdate,
-                s.start_time,
-                s.end_time,
-                to_char(s.start_time::time, 'FMHH12:MIAM') AS stime,
-                to_char(s.start_time::time, 'FMHH12AM') AS stime_no_min,
-                to_char(s.start_time::time, 'MI') AS start_min,
-                to_char(s.end_time::time, 'FMHH12:MIAM') AS etime,
-                to_char(s.end_time::time, 'FMHH12AM') AS etime_no_min,
-                to_char(s.end_time::time, 'MI') AS end_min,
-                COALESCE(s.name, '') AS show_name,
-                COALESCE(d.display_name, '') AS host_display,
-                s.note::text AS note
-            FROM shows s
-            LEFT JOIN djs d ON d.id = s.host_id
+        $stmt = $this->db->prepare($this->buildSelect('FMMonth DD, YYYY') . "
             WHERE s.id = :id
             LIMIT 1
         ");
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
 
-        if (!$row) {
-            return null;
-        }
-
-        return $this->formatEntry($row);
+        return $row ? $this->formatEntry($row) : null;
     }
 
     public function getByDate(string $date): array {
-        $stmt = $this->db->prepare("
-            SELECT
-                s.id,
-                (s.date AT TIME ZONE 'America/New_York')::date::text AS date,
-                trim(to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMDay')) AS day,
-                to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMMonth DD, YYYY') AS fdate,
-                s.start_time,
-                s.end_time,
-                to_char(s.start_time::time, 'FMHH12:MIAM') AS stime,
-                to_char(s.start_time::time, 'FMHH12AM') AS stime_no_min,
-                to_char(s.start_time::time, 'MI') AS start_min,
-                to_char(s.end_time::time, 'FMHH12:MIAM') AS etime,
-                to_char(s.end_time::time, 'FMHH12AM') AS etime_no_min,
-                to_char(s.end_time::time, 'MI') AS end_min,
-                COALESCE(s.name, '') AS show_name,
-                COALESCE(d.display_name, '') AS host_display,
-                s.note::text AS note
-            FROM shows s
-            LEFT JOIN djs d ON d.id = s.host_id
+        $stmt = $this->db->prepare($this->buildSelect('FMMonth DD, YYYY') . "
             WHERE (s.date AT TIME ZONE 'America/New_York')::date = :schedule_date::date
             ORDER BY s.start_time, s.id
         ");
         $stmt->execute(['schedule_date' => $date]);
 
-        $rows = $stmt->fetchAll();
-
-        return array_map(fn($row) => $this->formatEntry($row), $rows);
+        return array_map(fn($row) => $this->formatEntry($row), $stmt->fetchAll());
     }
 
     public function getUpcoming(int $limit = 7): array {
-        $stmt = $this->db->prepare("
-            SELECT
-                s.id,
-                (s.date AT TIME ZONE 'America/New_York')::date::text AS date,
-                trim(to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMDay')) AS day,
-                to_char((s.date AT TIME ZONE 'America/New_York')::date, 'MM/DD/YY') AS fdate,
-                s.start_time,
-                s.end_time,
-                to_char(s.start_time::time, 'FMHH12:MIAM') AS stime,
-                to_char(s.start_time::time, 'FMHH12AM') AS stime_no_min,
-                to_char(s.start_time::time, 'MI') AS start_min,
-                to_char(s.end_time::time, 'FMHH12:MIAM') AS etime,
-                to_char(s.end_time::time, 'FMHH12AM') AS etime_no_min,
-                to_char(s.end_time::time, 'MI') AS end_min,
-                COALESCE(s.name, '') AS show_name,
-                COALESCE(d.display_name, '') AS host_display,
-                s.note::text AS note
-            FROM shows s
-            LEFT JOIN djs d ON d.id = s.host_id
-            WHERE (s.date AT TIME ZONE 'America/New_York')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date
-            ORDER BY (s.date AT TIME ZONE 'America/New_York')::date, s.start_time, s.id
-        ");
-        $stmt->execute();
-
-        return $this->groupEntriesByDate($stmt->fetchAll(), $limit);
+        return $this->groupEntriesByDate($this->fetchUpcomingRows(), $limit);
     }
 
     public function getAllForAdmin(): array {
-        $stmt = $this->db->prepare("
+        return $this->groupEntriesByDate($this->fetchUpcomingRows());
+    }
+
+    public function add(array $data): int {
+        throw $this->writeNotSupportedException('creating');
+    }
+
+    public function update(int $id, array $data): bool {
+        throw $this->writeNotSupportedException('updating');
+    }
+
+    public function delete(int $id): bool {
+        throw $this->writeNotSupportedException('deleting');
+    }
+
+    public function copyDay(string $sourceDate, string $targetDate): bool {
+        throw $this->writeNotSupportedException('copying');
+    }
+
+    private function buildSelect(string $fdateFormat): string {
+        return "
             SELECT
                 s.id,
                 (s.date AT TIME ZONE 'America/New_York')::date::text AS date,
                 trim(to_char((s.date AT TIME ZONE 'America/New_York')::date, 'FMDay')) AS day,
-                to_char((s.date AT TIME ZONE 'America/New_York')::date, 'MM/DD/YY') AS fdate,
+                to_char((s.date AT TIME ZONE 'America/New_York')::date, '{$fdateFormat}') AS fdate,
                 s.start_time,
                 s.end_time,
                 to_char(s.start_time::time, 'FMHH12:MIAM') AS stime,
@@ -130,39 +84,23 @@ class PostgresSchedule implements Schedule {
                 s.note::text AS note
             FROM shows s
             LEFT JOIN djs d ON d.id = s.host_id
+        ";
+    }
+
+    private function fetchUpcomingRows(): array {
+        $stmt = $this->db->prepare($this->buildSelect('MM/DD/YY') . "
             WHERE (s.date AT TIME ZONE 'America/New_York')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date
             ORDER BY (s.date AT TIME ZONE 'America/New_York')::date, s.start_time, s.id
         ");
         $stmt->execute();
 
-        return $this->groupEntriesByDate($stmt->fetchAll());
+        return $stmt->fetchAll();
     }
 
-    public function add(array $data): int {
-        throw new \RuntimeException(
+    private function writeNotSupportedException(string $operation): \RuntimeException {
+        return new \RuntimeException(
             'Write operations are not supported in the PostgreSQL schedule model. ' .
-            'Please use Payload CMS admin interface or API for creating schedule entries.'
-        );
-    }
-
-    public function update(int $id, array $data): bool {
-        throw new \RuntimeException(
-            'Write operations are not supported in the PostgreSQL schedule model. ' .
-            'Please use Payload CMS admin interface or API for updating schedule entries.'
-        );
-    }
-
-    public function delete(int $id): bool {
-        throw new \RuntimeException(
-            'Write operations are not supported in the PostgreSQL schedule model. ' .
-            'Please use Payload CMS admin interface or API for deleting schedule entries.'
-        );
-    }
-
-    public function copyDay(string $sourceDate, string $targetDate): bool {
-        throw new \RuntimeException(
-            'Write operations are not supported in the PostgreSQL schedule model. ' .
-            'Please use Payload CMS admin interface or API for copying schedule entries.'
+            "Please use Payload CMS admin interface or API for {$operation} schedule entries."
         );
     }
 
@@ -243,7 +181,7 @@ class PostgresSchedule implements Schedule {
                     ],
                     'entries' => [],
                 ];
-                $countedDays += 1;
+                $countedDays++;
             }
 
             $grouped[$date]['entries'][] = $this->formatEntry($row);
