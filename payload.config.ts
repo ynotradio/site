@@ -78,6 +78,7 @@ export default buildConfig({
     constraints: {},
   },
   admin: {
+    dateFormat: 'EEEE, MMMM do, yyyy',
     user: Users.slug,
     // Auto-login for development: Pre-fills credentials but user must click login
     // https://payloadcms.com/docs/authentication/overview#auto-login
