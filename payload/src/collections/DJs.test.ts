@@ -53,12 +53,12 @@ describe('DJs', () => {
     expect(deleteFn({ req: { user: { role: 'dj' } } })).toBe(false);
   });
 
-  it('has displayName as a sidebar field', () => {
+  it('has displayName as an editable sidebar field', () => {
     const fields = flattenRowFields(DJs.fields as Record<string, unknown>[]);
     const displayNameField = fields.find((f) => f.name === 'displayName');
     expect(displayNameField?.type).toBe('text');
     expect((displayNameField?.admin as Record<string, unknown>)?.position).toBe('sidebar');
-    expect((displayNameField?.admin as Record<string, unknown>)?.readOnly).toBe(true);
+    expect((displayNameField?.admin as Record<string, unknown>)?.readOnly).toBeUndefined();
   });
 
   it('has person as a hasMany relationship to people', () => {
@@ -99,9 +99,7 @@ describe('DJs', () => {
   it('shows the DJ Order tool in the before-list slot', () => {
     const components = DJs.admin?.components as Record<string, unknown> | undefined;
     expect(components?.beforeList).toEqual(
-      expect.arrayContaining([
-        expect.stringContaining('DJsListHeader'),
-      ]),
+      expect.arrayContaining([expect.stringContaining('DJsListHeader')]),
     );
   });
 

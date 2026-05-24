@@ -24,6 +24,17 @@ describe('DJs displayName beforeChange hook', () => {
     };
   });
 
+  it('should preserve manually entered displayName', async () => {
+    const result = await generateDJDisplayName({
+      data: { displayName: 'Custom DJ Name', person: [1] },
+      req: createMockReq(mockPayload),
+      operation: 'update',
+    });
+
+    expect(result.displayName).toBe('Custom DJ Name');
+    expect(mockPayload.find).not.toHaveBeenCalled();
+  });
+
   it('should generate displayName from single person', async () => {
     (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
       docs: [{ id: 1, name: 'John Doe' }],
@@ -109,7 +120,10 @@ describe('DJs displayName beforeChange hook', () => {
 
   it('should handle person with null name, joining non-null names', async () => {
     (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
-      docs: [{ id: 1, name: null }, { id: 2, name: 'Jane Smith' }],
+      docs: [
+        { id: 1, name: null },
+        { id: 2, name: 'Jane Smith' },
+      ],
     });
 
     const result = await generateDJDisplayName({
