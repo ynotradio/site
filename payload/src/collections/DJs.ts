@@ -40,9 +40,8 @@ export const DJs: CollectionConfig = {
       type: 'text',
       admin: {
         position: 'sidebar',
-        readOnly: true,
         description:
-          'Shown on the website — generated automatically from the linked person name(s)',
+          'Shown on the website — auto-generated from linked person name(s), but can be overridden',
       },
     },
     {
