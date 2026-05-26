@@ -10,6 +10,7 @@ import {
 import type { SerializedEditorState } from 'lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { convertConcertTitleToHtml, convertConcertTitleToPlain } from '../utils/concertTitle';
+import { normalizeDateToNoon } from './hooks/showDateHooks';
 
 type ConcertSiblingData = {
   title?: SerializedEditorState | null;
@@ -65,6 +66,9 @@ export const Concerts: CollectionConfig = {
     groupBy: true,
   },
   defaultSort: 'date',
+  hooks: {
+    beforeChange: [normalizeDateToNoon],
+  },
   access: {
     read: () => true,
     create: ({ req }) => Boolean(req.user),
@@ -131,6 +135,7 @@ export const Concerts: CollectionConfig = {
         description: 'Concert date',
         date: {
           displayFormat: 'yyyy-MM-dd',
+          pickerAppearance: 'dayOnly',
         },
       },
     },
