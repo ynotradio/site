@@ -3,6 +3,7 @@ import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
 import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Records: CollectionConfig = {
   slug: 'records',
@@ -118,17 +119,7 @@ export const Records: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

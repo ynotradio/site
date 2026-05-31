@@ -5,6 +5,7 @@ import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
 import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { postSlugify } from './hooks/slugUtils';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
@@ -142,17 +143,7 @@ export const Posts: CollectionConfig = {
           'Display order on the front page — higher numbers appear first. Same priority sorts by date.',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',
