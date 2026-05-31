@@ -36,6 +36,7 @@ export function middleware(request: NextRequest) {
       const sixMonthsAgo = new Date();
       sixMonthsAgo.setUTCHours(12, 0, 0, 0);
       sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      url.searchParams.set('where[featureOnNewMusic][equals]', 'true');
       url.searchParams.set('where[releaseDate][greater_than_equal]', sixMonthsAgo.toISOString());
       url.searchParams.set('sort', '-releaseDate');
       url.searchParams.set('groupBy', 'releaseDate');
