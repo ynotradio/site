@@ -49,8 +49,9 @@ export function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       const now = new Date();
       now.setUTCHours(12, 0, 0, 0);
-      url.searchParams.set('where[endDate][greater_than_equal]', now.toISOString());
-      url.searchParams.set('where[startDate][less_than_equal]', now.toISOString());
+      url.searchParams.set('where[or][0][and][0][showOnFrontPage][equals]', 'true');
+      url.searchParams.set('where[or][0][and][1][endDate][greater_than_equal]', now.toISOString());
+      url.searchParams.set('where[or][0][and][2][startDate][less_than_equal]', now.toISOString());
       url.searchParams.set('sort', 'priority');
       url.searchParams.set('groupBy', 'startDate');
       return NextResponse.redirect(url);
