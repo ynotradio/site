@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { normalizeFieldToNoon } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
@@ -105,17 +106,7 @@ export const Ads: CollectionConfig = {
         description: 'Display order — higher numbers appear first. Same priority sorts by date.',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

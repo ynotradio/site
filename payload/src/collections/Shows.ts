@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { normalizeShowDate } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
@@ -100,17 +101,7 @@ export const Shows: CollectionConfig = {
         description: 'Notes shown alongside this time slot (e.g., "Best Of" episode, guest DJ)',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

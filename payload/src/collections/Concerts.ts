@@ -11,6 +11,7 @@ import type { SerializedEditorState } from 'lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { convertConcertTitleToHtml, convertConcertTitleToPlain } from '../utils/concertTitle';
 import { normalizeDateToNoon } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 type ConcertSiblingData = {
   title?: SerializedEditorState | null;
@@ -173,17 +174,7 @@ export const Concerts: CollectionConfig = {
         placeholder: 'https://',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',
