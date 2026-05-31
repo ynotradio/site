@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
@@ -48,6 +49,7 @@ export const Ads: CollectionConfig = {
             description: 'Ad is visible on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -60,6 +62,7 @@ export const Ads: CollectionConfig = {
             description: 'Ad is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -124,5 +127,8 @@ export const Ads: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [normalizeFieldToNoon('startDate'), normalizeFieldToNoon('endDate')],
+  },
   timestamps: true,
 };

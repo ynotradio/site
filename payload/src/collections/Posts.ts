@@ -3,6 +3,7 @@ import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { postSlugify } from './hooks/slugUtils';
 
 export const Posts: CollectionConfig = {
@@ -32,7 +33,7 @@ export const Posts: CollectionConfig = {
     description:
       'Front-page stories. Each story is visible on the site between its start and end dates.',
   },
-  defaultSort: ['-startDate', '-priority'],
+  defaultSort: ['priority', '-startDate'],
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
@@ -61,6 +62,7 @@ export const Posts: CollectionConfig = {
             description: 'Story appears on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -73,6 +75,7 @@ export const Posts: CollectionConfig = {
             description: 'Story is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -161,5 +164,8 @@ export const Posts: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [normalizeFieldToNoon('startDate'), normalizeFieldToNoon('endDate')],
+  },
   timestamps: true,
 };

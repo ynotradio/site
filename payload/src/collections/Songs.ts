@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
+import { normalizeDateToNoon } from './hooks/showDateHooks';
 import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
 
 export const Songs: CollectionConfig = {
@@ -36,7 +37,11 @@ export const Songs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
-    beforeChange: [generateMusicSlugBeforeChangeHook, generateMusicDisplayName('Song')],
+    beforeChange: [
+      normalizeDateToNoon,
+      generateMusicSlugBeforeChangeHook,
+      generateMusicDisplayName('Song'),
+    ],
   },
   fields: [
     {
@@ -83,6 +88,7 @@ export const Songs: CollectionConfig = {
         description: 'Date the song was released',
         date: {
           displayFormat: 'yyyy-MM-dd',
+          pickerAppearance: 'dayOnly',
         },
       },
     },
