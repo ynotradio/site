@@ -35,8 +35,8 @@ export const recordInlineFields: Field[] = [
         type: 'date',
         admin: {
           description: 'Release date',
-          date: {
-            displayFormat: 'yyyy-MM-dd',
+          components: {
+            Field: '/payload/src/components/fields/InlineDateField#InlineDateField',
           },
           width: '40%',
         },
