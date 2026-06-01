@@ -12,7 +12,10 @@ import {
 } from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
 import { fieldIsSidebar } from 'payload/shared';
-import type { ClientField, FormState, Data } from 'payload';
+import type {
+  ClientField, FormState, Data, CollectionConfig,
+} from 'payload';
+import { getInlineCollectionStatusMessage } from './InlineCollectionStatusMessage';
 
 type Props = {
   collectionSlug: string;
@@ -25,6 +28,7 @@ type Props = {
   disableSubmit?: boolean;
   disableGutter?: boolean;
   layout?: 'document' | 'stacked';
+  collectionConfig?: Pick<CollectionConfig, 'fields' | 'labels'>;
 };
 
 const RenderFieldLayout: React.FC<{
@@ -108,12 +112,13 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
   disableSubmit = false,
   disableGutter = false,
   layout = 'document',
+  collectionConfig,
 }) => {
   const { config: payloadConfig, getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
 
-  const config = getEntityConfig({ collectionSlug });
-  const configLoaded = (payloadConfig?.collections?.length ?? 0) > 0;
+  const config = collectionConfig ?? getEntityConfig({ collectionSlug });
+  const configLoaded = collectionConfig ? true : (payloadConfig?.collections?.length ?? 0) > 0;
   const allFields = (config?.fields as ClientField[]) || [];
   const fields = allFields.filter(
     (f) => !excludeFields.includes((f as { name?: string }).name ?? ''),
@@ -223,28 +228,18 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
     return disableGutter ? content : <Gutter>{content}</Gutter>;
   }
 
-  if (!configLoaded) {
-    return renderInGutter(<div style={{ padding: '2rem 0' }}>Loading form…</div>);
-  }
+  const statusMessage = getInlineCollectionStatusMessage({
+    config,
+    configLoaded,
+    collectionSlug,
+    error,
+    hasFields: fields.length > 0,
+    loading,
+    singularLabel: config.labels?.singular || collectionSlug,
+  });
 
-  if (!config) {
-    return renderInGutter(
-      <div className="payload-error" style={{ color: 'var(--theme-error-500)' }}>
-        {error || `Collection "${collectionSlug}" not found`}
-      </div>,
-    );
-  }
-
-  if (loading) {
-    return renderInGutter(<div style={{ padding: '2rem 0' }}>Loading form…</div>);
-  }
-
-  if (!fields.length) {
-    return renderInGutter(
-      <div>
-        The {config.labels?.singular || collectionSlug} collection has no fields to display.
-      </div>,
-    );
+  if (statusMessage) {
+    return renderInGutter(statusMessage);
   }
 
   return renderInGutter(

@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import {
-  Form, RenderFields, useConfig, useServerFunctions,
-} from '@payloadcms/ui';
+import { Form, RenderFields, useServerFunctions } from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
-import type { ClientField, FormState } from 'payload';
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import type { Field, FormState } from 'payload';
 
 interface Props {
   valueRef: React.MutableRefObject<unknown>;
@@ -17,14 +16,16 @@ interface Props {
  * The form has no submit button — the parent reads values via `valueRef`.
  */
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
-  const { config: payloadConfig, getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
-
-  const config = getEntityConfig({ collectionSlug: 'cdoftheweek' });
-  const configLoaded = (payloadConfig?.collections?.length ?? 0) > 0;
-  const reviewField = (config?.fields as ClientField[] | undefined)?.find(
-    (f) => (f as { name?: string }).name === 'review',
-  );
+  const reviewField: Field = {
+    name: 'review',
+    type: 'richText',
+    editor: lexicalEditor(),
+    required: true,
+    admin: {
+      description: 'The review text shown on the website',
+    },
+  };
 
   const [initialState, setInitialState] = useState<FormState>();
   const [error, setError] = useState<string | null>(null);
@@ -93,18 +94,6 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       abortAndIgnore(ctrl);
     };
   }, []);
-
-  if (!configLoaded) {
-    return <div style={{ minHeight: '200px' }}>Loading editor…</div>;
-  }
-
-  if (!reviewField) {
-    return (
-      <div className="cdotw-wizard__hint" role="alert">
-        Review field not found in collection config.
-      </div>
-    );
-  }
 
   if (!initialState) {
     return (

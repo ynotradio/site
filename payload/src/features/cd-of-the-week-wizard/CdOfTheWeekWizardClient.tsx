@@ -10,6 +10,7 @@ import { useAsyncSearch } from './useAsyncSearch';
 import { SearchField } from './SearchField';
 import { createCdOfTheWeek } from './utils';
 import { CdotwReviewField } from './CdotwReviewField';
+import { recordInlineCollectionConfig } from './recordCollectionConfig';
 import './CdOfTheWeekWizardClient.css';
 
 export const CdOfTheWeekWizardClient: React.FC = () => {
@@ -124,6 +125,7 @@ export const CdOfTheWeekWizardClient: React.FC = () => {
             </p>
             <InlineCollectionFormClient
               collectionSlug="records"
+              collectionConfig={recordInlineCollectionConfig}
               excludeFields={['legacyId', 'migratedAt']}
               onSuccess={handleRecordCreated}
               disableSubmit
