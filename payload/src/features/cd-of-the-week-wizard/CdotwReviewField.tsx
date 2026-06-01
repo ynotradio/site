@@ -1,124 +1,52 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { Form, RenderFields, useServerFunctions } from '@payloadcms/ui';
-import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
-import type { Field, FormState } from 'payload';
+import React, { useState } from 'react';
 
 interface Props {
   valueRef: React.MutableRefObject<unknown>;
 }
 
 /**
- * Provides a minimal CDOTW Form context so the `review` rich text field
- * renders natively with all its features (lexical editor, toolbar, etc.).
- * The form has no submit button — the parent reads values via `valueRef`.
- * Note: We don't specify the editor; RenderFields uses Payload's field registry.
+ * Simple review text field for the CD of the Week wizard.
+ * Uses a basic textarea to avoid Payload rich text infrastructure issues.
+ * The parent reads values via `valueRef`.
  */
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
-  const { getFormState } = useServerFunctions();
-  const reviewField: Field = {
-    name: 'review',
-    type: 'richText',
-    required: true,
-    admin: {
-      description: 'The review text shown on the website',
-    },
+  const [reviewText, setReviewText] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    setReviewText(text);
+    // eslint-disable-next-line no-param-reassign
+    valueRef.current = text;
   };
 
-  const [initialState, setInitialState] = useState<FormState>();
-  const [error, setError] = useState<string | null>(null);
-  const abortOnChangeRef = React.useRef<AbortController | null>(null);
-
-  const onChange = useCallback(
-    async (params: { formState: FormState; submitted: boolean }) => {
-      const { formState: prevFormState, submitted } = params;
-      const controller = handleAbortRef(abortOnChangeRef);
-      const response = await getFormState({
-        collectionSlug: 'cdoftheweek',
-        docPermissions: { fields: true },
-        docPreferences: { fields: {} },
-        formState: prevFormState,
-        operation: 'create',
-        schemaPath: 'cdoftheweek',
-        signal: controller.signal,
-        skipValidation: !submitted,
-      });
-      abortOnChangeRef.current = null;
-      if (response && response.state) {
-        // eslint-disable-next-line no-param-reassign
-        valueRef.current = response.state?.review?.value;
-        return response.state;
-      }
-      return undefined;
-    },
-    [getFormState, valueRef],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    async function init() {
-      try {
-        const result = await getFormState({
-          collectionSlug: 'cdoftheweek',
-          data: {},
-          docPermissions: { fields: true },
-          docPreferences: { fields: {} },
-          operation: 'create',
-          schemaPath: 'cdoftheweek',
-          skipValidation: true,
-        });
-        if (!cancelled && 'state' in result) {
-          setInitialState(result.state);
-          // eslint-disable-next-line no-param-reassign
-          valueRef.current = result.state?.review?.value;
-          setError(null);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : 'Failed to initialize review editor');
-        }
-      }
-    }
-    init();
-    return () => {
-      cancelled = true;
-    };
-  }, [getFormState, valueRef]);
-
-  useEffect(() => {
-    const ctrl = abortOnChangeRef.current;
-    return () => {
-      abortAndIgnore(ctrl);
-    };
-  }, []);
-
-  if (!initialState) {
-    return (
-      <div style={{ minHeight: '200px' }}>
-        {error ? (
-          <div className="cdotw-wizard__hint" role="alert">
-            {error}
-          </div>
-        ) : (
-          'Loading editor…'
-        )}
-      </div>
-    );
-  }
-
   return (
-    <Form action="/api/cdoftheweek" initialState={initialState} method="POST" onChange={[onChange]}>
-      <RenderFields
-        className="document-fields__fields"
-        fields={[reviewField]}
-        forceRender
-        parentIndexPath=""
-        parentPath=""
-        parentSchemaPath="cdoftheweek"
-        permissions
-        readOnly={false}
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px',
+        minHeight: '200px',
+      }}
+    >
+      <textarea
+        value={reviewText}
+        onChange={handleChange}
+        placeholder="Enter the review text…"
+        style={{
+          flex: 1,
+          padding: '12px',
+          border: '1px solid #ddd',
+          borderRadius: '4px',
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+          fontSize: '14px',
+          lineHeight: '1.5',
+          minHeight: '160px',
+          resize: 'vertical',
+        }}
       />
-    </Form>
+      <div style={{ fontSize: '12px', color: '#666' }}>The review text shown on the website.</div>
+    </div>
   );
 };
