@@ -5,6 +5,7 @@ import { useAsyncSearch } from './useAsyncSearch';
 import type { SearchItem } from './useAsyncSearch';
 
 interface SearchFieldProps {
+  id?: string;
   label: string;
   required?: boolean;
   search: ReturnType<typeof useAsyncSearch>;
@@ -13,6 +14,7 @@ interface SearchFieldProps {
 }
 
 export const SearchField: React.FC<SearchFieldProps> = ({
+  id,
   label,
   required,
   search,
@@ -20,7 +22,10 @@ export const SearchField: React.FC<SearchFieldProps> = ({
   hint,
 }) => (
   <div className="cdotw-wizard__field">
-    <label className={`cdotw-wizard__label${required ? ' cdotw-wizard__label--required' : ''}`}>
+    <label
+      className={`cdotw-wizard__label${required ? ' cdotw-wizard__label--required' : ''}`}
+      htmlFor={id}
+    >
       {label}
     </label>
     {search.selected ? (
@@ -38,6 +43,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
     ) : (
       <div className="cdotw-wizard__search-wrapper">
         <input
+          id={id}
           type="text"
           className="cdotw-wizard__input"
           value={search.query}
@@ -47,9 +53,7 @@ export const SearchField: React.FC<SearchFieldProps> = ({
         />
         {(search.results.length > 0 || (search.query.length > 0 && !search.isSearching)) && (
           <div className="cdotw-wizard__search-results">
-            {search.isSearching && (
-              <div className="cdotw-wizard__search-hint">Searching…</div>
-            )}
+            {search.isSearching && <div className="cdotw-wizard__search-hint">Searching…</div>}
             {!search.isSearching && search.results.length === 0 && search.query.length > 0 && (
               <div className="cdotw-wizard__search-hint">No results found</div>
             )}

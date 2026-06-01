@@ -1,23 +1,27 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {
+  useState, useCallback, useEffect, useRef,
+} from 'react';
 import { Gutter, useStepNav } from '@payloadcms/ui';
 import type { Data } from 'payload';
 import { InlineCollectionFormClient } from '../../utils/InlineCollectionFormClient';
 import { useAsyncSearch } from './useAsyncSearch';
 import { SearchField } from './SearchField';
 import { createCdOfTheWeek } from './utils';
+import { CdotwReviewField } from './CdotwReviewField';
 import './CdOfTheWeekWizardClient.css';
 
 export const CdOfTheWeekWizardClient: React.FC = () => {
   const { setStepNav } = useStepNav();
 
   const [reviewDate, setReviewDate] = useState('');
-  const [reviewText, setReviewText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const reviewerSearch = useAsyncSearch('people');
+  const submitBtnRef = useRef<HTMLButtonElement>(null);
+  const reviewValueRef = useRef<unknown>(null);
 
   useEffect(() => {
     setStepNav([
@@ -34,7 +38,14 @@ export const CdOfTheWeekWizardClient: React.FC = () => {
         setError('Review date is required');
         return;
       }
-      if (!reviewText.trim()) {
+
+      const reviewText = reviewValueRef.current;
+      if (
+        !reviewText
+        || (typeof reviewText === 'object'
+          && reviewText !== null
+          && JSON.stringify(reviewText) === '{}')
+      ) {
         setError('Review text is required');
         return;
       }
@@ -53,8 +64,14 @@ export const CdOfTheWeekWizardClient: React.FC = () => {
         setSubmitting(false);
       }
     },
-    [reviewDate, reviewText, reviewerSearch],
+    [reviewDate, reviewerSearch],
   );
+
+  const handleSubmit = useCallback(() => {
+    if (submitBtnRef.current) {
+      submitBtnRef.current.click();
+    }
+  }, []);
 
   return (
     <Gutter>
@@ -76,61 +93,64 @@ export const CdOfTheWeekWizardClient: React.FC = () => {
 
         <InlineCollectionFormClient
           collectionSlug="records"
-          title="Album Details"
-          description="Fill in the album details and review information below."
+          excludeFields={['legacyId', 'migratedAt']}
           submitLabel={submitting ? 'Creating…' : 'Create CD of the Week + Album'}
           onSuccess={handleRecordCreated}
         >
-          <div className="cdotw-wizard__section">
-            <h2 className="cdotw-wizard__section-title">CD of the Week Details</h2>
-
-            <div className="cdotw-wizard__row">
-              <div className="cdotw-wizard__field">
-                <label
-                  className="cdotw-wizard__label cdotw-wizard__label--required"
-                  htmlFor="reviewDate"
-                >
-                  Review Date
-                </label>
-                <input
-                  id="reviewDate"
-                  type="date"
-                  className="cdotw-wizard__input"
-                  value={reviewDate}
-                  onChange={(e) => setReviewDate(e.target.value)}
-                  required
-                />
-              </div>
-
-              <SearchField
-                label="Reviewer"
-                search={reviewerSearch}
-                placeholder="Search for a reviewer…"
-                hint="Optional. Type to search people."
-              />
-            </div>
-
+          <div className="cdotw-wizard__row">
             <div className="cdotw-wizard__field">
               <label
                 className="cdotw-wizard__label cdotw-wizard__label--required"
-                htmlFor="reviewText"
+                htmlFor="reviewDate"
               >
-                Review
+                Review Date
               </label>
-              <textarea
-                id="reviewText"
-                className="cdotw-wizard__textarea"
-                value={reviewText}
-                onChange={(e) => setReviewText(e.target.value)}
-                placeholder="Write the review here…"
+              <input
+                id="reviewDate"
+                type="date"
+                className="cdotw-wizard__input"
+                value={reviewDate}
+                onChange={(e) => setReviewDate(e.target.value)}
                 required
               />
-              <div className="cdotw-wizard__hint">
-                Plain text. You can add rich formatting after saving via the edit page.
-              </div>
+            </div>
+
+            <SearchField
+              id="reviewerSearch"
+              label="Reviewer"
+              search={reviewerSearch}
+              placeholder="Search for a reviewer…"
+              hint="Optional. Type to search people."
+            />
+          </div>
+
+          <div className="cdotw-wizard__field">
+            <span className="cdotw-wizard__label cdotw-wizard__label--required">Review</span>
+            <CdotwReviewField valueRef={reviewValueRef} />
+            <div className="cdotw-wizard__hint">
+              Rich text editor. You can format with bold, italic, links, lists, and more.
             </div>
           </div>
+
+          <button
+            ref={submitBtnRef}
+            type="submit"
+            className="cdotw-wizard__hidden-submit"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
         </InlineCollectionFormClient>
+
+        <div className="cdotw-wizard__footer">
+          <button
+            type="button"
+            className="cdotw-wizard__submit-btn"
+            disabled={submitting}
+            onClick={handleSubmit}
+          >
+            {submitting ? 'Creating…' : 'Create CD of the Week + Album'}
+          </button>
+        </div>
       </div>
     </Gutter>
   );

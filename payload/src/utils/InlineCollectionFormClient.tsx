@@ -11,30 +11,58 @@ import {
   toast,
 } from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
+import { fieldIsSidebar } from 'payload/shared';
 import type { ClientField, FormState, Data } from 'payload';
 
 type Props = {
   collectionSlug: string;
+  excludeFields?: string[];
   onSuccess?: (doc: Data) => void | Promise<void>;
   submitLabel?: string;
   title?: string;
   description?: string;
   children?: React.ReactNode;
+  disableSubmit?: boolean;
 };
 
 export const InlineCollectionFormClient: React.FC<Props> = ({
   collectionSlug,
+  excludeFields = [],
   onSuccess,
   submitLabel = 'Create',
   title,
   description,
   children,
+  disableSubmit = false,
 }) => {
   const { getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
 
   const config = getEntityConfig({ collectionSlug });
-  const fields = (config?.fields as ClientField[]) || [];
+  const allFields = (config?.fields as ClientField[]) || [];
+  const fields = allFields.filter(
+    (f) => !excludeFields.includes((f as { name?: string }).name ?? ''),
+  );
+
+  const { mainFields, sidebarFields, hasSidebar } = React.useMemo(() => {
+    const main: (ClientField | null)[] = [];
+    const sidebar: (ClientField | null)[] = [];
+    fields.forEach((field) => {
+      if (fieldIsSidebar(field)) {
+        sidebar.push(field);
+        main.push(null);
+      } else {
+        main.push(field);
+        sidebar.push(null);
+      }
+    });
+    return {
+      mainFields: main,
+      sidebarFields: sidebar,
+      hasSidebar: sidebar.some((f) => f !== null),
+    };
+  }, [fields]);
+
   const abortOnChangeRef = React.useRef<AbortController | null>(null);
 
   const [initialState, setInitialState] = useState<FormState>();
@@ -179,19 +207,51 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
         disableSuccessStatus={!!onSuccess}
         validationOperation="create"
       >
-        <RenderFields
-          fields={fields}
-          forceRender
-          parentIndexPath=""
-          parentPath=""
-          parentSchemaPath={collectionSlug}
-          permissions
-          readOnly={false}
-        />
-        {children}
-        <div style={{ marginTop: '2rem' }}>
-          <FormSubmit>{submitLabel}</FormSubmit>
+        <div
+          className={
+            hasSidebar
+              ? 'document-fields document-fields--has-sidebar'
+              : 'document-fields document-fields--no-sidebar'
+          }
+        >
+          <div className="document-fields__main">
+            <Gutter className="document-fields__edit">
+              <RenderFields
+                className="document-fields__fields"
+                fields={mainFields}
+                forceRender
+                parentIndexPath=""
+                parentPath=""
+                parentSchemaPath={collectionSlug}
+                permissions
+                readOnly={false}
+              />
+            </Gutter>
+          </div>
+          {hasSidebar && (
+            <div className="document-fields__sidebar-wrap">
+              <div className="document-fields__sidebar">
+                <div className="document-fields__sidebar-fields">
+                  <RenderFields
+                    fields={sidebarFields}
+                    forceRender
+                    parentIndexPath=""
+                    parentPath=""
+                    parentSchemaPath={collectionSlug}
+                    permissions
+                    readOnly={false}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+        {children}
+        {!disableSubmit && (
+          <div style={{ marginTop: '2rem' }}>
+            <FormSubmit>{submitLabel}</FormSubmit>
+          </div>
+        )}
       </Form>
     </Gutter>
   );

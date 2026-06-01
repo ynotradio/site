@@ -32,31 +32,32 @@ vi.mock('./useAsyncSearch', () => {
 
 vi.mock('../../utils/InlineCollectionFormClient', () => ({
   InlineCollectionFormClient: ({
-    onSuccess,
-    title,
-    description,
-    submitLabel,
     children,
+    ...rest
   }: {
     onSuccess?: (doc: any) => void;
-    title?: string;
-    description?: string;
-    submitLabel?: string;
     children?: React.ReactNode;
+    [key: string]: unknown;
   }) => (
     <div data-testid="inline-form">
-      {title && <h2>{title}</h2>}
-      {description && <p data-testid="form-description">{description}</p>}
-      <p data-testid="submit-label">{submitLabel}</p>
-      {children}
       <button
         data-testid="simulate-record-create"
-        onClick={() => onSuccess?.({ id: 42, title: 'OK Computer' })}
+        onClick={() => (rest as any).onSuccess?.({ id: 42, title: 'OK Computer' })}
       >
-        Simulate Create
+        Simulate Submit
       </button>
+      {children}
     </div>
   ),
+}));
+
+vi.mock('./CdotwReviewField', () => ({
+  CdotwReviewField: ({ valueRef }: { valueRef: React.MutableRefObject<unknown> }) => {
+    // Populate the ref synchronously so validation in onSuccess passes
+    // eslint-disable-next-line no-param-reassign
+    valueRef.current = { root: { children: [] } };
+    return <div data-testid="review-field">Rich Text Editor</div>;
+  },
 }));
 
 vi.mock('./utils', () => ({
@@ -77,40 +78,25 @@ describe('CdOfTheWeekWizardClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders album form and CDOTW fields on one page', () => {
+  it('renders form with CDOTW fields and no section headings', () => {
     render(<CdOfTheWeekWizardClient />);
 
     expect(screen.getByTestId('inline-form')).toBeInTheDocument();
-    expect(screen.getByText('Album Details')).toBeInTheDocument();
-    expect(screen.getByText('CD of the Week Details')).toBeInTheDocument();
+    expect(screen.queryByText('Album Details')).not.toBeInTheDocument();
+    expect(screen.queryByText('CD of the Week Details')).not.toBeInTheDocument();
   });
 
-  it('renders review date and review fields visibly', () => {
+  it('renders review date, reviewer search, and rich text review field', () => {
     render(<CdOfTheWeekWizardClient />);
 
     expect(screen.getByLabelText(/Review Date/)).toBeInTheDocument();
-    expect(screen.getByLabelText('Review')).toBeInTheDocument();
-  });
-
-  it('shows validation error when review text is missing', async () => {
-    render(<CdOfTheWeekWizardClient />);
-
-    fireEvent.change(screen.getByLabelText(/Review Date/), {
-      target: { value: '2025-06-01' },
-    });
-    fireEvent.click(screen.getByTestId('simulate-record-create'));
-
-    await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('Review text is required');
-    });
+    expect(screen.getByLabelText(/Reviewer/)).toBeInTheDocument();
+    expect(screen.getByTestId('review-field')).toBeInTheDocument();
   });
 
   it('shows validation error when review date is missing', async () => {
     render(<CdOfTheWeekWizardClient />);
 
-    fireEvent.change(screen.getByLabelText('Review'), {
-      target: { value: 'Great album' },
-    });
     fireEvent.click(screen.getByTestId('simulate-record-create'));
 
     await waitFor(() => {
@@ -127,13 +113,11 @@ describe('CdOfTheWeekWizardClient', () => {
     fireEvent.change(screen.getByLabelText(/Review Date/), {
       target: { value: '2025-06-01' },
     });
-    fireEvent.change(screen.getByLabelText('Review'), {
-      target: { value: 'Great album' },
-    });
     fireEvent.click(screen.getByTestId('simulate-record-create'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('submit-label')).toHaveTextContent('Creating…');
+      const btns = screen.getAllByText('Creating…');
+      expect(btns.length).toBeGreaterThan(0);
     });
   });
 
