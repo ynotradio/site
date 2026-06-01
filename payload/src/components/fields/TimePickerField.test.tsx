@@ -125,4 +125,105 @@ describe('TimePickerField', () => {
     fireEvent.keyDown(input, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
   });
+
+  // ── Short input formats (parseInput branches) ─────────────────────────────
+
+  it('parses short hour-only input like "9am" on Enter', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '9am' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockSetValue).toHaveBeenCalledWith('09:00');
+  });
+
+  it('parses 3-digit input like "930am" on Enter', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '930am' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockSetValue).toHaveBeenCalledWith('09:30');
+  });
+
+  it('parses 4-digit input like "1030am" on Enter', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '1030am' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(mockSetValue).toHaveBeenCalledWith('10:30');
+  });
+
+  // ── Blur commits value ─────────────────────────────────────────────────────
+
+  it('commits typed value on blur when focus leaves the widget', () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '3:00pm' } });
+    fireEvent.blur(input, { relatedTarget: null });
+    expect(mockSetValue).toHaveBeenCalledWith('15:00');
+  });
+
+  // ── Keyboard: open when closed ─────────────────────────────────────────────
+
+  it('opens dropdown when ArrowDown is pressed while closed', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    // Ensure the dropdown starts closed (no focus yet)
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
+  });
+
+  it('opens dropdown when Enter is pressed while closed', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByRole('listbox')).toBeInTheDocument());
+  });
+
+  // ── Keyboard: navigate open dropdown ──────────────────────────────────────
+
+  it('moves focus down with ArrowDown when dropdown is open', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    // Initially focusedIdx is -1 (no selected value); first ArrowDown → idx 0
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    await waitFor(() => {
+      const focused = screen.getAllByRole('option').find(
+        (o) => o.classList.contains('tp-option--focused'),
+      );
+      expect(focused).toBeDefined();
+    });
+  });
+
+  it('moves focus up with ArrowUp when dropdown is open', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    // Move down twice, then up once
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    await waitFor(() => {
+      const options = screen.getAllByRole('option');
+      // After down-down-up the focused option should be index 0 (clamped to max(0))
+      expect(options[0].classList.contains('tp-option--focused')).toBe(true);
+    });
+  });
+
+  // ── Outside click closes dropdown ─────────────────────────────────────────
+
+  it('closes dropdown when mousedown fires outside the widget', async () => {
+    setup('');
+    const input = screen.getByRole('textbox');
+    fireEvent.focus(input);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.mouseDown(document.body);
+    await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument());
+  });
 });
