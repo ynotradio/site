@@ -68,7 +68,7 @@ Common customizations:
 
 - Adjust schedules (change cron in YAML front matter)
 - Set default model with repository/org variable `GH_AW_MODEL_AGENT_COPILOT`
-- Use `workflow_dispatch` `model` input for one-off stronger-model runs
+- Optionally set `GH_AW_MODEL_AGENT_COPILOT_DISPATCH` for stronger manual `workflow_dispatch` runs
 - Tune `max-runs` and `max-effective-tokens` to control per-run token spend
 - Add/remove validation steps
 - Change PR expiration times

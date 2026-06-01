@@ -5,13 +5,10 @@ on:
   schedule:
     - cron: '0 4 * * 1'
   workflow_dispatch:
-    inputs:
-      model:
-        description: Optional model override for manual runs (for example, claude-sonnet-4.6)
-        required: false
-        type: string
 
-model: ${{ inputs.model || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
+engine:
+  id: copilot
+  model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
 max-runs: 120
 max-effective-tokens: 5000000
 

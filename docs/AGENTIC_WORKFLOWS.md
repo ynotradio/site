@@ -54,7 +54,7 @@ git add .github/ && git commit -m "chore: update workflows" && git push
 ### Cost controls
 
 - Set repository/org variable `GH_AW_MODEL_AGENT_COPILOT` to a low-cost default (recommended: `gpt-5 mini`).
-- For manual `workflow_dispatch` runs, use the `model` input to temporarily select a stronger model.
+- Optionally set repository/org variable `GH_AW_MODEL_AGENT_COPILOT_DISPATCH` for stronger manual `workflow_dispatch` runs.
 - Workflows enforce `max-runs` and `max-effective-tokens` to cap spend per run.
 
 ### Spend tracking
