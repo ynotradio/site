@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
-import { normalizeShowDate } from './hooks/showDateHooks';
+import { normalizeDateToNoon } from './hooks/showDateHooks';
 import { legacyIdField } from './shared/legacyIdField';
 
 export const Shows: CollectionConfig = {
@@ -24,7 +24,7 @@ export const Shows: CollectionConfig = {
   },
   defaultSort: 'date',
   hooks: {
-    beforeChange: [normalizeShowDate],
+    beforeChange: [normalizeDateToNoon],
   },
   access: {
     read: () => true, // Public read access
