@@ -60,11 +60,6 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     let cancelled = false;
 
     async function init() {
-      if (!reviewField) {
-        setError('Review field is unavailable');
-        return;
-      }
-
       try {
         const result = await getFormState({
           collectionSlug: 'cdoftheweek',
@@ -97,7 +92,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     return () => {
       cancelled = true;
     };
-  }, [getFormState, reviewField, valueRef]);
+  }, [getFormState, valueRef]);
 
   useEffect(() => {
     const ctrl = abortOnChangeRef.current;
@@ -106,7 +101,9 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     };
   }, []);
 
-  if (!reviewField) {
+  const fieldToRender = stateReviewField ?? reviewField;
+
+  if (!fieldToRender) {
     return (
       <div className="cdotw-wizard__hint" role="alert">
         Review field is unavailable
@@ -127,8 +124,6 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       </div>
     );
   }
-
-  const fieldToRender = stateReviewField ?? reviewField;
 
   return (
     <Form action="/api/cdoftheweek" initialState={initialState} method="POST" onChange={[onChange]}>
