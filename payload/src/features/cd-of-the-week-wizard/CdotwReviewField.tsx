@@ -66,7 +66,6 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
           operation: 'create',
-          renderAllFields: true,
           schemaPath: 'cdoftheweek',
           skipValidation: true,
         });

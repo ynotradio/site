@@ -182,7 +182,6 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
           operation: 'create',
-          renderAllFields: true,
           schemaPath: collectionSlug,
           skipValidation: true,
         });
