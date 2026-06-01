@@ -3,7 +3,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Form, RenderFields, useServerFunctions } from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import type { Field, FormState } from 'payload';
 
 interface Props {
@@ -14,13 +13,13 @@ interface Props {
  * Provides a minimal CDOTW Form context so the `review` rich text field
  * renders natively with all its features (lexical editor, toolbar, etc.).
  * The form has no submit button — the parent reads values via `valueRef`.
+ * Note: We don't specify the editor; RenderFields uses Payload's field registry.
  */
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   const { getFormState } = useServerFunctions();
   const reviewField: Field = {
     name: 'review',
     type: 'richText',
-    editor: lexicalEditor(),
     required: true,
     admin: {
       description: 'The review text shown on the website',
