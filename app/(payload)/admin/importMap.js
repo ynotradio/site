@@ -30,6 +30,7 @@ import { MusicBrainzRecordingCell as MusicBrainzRecordingCell_24d82142d38adfa7da
 import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
 import { MusicBrainzReleaseCell as MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
+import { InlineDateField as InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1 } from '../../../payload/src/components/fields/InlineDateField'
 import { TimeCell as TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1 } from '../../../payload/src/components/cells/TimeCell'
 import { TimePickerField as TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb } from '../../../payload/src/components/fields/TimePickerField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
@@ -89,6 +90,7 @@ export const importMap = {
   "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
   "/payload/src/components/cells/MusicBrainzCell#MusicBrainzReleaseCell": MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
+  "/payload/src/components/fields/InlineDateField#InlineDateField": InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1,
   "/payload/src/components/cells/TimeCell#TimeCell": TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1,
   "/payload/src/components/fields/TimePickerField#TimePickerField": TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
