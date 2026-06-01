@@ -16,6 +16,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   const { getFormState } = useServerFunctions();
   const [initialState, setInitialState] = useState<FormState>();
   const [error, setError] = useState<string | null>(null);
+  const [stateReviewField, setStateReviewField] = useState<Field | null>(null);
   const abortOnChangeRef = React.useRef<AbortController | null>(null);
 
   const collectionConfig = getEntityConfig({ collectionSlug: 'cdoftheweek' }) as
@@ -35,12 +36,17 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
         docPreferences: { fields: {} },
         formState: prevFormState,
         operation: 'create',
+        renderAllFields: true,
         schemaPath: 'cdoftheweek',
         signal: controller.signal,
         skipValidation: !submitted,
       });
       abortOnChangeRef.current = null;
       if (response && response.state) {
+        const nextReviewField = (response.state?.review as { field?: Field } | undefined)?.field;
+        if (nextReviewField) {
+          setStateReviewField(nextReviewField);
+        }
         // eslint-disable-next-line no-param-reassign
         valueRef.current = response.state?.review?.value;
         return response.state;
@@ -66,10 +72,15 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
           operation: 'create',
+          renderAllFields: true,
           schemaPath: 'cdoftheweek',
           skipValidation: true,
         });
         if (!cancelled && 'state' in result) {
+          const nextReviewField = (result.state?.review as { field?: Field } | undefined)?.field;
+          if (nextReviewField) {
+            setStateReviewField(nextReviewField);
+          }
           setInitialState(result.state);
           // eslint-disable-next-line no-param-reassign
           valueRef.current = result.state?.review?.value;
@@ -117,11 +128,13 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     );
   }
 
+  const fieldToRender = stateReviewField ?? reviewField;
+
   return (
     <Form action="/api/cdoftheweek" initialState={initialState} method="POST" onChange={[onChange]}>
       <RenderFields
         className="document-fields__fields"
-        fields={[reviewField]}
+        fields={[fieldToRender]}
         forceRender
         parentIndexPath=""
         parentPath=""
