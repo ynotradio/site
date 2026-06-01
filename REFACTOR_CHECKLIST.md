@@ -124,6 +124,9 @@ Converted inline styles to CSS files across all affected components:
 - [x] **ShowClonerClient.tsx** ✅ CSS extracted → `ShowClonerClient.css`
 - [x] **SourceDateRangeSelector.tsx** ✅ CSS extracted → `SourceDateRangeSelector.css`
 - [x] **TargetDateSelector.tsx** ✅ CSS extracted → `TargetDateSelector.css`
+- [x] **MessageBanner.tsx** ✅ CSS extracted → `MessageBanner.css` (BEM modifier classes for error/success)
+- [x] **CloneButton.tsx** ✅ CSS extracted → `CloneButton.css` (`clone-button--cloning` modifier)
+- [x] **TimeCell.tsx** ✅ CSS extracted → `TimeCell.css`
 
 ## 🎯 Summary Statistics
 
