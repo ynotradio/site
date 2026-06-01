@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  Form, RenderFields, useConfig, useServerFunctions, useFormFields,
+  Form, RenderFields, useConfig, useServerFunctions,
 } from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
 import type { ClientField, FormState } from 'payload';
@@ -19,7 +19,6 @@ interface Props {
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   const { getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
-  const [fields] = useFormFields(([, dispatch]) => dispatch);
 
   const config = getEntityConfig({ collectionSlug: 'cdoftheweek' });
   const reviewField = (config?.fields as ClientField[] | undefined)?.find(
@@ -27,6 +26,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   );
 
   const [initialState, setInitialState] = useState<FormState>();
+  const [error, setError] = useState<string | null>(null);
   const abortOnChangeRef = React.useRef<AbortController | null>(null);
 
   const onChange = useCallback(
@@ -34,22 +34,24 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       const { formState: prevFormState, submitted } = params;
       const controller = handleAbortRef(abortOnChangeRef);
       const response = await getFormState({
-        collectionSlug: 'cdotheweek',
+        collectionSlug: 'cdoftheweek',
         docPermissions: { fields: true },
         docPreferences: { fields: {} },
         formState: prevFormState,
         operation: 'create',
-        schemaPath: 'cdotheweek',
+        schemaPath: 'cdoftheweek',
         signal: controller.signal,
         skipValidation: !submitted,
       });
       abortOnChangeRef.current = null;
       if (response && response.state) {
+        // eslint-disable-next-line no-param-reassign
+        valueRef.current = response.state?.review?.value;
         return response.state;
       }
       return undefined;
     },
-    [getFormState],
+    [getFormState, valueRef],
   );
 
   useEffect(() => {
@@ -57,27 +59,32 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     async function init() {
       try {
         const result = await getFormState({
-          collectionSlug: 'cdotheweek',
+          collectionSlug: 'cdoftheweek',
           data: {},
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
           operation: 'create',
           renderAllFields: true,
-          schemaPath: 'cdotheweek',
+          schemaPath: 'cdoftheweek',
           skipValidation: true,
         });
         if (!cancelled && 'state' in result) {
           setInitialState(result.state);
+          // eslint-disable-next-line no-param-reassign
+          valueRef.current = result.state?.review?.value;
+          setError(null);
         }
-      } catch {
-        // silently fail — review field won't render
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Failed to initialize review editor');
+        }
       }
     }
     init();
     return () => {
       cancelled = true;
     };
-  }, [getFormState]);
+  }, [getFormState, valueRef]);
 
   useEffect(() => {
     const ctrl = abortOnChangeRef.current;
@@ -85,16 +92,6 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       abortAndIgnore(ctrl);
     };
   }, []);
-
-  // Sync review value to parent ref whenever form fields change
-  useEffect(() => {
-    if (fields && 'review' in fields) {
-      const formFields = fields as Record<string, { value?: unknown }>;
-      // eslint-disable-next-line no-param-reassign
-      valueRef.current = formFields.review?.value;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fields]);
 
   if (!reviewField) {
     return (
@@ -105,17 +102,30 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   }
 
   if (!initialState) {
-    return <div style={{ minHeight: '200px' }}>Loading editor…</div>;
+    return (
+      <div style={{ minHeight: '200px' }}>
+        {error ? (
+          <div className="cdotw-wizard__hint" role="alert">
+            {error}
+          </div>
+        ) : (
+          'Loading editor…'
+        )}
+      </div>
+    );
   }
 
   return (
-    <Form action="/api/cdotheweek" initialState={initialState} method="POST" onChange={[onChange]}>
+    <Form action="/api/cdoftheweek" initialState={initialState} method="POST" onChange={[onChange]}>
       <RenderFields
+        className="document-fields__fields"
         fields={[reviewField]}
         forceRender
         parentIndexPath=""
         parentPath=""
-        schemaPath="cdotheweek"
+        parentSchemaPath="cdoftheweek"
+        permissions
+        readOnly={false}
       />
     </Form>
   );

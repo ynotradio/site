@@ -78,18 +78,18 @@ describe('CdOfTheWeekWizardClient', () => {
     ).toBeInTheDocument();
   });
 
-  it('renders form with CDOTW fields and no section headings', () => {
+  it('renders inline record form and CDOTW details section', () => {
     render(<CdOfTheWeekWizardClient />);
 
     expect(screen.getByTestId('inline-form')).toBeInTheDocument();
-    expect(screen.queryByText('Album Details')).not.toBeInTheDocument();
-    expect(screen.queryByText('CD of the Week Details')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'New Record' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'CD of the Week Details' })).toBeInTheDocument();
   });
 
   it('renders review date, reviewer search, and rich text review field', () => {
     render(<CdOfTheWeekWizardClient />);
 
-    expect(screen.getByLabelText(/Review Date/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Date/)).toBeInTheDocument();
     expect(screen.getByLabelText(/Reviewer/)).toBeInTheDocument();
     expect(screen.getByTestId('review-field')).toBeInTheDocument();
   });
@@ -110,7 +110,7 @@ describe('CdOfTheWeekWizardClient', () => {
 
     render(<CdOfTheWeekWizardClient />);
 
-    fireEvent.change(screen.getByLabelText(/Review Date/), {
+    fireEvent.change(screen.getByLabelText(/Date/), {
       target: { value: '2025-06-01' },
     });
     fireEvent.click(screen.getByTestId('simulate-record-create'));

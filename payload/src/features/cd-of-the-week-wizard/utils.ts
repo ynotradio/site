@@ -1,4 +1,23 @@
-export function textToLexical(text: string) {
+type LexicalDocument = {
+  root: {
+    type: 'root';
+    format: string;
+    indent: number;
+    version: number;
+    direction: 'ltr' | 'rtl' | null;
+    children: Array<Record<string, unknown>>;
+  };
+};
+
+function isLexicalDocument(value: unknown): value is LexicalDocument {
+  if (!value || typeof value !== 'object') return false;
+  const maybe = value as { root?: unknown };
+  if (!maybe.root || typeof maybe.root !== 'object') return false;
+  const root = maybe.root as { type?: unknown; children?: unknown };
+  return root.type === 'root' && Array.isArray(root.children);
+}
+
+export function textToLexical(text: string): LexicalDocument {
   const lines = text.split('\n').filter((line) => line.trim() !== '');
   return {
     root: {
@@ -31,6 +50,18 @@ export function textToLexical(text: string) {
   };
 }
 
+function normalizeReviewValue(reviewValue: unknown): LexicalDocument {
+  if (isLexicalDocument(reviewValue)) {
+    return reviewValue;
+  }
+
+  if (typeof reviewValue === 'string') {
+    return textToLexical(reviewValue);
+  }
+
+  return textToLexical('');
+}
+
 async function createRecord(
   title: string,
   artistId: number,
@@ -61,13 +92,13 @@ async function createRecord(
 async function createCdOfTheWeek(
   recordId: number,
   reviewDate: string,
-  reviewText: string,
+  reviewText: unknown,
   reviewerId: number | null,
 ): Promise<number> {
   const payload: Record<string, unknown> = {
     record: recordId,
     date: reviewDate,
-    review: textToLexical(reviewText),
+    review: normalizeReviewValue(reviewText),
   };
   if (reviewerId !== null) payload.reviewer = reviewerId;
 

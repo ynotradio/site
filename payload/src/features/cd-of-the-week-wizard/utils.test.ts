@@ -63,9 +63,7 @@ describe('createRecord', () => {
 
     await createRecord('Kid A', 5, 'Parlophone', '2000-10-02');
 
-    const body = JSON.parse(
-      (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-    );
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
     expect(body.label).toBe('Parlophone');
     expect(body.releaseDate).toBe('2000-10-02');
   });
@@ -78,9 +76,7 @@ describe('createRecord', () => {
 
     await createRecord('Kid A', 5, '', '');
 
-    const body = JSON.parse(
-      (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-    );
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
     expect(body.label).toBeUndefined();
     expect(body.releaseDate).toBeUndefined();
   });
@@ -122,9 +118,7 @@ describe('createCdOfTheWeek', () => {
       '/api/cdoftheweek',
       expect.objectContaining({ method: 'POST' }),
     );
-    const body = JSON.parse(
-      (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-    );
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
     expect(body.record).toBe(99);
     expect(body.date).toBe('2024-01-15');
   });
@@ -137,9 +131,7 @@ describe('createCdOfTheWeek', () => {
 
     await createCdOfTheWeek(1, '2024-01-15', 'Text', 10);
 
-    const body = JSON.parse(
-      (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-    );
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
     expect(body.reviewer).toBe(10);
   });
 
@@ -151,10 +143,51 @@ describe('createCdOfTheWeek', () => {
 
     await createCdOfTheWeek(1, '2024-01-15', 'Text', null);
 
-    const body = JSON.parse(
-      (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body,
-    );
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
     expect(body.reviewer).toBeUndefined();
+  });
+
+  it('accepts lexical review payloads without converting to plain text', async () => {
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ok: true,
+      json: async () => ({ doc: { id: 7 } }),
+    });
+    const lexicalReview = {
+      root: {
+        type: 'root',
+        format: '',
+        indent: 0,
+        version: 1,
+        direction: 'ltr',
+        children: [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            direction: 'ltr',
+            textFormat: 0,
+            textStyle: '',
+            children: [
+              {
+                type: 'text',
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: 'Existing lexical text',
+                version: 1,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    await createCdOfTheWeek(1, '2024-01-15', lexicalReview, null);
+
+    const body = JSON.parse((global.fetch as ReturnType<typeof vi.fn>).mock.calls[0][1].body);
+    expect(body.review).toEqual(lexicalReview);
   });
 
   it('returns the cdoftheweek id', async () => {
