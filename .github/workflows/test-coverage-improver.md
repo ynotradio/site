@@ -3,8 +3,14 @@ name: Test Coverage Improver
 description: Systematically analyzes test coverage and adds meaningful tests to improve coverage in under-tested areas
 on:
   schedule:
-    - cron: '0 3 * * *'
+    - cron: '0 3 * * 1'
   workflow_dispatch:
+
+engine:
+  id: copilot
+  model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
+max-runs: 120
+max-effective-tokens: 5000000
 
 permissions:
   contents: read

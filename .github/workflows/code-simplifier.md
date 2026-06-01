@@ -3,8 +3,14 @@ name: Code Simplifier
 description: Analyzes recently modified code and creates pull requests with simplifications that improve clarity and maintainability while preserving functionality
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * 1-5'
   workflow_dispatch:
+
+engine:
+  id: copilot
+  model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
+max-runs: 100
+max-effective-tokens: 3500000
 
 permissions:
   contents: read

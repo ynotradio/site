@@ -38,8 +38,8 @@ git add .github/workflows/*.lock.yml && git commit -m "chore: activate agentic w
 
 | Workflow        | Frequency     | Scope                       |
 | --------------- | ------------- | --------------------------- |
-| Code Simplifier | Daily 2AM UTC | Files changed in last 24h   |
-| Test Coverage   | Daily 3AM UTC | Lowest coverage areas       |
+| Code Simplifier | Weekdays 2AM UTC | Files changed in last 24h |
+| Test Coverage   | Mon 3AM UTC   | Lowest coverage areas       |
 | Refactoring     | Mon 4AM UTC   | REFACTOR_CHECKLIST.md items |
 
 ## Configuration
@@ -50,6 +50,17 @@ Edit `.github/agents/*.md` files to customize, then:
 gh aw compile
 git add .github/ && git commit -m "chore: update workflows" && git push
 ```
+
+### Cost controls
+
+- Set repository/org variable `GH_AW_MODEL_AGENT_COPILOT` to a low-cost default (recommended: `gpt-5 mini`).
+- Optionally set repository/org variable `GH_AW_MODEL_AGENT_COPILOT_DISPATCH` for stronger manual `workflow_dispatch` runs.
+- Workflows enforce `max-runs` and `max-effective-tokens` to cap spend per run.
+
+### Spend tracking
+
+- Review each workflow run in GitHub Actions and compare token/cost metrics before/after model or cap changes.
+- Keep the cheapest model that still produces useful PRs for each workflow.
 
 ## Monitoring
 
