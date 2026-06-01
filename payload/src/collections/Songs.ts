@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { normalizeDateToNoon } from './hooks/showDateHooks';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
 
@@ -39,7 +39,7 @@ export const Songs: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      normalizeDateToNoon,
+      normalizeFieldToNoon('releaseDate'),
       generateMusicSlugBeforeChangeHook,
       generateMusicDisplayName('Song'),
     ],

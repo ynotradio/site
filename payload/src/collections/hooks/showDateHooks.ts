@@ -21,18 +21,8 @@ export function normalizeFieldToNoon(fieldName: string): CollectionBeforeChangeH
   };
 }
 
-/**
- * Normalize the `date` field to noon UTC.
- */
-export const normalizeDateToNoon: CollectionBeforeChangeHook = ({ data }) => {
-  if (data.date) {
-    const raw = data.date;
-    const date = raw instanceof Date ? raw : new Date(raw as string);
-    date.setUTCHours(12, 0, 0, 0);
-    return { ...data, date: date.toISOString() };
-  }
-  return data;
-};
+/** Normalize the `date` field to noon UTC. */
+export const normalizeDateToNoon: CollectionBeforeChangeHook = normalizeFieldToNoon('date');
 
 /** @deprecated Use `normalizeDateToNoon` instead */
 export const normalizeShowDate = normalizeDateToNoon;
