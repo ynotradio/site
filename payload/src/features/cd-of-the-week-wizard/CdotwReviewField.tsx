@@ -18,6 +18,10 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
   const [error, setError] = useState<string | null>(null);
   const [stateReviewField, setStateReviewField] = useState<Field | null>(null);
   const abortOnChangeRef = React.useRef<AbortController | null>(null);
+  const getReviewFieldFromState = useCallback((formState: FormState): Field | null => {
+    const reviewState = formState?.review as { field?: Field; fieldSchema?: Field } | undefined;
+    return reviewState?.fieldSchema ?? reviewState?.field ?? null;
+  }, []);
 
   const collectionConfig = getEntityConfig({ collectionSlug: 'cdoftheweek' }) as
     | { fields?: Field[]; labels?: { singular?: string } }
@@ -30,20 +34,22 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     async (params: { formState: FormState; submitted: boolean }) => {
       const { formState: prevFormState, submitted } = params;
       const controller = handleAbortRef(abortOnChangeRef);
-      const response = await getFormState({
+      const requestArgs: Parameters<typeof getFormState>[0] & { includeSchema?: boolean } = {
         collectionSlug: 'cdoftheweek',
         docPermissions: { fields: true },
         docPreferences: { fields: {} },
         formState: prevFormState,
+        includeSchema: true,
         operation: 'create',
         renderAllFields: true,
         schemaPath: 'cdoftheweek',
         signal: controller.signal,
         skipValidation: !submitted,
-      });
+      };
+      const response = await getFormState(requestArgs);
       abortOnChangeRef.current = null;
       if (response && response.state) {
-        const nextReviewField = (response.state?.review as { field?: Field } | undefined)?.field;
+        const nextReviewField = getReviewFieldFromState(response.state);
         if (nextReviewField) {
           setStateReviewField(nextReviewField);
         }
@@ -53,7 +59,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       }
       return undefined;
     },
-    [getFormState, valueRef],
+    [getFormState, getReviewFieldFromState, valueRef],
   );
 
   useEffect(() => {
@@ -61,18 +67,20 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
 
     async function init() {
       try {
-        const result = await getFormState({
+        const requestArgs: Parameters<typeof getFormState>[0] & { includeSchema?: boolean } = {
           collectionSlug: 'cdoftheweek',
           data: {},
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
+          includeSchema: true,
           operation: 'create',
           renderAllFields: true,
           schemaPath: 'cdoftheweek',
           skipValidation: true,
-        });
+        };
+        const result = await getFormState(requestArgs);
         if (!cancelled && 'state' in result) {
-          const nextReviewField = (result.state?.review as { field?: Field } | undefined)?.field;
+          const nextReviewField = getReviewFieldFromState(result.state);
           if (nextReviewField) {
             setStateReviewField(nextReviewField);
           }
@@ -92,7 +100,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     return () => {
       cancelled = true;
     };
-  }, [getFormState, valueRef]);
+  }, [getFormState, getReviewFieldFromState, valueRef]);
 
   useEffect(() => {
     const ctrl = abortOnChangeRef.current;
