@@ -13,15 +13,13 @@ describe('MessageBanner', () => {
   it('applies error styles when type is error', () => {
     const { container } = render(<MessageBanner message="Error!" type="error" />);
     const div = container.firstChild as HTMLElement;
-    expect(div).toHaveStyle({ backgroundColor: '#fee' });
-    expect(div).toHaveStyle({ color: '#c00' });
+    expect(div).toHaveClass('message-banner--error');
   });
 
   it('applies success styles when type is success', () => {
     const { container } = render(<MessageBanner message="Done!" type="success" />);
     const div = container.firstChild as HTMLElement;
-    expect(div).toHaveStyle({ backgroundColor: '#e6ffed' });
-    expect(div).toHaveStyle({ color: '#22863a' });
+    expect(div).toHaveClass('message-banner--success');
   });
 
   it('renders success message content', () => {
