@@ -8,45 +8,6 @@ vi.mock('@payloadcms/ui', () => ({
     <div data-testid="gutter">{children}</div>
   ),
   useStepNav: () => ({ setStepNav: vi.fn() }),
-  Form: ({ children }: { children: React.ReactNode }) => <form>{children}</form>,
-  FormSubmit: ({ children }: { children: React.ReactNode }) => (
-    <button type="submit">{children}</button>
-  ),
-  RenderFields: () => <div data-testid="render-fields" />,
-  useConfig: () => ({
-    getEntityConfig: ({ collectionSlug }: { collectionSlug: string }) => {
-      if (collectionSlug === 'records') {
-        return {
-          slug: 'records',
-          labels: { singular: 'Record', plural: 'Records' },
-          fields: [
-            { name: 'title', type: 'text', label: 'Title', required: true },
-            {
-              name: 'artist',
-              type: 'relationship',
-              label: 'Artist',
-              relationTo: 'artists',
-              required: true,
-            },
-            { name: 'label', type: 'text', label: 'Label' },
-            { name: 'releaseDate', type: 'date', label: 'Release Date' },
-          ],
-        };
-      }
-      return null;
-    },
-  }),
-  useServerFunctions: () => ({
-    getFormState: vi.fn().mockResolvedValue({
-      state: {
-        title: { value: '', valid: true, initialValue: '', path: 'title' },
-        artist: { value: null, valid: true, initialValue: null, path: 'artist' },
-        label: { value: '', valid: true, initialValue: '', path: 'label' },
-        releaseDate: { value: '', valid: true, initialValue: '', path: 'releaseDate' },
-      },
-    }),
-  }),
-  toast: { success: vi.fn() },
 }));
 
 vi.mock('./useAsyncSearch', () => {
@@ -73,15 +34,21 @@ vi.mock('../../utils/InlineCollectionFormClient', () => ({
   InlineCollectionFormClient: ({
     onSuccess,
     title,
+    description,
     submitLabel,
+    children,
   }: {
     onSuccess?: (doc: any) => void;
     title?: string;
+    description?: string;
     submitLabel?: string;
+    children?: React.ReactNode;
   }) => (
     <div data-testid="inline-form">
       {title && <h2>{title}</h2>}
+      {description && <p data-testid="form-description">{description}</p>}
       <p data-testid="submit-label">{submitLabel}</p>
+      {children}
       <button
         data-testid="simulate-record-create"
         onClick={() => onSuccess?.({ id: 42, title: 'OK Computer' })}
@@ -105,85 +72,68 @@ describe('CdOfTheWeekWizardClient', () => {
     render(<CdOfTheWeekWizardClient />);
 
     expect(screen.getByText('New CD of the Week + Album')).toBeInTheDocument();
-    expect(screen.getByText(/Creates the album record/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Creates the album record and CD of the Week entry at once/),
+    ).toBeInTheDocument();
   });
 
-  it('renders Step 1 (create album) initially', () => {
+  it('renders album form and CDOTW fields on one page', () => {
     render(<CdOfTheWeekWizardClient />);
 
     expect(screen.getByTestId('inline-form')).toBeInTheDocument();
-    expect(screen.getByText('Step 1: Create Album')).toBeInTheDocument();
+    expect(screen.getByText('Album Details')).toBeInTheDocument();
+    expect(screen.getByText('CD of the Week Details')).toBeInTheDocument();
   });
 
-  it('shows Step 2 after record is created', async () => {
+  it('renders review date and review fields visibly', () => {
     render(<CdOfTheWeekWizardClient />);
 
-    fireEvent.click(screen.getByTestId('simulate-record-create'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Step 2: Create CD of the Week')).toBeInTheDocument();
-      expect(screen.getByText(/OK Computer/)).toBeInTheDocument();
-    });
+    expect(screen.getByLabelText(/Review Date/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Review')).toBeInTheDocument();
   });
 
-  it('renders review date and review fields in Step 2', async () => {
+  it('shows validation error when review text is missing', async () => {
     render(<CdOfTheWeekWizardClient />);
 
-    fireEvent.click(screen.getByTestId('simulate-record-create'));
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/Review Date/)).toBeInTheDocument();
-      expect(screen.getByLabelText('Review')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Review Date/), {
+      target: { value: '2025-06-01' },
     });
-  });
-
-  it('shows validation error when review text is missing in Step 2', async () => {
-    render(<CdOfTheWeekWizardClient />);
-
     fireEvent.click(screen.getByTestId('simulate-record-create'));
-
-    await waitFor(() => {
-      fireEvent.change(screen.getByLabelText(/Review Date/), {
-        target: { value: '2025-06-01' },
-      });
-      fireEvent.click(screen.getByRole('button', { name: /Create CD of the Week/i }));
-    });
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Review text is required');
     });
   });
 
-  it('shows validation error when review date is missing in Step 2', async () => {
+  it('shows validation error when review date is missing', async () => {
     render(<CdOfTheWeekWizardClient />);
 
-    fireEvent.click(screen.getByTestId('simulate-record-create'));
-
-    await waitFor(() => {
-      fireEvent.change(screen.getByLabelText('Review'), {
-        target: { value: 'Great album' },
-      });
-      fireEvent.click(screen.getByRole('button', { name: /Create CD of the Week/i }));
+    fireEvent.change(screen.getByLabelText('Review'), {
+      target: { value: 'Great album' },
     });
+    fireEvent.click(screen.getByTestId('simulate-record-create'));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('Review date is required');
     });
   });
 
-  it('back button returns to Step 1', async () => {
+  it('shows submitting state while creating', async () => {
+    const { createCdOfTheWeek } = await import('./utils');
+    (createCdOfTheWeek as any).mockReturnValue(new Promise(() => {}));
+
     render(<CdOfTheWeekWizardClient />);
 
+    fireEvent.change(screen.getByLabelText(/Review Date/), {
+      target: { value: '2025-06-01' },
+    });
+    fireEvent.change(screen.getByLabelText('Review'), {
+      target: { value: 'Great album' },
+    });
     fireEvent.click(screen.getByTestId('simulate-record-create'));
 
     await waitFor(() => {
-      expect(screen.getByText('Step 2: Create CD of the Week')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('inline-form')).toBeInTheDocument();
+      expect(screen.getByTestId('submit-label')).toHaveTextContent('Creating…');
     });
   });
 

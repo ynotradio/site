@@ -15,10 +15,11 @@ import type { ClientField, FormState, Data } from 'payload';
 
 type Props = {
   collectionSlug: string;
-  onSuccess?: (doc: Data) => void;
+  onSuccess?: (doc: Data) => void | Promise<void>;
   submitLabel?: string;
   title?: string;
   description?: string;
+  children?: React.ReactNode;
 };
 
 export const InlineCollectionFormClient: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
   submitLabel = 'Create',
   title,
   description,
+  children,
 }) => {
   const { getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
@@ -186,6 +188,7 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
           permissions
           readOnly={false}
         />
+        {children}
         <div style={{ marginTop: '2rem' }}>
           <FormSubmit>{submitLabel}</FormSubmit>
         </div>
