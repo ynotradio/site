@@ -1,4 +1,5 @@
 import React from 'react';
+import './CloneButton.css';
 
 interface CloneButtonProps {
   cloning: boolean;
@@ -17,17 +18,7 @@ export const CloneButton: React.FC<CloneButtonProps> = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    style={{
-      padding: '10px 20px',
-      fontSize: '14px',
-      fontWeight: 500,
-      color: '#fff',
-      backgroundColor: cloning ? '#999' : '#3182ce',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: disabled ? 'not-allowed' : 'pointer',
-      opacity: disabled ? 0.5 : 1,
-    }}
+    className={`clone-button${cloning ? ' clone-button--cloning' : ''}`}
   >
     {cloning
       ? 'Cloning...'

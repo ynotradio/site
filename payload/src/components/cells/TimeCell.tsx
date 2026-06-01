@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { DefaultCellComponentProps } from 'payload';
+import './TimeCell.css';
 
 function formatAmPm(value: unknown): string {
   if (!value || typeof value !== 'string') return '—';
@@ -14,9 +15,7 @@ function formatAmPm(value: unknown): string {
 }
 
 export const TimeCell: React.FC<DefaultCellComponentProps> = ({ cellData }) => (
-  <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-    {formatAmPm(cellData)}
-  </span>
+  <span className="time-cell">{formatAmPm(cellData)}</span>
 );
 
 export default TimeCell;
