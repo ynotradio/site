@@ -109,10 +109,11 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
   disableGutter = false,
   layout = 'document',
 }) => {
-  const { getEntityConfig } = useConfig();
+  const { config: payloadConfig, getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
 
   const config = getEntityConfig({ collectionSlug });
+  const configLoaded = (payloadConfig?.collections?.length ?? 0) > 0;
   const allFields = (config?.fields as ClientField[]) || [];
   const fields = allFields.filter(
     (f) => !excludeFields.includes((f as { name?: string }).name ?? ''),
@@ -220,6 +221,10 @@ export const InlineCollectionFormClient: React.FC<Props> = ({
 
   function renderInGutter(content: React.ReactNode) {
     return disableGutter ? content : <Gutter>{content}</Gutter>;
+  }
+
+  if (!configLoaded) {
+    return renderInGutter(<div style={{ padding: '2rem 0' }}>Loading form…</div>);
   }
 
   if (!config) {

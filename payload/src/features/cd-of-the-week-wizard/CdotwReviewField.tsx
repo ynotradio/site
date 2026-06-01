@@ -17,10 +17,11 @@ interface Props {
  * The form has no submit button — the parent reads values via `valueRef`.
  */
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
-  const { getEntityConfig } = useConfig();
+  const { config: payloadConfig, getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
 
   const config = getEntityConfig({ collectionSlug: 'cdoftheweek' });
+  const configLoaded = (payloadConfig?.collections?.length ?? 0) > 0;
   const reviewField = (config?.fields as ClientField[] | undefined)?.find(
     (f) => (f as { name?: string }).name === 'review',
   );
@@ -92,6 +93,10 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       abortAndIgnore(ctrl);
     };
   }, []);
+
+  if (!configLoaded) {
+    return <div style={{ minHeight: '200px' }}>Loading editor…</div>;
+  }
 
   if (!reviewField) {
     return (
