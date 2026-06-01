@@ -6,7 +6,7 @@ AI-powered automation for code quality maintenance.
 
 ### Code Simplifier (`code-simplifier.md`)
 
-- **Schedule**: Daily at 2 AM UTC
+- **Schedule**: Weekdays at 2 AM UTC
 - **Scope**: Code merged in last 24 hours
 - **Actions**: Reduces complexity, removes dead code, extracts inline styles, applies project conventions
 - **PR Label**: `code-quality`, `automation`
@@ -14,7 +14,7 @@ AI-powered automation for code quality maintenance.
 
 ### Test Coverage Improver (`test-coverage-improver.md`)
 
-- **Schedule**: Daily at 3 AM UTC
+- **Schedule**: Mondays at 3 AM UTC
 - **Phases**: Research → Configuration → Implementation
 - **Target**: 80% test coverage
 - **Actions**: Adds tests to under-tested areas, creates story files
@@ -67,6 +67,9 @@ git add .github/ && git commit -m "chore: update workflow" && git push
 Common customizations:
 
 - Adjust schedules (change cron in YAML front matter)
+- Set default model with repository/org variable `GH_AW_MODEL_AGENT_COPILOT`
+- Use `workflow_dispatch` `model` input for one-off stronger-model runs
+- Tune `max-runs` and `max-effective-tokens` to control per-run token spend
 - Add/remove validation steps
 - Change PR expiration times
 - Modify agent instructions

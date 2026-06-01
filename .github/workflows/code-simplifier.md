@@ -3,8 +3,17 @@ name: Code Simplifier
 description: Analyzes recently modified code and creates pull requests with simplifications that improve clarity and maintainability while preserving functionality
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * 1-5'
   workflow_dispatch:
+    inputs:
+      model:
+        description: Optional model override for manual runs (for example, claude-sonnet-4.6)
+        required: false
+        type: string
+
+model: ${{ inputs.model || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
+max-runs: 100
+max-effective-tokens: 3500000
 
 permissions:
   contents: read
