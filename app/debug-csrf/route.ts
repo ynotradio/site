@@ -16,6 +16,10 @@ export async function GET(): Promise<NextResponse> {
       CONTEXT: process.env.CONTEXT ?? null,
       PAYLOAD_CSRF: process.env.PAYLOAD_CSRF ?? null,
       PAYLOAD_PUBLIC_SERVER_URL: process.env.PAYLOAD_PUBLIC_SERVER_URL ?? null,
+      BRANCH: process.env.BRANCH ?? null,
+      SITE_NAME: process.env.SITE_NAME ?? null,
+      DEPLOY_ID: process.env.DEPLOY_ID ?? null,
+      SITE_ID: process.env.SITE_ID ?? null,
     },
   });
 }
