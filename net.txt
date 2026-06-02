@@ -1,0 +1,6 @@
+40. [GET] http://localhost:3000/api/payload-preferences/nav => [200] OK
+41. [GET] http://localhost:3000/api/users/me => [200] OK
+42. [POST] http://localhost:3000/admin/cd-of-the-week-wizard => [200] OK
+43. [POST] http://localhost:3000/admin/cd-of-the-week-wizard => [200] OK
+
+Note: 42 static requests not shown, run with "static" option to see them.
