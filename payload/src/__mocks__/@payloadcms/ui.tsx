@@ -139,3 +139,25 @@ export const resetMocks = () => {
 export const setMockDocuments = (docs: Record<string, Record<string, unknown>>) => {
   mockRelationshipDocuments = docs;
 };
+
+export const Form: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+  <form>{children}</form>
+);
+
+export const FormSubmit: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+  <button type="submit">{children}</button>
+);
+
+export const RenderFields: React.FC<{ fields?: unknown }> = () => (
+  <div data-testid="render-fields" />
+);
+
+export const useServerFunctions = () => ({
+  getFormState: async () => ({ state: {} }),
+});
+
+export const toast = {
+  success: () => {},
+  error: () => {},
+  info: () => {},
+};
