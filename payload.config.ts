@@ -28,6 +28,7 @@ import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands'
 import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
 import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
 import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
+import { DEPLOY_ORIGIN } from './payload/generated/deploy-origin';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -43,6 +44,19 @@ const coerceList = (value: string): string[] => value
   .split(',')
   .map((entry) => entry.trim())
   .filter(Boolean);
+
+// Netlify's per-deploy origin (https://my-branch--site.netlify.app) is only
+// available during the build, not at function runtime where this config runs.
+// scripts/netlify-bake-deploy-origin.sh freezes DEPLOY_PRIME_URL into
+// DEPLOY_ORIGIN at build time. Payload's CSRF check is an exact string match
+// (no globs), so this origin must be in the allowlist or cookie auth is
+// rejected on Server Actions (the wizard's form-state POST).
+const withDeployOrigin = (origins: string[]): string[] => {
+  if (!DEPLOY_ORIGIN || origins.includes(DEPLOY_ORIGIN)) {
+    return origins;
+  }
+  return [...origins, DEPLOY_ORIGIN];
+};
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -116,6 +130,14 @@ export default buildConfig({
             title: 'Show Cloner',
           },
         },
+        CdOfTheWeekWizard: {
+          Component: '/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool',
+          path: '/cd-of-the-week-wizard',
+          exact: true,
+          meta: {
+            title: 'New CD of the Week + Album',
+          },
+        },
         MRMLive: {
           Component: '/payload/src/features/mrm-live#LiveMatchTool',
           path: '/mrm-live',
@@ -134,12 +156,16 @@ export default buildConfig({
     },
   },
   // CORS: Allow requests from these origins (set PAYLOAD_CORS env var in production)
-  cors: coerceList(
-    process.env.PAYLOAD_CORS
-      ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+  cors: withDeployOrigin(
+    coerceList(
+      process.env.PAYLOAD_CORS
+        ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+    ),
   ),
   // CSRF: Protect against CSRF attacks (set PAYLOAD_CSRF env var in production)
-  csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  csrf: withDeployOrigin(
+    coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  ),
   collections: [
     Users,
     Media,
