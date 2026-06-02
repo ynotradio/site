@@ -63,8 +63,9 @@ function renderCdCoverImage(string $imageUrl, ?string $artistUrl, string $altTex
 
                 $lastIndex = count($latestCds) - 1;
                 foreach ($latestCds as $i => $cd) {
+                    $displayCd = $cdOfTheWeek->getById((int) $cd['id']) ?: $cd;
                     $coverImage = renderCdCoverImage(
-                        $cd['cd_pic_url'],
+                        $displayCd['cd_pic_url'],
                         $cd['band'] ?? null,
                         $cd['artist'] . ' - ' . $cd['title'] . ' album cover'
                     );
