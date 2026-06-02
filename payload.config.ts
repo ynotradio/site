@@ -44,6 +44,15 @@ const coerceList = (value: string): string[] => value
   .map((entry) => entry.trim())
   .filter(Boolean);
 
+// Netlify sets DEPLOY_PRIME_URL to the exact branch/preview origin
+// (e.g. https://my-branch--site.netlify.app). Payload's CSRF check is an exact
+// string match with no glob support, so each deploy's dynamic origin must be
+// added at runtime or cookie auth is rejected on Server Actions.
+const withDeployOrigin = (origins: string[]): string[] => {
+  const deployUrl = process.env.DEPLOY_PRIME_URL;
+  return deployUrl && !origins.includes(deployUrl) ? [...origins, deployUrl] : origins;
+};
+
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
@@ -142,12 +151,16 @@ export default buildConfig({
     },
   },
   // CORS: Allow requests from these origins (set PAYLOAD_CORS env var in production)
-  cors: coerceList(
-    process.env.PAYLOAD_CORS
-      ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+  cors: withDeployOrigin(
+    coerceList(
+      process.env.PAYLOAD_CORS
+        ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+    ),
   ),
   // CSRF: Protect against CSRF attacks (set PAYLOAD_CSRF env var in production)
-  csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  csrf: withDeployOrigin(
+    coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  ),
   collections: [
     Users,
     Media,
