@@ -32,7 +32,7 @@ export const recordInlineFields: Field[] = [
       },
       {
         name: 'releaseDate',
-        type: 'date',
+        type: 'text',
         admin: {
           description: 'Release date',
           components: {

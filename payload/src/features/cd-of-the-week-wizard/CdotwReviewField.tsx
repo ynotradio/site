@@ -1,76 +1,89 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { Form, RenderFields, useServerFunctions } from '@payloadcms/ui';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  Form, RenderFields, useConfig, useServerFunctions,
+} from '@payloadcms/ui';
 import { abortAndIgnore, handleAbortRef } from '@payloadcms/ui/shared';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import type { Field, FormState } from 'payload';
 
 interface Props {
   valueRef: React.MutableRefObject<unknown>;
 }
 
-/**
- * Provides a minimal CDOTW Form context so the `review` rich text field
- * renders natively with all its features (lexical editor, toolbar, etc.).
- * The form has no submit button — the parent reads values via `valueRef`.
- */
 export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
+  const { getEntityConfig } = useConfig();
   const { getFormState } = useServerFunctions();
-  const reviewField: Field = {
-    name: 'review',
-    type: 'richText',
-    editor: lexicalEditor(),
-    required: true,
-    admin: {
-      description: 'The review text shown on the website',
-    },
-  };
-
   const [initialState, setInitialState] = useState<FormState>();
   const [error, setError] = useState<string | null>(null);
+  const [stateReviewField, setStateReviewField] = useState<Field | null>(null);
   const abortOnChangeRef = React.useRef<AbortController | null>(null);
+  const getReviewFieldFromState = useCallback((formState: FormState): Field | null => {
+    const reviewState = formState?.review as { field?: Field; fieldSchema?: Field } | undefined;
+    return reviewState?.fieldSchema ?? reviewState?.field ?? null;
+  }, []);
+
+  const collectionConfig = getEntityConfig({ collectionSlug: 'cdoftheweek' }) as
+    | { fields?: Field[]; labels?: { singular?: string } }
+    | undefined;
+  const reviewField = collectionConfig?.fields?.find(
+    (field): field is Field => 'name' in field && field.name === 'review',
+  );
 
   const onChange = useCallback(
     async (params: { formState: FormState; submitted: boolean }) => {
       const { formState: prevFormState, submitted } = params;
       const controller = handleAbortRef(abortOnChangeRef);
-      const response = await getFormState({
+      const requestArgs: Parameters<typeof getFormState>[0] & { includeSchema?: boolean } = {
         collectionSlug: 'cdoftheweek',
         docPermissions: { fields: true },
         docPreferences: { fields: {} },
         formState: prevFormState,
+        includeSchema: true,
         operation: 'create',
+        renderAllFields: true,
         schemaPath: 'cdoftheweek',
         signal: controller.signal,
         skipValidation: !submitted,
-      });
+      };
+      const response = await getFormState(requestArgs);
       abortOnChangeRef.current = null;
       if (response && response.state) {
+        const nextReviewField = getReviewFieldFromState(response.state);
+        if (nextReviewField) {
+          setStateReviewField(nextReviewField);
+        }
         // eslint-disable-next-line no-param-reassign
         valueRef.current = response.state?.review?.value;
         return response.state;
       }
       return undefined;
     },
-    [getFormState, valueRef],
+    [getFormState, getReviewFieldFromState, valueRef],
   );
 
   useEffect(() => {
     let cancelled = false;
+
     async function init() {
       try {
-        const result = await getFormState({
+        const requestArgs: Parameters<typeof getFormState>[0] & { includeSchema?: boolean } = {
           collectionSlug: 'cdoftheweek',
           data: {},
           docPermissions: { fields: true },
           docPreferences: { fields: {} },
+          includeSchema: true,
           operation: 'create',
           renderAllFields: true,
           schemaPath: 'cdoftheweek',
           skipValidation: true,
-        });
+        };
+        const result = await getFormState(requestArgs);
         if (!cancelled && 'state' in result) {
+          const nextReviewField = getReviewFieldFromState(result.state);
+          if (nextReviewField) {
+            setStateReviewField(nextReviewField);
+          }
           setInitialState(result.state);
           // eslint-disable-next-line no-param-reassign
           valueRef.current = result.state?.review?.value;
@@ -82,11 +95,12 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
         }
       }
     }
+
     init();
     return () => {
       cancelled = true;
     };
-  }, [getFormState, valueRef]);
+  }, [getFormState, getReviewFieldFromState, valueRef]);
 
   useEffect(() => {
     const ctrl = abortOnChangeRef.current;
@@ -94,6 +108,16 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
       abortAndIgnore(ctrl);
     };
   }, []);
+
+  const fieldToRender = stateReviewField ?? reviewField;
+
+  if (!fieldToRender) {
+    return (
+      <div className="cdotw-wizard__hint" role="alert">
+        Review field is unavailable
+      </div>
+    );
+  }
 
   if (!initialState) {
     return (
@@ -103,7 +127,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
             {error}
           </div>
         ) : (
-          'Loading editor…'
+          'Loading editor...'
         )}
       </div>
     );
@@ -113,7 +137,7 @@ export const CdotwReviewField: React.FC<Props> = ({ valueRef }) => {
     <Form action="/api/cdoftheweek" initialState={initialState} method="POST" onChange={[onChange]}>
       <RenderFields
         className="document-fields__fields"
-        fields={[reviewField]}
+        fields={[fieldToRender]}
         forceRender
         parentIndexPath=""
         parentPath=""
