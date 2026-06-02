@@ -4,7 +4,7 @@
   # migrations (causing the build to hang until Netlify times out).
   # `--forceAcceptWarning` alone does NOT suppress this specific prompt.
   # Do not remove the `yes |` prefix.
-  command = "yarn validate:migrations && yes | yarn payload:migrate && yarn build"
+  command = "bash ./scripts/netlify-bake-deploy-origin.sh && yarn validate:migrations && yes | yarn payload:migrate && yarn build"
   publish = ".next"
   ignore = "./scripts/netlify-ignore.sh"
 
@@ -64,10 +64,24 @@
   DATABASE_SSL = "require"
   # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
 
+# Payload CSRF/CORS are EXACT string matches (no glob support), so the
+# dynamic per-deploy origin (https://<branch>--ynotradio-admin.netlify.app or
+# https://deploy-preview-<n>--...) cannot be listed statically here. It is
+# appended at runtime from $DEPLOY_PRIME_URL in payload.config.ts. The static
+# values below only need the stable custom preview domain.
 [context.deploy-preview.environment]
   PAYLOAD_PUBLIC_SERVER_URL = "https://preview-admin.ynotradio.net"
-  PAYLOAD_CORS = "https://preview-admin.ynotradio.net,https://deploy-preview-*--ynotradio-admin.netlify.app"
-  PAYLOAD_CSRF = "https://preview-admin.ynotradio.net,https://deploy-preview-*--ynotradio-admin.netlify.app"
+  PAYLOAD_CORS = "https://preview-admin.ynotradio.net"
+  PAYLOAD_CSRF = "https://preview-admin.ynotradio.net"
+  DATABASE_SSL = "require"
+  # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
+
+# Branch deploys (non-PR pushes) get the same treatment; the dynamic origin
+# comes from $DEPLOY_PRIME_URL at runtime via payload.config.ts.
+[context.branch-deploy.environment]
+  PAYLOAD_PUBLIC_SERVER_URL = "https://preview-admin.ynotradio.net"
+  PAYLOAD_CORS = "https://preview-admin.ynotradio.net"
+  PAYLOAD_CSRF = "https://preview-admin.ynotradio.net"
   DATABASE_SSL = "require"
   # DATABASE_URI and PAYLOAD_SECRET are configured via Netlify dashboard
 
