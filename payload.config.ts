@@ -28,6 +28,7 @@ import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands'
 import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
 import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
 import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
+import { DEPLOY_ORIGIN } from './payload/generated/deploy-origin';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -44,13 +45,17 @@ const coerceList = (value: string): string[] => value
   .map((entry) => entry.trim())
   .filter(Boolean);
 
-// Netlify sets DEPLOY_PRIME_URL to the exact branch/preview origin
-// (e.g. https://my-branch--site.netlify.app). Payload's CSRF check is an exact
-// string match with no glob support, so each deploy's dynamic origin must be
-// added at runtime or cookie auth is rejected on Server Actions.
+// Netlify's per-deploy origin (https://my-branch--site.netlify.app) is only
+// available during the build, not at function runtime where this config runs.
+// scripts/netlify-bake-deploy-origin.sh freezes DEPLOY_PRIME_URL into
+// DEPLOY_ORIGIN at build time. Payload's CSRF check is an exact string match
+// (no globs), so this origin must be in the allowlist or cookie auth is
+// rejected on Server Actions (the wizard's form-state POST).
 const withDeployOrigin = (origins: string[]): string[] => {
-  const deployUrl = process.env.DEPLOY_PRIME_URL;
-  return deployUrl && !origins.includes(deployUrl) ? [...origins, deployUrl] : origins;
+  if (!DEPLOY_ORIGIN || origins.includes(DEPLOY_ORIGIN)) {
+    return origins;
+  }
+  return [...origins, DEPLOY_ORIGIN];
 };
 
 const isProduction = process.env.NODE_ENV === 'production';

@@ -4,7 +4,7 @@
   # migrations (causing the build to hang until Netlify times out).
   # `--forceAcceptWarning` alone does NOT suppress this specific prompt.
   # Do not remove the `yes |` prefix.
-  command = "yarn validate:migrations && yes | yarn payload:migrate && yarn build"
+  command = "bash ./scripts/netlify-bake-deploy-origin.sh && yarn validate:migrations && yes | yarn payload:migrate && yarn build"
   publish = ".next"
   ignore = "./scripts/netlify-ignore.sh"
 
