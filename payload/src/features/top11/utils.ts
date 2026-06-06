@@ -1,0 +1,124 @@
+import { APIError, type Payload, type PayloadRequest, type Where } from 'payload';
+import { hasRole } from '../../utils/auth';
+
+export const TOP11_MANAGER_ROLES = ['admin', 'editor'] as const;
+
+export const requireTop11Manager = (req: PayloadRequest): void => {
+  if (!hasRole(req.user, [...TOP11_MANAGER_ROLES])) {
+    throw new APIError('Unauthorized', 401);
+  }
+};
+
+export const parseTop11Id = (value: string | undefined, fieldName = 'id'): number => {
+  if (!value) {
+    throw new APIError(`${fieldName} is required`, 400);
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new APIError(`${fieldName} must be a positive integer`, 400);
+  }
+
+  return parsed;
+};
+
+export const getTop11ContestStatusFromData = (
+  data: Record<string, unknown> | null | undefined,
+): string | undefined => {
+  const status = data?.status;
+  return typeof status === 'string' ? status : undefined;
+};
+
+export const validateTop11StatusTransition = (
+  currentStatus: string,
+  nextStatus: string,
+): void => {
+  const allowedTransitions: Record<string, string[]> = {
+    draft: ['draft', 'open', 'archived'],
+    open: ['open', 'closed', 'archived'],
+    closed: ['closed', 'open', 'published', 'archived'],
+    published: ['published', 'archived'],
+    archived: ['archived'],
+  };
+
+  const allowed = allowedTransitions[currentStatus] ?? [];
+  if (!allowed.includes(nextStatus)) {
+    throw new APIError(
+      `Invalid Top 11 contest status transition: ${currentStatus} -> ${nextStatus}`,
+      400,
+    );
+  }
+};
+
+export const assertPublishedContestImmutability = (
+  originalStatus: string,
+  data: Record<string, unknown> | null | undefined,
+): void => {
+  if (originalStatus === 'archived') {
+    throw new APIError('Archived Top 11 contests are immutable', 409);
+  }
+
+  if (originalStatus !== 'published' || !data) {
+    return;
+  }
+
+  const mutableKeys = new Set(['status']);
+  const attemptedMutations = Object.keys(data).filter((key) => !mutableKeys.has(key));
+
+  if (attemptedMutations.length > 0) {
+    throw new APIError(
+      'Published Top 11 contests are immutable except for transitioning to archived',
+      409,
+    );
+  }
+};
+
+const escapeCsvValue = (value: string): string => {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replaceAll('"', '""')}"`;
+  }
+
+  return value;
+};
+
+export const buildCsv = (headers: string[], rows: string[][]): string => {
+  const lines = [headers, ...rows].map((values) => values.map(escapeCsvValue).join(','));
+  return `${lines.join('\n')}\n`;
+};
+
+export const findAllDocs = async <TDoc>(args: {
+  payload: Payload;
+  collection: string;
+  where?: Where;
+  depth?: number;
+  sort?: string;
+  select?: Record<string, true>;
+}): Promise<TDoc[]> => {
+  const { payload, collection, where, depth = 0, sort, select } = args;
+  const docs: TDoc[] = [];
+  let page = 1;
+
+  while (true) {
+    const result = await payload.find({
+      collection,
+      where,
+      depth,
+      sort,
+      select,
+      limit: 200,
+      page,
+      pagination: true,
+      overrideAccess: false,
+    });
+
+    docs.push(...(result.docs as TDoc[]));
+
+    if (result.page >= result.totalPages) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return docs;
+};
