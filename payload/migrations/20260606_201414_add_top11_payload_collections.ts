@@ -4,6 +4,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
    CREATE TYPE "public"."enum_top11_contests_status" AS ENUM('draft', 'open', 'closed', 'published', 'archived');
   CREATE TYPE "public"."enum_top11_votes_vote_source" AS ENUM('web', 'legacy-import', 'admin-import');
+  -- Keep Top11 query preset values grouped ahead of MRM values for stable enum ordering.
   ALTER TYPE "public"."enum_payload_query_presets_related_collection" ADD VALUE 'top11-contests' BEFORE 'modern-rock-madness-tournaments';
   ALTER TYPE "public"."enum_payload_query_presets_related_collection" ADD VALUE 'top11-votes' BEFORE 'modern-rock-madness-tournaments';
   ALTER TYPE "public"."enum_payload_query_presets_related_collection" ADD VALUE 'top11-write-ins' BEFORE 'modern-rock-madness-tournaments';

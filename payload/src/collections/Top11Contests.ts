@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import type { CollectionConfig } from 'payload';
 import { APIError, slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
@@ -54,7 +55,10 @@ type WinnerDrawDoc = {
   contestantEmail?: string | null;
 };
 
-const setContestStatus = async (req: Parameters<NonNullable<CollectionConfig['endpoints']>[number]['handler']>[0], status: string): Promise<Response> => {
+type CollectionEndpointHandler = NonNullable<CollectionConfig['endpoints']>[number]['handler'];
+type EndpointRequest = Parameters<CollectionEndpointHandler>[0];
+
+const setContestStatus = async (req: EndpointRequest, status: string): Promise<Response> => {
   requireTop11Manager(req);
   const contestId = parseTop11Id(req.routeParams?.id, 'contest id');
 
@@ -365,7 +369,8 @@ export const Top11Contests: CollectionConfig = {
           }
         }
 
-        const winnerIndex = Math.floor(Math.random() * eligibleContestants.length);
+        // node:crypto randomInt provides cryptographically secure randomness for fair draws.
+        const winnerIndex = randomInt(eligibleContestants.length);
         const winner = eligibleContestants[winnerIndex];
 
         const winnerLog = await req.payload.create({
@@ -442,6 +447,19 @@ export const Top11Contests: CollectionConfig = {
         {
           name: 'externalTemplateUrl',
           type: 'text',
+          validate: (value) => {
+            if (!value) {
+              return true;
+            }
+
+            try {
+              // eslint-disable-next-line no-new
+              new URL(String(value));
+              return true;
+            } catch {
+              return 'External template URL must be a valid URL';
+            }
+          },
           admin: {
             width: '34%',
             description: 'Link to external templated message source document.',
