@@ -23,6 +23,11 @@ import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
+import { Top11Contests } from './payload/src/collections/Top11Contests';
+import { Top11Votes } from './payload/src/collections/Top11Votes';
+import { Top11WriteIns } from './payload/src/collections/Top11WriteIns';
+import { Top11Contestants } from './payload/src/collections/Top11Contestants';
+import { Top11WinnerDraws } from './payload/src/collections/Top11WinnerDraws';
 import { ModernRockMadnessTournaments } from './payload/src/collections/MadnessTournaments';
 import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands';
 import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
@@ -182,6 +187,11 @@ export default buildConfig({
     Posts,
     CdOfTheWeek,
     YearEndPollResults,
+    Top11Contests,
+    Top11Votes,
+    Top11WriteIns,
+    Top11Contestants,
+    Top11WinnerDraws,
     ModernRockMadnessTournaments,
     ModernRockMadnessGroups,
     ModernRockMadnessMatches,
