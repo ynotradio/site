@@ -29,17 +29,13 @@ describe('top11 utils', () => {
   });
 
   it('enforces immutable published contests', () => {
-    expect(() =>
-      assertPublishedContestImmutability('published', {
-        title: 'attempt mutation',
-      }),
-    ).toThrow(APIError);
+    expect(() => assertPublishedContestImmutability('published', {
+      title: 'attempt mutation',
+    })).toThrow(APIError);
 
-    expect(() =>
-      assertPublishedContestImmutability('published', {
-        status: 'archived',
-      }),
-    ).not.toThrow();
+    expect(() => assertPublishedContestImmutability('published', {
+      status: 'archived',
+    })).not.toThrow();
   });
 
   it('builds csv output', () => {
