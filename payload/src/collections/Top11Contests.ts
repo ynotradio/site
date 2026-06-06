@@ -81,31 +81,45 @@ const validateContestEntries = (value: unknown): true | string => {
 
   const orders = new Set<number>();
   const songs = new Set<number>();
+  let validationError: string | null = null;
 
-  for (const row of value) {
+  value.forEach((row) => {
+    if (validationError) {
+      return;
+    }
+
     if (!row || typeof row !== 'object') {
-      return 'Each entry must be an object';
+      validationError = 'Each entry must be an object';
+      return;
     }
 
     const typedRow = row as { displayOrder?: unknown; song?: unknown };
     if (typeof typedRow.displayOrder !== 'number') {
-      return 'Each entry requires a numeric display order';
+      validationError = 'Each entry requires a numeric display order';
+      return;
     }
 
     if (orders.has(typedRow.displayOrder)) {
-      return 'Display order must be unique per contest';
+      validationError = 'Display order must be unique per contest';
+      return;
     }
     orders.add(typedRow.displayOrder);
 
     const songId = Number(typedRow.song);
     if (!Number.isInteger(songId) || songId <= 0) {
-      return 'Each entry must reference a valid song';
+      validationError = 'Each entry must reference a valid song';
+      return;
     }
 
     if (songs.has(songId)) {
-      return 'A song can only appear once in a Top 11 contest';
+      validationError = 'A song can only appear once in a Top 11 contest';
+      return;
     }
     songs.add(songId);
+  });
+
+  if (validationError) {
+    return validationError;
   }
 
   return true;
@@ -140,10 +154,9 @@ export const Top11Contests: CollectionConfig = {
           return data;
         }
 
-        const originalStatus =
-          typeof originalDoc.status === 'string' ? originalDoc.status : 'draft';
-        const nextStatus =
-          getTop11ContestStatusFromData(data as Record<string, unknown>) ?? originalStatus;
+        const originalStatus = typeof originalDoc.status === 'string' ? originalDoc.status : 'draft';
+        const nextStatus = getTop11ContestStatusFromData(data as Record<string, unknown>)
+          ?? originalStatus;
 
         assertPublishedContestImmutability(originalStatus, data as Record<string, unknown>);
         validateTop11StatusTransition(originalStatus, nextStatus);
@@ -258,12 +271,15 @@ export const Top11Contests: CollectionConfig = {
         const voteCounts = new Map<number, number>();
         const voterKeys = new Set<string>();
 
-        for (const vote of votes) {
+        votes.forEach((vote) => {
           voteCounts.set(vote.song, (voteCounts.get(vote.song) ?? 0) + 1);
 
-          const voterKey = vote.voterAuth0Id || vote.voterUserId || vote.voterEmail || `vote-${vote.id}`;
+          const voterKey = vote.voterAuth0Id
+            || vote.voterUserId
+            || vote.voterEmail
+            || `vote-${vote.id}`;
           voterKeys.add(voterKey);
-        }
+        });
 
         const rankedSongs = (contest.entries ?? [])
           .map((entry) => ({
@@ -273,7 +289,8 @@ export const Top11Contests: CollectionConfig = {
           }))
           .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
 
-        const newsletterOnlyCount = contestants.filter((contestant) => contestant.newsletterOptIn).length;
+        const newsletterOnlyCount = contestants
+          .filter((contestant) => contestant.newsletterOptIn).length;
 
         return Response.json({
           contestId,
@@ -321,8 +338,9 @@ export const Top11Contests: CollectionConfig = {
           throw new APIError('No eligible contestants found for this contest', 400);
         }
 
-        const shouldExcludePriorWinners =
-          body.excludePriorWinners ?? contest.settings?.excludePriorWinners ?? true;
+        const shouldExcludePriorWinners = body.excludePriorWinners
+          ?? contest.settings?.excludePriorWinners
+          ?? true;
 
         let eligibleContestants = contestants;
 
@@ -340,7 +358,10 @@ export const Top11Contests: CollectionConfig = {
           );
 
           if (eligibleContestants.length === 0) {
-            throw new APIError('No eligible contestants remain after excluding prior winners', 400);
+            throw new APIError(
+              'No eligible contestants remain after excluding prior winners',
+              400,
+            );
           }
         }
 
@@ -353,7 +374,9 @@ export const Top11Contests: CollectionConfig = {
             contest: contestId,
             contestant: winner.id,
             contestantEmail: winner.email,
-            drawnBy: req.user && typeof req.user === 'object' ? (req.user as { id?: unknown }).id : null,
+            drawnBy: req.user && typeof req.user === 'object'
+              ? (req.user as { id?: unknown }).id
+              : null,
             excludePriorWinners: shouldExcludePriorWinners,
           },
           req,

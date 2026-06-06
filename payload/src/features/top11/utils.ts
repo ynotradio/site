@@ -1,4 +1,9 @@
-import { APIError, type Payload, type PayloadRequest, type Where } from 'payload';
+import {
+  APIError,
+  type Payload,
+  type PayloadRequest,
+  type Where,
+} from 'payload';
 import { hasRole } from '../../utils/auth';
 
 export const TOP11_MANAGER_ROLES = ['admin', 'editor'] as const;
@@ -94,31 +99,24 @@ export const findAllDocs = async <TDoc>(args: {
   sort?: string;
   select?: Record<string, true>;
 }): Promise<TDoc[]> => {
-  const { payload, collection, where, depth = 0, sort, select } = args;
-  const docs: TDoc[] = [];
-  let page = 1;
+  const {
+    payload,
+    collection,
+    where,
+    depth = 0,
+    sort,
+    select,
+  } = args;
+  const result = await payload.find({
+    collection,
+    where,
+    depth,
+    sort,
+    select,
+    limit: 10000,
+    pagination: false,
+    overrideAccess: false,
+  });
 
-  while (true) {
-    const result = await payload.find({
-      collection,
-      where,
-      depth,
-      sort,
-      select,
-      limit: 200,
-      page,
-      pagination: true,
-      overrideAccess: false,
-    });
-
-    docs.push(...(result.docs as TDoc[]));
-
-    if (result.page >= result.totalPages) {
-      break;
-    }
-
-    page += 1;
-  }
-
-  return docs;
+  return result.docs as TDoc[];
 };

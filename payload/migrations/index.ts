@@ -8,6 +8,7 @@ import * as migration_20260508_152000_concert_artists_text from './20260508_1520
 import * as migration_20260509_172217_cdoftheweek_ondemand_search_text from './20260509_172217_cdoftheweek_ondemand_search_text';
 import * as migration_20260511_024334 from './20260511_024334';
 import * as migration_20260511_154500_add_cdotw_artist_url from './20260511_154500_add_cdotw_artist_url';
+import * as migration_20260606_201414_add_top11_payload_collections from './20260606_201414_add_top11_payload_collections';
 
 export const migrations = [
   {
@@ -53,11 +54,16 @@ export const migrations = [
   {
     up: migration_20260511_024334.up,
     down: migration_20260511_024334.down,
-    name: '20260511_024334'
+    name: '20260511_024334',
   },
   {
     up: migration_20260511_154500_add_cdotw_artist_url.up,
     down: migration_20260511_154500_add_cdotw_artist_url.down,
-    name: '20260511_154500_add_cdotw_artist_url'
+    name: '20260511_154500_add_cdotw_artist_url',
+  },
+  {
+    up: migration_20260606_201414_add_top11_payload_collections.up,
+    down: migration_20260606_201414_add_top11_payload_collections.down,
+    name: '20260606_201414_add_top11_payload_collections'
   },
 ];
