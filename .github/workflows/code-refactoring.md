@@ -65,6 +65,7 @@ High-risk (create GitHub Issue instead, do not implement):
 ## 3. Implement
 
 ```bash
+corepack enable && yarn install --immutable --silent 2>&1 | tail -3
 git checkout -b refactor/<description>-$(date +%Y%m%d)
 ```
 
@@ -82,9 +83,8 @@ git checkout -b refactor/<description>-$(date +%Y%m%d)
 After each change:
 
 ```bash
-yarn lint    # fix if fails
-yarn test    # revert if fails
-yarn build   # revert if fails
+yarn lint 2>&1 | tail -20   # fix if fails, do not push if unfixable
+yarn test --silent 2>&1 | tail -10   # revert if fails
 ```
 
 ## 4. PR

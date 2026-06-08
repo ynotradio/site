@@ -53,8 +53,8 @@ gh api graphql -f query='{ repository(owner:"ynotradio",name:"site") { discussio
 ## Phase 1: Research
 
 ```bash
-corepack enable && yarn install --immutable
-yarn test:coverage 2>&1 | tail -30
+corepack enable && yarn install --immutable --silent 2>&1 | tail -3
+yarn test:coverage --silent 2>&1 | tail -30
 
 # Components missing tests or stories (scope: app/ and payload/ only)
 find app payload -name "*.tsx" \
@@ -104,16 +104,16 @@ Create PR: "Test Coverage Improver - Coverage Configuration". Exit.
 ## Phase 3: Implementation
 
 ```bash
-# Find the lowest-coverage file in app/ or payload/
-yarn test:coverage --reporter=json 2>/dev/null | \
-  node -e "
-    const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
-    const files = Object.entries(d.coverageMap || {})
-      .filter(([f]) => /\/(app|payload)\//.test(f) && !/\.(test|stories)\./.test(f))
-      .map(([f,v]) => [f, v.s ? Object.values(v.s).filter(Boolean).length / Object.values(v.s).length : 0])
-      .sort((a,b) => a[1]-b[1]);
-    files.slice(0,5).forEach(([f,c]) => console.log(c.toFixed(2), f));
-  " 2>/dev/null || \
+# Find the lowest-coverage files in app/ or payload/
+yarn test:coverage --reporter=json --silent > /tmp/coverage.json 2>/dev/null
+node -e "
+  const d = JSON.parse(require('fs').readFileSync('/tmp/coverage.json','utf8'));
+  const files = Object.entries(d.coverageMap || {})
+    .filter(([f]) => /\/(app|payload)\//.test(f) && !/\.(test|stories)\./.test(f))
+    .map(([f,v]) => [f, v.s ? Object.values(v.s).filter(Boolean).length / Object.values(v.s).length : 0])
+    .sort((a,b) => a[1]-b[1]);
+  files.slice(0,5).forEach(([f,c]) => console.log(c.toFixed(2), f));
+" 2>/dev/null || \
   find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | grep "components" | head -5
 ```
 
@@ -137,7 +137,7 @@ Pick ONE file. Read it carefully before writing any tests.
 ```bash
 git checkout -b test/coverage-<component>-$(date +%Y%m%d)
 # write tests
-yarn lint && yarn test   # must both exit 0 before pushing
+yarn lint 2>&1 | tail -20 && yarn test --silent 2>&1 | tail -10   # must both exit 0 before pushing
 git add . && git commit -m "test: add coverage for <component>"
 git push origin HEAD
 ```

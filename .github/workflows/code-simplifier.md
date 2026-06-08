@@ -69,9 +69,9 @@ Read each file. Apply only if clearly better:
 ## 3. Validate
 
 ```bash
-corepack enable && yarn install --immutable
-yarn lint    # fix if fails, do not push if unfixable
-yarn test    # revert if fails
+corepack enable && yarn install --immutable --silent 2>&1 | tail -3
+yarn lint 2>&1 | tail -20   # fix if fails, do not push if unfixable
+yarn test --silent 2>&1 | tail -10   # revert if fails
 ```
 
 ## 4. Create PR
