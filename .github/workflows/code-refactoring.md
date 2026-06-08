@@ -31,124 +31,88 @@ safe-outputs:
 
 # Code Refactoring Assistant
 
-Systematically analyze the codebase and implement strategic refactoring to improve code quality.
+Implement one targeted refactoring per run. Create a PR if successful, or a GitHub Issue if the change is high-risk.
 
-## Mission
-
-Process items from [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md), prioritize improvements, implement one refactoring per run.
-
-**Context**: Solo hobby project. Be decisive. No options/comparisons. Your code demonstrates the improvement.
-
-## Project Context
-
-- **Repository**: ynotradio/site
-- **Standards**: See [AGENTS.md](../../AGENTS.md), [`.claude/skills/code-quality-standards/`](../../.claude/skills/code-quality-standards/)
-- **Refactoring Guide**: [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md)
-
-## Process
-
-### 1. Identify Opportunities
-
-Read [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md) for current priorities.
-
-Find additional candidates (scope to `app/` and `payload/` only — exclude everything else):
+## 1. Find a target
 
 ```bash
-# Large files (>300 lines)
-find app payload -name "*.tsx" -o -name "*.ts" | while read f; do
-  lines=$(wc -l < "$f")
-  [ $lines -gt 300 ] && echo "$f: $lines lines"
-done
-
-# Missing tests
+# Components over 300 lines
 find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | \
-  grep -E "(app|payload)/.*components"
+  xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 300 {print $2, $1}' | head -5
+
+# Components missing test or story files
+find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | \
+  grep -E "components" | head -10
 ```
 
-Priority: Components >300 lines, 0% test coverage, high complexity.
+Pick ONE target. Prefer: over-300-line components > missing tests > missing stories.
 
-### 2. Plan Refactoring
+## 2. Plan
 
-Select ONE tractable target. Design approach:
+Low-risk (implement as PR):
 
-**Common refactorings**:
+- Split large components into sub-components or hooks
+- Add missing `.test.tsx` / `.stories.tsx` files
+- Extract inline styles to CSS files
+- Remove duplicate code
 
-- Split large components (extract sub-components, hooks)
-- Add missing `.test.tsx` and `.stories.tsx` files
-- Extract inline styles to CSS modules
-- Extract utilities to shared functions
-- Remove duplicate code patterns
+High-risk (create GitHub Issue instead, do not implement):
 
-See [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/) for component requirements.
+- Changing component APIs
+- Modifying state management
+- Altering business logic
 
-### 3. Implement
+## 3. Implement
 
 ```bash
-git checkout -b refactor/[description]-$(date +%Y%m%d)
+git checkout -b refactor/<description>-$(date +%Y%m%d)
 ```
 
-Make incremental changes. **After each step, verify locally**:
+**Standards (do not read external files):**
+
+- Arrow function components with TypeScript interfaces, no `any`
+- Max 300 lines per file — split if over
+- `use` prefix on hooks, complete `useEffect` dependency arrays
+- CSS files not inline styles
+- Test files: `ComponentName.test.tsx` (exact name match)
+- Story files: `ComponentName.stories.tsx` (exact name match)
+- Use `@testing-library/react` for component tests
+- Coverage targets: 80% statements/branches/functions/lines
+
+After each change:
 
 ```bash
-yarn lint    # Must exit 0
-yarn test    # Must exit 0
-yarn build   # Must exit 0
+yarn lint    # fix if fails
+yarn test    # revert if fails
+yarn build   # revert if fails
 ```
 
-**Never push code that fails any of these checks.**
-
-### 4. Validate & PR
+## 4. PR
 
 ```bash
 git add .
-git commit -m "refactor: [description]
-
-- [Specific changes]
-
-Addresses: [Checklist item]"
+git commit -m "refactor: <description>"
 git push origin HEAD
 ```
 
-**PR Title**: `[refactoring] [Brief description]`  
-**Labels**: `refactoring`, `code-quality`, `automation`
-
-**PR Description** (brief):
+- Title: `[refactoring] <description>`
+- Labels: `refactoring`, `code-quality`, `automation`
+- Body:
 
 ```markdown
 ## Changes
 
-- [Specific improvements made]
+- [Specific improvements with file names]
 
 ## Verification
 
 - [x] `yarn lint` exits 0
 - [x] `yarn test` exits 0
-- [x] Screenshot attached below — N/A (code-only refactoring, no UI affected)
-
-Addresses: [Checklist item]
+- [x] Screenshot attached below — N/A (code-only refactoring)
 ```
 
-Update [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md) to mark completed items.
+## Exit conditions
 
-**Important**: Your refactoring speaks for itself. No summaries or documentation as proof of work.
-
-## Safety
-
-**Low-risk refactoring** (automated):
-
-- Split components/functions/hooks
-- Move inline styles to CSS
-- Add test/story files
-- Remove dead code
-
-**High-risk refactoring** (create issue instead):
-
-- Change component APIs
-- Modify state management
-- Alter critical business logic
-
-## Exit Conditions
-
-- **Success**: PR created with refactoring, checklist updated
-- **No Work**: All priority items complete
-- **Error**: Validation failures or high-risk changes detected
+- **Success**: PR or Issue created
+- **No work**: No viable targets found
+- **Error**: Validation failures that cannot be resolved

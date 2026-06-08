@@ -33,111 +33,138 @@ safe-outputs:
 
 # Test Coverage Improver Agent
 
-Systematically identify and implement test coverage improvements to reach 80% coverage.
+Add tests to one under-tested area per run. Create a draft PR.
 
-## Mission
+## Phase selection
 
-Work in phases: research → configuration → implementation. Add meaningful tests to under-tested areas.
+```bash
+# Check if a phase 1 discussion exists
+gh api graphql -f query='{ repository(owner:"ynotradio",name:"site") { discussions(first:5,orderBy:{field:CREATED_AT,direction:DESC}) { nodes { title } } } }' \
+  | grep -i "test coverage improver"
 
-**Context**: Solo hobby project. Make engineering decisions confidently. No summaries or comparisons.
+# Check if config action exists
+[ -f .github/actions/test-coverage-improver/coverage-steps/action.yml ] && echo "phase3" || echo "check-discussion"
+```
 
-## Project Context
-
-- **Repository**: ynotradio/site
-- **Current Coverage**: ~70% statements, ~55% branches
-- **Target**: 80% statements, 60%+ branches
-- **Standards**: See [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/), [`.claude/skills/testing-pr-changes/`](../../.claude/skills/testing-pr-changes/)
-- **Config**: [vitest.config.ts](../../vitest.config.ts)
-
-## Phase Selection
-
-Check what's been completed:
-
-1. **Discussion exists?** → Phase already started, check which phase
-2. **`.github/actions/test-coverage-improver/coverage-steps/action.yml` exists?** → Configuration done, run Phase 3
-3. **Neither exists?** → Run Phase 1
+- Config action exists → Phase 3
+- Discussion exists, no config → Phase 2
+- Neither → Phase 1
 
 ## Phase 1: Research
 
-1. Run `yarn test:coverage` and analyze results
-2. Find components without test files:
-   ```bash
-   find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | grep -E "components"
-   ```
-3. Review testing standards in [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/)
-4. Create GitHub Discussion: "Test Coverage Improver - Research and Plan"
-   - Current coverage stats
-   - Coverage gaps identified
-   - Improvement plan with priorities
-   - Build commands: `yarn install`, `yarn test:coverage`
-5. Exit - wait for human review
+```bash
+corepack enable && yarn install --immutable
+yarn test:coverage 2>&1 | tail -30
+
+# Components missing tests or stories (scope: app/ and payload/ only)
+find app payload -name "*.tsx" \
+  -not -name "*.test.tsx" \
+  -not -name "*.stories.tsx" \
+  | grep -E "components" | head -20
+```
+
+Create GitHub Discussion titled "Test Coverage Improver - Research and Plan" with:
+
+- Coverage stats (statements/branches/functions/lines %)
+- Top 5 files with lowest coverage
+- Components missing tests/stories
+- Proposed next target
+
+Exit — wait for human review.
 
 ## Phase 2: Configuration
 
-1. Check for existing config PR, exit if found
-2. Create `.github/actions/test-coverage-improver/coverage-steps/action.yml`:
-   ```yaml
-   runs:
-     steps:
-       - name: Install dependencies
-         run: yarn install --frozen-lockfile | tee -a coverage-steps.log
-       - name: Run coverage
-         run: yarn test:coverage | tee -a coverage-steps.log
-       - name: Upload coverage
-         uses: actions/upload-artifact@v6
-         with:
-           name: coverage
-           path: coverage/
-   ```
-3. Create PR: "Test Coverage Improver - Coverage Configuration"
-4. Test steps manually
-5. Comment on discussion with initial coverage numbers
-6. Exit - wait for PR merge
+Check for open config PR first:
+
+```bash
+gh pr list --label "automation" --search "Coverage Configuration" --state open
+```
+
+Exit if found. Otherwise create `.github/actions/test-coverage-improver/coverage-steps/action.yml`:
+
+```yaml
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies
+      run: yarn install --frozen-lockfile | tee -a coverage-steps.log
+      shell: bash
+    - name: Run coverage
+      run: yarn test:coverage | tee -a coverage-steps.log
+      shell: bash
+    - name: Upload coverage
+      uses: actions/upload-artifact@v6
+      with:
+        name: coverage
+        path: coverage/
+```
+
+Create PR: "Test Coverage Improver - Coverage Configuration". Exit.
 
 ## Phase 3: Implementation
 
-1. Validate config exists and works
-2. Read coverage report to find gaps
-3. Review plan from Phase 1 discussion
-4. Check for open test PRs to avoid duplicates
-5. Select ONE under-tested area (prioritize 0% coverage files)
-6. **Read the source file carefully** before writing tests — understand actual function signatures, return values, and edge case behavior
-7. Create tests following patterns in existing `.test.tsx` files
-8. Add `.stories.tsx` if component is user-facing
-9. **Validate locally BEFORE pushing**: `yarn test && yarn lint` - must exit 0
-10. Create PR: `[test-coverage-improver] Add tests for [component]`
-    - Labels: `automation`, `testing`
-    - Draft: true
-    - Brief description:
+```bash
+# Find the lowest-coverage file in app/ or payload/
+yarn test:coverage --reporter=json 2>/dev/null | \
+  node -e "
+    const d = JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+    const files = Object.entries(d.coverageMap || {})
+      .filter(([f]) => /\/(app|payload)\//.test(f) && !/\.(test|stories)\./.test(f))
+      .map(([f,v]) => [f, v.s ? Object.values(v.s).filter(Boolean).length / Object.values(v.s).length : 0])
+      .sort((a,b) => a[1]-b[1]);
+    files.slice(0,5).forEach(([f,c]) => console.log(c.toFixed(2), f));
+  " 2>/dev/null || \
+  find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | grep "components" | head -5
+```
 
-      ```markdown
-      ## Changes
+Check for open PRs to avoid duplicates:
 
-      - [Specific tests added, component name, what is covered]
+```bash
+gh pr list --label "testing" --state open | head -10
+```
 
-      ## Verification
+Pick ONE file. Read it carefully before writing any tests.
 
-      - [x] `yarn lint` exits 0
-      - [x] `yarn test` exits 0
-      - [x] Screenshot attached below — N/A (test-only change, no UI affected)
-      ```
+**Standards (do not read external files):**
 
-11. Comment on discussion with progress update
+- Test file: `ComponentName.test.tsx` (exact name match, same directory)
+- Story file: `ComponentName.stories.tsx` if component is user-facing
+- Use `@testing-library/react` + Vitest for components
+- Use `describe`/`it`/`expect` — match actual source behaviour
+- Mock external dependencies; do not mock the module under test
+- Minimum: happy path + one edge case
 
-**Important**: Write meaningful tests that validate functionality. Your tests speak for themselves - no proof-of-work summaries.
+```bash
+git checkout -b test/coverage-<component>-$(date +%Y%m%d)
+# write tests
+yarn lint && yarn test   # must both exit 0 before pushing
+git add . && git commit -m "test: add coverage for <component>"
+git push origin HEAD
+```
 
-## Testing Patterns
+Create draft PR:
 
-See existing test files for examples. Key requirements from [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/):
+- Title: `[test-coverage-improver] Add tests for <component>`
+- Labels: `automation`, `testing`
+- Body:
 
-- Test files must match component names exactly
-- All user-facing components need both `.test.tsx` and `.stories.tsx`
-- Use `@testing-library/react` for component testing
-- Mock external dependencies appropriately
-- **Test expectations must match actual source behavior** — read the source before writing assertions
+```markdown
+## Changes
 
-## Exit Conditions
+- [Specific tests added, what is covered]
+
+## Verification
+
+- [x] `yarn lint` exits 0
+- [x] `yarn test` exits 0
+- [x] Screenshot attached below — N/A (test-only change)
+```
+
+Comment progress on the Phase 1 discussion.
+
+## Exit conditions
 
 - **Phase 1**: Discussion created
-- **Phase 2**: Config PR created and tested
-- **Phase 3**: Test PR created with improvements
+- **Phase 2**: Config PR created
+- **Phase 3**: Draft PR created
+- **No work**: Coverage already meets targets (80% all metrics)
