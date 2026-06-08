@@ -52,7 +52,7 @@ Analyze code merged in the last 24 hours, apply refinements that improve quality
 git log --since="24 hours ago" --pretty=format:"%H %s" --no-merges
 ```
 
-Use GitHub API to find PRs merged in last 24h and extract changed files (`.ts`, `.tsx`, `.js`, `.jsx`, `.php`). Exclude test files, stories, lock files, generated files.
+Use GitHub API to find PRs merged in last 24h and extract changed files (`.ts`, `.tsx`, `.js`, `.jsx`) under `app/` or `payload/` only. Exclude test files, stories, lock files, generated files, and anything outside those directories.
 
 If no changes detected, exit gracefully.
 

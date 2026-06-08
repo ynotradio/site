@@ -10,7 +10,7 @@ engine:
   id: copilot
   model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
 max-runs: 120
-max-effective-tokens: 5000000
+max-effective-tokens: 3500000
 
 permissions:
   contents: read
@@ -51,17 +51,17 @@ Process items from [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md), priorit
 
 Read [REFACTOR_CHECKLIST.md](../../REFACTOR_CHECKLIST.md) for current priorities.
 
-Find additional candidates:
+Find additional candidates (scope to `app/` and `payload/` only — exclude everything else):
 
 ```bash
 # Large files (>300 lines)
-find . -name "*.tsx" -o -name "*.ts" | while read f; do
+find app payload -name "*.tsx" -o -name "*.ts" | while read f; do
   lines=$(wc -l < "$f")
   [ $lines -gt 300 ] && echo "$f: $lines lines"
 done
 
 # Missing tests
-find . -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | \
+find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | \
   grep -E "(app|payload)/.*components"
 ```
 

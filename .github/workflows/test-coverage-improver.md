@@ -10,7 +10,7 @@ engine:
   id: copilot
   model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
 max-runs: 120
-max-effective-tokens: 5000000
+max-effective-tokens: 3500000
 
 permissions:
   contents: read
@@ -62,7 +62,7 @@ Check what's been completed:
 1. Run `yarn test:coverage` and analyze results
 2. Find components without test files:
    ```bash
-   find . -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | grep -E "(app|payload)/.*components"
+   find app payload -name "*.tsx" -not -name "*.test.tsx" -not -name "*.stories.tsx" | grep -E "components"
    ```
 3. Review testing standards in [`.claude/skills/test-story-coupling/`](../../.claude/skills/test-story-coupling/)
 4. Create GitHub Discussion: "Test Coverage Improver - Research and Plan"
@@ -109,6 +109,7 @@ Check what's been completed:
     - Labels: `automation`, `testing`
     - Draft: true
     - Brief description:
+
       ```markdown
       ## Changes
 
@@ -120,6 +121,7 @@ Check what's been completed:
       - [x] `yarn test` exits 0
       - [x] Screenshot attached below — N/A (test-only change, no UI affected)
       ```
+
 11. Comment on discussion with progress update
 
 **Important**: Write meaningful tests that validate functionality. Your tests speak for themselves - no proof-of-work summaries.
