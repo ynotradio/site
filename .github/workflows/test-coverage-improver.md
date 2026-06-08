@@ -105,9 +105,9 @@ Create PR: "Test Coverage Improver - Coverage Configuration". Exit.
 
 ```bash
 # Find the lowest-coverage files in app/ or payload/
-yarn test:coverage --reporter=json --silent > /tmp/coverage.json 2>/dev/null
+yarn test:coverage --reporter=json --silent > /tmp/gh-aw/agent/coverage.json 2>/dev/null
 node -e "
-  const d = JSON.parse(require('fs').readFileSync('/tmp/coverage.json','utf8'));
+  const d = JSON.parse(require('fs').readFileSync('/tmp/gh-aw/agent/coverage.json','utf8'));
   const files = Object.entries(d.coverageMap || {})
     .filter(([f]) => /\/(app|payload)\//.test(f) && !/\.(test|stories)\./.test(f))
     .map(([f,v]) => [f, v.s ? Object.values(v.s).filter(Boolean).length / Object.values(v.s).length : 0])
