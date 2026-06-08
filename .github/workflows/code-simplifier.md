@@ -10,7 +10,7 @@ engine:
   id: copilot
   model: ${{ github.event_name == 'workflow_dispatch' && (vars.GH_AW_MODEL_AGENT_COPILOT_DISPATCH || 'claude-sonnet-4.6') || vars.GH_AW_MODEL_AGENT_COPILOT || 'gpt-5 mini' }}
 max-runs: 100
-max-effective-tokens: 3500000
+max-effective-tokens: 4500000
 
 permissions:
   contents: read
