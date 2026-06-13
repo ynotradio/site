@@ -99,11 +99,16 @@ class FeatureManagerTest extends TestCase
         $originalScriptName = $_SERVER['SCRIPT_NAME'] ?? null;
         $_SERVER['SCRIPT_NAME'] = '/cp/story_view_all.php';
         putenv('USE_POSTGRES_STORIES=true');
+        putenv('USE_POSTGRES_CUSTOMTEXT=true');
+        putenv('USE_POSTGRES_TOP11=true');
 
-        $result = FeatureManager::isEnabled('use_postgres_stories');
-        $this->assertFalse($result);
+        $this->assertFalse(FeatureManager::isEnabled('use_postgres_stories'));
+        $this->assertFalse(FeatureManager::isEnabled('use_postgres_customtext'));
+        $this->assertFalse(FeatureManager::isEnabled('use_postgres_top11'));
 
         putenv('USE_POSTGRES_STORIES');
+        putenv('USE_POSTGRES_CUSTOMTEXT');
+        putenv('USE_POSTGRES_TOP11');
         if ($originalScriptName === null) {
             unset($_SERVER['SCRIPT_NAME']);
         } else {
