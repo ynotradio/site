@@ -9,6 +9,10 @@ class FeatureManager {
     private static $featureFlags = null;
 
     public static function isEnabled(string $feature): bool {
+        if (self::isControlPanelRequest() && str_starts_with($feature, 'use_postgres_')) {
+            return false;
+        }
+
         // First check runtime feature flags (cookie/URL parameter)
         if (self::$featureFlags === null) {
             self::$featureFlags = new \FeatureFlags([
@@ -36,5 +40,11 @@ class FeatureManager {
         }
 
         return self::$features[$feature] ?? false;
+    }
+
+    private static function isControlPanelRequest(): bool
+    {
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        return str_contains($scriptName, '/cp/') || str_ends_with($scriptName, '/cp.php');
     }
 } 

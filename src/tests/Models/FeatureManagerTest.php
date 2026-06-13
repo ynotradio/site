@@ -90,4 +90,24 @@ class FeatureManagerTest extends TestCase
         $this->assertTrue($result);
         putenv('TEST_FEATURE');
     }
+
+    /**
+     * Test that CP routes suppress use_postgres_* flags
+     */
+    public function testControlPanelRequestSuppressesPostgresFlags(): void
+    {
+        $originalScriptName = $_SERVER['SCRIPT_NAME'] ?? null;
+        $_SERVER['SCRIPT_NAME'] = '/cp/story_view_all.php';
+        putenv('USE_POSTGRES_STORIES=true');
+
+        $result = FeatureManager::isEnabled('use_postgres_stories');
+        $this->assertFalse($result);
+
+        putenv('USE_POSTGRES_STORIES');
+        if ($originalScriptName === null) {
+            unset($_SERVER['SCRIPT_NAME']);
+        } else {
+            $_SERVER['SCRIPT_NAME'] = $originalScriptName;
+        }
+    }
 }
