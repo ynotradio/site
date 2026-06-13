@@ -159,7 +159,7 @@ class PostgresCustomText implements CustomText {
             // Remove the plain text paragraph and replace with styled link
             $row['html'] = preg_replace(
                 '/<p>FIND MORE PREVIOUS EPISODES HERE >><\/p>\s*$/s',
-                '<a href="http://rodneyanonymous.com/" target=_blank><b><i>FIND MORE PREVIOUS EPISODES HERE >></i></b></a>' . "\n",
+                '<a href="http://rodneyanonymous.com/" target="_blank"><b><i>FIND MORE PREVIOUS EPISODES HERE >></i></b></a>' . "\n",
                 $row['html']
             );
         }
