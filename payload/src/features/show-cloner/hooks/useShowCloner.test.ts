@@ -1,7 +1,18 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import type { Field } from 'payload';
+import { Shows } from '../../../collections/Shows';
 import { useShowCloner } from './useShowCloner';
 import type { Show } from '../types';
+
+function collectFieldNames(fields: Field[]): string[] {
+  return fields.flatMap((field) => {
+    const nested = 'fields' in field && Array.isArray(field.fields)
+      ? collectFieldNames(field.fields as Field[])
+      : [];
+    return 'name' in field ? [field.name as string, ...nested] : nested;
+  });
+}
 
 const makeShow = (overrides: Partial<Show> = {}): Show => ({
   id: '1',
@@ -21,6 +32,19 @@ const shows: Show[] = [
 describe('useShowCloner', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('accounts for every Shows field — add new fields to cloned or excluded list', () => {
+    // When you add a field to the Shows collection this test will fail.
+    // Decide whether the new field should be copied to cloned shows and add it
+    // to the appropriate list below, then update useShowCloner.ts accordingly.
+    const cloned = new Set(['date', 'startTime', 'endTime', 'name', 'host', 'note']);
+    const excluded = new Set(['legacyId', 'migratedAt']); // not meaningful on a fresh clone
+
+    const unaccounted = collectFieldNames(Shows.fields as Field[])
+      .filter((f) => !cloned.has(f) && !excluded.has(f));
+
+    expect(unaccounted).toEqual([]);
   });
 
   it('starts with idle state', () => {
