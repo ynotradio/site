@@ -70,9 +70,9 @@ export const useShowCloner = (shows: Show[], onComplete: () => Promise<void>) =>
               newShow.host = !Number.isNaN(numericId) ? numericId : hostId;
             }
           }
-          // Note: Rich text (Lexical) note field is not cloned because it contains complex
-          // nested node structures with internal IDs that may cause issues if duplicated.
-          // Users can add notes manually to cloned shows if needed.
+          if (show.note) {
+            newShow.note = show.note;
+          }
 
           return fetch('/api/shows', {
             method: 'POST',

@@ -1,7 +1,18 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import type { Field } from 'payload';
+import { Shows } from '../../../collections/Shows';
 import { useShowCloner } from './useShowCloner';
 import type { Show } from '../types';
+
+function collectFieldNames(fields: Field[]): string[] {
+  return fields.flatMap((field) => {
+    const nested = 'fields' in field && Array.isArray(field.fields)
+      ? collectFieldNames(field.fields as Field[])
+      : [];
+    return 'name' in field ? [field.name as string, ...nested] : nested;
+  });
+}
 
 const makeShow = (overrides: Partial<Show> = {}): Show => ({
   id: '1',
@@ -21,6 +32,19 @@ const shows: Show[] = [
 describe('useShowCloner', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('accounts for every Shows field — add new fields to cloned or excluded list', () => {
+    // When you add a field to the Shows collection this test will fail.
+    // Decide whether the new field should be copied to cloned shows and add it
+    // to the appropriate list below, then update useShowCloner.ts accordingly.
+    const cloned = new Set(['date', 'startTime', 'endTime', 'name', 'host', 'note']);
+    const excluded = new Set(['legacyId', 'migratedAt']); // not meaningful on a fresh clone
+
+    const unaccounted = collectFieldNames(Shows.fields as Field[])
+      .filter((f) => !cloned.has(f) && !excluded.has(f));
+
+    expect(unaccounted).toEqual([]);
   });
 
   it('starts with idle state', () => {
@@ -192,6 +216,45 @@ describe('useShowCloner', () => {
     });
 
     expect(fetchedBodies[0].host).toBeUndefined();
+  });
+
+  it('clones the note field when present', async () => {
+    const fetchedBodies: { note?: unknown }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const lexicalNote = { root: { children: [{ type: 'paragraph', children: [{ type: 'text', text: 'Best Of episode' }] }] } };
+    const showWithNote: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', note: lexicalNote }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithNote, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].note).toEqual(lexicalNote);
+  });
+
+  it('omits note from payload when note is absent', async () => {
+    const fetchedBodies: { note?: unknown }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const showWithoutNote: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', note: undefined }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithoutNote, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].note).toBeUndefined();
   });
 
   it('sets error on fetch failure', async () => {

@@ -106,6 +106,9 @@ export const Songs: CollectionConfig = {
       name: 'musicbrainzId',
       type: 'text',
       unique: true,
+      hooks: {
+        beforeDuplicate: [() => null],
+      },
       admin: {
         position: 'sidebar',
         description:
