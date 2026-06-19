@@ -1,5 +1,6 @@
-import type { Block, CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { randomUUID } from 'node:crypto';
+import type { Block, CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
 /**
@@ -349,7 +350,7 @@ export const YearEndPollResults: CollectionConfig = {
       required: true,
       unique: true,
       hooks: {
-        beforeDuplicate: [({ value }) => `${String(value)}-copy`],
+        beforeDuplicate: [({ value }) => `${String(value)}-copy-${randomUUID().slice(0, 8)}`],
       },
       admin: {
         position: 'sidebar',

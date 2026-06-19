@@ -99,7 +99,7 @@ describe('Collection schema invariants', () => {
     // Add a beforeDuplicate hook so duplication doesn't silently break on the
     // unique constraint. See legacyIdField for the pattern:
     //   hooks: { beforeDuplicate: [() => null] }        // clears the value (optional fields)
-    //   hooks: { beforeDuplicate: [({ value }) => `${String(value)}-copy`] } // transforms it
+    //   hooks: { beforeDuplicate: [({ value }) => `${String(value)}-copy-${Date.now()}`] } // transforms it
     const violations = allCollections
       .filter(({ config }) => !config.admin?.disableDuplicate)
       .flatMap(({ name, config }) => (

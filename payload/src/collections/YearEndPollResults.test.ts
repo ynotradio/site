@@ -103,6 +103,25 @@ describe('YearEndPollResults', () => {
     expect(slugField?.unique).toBe(true);
   });
 
+  it('adds a unique suffix when duplicating slug values', () => {
+    const fields = flattenRowFields(YearEndPollResults.fields as Record<string, unknown>[]);
+    const slugField = fields.find((f) => f.name === 'slug') as {
+      hooks?: {
+        beforeDuplicate?: Array<(args: { value: unknown }) => string>;
+      };
+    };
+    const duplicateSlug = slugField?.hooks?.beforeDuplicate?.[0];
+
+    expect(duplicateSlug).toBeTypeOf('function');
+
+    const firstDuplicate = duplicateSlug?.({ value: 'top225of2025' });
+    const secondDuplicate = duplicateSlug?.({ value: 'top225of2025' });
+
+    expect(firstDuplicate).toMatch(/^top225of2025-copy-/);
+    expect(secondDuplicate).toMatch(/^top225of2025-copy-/);
+    expect(firstDuplicate).not.toBe(secondDuplicate);
+  });
+
   it('has sections as a required blocks field', () => {
     const fields = flattenRowFields(YearEndPollResults.fields as Record<string, unknown>[]);
     const sectionsField = fields.find((f) => f.name === 'sections') as {
