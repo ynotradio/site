@@ -194,6 +194,45 @@ describe('useShowCloner', () => {
     expect(fetchedBodies[0].host).toBeUndefined();
   });
 
+  it('clones the note field when present', async () => {
+    const fetchedBodies: { note?: unknown }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const lexicalNote = { root: { children: [{ type: 'paragraph', children: [{ type: 'text', text: 'Best Of episode' }] }] } };
+    const showWithNote: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', note: lexicalNote }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithNote, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].note).toEqual(lexicalNote);
+  });
+
+  it('omits note from payload when note is absent', async () => {
+    const fetchedBodies: { note?: unknown }[] = [];
+    global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
+      fetchedBodies.push(JSON.parse(opts?.body as string));
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const showWithoutNote: Show[] = [
+      makeShow({ id: '1', date: '2024-01-15', note: undefined }),
+    ];
+    const { result } = renderHook(() => useShowCloner(showWithoutNote, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-15', '2024-02-05');
+    });
+
+    expect(fetchedBodies[0].note).toBeUndefined();
+  });
+
   it('sets error on fetch failure', async () => {
     global.fetch = vi.fn().mockRejectedValue(new Error('Network failure'));
     const onComplete = vi.fn().mockResolvedValue(undefined);
