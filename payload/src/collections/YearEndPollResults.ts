@@ -348,6 +348,9 @@ export const YearEndPollResults: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
+      hooks: {
+        beforeDuplicate: [({ value }) => `${String(value)}-copy`],
+      },
       admin: {
         position: 'sidebar',
         description: 'URL identifier (e.g., "top225of2025")',
