@@ -51,7 +51,12 @@ if [[ "${BUILDKITE_PIPELINE_SLUG:-}" == *"deploy"* ]] || [[ "${BUILDKITE_STEP_KE
   DEPLOY_SSH_KNOWN_HOSTS=$(buildkite-agent secret get DEPLOY_SSH_KNOWN_HOSTS 2>/dev/null || true)
   DEPLOY_SSH_HOST=$(buildkite-agent secret get DEPLOY_SSH_HOST 2>/dev/null || true)
   ENV_PHP_CONTENTS=$(buildkite-agent secret get ENV_PHP_CONTENTS 2>/dev/null || true)
+  # Notification secrets — used by the notify-deploy step
+  RESEND_API_KEY=$(buildkite-agent secret get RESEND_API_KEY 2>/dev/null || true)
+  DEPLOY_NOTIFY_EMAIL=$(buildkite-agent secret get DEPLOY_NOTIFY_EMAIL 2>/dev/null || true)
+  GITHUB_PR_TOKEN=$(buildkite-agent secret get GITHUB_PR_TOKEN 2>/dev/null || true)
   export DEPLOY_SSH_KEY DEPLOY_SSH_KNOWN_HOSTS DEPLOY_SSH_HOST ENV_PHP_CONTENTS
+  export RESEND_API_KEY DEPLOY_NOTIFY_EMAIL GITHUB_PR_TOKEN
 fi
 
 # --- E2E environment setup ---

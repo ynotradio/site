@@ -31,3 +31,21 @@ steps:
             - "ENV_PHP_CONTENTS"
     agents:
       queue: "default"
+
+  - label: ":email: Notify deploy"
+    key: "notify-deploy"
+    depends_on: "deploy-pr"
+    # Never fail the build on notification errors
+    soft_fail: true
+    command: "bash .buildkite/scripts/notify-deploy.sh"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "RESEND_API_KEY"
+            - "DEPLOY_NOTIFY_EMAIL"
+            - "GITHUB_PR_TOKEN"
+            - "DEPLOY_PR_NUMBER"
+    agents:
+      queue: "default"

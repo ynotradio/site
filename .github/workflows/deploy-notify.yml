@@ -1,0 +1,211 @@
+name: Deploy Notification
+
+# Sends a natural language email summary after a successful production deploy.
+#
+# Triggers:
+#   1. deployment_status — fired by Netlify when it marks a production deploy
+#      as succeeded. Runs alongside the smoke-test workflow.
+#   2. workflow_dispatch — called by the Buildkite legacy-PHP deploy pipeline
+#      after a successful Lightsail deploy.
+#
+# Required GitHub Actions secrets:
+#   RESEND_API_KEY       — Resend API key (https://resend.com/api-keys)
+#   DEPLOY_NOTIFY_EMAIL  — Recipient email address
+#
+# The sender address is deploys@ynotradio.net. The ynotradio.net domain must
+# be verified in the Resend dashboard before emails will deliver.
+# See: https://resend.com/docs/dashboard/domains/introduction
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'Deployed commit SHA'
+        required: true
+      deploy_type:
+        description: 'Deploy type (legacy-php or netlify-payload)'
+        required: false
+        default: 'legacy-php'
+      pr_number:
+        description: 'PR number for label-triggered PR deploys (optional)'
+        required: false
+
+permissions:
+  contents: read
+  deployments: read
+  models: read
+
+jobs:
+  notify:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'production')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: >-
+            ${{ github.event_name == 'workflow_dispatch'
+              && inputs.sha
+              || github.event.deployment.sha }}
+
+      - name: Resolve commit range
+        id: range
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let currentSha, previousSha, deployType, deployUrl, prNumber;
+
+            if (context.eventName === 'workflow_dispatch') {
+              currentSha = context.payload.inputs.sha;
+              deployType = context.payload.inputs.deploy_type || 'legacy-php';
+              prNumber   = context.payload.inputs.pr_number || '';
+              deployUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${currentSha}`;
+              previousSha = '';
+            } else {
+              currentSha  = context.payload.deployment.sha;
+              deployType  = 'netlify-payload';
+              prNumber    = '';
+              deployUrl   = context.payload.deployment_status.target_url ||
+                'https://admin.ynotradio.net';
+
+              // Walk back through production deployments to find the last
+              // successful one so we can show exactly what changed.
+              const deployments = await github.rest.repos.listDeployments({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                environment: 'production',
+                per_page: 20,
+              });
+
+              previousSha = '';
+              for (const dep of deployments.data) {
+                if (dep.sha === currentSha) continue;
+                const statuses = await github.rest.repos.listDeploymentStatuses({
+                  owner: context.repo.owner,
+                  repo:  context.repo.repo,
+                  deployment_id: dep.id,
+                  per_page: 1,
+                });
+                if (statuses.data.length > 0 && statuses.data[0].state === 'success') {
+                  previousSha = dep.sha;
+                  break;
+                }
+              }
+            }
+
+            core.setOutput('current_sha',  currentSha);
+            core.setOutput('previous_sha', previousSha);
+            core.setOutput('deploy_type',  deployType);
+            core.setOutput('deploy_url',   deployUrl);
+            core.setOutput('pr_number',    prNumber);
+
+      - name: Get commits in range
+        id: commits
+        env:
+          GH_TOKEN:     ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_SHA:  ${{ steps.range.outputs.current_sha }}
+          PREVIOUS_SHA: ${{ steps.range.outputs.previous_sha }}
+          PR_NUMBER:    ${{ steps.range.outputs.pr_number }}
+        run: |
+          git fetch --unshallow 2>/dev/null || true
+
+          if [ -n "${PR_NUMBER:-}" ]; then
+            COMMITS=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/commits" \
+              --jq '.[] | .sha[:8] + " " + .commit.message' 2>/dev/null | head -20 || true)
+          elif [ -n "${PREVIOUS_SHA:-}" ]; then
+            git fetch origin "${PREVIOUS_SHA}" 2>/dev/null || true
+            COMMITS=$(git log --oneline "${PREVIOUS_SHA}..${CURRENT_SHA}" 2>/dev/null || true)
+          fi
+
+          if [ -z "${COMMITS:-}" ]; then
+            COMMITS=$(git log --oneline -10 HEAD)
+          fi
+
+          {
+            echo 'commits<<EOF'
+            echo "$COMMITS"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate natural language summary
+        id: summary
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMITS:      ${{ steps.commits.outputs.commits }}
+          DEPLOY_TYPE:  ${{ steps.range.outputs.deploy_type }}
+        run: |
+          if [ "$DEPLOY_TYPE" = "netlify-payload" ]; then
+            APP_DESC="Payload CMS admin app"
+          else
+            APP_DESC="legacy PHP radio station website"
+          fi
+
+          RESPONSE=$(curl -sf \
+            "https://models.inference.ai.azure.com/chat/completions" \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -d "$(jq -n \
+              --arg commits "${COMMITS}" \
+              --arg app    "${APP_DESC}" \
+              '{
+                model: "gpt-4o-mini",
+                max_tokens: 250,
+                messages: [{
+                  role: "user",
+                  content: ("Write a 2-4 sentence natural language summary of what changed in this production deployment of the Y-Not Radio " + $app + ". Be friendly and concise. Focus on what is new or fixed for users or operators.\n\nCommits:\n" + $commits)
+                }]
+              }')" 2>/dev/null || true)
+
+          AI_TEXT=$(echo "$RESPONSE" | jq -r '.choices[0].message.content // empty' 2>/dev/null || true)
+
+          if [ -z "${AI_TEXT:-}" ]; then
+            AI_TEXT=$(echo "$COMMITS" | head -10 | sed 's/^[a-f0-9]* /• /')
+          fi
+
+          {
+            echo 'text<<EOF'
+            printf '%s\n' "$AI_TEXT"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send notification email
+        env:
+          RESEND_API_KEY:      ${{ secrets.RESEND_API_KEY }}
+          DEPLOY_NOTIFY_EMAIL: ${{ secrets.DEPLOY_NOTIFY_EMAIL }}
+          DEPLOY_TYPE:  ${{ steps.range.outputs.deploy_type }}
+          DEPLOY_URL:   ${{ steps.range.outputs.deploy_url }}
+          FULL_SHA:     ${{ steps.range.outputs.current_sha }}
+          SUMMARY:      ${{ steps.summary.outputs.text }}
+        run: |
+          SHORT_SHA="${FULL_SHA:0:8}"
+
+          if [ "$DEPLOY_TYPE" = "netlify-payload" ]; then
+            APP_NAME="Payload CMS"
+            SUBJECT="🚀 Payload CMS deployed to production (${SHORT_SHA})"
+          else
+            APP_NAME="Legacy PHP Site"
+            SUBJECT="🚀 Legacy PHP site deployed to production (${SHORT_SHA})"
+          fi
+
+          curl -sf -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer ${RESEND_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$(jq -n \
+              --arg to      "${DEPLOY_NOTIFY_EMAIL}" \
+              --arg subject "${SUBJECT}" \
+              --arg app     "${APP_NAME}" \
+              --arg sha     "${SHORT_SHA}" \
+              --arg url     "${DEPLOY_URL}" \
+              --arg summary "${SUMMARY}" \
+              '{
+                from: "deploys@ynotradio.net",
+                to: [$to],
+                subject: $subject,
+                text: ($app + " Production Deploy\n\nCommit: " + $sha + "\nURL: " + $url + "\n\n" + $summary)
+              }')" \
+            && echo "✅ Deploy notification sent to ${DEPLOY_NOTIFY_EMAIL}" \
+            || echo "⚠️  Email send failed — check RESEND_API_KEY and that ynotradio.net is verified in Resend"
