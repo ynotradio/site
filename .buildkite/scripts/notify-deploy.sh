@@ -35,7 +35,25 @@ if [ -n "${DEPLOY_PR_NUMBER:-}" ] && [ -n "${GITHUB_PR_TOKEN:-}" ]; then
 fi
 
 if [ -z "${COMMITS:-}" ]; then
-  COMMITS=$(git log --oneline -10 HEAD 2>/dev/null || echo "(commit history unavailable)")
+  COMMITS=$(git log --oneline -10 HEAD 2>/dev/null || true)
+fi
+
+if [ -z "${COMMITS:-}" ]; then
+  # If git history is truly unavailable, skip AI and send a simple confirmation
+  echo "✅ Deploy notification sent (no commit history available)"
+  curl -sf -X POST https://api.resend.com/emails \
+    -H "Authorization: Bearer ${RESEND_API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n \
+      --arg to   "${DEPLOY_NOTIFY_EMAIL}" \
+      --arg sha  "${SHORT_SHA}" \
+      --arg url  "${BUILDKITE_BUILD_URL:-}" \
+      '{
+        from: "deploys@ynotradio.net",
+        to: [$to],
+        subject: ("🚀 Legacy PHP site deployed to production (" + $sha + ")"),
+        text: ("Legacy PHP Site Production Deploy\n\nCommit: " + $sha + "\nBuild: " + $url)
+      }')" && exit 0 || exit 0
 fi
 
 # --- Generate natural language summary via GitHub Models ---

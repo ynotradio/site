@@ -59,31 +59,17 @@ jobs:
           script: |
             let currentSha, previousSha, deployType, deployUrl, prNumber;
 
-            if (context.eventName === 'workflow_dispatch') {
-              currentSha = context.payload.inputs.sha;
-              deployType = context.payload.inputs.deploy_type || 'legacy-php';
-              prNumber   = context.payload.inputs.pr_number || '';
-              deployUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${currentSha}`;
-              previousSha = '';
-            } else {
-              currentSha  = context.payload.deployment.sha;
-              deployType  = 'netlify-payload';
-              prNumber    = '';
-              deployUrl   = context.payload.deployment_status.target_url ||
-                'https://admin.ynotradio.net';
-
-              // Walk back through production deployments to find the last
-              // successful one so we can show exactly what changed.
+            // Shared helper: find the last successful production deployment
+            // before a given SHA so we can show exactly what changed.
+            async function findPreviousProductionSha(excludeSha) {
               const deployments = await github.rest.repos.listDeployments({
                 owner: context.repo.owner,
                 repo:  context.repo.repo,
                 environment: 'production',
                 per_page: 20,
               });
-
-              previousSha = '';
               for (const dep of deployments.data) {
-                if (dep.sha === currentSha) continue;
+                if (dep.sha === excludeSha) continue;
                 const statuses = await github.rest.repos.listDeploymentStatuses({
                   owner: context.repo.owner,
                   repo:  context.repo.repo,
@@ -91,10 +77,27 @@ jobs:
                   per_page: 1,
                 });
                 if (statuses.data.length > 0 && statuses.data[0].state === 'success') {
-                  previousSha = dep.sha;
-                  break;
+                  return dep.sha;
                 }
               }
+              return '';
+            }
+
+            if (context.eventName === 'workflow_dispatch') {
+              currentSha = context.payload.inputs.sha;
+              deployType = context.payload.inputs.deploy_type || 'legacy-php';
+              prNumber   = context.payload.inputs.pr_number || '';
+              deployUrl  = `https://github.com/${context.repo.owner}/${context.repo.repo}/commit/${currentSha}`;
+              // For non-PR dispatches, look up the last successful production deploy
+              // so the commit range is accurate even for Buildkite-triggered runs.
+              previousSha = prNumber ? '' : await findPreviousProductionSha(currentSha);
+            } else {
+              currentSha  = context.payload.deployment.sha;
+              deployType  = 'netlify-payload';
+              prNumber    = '';
+              deployUrl   = context.payload.deployment_status.target_url ||
+                'https://admin.ynotradio.net';
+              previousSha = await findPreviousProductionSha(currentSha);
             }
 
             core.setOutput('current_sha',  currentSha);
@@ -111,8 +114,6 @@ jobs:
           PREVIOUS_SHA: ${{ steps.range.outputs.previous_sha }}
           PR_NUMBER:    ${{ steps.range.outputs.pr_number }}
         run: |
-          git fetch --unshallow 2>/dev/null || true
-
           if [ -n "${PR_NUMBER:-}" ]; then
             COMMITS=$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/commits" \
               --jq '.[] | .sha[:8] + " " + .commit.message' 2>/dev/null | head -20 || true)
