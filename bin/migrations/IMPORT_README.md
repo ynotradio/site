@@ -53,7 +53,6 @@ The actual MySQL tables available for import:
 | `concerts` | 4,386 | Concert listings with artist/venue names |
 | `cdotw` | 845 | CD of the Week album reviews |
 | `music` | 5,369 | New music tracks |
-| `schedule` | 23,496 | Radio show schedule |
 | `ondemand` | 516 | On-demand audio content |
 | `ads` | - | Sponsor advertisements |
 | `stories` | - | Featured stories |
@@ -92,14 +91,12 @@ npx tsx bin/migrations/importConcerts.ts --env dev
 npx tsx bin/migrations/importCdOfTheWeek.ts --env dev
 ```
 
-### Phase 3: New Music and Schedule
+### Phase 3: New Music
 
 ```bash
 # Music - creates Songs + Artists collections from music table
 npx tsx bin/migrations/importMusic.ts --env dev
 
-# Schedule - creates Shows collection from schedule table (references DJs)
-npx tsx bin/migrations/importSchedule.ts --env dev
 ```
 
 ## Available Import Scripts
@@ -200,21 +197,6 @@ Imports music tracks with dynamic artist creation.
 ```bash
 npx tsx bin/migrations/importMusic.ts --env dev
 npx tsx bin/migrations/importMusic.ts --env prod --start-id 1000
-```
-
-### ✅ importSchedule.ts
-Imports radio show schedule entries.
-
-**Source**: MySQL `schedule` table (23,496 active records)  
-**Target**: Payload `shows` collection  
-**Dependencies**: DJs collection (must run importDJs.ts first)  
-**Links**: Attempts to link shows to DJ records by matching host names to people names
-
-**Fields**: date, day, startTime, endTime, host (relationship to djs), hostName, note
-
-```bash
-npx tsx bin/migrations/importSchedule.ts --env dev
-npx tsx bin/migrations/importSchedule.ts --env prod --start-id 1000
 ```
 
 ## Common Options
@@ -348,7 +330,6 @@ npx tsx bin/migrations/importCdOfTheWeek.ts --env prod
 | importCdOfTheWeek.ts | ✅ Ready + Tested | `cdotw` | `cd_of_the_week`, `records`, `artists` |
 | importOnDemand.ts | ✅ Ready + Tested | `ondemand` | `ondemand` |
 | importMusic.ts | ✅ Ready + Tested | `music` | `songs`, `artists` |
-| importSchedule.ts | ✅ Ready + Tested | `schedule` | `shows` |
 
 ## Related Documentation
 

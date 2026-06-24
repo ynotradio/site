@@ -30,7 +30,6 @@ import {
 interface LastImportIds {
   stories: number;
   customTexts: number;
-  schedule: number;
   lastUpdated: string;
 }
 
@@ -58,7 +57,6 @@ const TRACKING_FILE = path.join(process.cwd(), '.last-import-ids.json');
 
 const COLLECTION_LABELS: Record<string, string> = {
   Posts: 'Posts (Stories + Custom Texts)',
-  Schedule: 'Schedule',
 };
 
 /**
@@ -212,7 +210,6 @@ function loadLastImportIds(): LastImportIds | null {
     return {
       stories: typeof parsed.stories === 'number' ? parsed.stories : 0,
       customTexts: typeof parsed.customTexts === 'number' ? parsed.customTexts : 0,
-      schedule: typeof parsed.schedule === 'number' ? parsed.schedule : 0,
       lastUpdated: parsed.lastUpdated || new Date().toISOString(),
     };
   } catch (error) {
@@ -254,11 +251,6 @@ async function getNewRecordCounts(
     "SELECT COUNT(*) as count, COALESCE(MAX(id), 0) as maxId FROM custom_texts WHERE status = 'active' AND id > ?",
     [lastIds.customTexts],
   );
-  const [scheduleRows] = await connection.query<mysql.RowDataPacket[]>(
-    "SELECT COUNT(*) as count, COALESCE(MAX(id), 0) as maxId FROM schedule WHERE deleted = 'n' AND id > ?",
-    [lastIds.schedule],
-  );
-
   return {
     stories: {
       count: storyRows[0]?.count || 0,
@@ -267,10 +259,6 @@ async function getNewRecordCounts(
     customTexts: {
       count: customTextRows[0]?.count || 0,
       maxId: customTextRows[0]?.maxId || 0,
-    },
-    schedule: {
-      count: scheduleRows[0]?.count || 0,
-      maxId: scheduleRows[0]?.maxId || 0,
     },
   };
 }
@@ -421,7 +409,6 @@ async function main() {
     lastIds = {
       stories: 0,
       customTexts: 0,
-      schedule: 0,
       lastUpdated: new Date().toISOString(),
     };
   } else {
@@ -434,7 +421,6 @@ async function main() {
       lastIds = {
         stories: 0,
         customTexts: 0,
-        schedule: 0,
         lastUpdated: new Date().toISOString(),
       };
     }
@@ -444,7 +430,6 @@ async function main() {
   console.log('Last imported IDs:');
   console.log(`   Stories:      ${lastIds.stories}`);
   console.log(`   Custom Texts: ${lastIds.customTexts}`);
-  console.log(`   Schedule:   ${lastIds.schedule}`);
   console.log();
 
   // Connect to MySQL using the new config system
@@ -460,7 +445,6 @@ async function main() {
   console.log('📊 New records available:');
   console.log(`   Stories:      ${newCounts.stories.count}`);
   console.log(`   Custom Texts: ${newCounts.customTexts.count}`);
-  console.log(`   Schedule:     ${newCounts.schedule.count}`);
   console.log(`   TOTAL:      ${totalNew}`);
   console.log();
 
@@ -479,12 +463,6 @@ async function main() {
         '--custom-texts-start-id',
         String(lastIds.customTexts + 1),
       ],
-    },
-    {
-      key: 'schedule',
-      script: 'bin/migrations/importSchedule.ts',
-      count: newCounts.schedule.count,
-      startId: lastIds.schedule + 1,
     },
   ];
 
@@ -530,8 +508,6 @@ async function main() {
         if (key === 'posts') {
           lastIds.stories = newCounts.stories.maxId;
           lastIds.customTexts = newCounts.customTexts.maxId;
-        } else if (key === 'schedule') {
-          lastIds.schedule = newCounts.schedule.maxId;
         }
       }
 

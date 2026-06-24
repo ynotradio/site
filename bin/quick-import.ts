@@ -8,7 +8,7 @@
  * This script:
  * 1. Calculates the date N months ago (or imports all if --all flag is set)
  * 2. Queries MySQL to find minimum IDs for each table within that date range
- * 3. Runs all import scripts with --start-id parameters
+ * 3. Runs all legacy content import scripts with --start-id parameters
  *
  * Note: This will import ALL records for DJs (no date field), but filter
  * date-based collections like concerts, posts, on-demand, etc.
@@ -156,7 +156,7 @@ async function getExpectedCounts(
     if (['cdotw', 'deejays', 'ondemand'].includes(table)) {
       return "deleted = 'no'";
     }
-    // Tables using 'n'/'y': ads, concerts, music, stories, schedule
+    // Tables using 'n'/'y': ads, concerts, music, stories
     return "deleted = 'n'";
   };
 
@@ -231,16 +231,6 @@ async function getExpectedCounts(
       `,
       months: monthsBack,
     },
-    {
-      collection: 'Shows',
-      query: `
-        SELECT COUNT(*) as total,
-               SUM(CASE WHEN start >= DATE_SUB(NOW(), INTERVAL 1 MONTH) THEN 1 ELSE 0 END) as in_range
-        FROM schedule
-        WHERE ${getDeletedCondition('schedule')}
-      `,
-      months: 1, // Shows always use 30 days
-    },
   ];
 
   // Query each collection sequentially
@@ -309,7 +299,7 @@ function printPreImportReport(
   if (importAll) {
     console.log('Note: Importing ALL records (no date filtering)');
   } else {
-    const note = `Note: Importing records from last ${monthsBack} months (30 days for Shows)`;
+    const note = `Note: Importing records from last ${monthsBack} months`;
     console.log(note);
   }
   console.log();
@@ -627,10 +617,6 @@ async function main() {
     } else {
       console.log('\n⏭️  Skipping ads (no records in date range)');
     }
-
-    // 8. Import Schedule (shows) - no date filter
-    console.log('\n📅 Importing schedule (all records)...');
-    results.push(await runImportScript('importSchedule.ts', 'Shows', options.from, options.to));
 
     // Print final summary
     console.log(`\n${'='.repeat(60)}`);

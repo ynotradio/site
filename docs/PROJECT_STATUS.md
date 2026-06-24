@@ -46,7 +46,6 @@ The Y-Not Radio site is undergoing a migration from legacy PHP/MySQL to a modern
 - [x] `importConcerts.ts` - Concert data import
 - [x] `importMusic.ts` - Songs and Records import
 - [x] `importCdOfTheWeek.ts` - CD of the Week reviews
-- [x] `importSchedule.ts` - Show schedule import
 - [x] `importPosts.ts` - Content blocks import
 - [x] `importOnDemand.ts` - Audio content import
 - [x] `importAds.ts` - Advertisement import
@@ -112,7 +111,7 @@ Six integrity check scripts (`bin/integrity-check-*.ts`) run with `--fix` agains
 #### Nightly Sync — Running (March 2026)
 
 - [x] `nightly-gap-report.yml` Buildkite pipeline runs daily at 3 AM UTC
-- [x] Nightly sync limited to Schedule, Stories, and Custom Texts
+- [x] Nightly sync limited to Stories and Custom Texts
 - [x] Publish-status integrity check runs after each sync for migrated posts
 
 #### Weekly Dev DB Sync — Running (March 2026)
@@ -166,7 +165,7 @@ collections live in `src/models/implementations/Postgres*.php`.
 ### March 2026
 
 - **Production Data Import**: All collections imported to prod Neon (6,370+ records). Six integrity check scripts validate data correctness on every nightly sync.
-- **Nightly Sync Pipeline**: `nightly-gap-report.yml` runs daily at 3 AM UTC — incremental MySQL→Neon import followed by integrity checks. Dev database synced weekly from prod.
+- **Nightly Sync Pipeline**: `nightly-gap-report.yml` runs daily at 3 AM UTC — incremental MySQL→Neon import for legacy content followed by integrity checks. Dev database synced weekly from prod.
 - **Data Integrity Cleanup**: All six integrity checks run with `--fix`: display names, slugs, musicbrainz, record metadata, ondemand source, and publish status. Tens of thousands of records fixed automatically.
 - **Artist Deduplication**: Consolidated 20 "Y-Not Radio Presents:" duplicates, fixed 12 mojibake names, merged 37 duplicate pairs using exact match, "The X"/"X", and "&"/"and" standardization.
 - **Feature Flags**: Built `FeatureManager.php` with env var, cookie, and URL param overrides. 11 flags defined in `features.php` covering all collections. All flags default to `false` (MySQL remains active).
