@@ -12,9 +12,8 @@ name: Deploy Notification
 #   RESEND_API_KEY       — Resend API key (https://resend.com/api-keys)
 #   DEPLOY_NOTIFY_EMAIL  — Recipient email address
 #
-# The sender address is deploys@ynotradio.net. The ynotradio.net domain must
-# be verified in the Resend dashboard before emails will deliver.
-# See: https://resend.com/docs/dashboard/domains/introduction
+# The sender address is noreply@resend.dev (Resend's shared domain — no domain
+# verification required).
 
 on:
   deployment_status:
@@ -203,10 +202,10 @@ jobs:
               --arg url     "${DEPLOY_URL}" \
               --arg summary "${SUMMARY}" \
               '{
-                from: "deploys@ynotradio.net",
+                from: "noreply@resend.dev",
                 to: [$to],
                 subject: $subject,
                 text: ($app + " Production Deploy\n\nCommit: " + $sha + "\nURL: " + $url + "\n\n" + $summary)
               }')" \
             && echo "✅ Deploy notification sent to ${DEPLOY_NOTIFY_EMAIL}" \
-            || echo "⚠️  Email send failed — check RESEND_API_KEY and that ynotradio.net is verified in Resend"
+            || echo "⚠️  Email send failed — check RESEND_API_KEY"

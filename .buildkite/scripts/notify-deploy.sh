@@ -49,7 +49,7 @@ if [ -z "${COMMITS:-}" ]; then
       --arg sha  "${SHORT_SHA}" \
       --arg url  "${BUILDKITE_BUILD_URL:-}" \
       '{
-        from: "deploys@ynotradio.net",
+        from: "noreply@resend.dev",
         to: [$to],
         subject: ("🚀 Legacy PHP site deployed to production (" + $sha + ")"),
         text: ("Legacy PHP Site Production Deploy\n\nCommit: " + $sha + "\nBuild: " + $url)
