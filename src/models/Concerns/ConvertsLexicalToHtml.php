@@ -82,7 +82,10 @@ trait ConvertsLexicalToHtml
                 $rawUrl = $node['url'] ?? ($node['fields']['url'] ?? '');
                 $url = $this->isSafeLexicalUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-                return "<a href=\"$url\">" . $this->convertLexicalChildren($node) . '</a>';
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                $newTab = (bool)($fields['newTab'] ?? false);
+                $target = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+                return "<a href=\"$url\"$target>" . $this->convertLexicalChildren($node) . '</a>';
 
             case 'linebreak':
                 return "<br>\n";
