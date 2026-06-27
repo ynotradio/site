@@ -38,7 +38,13 @@ vi.mock('./components/SortableItem', () => ({
 
 // Mock @dnd-kit/core
 vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children, onDragEnd }: { children: React.ReactNode; onDragEnd?: (event: any) => void }) => {
+  DndContext: ({
+    children,
+    onDragEnd,
+  }: {
+    children: React.ReactNode;
+    onDragEnd?: (event: any) => void;
+  }) => {
     dndCallbacks.onDragEnd = onDragEnd;
     return <div data-testid="dnd-context">{children}</div>;
   },
@@ -233,6 +239,9 @@ describe('DJOrderClient', () => {
       fireEvent.click(saveButton);
 
       expect(screen.getByRole('button', { name: /Saving.../i })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Save Order/i })).toBeInTheDocument();
+      });
     });
 
     it('should handle save error', async () => {
@@ -280,6 +289,9 @@ describe('DJOrderClient', () => {
 
       const savingButton = screen.getByRole('button', { name: /Saving.../i });
       expect(savingButton).toBeDisabled();
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Save Order/i })).toBeInTheDocument();
+      });
     });
   });
 
