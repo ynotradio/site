@@ -78,4 +78,19 @@ $id = "";
   </div>
   <div class="three columns"><?php require ("partials/_featured_concerts_and_ads.php") ?></div>
 </div> <!-- end of row div -->
+<script>
+  document.querySelectorAll('a').forEach(function(link) {
+    link.setAttribute('target', '_blank');
+    var rel = (link.getAttribute('rel') || '').split(/\s+/).filter(Boolean);
+
+    if (!rel.includes('noopener')) {
+      rel.push('noopener');
+    }
+    if (!rel.includes('noreferrer')) {
+      rel.push('noreferrer');
+    }
+
+    link.setAttribute('rel', rel.join(' '));
+  });
+</script>
 <?php require ("partials/_footer.php"); ?>
