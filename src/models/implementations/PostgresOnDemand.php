@@ -53,7 +53,7 @@ class PostgresOnDemand implements OnDemand {
         // Convert PostgreSQL timestamp to MySQL date format
         $result['date'] = $this->formatDate($result['date']);
         if (isset($result['note'])) {
-            $result['note'] = $this->convertLexicalToHtml($result['note']);
+            $result['note'] = $this->convertLexicalToHtml($result['note'], true);
         }
         
         return $result;
@@ -259,7 +259,7 @@ class PostgresOnDemand implements OnDemand {
                 $row['date'] = $this->formatDate($row['date']);
             }
             if (isset($row['note'])) {
-                $row['note'] = $this->convertLexicalToHtml($row['note']);
+                $row['note'] = $this->convertLexicalToHtml($row['note'], true);
             }
             return $row;
         }, $results);
