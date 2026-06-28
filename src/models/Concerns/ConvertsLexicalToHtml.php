@@ -21,7 +21,7 @@ trait ConvertsLexicalToHtml
      * doesn't have the expected structure, the original string is returned
      * untouched (treated as already-HTML legacy content).
      */
-    protected function convertLexicalToHtml(?string $lexicalJson): string
+    protected function convertLexicalToHtml(?string $lexicalJson, bool $forceNewTabLinks = false): string
     {
         if ($lexicalJson === null || $lexicalJson === '') {
             return '';
@@ -42,7 +42,7 @@ trait ConvertsLexicalToHtml
         try {
             $html = '';
             foreach ($lexical['root']['children'] as $node) {
-                $html .= $this->convertLexicalNodeToHtml($node);
+                $html .= $this->convertLexicalNodeToHtml($node, $forceNewTabLinks);
             }
             return $html;
         } catch (\Throwable $e) {
@@ -51,13 +51,13 @@ trait ConvertsLexicalToHtml
         }
     }
 
-    private function convertLexicalNodeToHtml(array $node): string
+    private function convertLexicalNodeToHtml(array $node, bool $forceNewTabLinks): string
     {
         $type = $node['type'] ?? '';
 
         switch ($type) {
             case 'paragraph':
-                $content = $this->convertLexicalChildren($node);
+                $content = $this->convertLexicalChildren($node, $forceNewTabLinks);
                 $format = $node['format'] ?? '';
                 return $this->wrapInBlock('p', $content, $format);
 
@@ -68,24 +68,24 @@ trait ConvertsLexicalToHtml
                 if (!in_array($tag, $allowedTags, true)) {
                     $tag = 'h2';
                 }
-                return "<$tag>" . $this->convertLexicalChildren($node) . "</$tag>\n";
+                return "<$tag>" . $this->convertLexicalChildren($node, $forceNewTabLinks) . "</$tag>\n";
 
             case 'list':
                 $listType = $node['listType'] ?? 'bullet';
                 $tag = $listType === 'number' ? 'ol' : 'ul';
-                return "<$tag>" . $this->convertLexicalChildren($node) . "</$tag>\n";
+                return "<$tag>" . $this->convertLexicalChildren($node, $forceNewTabLinks) . "</$tag>\n";
 
             case 'listitem':
-                return '<li>' . $this->convertLexicalChildren($node) . "</li>\n";
+                return '<li>' . $this->convertLexicalChildren($node, $forceNewTabLinks) . "</li>\n";
 
             case 'link':
                 $rawUrl = $node['url'] ?? ($node['fields']['url'] ?? '');
                 $url = $this->isSafeLexicalUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
                 $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
-                $newTab = (bool)($fields['newTab'] ?? false);
+                $newTab = $forceNewTabLinks || (bool)($fields['newTab'] ?? false);
                 $target = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
-                return "<a href=\"$url\"$target>" . $this->convertLexicalChildren($node) . '</a>';
+                return "<a href=\"$url\"$target>" . $this->convertLexicalChildren($node, $forceNewTabLinks) . '</a>';
 
             case 'linebreak':
                 return "<br>\n";
@@ -110,11 +110,11 @@ trait ConvertsLexicalToHtml
                 return $text;
 
             default:
-                return $this->convertLexicalChildren($node);
+                return $this->convertLexicalChildren($node, $forceNewTabLinks);
         }
     }
 
-    private function convertLexicalChildren(array $node): string
+    private function convertLexicalChildren(array $node, bool $forceNewTabLinks): string
     {
         if (!isset($node['children']) || !is_array($node['children'])) {
             return '';
@@ -122,7 +122,7 @@ trait ConvertsLexicalToHtml
 
         $html = '';
         foreach ($node['children'] as $child) {
-            $html .= $this->convertLexicalNodeToHtml($child);
+            $html .= $this->convertLexicalNodeToHtml($child, $forceNewTabLinks);
         }
 
         return $html;
@@ -130,7 +130,7 @@ trait ConvertsLexicalToHtml
 
     /**
      * Wrap text content in a block element (p, h1-h6) with optional text alignment.
-     * 
+     *
      * @param string $tag HTML tag name (p, h1-h6)
      * @param string $content HTML content
      * @param string $format Optional text alignment (left, center, right, justify)

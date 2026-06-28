@@ -34,9 +34,6 @@ if ($page_file != "logout.php") {
       <meta property="og:type" content="article">
       <meta property="og:url" content="https://www.ynotradio.net">
       <!-- social meta end -->
-      <?php if (isset($page_default_link_target) && $page_default_link_target !== ''): ?>
-      <base target="<?php echo htmlspecialchars($page_default_link_target, ENT_QUOTES, 'UTF-8'); ?>">
-      <?php endif; ?>
     <!--[if lte IE 8]>
     <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
