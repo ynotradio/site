@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
-import { getArtistMbid } from './musicbrainz';
+import { getArtistMbid, getRecordingMbid } from './musicbrainz';
 import { generateSlug, generateMusicSlug, stripHtmlTags } from './importUtils';
 
 const logger = createLogger('PayloadClient');
@@ -502,39 +502,77 @@ export async function findOrCreateSong(
     return existing.docs[0].id;
   }
 
+  let recordingMbid: string | null = null;
+  let artistName = '';
+  if (artistId) {
+    try {
+      const artist = await payload.findByID({ collection: 'artists', id: artistId });
+      artistName = artist?.name || '';
+    } catch {
+      /* ignore */
+    }
+  }
   try {
-    const songData = {
-      title: cleanTitle,
-      ...(artistId && { artist: artistId }),
-    };
+    recordingMbid = await getRecordingMbid(cleanTitle, artistName || undefined);
+  } catch {
+    logger.debug(`MusicBrainz recording lookup failed for "${cleanTitle}"`);
+  }
 
+  const baseSongData = {
+    title: cleanTitle,
+    ...(artistId && { artist: artistId }),
+  };
+
+  const resolveBySlug = async (resolvedArtistName: string) => {
+    const slug = generateMusicSlug(resolvedArtistName, cleanTitle);
+    return findDocBySlug(payload, 'songs', slug);
+  };
+
+  const fetchArtistName = async (): Promise<string> => {
+    if (!artistId) return '';
+    try {
+      const artist = await payload.findByID({ collection: 'artists', id: artistId });
+      return artist?.name || '';
+    } catch {
+      return '';
+    }
+  };
+
+  try {
     const newSong = await payload.create({
       collection: 'songs',
-      data: songData,
+      data: { ...baseSongData, musicbrainzId: recordingMbid || undefined },
     });
-
     logger.debug(`Created song: ${cleanTitle}`);
     return newSong.id;
   } catch (error: any) {
-    const isSlugError = isFieldError(error, 'slug');
+    const isMbidError = isFieldError(error, 'musicbrainzId');
 
-    if (isSlugError) {
-      logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
-
-      let artistName = '';
-      if (artistId) {
-        try {
-          const artist = await payload.findByID({ collection: 'artists', id: artistId });
-          artistName = artist?.name || '';
-        } catch {
-          /* ignore */
+    if (isMbidError) {
+      logger.debug(`MusicBrainz ID conflict for song "${cleanTitle}", retrying without MBID`);
+      try {
+        const newSong = await payload.create({ collection: 'songs', data: baseSongData });
+        logger.debug(`Created song without MBID: ${cleanTitle}`);
+        return newSong.id;
+      } catch (retryError) {
+        if (isFieldError(retryError, 'slug')) {
+          const name = artistName || (await fetchArtistName());
+          const id = await resolveBySlug(name);
+          if (id !== null) {
+            logger.debug(`Found existing song by slug after MBID retry: "${cleanTitle}" (id: ${id})`);
+            return id;
+          }
         }
+        throw retryError;
       }
+    }
 
-      const slug = generateMusicSlug(artistName, cleanTitle);
-      const id = await findDocBySlug(payload, 'songs', slug);
+    if (isFieldError(error, 'slug')) {
+      logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
+      const name = artistName || (await fetchArtistName());
+      const id = await resolveBySlug(name);
       if (id !== null) {
-        logger.debug(`Found existing song by slug: "${cleanTitle}" -> "${slug}" (id: ${id})`);
+        logger.debug(`Found existing song by slug: "${cleanTitle}" (id: ${id})`);
         return id;
       }
     }

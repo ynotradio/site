@@ -31,6 +31,7 @@ vi.mock('dotenv', () => ({
 // Mock musicbrainz
 vi.mock('./musicbrainz', () => ({
   getArtistMbid: vi.fn(),
+  getRecordingMbid: vi.fn(),
 }));
 
 // Mock payload.config for getPayloadClient success path
@@ -41,11 +42,13 @@ vi.mock('../../../payload.config', () => ({
 describe('payloadClient', () => {
   let mockPayload: Partial<Payload>;
   let mockGetArtistMbid: Mock;
+  let mockGetRecordingMbid: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const musicbrainz = await import('./musicbrainz');
     mockGetArtistMbid = musicbrainz.getArtistMbid as Mock;
+    mockGetRecordingMbid = musicbrainz.getRecordingMbid as Mock;
 
     mockPayload = {
       find: vi.fn(),
@@ -529,6 +532,8 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValue({ name: 'New Song Artist' });
+      mockGetRecordingMbid.mockResolvedValue('recording-mbid-123');
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-789' });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'New Song', 42);
@@ -539,6 +544,7 @@ describe('payloadClient', () => {
         data: {
           title: 'New Song',
           artist: 42,
+          musicbrainzId: 'recording-mbid-123',
         },
       });
     });
@@ -547,6 +553,7 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      mockGetRecordingMbid.mockResolvedValue(null);
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-999' });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'Orphan Song');
@@ -566,6 +573,31 @@ describe('payloadClient', () => {
       await expect(findOrCreateSong(mockPayload as Payload, '')).rejects.toThrow(
         'Song title is required',
       );
+    });
+
+    it('retries song creation without MBID on musicbrainzId conflict', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Conflict Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce('duplicate-mbid');
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(mbidError);
+      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'song-without-mbid' });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Conflict Song', 99);
+
+      expect(songId).toBe('song-without-mbid');
+      expect(mockPayload.create).toHaveBeenNthCalledWith(2, {
+        collection: 'songs',
+        data: {
+          title: 'Conflict Song',
+          artist: 99,
+        },
+      });
     });
   });
 
@@ -1021,13 +1053,14 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Song Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
         message: 'Duplicate slug',
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
-      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Song Artist' });
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-by-slug' }] });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'Duplicate Song', 10);
@@ -1040,6 +1073,7 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
@@ -1058,13 +1092,14 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 10 }); // no name field
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
         message: 'Duplicate slug',
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
-      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 10 }); // no name field
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-nameless-artist' }] });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'Nameless Artist Song', 10);
@@ -1076,6 +1111,8 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Some Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const genericError = { status: 500, message: 'Database error' };
       (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
 
@@ -1088,18 +1125,41 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Artist Name' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
         message: 'Duplicate slug',
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
-      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Artist Name' });
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
 
       await expect(
         findOrCreateSong(mockPayload as Payload, 'Ghost Song', 12),
       ).rejects.toEqual(slugError);
+    });
+
+    it('should resolve slug conflict when artist name fetch fails before create', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      // pre-create artist fetch throws — artistName stays ''
+      (mockPayload.findByID as Mock).mockRejectedValueOnce(new Error('DB timeout'));
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      // retry fetch inside slug handler succeeds
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Recovered Artist' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-recovered' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Recovered Song', 20);
+
+      expect(songId).toBe('song-recovered');
     });
   });
 });
