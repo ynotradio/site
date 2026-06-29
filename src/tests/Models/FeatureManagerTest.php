@@ -90,4 +90,23 @@ class FeatureManagerTest extends TestCase
         $this->assertTrue($result);
         putenv('TEST_FEATURE');
     }
+
+    /**
+     * Test that CP routes suppress use_postgres_* flags
+     */
+    public function testControlPanelRequestSuppressesPostgresFlags(): void
+    {
+        $originalScriptName = $_SERVER['SCRIPT_NAME'] ?? null;
+        $_SERVER['SCRIPT_NAME'] = '/cp/top11_song_view_all.php';
+        putenv('USE_POSTGRES_TOP11=true');
+
+        $this->assertFalse(FeatureManager::isEnabled('use_postgres_top11'));
+
+        putenv('USE_POSTGRES_TOP11');
+        if ($originalScriptName === null) {
+            unset($_SERVER['SCRIPT_NAME']);
+        } else {
+            $_SERVER['SCRIPT_NAME'] = $originalScriptName;
+        }
+    }
 }

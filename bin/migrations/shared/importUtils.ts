@@ -60,6 +60,27 @@ function appendSpaceToLastNode(nodes: any[]): void {
   }
 }
 
+// A boundary space can be attached to a preceding plain-text node, but not to a
+// link node (whose text lives in children). When the previous node is a link,
+// the leading space must be kept on the following text node instead.
+function lastNodeIsLink(nodes: any[]): boolean {
+  return nodes.length > 0 && nodes[nodes.length - 1].type === 'link';
+}
+
+// OR a Lexical format bit into every text node, recursing into link children,
+// so wrapping tags (e.g. <em><a>…</a></em>) propagate formatting to the text.
+function applyFormat(nodes: any[], formatBit: number): any[] {
+  for (const node of nodes) {
+    if (node.type === 'text') {
+      // eslint-disable-next-line no-bitwise, no-param-reassign
+      node.format |= formatBit;
+    } else if (node.type === 'link' && Array.isArray(node.children)) {
+      applyFormat(node.children, formatBit);
+    }
+  }
+  return nodes;
+}
+
 /**
  * Parse inline HTML elements recursively
  * Handles nested tags like <b><a href="...">text</a></b>
@@ -106,7 +127,21 @@ function parseInlineElements(html: string): any[] {
             version: 1,
           });
         } else if (normalizedText === ' ') {
-          appendSpaceToLastNode(nodes);
+          if (lastNodeIsLink(nodes)) {
+            // Space between a link and the next tag — emit it as its own node
+            // since it can't be appended to the link's text.
+            nodes.push({
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: ' ',
+              type: 'text',
+              version: 1,
+            });
+          } else {
+            appendSpaceToLastNode(nodes);
+          }
         }
       }
 
@@ -118,9 +153,25 @@ function parseInlineElements(html: string): any[] {
         const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
         const href = hrefMatch ? hrefMatch[1] : '';
 
-        const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
+        // Recurse so formatting inside the anchor (e.g. <a><em>Album</em></a>)
+        // is preserved as text-node format bits instead of being flattened.
+        const linkChildren = innerHtml.includes('<')
+          ? parseInlineElements(innerHtml)
+          : [{
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          }];
 
-        if (linkText && href) {
+        const hasText = linkChildren.some(
+          (c) => (c.text && c.text.trim()) || c.type === 'link',
+        );
+
+        if (hasText && href) {
           const absoluteUrl = toAbsoluteUrl(href);
           const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
           const target = targetMatch ? targetMatch[1] : null;
@@ -135,23 +186,13 @@ function parseInlineElements(html: string): any[] {
               url: absoluteUrl,
               newTab: target === '_blank' || target === '_new',
             },
-            children: [
-              {
-                detail: 0,
-                format: 0,
-                mode: 'normal',
-                style: '',
-                text: linkText,
-                type: 'text',
-                version: 1,
-              },
-            ],
+            children: linkChildren,
             direction: 'ltr',
           });
         }
       } else if (tag === 'b' || tag === 'strong') {
         if (innerHtml.includes('<')) {
-          nodes.push(...parseInlineElements(innerHtml));
+          nodes.push(...applyFormat(parseInlineElements(innerHtml), 1)); // Bold
         } else {
           nodes.push({
             detail: 0,
@@ -164,15 +205,19 @@ function parseInlineElements(html: string): any[] {
           });
         }
       } else if (tag === 'em' || tag === 'i') {
-        nodes.push({
-          detail: 0,
-          format: 2, // Italic
-          mode: 'normal',
-          style: '',
-          text: innerHtml.replace(/<[^>]*>/g, '').trim(),
-          type: 'text',
-          version: 1,
-        });
+        if (innerHtml.includes('<')) {
+          nodes.push(...applyFormat(parseInlineElements(innerHtml), 2)); // Italic
+        } else {
+          nodes.push({
+            detail: 0,
+            format: 2, // Italic
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          });
+        }
       }
 
       lastProcessedIndex = m.end;
@@ -183,7 +228,11 @@ function parseInlineElements(html: string): any[] {
       const plainText = partHtml.substring(lastProcessedIndex);
       const normalizedText = plainText.replace(/\s+/g, ' ');
       if (normalizedText.trim()) {
-        if (plainText.match(/^\s/)) {
+        const hasLeadingSpace = !!plainText.match(/^\s/);
+        // Keep the leading space on this node when it can't be appended to a
+        // preceding link node (links store text in children, not on the node).
+        const keepLeadingSpace = hasLeadingSpace && lastNodeIsLink(nodes);
+        if (hasLeadingSpace && !keepLeadingSpace) {
           appendSpaceToLastNode(nodes);
         }
         nodes.push({
@@ -191,7 +240,7 @@ function parseInlineElements(html: string): any[] {
           format: 0,
           mode: 'normal',
           style: '',
-          text: normalizedText.trim(),
+          text: keepLeadingSpace ? ` ${normalizedText.trim()}` : normalizedText.trim(),
           type: 'text',
           version: 1,
         });

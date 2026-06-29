@@ -1,8 +1,8 @@
 <?php
 
-// Reserved for future feature flags. The legacy USE_POSTGRES_* flags were
-// dissolved when the Payload migration completed: each model factory now
-// hardcodes its data source (Postgres for migrated collections, MySQL for the
-// few remaining legacy ones). Add new flags here as needed.
-return [];
-
+return [
+    // Top 11 @ 11 has no Postgres/Payload adapter yet, so it stays on MySQL.
+    // Stories and custom text were cut over to Postgres directly (their
+    // factories no longer consult a flag).
+    'use_postgres_top11' => false,
+];

@@ -25,8 +25,7 @@ if (!$_SESSION["logged_in"]) {
             <dt>Concerts</dt>
               <dd>Edit in <a href="/admin/collections/concerts">Payload &rarr; Concerts</a></dd>
             <dt>Custom Text Pages</dt>
-              <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
-              <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
+              <dd>Edit in <a href="/admin/collections/posts">Payload &rarr; Posts</a></dd>
             <dt>Deejays</dt>
               <dd>Edit in <a href="/admin/collections/deejays">Payload &rarr; Deejays</a></dd>
           </td>
@@ -39,9 +38,7 @@ if (!$_SESSION["logged_in"]) {
               <dd><a href="schedule_add.php">Add to Schedule</a></dd>
               <dd><a href="schedule_view_all.php">View Schedule</a></dd>
             <dt>Stories</dt>
-              <dd><a href="story_add.php">Add a Story</a></dd>
-              <dd><a href="story_view_all.php">View all Stories</a></dd>
-              <dd><a href="stories_order.php">Order Stories</a></dd>
+              <dd>Edit in <a href="/admin/collections/posts">Payload &rarr; Stories</a></dd>
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>

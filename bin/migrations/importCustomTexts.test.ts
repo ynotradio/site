@@ -53,6 +53,7 @@ describe('importCustomTexts', () => {
     mockPayload = {
       find: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     };
   });
 
@@ -111,13 +112,14 @@ describe('importCustomTexts', () => {
       );
     });
 
-    it('should skip already imported custom_text', async () => {
+    it('should update (not recreate) an already-imported custom_text', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({
         totalDocs: 1,
         docs: [{ id: 'existing' }],
       });
+      (mockPayload.update as Mock).mockResolvedValue({ id: 'existing' });
 
       const customText: CustomText = {
         id: 5,
@@ -129,7 +131,11 @@ describe('importCustomTexts', () => {
 
       const result = await importCustomText(mockPayload as Payload, customText);
 
-      expect(result).toBe('skipped');
+      // Upsert: existing docs are refreshed in place, not skipped or duplicated.
+      expect(result).toBe('success');
+      expect(mockPayload.update).toHaveBeenCalledWith(
+        expect.objectContaining({ collection: 'posts', id: 'existing' }),
+      );
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
