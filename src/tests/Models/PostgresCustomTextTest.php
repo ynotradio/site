@@ -44,6 +44,31 @@ class PostgresCustomTextTest extends TestCase
         ]);
     }
 
+    private function lexicalLink(bool $newTab): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/custom-text',
+                                    'newTab' => $newTab,
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Custom link'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testFindByPermalinkRendersLexicalToHtml(): void
     {
         $row = [
@@ -78,6 +103,27 @@ class PostgresCustomTextTest extends TestCase
         $this->mockDb->method('prepare')->willReturn($mockStmt);
 
         $this->assertNull($this->customText->findByPermalink('missing'));
+    }
+
+    public function testFindByPermalinkRespectsPayloadNewTabLinks(): void
+    {
+        $row = [
+            'id' => 9,
+            'permalink' => 'links-page',
+            'title' => 'Links Page',
+            'html' => $this->lexicalLink(true),
+            'legacy_id' => 99,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('links-page');
+
+        $this->assertStringContainsString('target="_blank"', $result['html']);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $result['html']);
     }
 
     public function testFutureFridayPermalinkGetsImageTitleAndTableCss(): void

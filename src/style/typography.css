@@ -1100,10 +1100,10 @@ footer a:hover {
     text-align: center;
   }
 
-  /* Center the MixCloud follow widget (and any other feature-box iframe) */
-  .feature-box {
-    text-align: center;
+  .feature-box .clearfix {
+    text-align: left;
   }
+
   .feature-box iframe {
     display: block;
     margin: 0 auto;

@@ -7,6 +7,8 @@ use YNotRadio\Models\Implementations\PostgresStory;
 use PDO;
 use PDOStatement;
 
+require_once dirname(__DIR__, 2) . '/partials/_story_display_helpers.php';
+
 /**
  * Tests for PostgresStory read operations.
  *
@@ -36,6 +38,31 @@ class PostgresStoryTest extends TestCase
                         'type' => 'paragraph',
                         'children' => [
                             ['type' => 'text', 'text' => $text],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    private function lexicalLink(bool $newTab): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/session',
+                                    'newTab' => $newTab,
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Session link'],
+                                ],
+                            ],
                         ],
                     ],
                 ],
@@ -102,6 +129,31 @@ class PostgresStoryTest extends TestCase
         $this->assertSame(1, $odd[0]['id']);
         $this->assertSame(2, $even[0]['id']);
         $this->assertStringContainsString('one', $odd[0]['story']);
+    }
+
+    public function testGetAllRespectsPayloadNewTabLinks(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetchAll')->willReturn([
+            ['id' => 1, 'headline' => 'Remember Sports Session', 'content' => $this->lexicalLink(true)],
+        ]);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        [$odd] = $this->story->getAll();
+
+        $this->assertStringContainsString('target="_blank"', $odd[0]['story']);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $odd[0]['story']);
+    }
+
+    public function testFrontPageStoryImageLinksOpenInNewTab(): void
+    {
+        ob_start();
+        \display_pic('https://example.com/session', 'https://example.com/session.jpg');
+        $html = ob_get_clean();
+
+        $this->assertStringContainsString('target="_blank"', $html);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $html);
     }
 
     public function testWritesAreDisabled(): void

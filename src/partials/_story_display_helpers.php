@@ -7,7 +7,7 @@ function display_pic($pic_url, $pic_img)
   if ($pic_url == "top11.php") {
     echo "<a href= \"" . $pic_url . "\" ><img src=\"" . $pic_img . "\"></a>\n";
   } else {
-    echo "<a href= \"" . $pic_url . "\" target=_new ><img src=\"" . $pic_img . "\"></a>\n";
+    echo "<a href= \"" . $pic_url . "\" target=\"_blank\" rel=\"noopener noreferrer\"><img src=\"" . $pic_img . "\"></a>\n";
   }
 }
 
