@@ -13,8 +13,9 @@ import { checkForPhpErrors } from './utils/test-helpers';
  *   - DJs page rendering stub names like "DJ #123" when the migrator
  *     left placeholder People rows.
  *
- * Pages are accessed via the `?ff=use_postgres_<name>` feature flag query
- * param, which sets a cookie consumed by `\FeatureFlags`.
+ * Every collection below is now served from Postgres unconditionally (the
+ * legacy `?ff=use_postgres_*` flags were dissolved at cutover), so the pages
+ * are hit at their plain URLs.
  */
 
 const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
@@ -27,17 +28,17 @@ async function gotoPhp(page: import('@playwright/test').Page, url: string) {
 }
 
 const POSTGRES_PAGES = [
-  { path: 'concerts.php', flag: 'use_postgres_concerts' },
-  { path: 'cdoftheweek.php', flag: 'use_postgres_cdoftheweek' },
-  { path: 'deejays.php', flag: 'use_postgres_deejays' },
-  { path: 'ondemand.php', flag: 'use_postgres_ondemand' },
-  { path: 'donate.php', flag: 'use_postgres_customtext' },
+  'concerts.php',
+  'cdoftheweek.php',
+  'deejays.php',
+  'ondemand.php',
+  'donate.php',
 ] as const;
 
 test.describe('Postgres-backed PHP pages', () => {
-  POSTGRES_PAGES.forEach(({ path, flag }) => {
+  POSTGRES_PAGES.forEach((path) => {
     test(`${path} loads with no PHP errors`, async ({ page }) => {
-      const url = `${LEGACY_BASE_URL}/${path}?ff=${flag}`;
+      const url = `${LEGACY_BASE_URL}/${path}`;
       const status = await gotoPhp(page, url);
       expect(status).toBe(200);
       const errors = checkForPhpErrors(await page.content());
@@ -49,7 +50,7 @@ test.describe('Postgres-backed PHP pages', () => {
   // exercise the first few pages explicitly.
   [1, 2, 3].forEach((pageNum) => {
     test(`ondemand.php page ${pageNum} renders without parse error`, async ({ page }) => {
-      const url = `${LEGACY_BASE_URL}/ondemand.php?ff=use_postgres_ondemand&page=${pageNum}`;
+      const url = `${LEGACY_BASE_URL}/ondemand.php?page=${pageNum}`;
       const status = await gotoPhp(page, url);
       expect(status).toBe(200);
       const content = await page.content();
@@ -59,7 +60,7 @@ test.describe('Postgres-backed PHP pages', () => {
   });
 
   test('deejays.php does not render stub "DJ #N" placeholder names', async ({ page }) => {
-    const url = `${LEGACY_BASE_URL}/deejays.php?ff=use_postgres_deejays`;
+    const url = `${LEGACY_BASE_URL}/deejays.php`;
     const status = await gotoPhp(page, url);
     expect(status).toBe(200);
     const stubMatches = await page.locator('h2', { hasText: /^DJ #\d+$/ }).count();
@@ -67,7 +68,7 @@ test.describe('Postgres-backed PHP pages', () => {
   });
 
   test('cdoftheweek.php main panel does not show "error loading" fallback', async ({ page }) => {
-    const url = `${LEGACY_BASE_URL}/cdoftheweek.php?ff=use_postgres_cdoftheweek`;
+    const url = `${LEGACY_BASE_URL}/cdoftheweek.php`;
     const status = await gotoPhp(page, url);
     expect(status).toBe(200);
     // Scope to the main panel (first .row) to avoid false matches in the
@@ -80,7 +81,7 @@ test.describe('Postgres-backed PHP pages', () => {
     // Pete Yorn concert in production uses an italic album title in the
     // concert title — verifies the title_html column flows through the
     // PHP sanitizer with <em> intact.
-    const url = `${LEGACY_BASE_URL}/concerts.php?ff=use_postgres_concerts`;
+    const url = `${LEGACY_BASE_URL}/concerts.php`;
     const status = await gotoPhp(page, url);
     expect(status).toBe(200);
     const peteYornCell = page.locator('td', { hasText: /Pete Yorn/ }).first();
@@ -91,7 +92,7 @@ test.describe('Postgres-backed PHP pages', () => {
   });
 
   test('donate.php displays donation content from Postgres', async ({ page }) => {
-    const url = `${LEGACY_BASE_URL}/donate.php?ff=use_postgres_customtext`;
+    const url = `${LEGACY_BASE_URL}/donate.php`;
     const status = await gotoPhp(page, url);
     expect(status).toBe(200);
     const errors = checkForPhpErrors(await page.content());
@@ -101,6 +102,9 @@ test.describe('Postgres-backed PHP pages', () => {
     // The content area must contain meaningful text, not be blank
     const contentArea = page.locator('.content').first();
     const contentText = await contentArea.innerText();
-    expect(contentText.trim().length, 'Donate page content area should not be blank').toBeGreaterThan(0);
+    expect(
+      contentText.trim().length,
+      'Donate page content area should not be blank',
+    ).toBeGreaterThan(0);
   });
 });
