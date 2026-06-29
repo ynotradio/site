@@ -223,6 +223,45 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
 
   // Paragraphs
   else if (tagName === 'p') {
+    // Legacy markup sometimes nests block content (tables of embeds, images)
+    // inside a <p>, which is invalid HTML but renders fine in browsers. Inline
+    // flattening would silently drop those embeds, so when block descendants
+    // are present, walk the children in order and route block elements through
+    // the block converter.
+    const blockTags = new Set(['table', 'iframe', 'img', 'ul', 'ol', 'blockquote', 'hr', 'div', 'center']);
+    const hasBlockDescendant = element.querySelector('table, iframe, img, ul, ol, blockquote, hr') !== null;
+
+    if (hasBlockDescendant) {
+      let inlineBuffer = '';
+      const flushInline = () => {
+        const inline = parseInlineHTML(inlineBuffer);
+        inlineBuffer = '';
+        if (inline.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: inline,
+            direction: 'ltr',
+          });
+        }
+      };
+      Array.from(element.childNodes).forEach((node) => {
+        const el = node.nodeType === 1 ? (node as Element) : null;
+        if (el && blockTags.has(el.tagName.toLowerCase())) {
+          flushInline();
+          nodes.push(...htmlElementToLexicalNodes(el));
+        } else if (el) {
+          inlineBuffer += el.outerHTML;
+        } else if (node.nodeType === 3) {
+          inlineBuffer += node.textContent ?? '';
+        }
+      });
+      flushInline();
+      return nodes;
+    }
+
     const children = parseInlineHTML(element.innerHTML);
     if (children.length > 0) {
       // Detect alignment from align attribute or inline style
@@ -347,31 +386,74 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
     });
   }
 
-  // Tables - simplify to paragraph with structured text
+  // Tables. Legacy content frequently abuses tables purely as layout wrappers
+  // around block media (iframes, images) — e.g. the y100-rocks playlist. If any
+  // cell contains block-level content, recurse into the cells so those embeds
+  // survive. Only fall back to the flattened "[Table]" text representation for
+  // genuinely text-only tabular data.
   else if (tagName === 'table') {
-    const rows = Array.from(element.querySelectorAll('tr'));
-    const tableText = rows.map((row) => {
-      const cells = Array.from(row.querySelectorAll('td, th'));
-      return cells.map((cell) => cell.textContent?.trim() || '').join(' | ');
-    }).join('\n');
+    const blockSelector = 'iframe, img, ul, ol, blockquote, table, hr';
+    const hasBlockContent = element.querySelector(blockSelector) !== null;
 
-    if (tableText) {
-      nodes.push({
-        type: 'paragraph',
-        format: '',
-        indent: 0,
-        version: 1,
-        children: [{
-          type: 'text',
-          text: `[Table]\n${tableText}`,
-          format: 0,
-          mode: 'normal',
-          style: '',
-          detail: 0,
-          version: 1,
-        }],
-        direction: 'ltr',
+    if (hasBlockContent) {
+      const blockTags = new Set(['iframe', 'img', 'ul', 'ol', 'blockquote', 'table', 'hr']);
+      // Flush accumulated inline HTML (text, <b>, <a>, <br>…) as a paragraph so
+      // labels stay attached above their embed, in document order.
+      const flushInline = (htmlBuffer: string) => {
+        const inline = parseInlineHTML(htmlBuffer);
+        if (inline.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: inline,
+            direction: 'ltr',
+          });
+        }
+      };
+
+      Array.from(element.querySelectorAll('td, th')).forEach((cell) => {
+        let inlineBuffer = '';
+        Array.from(cell.childNodes).forEach((node) => {
+          const el = node.nodeType === 1 ? (node as Element) : null;
+          if (el && blockTags.has(el.tagName.toLowerCase())) {
+            flushInline(inlineBuffer);
+            inlineBuffer = '';
+            nodes.push(...htmlElementToLexicalNodes(el));
+          } else if (el) {
+            inlineBuffer += el.outerHTML;
+          } else if (node.nodeType === 3) {
+            inlineBuffer += node.textContent ?? '';
+          }
+        });
+        flushInline(inlineBuffer);
       });
+    } else {
+      const rows = Array.from(element.querySelectorAll('tr'));
+      const tableText = rows.map((row) => {
+        const cells = Array.from(row.querySelectorAll('td, th'));
+        return cells.map((cell) => cell.textContent?.trim() || '').join(' | ');
+      }).join('\n');
+
+      if (tableText) {
+        nodes.push({
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [{
+            type: 'text',
+            text: `[Table]\n${tableText}`,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            detail: 0,
+            version: 1,
+          }],
+          direction: 'ltr',
+        });
+      }
     }
   }
 

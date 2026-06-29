@@ -257,6 +257,38 @@ describe('enhancedHtmlToLexical', () => {
       expect(text).toContain('Cell 1');
       expect(text).toContain('Cell 4');
     });
+
+    it('should preserve iframe embeds inside table cells instead of flattening', () => {
+      // Legacy layout tables wrap embeds in cells (e.g. y100-rocks playlist).
+      const html = `
+        <table><tr><td>
+          <b>Track A</b><br>
+          <iframe src="https://www.opendrive.com/player/111"></iframe><br><br>
+          <b>Track B</b><br>
+          <iframe src="https://www.opendrive.com/player/222"></iframe>
+        </td></tr></table>
+      `;
+      const result = convertHtmlToLexicalEnhanced(html);
+      const embeds = result.root.children.filter(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embeds).toHaveLength(2);
+      expect(embeds[0].fields.url).toBe('https://www.opendrive.com/player/111');
+      expect(embeds[1].fields.url).toBe('https://www.opendrive.com/player/222');
+    });
+
+    it('should preserve embeds when a table of iframes is nested inside a <p>', () => {
+      // Invalid-but-rendered legacy markup: <p><table>…iframes…</table></p>.
+      const html = '<p><table><tr><td>'
+        + '<iframe src="https://www.opendrive.com/player/333"></iframe>'
+        + '</td></tr></table></p>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const embeds = result.root.children.filter(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embeds).toHaveLength(1);
+      expect(embeds[0].fields.url).toBe('https://www.opendrive.com/player/333');
+    });
   });
 
   describe('Horizontal Rules', () => {
