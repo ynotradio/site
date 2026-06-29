@@ -40,17 +40,14 @@ async function importCustomText(
   const legacyId = customText.id + 10000; // Offset to avoid collisions with story IDs
 
   try {
-    // Check if already imported
+    // Check if already imported — if so we update in place so re-running the
+    // script refreshes stale custom-text content (e.g. new Mixcloud embeds).
     const existing = await payload.find({
       collection: 'posts',
       where: { legacyId: { equals: legacyId } },
       limit: 1,
     });
-
-    if (existing.totalDocs > 0) {
-      logger.info(`Skipping custom_text ${customText.id} (${customText.title}) - already imported`);
-      return 'skipped';
-    }
+    const existingId = existing.totalDocs > 0 ? existing.docs[0].id : undefined;
 
     logger.info(`Importing custom_text ${customText.id}: ${customText.title}`);
 
@@ -165,25 +162,27 @@ async function importCustomText(
     // Generate slug from permalink
     const slug = customText.permalink || `custom-text-${customText.id}`;
 
-    // Create post in Payload
-    const newPost = await payload.create({
-      collection: 'posts',
-      data: {
-        headline,
-        content,
-        slug,
-        // generateSlug: false ensures the postSlugify hook doesn't overwrite
-        // our permalink-derived slug with a date-prefixed value.
-        generateSlug: false,
-        startDate: '2000-01-01T00:00:00.000Z', // Always visible content
-        endDate: '2099-12-31T23:59:59.999Z', // Far future date
-        showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
-        status: 'published',
-        legacyId,
-      },
-    });
+    const data = {
+      headline,
+      content,
+      slug,
+      // generateSlug: false ensures the postSlugify hook doesn't overwrite
+      // our permalink-derived slug with a date-prefixed value.
+      generateSlug: false,
+      startDate: '2000-01-01T00:00:00.000Z', // Always visible content
+      endDate: '2099-12-31T23:59:59.999Z', // Far future date
+      showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
+      status: 'published',
+      legacyId,
+    };
 
-    logger.info(`  ✓ Successfully imported custom_text ${customText.id} as post ${newPost.id}`);
+    if (existingId !== undefined) {
+      await payload.update({ collection: 'posts', id: existingId, data });
+      logger.info(`  ✓ Updated custom_text ${customText.id} (post ${existingId})`);
+    } else {
+      const newPost = await payload.create({ collection: 'posts', data });
+      logger.info(`  ✓ Imported custom_text ${customText.id} as post ${newPost.id}`);
+    }
     return 'success';
   } catch (error: any) {
     logger.error(`  ✗ Failed to import custom_text ${customText.id}`);
