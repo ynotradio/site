@@ -1,98 +1,53 @@
-# DJ Data Quality Issues - Repair Guide
+# DJ Data Quality Repair
 
-This document guides the process of finding and fixing DJ data quality issues as described in GitHub issues #597 and #598.
-
-## Issues Overview
-
-- **#597**: DJ #84 is unknown/orphaned and needs to be removed
-- **#598**: Duplicate Josh DJ records exist; only one appears on the public deejays page
+This document covers manual DJ cleanup scripts originally created for GitHub issues #597 and #598.
 
 ## Scripts
 
-### 1. Find DJ Issues (`bin/find-dj-issues.ts`)
-
-Identify which DJs have issues without making any changes.
+### Find DJ Issues
 
 ```bash
-# Against local database (via DATABASE_URI env var)
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
+```
 
-# Against dev Neon
+With an explicit database:
+
+```bash
 DATABASE_URI="$NEON_DEV_DATABASE_URL" \
-  node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
-
-# Against production Neon
-DATABASE_URI="$NEON_PROD_DATABASE_URL" \
   node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/find-dj-issues.ts
 ```
 
-Output will show:
+### Repair DJ Issues
 
-- DJ #84 status
-- All Josh DJs and which ones exist
-- All orphaned DJs (no person linked)
-
-### 2. Repair DJ Issues (`bin/repair-dj-issues.ts`)
-
-Automatically delete problematic DJs.
+Dry run:
 
 ```bash
-# DRY RUN (show what will be deleted, make no changes)
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/repair-dj-issues.ts
+```
 
-# ACTUAL DELETE (requires --confirm)
+Confirmed delete:
+
+```bash
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/repair-dj-issues.ts --confirm
 ```
 
-This script will:
-
-- Automatically delete DJ #84 if it exists
-- List all Josh DJs (requires manual review to identify which to keep)
-- List all orphaned DJs
-
-### 3. DJ Data Quality Integrity Check (`bin/integrity-check-djs.ts`)
-
-Regularly check for and report DJ data quality issues.
+### DJ Integrity Check
 
 ```bash
-# Dry run (report issues)
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/integrity-check-djs.ts
-
-# Fix orphaned DJs automatically
 node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/integrity-check-djs.ts --fix
-
-# Check only recent changes
-node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/integrity-check-djs.ts --since 24h
-
-# Output report to file
-node --import ./bin/preload-nextenv-fix.mjs --import tsx bin/integrity-check-djs.ts --output report.md
 ```
 
-## Fix DJ #598 (Duplicate Josh) Manually
+## Current Policy
 
-The duplicate Josh issue requires manual review because we need to know which Josh DJ actually appears on the public deejays page.
+These scripts are manual repair tools only. They are not part of a nightly integrity-check pipeline.
 
-Steps:
+## Manual Duplicate Review
 
-1. Run `bin/find-dj-issues.ts` to get the Josh DJ IDs
-2. Visit the Payload admin and the public deejays page to identify which Josh DJ should be kept
-3. Edit `bin/repair-dj-issues.ts` to add the `--delete-josh-id` parameter, or manually delete in Payload admin
-4. Confirm the issue is resolved on the public site
+For duplicate DJ names:
 
-## Automated Prevention
-
-This check was integrated into the nightly gap report pipeline during the DJ cleanup work:
-
-- A dedicated `:microphone: Check DJ data quality` step was added to the integrity checks
-- Orphaned DJs are detected and reported
-- Duplicate display names are flagged
-- Reports are combined and posted as GitHub issue comments
-
-The standalone script remains available for manual runs even though nightly integrity checks now focus on the collections still syncing from MySQL.
-
-## Related Documentation
-
-- [Nightly Gap Report Pipeline](.buildkite/nightly-gap-report.yml)
-- [Integrity Check Script](.buildkite/scripts/run-single-integrity-check.sh)
-- [GitHub Issue #597](https://github.com/ynotradio/site/issues/597)
-- [GitHub Issue #598](https://github.com/ynotradio/site/issues/598)
+1. Run `bin/find-dj-issues.ts`.
+2. Compare Payload admin with the public deejays page.
+3. Keep the record used by the public site.
+4. Delete confirmed duplicates in Payload admin or with the repair script.
+5. Re-run the check.
