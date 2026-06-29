@@ -79,7 +79,7 @@ ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 
 ### Nightly Content Sync
 
-The old nightly import/gap/integrity workflow is retired. Keep the Buildkite pipeline if desired, but `.buildkite/nightly-gap-report.yml` now runs a no-op placeholder step and requires no MySQL, Neon, or GitHub issue secrets.
+The old nightly import/gap/integrity workflow is retired. `.buildkite/nightly-gap-report.yml` now only resets the Neon development branch from production and requires `NEON_API_KEY`. It no longer needs MySQL or GitHub issue secrets.
 
 ### Legacy PHP Deploy Pipeline
 

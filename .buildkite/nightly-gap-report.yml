@@ -1,11 +1,28 @@
 env:
   NODE_VERSION: "22"
+  NEON_PROJECT_ID: "flat-bird-55654203"
+  NEON_ORG_ID: "org-cool-hat-59377226"
 
 steps:
-  - label: "Nightly content sync retired"
-    key: "nightly-content-sync-retired"
+  - label: "Reset dev branch from production"
+    key: "reset-dev-branch"
+    timeout_in_minutes: 5
     command: |
       echo "Nightly content imports and integrity checks are retired."
-      echo "This pipeline is intentionally a no-op placeholder."
+      echo "Resetting Neon development branch from production."
+      npx neonctl branches reset development \
+        --parent \
+        --api-key "$$NEON_API_KEY" \
+        --project-id "$$NEON_PROJECT_ID" \
+        --org-id "$$NEON_ORG_ID"
+      echo "Development branch reset to production"
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22-slim"
+          propagate-environment: true
+          environment:
+            - "NEON_API_KEY"
+            - "NEON_PROJECT_ID"
+            - "NEON_ORG_ID"
     agents:
       queue: "default"
