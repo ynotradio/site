@@ -15,7 +15,7 @@ import path from 'path';
 import { getPayloadClient, type PostgresTarget } from './shared/payloadClient';
 import { convertHtmlToLexical } from './shared/importUtils';
 import { importImageFromUrl } from './shared/mediaImporter';
-import { slugify, cleanHeadline } from './shared/slugify';
+import { cleanHeadline } from './shared/slugify';
 
 interface ProdStory {
   id: number;
@@ -32,9 +32,6 @@ const TARGETS: PostgresTarget[] = process.env.SYNC_TARGET
   ? [process.env.SYNC_TARGET as PostgresTarget]
   : ['dev-neon', 'prod-neon'];
 
-// Stories present on Neon but not in prod active set — hide from front page.
-const HIDE_LEGACY_IDS = [1777];
-
 function loadStories(): ProdStory[] {
   const file = path.resolve(process.cwd(), 'tmp/prod-stories.json');
   const lines = fs.readFileSync(file, 'utf8').trim().split('\n');
@@ -47,7 +44,6 @@ async function syncTarget(target: PostgresTarget, stories: ProdStory[]): Promise
 
   for (const s of stories) {
     const cleanedHeadline = cleanHeadline(s.headline);
-    const slug = slugify(s.headline);
     const content = convertHtmlToLexical(s.story);
 
     const existing = await payload.find({
@@ -78,7 +74,6 @@ async function syncTarget(target: PostgresTarget, stories: ProdStory[]): Promise
 
     const data: Record<string, unknown> = {
       headline: cleanedHeadline,
-      slug,
       startDate: s.start_date,
       endDate: s.end_date,
       content,
@@ -92,29 +87,49 @@ async function syncTarget(target: PostgresTarget, stories: ProdStory[]): Promise
     if (imageId) data.image = imageId;
 
     if (existingDoc) {
+      // Don't send slug on update — the post already has a valid (date-prefixed)
+      // slug and Payload's postSlugify hook owns slug generation. Forcing a
+      // bare slug here collides with same-headline custom-text posts.
       await payload.update({ collection: 'posts', id: existingDoc.id, data });
       console.log(`✏️  [${s.id}] Updated "${cleanedHeadline}" (priority ${s.priority})`);
     } else {
+      // New docs: let the postSlugify hook derive a date-prefixed slug from the
+      // headline + startDate (avoids collisions by construction).
       data.migratedAt = new Date().toISOString();
       await payload.create({ collection: 'posts', data });
       console.log(`✅ [${s.id}] Created  "${cleanedHeadline}" (priority ${s.priority})`);
     }
   }
 
-  for (const legacyId of HIDE_LEGACY_IDS) {
-    const found = await payload.find({
+  // Hide stories that would still render on the front page (showOnFrontPage =
+  // true and a date window covering today) but are no longer in the prod MySQL
+  // active set. Without this, a story dropped from production lingers on the
+  // Postgres front page. Keeps the two sources in lockstep.
+  const activeIds = new Set(stories.map((s) => s.id));
+  const today = new Date().toISOString().slice(0, 10);
+  const frontPage = await payload.find({
+    collection: 'posts',
+    where: { showOnFrontPage: { equals: true } },
+    limit: 1000,
+    depth: 0,
+  });
+
+  const staleActive = (frontPage.docs as any[]).filter((doc) => {
+    if (activeIds.has(doc.legacyId)) return false;
+    const start = (doc.startDate ?? '').slice(0, 10);
+    const end = (doc.endDate ?? '').slice(0, 10);
+    // Stories whose window no longer covers today are already excluded by the
+    // date-window read query, so only those still in-window need hiding.
+    return start && end && start <= today && end >= today;
+  });
+
+  for (const doc of staleActive) {
+    await payload.update({
       collection: 'posts',
-      where: { legacyId: { equals: legacyId } },
-      limit: 1,
+      id: doc.id,
+      data: { showOnFrontPage: false },
     });
-    if (found.docs.length > 0) {
-      await payload.update({
-        collection: 'posts',
-        id: found.docs[0].id,
-        data: { showOnFrontPage: false },
-      });
-      console.log(`🙈 [${legacyId}] Hidden from front page`);
-    }
+    console.log(`🙈 [${doc.legacyId}] Hidden stale front-page story "${String(doc.headline).replace(/<[^>]+>/g, '').slice(0, 50)}"`);
   }
 }
 
