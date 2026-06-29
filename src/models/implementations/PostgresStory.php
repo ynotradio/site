@@ -320,8 +320,11 @@ class PostgresStory implements Story {
                 // Validate URL first, then apply fallback if invalid
                 $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                $newTab = (bool)($fields['newTab'] ?? false);
+                $target = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
                 $content = $this->convertLexicalChildren($node);
-                return "<a href=\"$url\">$content</a>";
+                return "<a href=\"$url\"$target>$content</a>";
 
             case 'linebreak':
                 // Soft line breaks (Shift+Enter in the Payload editor) are
