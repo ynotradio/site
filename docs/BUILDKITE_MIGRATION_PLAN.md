@@ -1,40 +1,28 @@
-# Buildkite CI Migration Plan
+# Buildkite Pipelines
 
-## Overview
+Buildkite runs the repository CI and scheduled maintenance pipelines from `.buildkite/`.
 
-Migration from GitHub Actions to Buildkite for CI/CD. All pipeline configurations are in `.buildkite/` directory.
+## Current Pipelines
 
-**Current status:** Non-E2E steps (ESLint, Vitest, Storybook, PHP Lint) run on Buildkite. E2E tests remain in GitHub Actions due to Docker-in-Docker networking limitations (see `docs/archive/ci-setup/buildkite-e2e-investigation.md`).
-
-## Pipelines
-
-| Buildkite Pipeline | Replaces GitHub Actions | Status |
-|---|---|---|
-| `pipeline.yml` | ci.yml + e2e.yml | ✅ CI steps active, E2E deferred |
-| `build-images.yml` | build-agent-images.yml | ✅ Active |
-| `scheduled-db-sync.yml` | weekly-db-sync.yml | ✅ Active |
-| `nightly-gap-report.yml` | *(new)* | ✅ Active |
+| Pipeline                 | Status | Notes                                                                   |
+| ------------------------ | ------ | ----------------------------------------------------------------------- |
+| `pipeline.yml`           | Active | Lint, tests, build, Storybook/PHP checks as configured                  |
+| `build-images.yml`       | Active | Builds/publishes agent and service images                               |
+| `scheduled-db-sync.yml`  | Active | Copies prod Neon to dev Neon on schedule                                |
+| `nightly-gap-report.yml` | No-op  | Retained as a placeholder; nightly imports/integrity checks are retired |
 
 ## Required Configuration
 
-### Environment Variables (in Buildkite)
-- `GHCR_USERNAME` / `GHCR_TOKEN` - GitHub Container Registry
-- `NEON_PROD_DATABASE_URL` / `NEON_DEV_DATABASE_URL` - Databases
-- `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` - E2E tests
-- `CODECOV_TOKEN` - Optional
+- `GHCR_USERNAME` / `GHCR_TOKEN`
+- `NEON_PROD_DATABASE_URL` / `NEON_DEV_DATABASE_URL`
+- Cloudinary credentials where e2e or Payload image tests need them
+- `CODECOV_TOKEN` when coverage upload is enabled
 
-### Agent Requirements
-- Docker & Docker Compose
-- Node.js 22 (or use Docker images)
-- PHP 7.4 (or use Docker images)
-- 4GB+ RAM, 2+ CPU cores, 50GB+ disk
+## Agent Requirements
 
-## Setup
+- Docker and Docker Compose
+- Node.js 22 or project Docker images
+- PHP 7.4 where PHP checks run outside containers
+- Enough disk for Docker layer cache
 
-1. Sign up at [buildkite.com](https://buildkite.com) (cloud agents or self-hosted)
-2. Add environment variables in Buildkite UI: Pipeline → Settings → Environment Variables
-3. Create pipeline: name "Y-Not Radio - CI", config path `.buildkite/pipeline.yml`
-4. Enable webhooks for pull requests
-5. Trigger a manual build or test PR to verify
-
-See `.buildkite/README.md` for detailed pipeline configuration.
+See `.buildkite/README.md` for pipeline-specific commands.

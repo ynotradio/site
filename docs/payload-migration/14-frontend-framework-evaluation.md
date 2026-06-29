@@ -11,18 +11,21 @@
 The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site renders server-side HTML from MySQL/Postgres queries. The next phase is a modern, responsive redesign of the public-facing site.
 
 **What we have today:**
+
 - Payload CMS admin running on Next.js 15, deployed to Netlify
 - PostgreSQL (Neon) as the single source of truth
 - Payload REST + GraphQL APIs available for content delivery
 - Cloudinary CDN for media
 
 **What the public site actually does:**
+
 - Displays mostly read-only content (shows, concerts, DJs, stories, music)
 - A few interactive features (Modern Rock Madness voting, Year End Poll, Top 11)
 - Schedule display, now-playing info
 - ~15 distinct page types, low traffic
 
 **Priorities for the new frontend:**
+
 1. **Minimal dependencies** — fewer things to break, less maintenance
 2. **Netlify-compatible** — already paying for it
 3. **Fast** — both build and runtime
@@ -34,18 +37,18 @@ The CMS migration to Payload + PostgreSQL is complete. The legacy PHP site rende
 
 ## Options Evaluated
 
-| # | Stack | Philosophy |
-|---|-------|------------|
-| A | [Next.js 15](#a-nextjs-15) | Full-featured React framework (already in use for Payload) |
-| B | [Astro](#b-astro) | Content-first, zero-JS-by-default, island architecture |
-| C | [11ty + HTMX](#c-11ty--htmx) | Static HTML generator + hypermedia for interactivity |
-| D | [Enhance](#d-enhance) | SSR web components with progressive enhancement |
-| E | [Lit](#e-lit) | Google's lightweight web components library |
-| F | [Stencil](#f-stencil) | Web component compiler with SSG and TypeScript |
-| G | [Qwik](#g-qwik) | Resumable framework — near-zero JS until interaction |
-| H | [Remix](#h-remix) | Full-stack React framework built on web standards |
-| I | [Marko](#i-marko) | HTML-extended template language with fine-grained partial hydration |
-| J | [Elena](#j-elena) | Tiny progressive web components library (~2.6kB) |
+| #   | Stack                        | Philosophy                                                          |
+| --- | ---------------------------- | ------------------------------------------------------------------- |
+| A   | [Next.js 15](#a-nextjs-15)   | Full-featured React framework (already in use for Payload)          |
+| B   | [Astro](#b-astro)            | Content-first, zero-JS-by-default, island architecture              |
+| C   | [11ty + HTMX](#c-11ty--htmx) | Static HTML generator + hypermedia for interactivity                |
+| D   | [Enhance](#d-enhance)        | SSR web components with progressive enhancement                     |
+| E   | [Lit](#e-lit)                | Google's lightweight web components library                         |
+| F   | [Stencil](#f-stencil)        | Web component compiler with SSG and TypeScript                      |
+| G   | [Qwik](#g-qwik)              | Resumable framework — near-zero JS until interaction                |
+| H   | [Remix](#h-remix)            | Full-stack React framework built on web standards                   |
+| I   | [Marko](#i-marko)            | HTML-extended template language with fine-grained partial hydration |
+| J   | [Elena](#j-elena)            | Tiny progressive web components library (~2.6kB)                    |
 
 ---
 
@@ -113,6 +116,7 @@ test('renders both bands', () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Shared deployment with Payload, familiar tooling, huge ecosystem
 - ✅ Strong agent support — Copilot/Claude know React extremely well
 - ❌ Heavy runtime (~90kB+ min React+ReactDOM), overkill for read-only pages
@@ -209,7 +213,9 @@ import MatchCard from '../MatchCard.astro';
 test('renders both band names', async () => {
   const container = await AstroContainer.create();
   const html = await container.renderToString(MatchCard, {
-    props: { match: { bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' } }
+    props: {
+      match: { bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' },
+    },
   });
   expect(html).toContain('Radiohead');
   expect(html).toContain('Muse');
@@ -217,6 +223,7 @@ test('renders both band names', async () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Zero JS shipped for read-only pages — fastest possible output
 - ✅ Scoped CSS built-in, great for creative design without naming collisions
 - ✅ Islands for interactivity — can use Lit, vanilla JS, or even React for one widget
@@ -293,8 +300,10 @@ title: Modern Rock Madness 2026
 
 ```js
 // src/_data/tournament.js
-module.exports = async function() {
-  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+module.exports = async function () {
+  const res = await fetch(
+    `${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`,
+  );
   const { docs } = await res.json();
   return docs[0];
 };
@@ -323,9 +332,9 @@ test('renders both band names', () => {
       currentMatch: {
         bandA: { name: 'Radiohead', id: '1' },
         bandB: { name: 'Muse', id: '2' },
-        id: '99'
-      }
-    }
+        id: '99',
+      },
+    },
   });
   expect(html).toContain('Radiohead');
   expect(html).toContain('Muse');
@@ -333,6 +342,7 @@ test('renders both band names', () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Fewest dependencies of any option — nearly zero lock-in
 - ✅ HTMX voting is just HTML attributes — progressive enhancement by nature
 - ✅ Netlify Functions handle the few server-side needs (voting, live data)
@@ -424,13 +434,16 @@ import MrmMatchCard from '../../app/elements/mrm-match-card.mjs';
 
 test('renders both band names', async () => {
   const html = enhance({ elements: { 'mrm-match-card': MrmMatchCard } });
-  const result = await html`<mrm-match-card match-data='${JSON.stringify(mockMatch)}'></mrm-match-card>`;
+  const result = await html`<mrm-match-card
+    match-data="${JSON.stringify(mockMatch)}"
+  ></mrm-match-card>`;
   expect(result).toContain('Radiohead');
   expect(result).toContain('Muse');
 });
 ```
 
 **Tradeoffs:**
+
 - ✅ True web components — components work in any context, no framework needed at runtime
 - ✅ SSR by default — fast first paint, progressive enhancement for interactivity
 - ✅ Scoped styles via `:host` and Shadow DOM — clean CSS isolation
@@ -497,8 +510,12 @@ export class MrmMatchCard extends LitElement {
         <div class="band">${this.match.bandA.name}</div>
         <span class="vs">vs</span>
         <div class="band">${this.match.bandB.name}</div>
-        <button @click=${() => this.vote(this.match.bandA.id)}>Vote ${this.match.bandA.name}</button>
-        <button @click=${() => this.vote(this.match.bandB.id)}>Vote ${this.match.bandB.name}</button>
+        <button @click=${() => this.vote(this.match.bandA.id)}>
+          Vote ${this.match.bandA.name}
+        </button>
+        <button @click=${() => this.vote(this.match.bandB.id)}>
+          Vote ${this.match.bandB.name}
+        </button>
       </article>
     `;
   }
@@ -512,7 +529,13 @@ import '../src/components/mrm-match-card.js';
 
 test('renders both band names', async () => {
   const el = await fixture(html`
-    <mrm-match-card .match=${{ bandA: { name: 'Radiohead', id: '1' }, bandB: { name: 'Muse', id: '2' }, id: '99' }}>
+    <mrm-match-card
+      .match=${{
+        bandA: { name: 'Radiohead', id: '1' },
+        bandB: { name: 'Muse', id: '2' },
+        id: '99',
+      }}
+    >
     </mrm-match-card>
   `);
   expect(el.shadowRoot.textContent).to.contain('Radiohead');
@@ -521,6 +544,7 @@ test('renders both band names', async () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ True web components — portable across any framework or plain HTML
 - ✅ Tiny runtime (~5kB), Shadow DOM scoping, reactive properties
 - ✅ Can be adopted incrementally — add Lit widgets to any of the other options
@@ -615,6 +639,7 @@ test('renders both band names', async () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Compiler output is zero-runtime web components — maximally portable
 - ✅ Built-in SSG with automatic prerendering — no separate framework needed
 - ✅ TypeScript + JSX syntax is familiar to React developers and agents
@@ -659,7 +684,9 @@ import { routeLoader$ } from '@builder.io/qwik-city';
 import { MatchCard } from '../../components/match-card/match-card';
 
 export const useTournament = routeLoader$(async () => {
-  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const res = await fetch(
+    `${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`,
+  );
   const { docs } = await res.json();
   return docs[0];
 });
@@ -715,6 +742,7 @@ test('renders both band names', async () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ ~1kB initial JS — fastest interactive framework; JS loads only on interaction
 - ✅ No hydration cost — "resumability" means the page is interactive without replaying component logic
 - ✅ JSX syntax familiar to React developers and agents
@@ -755,7 +783,9 @@ import { useLoaderData, Form } from '@remix-run/react';
 import type { LoaderFunctionArgs, ActionFunctionArgs } from '@remix-run/node';
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const res = await fetch(`${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`);
+  const res = await fetch(
+    `${process.env.PAYLOAD_URL}/api/mrm-tournaments?where[year][equals]=2026`,
+  );
   const { docs } = await res.json();
   return { tournament: docs[0] };
 }
@@ -779,9 +809,15 @@ export default function MadnessPage() {
       <h1>Modern Rock Madness 2026</h1>
       <Form method="post">
         <input type="hidden" name="matchId" value={match.id} />
-        <div>{match.bandA.name} vs {match.bandB.name}</div>
-        <button name="bandId" value={match.bandA.id}>Vote {match.bandA.name}</button>
-        <button name="bandId" value={match.bandB.id}>Vote {match.bandB.name}</button>
+        <div>
+          {match.bandA.name} vs {match.bandB.name}
+        </div>
+        <button name="bandId" value={match.bandA.id}>
+          Vote {match.bandA.name}
+        </button>
+        <button name="bandId" value={match.bandB.id}>
+          Vote {match.bandB.name}
+        </button>
       </Form>
     </main>
   );
@@ -791,13 +827,16 @@ export default function MadnessPage() {
 ```tsx
 // __tests__/madness.test.tsx
 test('renders both bands from loader data', () => {
-  render(<MadnessPage />, { hydrationData: { loaderData: { root: {}, 'routes/madness': mockLoaderData } } });
+  render(<MadnessPage />, {
+    hydrationData: { loaderData: { root: {}, 'routes/madness': mockLoaderData } },
+  });
   expect(screen.getByText('Radiohead')).toBeInTheDocument();
   expect(screen.getByText('Muse')).toBeInTheDocument();
 });
 ```
 
 **Tradeoffs:**
+
 - ✅ Web-standards mutations via `<Form>` — progressive enhancement like HTMX, but with React's component model
 - ✅ Nested routes + loaders = efficient data fetching with HTTP caching
 - ✅ Strong agent support — Copilot/Claude know React and Remix well
@@ -914,6 +953,7 @@ test('renders both band names', async () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Fine-grained partial hydration — only reactive DOM nodes ship JS; static content is pure HTML, no opt-in required
 - ✅ HTML-first syntax — `.marko` files look like HTML templates; minimal mental overhead for markup-heavy pages
 - ✅ Production-proven at eBay scale (powers eBay.com) — not a hobby project
@@ -958,13 +998,7 @@ import { Elena, html } from '@elenajs/core';
 
 export default class MrmMatchCard extends Elena(HTMLElement) {
   static tagName = 'mrm-match-card';
-  static props = [
-    'band-a-name',
-    'band-a-id',
-    'band-b-name',
-    'band-b-id',
-    'match-id',
-  ];
+  static props = ['band-a-name', 'band-a-id', 'band-b-name', 'band-b-id', 'match-id'];
   static shadow = 'open';
   static styles = `
     :host {
@@ -993,12 +1027,8 @@ export default class MrmMatchCard extends Elena(HTMLElement) {
         <div class="band">${this['band-a-name']}</div>
         <span class="vs">vs</span>
         <div class="band">${this['band-b-name']}</div>
-        <button @click=${() => this.vote(this['band-a-id'])}>
-          Vote ${this['band-a-name']}
-        </button>
-        <button @click=${() => this.vote(this['band-b-id'])}>
-          Vote ${this['band-b-name']}
-        </button>
+        <button @click=${() => this.vote(this['band-a-id'])}>Vote ${this['band-a-name']}</button>
+        <button @click=${() => this.vote(this['band-b-id'])}>Vote ${this['band-b-name']}</button>
       </article>
     `;
   }
@@ -1042,6 +1072,7 @@ describe('MrmMatchCard', () => {
 ```
 
 **Tradeoffs:**
+
 - ✅ Smallest runtime of all options — 2.6kB with zero transitive runtime dependencies
 - ✅ Pure web standards — Custom Elements, Shadow DOM, `CSSStyleSheet` adoption, no framework runtime in production
 - ✅ Progressive enhancement by design — `text` capture reads pre-existing DOM before first render; works with server-rendered HTML
@@ -1082,6 +1113,7 @@ Regardless of framework choice, the CSS approach should lean into modern platfor
 ```
 
 **Modern CSS features to use freely (baseline 2024+):**
+
 - Nesting (`& .child { }`) — eliminates need for Sass
 - Container queries (`@container`) — responsive components, not just viewports
 - `:has()` — parent selectors, state-driven styling
@@ -1091,6 +1123,7 @@ Regardless of framework choice, the CSS approach should lean into modern platfor
 - View Transitions API — page transition animations
 
 **What this replaces:**
+
 - No Sass/SCSS needed (nesting + custom properties cover it)
 - No CSS-in-JS (scoped styles or `@scope` handle isolation)
 - No Tailwind required (but compatible with all options if you want it)
@@ -1130,18 +1163,18 @@ A radio station site should feel alive. Modern CSS enables this without JS:
 
 Vite is not a framework — it's a **build tool** (dev server + bundler) that most modern frameworks now use under the hood. It's not scored as a separate option because choosing a framework already determines your build toolchain:
 
-| Framework | Build Tool | Notes |
-|-----------|-----------|-------|
-| Next.js 15 | Turbopack / Webpack | Migrating toward Turbopack; Vite not used |
-| Astro | **Vite** | Core build engine |
-| 11ty | None (or Lightning CSS) | No bundler required; optionally add Vite via plugin |
-| Enhance | Architect/Begin | Custom build; no Vite |
-| Lit | **Vite** (recommended) | Official Vite starter template |
-| Stencil | Custom (Rollup-based) | Own compiler; no Vite |
-| Qwik | **Vite** | Core build engine (Qwik City) |
-| Remix | **Vite** | Migrated to Vite in v2; official Vite plugin |
-| Marko | **Vite** | `@marko/vite` plugin; first-class integration |
-| Elena | Custom (Rollup) | `@elenajs/bundler` wraps Rollup; zero-config for component libraries |
+| Framework  | Build Tool              | Notes                                                                |
+| ---------- | ----------------------- | -------------------------------------------------------------------- |
+| Next.js 15 | Turbopack / Webpack     | Migrating toward Turbopack; Vite not used                            |
+| Astro      | **Vite**                | Core build engine                                                    |
+| 11ty       | None (or Lightning CSS) | No bundler required; optionally add Vite via plugin                  |
+| Enhance    | Architect/Begin         | Custom build; no Vite                                                |
+| Lit        | **Vite** (recommended)  | Official Vite starter template                                       |
+| Stencil    | Custom (Rollup-based)   | Own compiler; no Vite                                                |
+| Qwik       | **Vite**                | Core build engine (Qwik City)                                        |
+| Remix      | **Vite**                | Migrated to Vite in v2; official Vite plugin                         |
+| Marko      | **Vite**                | `@marko/vite` plugin; first-class integration                        |
+| Elena      | Custom (Rollup)         | `@elenajs/bundler` wraps Rollup; zero-config for component libraries |
 
 **What Vite gets us:** Instant HMR during development, fast production builds via Rollup, and native ES module support. For frameworks that use Vite (Astro, Qwik, Lit, Remix), the DX benefit is already baked in — you don't need to think about Vite separately.
 
@@ -1153,35 +1186,35 @@ For 11ty, Vite is optional and adds complexity that may not be needed for a stat
 
 ## Comparison Matrix
 
-| Criterion | Next.js 15 | Astro | 11ty + HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko | Elena |
-|-----------|-----------|-------|-------------|---------|-----|---------|------|-------|-------|-------|
-| **JS shipped (read-only page)** | ~90kB+ | 0kB | 0kB (14kB w/ HTMX) | 0kB | ~5kB per component | 0kB (lazy-loads on use) | ~1kB loader | ~90kB+ | 0kB | ~2.6kB per component |
-| **npm dependencies** | ~250+ | ~80 | ~30 | ~40 | ~15 (+ host) | ~60 | ~90 | ~200+ | ~50 | ~0 runtime (+ host) |
-| **Build tool** | Turbopack | Vite | None | Custom | Vite | Rollup | Vite | Vite | Vite | Rollup (custom) |
-| **Netlify support** | ★★★★★ | ★★★★★ | ★★★★★ | ★★★☆☆ | ★★★★☆ (via host) | ★★★★☆ | ★★★★☆ | ★★★★★ | ★★★☆☆ | ★★★☆☆ (via host; SSR experimental) |
-| **Build speed** | Moderate | Fast | Fastest | Fast | Fast | Fast | Moderate | Fast | Fast | Fast |
-| **Agent familiarity** | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★☆☆ | ★★★★☆ | ★★☆☆☆ | ★☆☆☆☆ |
-| **Component model** | React (JSX) | `.astro` (HTML+) | Templates (Njk) | Web Components | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`) | React (JSX) | Marko (`.marko`, HTML+) | Web Components (Elena mixin) |
-| **CSS scoping** | CSS Modules | Built-in `<style>` | Manual | Shadow DOM / `:host` | Shadow DOM | Shadow DOM or scoped | Co-located / scoped | CSS Modules | Built-in `<style>` (class-prefixed) | Shadow DOM or light DOM |
-| **Interactivity model** | Client components | Islands (opt-in) | HTMX attributes | Progressive enhancement | Reactive properties | Lazy-loaded handlers | Resumable (on-demand) | `<Form>` + loaders | Partial hydration (per-node) | Progressive enhancement |
-| **Vendor lock-in** | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards) | Low (compiles away) | Medium (Qwik conventions) | High (React) | Medium (Marko syntax) | Low (web standards) |
-| **Evergreen score** | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ | ★★★★★ | ★★★★★ | ★★★★☆ | ★★★☆☆ | ★★☆☆☆ | ★★★☆☆ | ★★★★☆ |
-| **Creative CSS ceiling** | High | High | High | High | High | High | High | High | High | High |
-| **Ecosystem / plugins** | Massive | Growing | Mature | Small | Moderate | Moderate (Ionic) | Small | Large | Small (eBay-driven) | Minimal (pre-release) |
+| Criterion                       | Next.js 15            | Astro                 | 11ty + HTMX            | Enhance                 | Lit                  | Stencil                   | Qwik                      | Remix              | Marko                               | Elena                              |
+| ------------------------------- | --------------------- | --------------------- | ---------------------- | ----------------------- | -------------------- | ------------------------- | ------------------------- | ------------------ | ----------------------------------- | ---------------------------------- |
+| **JS shipped (read-only page)** | ~90kB+                | 0kB                   | 0kB (14kB w/ HTMX)     | 0kB                     | ~5kB per component   | 0kB (lazy-loads on use)   | ~1kB loader               | ~90kB+             | 0kB                                 | ~2.6kB per component               |
+| **npm dependencies**            | ~250+                 | ~80                   | ~30                    | ~40                     | ~15 (+ host)         | ~60                       | ~90                       | ~200+              | ~50                                 | ~0 runtime (+ host)                |
+| **Build tool**                  | Turbopack             | Vite                  | None                   | Custom                  | Vite                 | Rollup                    | Vite                      | Vite               | Vite                                | Rollup (custom)                    |
+| **Netlify support**             | ★★★★★                 | ★★★★★                 | ★★★★★                  | ★★★☆☆                   | ★★★★☆ (via host)     | ★★★★☆                     | ★★★★☆                     | ★★★★★              | ★★★☆☆                               | ★★★☆☆ (via host; SSR experimental) |
+| **Build speed**                 | Moderate              | Fast                  | Fastest                | Fast                    | Fast                 | Fast                      | Moderate                  | Fast               | Fast                                | Fast                               |
+| **Agent familiarity**           | ★★★★★                 | ★★★★☆                 | ★★★☆☆                  | ★★☆☆☆                   | ★★★☆☆                | ★★★☆☆                     | ★★★☆☆                     | ★★★★☆              | ★★☆☆☆                               | ★☆☆☆☆                              |
+| **Component model**             | React (JSX)           | `.astro` (HTML+)      | Templates (Njk)        | Web Components          | Web Components (Lit) | Web Components (compiled) | Qwik (JSX + `$()`)        | React (JSX)        | Marko (`.marko`, HTML+)             | Web Components (Elena mixin)       |
+| **CSS scoping**                 | CSS Modules           | Built-in `<style>`    | Manual                 | Shadow DOM / `:host`    | Shadow DOM           | Shadow DOM or scoped      | Co-located / scoped       | CSS Modules        | Built-in `<style>` (class-prefixed) | Shadow DOM or light DOM            |
+| **Interactivity model**         | Client components     | Islands (opt-in)      | HTMX attributes        | Progressive enhancement | Reactive properties  | Lazy-loaded handlers      | Resumable (on-demand)     | `<Form>` + loaders | Partial hydration (per-node)        | Progressive enhancement            |
+| **Vendor lock-in**              | High (React + Vercel) | Medium (Astro syntax) | Low (standards + HTMX) | Lowest (web components) | Low (web standards)  | Low (compiles away)       | Medium (Qwik conventions) | High (React)       | Medium (Marko syntax)               | Low (web standards)                |
+| **Evergreen score**             | ★★☆☆☆                 | ★★★☆☆                 | ★★★★☆                  | ★★★★★                   | ★★★★★                | ★★★★☆                     | ★★★☆☆                     | ★★☆☆☆              | ★★★☆☆                               | ★★★★☆                              |
+| **Creative CSS ceiling**        | High                  | High                  | High                   | High                    | High                 | High                      | High                      | High               | High                                | High                               |
+| **Ecosystem / plugins**         | Massive               | Growing               | Mature                 | Small                   | Moderate             | Moderate (Ionic)          | Small                     | Large              | Small (eBay-driven)                 | Minimal (pre-release)              |
 
 ### Scoring by stated priority
 
-| Priority | Weight | Next.js | Astro | 11ty+HTMX | Enhance | Lit | Stencil | Qwik | Remix | Marko | Elena |
-|----------|--------|---------|-------|-----------|---------|-----|---------|------|-------|-------|-------|
-| Minimal dependencies | ●●●●● | 2 | 4 | 5 | 5 | 4 | 4 | 3 | 2 | 4 | 5 |
-| Netlify-compatible | ●●●●○ | 5 | 5 | 5 | 3 | 4 | 4 | 4 | 5 | 3 | 3 |
-| Fast (runtime) | ●●●●○ | 3 | 5 | 5 | 5 | 4 | 5 | 5 | 3 | 5 | 5 |
-| Agent-friendly | ●●●○○ | 5 | 4 | 3 | 2 | 3 | 3 | 3 | 4 | 2 | 1 |
-| Evergreen | ●●●●● | 2 | 3 | 4 | 5 | 5 | 4 | 3 | 2 | 3 | 4 |
-| Creative CSS | ●●●○○ | 4 | 5 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
-| **Weighted total** | | **79** | **102** | **106** | **100** | **98** | **97** | **87** | **76** | **85** | **92** |
+| Priority             | Weight | Next.js | Astro   | 11ty+HTMX | Enhance | Lit    | Stencil | Qwik   | Remix  | Marko  | Elena  |
+| -------------------- | ------ | ------- | ------- | --------- | ------- | ------ | ------- | ------ | ------ | ------ | ------ |
+| Minimal dependencies | ●●●●●  | 2       | 4       | 5         | 5       | 4      | 4       | 3      | 2      | 4      | 5      |
+| Netlify-compatible   | ●●●●○  | 5       | 5       | 5         | 3       | 4      | 4       | 4      | 5      | 3      | 3      |
+| Fast (runtime)       | ●●●●○  | 3       | 5       | 5         | 5       | 4      | 5       | 5      | 3      | 5      | 5      |
+| Agent-friendly       | ●●●○○  | 5       | 4       | 3         | 2       | 3      | 3       | 3      | 4      | 2      | 1      |
+| Evergreen            | ●●●●●  | 2       | 3       | 4         | 5       | 5      | 4       | 3      | 2      | 3      | 4      |
+| Creative CSS         | ●●●○○  | 4       | 5       | 4         | 4       | 4      | 4       | 4      | 4      | 4      | 4      |
+| **Weighted total**   |        | **79**  | **102** | **106**   | **100** | **98** | **97**  | **87** | **76** | **85** | **92** |
 
-*(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)*
+_(Weighted total = Σ(score × priority weight). Max possible = 120. Higher is better.)_
 
 ---
 
@@ -1189,18 +1222,18 @@ For 11ty, Vite is optional and adds complexity that may not be needed for a stat
 
 Storybook is used in this project for component development and visual testing. Here's how each framework integrates:
 
-| Framework | Storybook Support | Details |
-|-----------|------------------|---------|
-| **Next.js** | ★★★★★ Native | `@storybook/nextjs` — first-class. Already configured in this repo. |
-| **Astro** | ★★★☆☆ Partial | No support for `.astro` components ([open issue](https://github.com/storybookjs/storybook/issues/18356)). Storybook works for island components (React, Svelte, Lit) embedded in Astro pages. |
-| **11ty + HTMX** | ★★☆☆☆ Indirect | 11ty templates (Nunjucks) have no Storybook integration. Pair with Lit components via `@lit-labs/eleventy-plugin-lit` — then use `@storybook/web-components` for those. |
-| **Enhance** | ★☆☆☆☆ None | No Storybook integration. Enhance elements are pure functions returning HTML strings — could potentially use `@storybook/server` with a custom renderer, but nothing exists today. |
-| **Lit** | ★★★★★ Native | `@storybook/web-components` — first-class. Lit components are standard Custom Elements with full Storybook support. |
-| **Stencil** | ★★★★☆ Good | Official `@stencil/storybook-plugin`. Well-documented integration for previewing and testing compiled web components. |
-| **Qwik** | ★★☆☆☆ Experimental | No official integration. Qwik components can be wrapped as web components for basic Storybook usage, but `$()` boundaries and resumability don't translate to Storybook's rendering model. |
-| **Remix** | ★★★★☆ Good | Uses React components — works with `@storybook/react`. Route loaders/actions aren't testable in Storybook, but UI components are. Remix 3 (non-React) has no Storybook support yet. |
-| **Marko** | ★☆☆☆☆ None | No official Storybook adapter. Marko components are compiled `.marko` files with no Storybook renderer. Component isolation testing relies on `@marko/testing-library` (Node.js) rather than a browser-based tool. |
-| **Elena** | ★☆☆☆☆ None | No official Storybook adapter. Elena components are Custom Elements tested with Vitest + happy-dom. No browser component sandbox available. |
+| Framework       | Storybook Support  | Details                                                                                                                                                                                                            |
+| --------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Next.js**     | ★★★★★ Native       | `@storybook/nextjs` — first-class. Already configured in this repo.                                                                                                                                                |
+| **Astro**       | ★★★☆☆ Partial      | No support for `.astro` components ([open issue](https://github.com/storybookjs/storybook/issues/18356)). Storybook works for island components (React, Svelte, Lit) embedded in Astro pages.                      |
+| **11ty + HTMX** | ★★☆☆☆ Indirect     | 11ty templates (Nunjucks) have no Storybook integration. Pair with Lit components via `@lit-labs/eleventy-plugin-lit` — then use `@storybook/web-components` for those.                                            |
+| **Enhance**     | ★☆☆☆☆ None         | No Storybook integration. Enhance elements are pure functions returning HTML strings — could potentially use `@storybook/server` with a custom renderer, but nothing exists today.                                 |
+| **Lit**         | ★★★★★ Native       | `@storybook/web-components` — first-class. Lit components are standard Custom Elements with full Storybook support.                                                                                                |
+| **Stencil**     | ★★★★☆ Good         | Official `@stencil/storybook-plugin`. Well-documented integration for previewing and testing compiled web components.                                                                                              |
+| **Qwik**        | ★★☆☆☆ Experimental | No official integration. Qwik components can be wrapped as web components for basic Storybook usage, but `$()` boundaries and resumability don't translate to Storybook's rendering model.                         |
+| **Remix**       | ★★★★☆ Good         | Uses React components — works with `@storybook/react`. Route loaders/actions aren't testable in Storybook, but UI components are. Remix 3 (non-React) has no Storybook support yet.                                |
+| **Marko**       | ★☆☆☆☆ None         | No official Storybook adapter. Marko components are compiled `.marko` files with no Storybook renderer. Component isolation testing relies on `@marko/testing-library` (Node.js) rather than a browser-based tool. |
+| **Elena**       | ★☆☆☆☆ None         | No official Storybook adapter. Elena components are Custom Elements tested with Vitest + happy-dom. No browser component sandbox available.                                                                        |
 
 **Key takeaway:** If Storybook is a hard requirement for the component development workflow, **Lit** and **Next.js** have the best support. **Astro** works if interactive components are built with Lit or React islands (Storybook covers the islands, not the `.astro` templates). **11ty + HTMX** would need Lit components for anything that needs Storybook coverage. **Marko**, **Elena**, and **Enhance** have no Storybook integration — testing requires Node.js-based rendering tools instead.
 
@@ -1237,7 +1270,7 @@ Worth revisiting if the ecosystem matures, but not a frontrunner today.
 
 ### A hybrid note
 
-These options are not mutually exclusive with the Payload deployment. Payload runs its own Next.js app at `admin.ynotradio.net`. The public site can be a completely separate project using any of these frameworks, deployed as a separate Netlify site, fetching content from Payload's API. This is already the implied architecture.
+These options are not mutually exclusive with the Payload deployment. Payload runs its own Next.js app at `ynotradio-admin.netlify.app`. The public site can be a completely separate project using any of these frameworks, deployed as a separate Netlify site, fetching content from Payload's API. This is already the implied architecture.
 
 ---
 
