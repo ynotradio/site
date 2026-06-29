@@ -4,6 +4,7 @@ $page_file = "index.php";
 $page_title = "Control Panel";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../partials/_header.php");
 
 if (!$_SESSION["logged_in"]) {
@@ -19,26 +20,26 @@ if (!$_SESSION["logged_in"]) {
         <tr>
           <td width="275px">
             <dt>Ads</dt>
-              <dd>Edit in <a href="/admin/collections/ads">Payload &rarr; Ads</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('ads'); ?>">Payload &rarr; Ads</a></dd>
             <dt>CD of The Week</dt>
-              <dd>Edit in <a href="/admin/collections/cd-of-the-week">Payload &rarr; CD of The Week</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('cdoftheweek'); ?>">Payload &rarr; CD of The Week</a></dd>
             <dt>Concerts</dt>
-              <dd>Edit in <a href="/admin/collections/concerts">Payload &rarr; Concerts</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('concerts'); ?>">Payload &rarr; Concerts</a></dd>
             <dt>Custom Text Pages</dt>
-              <dd>Edit in <a href="/admin/collections/posts">Payload &rarr; Posts</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('posts'); ?>">Payload &rarr; Posts</a></dd>
             <dt>Deejays</dt>
-              <dd>Edit in <a href="/admin/collections/deejays">Payload &rarr; Deejays</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('djs'); ?>">Payload &rarr; Deejays</a></dd>
           </td>
           <td width="275px">
             <dt>New Music</dt>
-              <dd>Edit in <a href="/admin/collections/music">Payload &rarr; New Music</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('records'); ?>">Payload &rarr; Records</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('songs'); ?>">Payload &rarr; Songs</a></dd>
             <dt>On Demand</dt>
-              <dd>Edit in <a href="/admin/collections/on-demand">Payload &rarr; On Demand</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('ondemand'); ?>">Payload &rarr; On Demand</a></dd>
             <dt>Schedule</dt>
-              <dd><a href="schedule_add.php">Add to Schedule</a></dd>
-              <dd><a href="schedule_view_all.php">View Schedule</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('shows'); ?>">Payload &rarr; Schedule</a></dd>
             <dt>Stories</dt>
-              <dd>Edit in <a href="/admin/collections/posts">Payload &rarr; Stories</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('posts'); ?>">Payload &rarr; Stories</a></dd>
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>
