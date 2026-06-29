@@ -139,8 +139,14 @@ function parseInlineHTML(html: string): LexicalNode[] {
 
       if (tagName === 'a') {
         const href = element.getAttribute('href') || '';
-        const text = element.textContent || '';
         const target = element.getAttribute('target');
+
+        // Build the link's children by recursing into its contents so that
+        // formatting *inside* the anchor (e.g. <a><em>Album</em></a>) is
+        // preserved as text-node format bits, not flattened to plain text.
+        const before = nodes.length;
+        Array.from(element.childNodes).forEach((child) => processNode(child, format));
+        const linkChildren = nodes.splice(before);
 
         nodes.push({
           type: 'link',
@@ -152,10 +158,10 @@ function parseInlineHTML(html: string): LexicalNode[] {
             url: toAbsoluteUrl(href),
             newTab: target === '_blank' || target === '_new',
           },
-          children: [{
+          children: linkChildren.length > 0 ? linkChildren : [{
             type: 'text',
-            text,
-            format, // Inherit bold/italic from wrapping elements (e.g. <b><a>...</a></b>)
+            text: element.textContent || '',
+            format,
             mode: 'normal',
             style: '',
             detail: 0,

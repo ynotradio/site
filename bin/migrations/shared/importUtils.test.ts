@@ -134,6 +134,32 @@ describe('convertHtmlToLexical', () => {
     expect(fullText).toBe('Check out the latest episode of The Show!');
   });
 
+  it('should preserve the space between a link and following text', () => {
+    const html = '<p><a href="https://example.com/album">Album</a> by The Band.</p>';
+    const result = convertHtmlToLexical(html);
+    const last = result.root.children[0].children.at(-1);
+    expect(last.type).toBe('text');
+    expect(last.text).toBe(' by The Band.');
+  });
+
+  it('should preserve italic formatting nested inside a link', () => {
+    const html = '<p><a href="https://example.com/album"><em>Album Title</em></a></p>';
+    const result = convertHtmlToLexical(html);
+    const link = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(link).toBeDefined();
+    expect(link.children[0].text).toBe('Album Title');
+    expect(link.children[0].format).toBe(2); // italic
+  });
+
+  it('should keep the link when wrapped in an italic tag', () => {
+    const html = '<p><em><a href="https://example.com/album">Album Title</a></em></p>';
+    const result = convertHtmlToLexical(html);
+    const link = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(link).toBeDefined();
+    expect(link.fields.url).toBe('https://example.com/album');
+    expect(link.children[0].format).toBe(2); // italic inherited from <em>
+  });
+
   it('should handle complex HTML', () => {
     const html = '<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>';
     const result = convertHtmlToLexical(html);

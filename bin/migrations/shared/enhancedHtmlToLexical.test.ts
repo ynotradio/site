@@ -77,6 +77,26 @@ describe('enhancedHtmlToLexical', () => {
       expect(linkNode.children[0].format).toBe(2); // italic
     });
 
+    it('should preserve formatting nested inside a link', () => {
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><a href="https://example.com/album"><em>Album Title</em></a></p>',
+      );
+      const linkNode = result.root.children[0].children.find((n: any) => n.type === 'link');
+      expect(linkNode).toBeDefined();
+      expect(linkNode.children[0].text).toBe('Album Title');
+      expect(linkNode.children[0].format).toBe(2); // italic from <em> inside <a>
+    });
+
+    it('should preserve whitespace between a link and following text', () => {
+      const result = convertHtmlToLexicalEnhanced(
+        '<p><a href="https://example.com/album">Album</a> by The Band.</p>',
+      );
+      const { children } = result.root.children[0];
+      const trailing = children[children.length - 1];
+      expect(trailing.type).toBe('text');
+      expect(trailing.text).toBe(' by The Band.');
+    });
+
     it('should handle combined formatting', () => {
       const result = convertHtmlToLexicalEnhanced(
         '<p><strong><em>Bold and italic</em></strong></p>',
