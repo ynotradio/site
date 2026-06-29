@@ -58,6 +58,33 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('https://www.youtube.com/watch?v=dQw4w9WgXcQ', $html);
     }
 
+    public function testPreservesLeadingSpaceInTextFollowingLink(): void
+    {
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => ['url' => 'https://example.com/album'],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Alternative Rock'],
+                                ],
+                            ],
+                            ['type' => 'text', 'text' => ' by The Blackburns.'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        $this->assertStringContainsString('</a> by The Blackburns.', $html);
+    }
+
     public function testForceNewTabLinksOverridesLexicalNewTabFlag(): void
     {
         $lexicalJson = json_encode([
