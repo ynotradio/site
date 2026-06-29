@@ -10,7 +10,7 @@ Pipeline configurations for Y-Not Radio CI/CD.
 - **`pipeline-deploy-pr.yml`** - PR-to-production deploy: triggered via Buildkite REST API by `.github/workflows/deploy-pr-on-label.yml` when a PR is labeled `deploy-to-prod` (no CI gate, no branch filter — deploys exactly the PR head SHA)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
-- **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
+- **`nightly-gap-report.yml`** - No-op placeholder; nightly content imports and integrity checks are retired
 
 ## Required Environment Variables
 
@@ -34,13 +34,8 @@ CLOUDINARY_API_SECRET=<api-secret>
 # CodeCov (optional)
 CODECOV_TOKEN=<codecov-token>
 
-# Nightly gap report
-PROD_MYSQL_HOST=<production-mysql-hostname>
-PROD_MYSQL_USER=<production-mysql-username>
-PROD_MYSQL_PASSWORD=<production-mysql-password>
-PROD_MYSQL_DATABASE=<production-mysql-database>  # default: ynot_site
-GITHUB_PR_TOKEN=<fine-grained-pat-with-issues-write>  # also used by storybook deploy
-GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
+# GitHub API, used by Storybook deploy when enabled
+GITHUB_PR_TOKEN=<fine-grained-pat>
 
 # Legacy PHP deploy (pipeline-deploy-legacy.yml)
 DEPLOY_SSH_KEY=<ssh-private-key-for-production-server>
@@ -82,15 +77,9 @@ ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 4. Build Schedule: `0 2 * * 1` on `master`
 5. Add secret: `NEON_API_KEY`
 
-### Nightly Import & Gap Report
+### Nightly Content Sync
 
-1. New Pipeline: "Y-Not Radio - Nightly Sync"
-2. Configuration path: `.buildkite/nightly-gap-report.yml`
-3. Disable webhooks
-4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
-5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
-   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `NEON_API_KEY`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
-6. Create a GitHub issue to track migration progress (note the issue number)
+The old nightly import/gap/integrity workflow is retired. `.buildkite/nightly-gap-report.yml` now only resets the Neon development branch from production and requires `NEON_API_KEY`. It no longer needs MySQL or GitHub issue secrets.
 
 ### Legacy PHP Deploy Pipeline
 
