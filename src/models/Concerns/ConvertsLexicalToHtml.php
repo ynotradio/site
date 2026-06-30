@@ -11,6 +11,8 @@ namespace YNotRadio\Models\Concerns;
  */
 trait ConvertsLexicalToHtml
 {
+    use RendersLexicalEmbeds;
+
     // Lexical text format bit flags
     private static int $LEXICAL_FORMAT_BOLD = 1;
     private static int $LEXICAL_FORMAT_ITALIC = 2;
@@ -89,6 +91,11 @@ trait ConvertsLexicalToHtml
 
             case 'linebreak':
                 return "<br>\n";
+
+            case 'block':
+                // Payload block nodes (e.g. the EmbedFeature embed block).
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                return $this->renderLexicalEmbedBlock($fields);
 
             case 'text':
                 $text = $node['text'] ?? '';

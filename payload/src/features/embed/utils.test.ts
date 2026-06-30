@@ -10,6 +10,7 @@ import {
   extractVimeoId,
   extractSpotifyInfo,
   extractSoundCloudInfo,
+  extractMixcloudFeed,
   detectEmbedType,
 } from './utils';
 
@@ -233,5 +234,64 @@ describe('detectEmbedType', () => {
         originalUrl: url,
       });
     });
+  });
+
+  describe('Mixcloud detection', () => {
+    it('should convert a public show URL to the player widget', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('mixcloud');
+      expect(result.embedUrl).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+      );
+      expect(result.originalUrl).toBe(url);
+    });
+
+    it('should pass through an existing player-widget URL', () => {
+      const url =
+        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Fshow%2F';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'mixcloud', embedUrl: url, originalUrl: url });
+    });
+
+    it('should fall back to generic for a genre/hub URL', () => {
+      const url = 'https://www.mixcloud.com/genres/british%2Bynotradio/?order=latest';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('generic');
+    });
+  });
+
+  describe('OpenDrive detection', () => {
+    it('should pass through an OpenDrive player URL', () => {
+      const url = 'https://www.opendrive.com/player/216190430_XqukK';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'opendrive', embedUrl: url, originalUrl: url });
+    });
+  });
+});
+
+describe('extractMixcloudFeed', () => {
+  it('should extract the feed path from a public show URL', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/some-show/')).toBe(
+      '/ynotradio/some-show/',
+    );
+  });
+
+  it('should add a trailing slash when missing', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/some-show')).toBe(
+      '/ynotradio/some-show/',
+    );
+  });
+
+  it('should return null for genre/hub URLs', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/genres/punk%2Bynotradio/')).toBeNull();
+  });
+
+  it('should return null for a single-segment path', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/')).toBeNull();
+  });
+
+  it('should return null for an unparseable URL', () => {
+    expect(extractMixcloudFeed('not a url')).toBeNull();
   });
 });

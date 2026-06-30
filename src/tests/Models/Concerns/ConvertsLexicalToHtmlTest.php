@@ -117,4 +117,86 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('target="_blank"', $html);
         $this->assertStringContainsString('rel="noopener noreferrer"', $html);
     }
+
+    /**
+     * Build a Lexical document containing a single embed block.
+     */
+    private function embedBlockJson(string $url, ?string $caption = null): string
+    {
+        $fields = ['blockType' => 'embed', 'url' => $url];
+        if ($caption !== null) {
+            $fields['caption'] = $caption;
+        }
+
+        return json_encode([
+            'root' => [
+                'children' => [
+                    ['type' => 'block', 'fields' => $fields],
+                ],
+            ],
+        ]);
+    }
+
+    public function testEmbedBlockRendersYouTubeAsResponsiveVideo(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+        );
+
+        $this->assertStringContainsString('https://www.youtube.com/embed/dQw4w9WgXcQ', $html);
+        $this->assertStringContainsString('allowfullscreen', $html);
+        $this->assertStringContainsString('padding-bottom:56.25%', $html);
+    }
+
+    public function testEmbedBlockConvertsPublicMixcloudUrlToWidget(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/')
+        );
+
+        $this->assertStringContainsString('player-widget.mixcloud.com/widget/iframe/', $html);
+        // Feed path is rawurlencoded onto the widget src.
+        $this->assertStringContainsString(
+            'feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+            $html
+        );
+    }
+
+    public function testEmbedBlockPassesThroughMixcloudWidgetUrl(): void
+    {
+        $widget = 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Fshow%2F';
+        $html = $this->converter->convert($this->embedBlockJson($widget));
+
+        $this->assertStringContainsString('player-widget.mixcloud.com/widget/iframe/', $html);
+        $this->assertStringContainsString('%2Fynotradio%2Fshow%2F', $html);
+    }
+
+    public function testEmbedBlockRendersOpenDrivePlayer(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://www.opendrive.com/player/216190430_XqukK')
+        );
+
+        $this->assertStringContainsString('https://www.opendrive.com/player/216190430_XqukK', $html);
+        $this->assertStringContainsString('height="60"', $html);
+    }
+
+    public function testEmbedBlockRendersCaption(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://youtu.be/dQw4w9WgXcQ', 'Episode 1')
+        );
+
+        $this->assertStringContainsString('class="embed-caption"', $html);
+        $this->assertStringContainsString('Episode 1', $html);
+    }
+
+    public function testEmbedBlockRejectsUnsafeUrl(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('javascript:alert(1)')
+        );
+
+        $this->assertStringNotContainsString('<iframe', $html);
+    }
 }

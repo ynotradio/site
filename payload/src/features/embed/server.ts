@@ -9,6 +9,7 @@ export {
   extractVimeoId,
   extractSpotifyInfo,
   extractSoundCloudInfo,
+  extractMixcloudFeed,
 } from './utils';
 
 export const EmbedBlock: Block = {
@@ -21,7 +22,8 @@ export const EmbedBlock: Block = {
       required: true,
       label: 'Embed URL',
       admin: {
-        description: 'YouTube, Vimeo, Spotify, SoundCloud, or any iframe URL',
+        description:
+          'Paste a URL: YouTube, Vimeo, Mixcloud, OpenDrive, Spotify, SoundCloud, or any iframe URL',
       },
     },
     {

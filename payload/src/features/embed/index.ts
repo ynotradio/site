@@ -6,6 +6,7 @@ export {
   extractVimeoId,
   extractSpotifyInfo,
   extractSoundCloudInfo,
+  extractMixcloudFeed,
 } from './server';
 export type { EmbedType, EmbedInfo } from './server';
 export { EmbedComponent } from './client';
