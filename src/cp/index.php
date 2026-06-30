@@ -26,6 +26,8 @@ if (!$_SESSION["logged_in"]) {
             <dt>Concerts</dt>
               <dd>Edit in <a href="<?php echo get_payload_collection_url('concerts'); ?>">Payload &rarr; Concerts</a></dd>
             <dt>Custom Text Pages</dt>
+              <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
+              <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
               <dd>Edit in <a href="<?php echo get_payload_collection_url('posts'); ?>">Payload &rarr; Posts</a></dd>
             <dt>Deejays</dt>
               <dd>Edit in <a href="<?php echo get_payload_collection_url('djs'); ?>">Payload &rarr; Deejays</a></dd>
