@@ -593,6 +593,9 @@ export const Top11Contests: CollectionConfig = {
           admin: {
             width: '50%',
             description: 'When public voting opens.',
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
           },
         },
         {
@@ -601,6 +604,9 @@ export const Top11Contests: CollectionConfig = {
           admin: {
             width: '50%',
             description: 'When public voting closes.',
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
           },
         },
       ],

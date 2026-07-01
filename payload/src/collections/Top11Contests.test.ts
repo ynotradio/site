@@ -77,6 +77,22 @@ describe('Top11Contests', () => {
     });
   });
 
+  it('has votingOpensAt and votingClosesAt as date fields with dayAndTime picker', () => {
+    const allFields = flattenRowFields(Top11Contests.fields);
+    const votingOpensAt = allFields.find((field) => field.name === 'votingOpensAt') as {
+      type?: string;
+      admin?: { date?: { pickerAppearance?: string } };
+    };
+    const votingClosesAt = allFields.find((field) => field.name === 'votingClosesAt') as {
+      type?: string;
+      admin?: { date?: { pickerAppearance?: string } };
+    };
+    expect(votingOpensAt?.type).toBe('date');
+    expect(votingOpensAt?.admin?.date?.pickerAppearance).toBe('dayAndTime');
+    expect(votingClosesAt?.type).toBe('date');
+    expect(votingClosesAt?.admin?.date?.pickerAppearance).toBe('dayAndTime');
+  });
+
   it('derives the slug from weekOf instead of a title field', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     const slugField = allFields.find((field) => field.name === 'slug') as {
