@@ -424,8 +424,9 @@ export const Top11Contests: CollectionConfig = {
             user: req.user,
           });
 
-          const windowedPriorWinners = priorWinners.slice(0, lookbackContests);
-          const recentPriorWinners = lookbackContests > 0 ? windowedPriorWinners : priorWinners;
+          // 0 means no lookback limit: check the full all-time winner history.
+          const recentPriorWinners = lookbackContests > 0
+            ? priorWinners.slice(0, lookbackContests) : priorWinners;
 
           const priorWinnerEmails = new Set(
             recentPriorWinners.map((winner) => winner.contestantEmail).filter(Boolean),

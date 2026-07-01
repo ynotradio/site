@@ -88,7 +88,7 @@ export const useContestActions = (
         throw new Error(await parseErrorMessage(res, 'Could not clone this contest.'));
       }
       const body = await res.json();
-      return `Cloned as new draft contest #${body?.doc?.id ?? '?'}.`;
+      return `Cloned as new draft contest #${body?.id ?? '?'}.`;
     });
   }, [contestId, withSaving]);
 

@@ -56,7 +56,9 @@ describe('useContestActions', () => {
     let body: Record<string, unknown> | null = null;
     global.fetch = vi.fn().mockImplementation(async (_url: string, opts?: RequestInit) => {
       body = JSON.parse(opts?.body as string);
-      return { ok: true, json: async () => ({ doc: { id: 99 } }) };
+      // The /clone endpoint returns the created document directly
+      // (Response.json(clonedContest)), not wrapped in a { doc } envelope.
+      return { ok: true, json: async () => ({ id: 99 }) };
     });
     const onComplete = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() => useContestActions(1, onComplete));
