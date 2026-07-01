@@ -22,8 +22,10 @@ type ContestDoc = {
   id: number;
   title: string;
   status: string;
+  weekOf: string;
   settings?: {
     excludePriorWinners?: boolean;
+    priorWinnerLookbackContests?: number;
   };
   entries?: ContestEntry[];
   messageSnapshot?: unknown;
@@ -53,6 +55,7 @@ type WriteInDoc = {
 
 type WinnerDrawDoc = {
   contestantEmail?: string | null;
+  createdAt: string;
 };
 
 type CollectionEndpointHandler = NonNullable<CollectionConfig['endpoints']>[number]['handler'];
@@ -158,11 +161,12 @@ export const Top11Contests: CollectionConfig = {
           return data;
         }
 
-        const originalStatus = typeof originalDoc.status === 'string' ? originalDoc.status : 'draft';
-        const nextStatus = getTop11ContestStatusFromData(data as Record<string, unknown>)
-          ?? originalStatus;
+        const rawOriginalStatus = originalDoc.status;
+        const originalStatus = typeof rawOriginalStatus === 'string' ? rawOriginalStatus : 'draft';
+        const dataAsRecord = data as Record<string, unknown>;
+        const nextStatus = getTop11ContestStatusFromData(dataAsRecord) ?? originalStatus;
 
-        assertPublishedContestImmutability(originalStatus, data as Record<string, unknown>);
+        assertPublishedContestImmutability(originalStatus, dataAsRecord);
         validateTop11StatusTransition(originalStatus, nextStatus);
 
         return data;
@@ -252,12 +256,16 @@ export const Top11Contests: CollectionConfig = {
             collection: 'top11-votes',
             where: { contest: { equals: contestId } },
             sort: 'createdAt',
+            req,
+            user: req.user,
           }),
           findAllDocs<WriteInDoc>({
             payload: req.payload,
             collection: 'top11-write-ins',
             where: { contest: { equals: contestId } },
             sort: 'createdAt',
+            req,
+            user: req.user,
           }),
           findAllDocs<ContestantDoc>({
             payload: req.payload,
@@ -269,6 +277,8 @@ export const Top11Contests: CollectionConfig = {
                 { enteredContest: { equals: true } },
               ],
             },
+            req,
+            user: req.user,
           }),
         ]);
 
@@ -278,10 +288,7 @@ export const Top11Contests: CollectionConfig = {
         votes.forEach((vote) => {
           voteCounts.set(vote.song, (voteCounts.get(vote.song) ?? 0) + 1);
 
-          const voterKey = vote.voterAuth0Id
-            || vote.voterUserId
-            || vote.voterEmail
-            || `vote-${vote.id}`;
+          const voterKey = vote.voterAuth0Id || vote.voterUserId || vote.voterEmail || `vote-${vote.id}`;
           voterKeys.add(voterKey);
         });
 
@@ -293,8 +300,9 @@ export const Top11Contests: CollectionConfig = {
           }))
           .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
 
-        const newsletterOnlyCount = contestants
-          .filter((contestant) => contestant.newsletterOptIn).length;
+        const newsletterOnlyCount = contestants.filter(
+          (contestant) => contestant.newsletterOptIn,
+        ).length;
 
         return Response.json({
           contestId,
@@ -336,25 +344,35 @@ export const Top11Contests: CollectionConfig = {
               { enteredContest: { equals: true } },
             ],
           },
+          req,
+          user: req.user,
         });
 
         if (contestants.length === 0) {
           throw new APIError('No eligible contestants found for this contest', 400);
         }
 
-        const shouldExcludePriorWinners = body.excludePriorWinners
-          ?? contest.settings?.excludePriorWinners
-          ?? true;
+        const settingsExcludePriorWinners = contest.settings?.excludePriorWinners ?? true;
+        const shouldExcludePriorWinners = body.excludePriorWinners ?? settingsExcludePriorWinners;
 
         let eligibleContestants = contestants;
 
         if (shouldExcludePriorWinners) {
+          const lookbackContests = contest.settings?.priorWinnerLookbackContests ?? 8;
+
           const priorWinners = await findAllDocs<WinnerDrawDoc>({
             payload: req.payload,
             collection: 'top11-winner-draws',
+            sort: '-createdAt',
+            req,
+            user: req.user,
           });
+
+          const windowedPriorWinners = priorWinners.slice(0, lookbackContests);
+          const recentPriorWinners = lookbackContests > 0 ? windowedPriorWinners : priorWinners;
+
           const priorWinnerEmails = new Set(
-            priorWinners.map((winner) => winner.contestantEmail).filter(Boolean),
+            recentPriorWinners.map((winner) => winner.contestantEmail).filter(Boolean),
           );
 
           eligibleContestants = contestants.filter(
@@ -362,10 +380,7 @@ export const Top11Contests: CollectionConfig = {
           );
 
           if (eligibleContestants.length === 0) {
-            throw new APIError(
-              'No eligible contestants remain after excluding prior winners',
-              400,
-            );
+            throw new APIError('No eligible contestants remain after excluding prior winners', 400);
           }
         }
 
@@ -379,9 +394,8 @@ export const Top11Contests: CollectionConfig = {
             contest: contestId,
             contestant: winner.id,
             contestantEmail: winner.email,
-            drawnBy: req.user && typeof req.user === 'object'
-              ? (req.user as { id?: unknown }).id
-              : null,
+            drawnBy:
+              req.user && typeof req.user === 'object' ? (req.user as { id?: unknown }).id : null,
             excludePriorWinners: shouldExcludePriorWinners,
           },
           req,
@@ -561,7 +575,8 @@ export const Top11Contests: CollectionConfig = {
         },
       ],
       admin: {
-        description: 'Top 11 songs for the week. Songs must come from the canonical Songs collection.',
+        description:
+          'Top 11 songs for the week. Songs must come from the canonical Songs collection.',
       },
     },
     {
@@ -573,7 +588,18 @@ export const Top11Contests: CollectionConfig = {
           type: 'checkbox',
           defaultValue: true,
           admin: {
-            description: 'Default winner draw behavior to exclude all historical prior winners.',
+            description: 'Default winner draw behavior to exclude recent prior winners.',
+          },
+        },
+        {
+          name: 'priorWinnerLookbackContests',
+          type: 'number',
+          defaultValue: 8,
+          min: 0,
+          admin: {
+            description:
+              'How many of the most recent past contests to check for prior winners to exclude. 0 excludes winners from all contests ever.',
+            condition: (_data, siblingData) => Boolean(siblingData?.excludePriorWinners),
           },
         },
       ],

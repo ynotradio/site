@@ -1,8 +1,5 @@
 import {
-  APIError,
-  type Payload,
-  type PayloadRequest,
-  type Where,
+  APIError, type Payload, type PayloadRequest, type Where,
 } from 'payload';
 import { hasRole } from '../../utils/auth';
 
@@ -34,10 +31,7 @@ export const getTop11ContestStatusFromData = (
   return typeof status === 'string' ? status : undefined;
 };
 
-export const validateTop11StatusTransition = (
-  currentStatus: string,
-  nextStatus: string,
-): void => {
+export const validateTop11StatusTransition = (currentStatus: string, nextStatus: string): void => {
   const allowedTransitions: Record<string, string[]> = {
     draft: ['draft', 'open', 'archived'],
     open: ['open', 'closed', 'archived'],
@@ -98,14 +92,11 @@ export const findAllDocs = async <TDoc>(args: {
   depth?: number;
   sort?: string;
   select?: Record<string, true>;
+  req?: PayloadRequest;
+  user?: PayloadRequest['user'];
 }): Promise<TDoc[]> => {
   const {
-    payload,
-    collection,
-    where,
-    depth = 0,
-    sort,
-    select,
+    payload, collection, where, depth = 0, sort, select, req, user,
   } = args;
   const result = await payload.find({
     collection,
@@ -113,6 +104,8 @@ export const findAllDocs = async <TDoc>(args: {
     depth,
     sort,
     select,
+    req,
+    user,
     limit: 10000,
     pagination: false,
     overrideAccess: false,
