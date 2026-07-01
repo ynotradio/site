@@ -1,4 +1,5 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
+import { sql } from '@payloadcms/db-postgres';
+import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
 
 /**
  * Add the payload-query-presets system collection introduced in Payload 3.76.
