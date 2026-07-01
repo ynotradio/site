@@ -70,6 +70,16 @@ type WinnerDrawDoc = {
 type CollectionEndpointHandler = NonNullable<CollectionConfig['endpoints']>[number]['handler'];
 type EndpointRequest = Parameters<CollectionEndpointHandler>[0];
 
+const formatWeekOfTitle = (weekOf: string): string => {
+  const date = new Date(weekOf);
+  if (Number.isNaN(date.getTime())) {
+    return weekOf;
+  }
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
+  });
+};
+
 const setContestStatus = async (req: EndpointRequest, status: string): Promise<Response> => {
   requireTop11Manager(req);
   const contestId = parseTop11Id(req.routeParams?.id, 'contest id');
@@ -141,7 +151,7 @@ export const Top11Contests: CollectionConfig = {
     plural: 'Contests',
   },
   admin: {
-    useAsTitle: 'weekOf',
+    useAsTitle: 'displayTitle',
     defaultColumns: ['weekOf', 'status', 'votingOpensAt', 'votingClosesAt', 'updatedAt'],
     group: 'Top 11',
     description: 'Immutable weekly Top 11 contests and published results snapshots.',
@@ -199,6 +209,18 @@ export const Top11Contests: CollectionConfig = {
             displayOrder: index + 1,
           })),
         };
+      },
+      ({ data, originalDoc }) => {
+        if (!data) {
+          return data;
+        }
+
+        const rawWeekOf = 'weekOf' in data ? data.weekOf : originalDoc?.weekOf;
+        if (typeof rawWeekOf !== 'string') {
+          return data;
+        }
+
+        return { ...data, displayTitle: formatWeekOfTitle(rawWeekOf) };
       },
     ],
   },
@@ -502,6 +524,20 @@ export const Top11Contests: CollectionConfig = {
     },
   ],
   fields: [
+    {
+      // Derived from weekOf via a beforeChange hook and used as the admin
+      // document title instead of the raw date field, since Payload's
+      // document header renders useAsTitle's stored value as-is (it does
+      // not apply the field's admin.date.displayFormat to the header).
+      // Not `hidden: true` -- useAsTitle needs the value to actually reach
+      // the client, so this is admin-hidden-from-the-form only, via a
+      // dedicated field.
+      name: 'displayTitle',
+      type: 'text',
+      admin: {
+        hidden: true,
+      },
+    },
     {
       type: 'row',
       fields: [

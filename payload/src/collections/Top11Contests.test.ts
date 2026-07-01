@@ -37,10 +37,44 @@ describe('Top11Contests', () => {
     expect(entriesField.maxRows).toBe(11);
   });
 
-  it('does not have a title field; weekOf is used as the admin title', () => {
+  it('does not have a title field; a derived displayTitle is used as the admin title', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     expect(allFields.some((field) => field.name === 'title')).toBe(false);
-    expect(Top11Contests.admin?.useAsTitle).toBe('weekOf');
+    expect(allFields.some((field) => field.name === 'displayTitle')).toBe(true);
+    expect(Top11Contests.admin?.useAsTitle).toBe('displayTitle');
+  });
+
+  it('hides displayTitle from the admin form but keeps it readable via the API', () => {
+    const displayTitleField = Top11Contests.fields.find(
+      (field) => field.name === 'displayTitle',
+    ) as { hidden?: boolean; admin?: { hidden?: boolean } };
+    expect(displayTitleField?.hidden).toBeUndefined();
+    expect(displayTitleField?.admin?.hidden).toBe(true);
+  });
+
+  describe('displayTitle derivation hook', () => {
+    const displayTitleHook = Top11Contests.hooks?.beforeChange?.[2];
+
+    it('derives a human-readable title from weekOf on create', () => {
+      const data = { weekOf: '2026-06-25T00:00:00.000Z' };
+      const result = displayTitleHook?.({ data } as never) as { displayTitle?: string };
+      expect(result.displayTitle).toBe('Thu, Jun 25, 2026');
+    });
+
+    it('falls back to the original doc weekOf when weekOf is not part of the update', () => {
+      const data = { status: 'open' };
+      const originalDoc = { weekOf: '2026-06-25T00:00:00.000Z' };
+      const result = displayTitleHook?.({ data, originalDoc } as never) as {
+        displayTitle?: string;
+      };
+      expect(result.displayTitle).toBe('Thu, Jun 25, 2026');
+    });
+
+    it('leaves data untouched when there is no usable weekOf', () => {
+      const data = { status: 'open' };
+      const result = displayTitleHook?.({ data } as never);
+      expect(result).toBe(data);
+    });
   });
 
   it('derives the slug from weekOf instead of a title field', () => {
