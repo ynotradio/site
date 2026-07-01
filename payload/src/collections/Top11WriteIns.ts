@@ -12,7 +12,7 @@ export const Top11WriteIns: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['contest', 'writeIn', 'voterEmail', 'display', 'createdAt'],
-    group: 'Polls & Contests',
+    group: 'Top 11',
     description: 'Write-in submissions for Top 11 contests.',
     groupBy: true,
   },

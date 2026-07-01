@@ -52,6 +52,12 @@ const PRIMARY_COLLECTIONS = [
     description: 'Manage DJ profiles. Toggle "On Air" to show or hide them on the website.',
     tool: { href: '/admin/dj-order', label: 'Sort Order' },
   },
+  {
+    slug: 'top11-contests',
+    label: 'Top 11',
+    icon: '🎶',
+    description: 'Run the weekly Top 11 contest: open voting, pick a winner, publish results.',
+  },
 ] as const;
 
 const SECONDARY_COLLECTIONS = [

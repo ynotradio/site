@@ -13,12 +13,12 @@ export const Top11Votes: CollectionConfig = {
   enableRichTextRelationship: false,
   enableQueryPresets: true,
   labels: {
-    singular: 'Top 11 Vote',
-    plural: 'Top 11 Votes',
+    singular: 'Vote',
+    plural: 'Votes',
   },
   admin: {
     defaultColumns: ['contest', 'song', 'voterEmail', 'voteSource', 'createdAt'],
-    group: 'Polls & Contests',
+    group: 'Top 11',
     description: 'Top 11 votes tied to a specific weekly contest.',
     groupBy: true,
   },
@@ -58,7 +58,10 @@ export const Top11Votes: CollectionConfig = {
 
         const voterIdentifier = voterAuth0Id || voterUserId || voterEmail;
         if (!voterIdentifier) {
-          throw new APIError('A voter identifier is required (voterAuth0Id, voterUserId, or voterEmail)', 400);
+          throw new APIError(
+            'A voter identifier is required (voterAuth0Id, voterUserId, or voterEmail)',
+            400,
+          );
         }
 
         let identityWhere: Record<string, unknown>;
@@ -157,7 +160,8 @@ export const Top11Votes: CollectionConfig = {
         { label: 'Admin Import', value: 'admin-import' },
       ],
       admin: {
-        description: 'Manual CP voting is deprecated; use authenticated web or import sources only.',
+        description:
+          'Manual CP voting is deprecated; use authenticated web or import sources only.',
       },
     },
   ],

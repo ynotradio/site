@@ -6,7 +6,7 @@ import { flattenRowFields } from './testUtils';
 describe('Top11Contestants', () => {
   it('has expected slug and group', () => {
     expect(Top11Contestants.slug).toBe('top11-contestants');
-    expect(Top11Contestants.admin?.group).toBe('Polls & Contests');
+    expect(Top11Contestants.admin?.group).toBe('Top 11');
   });
 
   it('contains contestant identity fields', () => {

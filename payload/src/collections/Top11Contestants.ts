@@ -37,7 +37,7 @@ export const Top11Contestants: CollectionConfig = {
       'newsletterOptIn',
       'createdAt',
     ],
-    group: 'Polls & Contests',
+    group: 'Top 11',
     description:
       'Top 11 contestants and newsletter signups. CSV export available via custom endpoint.',
     groupBy: true,

@@ -12,7 +12,7 @@ export const Top11WinnerDraws: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['contest', 'contestantEmail', 'excludePriorWinners', 'drawnBy', 'createdAt'],
-    group: 'Polls & Contests',
+    group: 'Top 11',
     description: 'Auditable winner selection log for Top 11 contests.',
     groupBy: true,
   },

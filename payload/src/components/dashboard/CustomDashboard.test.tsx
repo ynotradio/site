@@ -103,7 +103,7 @@ describe('CustomDashboard', () => {
   });
 
   describe('primary collections', () => {
-    it('renders all 7 primary collection cards', () => {
+    it('renders all 8 primary collection cards', () => {
       render(<CustomDashboard />);
 
       expect(screen.getByText('Posts')).toBeInTheDocument();
@@ -113,6 +113,7 @@ describe('CustomDashboard', () => {
       expect(screen.getByText('On Demand')).toBeInTheDocument();
       expect(screen.getByText('Shows')).toBeInTheDocument();
       expect(screen.getByText('DJs')).toBeInTheDocument();
+      expect(screen.getByText('Top 11')).toBeInTheDocument();
     });
 
     it('renders primary collection descriptions', () => {
@@ -149,6 +150,11 @@ describe('CustomDashboard', () => {
           'Manage DJ profiles. Toggle "On Air" to show or hide them on the website.',
         ),
       ).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'Run the weekly Top 11 contest: open voting, pick a winner, publish results.',
+        ),
+      ).toBeInTheDocument();
     });
 
     it('renders primary collection icons', () => {
@@ -161,12 +167,13 @@ describe('CustomDashboard', () => {
       expect(screen.getByText('🎧')).toBeInTheDocument();
       expect(screen.getByText('📻')).toBeInTheDocument();
       expect(screen.getByText('🎙️')).toBeInTheDocument();
+      expect(screen.getByText('🎶')).toBeInTheDocument();
     });
 
     it('applies correct CSS classes to primary cards', () => {
       const { container } = render(<CustomDashboard />);
       const primaryCards = container.querySelectorAll('.primary-card');
-      expect(primaryCards).toHaveLength(7);
+      expect(primaryCards).toHaveLength(8);
     });
   });
 
@@ -174,8 +181,8 @@ describe('CustomDashboard', () => {
     it('renders View All and Add New links for each primary collection', () => {
       render(<CustomDashboard />);
 
-      expect(screen.getAllByText('View All')).toHaveLength(7);
-      expect(screen.getAllByText('+ Add New')).toHaveLength(7);
+      expect(screen.getAllByText('View All')).toHaveLength(8);
+      expect(screen.getAllByText('+ Add New')).toHaveLength(8);
     });
 
     it('generates correct View All href for each collection', () => {
@@ -190,6 +197,7 @@ describe('CustomDashboard', () => {
         'ondemand',
         'shows',
         'djs',
+        'top11-contests',
       ];
 
       viewAllLinks.forEach((link, i) => {
@@ -209,6 +217,7 @@ describe('CustomDashboard', () => {
         'ondemand',
         'shows',
         'djs',
+        'top11-contests',
       ];
 
       addNewLinks.forEach((link, i) => {
