@@ -35,6 +35,10 @@ const STATS = {
   contestants: 12,
   newsletterOptInContestants: 5,
   writeInCount: 3,
+  rankedWriteIns: [
+    { text: 'Free Bird', count: 2, hiddenCount: 0 },
+    { text: 'Stairway to Heaven', count: 1, hiddenCount: 1 },
+  ],
   rankedSongs: [
     { song: 1, displayOrder: 1, votes: 30 },
     { song: 2, displayOrder: 2, votes: 12 },
@@ -123,6 +127,47 @@ describe('Top11ContestControlsTab', () => {
     render(<Top11ContestControlsTab />);
     await waitFor(() => {
       expect(screen.getByText('No further transitions available.')).toBeInTheDocument();
+    });
+  });
+
+  it('renders write-in text grouped with counts, sorted by popularity', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 1 },
+    } as ReturnType<typeof useDocumentInfo>);
+    mockFetchSequence(CONTEST);
+    render(<Top11ContestControlsTab />);
+    await waitFor(() => {
+      expect(screen.getByText('Free Bird')).toBeInTheDocument();
+      expect(screen.getByText('Stairway to Heaven')).toBeInTheDocument();
+    });
+  });
+
+  it('shows the hidden count for moderated write-ins', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 1 },
+    } as ReturnType<typeof useDocumentInfo>);
+    mockFetchSequence(CONTEST);
+    render(<Top11ContestControlsTab />);
+    const row = await screen.findByText('Stairway to Heaven');
+    await waitFor(() => {
+      expect(row.closest('tr')).toHaveTextContent('1');
+    });
+  });
+
+  it('shows empty state when there are no write-ins', async () => {
+    vi.mocked(useDocumentInfo).mockReturnValue({
+      data: { id: 1 },
+    } as ReturnType<typeof useDocumentInfo>);
+    mockFetchSequence(CONTEST);
+    global.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (String(url).endsWith('/stats')) {
+        return { ok: true, json: async () => ({ ...STATS, rankedWriteIns: [] }) };
+      }
+      return { ok: true, json: async () => CONTEST };
+    });
+    render(<Top11ContestControlsTab />);
+    await waitFor(() => {
+      expect(screen.getByText('No write-ins submitted yet.')).toBeInTheDocument();
     });
   });
 

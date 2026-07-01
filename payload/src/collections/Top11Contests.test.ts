@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { Top11Contests } from './Top11Contests';
 import { flattenRowFields } from './testUtils';
 
@@ -48,5 +48,56 @@ describe('Top11Contests', () => {
     expect(paths).toContain('/clone');
     expect(paths).toContain('/:id/stats');
     expect(paths).toContain('/:id/pick-winner');
+  });
+
+  describe('/:id/stats write-in grouping', () => {
+    const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
+
+    const makeRequest = (writeInDocs: Array<{ id: number; writeIn: string; display: boolean }>) => {
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'top11-write-ins') {
+          return { docs: writeInDocs };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'closed',
+        entries: [],
+      });
+      return {
+        req: {
+          user: { role: 'admin' },
+          routeParams: { id: '1' },
+          payload: { find, findByID },
+        },
+      };
+    };
+
+    it('groups write-ins by normalized text and counts them', async () => {
+      const { req } = makeRequest([
+        { id: 1, writeIn: 'Free Bird', display: true },
+        { id: 2, writeIn: ' free bird ', display: true },
+        { id: 3, writeIn: 'Stairway to Heaven', display: false },
+      ]);
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedWriteIns).toEqual([
+        { text: 'Free Bird', count: 2, hiddenCount: 0 },
+        { text: 'Stairway to Heaven', count: 1, hiddenCount: 1 },
+      ]);
+      expect(body.writeInCount).toBe(3);
+    });
+
+    it('returns an empty array when there are no write-ins', async () => {
+      const { req } = makeRequest([]);
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedWriteIns).toEqual([]);
+    });
   });
 });

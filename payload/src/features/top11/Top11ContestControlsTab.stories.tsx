@@ -17,6 +17,10 @@ const baseStats = (overrides: object) => ({
   contestants: 12,
   newsletterOptInContestants: 5,
   writeInCount: 3,
+  rankedWriteIns: [
+    { text: 'Free Bird', count: 2, hiddenCount: 0 },
+    { text: 'Stairway to Heaven', count: 1, hiddenCount: 1 },
+  ],
   rankedSongs: [
     { song: 1, displayOrder: 1, votes: 30 },
     { song: 2, displayOrder: 2, votes: 12 },

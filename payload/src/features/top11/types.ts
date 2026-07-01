@@ -17,6 +17,12 @@ export interface Top11RankedSong {
   votes: number;
 }
 
+export interface Top11RankedWriteIn {
+  text: string;
+  count: number;
+  hiddenCount: number;
+}
+
 export interface Top11ContestStats {
   contestId: number;
   status: Top11ContestStatus;
@@ -25,6 +31,7 @@ export interface Top11ContestStats {
   contestants: number;
   newsletterOptInContestants: number;
   writeInCount: number;
+  rankedWriteIns: Top11RankedWriteIn[];
   rankedSongs: Top11RankedSong[];
 }
 

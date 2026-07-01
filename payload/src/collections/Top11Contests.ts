@@ -52,6 +52,7 @@ type ContestantDoc = {
 type WriteInDoc = {
   id: number;
   writeIn: string;
+  display: boolean;
 };
 
 type WinnerDrawDoc = {
@@ -338,6 +339,26 @@ export const Top11Contests: CollectionConfig = {
           (contestant) => contestant.newsletterOptIn,
         ).length;
 
+        // Group write-ins by normalized text (trimmed, case-insensitive) so
+        // repeat submissions of the same song tally together instead of
+        // appearing as separate rows.
+        type WriteInGroup = { text: string; count: number; hiddenCount: number };
+        const writeInGroups = new Map<string, WriteInGroup>();
+        writeIns.forEach((writeIn) => {
+          const trimmed = writeIn.writeIn.trim();
+          const key = trimmed.toLowerCase();
+          const group = writeInGroups.get(key) ?? { text: trimmed, count: 0, hiddenCount: 0 };
+          group.count += 1;
+          if (!writeIn.display) {
+            group.hiddenCount += 1;
+          }
+          writeInGroups.set(key, group);
+        });
+
+        const rankedWriteIns = Array.from(writeInGroups.values()).sort(
+          (a, b) => b.count - a.count || a.text.localeCompare(b.text),
+        );
+
         return Response.json({
           contestId,
           status: contest.status,
@@ -346,6 +367,7 @@ export const Top11Contests: CollectionConfig = {
           contestants: contestants.length,
           newsletterOptInContestants: newsletterOnlyCount,
           writeInCount: writeIns.length,
+          rankedWriteIns,
           rankedSongs,
         });
       },

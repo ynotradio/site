@@ -129,6 +129,32 @@ const ContestControlsPanel: React.FC<ContestControlsPanelProps> = ({
       </div>
 
       <div className="top11-controls-tab__card">
+        <h4 className="top11-controls-tab__section-title">Write-Ins</h4>
+        {stats && stats.rankedWriteIns.length > 0 ? (
+          <table className="top11-controls-tab__ranking">
+            <thead>
+              <tr>
+                <th>Song</th>
+                <th>Count</th>
+                <th>Hidden</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.rankedWriteIns.map((row) => (
+                <tr key={row.text}>
+                  <td>{row.text}</td>
+                  <td>{row.count}</td>
+                  <td>{row.hiddenCount > 0 ? row.hiddenCount : ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="No write-ins submitted yet." />
+        )}
+      </div>
+
+      <div className="top11-controls-tab__card">
         <h4 className="top11-controls-tab__section-title">Winner Draw</h4>
         <button
           type="button"
