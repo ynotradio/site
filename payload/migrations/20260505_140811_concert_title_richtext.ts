@@ -1,6 +1,7 @@
-import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
-import { htmlTitleToLexical } from '../../bin/migrations/shared/htmlTitleToLexical';
-import { convertConcertTitleToPlain } from '../src/utils/concertTitle';
+import { sql } from '@payloadcms/db-postgres';
+import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
+import { htmlTitleToLexical } from '../../bin/migrations/shared/htmlTitleToLexical.ts';
+import { convertConcertTitleToPlain } from '../src/utils/concertTitle.ts';
 
 /**
  * Convert concerts.title from plain varchar (which historically held raw HTML
