@@ -13,6 +13,7 @@ import {
 import { hasRole } from '../utils/auth';
 
 type ContestEntry = {
+  id?: string;
   displayOrder: number;
   song: number;
   weeklyNote?: unknown;
@@ -147,6 +148,21 @@ export const Top11Contests: CollectionConfig = {
     group: 'Polls & Contests',
     description: 'Immutable weekly Top 11 contests and published results snapshots.',
     groupBy: true,
+    components: {
+      views: {
+        edit: {
+          controls: {
+            Component:
+              '/payload/src/features/top11/Top11ContestControlsTab#Top11ContestControlsTab',
+            path: '/controls',
+            tab: {
+              label: 'Contest Controls',
+              href: '/controls',
+            },
+          },
+        },
+      },
+    },
   },
   access: {
     read: ({ req }) => Boolean(req.user),
@@ -216,14 +232,32 @@ export const Top11Contests: CollectionConfig = {
           overrideAccess: false,
         })) as ContestDoc;
 
+        const clonedTitle = body.title?.trim() || `${sourceContest.title} (Clone)`;
+        const clonedSlugBase = clonedTitle
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+
+        // Strip each entry row's own sub-document id so Payload generates
+        // fresh ones on create, instead of trying to reuse ids that already
+        // belong to rows on the source contest.
+        const clonedEntries = (sourceContest.entries ?? []).map(
+          ({ id: _entryId, ...entry }) => entry,
+        );
+
         const clonedContest = await req.payload.create({
           collection: 'top11-contests',
           data: {
-            title: body.title?.trim() || `${sourceContest.title} (Clone)`,
+            title: clonedTitle,
+            // Explicit slug so repeated clones of the same source (which
+            // produce the same default title) never collide on the
+            // slugField's auto-generated slug.
+            generateSlug: false,
+            slug: `${clonedSlugBase}-${Date.now()}`,
             weekOf: body.weekOf || new Date().toISOString(),
             status: 'draft',
             messageSnapshot: sourceContest.messageSnapshot,
-            entries: sourceContest.entries,
+            entries: clonedEntries,
             settings: sourceContest.settings,
           },
           req,
