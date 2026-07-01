@@ -12,6 +12,8 @@ export interface Top11Contest {
 
 export interface Top11RankedSong {
   song: number;
+  songTitle: string | null;
+  songArtist: string | null;
   displayOrder: number;
   votes: number;
 }

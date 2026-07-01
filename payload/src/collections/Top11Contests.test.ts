@@ -178,7 +178,18 @@ describe('Top11Contests', () => {
     const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
 
     it('derives displayOrder from entries array position, not the hidden field', async () => {
-      const find = vi.fn().mockResolvedValue({ docs: [] });
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return {
+            docs: [
+              { id: 7, title: 'Song Seven', artist: { name: 'Artist A' } },
+              { id: 3, title: 'Song Three', artist: { name: 'Artist B' } },
+              { id: 9, title: 'Song Nine', artist: { name: 'Artist C' } },
+            ],
+          };
+        }
+        return { docs: [] };
+      });
       // displayOrder is a hidden field, so a real read never includes it —
       // this mock matches that runtime shape.
       const findByID = vi.fn().mockResolvedValue({
@@ -196,9 +207,38 @@ describe('Top11Contests', () => {
       const body = await (response as Response).json();
 
       expect(body.rankedSongs).toEqual([
-        { song: 7, displayOrder: 1, votes: 0 },
-        { song: 3, displayOrder: 2, votes: 0 },
-        { song: 9, displayOrder: 3, votes: 0 },
+        {
+          song: 7, songTitle: 'Song Seven', songArtist: 'Artist A', displayOrder: 1, votes: 0,
+        },
+        {
+          song: 3, songTitle: 'Song Three', songArtist: 'Artist B', displayOrder: 2, votes: 0,
+        },
+        {
+          song: 9, songTitle: 'Song Nine', songArtist: 'Artist C', displayOrder: 3, votes: 0,
+        },
+      ]);
+    });
+
+    it('falls back gracefully when a song cannot be found', async () => {
+      const find = vi.fn().mockResolvedValue({ docs: [] });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'closed',
+        entries: [{ song: 42 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs).toEqual([
+        {
+          song: 42, songTitle: null, songArtist: null, displayOrder: 1, votes: 0,
+        },
       ]);
     });
   });

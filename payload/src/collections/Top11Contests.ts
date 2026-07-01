@@ -41,6 +41,12 @@ type VoteDoc = {
   voterEmail?: string | null;
 };
 
+type SongDoc = {
+  id: number;
+  title: string;
+  artist?: { name?: string } | number | null;
+};
+
 type ContestantDoc = {
   id: number;
   firstName: string;
@@ -328,15 +334,36 @@ export const Top11Contests: CollectionConfig = {
           voterKeys.add(voterKey);
         });
 
+        const songIds = (contest.entries ?? []).map((entry) => entry.song);
+        const songs = songIds.length > 0
+          ? await findAllDocs<SongDoc>({
+            payload: req.payload,
+            collection: 'songs',
+            where: { id: { in: songIds } },
+            depth: 1,
+            req,
+            user: req.user,
+          })
+          : [];
+        const songsById = new Map(songs.map((song) => [song.id, song]));
+
         // displayOrder is a hidden field (excluded from reads), so use the
         // entries array's own position as the display order instead of
         // relying on the stored value.
         const rankedSongs = (contest.entries ?? [])
-          .map((entry, index) => ({
-            song: entry.song,
-            displayOrder: index + 1,
-            votes: voteCounts.get(entry.song) ?? 0,
-          }))
+          .map((entry, index) => {
+            const song = songsById.get(entry.song);
+            const artistName = song?.artist && typeof song.artist === 'object'
+              ? song.artist.name
+              : undefined;
+            return {
+              song: entry.song,
+              songTitle: song?.title ?? null,
+              songArtist: artistName ?? null,
+              displayOrder: index + 1,
+              votes: voteCounts.get(entry.song) ?? 0,
+            };
+          })
           .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
 
         const newsletterOnlyCount = contestants.filter(
