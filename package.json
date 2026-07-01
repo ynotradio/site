@@ -61,7 +61,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@benborla29/mcp-server-mysql": "^2.0.8",
+    "@benborla29/mcp-server-mysql": "^2.0.9",
     "@chromatic-com/storybook": "^5.2.1",
     "@netlify/plugin-nextjs": "^5.15.11",
     "@playwright/test": "^1.60.0",
