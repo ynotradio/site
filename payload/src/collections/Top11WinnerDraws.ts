@@ -7,8 +7,8 @@ export const Top11WinnerDraws: CollectionConfig = {
   enableRichTextRelationship: false,
   enableQueryPresets: true,
   labels: {
-    singular: 'Top 11 Winner Draw',
-    plural: 'Top 11 Winner Draws',
+    singular: 'Winner Draw',
+    plural: 'Winner Draws',
   },
   admin: {
     defaultColumns: ['contest', 'contestantEmail', 'excludePriorWinners', 'drawnBy', 'createdAt'],

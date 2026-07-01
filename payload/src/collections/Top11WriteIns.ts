@@ -7,8 +7,8 @@ export const Top11WriteIns: CollectionConfig = {
   enableRichTextRelationship: false,
   enableQueryPresets: true,
   labels: {
-    singular: 'Top 11 Write-in',
-    plural: 'Top 11 Write-ins',
+    singular: 'Write-in',
+    plural: 'Write-ins',
   },
   admin: {
     defaultColumns: ['contest', 'writeIn', 'voterEmail', 'display', 'createdAt'],

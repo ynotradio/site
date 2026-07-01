@@ -24,8 +24,8 @@ export const Top11Contestants: CollectionConfig = {
   enableRichTextRelationship: false,
   enableQueryPresets: true,
   labels: {
-    singular: 'Top 11 Contestant',
-    plural: 'Top 11 Contestants',
+    singular: 'Contestant',
+    plural: 'Contestants',
   },
   admin: {
     useAsTitle: 'email',
