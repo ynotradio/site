@@ -2,7 +2,6 @@ export type Top11ContestStatus = 'draft' | 'open' | 'closed' | 'published' | 'ar
 
 export interface Top11Contest {
   id: number;
-  title: string;
   status: Top11ContestStatus;
   weekOf: string;
   settings?: {

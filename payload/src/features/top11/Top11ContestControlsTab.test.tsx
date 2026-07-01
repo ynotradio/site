@@ -22,7 +22,6 @@ const { useDocumentInfo } = await import('@payloadcms/ui');
 
 const CONTEST = {
   id: 1,
-  title: 'Week of July 6',
   status: 'open',
   weekOf: '2026-07-06T00:00:00.000Z',
 };

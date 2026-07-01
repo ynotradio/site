@@ -21,7 +21,6 @@ type ContestEntry = {
 
 type ContestDoc = {
   id: number;
-  title: string;
   status: string;
   weekOf: string;
   settings?: {
@@ -88,7 +87,6 @@ const validateContestEntries = (value: unknown): true | string => {
     return 'Top 11 contests must have between 1 and 11 entries';
   }
 
-  const orders = new Set<number>();
   const songs = new Set<number>();
   let validationError: string | null = null;
 
@@ -102,18 +100,9 @@ const validateContestEntries = (value: unknown): true | string => {
       return;
     }
 
-    const typedRow = row as { displayOrder?: unknown; song?: unknown };
-    if (typeof typedRow.displayOrder !== 'number') {
-      validationError = 'Each entry requires a numeric display order';
-      return;
-    }
-
-    if (orders.has(typedRow.displayOrder)) {
-      validationError = 'Display order must be unique per contest';
-      return;
-    }
-    orders.add(typedRow.displayOrder);
-
+    // displayOrder is derived from row position in a beforeChange hook, not
+    // submitted by the client, so it isn't validated here.
+    const typedRow = row as { song?: unknown };
     const songId = Number(typedRow.song);
     if (!Number.isInteger(songId) || songId <= 0) {
       validationError = 'Each entry must reference a valid song';
@@ -140,13 +129,13 @@ export const Top11Contests: CollectionConfig = {
   enableRichTextRelationship: false,
   enableQueryPresets: true,
   labels: {
-    singular: 'Top 11 Contest',
-    plural: 'Top 11 Contests',
+    singular: 'Contest',
+    plural: 'Contests',
   },
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['title', 'weekOf', 'status', 'votingOpensAt', 'votingClosesAt', 'updatedAt'],
-    group: 'Polls & Contests',
+    useAsTitle: 'weekOf',
+    defaultColumns: ['weekOf', 'status', 'votingOpensAt', 'votingClosesAt', 'updatedAt'],
+    group: 'Top 11',
     description: 'Immutable weekly Top 11 contests and published results snapshots.',
     groupBy: true,
     components: {
@@ -188,6 +177,21 @@ export const Top11Contests: CollectionConfig = {
 
         return data;
       },
+      ({ data }) => {
+        // Editors reorder entries by dragging rows; displayOrder is derived
+        // from row position rather than typed in manually.
+        if (!data || !Array.isArray(data.entries)) {
+          return data;
+        }
+
+        return {
+          ...data,
+          entries: data.entries.map((entry: Record<string, unknown>, index: number) => ({
+            ...entry,
+            displayOrder: index + 1,
+          })),
+        };
+      },
     ],
   },
   endpoints: [
@@ -218,7 +222,6 @@ export const Top11Contests: CollectionConfig = {
         requireTop11Manager(req);
         const body = (await req.json()) as {
           sourceContestId?: string | number;
-          title?: string;
           weekOf?: string;
         };
 
@@ -233,11 +236,13 @@ export const Top11Contests: CollectionConfig = {
           overrideAccess: false,
         })) as ContestDoc;
 
-        const clonedTitle = body.title?.trim() || `${sourceContest.title} (Clone)`;
-        const clonedSlugBase = clonedTitle
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '');
+        // Default the clone to one week after its source, since a repeat
+        // clone of the same source without an explicit weekOf would
+        // otherwise collide with the source's own weekOf-derived slug.
+        const sourceWeekOf = new Date(sourceContest.weekOf);
+        const defaultNextWeekOf = Number.isNaN(sourceWeekOf.getTime())
+          ? new Date()
+          : new Date(sourceWeekOf.getTime() + 7 * 24 * 60 * 60 * 1000);
 
         // Strip each entry row's own sub-document id so Payload generates
         // fresh ones on create, instead of trying to reuse ids that already
@@ -249,13 +254,7 @@ export const Top11Contests: CollectionConfig = {
         const clonedContest = await req.payload.create({
           collection: 'top11-contests',
           data: {
-            title: clonedTitle,
-            // Explicit slug so repeated clones of the same source (which
-            // produce the same default title) never collide on the
-            // slugField's auto-generated slug.
-            generateSlug: false,
-            slug: `${clonedSlugBase}-${Date.now()}`,
-            weekOf: body.weekOf || new Date().toISOString(),
+            weekOf: body.weekOf || defaultNextWeekOf.toISOString(),
             status: 'draft',
             messageSnapshot: sourceContest.messageSnapshot,
             entries: clonedEntries,
@@ -472,15 +471,6 @@ export const Top11Contests: CollectionConfig = {
   ],
   fields: [
     {
-      name: 'title',
-      type: 'text',
-      required: true,
-      admin: {
-        description: 'Name for this Top 11 week (for admin use and API clients).',
-      },
-    },
-    slugField(),
-    {
       type: 'row',
       fields: [
         {
@@ -489,7 +479,7 @@ export const Top11Contests: CollectionConfig = {
           required: true,
           index: true,
           admin: {
-            width: '33%',
+            width: '50%',
             date: {
               displayFormat: 'yyyy-MM-dd',
               pickerAppearance: 'dayOnly',
@@ -511,34 +501,21 @@ export const Top11Contests: CollectionConfig = {
             { label: 'Archived', value: 'archived' },
           ],
           admin: {
-            width: '33%',
+            width: '50%',
             description: 'Contest lifecycle state.',
-          },
-        },
-        {
-          name: 'externalTemplateUrl',
-          type: 'text',
-          validate: (value) => {
-            if (!value) {
-              return true;
-            }
-
-            try {
-              // eslint-disable-next-line no-new
-              new URL(String(value));
-              return true;
-            } catch {
-              return 'External template URL must be a valid URL';
-            }
-          },
-          admin: {
-            width: '34%',
-            description: 'Link to external templated message source document.',
-            placeholder: 'https://',
           },
         },
       ],
     },
+    slugField({
+      useAsSlug: 'weekOf',
+      slugify: ({ valueToSlugify }) => {
+        const date = new Date(String(valueToSlugify));
+        return Number.isNaN(date.getTime())
+          ? undefined
+          : date.toISOString().slice(0, 10);
+      },
+    }),
     {
       type: 'row',
       fields: [
@@ -574,24 +551,36 @@ export const Top11Contests: CollectionConfig = {
           editor: lexicalEditor(),
         },
         {
-          name: 'bandLinks',
-          type: 'array',
+          type: 'row',
           fields: [
             {
-              name: 'bandName',
+              name: 'recordingUrl',
               type: 'text',
-              required: true,
+              admin: {
+                description:
+                  'The audio file ID or URL — for OpenDrive, paste the file ID; for MixCloud, the full URL',
+                placeholder: 'file-id or URL',
+                width: '70%',
+              },
             },
             {
-              name: 'websiteUrl',
-              type: 'text',
-              required: true,
+              name: 'recordingSource',
+              type: 'select',
+              options: [
+                { label: 'MixCloud', value: 'mixcloud' },
+                { label: 'OpenDrive', value: 'opendrive' },
+                { label: 'Other', value: 'other' },
+              ],
+              admin: {
+                description: 'Where is the show recording hosted?',
+                width: '30%',
+              },
             },
           ],
         },
       ],
       admin: {
-        description: 'Weekly Top 11 message snapshot, including links to band websites.',
+        description: 'Weekly Top 11 message snapshot and a link to the show recording.',
       },
     },
     {
@@ -605,12 +594,7 @@ export const Top11Contests: CollectionConfig = {
         {
           name: 'displayOrder',
           type: 'number',
-          required: true,
-          min: 1,
-          max: 11,
-          admin: {
-            width: '20%',
-          },
+          hidden: true,
         },
         {
           name: 'song',
@@ -618,7 +602,7 @@ export const Top11Contests: CollectionConfig = {
           relationTo: 'songs',
           required: true,
           admin: {
-            width: '40%',
+            width: '50%',
           },
         },
         {
@@ -626,7 +610,7 @@ export const Top11Contests: CollectionConfig = {
           type: 'richText',
           editor: lexicalEditor(),
           admin: {
-            width: '40%',
+            width: '50%',
             description: 'Optional weekly context note (e.g., pinch-hit note).',
           },
         },

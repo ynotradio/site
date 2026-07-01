@@ -5,7 +5,7 @@ import { flattenRowFields } from './testUtils';
 describe('Top11Contests', () => {
   it('has expected slug and grouping', () => {
     expect(Top11Contests.slug).toBe('top11-contests');
-    expect(Top11Contests.admin?.group).toBe('Polls & Contests');
+    expect(Top11Contests.admin?.group).toBe('Top 11');
   });
 
   it('uses immutable lifecycle statuses', () => {
@@ -35,6 +35,79 @@ describe('Top11Contests', () => {
     expect(entriesField.type).toBe('array');
     expect(entriesField.minRows).toBe(1);
     expect(entriesField.maxRows).toBe(11);
+  });
+
+  it('does not have a title field; weekOf is used as the admin title', () => {
+    const allFields = flattenRowFields(Top11Contests.fields);
+    expect(allFields.some((field) => field.name === 'title')).toBe(false);
+    expect(Top11Contests.admin?.useAsTitle).toBe('weekOf');
+  });
+
+  it('derives the slug from weekOf instead of a title field', () => {
+    const allFields = flattenRowFields(Top11Contests.fields);
+    const slugField = allFields.find((field) => field.name === 'slug') as {
+      admin?: { components?: { Field?: { clientProps?: { useAsSlug?: string } } } };
+    };
+    expect(slugField).toBeDefined();
+  });
+
+  it('does not have a bandLinks field or externalTemplateUrl field', () => {
+    const allFields = flattenRowFields(Top11Contests.fields);
+    const names = allFields.map((field) => field.name);
+    expect(names).not.toContain('bandLinks');
+    expect(names).not.toContain('externalTemplateUrl');
+  });
+
+  it('has recording fields for the show recording embed', () => {
+    const messageSnapshotField = Top11Contests.fields.find(
+      (field) => field.name === 'messageSnapshot',
+    ) as { fields?: Array<Record<string, unknown>> };
+    const nestedFields = flattenRowFields(messageSnapshotField.fields ?? []);
+    const names = nestedFields.map((field) => field.name);
+    expect(names).toContain('recordingUrl');
+    expect(names).toContain('recordingSource');
+
+    const sourceField = nestedFields.find((field) => field.name === 'recordingSource') as {
+      options?: Array<{ value: string }>;
+    };
+    expect(sourceField.options?.map((option) => option.value)).toEqual([
+      'mixcloud',
+      'opendrive',
+      'other',
+    ]);
+  });
+
+  it('hides displayOrder from the entries admin form', () => {
+    const entriesField = Top11Contests.fields.find((field) => field.name === 'entries') as {
+      fields?: Array<{ name?: string; hidden?: boolean }>;
+    };
+    const displayOrderField = entriesField.fields?.find((field) => field.name === 'displayOrder');
+    expect(displayOrderField?.hidden).toBe(true);
+  });
+
+  describe('displayOrder derivation hook', () => {
+    const renumberHook = Top11Contests.hooks?.beforeChange?.[1];
+
+    it('renumbers entries to match row position', () => {
+      const data = {
+        entries: [
+          { song: 3 },
+          { song: 1 },
+          { song: 2 },
+        ],
+      };
+
+      const result = renumberHook?.({ data } as never) as { entries: Array<{ displayOrder: number; song: number }> };
+
+      expect(result.entries.map((e) => e.displayOrder)).toEqual([1, 2, 3]);
+      expect(result.entries.map((e) => e.song)).toEqual([3, 1, 2]);
+    });
+
+    it('leaves data untouched when entries is not present', () => {
+      const data = { status: 'open' };
+      const result = renumberHook?.({ data } as never);
+      expect(result).toBe(data);
+    });
   });
 
   it('exposes lifecycle and operations endpoints', () => {
