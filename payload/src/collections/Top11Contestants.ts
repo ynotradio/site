@@ -48,6 +48,39 @@ export const Top11Contestants: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
+  hooks: {
+    beforeChange: [
+      async ({ operation, data, req }) => {
+        if (operation !== 'create' || !data) {
+          return data;
+        }
+
+        const contestId = Number(data.contest);
+        const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
+
+        if (!Number.isInteger(contestId) || contestId <= 0 || !email) {
+          return data;
+        }
+
+        const existingEntries = await req.payload.find({
+          collection: 'top11-contestants',
+          where: {
+            and: [{ contest: { equals: contestId } }, { email: { equals: email } }],
+          },
+          req,
+          overrideAccess: true,
+          limit: 1,
+          depth: 0,
+        });
+
+        if (existingEntries.docs.length > 0) {
+          throw new APIError('This email has already entered the current Top 11 contest', 409);
+        }
+
+        return data;
+      },
+    ],
+  },
   endpoints: [
     {
       path: '/export',
