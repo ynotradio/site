@@ -11,6 +11,7 @@ import * as migration_20260511_154500_add_cdotw_artist_url from './20260511_1545
 import * as migration_20260606_201414_add_top11_payload_collections from './20260606_201414_add_top11_payload_collections';
 import * as migration_20260701_170648_add_top11_vote_dedup_and_lookback from './20260701_170648_add_top11_vote_dedup_and_lookback';
 import * as migration_20260701_172922_add_top11_contestant_dedup from './20260701_172922_add_top11_contestant_dedup';
+import * as migration_20260701_203840_add_top11_recording_fields_and_drop_title from './20260701_203840_add_top11_recording_fields_and_drop_title';
 
 export const migrations = [
   {
@@ -77,5 +78,10 @@ export const migrations = [
     up: migration_20260701_172922_add_top11_contestant_dedup.up,
     down: migration_20260701_172922_add_top11_contestant_dedup.down,
     name: '20260701_172922_add_top11_contestant_dedup',
+  },
+  {
+    up: migration_20260701_203840_add_top11_recording_fields_and_drop_title.up,
+    down: migration_20260701_203840_add_top11_recording_fields_and_drop_title.down,
+    name: '20260701_203840_add_top11_recording_fields_and_drop_title',
   },
 ];
