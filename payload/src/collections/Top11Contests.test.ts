@@ -77,20 +77,22 @@ describe('Top11Contests', () => {
     });
   });
 
-  it('has votingOpensAt and votingClosesAt as date fields with dayAndTime picker', () => {
+  it('has votingOpensAt and votingClosesAt as date fields with dayAndTime picker and a time-inclusive display format', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     const votingOpensAt = allFields.find((field) => field.name === 'votingOpensAt') as {
       type?: string;
-      admin?: { date?: { pickerAppearance?: string } };
+      admin?: { date?: { pickerAppearance?: string; displayFormat?: string } };
     };
     const votingClosesAt = allFields.find((field) => field.name === 'votingClosesAt') as {
       type?: string;
-      admin?: { date?: { pickerAppearance?: string } };
+      admin?: { date?: { pickerAppearance?: string; displayFormat?: string } };
     };
     expect(votingOpensAt?.type).toBe('date');
     expect(votingOpensAt?.admin?.date?.pickerAppearance).toBe('dayAndTime');
+    expect(votingOpensAt?.admin?.date?.displayFormat).toBe('yyyy-MM-dd h:mm a');
     expect(votingClosesAt?.type).toBe('date');
     expect(votingClosesAt?.admin?.date?.pickerAppearance).toBe('dayAndTime');
+    expect(votingClosesAt?.admin?.date?.displayFormat).toBe('yyyy-MM-dd h:mm a');
   });
 
   it('derives the slug from weekOf instead of a title field', () => {

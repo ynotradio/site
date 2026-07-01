@@ -595,6 +595,7 @@ export const Top11Contests: CollectionConfig = {
             description: 'When public voting opens.',
             date: {
               pickerAppearance: 'dayAndTime',
+              displayFormat: 'yyyy-MM-dd h:mm a',
             },
           },
         },
@@ -606,6 +607,7 @@ export const Top11Contests: CollectionConfig = {
             description: 'When public voting closes.',
             date: {
               pickerAppearance: 'dayAndTime',
+              displayFormat: 'yyyy-MM-dd h:mm a',
             },
           },
         },
