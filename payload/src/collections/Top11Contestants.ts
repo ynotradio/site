@@ -1,10 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { APIError } from 'payload';
 import {
-  buildCsv,
-  findAllDocs,
-  parseTop11Id,
-  requireTop11Manager,
+  buildCsv, findAllDocs, parseTop11Id, requireTop11Manager,
 } from '../features/top11/utils';
 import { hasRole } from '../utils/auth';
 
@@ -41,7 +38,8 @@ export const Top11Contestants: CollectionConfig = {
       'createdAt',
     ],
     group: 'Polls & Contests',
-    description: 'Top 11 contestants and newsletter signups. CSV export available via custom endpoint.',
+    description:
+      'Top 11 contestants and newsletter signups. CSV export available via custom endpoint.',
     groupBy: true,
   },
   access: {
@@ -73,6 +71,8 @@ export const Top11Contestants: CollectionConfig = {
           collection: 'top11-contestants',
           where,
           sort: 'createdAt',
+          req,
+          user: req.user,
         });
 
         if (contestants.length === 0) {
