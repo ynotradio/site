@@ -72,12 +72,20 @@ export const assertPublishedContestImmutability = (
   }
 };
 
+const FORMULA_TRIGGER_CHARS = ['=', '+', '-', '@', '\t', '\r'];
+
 const escapeCsvValue = (value: string): string => {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replaceAll('"', '""')}"`;
+  // Prefix with a leading apostrophe when the value starts with a character
+  // that Excel/Sheets interpret as a formula trigger, so untrusted input
+  // (e.g. a public contestant's name) can't execute as a formula when the
+  // exported CSV is opened in a spreadsheet app.
+  const escaped = FORMULA_TRIGGER_CHARS.includes(value[0]) ? `'${value}` : value;
+
+  if (escaped.includes(',') || escaped.includes('"') || escaped.includes('\n')) {
+    return `"${escaped.replaceAll('"', '""')}"`;
   }
 
-  return value;
+  return escaped;
 };
 
 export const buildCsv = (headers: string[], rows: string[][]): string => {
