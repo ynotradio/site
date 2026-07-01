@@ -39,8 +39,20 @@ const STATS = {
     { text: 'Stairway to Heaven', count: 1, hiddenCount: 1 },
   ],
   rankedSongs: [
-    { song: 1, displayOrder: 1, votes: 30 },
-    { song: 2, displayOrder: 2, votes: 12 },
+    {
+      song: 1,
+      songTitle: 'Chance to Bleed',
+      songArtist: 'Kurt Vile',
+      displayOrder: 1,
+      votes: 30,
+    },
+    {
+      song: 2,
+      songTitle: 'A Good Day for Dying',
+      songArtist: 'The Bug Club',
+      displayOrder: 2,
+      votes: 12,
+    },
   ],
 };
 
@@ -77,8 +89,8 @@ describe('Top11ContestControlsTab', () => {
     mockFetchSequence(CONTEST);
     render(<Top11ContestControlsTab />);
     await waitFor(() => {
-      expect(screen.getByText('Status: open')).toBeInTheDocument();
-      expect(screen.getByText('Total votes: 42')).toBeInTheDocument();
+      expect(screen.getByText('Open')).toBeInTheDocument();
+      expect(screen.getByText('42')).toBeInTheDocument();
     });
   });
 
