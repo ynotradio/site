@@ -14,7 +14,9 @@ import { hasRole } from '../utils/auth';
 
 type ContestEntry = {
   id?: string;
-  displayOrder: number;
+  // Hidden field: excluded from reads. Row position in the entries array is
+  // the source of truth for display order; see the beforeChange hook below.
+  displayOrder?: number;
   song: number;
   weeklyNote?: unknown;
 };
@@ -326,10 +328,13 @@ export const Top11Contests: CollectionConfig = {
           voterKeys.add(voterKey);
         });
 
+        // displayOrder is a hidden field (excluded from reads), so use the
+        // entries array's own position as the display order instead of
+        // relying on the stored value.
         const rankedSongs = (contest.entries ?? [])
-          .map((entry) => ({
+          .map((entry, index) => ({
             song: entry.song,
-            displayOrder: entry.displayOrder,
+            displayOrder: index + 1,
             votes: voteCounts.get(entry.song) ?? 0,
           }))
           .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);

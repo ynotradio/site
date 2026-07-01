@@ -173,4 +173,33 @@ describe('Top11Contests', () => {
       expect(body.rankedWriteIns).toEqual([]);
     });
   });
+
+  describe('/:id/stats rankedSongs displayOrder', () => {
+    const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
+
+    it('derives displayOrder from entries array position, not the hidden field', async () => {
+      const find = vi.fn().mockResolvedValue({ docs: [] });
+      // displayOrder is a hidden field, so a real read never includes it —
+      // this mock matches that runtime shape.
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'closed',
+        entries: [{ song: 7 }, { song: 3 }, { song: 9 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs).toEqual([
+        { song: 7, displayOrder: 1, votes: 0 },
+        { song: 3, displayOrder: 2, votes: 0 },
+        { song: 9, displayOrder: 3, votes: 0 },
+      ]);
+    });
+  });
 });
