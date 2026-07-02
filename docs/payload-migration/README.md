@@ -29,8 +29,8 @@ Legacy MySQL/admin still owns:
 - Top 11
 - Year End Poll voting/admin
 - Staff Picks
-- Custom text (served from MySQL behind `use_postgres_customtext`; storage
-  strategy under review — see Chapter 15)
+- Custom text (served from MySQL behind `use_postgres_customtext`; targeting a
+  dedicated `Pages` collection, distinct from Posts — see Chapter 15)
 
 ## Active References
 

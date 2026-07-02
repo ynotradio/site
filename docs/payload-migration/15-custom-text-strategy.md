@@ -2,7 +2,8 @@
 
 [← Back to Index](./README.md)
 
-**Status:** Proposed (Plan 3 adopted) · **Last Updated:** June 2026
+**Status:** Proposed (Plan 3 adopted; custom text targets a dedicated `Pages`
+collection) · **Last Updated:** July 2026
 
 ---
 
@@ -71,7 +72,34 @@ Stabilize now, then replace the blob model one archetype at a time — highest
 pain first — keeping the feature flag as the safety net throughout. This reaches
 the correct end state without a big-bang migration.
 
-### Phase 0 — Stabilize (done, PR #786)
+### Target home: a dedicated `Pages` collection (per Josh)
+
+Custom texts get their **own `Pages` collection, separate and distinct from
+`Posts`** — they are not stories, and the two content types should not share a
+table:
+
+| | `Posts` (Stories) | `Pages` (Custom Text) |
+|---|---|---|
+| Addressing | Front-page rotation, date-windowed (`startDate`/`endDate`, `priority`, `showOnFrontPage`) | Evergreen, addressed by a stable `permalink`/slug |
+| Lifecycle | Time-bound news items that age off the front page | Long-lived reference / marketing pages |
+| Identity | A headline + dated body | A titled page at a fixed URL |
+
+`Pages` is the baseline home for the 35 custom texts and preserves the permalinks
+the front end already routes on — `pages.php?page=…`, plus `donate.php`,
+`shows.php`, `y100rocks.php`, and `rodney.php`, which all resolve custom text by
+permalink via `CustomTextFactory`. Minimum fields: `title`, `slug`/`permalink`
+(unique, matching the legacy values), `content` (richText + embed blocks),
+`status`, `legacyId`. `PostgresCustomText` — the read model the
+`use_postgres_customtext` flag toggles — repoints from `custom_texts` to the
+`pages` table once content is migrated, so no front-end call sites change.
+
+The archetype work below refines this baseline: pages that are really *structured
+data* (A/B specialty shows, C year-end lists) graduate **out of** freeform
+`Pages` into purpose-built collections; the genuine rich-text pages (D/E) stay in
+`Pages` with rich text + embed blocks. (Whether every custom text must live in
+`Pages` or the structured archetypes graduate out is tracked in Open Questions.)
+
+### Phase 0 — Stabilize (done, PR #786 — merged)
 
 - `use_postgres_customtext` flag (default MySQL) toggles the front-end read path.
 - Legacy CP add/update/delete/view screens restored; `/cp` always resolves to
@@ -82,10 +110,14 @@ the correct end state without a big-bang migration.
 
 - **Fix the charset.** Migrate custom-text content to UTF-8 on import so mojibake
   stops being introduced.
-- **Add Lexical embed blocks** to `Posts` (`payload/src/collections/Posts.ts`)
-  for Mixcloud, YouTube, and OpenDrive, so editors insert an embed by pasting a
-  URL/slug instead of raw `<iframe>` markup. This is what makes archetypes D and
-  E acceptable on Payload and removes the converter's main failure mode.
+- **Add Lexical embed blocks** for Mixcloud, YouTube, and OpenDrive, so editors
+  insert an embed by pasting a URL/slug instead of raw `<iframe>` markup. This is
+  what makes archetypes D and E acceptable on Payload and removes the converter's
+  main failure mode. The embed capability itself is in flight — the generic
+  `embed` block + shared `RendersLexicalEmbeds` rendering (TS + PHP) is **PR #800**,
+  with the plan and alternatives weighed in **Chapter 16 / PR #801**. It is
+  currently exercised through `PostgresCustomText`; it attaches to the `Pages`
+  rich-text field when that collection lands.
 - Once D/E render acceptably from Postgres, flip `use_postgres_customtext` for
   those pages (the flag is page-agnostic today; see Open Questions for
   per-page/per-archetype gating).
@@ -121,11 +153,11 @@ Sequenced by pain:
      `pages.php?page=top22X…` / `yearendpoll…` URLs at the Payload-rendered
      output. No new modelling in this chapter.
 
-3. **D — Multimedia retrospectives.** Migrate to `Posts` rich text using the
+3. **D — Multimedia retrospectives.** Migrate to `Pages` rich text using the
    Phase 1 embed blocks. These are true articles; the only requirement is clean
    embeds.
 
-4. **E — Landing pages.** Migrate to `Posts` rich text. Handle the few
+4. **E — Landing pages.** Migrate to `Pages` rich text. Handle the few
    form/script pages (`donate`, raffle, MRM bracket) as a small set of reusable
    front-end components rather than pasted HTML/JS.
 
@@ -141,27 +173,38 @@ Sequenced by pain:
 
 ## Archetype → target model summary
 
+Baseline home for all custom text is the new **`Pages`** collection; the
+structured archetypes graduate out of it into purpose-built collections.
+
 | Archetype | Target | Status |
 |-----------|--------|--------|
 | A — episode archives | `SpecialtyShow` (+ episodes) | **New work** (biggest gap) |
 | B — show hub | `SpecialtyShow` directory view | **New work** (with A) |
 | C — year-end lists | `YearEndPollResults` (Ch. 13 / #154) | **Exists** — reuse |
 | C — voting | `YearEndPolls*` (PR #518) | **Open PR** — land |
-| D — retrospectives | `Posts` + embed blocks | Needs Phase 1 blocks |
-| E — landing/forms | `Posts` + form components | Needs Phase 1 blocks |
+| D — retrospectives | `Pages` + embed blocks | Needs `Pages` + Phase 1 blocks |
+| E — landing/forms | `Pages` + form components | Needs `Pages` + Phase 1 blocks |
 
 ---
 
 ## Open questions
 
-1. **Flag granularity.** `use_postgres_customtext` is currently all-or-nothing
+1. **Scope of `Pages`.** Does every custom text live in `Pages` (simplest, one
+   model), or do the structured archetypes graduate to purpose-built collections
+   (A/B → `SpecialtyShow`, C → `YearEndPollResults`) with `Pages` holding only
+   the D/E rich-text pages? This doc assumes the latter; Josh to confirm.
+2. **`Pages` vs `Posts` field overlap.** `Pages` needs `title` + `slug` +
+   `content`; it deliberately omits the date-window/front-page fields that define
+   `Posts`. Confirm no shared base is wanted (keeping them fully separate is the
+   point of the split).
+3. **Flag granularity.** `use_postgres_customtext` is currently all-or-nothing
    across every custom-text page. Phasing by archetype likely wants either
    per-permalink routing (serve some permalinks from Postgres, others from MySQL)
    or retiring the flag per archetype as each is cut over. Decide before Phase 2.
-2. **Episode source of truth.** Should specialty-show episodes be entered in
+4. **Episode source of truth.** Should specialty-show episodes be entered in
    Payload, or pulled from the Mixcloud API by playlist/genre? An API pull would
    make `rodney-anonymous`-style archives self-maintaining.
-3. **Asset hosting.** Whether to backfill imgur/Mixcloud-thumbnail images into
+5. **Asset hosting.** Whether to backfill imgur/Mixcloud-thumbnail images into
    Cloudinary/Media as part of each archetype migration.
 
 ---
@@ -169,7 +212,9 @@ Sequenced by pain:
 ## Related Documentation
 
 - [Chapter 13: Year End Poll Results](./13-year-end-poll-results.md) — archetype C
+- Chapter 16 / PR #801 — Rich-Text Embeds (Custom Text — Phase 1) plan
 - [Core Data Models](./03-core-data-models.md)
 - [Frontend Cutover](./06-frontend-cutover.md)
-- PR #786 — feature flag + restored CP screens (Phase 0)
+- PR #786 — feature flag + restored CP screens (Phase 0, merged)
+- PR #800 — embed block + shared `RendersLexicalEmbeds` rendering (Phase 1 code)
 - PR #518 — Year End Poll voting collections (archetype C, voting)
