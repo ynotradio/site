@@ -62,6 +62,20 @@ export const SoundCloudTrack: Story = {
   },
 };
 
+export const MixcloudShow: Story = {
+  args: {
+    url: 'https://www.mixcloud.com/ynotradio/rodney-anonymous-tells-you-how-to-live-6526/',
+    caption: 'Rodney Anonymous Tells You How To Live',
+  },
+};
+
+export const OpenDrivePlayer: Story = {
+  args: {
+    url: 'https://www.opendrive.com/player/216190430_XqukK',
+    caption: 'OpenDrive audio player',
+  },
+};
+
 export const WithoutCaption: Story = {
   args: {
     url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',

@@ -236,25 +236,13 @@ class PostgresCustomText implements CustomText {
                 return "<a href=\"$url\"$target>$content</a>";
                 
             case 'block':
-                // Handle Payload CMS block types (embeds, etc.)
-                $fields = $node['fields'] ?? [];
-                $blockType = $fields['blockType'] ?? '';
-                
-                if ($blockType === 'embed' && !empty($fields['url'])) {
-                    $url = $fields['url'];
-                    $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-                    
-                    // Check if it's a MixCloud embed
-                    if (strpos($url, 'mixcloud.com') !== false) {
-                        return "<br><br>\n<iframe width=\"100%\" height=\"60\" src=\"$escapedUrl\" frameborder=\"0\" ></iframe>\n<br><br>\n";
-                    }
-                    
-                    // Generic iframe for other embeds
-                    return "<br><br>\n<iframe src=\"$escapedUrl\" frameborder=\"0\"></iframe>\n<br><br>\n";
-                }
-                
-                return '';
-                
+                // Payload block nodes (e.g. the EmbedFeature embed block).
+                // Rendered via the shared RendersLexicalEmbeds helper so the
+                // legacy front end embeds Mixcloud/YouTube/OpenDrive/etc. the
+                // same way here as in every other Postgres-backed model.
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                return $this->renderLexicalEmbedBlock($fields);
+
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;

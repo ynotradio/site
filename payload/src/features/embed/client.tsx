@@ -10,10 +10,10 @@ export interface EmbedComponentProps {
 
 export const EmbedComponent: React.FC<EmbedComponentProps> = ({ url, caption }) => {
   // Convert to proper embed URL if needed
-  const { embedUrl } = detectEmbedType(url);
+  const { embedUrl, type } = detectEmbedType(url);
 
   return (
-    <div className="embed-container">
+    <div className={`embed-container embed-container--${type}`}>
       <div className="embed-wrapper">
         <iframe
           src={embedUrl}
