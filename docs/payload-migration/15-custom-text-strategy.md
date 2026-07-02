@@ -115,9 +115,9 @@ data* (A/B specialty shows, C year-end lists) graduate **out of** freeform
   what makes archetypes D and E acceptable on Payload and removes the converter's
   main failure mode. The embed capability itself is in flight — the generic
   `embed` block + shared `RendersLexicalEmbeds` rendering (TS + PHP) is **PR #800**,
-  with the plan and alternatives weighed in **Chapter 16 / PR #801**. It is
-  currently exercised through `PostgresCustomText`; it attaches to the `Pages`
-  rich-text field when that collection lands.
+  with the plan and alternatives weighed in [Chapter 16](./16-rich-text-embeds.md).
+  It is currently exercised through `PostgresCustomText`; it attaches to the
+  `Pages` rich-text field when that collection lands.
 - Once D/E render acceptably from Postgres, flip `use_postgres_customtext` for
   those pages (the flag is page-agnostic today; see Open Questions for
   per-page/per-archetype gating).
@@ -211,8 +211,8 @@ structured archetypes graduate out of it into purpose-built collections.
 
 ## Related Documentation
 
+- [Chapter 16: Rich-Text Embeds](./16-rich-text-embeds.md) — Phase 1 embed detail
 - [Chapter 13: Year End Poll Results](./13-year-end-poll-results.md) — archetype C
-- Chapter 16 / PR #801 — Rich-Text Embeds (Custom Text — Phase 1) plan
 - [Core Data Models](./03-core-data-models.md)
 - [Frontend Cutover](./06-frontend-cutover.md)
 - PR #786 — feature flag + restored CP screens (Phase 0, merged)
