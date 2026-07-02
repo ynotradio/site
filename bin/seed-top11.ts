@@ -52,6 +52,45 @@ const CHART: Array<{ artist: string; title: string; artistUrl?: string }> = [
 
 const WRITE_INS = ['Free Bird', 'Free Bird', 'Stairway to Heaven'];
 
+const MESSAGE_SNAPSHOT = {
+  headline: 'Top 11 @ 11 for June 25, 2026',
+  body: {
+    root: {
+      type: 'root',
+      children: [
+        {
+          type: 'paragraph',
+          version: 1,
+          children: [
+            {
+              type: 'text',
+              version: 1,
+              text: 'Every Thursday at 11am and 11pm, Y-Not Radio counts down the Top 11 indie rock songs of the week.',
+            },
+          ],
+        },
+        {
+          type: 'paragraph',
+          version: 1,
+          children: [
+            {
+              type: 'text',
+              version: 1,
+              text: "Vote for the next Top 11 @ 11 and you'll be entered to win a pair of tickets for Caroline Rose at an upcoming Philadelphia show.",
+            },
+          ],
+        },
+      ],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      version: 1,
+    },
+  },
+  recordingUrl: 'https://www.mixcloud.com/ynotradio/top-11-11-62526/',
+  recordingSource: 'mixcloud',
+};
+
 async function findOrCreateArtist(
   payload: Awaited<ReturnType<typeof getPayloadHMR>>,
   name: string,
@@ -148,6 +187,7 @@ async function seedTop11() {
         status: 'open',
         votingOpensAt: WEEK_OF,
         entries: songIds.map((song) => ({ song })),
+        messageSnapshot: MESSAGE_SNAPSHOT,
       },
     });
     const contestId = contest.id as number;
