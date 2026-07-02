@@ -16,9 +16,7 @@ import {
 
 describe('extractYouTubeId', () => {
   it('should extract ID from standard watch URL', () => {
-    expect(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(
-      'dQw4w9WgXcQ',
-    );
+    expect(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
   });
 
   it('should extract ID from short URL', () => {
@@ -26,9 +24,7 @@ describe('extractYouTubeId', () => {
   });
 
   it('should extract ID from embed URL', () => {
-    expect(extractYouTubeId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe(
-      'dQw4w9WgXcQ',
-    );
+    expect(extractYouTubeId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
   });
 
   it('should extract ID from watch URL with additional parameters', () => {
@@ -101,9 +97,7 @@ describe('extractSoundCloudInfo', () => {
   });
 
   it('should handle URLs with dashes and underscores', () => {
-    const result = extractSoundCloudInfo(
-      'https://soundcloud.com/artist_name-123/track-name_456',
-    );
+    const result = extractSoundCloudInfo('https://soundcloud.com/artist_name-123/track-name_456');
     expect(result).toBe('artist_name-123/track-name_456');
   });
 
@@ -248,8 +242,7 @@ describe('detectEmbedType', () => {
     });
 
     it('should pass through an existing player-widget URL', () => {
-      const url =
-        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Fshow%2F';
+      const url = 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Fshow%2F';
       const result = detectEmbedType(url);
       expect(result).toEqual({ type: 'mixcloud', embedUrl: url, originalUrl: url });
     });
