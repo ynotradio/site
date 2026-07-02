@@ -42,6 +42,7 @@ Legacy MySQL/admin still owns:
 8. [Quick Reference](08-quick-reference.md)
 9. [Cloudinary Integration](12-cloudinary-integration.md)
 10. [Year End Poll Results](13-year-end-poll-results.md)
+11. [Rich-Text Embeds (Custom Text Phase 1)](16-rich-text-embeds.md)
 
 ## Historical / Planning References
 
