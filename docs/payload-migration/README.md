@@ -20,7 +20,7 @@ Payload manages:
 - Music records and songs
 - On Demand
 - Schedule
-- Stories and custom text as Posts
+- Stories as Posts
 - Modern Rock Madness
 - Year End Poll Results display data
 
@@ -29,6 +29,8 @@ Legacy MySQL/admin still owns:
 - Top 11
 - Year End Poll voting/admin
 - Staff Picks
+- Custom text (served from MySQL behind `use_postgres_customtext`; targeting a
+  dedicated `Pages` collection, distinct from Posts — see Chapter 15)
 
 ## Active References
 
@@ -42,6 +44,8 @@ Legacy MySQL/admin still owns:
 8. [Quick Reference](08-quick-reference.md)
 9. [Cloudinary Integration](12-cloudinary-integration.md)
 10. [Year End Poll Results](13-year-end-poll-results.md)
+11. [Custom Text Strategy](15-custom-text-strategy.md)
+12. [Rich-Text Embeds (Custom Text Phase 1)](16-rich-text-embeds.md)
 
 ## Historical / Planning References
 
