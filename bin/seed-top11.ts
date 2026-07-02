@@ -16,39 +16,98 @@ import config from '@payload-config';
 
 const WEEK_OF = '2026-06-25T00:00:00.000Z';
 
-const CHART: Array<{ artist: string; title: string; artistUrl?: string }> = [
-  { artist: 'Kurt Vile', title: 'Chance to Bleed', artistUrl: 'http://kurtvile.com/' },
+const CHART: Array<{
+  artist: string;
+  title: string;
+  artistUrl?: string;
+  note: string;
+}> = [
+  {
+    artist: 'Kurt Vile',
+    title: 'Chance to Bleed',
+    artistUrl: 'http://kurtvile.com/',
+    note: '(-)',
+  },
   {
     artist: 'The Bug Club',
     title: 'A Good Day for Dying',
     artistUrl: 'https://thebugclub.bandcamp.com/album/very-human-features',
+    note: '(debut)',
   },
   {
     artist: 'Caroline Rose',
     title: 'Yip Yip Yow',
     artistUrl: 'https://www.carolinerosemusic.com/',
+    note: '(-)',
   },
   {
     artist: 'Blondshell',
     title: 'Heart Has To Work So Hard',
     artistUrl: 'https://www.blondshellmusic.com/',
+    note: '(+4)',
   },
-  { artist: 'Mike D', title: 'Switch Up' },
+  {
+    artist: 'Mike D',
+    title: 'Switch Up',
+    note: '(debut)',
+  },
   {
     artist: 'Death Cab For Cutie',
     title: 'Stone Over Water',
     artistUrl: 'http://www.deathcabforcutie.com/',
+    note: '(-1 / pinch hitter)',
   },
-  { artist: 'Metric', title: 'Time Is A Bomb', artistUrl: 'http://ilovemetric.com/' },
-  { artist: 'Interpol', title: 'See Out Loud', artistUrl: 'http://interpolnyc.com/' },
+  {
+    artist: 'Metric',
+    title: 'Time Is A Bomb',
+    artistUrl: 'http://ilovemetric.com/',
+    note: '(-5)',
+  },
+  {
+    artist: 'Interpol',
+    title: 'See Out Loud',
+    artistUrl: 'http://interpolnyc.com/',
+    note: '(-4)',
+  },
   {
     artist: 'The Last Dinner Party',
     title: 'Big Dog',
     artistUrl: 'https://www.thelastdinnerparty.co.uk/',
+    note: '(debut)',
   },
-  { artist: 'Ratboys', title: "What's Right", artistUrl: 'http://ratboysband.com/' },
-  { artist: 'Snail Mail', title: 'Tractor Beam', artistUrl: 'https://www.snailmail.band/' },
+  {
+    artist: 'Ratboys',
+    title: "What's Right",
+    artistUrl: 'http://ratboysband.com/',
+    note: '(last appeared on 5/14)',
+  },
+  {
+    artist: 'Snail Mail',
+    title: 'Tractor Beam',
+    artistUrl: 'https://www.snailmail.band/',
+    note: '(debut)',
+  },
 ];
+
+/** Wraps plain text in the Lexical JSON shape Payload's richText field expects. */
+function toLexical(text: string) {
+  return {
+    root: {
+      type: 'root',
+      children: [
+        {
+          type: 'paragraph',
+          version: 1,
+          children: [{ type: 'text', version: 1, text }],
+        },
+      ],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      version: 1,
+    },
+  };
+}
 
 const WRITE_INS = ['Free Bird', 'Free Bird', 'Stairway to Heaven'];
 
@@ -186,7 +245,7 @@ async function seedTop11() {
         weekOf: WEEK_OF,
         status: 'open',
         votingOpensAt: WEEK_OF,
-        entries: songIds.map((song) => ({ song })),
+        entries: songIds.map((song, i) => ({ song, weeklyNote: toLexical(CHART[i].note) })),
         messageSnapshot: MESSAGE_SNAPSHOT,
       },
     });
