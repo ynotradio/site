@@ -169,6 +169,18 @@ class ConvertsLexicalToHtmlTest extends TestCase
 
         $this->assertStringContainsString('player-widget.mixcloud.com/widget/iframe/', $html);
         $this->assertStringContainsString('%2Fynotradio%2Fshow%2F', $html);
+        $this->assertStringContainsString('height="120"', $html);
+    }
+
+    public function testEmbedBlockMixcloudMiniPlayerUses60pxHeight(): void
+    {
+        $mini = 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&feed=%2Fynotradio%2Fshow%2F';
+        $html = $this->converter->convert($this->embedBlockJson($mini));
+
+        $this->assertStringContainsString('player-widget.mixcloud.com/widget/iframe/', $html);
+        $this->assertStringContainsString('mini=1', $html);
+        $this->assertStringContainsString('height="60"', $html);
+        $this->assertStringNotContainsString('height="120"', $html);
     }
 
     public function testEmbedBlockRendersOpenDrivePlayer(): void
