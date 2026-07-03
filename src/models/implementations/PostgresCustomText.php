@@ -29,12 +29,12 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                headline as title,
+                title,
                 content as html,
                 legacy_id
-            FROM posts
+            FROM pages
             WHERE _status = 'published'
-            ORDER BY headline ASC
+            ORDER BY title ASC
         ");
         
         $stmt->execute();
@@ -48,10 +48,10 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                headline as title,
+                title,
                 content as html,
                 legacy_id
-            FROM posts
+            FROM pages
             WHERE id = :id 
                 AND _status = 'published'
         ");
@@ -71,10 +71,10 @@ class PostgresCustomText implements CustomText {
             SELECT 
                 id,
                 slug as permalink,
-                headline as title,
+                title,
                 content as html,
                 legacy_id
-            FROM posts
+            FROM pages
             WHERE slug = :permalink 
                 AND _status = 'published'
         ");
@@ -113,9 +113,8 @@ class PostgresCustomText implements CustomText {
     public function isValidPermalink(string $permalink): bool {
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as count
-            FROM posts
+            FROM pages
             WHERE slug = :permalink 
-                AND type = 'custom_text'
                 AND _status = 'published'
         ");
         

@@ -1,9 +1,8 @@
 /**
  * Unit tests for importCustomTexts migration script
  *
- * Focuses on the donate page scenario described in GitHub issue:
- * "Donate page is blank in Postgres version" — the root cause was that
- * the 'donate' custom_text was not present in the Postgres posts table.
+ * Covers the import of custom_texts from MySQL into the dedicated `pages`
+ * Payload collection (distinct from `posts` / stories).
  */
 
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
@@ -58,11 +57,11 @@ describe('importCustomTexts', () => {
   });
 
   describe('importCustomText', () => {
-    it('should import donate custom_text with slug "donate"', async () => {
+    it('should import donate custom_text into the pages collection with slug "donate"', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-donate' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-donate' });
 
       const donateCustomText: CustomText = {
         id: 5,
@@ -77,13 +76,11 @@ describe('importCustomTexts', () => {
       expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          collection: 'posts',
+          collection: 'pages',
           data: expect.objectContaining({
             slug: 'donate',
-            headline: 'Support Y-Not Radio',
-            showOnFrontPage: false,
-            startDate: '2000-01-01T00:00:00.000Z',
-            endDate: '2099-12-31T23:59:59.999Z',
+            title: 'Support Y-Not Radio',
+            _status: 'published',
           }),
         }),
       );
@@ -93,7 +90,7 @@ describe('importCustomTexts', () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-about' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-about' });
 
       const aboutCustomText: CustomText = {
         id: 10,
@@ -134,16 +131,16 @@ describe('importCustomTexts', () => {
       // Upsert: existing docs are refreshed in place, not skipped or duplicated.
       expect(result).toBe('success');
       expect(mockPayload.update).toHaveBeenCalledWith(
-        expect.objectContaining({ collection: 'posts', id: 'existing' }),
+        expect.objectContaining({ collection: 'pages', id: 'existing' }),
       );
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
-    it('should set showOnFrontPage to false for custom text pages', async () => {
+    it('should not include Posts-specific fields (startDate, endDate, showOnFrontPage)', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-id' });
 
       const customText: CustomText = {
         id: 7,
@@ -155,18 +152,18 @@ describe('importCustomTexts', () => {
 
       await importCustomText(mockPayload as Payload, customText);
 
-      expect(mockPayload.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ showOnFrontPage: false }),
-        }),
-      );
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('showOnFrontPage');
+      expect(callData).not.toHaveProperty('startDate');
+      expect(callData).not.toHaveProperty('endDate');
+      expect(callData).not.toHaveProperty('priority');
     });
 
-    it('should apply legacyId offset of 10000 to avoid collision with story IDs', async () => {
+    it('should use the raw MySQL id as legacyId (no offset needed in pages collection)', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-id' });
 
       const customText: CustomText = {
         id: 5,
@@ -178,10 +175,11 @@ describe('importCustomTexts', () => {
 
       await importCustomText(mockPayload as Payload, customText);
 
-      // Verify the find call used legacyId = 5 + 10000 = 10005
+      // Find uses the raw MySQL id (no +10000 offset; pages has no story ID collisions)
       expect(mockPayload.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { legacyId: { equals: 10005 } },
+          collection: 'pages',
+          where: { legacyId: { equals: 5 } },
         }),
       );
     });
@@ -206,3 +204,4 @@ describe('importCustomTexts', () => {
     });
   });
 });
+

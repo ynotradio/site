@@ -1111,6 +1111,52 @@ footer a:hover {
   }
 }
 
+/* Embed blocks (EmbedFeature from Payload / RendersLexicalEmbeds.php)
+ *
+ * The PHP helper emits .embed wrapper divs/iframes for Lexical embed blocks.
+ * Video embeds use a 16:9 aspect-ratio wrapper (.embed--video); audio embeds
+ * (Mixcloud, OpenDrive, Spotify, SoundCloud, generic) use a fixed-height iframe
+ * with class .embed--<provider>. The caption sits below in .embed-caption.
+ */
+.embed {
+  margin: 1em 0;
+}
+
+/* Responsive 16:9 wrapper emitted for video providers (YouTube, Vimeo) */
+.embed--video {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.embed--video iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Audio player iframes: full-width, fixed height per provider */
+.embed--mixcloud,
+.embed--opendrive,
+.embed--spotify,
+.embed--soundcloud,
+.embed--generic {
+  display: block;
+  width: 100%;
+  border: 0;
+}
+
+.embed-caption {
+  font-size: 0.875em;
+  color: #555;
+  margin-top: 0.25em;
+  text-align: center;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   * {

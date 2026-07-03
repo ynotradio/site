@@ -12,6 +12,7 @@ import { MadnessTournaments } from './MadnessTournaments';
 import { MadnessVotes } from './MadnessVotes';
 import { Media } from './Media';
 import { OnDemand } from './OnDemand';
+import { Pages } from './Pages';
 import { People } from './People';
 import { Posts } from './Posts';
 import { Records } from './Records';
@@ -83,6 +84,7 @@ const allCollections: Array<{ name: string; config: CollectionConfig }> = [
   { name: 'MadnessVotes', config: MadnessVotes },
   { name: 'Media', config: Media },
   { name: 'OnDemand', config: OnDemand },
+  { name: 'Pages', config: Pages },
   { name: 'People', config: People },
   { name: 'Posts', config: Posts },
   { name: 'Records', config: Records },
