@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { LoadingSpinner } from './LoadingSpinner';
 
 const meta = {
-  title: 'Payload/Features/Shared/LoadingSpinner',
+  title: 'Features/Shared/LoadingSpinner',
   component: LoadingSpinner,
   parameters: {
     layout: 'centered',
@@ -43,12 +43,13 @@ export const Default: Story = {};
 export const InContainer: Story = {
   decorators: [
     (Story) => (
-      <div style={{
-        width: '300px',
-        height: '200px',
-        border: '1px solid #ddd',
-        borderRadius: '8px',
-      }}
+      <div
+        style={{
+          width: '300px',
+          height: '200px',
+          border: '1px solid #ddd',
+          borderRadius: '8px',
+        }}
       >
         <Story />
       </div>

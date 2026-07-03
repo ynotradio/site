@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { StoryOrderClient } from './StoryOrderClient';
 
 const meta = {
-  title: 'Features/StoryOrder/StoryOrderClient',
+  title: 'Features/Story Order/StoryOrderClient',
   component: StoryOrderClient,
   parameters: {
     layout: 'fullscreen',

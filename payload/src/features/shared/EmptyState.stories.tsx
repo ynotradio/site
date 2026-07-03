@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { EmptyState } from './EmptyState';
 
 const meta = {
-  title: 'Payload/Features/Shared/EmptyState',
+  title: 'Features/Shared/EmptyState',
   component: EmptyState,
   parameters: {
     layout: 'centered',

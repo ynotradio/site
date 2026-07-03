@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { CloneButton } from './CloneButton';
 
 const meta = {
-  title: 'Features/ShowCloner/CloneButton',
+  title: 'Features/Show Cloner/CloneButton',
   component: CloneButton,
   parameters: {
     layout: 'padded',
