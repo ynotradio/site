@@ -8,7 +8,7 @@ const meta = {
     layout: 'fullscreen',
     mockData: [
       {
-        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         method: 'GET',
         status: 200,
         response: {
@@ -52,7 +52,7 @@ export const WithManyStories: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         method: 'GET',
         status: 200,
         response: {
@@ -76,7 +76,7 @@ export const EmptyState: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         method: 'GET',
         status: 200,
         response: {
@@ -95,7 +95,7 @@ export const LoadingError: Story = {
   parameters: {
     mockData: [
       {
-        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+        url: '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         method: 'GET',
         status: 500,
         response: {

@@ -114,7 +114,7 @@ describe('StoryOrderClient', () => {
 
       await waitFor(() => {
         expect(global.fetch).toHaveBeenCalledWith(
-          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         );
       });
     });
@@ -243,13 +243,15 @@ describe('StoryOrderClient', () => {
       });
     });
 
-    it('should handle save error', async () => {
+    it('should report which stories failed when a PATCH is rejected (network failure)', async () => {
       (global.fetch as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => mockStoriesResponse,
         })
-        .mockRejectedValueOnce(new Error('Save failed'));
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockRejectedValueOnce(new Error('Network error'))
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
 
       render(<StoryOrderClient />);
 
@@ -261,7 +263,63 @@ describe('StoryOrderClient', () => {
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Error saving story order. Please try again.')).toBeInTheDocument();
+        expect(
+          screen.getByText('Failed to save order for: Story Beta. Please try again.'),
+        ).toBeInTheDocument();
+      });
+      expect(screen.queryByText('Story order saved successfully!')).not.toBeInTheDocument();
+    });
+
+    it('should report which stories failed when a PATCH returns a non-ok response', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockStoriesResponse,
+        })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: false, status: 403, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) });
+
+      render(<StoryOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Story Alpha')).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByRole('button', { name: /Save Order/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Failed to save order for: Story Beta. Please try again.'),
+        ).toBeInTheDocument();
+      });
+      expect(screen.queryByText('Story order saved successfully!')).not.toBeInTheDocument();
+    });
+
+    it('should report multiple failed stories together', async () => {
+      (global.fetch as ReturnType<typeof vi.fn>)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => mockStoriesResponse,
+        })
+        .mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) })
+        .mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+        .mockRejectedValueOnce(new Error('Network error'));
+
+      render(<StoryOrderClient />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Story Alpha')).toBeInTheDocument();
+      });
+
+      const saveButton = screen.getByRole('button', { name: /Save Order/i });
+      fireEvent.click(saveButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText('Failed to save order for: Story Alpha, Story Gamma. Please try again.'),
+        ).toBeInTheDocument();
       });
     });
 

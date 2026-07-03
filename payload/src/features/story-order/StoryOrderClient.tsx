@@ -54,8 +54,10 @@ export const StoryOrderClient: React.FC = () => {
   useEffect(() => {
     async function fetchStories() {
       try {
+        // _status=published excludes drafts — reordering a draft could otherwise force-publish
+        // it, since PATCHing without ?draft=true always writes straight to the published doc.
         const response = await fetch(
-          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true',
+          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
         );
         if (!response.ok) {
           throw new Error('Failed to fetch stories');
@@ -100,22 +102,35 @@ export const StoryOrderClient: React.FC = () => {
     setSuccessMessage(null);
 
     try {
-      // Include _status and showOnFrontPage to preserve existing values when drafts are enabled.
       // Lower priority numbers appear first on the front page, so top-of-list gets 0.
-      const updatePromises = stories.map((story, index) => fetch(`/api/posts/${story.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priority: index,
-          showOnFrontPage: story.showOnFrontPage,
-          _status: 'published',
-        }),
-      }));
+      // Only published, front-page-flagged stories are ever loaded into this list (see
+      // fetchStories), so _status: 'published' here is just re-affirming their existing status.
+      const results = await Promise.allSettled(
+        stories.map((story, index) => fetch(`/api/posts/${story.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            priority: index,
+            showOnFrontPage: story.showOnFrontPage,
+            _status: 'published',
+          }),
+        })),
+      );
 
-      await Promise.all(updatePromises);
-      setSuccessMessage('Story order saved successfully!');
+      // fetch() only rejects on network failure — a non-2xx response resolves normally, so both
+      // cases must be checked to avoid reporting success when a story actually failed to save.
+      const failedHeadlines = results
+        .map((result, index) => ({ result, story: stories[index] }))
+        .filter(({ result }) => result.status === 'rejected' || !result.value.ok)
+        .map(({ story }) => story.headline);
+
+      if (failedHeadlines.length > 0) {
+        setError(`Failed to save order for: ${failedHeadlines.join(', ')}. Please try again.`);
+      } else {
+        setSuccessMessage('Story order saved successfully!');
+      }
     } catch (err) {
       setError('Error saving story order. Please try again.');
       // eslint-disable-next-line no-console
