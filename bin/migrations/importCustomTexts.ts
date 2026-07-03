@@ -37,13 +37,13 @@ async function importCustomText(
   payload: any,
   customText: CustomText,
 ): Promise<'success' | 'skipped' | 'error'> {
-  const legacyId = customText.id + 10000; // Offset to avoid collisions with story IDs
+  const legacyId = customText.id;
 
   try {
     // Check if already imported — if so we update in place so re-running the
     // script refreshes stale custom-text content (e.g. new Mixcloud embeds).
     const existing = await payload.find({
-      collection: 'posts',
+      collection: 'pages',
       where: { legacyId: { equals: legacyId } },
       limit: 1,
     });
@@ -51,20 +51,20 @@ async function importCustomText(
 
     logger.info(`Importing custom_text ${customText.id}: ${customText.title}`);
 
-    // Generate proper headline from permalink if title is HTML
-    let headline = customText.title;
-    if (headline.trim().startsWith('<')) {
+    // Generate proper title from permalink if title is HTML
+    let { title } = customText;
+    if (title.trim().startsWith('<')) {
       // Title is HTML (likely an image tag), use permalink instead
       if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
-        headline = customText.permalink
+        title = customText.permalink
           .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
       } else {
-        headline = `Custom Text ${customText.id}`;
+        title = `Custom Text ${customText.id}`;
       }
-      logger.info(`  Converted HTML title to: "${headline}"`);
+      logger.info(`  Converted HTML title to: "${title}"`);
     }
 
     // Convert HTML content to Lexical format using enhanced converter
@@ -163,25 +163,22 @@ async function importCustomText(
     const slug = customText.permalink || `custom-text-${customText.id}`;
 
     const data = {
-      headline,
+      title,
       content,
       slug,
-      // generateSlug: false ensures the postSlugify hook doesn't overwrite
-      // our permalink-derived slug with a date-prefixed value.
+      // generateSlug: false ensures the pageSlugify hook doesn't overwrite
+      // our permalink-derived slug.
       generateSlug: false,
-      startDate: '2000-01-01T00:00:00.000Z', // Always visible content
-      endDate: '2099-12-31T23:59:59.999Z', // Far future date
-      showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
-      status: 'published',
+      _status: 'published' as const,
       legacyId,
     };
 
     if (existingId !== undefined) {
-      await payload.update({ collection: 'posts', id: existingId, data });
-      logger.info(`  ✓ Updated custom_text ${customText.id} (post ${existingId})`);
+      await payload.update({ collection: 'pages', id: existingId, data });
+      logger.info(`  ✓ Updated custom_text ${customText.id} (page ${existingId})`);
     } else {
-      const newPost = await payload.create({ collection: 'posts', data });
-      logger.info(`  ✓ Imported custom_text ${customText.id} as post ${newPost.id}`);
+      const newPage = await payload.create({ collection: 'pages', data });
+      logger.info(`  ✓ Imported custom_text ${customText.id} as page ${newPage.id}`);
     }
     return 'success';
   } catch (error: any) {
