@@ -19,9 +19,16 @@ html[data-theme='light'] {
   color: #cc2200;
 }
 
-/* Save / primary buttons */
+/*
+ * Save / primary buttons.
+ * Payload's --color for this style is var(--theme-elevation-0), which is
+ * white in light mode but flips to black in dark mode — invisible against
+ * our red background there, so it must be pinned to white explicitly.
+ */
 .btn.btn--style-primary,
 .form-submit .btn--style-primary {
+  --color: #fff;
+  --hover-color: #fff;
   background-color: #cc2200;
   border-color: #aa1a00;
 }

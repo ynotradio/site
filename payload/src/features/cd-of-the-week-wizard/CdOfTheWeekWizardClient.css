@@ -180,18 +180,19 @@
 .cdotw-wizard__submit-btn {
   min-block-size: 2.75rem;
   padding: 0 1.5rem;
-  border: 1px solid var(--theme-success-600, #16a34a);
+  border: 1px solid #cc2200;
   border-radius: var(--style-radius-s);
-  background: var(--theme-success-600, #16a34a);
-  color: var(--theme-base-0, #ffffff);
+  background: #cc2200;
+  background-image: none;
+  color: #fff;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .cdotw-wizard__submit-btn:hover:not(:disabled) {
-  background: var(--theme-success-700, #15803d);
-  border-color: var(--theme-success-700, #15803d);
+  background: #a31c00;
+  border-color: #a31c00;
 }
 
 .cdotw-wizard__submit-btn:disabled {

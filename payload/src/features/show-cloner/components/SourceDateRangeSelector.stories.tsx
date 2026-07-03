@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { SourceDateRangeSelector } from './SourceDateRangeSelector';
 
 const meta = {
-  title: 'Features/ShowCloner/SourceDateRangeSelector',
+  title: 'Features/Show Cloner/SourceDateRangeSelector',
   component: SourceDateRangeSelector,
   parameters: {
     layout: 'padded',

@@ -15,8 +15,8 @@ describe('CdOfTheWeekListHeader', () => {
   it('applies correct CSS classes', () => {
     const { container } = render(<CdOfTheWeekListHeader />);
 
-    expect(container.querySelector('.cdotw-list-header')).toBeInTheDocument();
-    expect(container.querySelector('.cdotw-list-header__link')).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill-row')).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill')).toBeInTheDocument();
   });
 
   it('renders as a navigation link', () => {

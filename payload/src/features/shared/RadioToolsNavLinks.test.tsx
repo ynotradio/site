@@ -21,6 +21,13 @@ describe('RadioToolsNavLinks', () => {
     expect(djOrderLink).toHaveAttribute('href', '/admin/dj-order');
   });
 
+  it('renders the Story Order link', () => {
+    render(<RadioToolsNavLinks />);
+    const storyOrderLink = screen.getByRole('link', { name: /Story Order/i });
+    expect(storyOrderLink).toBeInTheDocument();
+    expect(storyOrderLink).toHaveAttribute('href', '/admin/story-order');
+  });
+
   it('renders the Show Cloner link', () => {
     render(<RadioToolsNavLinks />);
     const showClonerLink = screen.getByRole('link', { name: /Show Cloner/i });
@@ -38,13 +45,14 @@ describe('RadioToolsNavLinks', () => {
   it('renders emoji icons with the links', () => {
     render(<RadioToolsNavLinks />);
     expect(screen.getByText(/🎧/)).toBeInTheDocument();
+    expect(screen.getByText(/📰/)).toBeInTheDocument();
     expect(screen.getByText(/📋/)).toBeInTheDocument();
     expect(screen.getByText(/💿/)).toBeInTheDocument();
   });
 
-  it('has all three navigation links', () => {
+  it('has all four navigation links', () => {
     render(<RadioToolsNavLinks />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(3);
+    expect(links).toHaveLength(4);
   });
 });

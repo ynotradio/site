@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { TargetDateSelector } from './TargetDateSelector';
 
 const meta = {
-  title: 'Features/ShowCloner/TargetDateSelector',
+  title: 'Features/Show Cloner/TargetDateSelector',
   component: TargetDateSelector,
   parameters: {
     layout: 'padded',

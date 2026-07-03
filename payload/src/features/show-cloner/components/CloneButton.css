@@ -3,13 +3,20 @@
   font-size: 14px;
   font-weight: 500;
   color: #fff;
-  background-color: #3182ce;
+  background-color: #cc2200;
+  background-image: none;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.clone-button:not(:disabled):hover {
+  background-color: #a31c00;
 }
 
 .clone-button:disabled {
+  background-color: #999;
   cursor: not-allowed;
   opacity: 0.5;
 }

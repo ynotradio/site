@@ -14,8 +14,8 @@ describe('ShowsListHeader', () => {
 
   it('applies correct CSS classes', () => {
     const { container } = render(<ShowsListHeader />);
-    expect(container.querySelector('.shows-list-header')).toBeInTheDocument();
-    expect(container.querySelector('.shows-list-header__link')).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill-row')).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill')).toBeInTheDocument();
   });
 
   it('renders as a navigation link', () => {

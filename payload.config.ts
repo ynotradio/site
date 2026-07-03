@@ -122,6 +122,14 @@ export default buildConfig({
             title: 'DJ Order',
           },
         },
+        StoryOrder: {
+          Component: '/payload/src/features/story-order#StoryOrderTool',
+          path: '/story-order',
+          exact: true,
+          meta: {
+            title: 'Story Order',
+          },
+        },
         ShowCloner: {
           Component: '/payload/src/features/show-cloner#ShowClonerTool',
           path: '/show-cloner',

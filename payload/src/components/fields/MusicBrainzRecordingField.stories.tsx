@@ -4,7 +4,7 @@ import { setMockFieldValue, setMockFormFields, resetMocks } from '@payloadcms/ui
 import { MusicBrainzRecordingField } from './MusicBrainzRecordingField';
 
 const meta = {
-  title: 'Payload/Fields/MusicBrainzRecordingField',
+  title: 'Components/Fields/MusicBrainzRecordingField',
   component: MusicBrainzRecordingField,
   parameters: {
     layout: 'padded',

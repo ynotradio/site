@@ -21,49 +21,63 @@ interface MockDataEntry {
  * returning canned responses for URLs that match `mockData` entries.
  * Unmatched requests fall through to the real `fetch`.
  */
+const originalFetch = window.fetch;
+
+/**
+ * Patches window.fetch synchronously during render (not in a useEffect) so it's
+ * in place before any child component's mount-time effect can call fetch — with
+ * two components mounting in the same commit (this provider and the story's own
+ * component), effect order isn't guaranteed, so patching in an effect raced the
+ * very fetch calls it was meant to intercept.
+ */
+const patchFetch = (mockData: MockDataEntry[]) => {
+  window.fetch = (async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.toString()
+          : input.url;
+    const method = (init?.method ?? 'GET').toUpperCase();
+
+    const match = mockData.find((m) => {
+      const methodMatch = !m.method || m.method.toUpperCase() === method;
+      const urlMatch =
+        m.url instanceof RegExp ? m.url.test(url) : url.includes(m.url);
+      return methodMatch && urlMatch;
+    });
+
+    if (match) {
+      return new Response(JSON.stringify(match.response), {
+        status: match.status ?? 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Fall through to real fetch for unmatched requests
+    return originalFetch(input, init);
+  }) as typeof window.fetch;
+};
+
 const FetchMockProvider: React.FC<{
   mockData: MockDataEntry[];
   children: React.ReactNode;
 }> = ({ mockData, children }) => {
-  useEffect(() => {
-    if (mockData.length === 0) return undefined;
+  if (mockData.length > 0) {
+    // Patched during render so it's active before any effect (this provider's
+    // or a descendant's) can run — see patchFetch's comment above.
+    patchFetch(mockData);
+  }
 
-    const originalFetch = window.fetch;
-
-    window.fetch = (async (
-      input: RequestInfo | URL,
-      init?: RequestInit,
-    ): Promise<Response> => {
-      const url =
-        typeof input === 'string'
-          ? input
-          : input instanceof URL
-            ? input.toString()
-            : input.url;
-      const method = (init?.method ?? 'GET').toUpperCase();
-
-      const match = mockData.find((m) => {
-        const methodMatch = !m.method || m.method.toUpperCase() === method;
-        const urlMatch =
-          m.url instanceof RegExp ? m.url.test(url) : url.includes(m.url);
-        return methodMatch && urlMatch;
-      });
-
-      if (match) {
-        return new Response(JSON.stringify(match.response), {
-          status: match.status ?? 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
-      }
-
-      // Fall through to real fetch for unmatched requests
-      return originalFetch(input, init);
-    }) as typeof window.fetch;
-
-    return () => {
+  useEffect(
+    () => () => {
       window.fetch = originalFetch;
-    };
-  }, [mockData]);
+    },
+    [mockData],
+  );
 
   return children as React.ReactElement;
 };

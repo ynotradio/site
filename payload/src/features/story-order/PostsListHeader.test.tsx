@@ -2,19 +2,19 @@
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { DJsListHeader } from './DJsListHeader';
+import { PostsListHeader } from './PostsListHeader';
 
-describe('DJsListHeader', () => {
-  it('renders the DJ Sort Order link', () => {
-    render(<DJsListHeader />);
+describe('PostsListHeader', () => {
+  it('renders the Story Sort Order link', () => {
+    render(<PostsListHeader />);
 
-    const link = screen.getByText('DJ Sort Order');
+    const link = screen.getByText('Story Sort Order');
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/admin/dj-order');
+    expect(link).toHaveAttribute('href', '/admin/story-order');
   });
 
   it('applies correct CSS classes', () => {
-    const { container } = render(<DJsListHeader />);
+    const { container } = render(<PostsListHeader />);
 
     const wrapper = container.querySelector('.tool-link-pill-row');
     expect(wrapper).toBeInTheDocument();
@@ -24,9 +24,9 @@ describe('DJsListHeader', () => {
   });
 
   it('renders as a navigation link', () => {
-    render(<DJsListHeader />);
+    render(<PostsListHeader />);
 
-    const link = screen.getByRole('link', { name: 'DJ Sort Order' });
+    const link = screen.getByRole('link', { name: 'Story Sort Order' });
     expect(link).toBeInTheDocument();
   });
 });

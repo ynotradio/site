@@ -63,8 +63,8 @@
 .target-date-selector__summary {
   margin-top: 12px;
   padding: 10px 12px;
-  background-color: #e8f4fd;
+  background-color: #f0f0f0;
   border-radius: 4px;
   font-size: 13px;
-  color: #0066cc;
+  color: #333;
 }
