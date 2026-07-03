@@ -170,6 +170,7 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('player-widget.mixcloud.com/widget/iframe/', $html);
         $this->assertStringContainsString('%2Fynotradio%2Fshow%2F', $html);
         $this->assertStringContainsString('height="120"', $html);
+        $this->assertStringNotContainsString('height="60"', $html);
     }
 
     public function testEmbedBlockMixcloudMiniPlayerUses60pxHeight(): void
