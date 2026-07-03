@@ -111,6 +111,9 @@ class PostgresCustomText implements CustomText {
     }
 
     public function isValidPermalink(string $permalink): bool {
+        // This implementation checks the pages table only. The method is
+        // defined on the CustomText interface (which predates the pages/posts
+        // split); here it answers "is this permalink already taken in pages?".
         $stmt = $this->db->prepare("
             SELECT COUNT(*) as count
             FROM pages
