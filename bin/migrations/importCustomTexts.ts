@@ -1,7 +1,7 @@
 /**
  * Import only custom_texts from MySQL to Payload
  *
- * This script imports custom_texts as Posts with special handling:
+ * This script imports custom_texts as Pages with special handling:
  * - Uses enhanced HTML-to-Lexical converter for complex content
  * - Generates slugs from permalinks
  * - Sets appropriate dates for always-visible content
@@ -53,7 +53,7 @@ async function importCustomText(
 
     // Generate proper title from permalink if title is HTML
     let { title } = customText;
-    if (title.trim().startsWith('<')) {
+    if (title && title.trim().startsWith('<')) {
       // Title is HTML (likely an image tag), use permalink instead
       if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
