@@ -16,10 +16,10 @@ describe('DJsListHeader', () => {
   it('applies correct CSS classes', () => {
     const { container } = render(<DJsListHeader />);
 
-    const wrapper = container.querySelector('.djs-list-header');
+    const wrapper = container.querySelector('.tool-link-pill-row');
     expect(wrapper).toBeInTheDocument();
 
-    const link = container.querySelector('.djs-list-header__link');
+    const link = container.querySelector('.tool-link-pill');
     expect(link).toBeInTheDocument();
   });
 

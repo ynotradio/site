@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { RadioToolsNavLinks } from './RadioToolsNavLinks';
 
 const meta = {
-  title: 'Payload/Features/Shared/RadioToolsNavLinks',
+  title: 'Features/Shared/RadioToolsNavLinks',
   component: RadioToolsNavLinks,
   parameters: {
     layout: 'padded',
@@ -29,13 +29,26 @@ This component is registered in the Payload admin config to appear in the sideba
   tags: ['autodocs'],
   decorators: [
     (Story) => (
+      // This component reuses Payload's own .nav-group / .nav__link classes so it
+      // matches the real admin sidebar exactly — but Storybook doesn't load Payload's
+      // admin theme CSS, so those classes render unstyled here. This inline stylesheet
+      // approximates the real computed styles (captured from the live admin) for a
+      // representative preview only; it has no effect on the actual admin UI.
       <div
         style={{
           width: '250px',
           backgroundColor: '#f5f5f5',
           borderRadius: '8px',
+          fontFamily:
+            '-apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+          fontSize: '13px',
         }}
       >
+        <style>{`
+          .nav-group__label { color: #9a9a9a; margin-bottom: 4px; }
+          .nav__link { display: flex; padding: 2.5px 30px 2.5px 0; color: #111; text-decoration: none; }
+          .nav__link:hover { color: #cc2200; }
+        `}</style>
         <Story />
       </div>
     ),

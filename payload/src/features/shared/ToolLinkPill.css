@@ -1,0 +1,30 @@
+.tool-link-pill-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+  padding: 0 var(--gutter-h);
+}
+
+.tool-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color: #fff;
+  background-color: #cc2200;
+  background-image: none;
+  border-radius: 4px;
+  text-decoration: none;
+  line-height: 1.4;
+  transition: background-color 0.15s;
+}
+
+.tool-link-pill:hover {
+  color: #fff;
+  background-color: #a31c00;
+  text-decoration: none;
+}

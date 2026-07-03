@@ -16,10 +16,10 @@ describe('PostsListHeader', () => {
   it('applies correct CSS classes', () => {
     const { container } = render(<PostsListHeader />);
 
-    const wrapper = container.querySelector('.posts-list-header');
+    const wrapper = container.querySelector('.tool-link-pill-row');
     expect(wrapper).toBeInTheDocument();
 
-    const link = container.querySelector('.posts-list-header__link');
+    const link = container.querySelector('.tool-link-pill');
     expect(link).toBeInTheDocument();
   });
 
