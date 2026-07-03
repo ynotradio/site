@@ -69,6 +69,13 @@ export const MixcloudShow: Story = {
   },
 };
 
+export const MixcloudMiniPlayer: Story = {
+  args: {
+    url: 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+    caption: 'Mixcloud mini player (60 px)',
+  },
+};
+
 export const OpenDrivePlayer: Story = {
   args: {
     url: 'https://www.opendrive.com/player/216190430_XqukK',

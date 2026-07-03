@@ -90,7 +90,9 @@ trait RendersLexicalEmbeds
         if (str_contains($url, 'mixcloud.com')) {
             if (str_contains($url, 'player-widget.mixcloud.com')) {
                 // Already a widget embed URL — use as-is.
-                return ['provider' => 'mixcloud', 'src' => $url, 'layout' => 'audio', 'height' => 120];
+                // The mini player (mini=1) renders at 60 px; the full widget at 120 px.
+                $height = $this->isMixcloudMiniPlayer($url) ? 60 : 120;
+                return ['provider' => 'mixcloud', 'src' => $url, 'layout' => 'audio', 'height' => $height];
             }
             $feed = $this->extractMixcloudFeed($url);
             if ($feed !== null) {
@@ -169,6 +171,17 @@ trait RendersLexicalEmbeds
 
         // Mixcloud feeds are addressed with a leading and trailing slash.
         return '/' . $trimmed . '/';
+    }
+
+    /**
+     * Return true when a Mixcloud widget URL requests the mini player layout
+     * (i.e. it contains the `mini=1` query parameter).
+     */
+    protected function isMixcloudMiniPlayer(string $url): bool
+    {
+        $query = parse_url($url, PHP_URL_QUERY) ?? '';
+        parse_str($query, $params);
+        return ($params['mini'] ?? null) === '1';
     }
 
     protected function isSafeEmbedUrl(string $url): bool
