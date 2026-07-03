@@ -56,9 +56,20 @@ export const StoryOrderClient: React.FC = () => {
       try {
         // _status=published excludes drafts — reordering a draft could otherwise force-publish
         // it, since PATCHing without ?draft=true always writes straight to the published doc.
-        const response = await fetch(
-          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
-        );
+        // Only stories currently in their active date window are shown — matching the front
+        // page's own query — otherwise every story ever published piles up here indefinitely
+        // (hundreds of expired/future stories mixed in with the handful that actually matter).
+        const now = new Date();
+        now.setUTCHours(12, 0, 0, 0);
+        const params = new URLSearchParams({
+          limit: '100',
+          sort: 'priority',
+          'where[showOnFrontPage][equals]': 'true',
+          'where[_status][equals]': 'published',
+          'where[endDate][greater_than_equal]': now.toISOString(),
+          'where[startDate][less_than_equal]': now.toISOString(),
+        });
+        const response = await fetch(`/api/posts?${params.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch stories');
         }
@@ -154,8 +165,9 @@ export const StoryOrderClient: React.FC = () => {
         <div className="story-order-client__header">
           <h1 className="story-order-client__title">Story Order</h1>
           <p className="story-order-client__description">
-            Drag and drop stories to change their display order on the front page. Changes
-            won&apos;t be saved until you click the &quot;Save Order&quot; button.
+            Drag and drop stories to change their display order on the front page. Only stories
+            currently in their active date range are shown. Changes won&apos;t be saved until you
+            click the &quot;Save Order&quot; button.
           </p>
         </div>
 
@@ -180,7 +192,7 @@ export const StoryOrderClient: React.FC = () => {
               strategy={verticalListSortingStrategy}
             >
               {stories.length === 0 ? (
-                <EmptyState message='No front-page stories found. Enable "Show on front page" on a story first.' />
+                <EmptyState message='No stories are currently active on the front page. Check that a story has "Show on front page" enabled and its start/end dates include today.' />
               ) : (
                 stories.map((story) => (
                   <SortableItem

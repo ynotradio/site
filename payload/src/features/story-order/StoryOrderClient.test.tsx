@@ -113,10 +113,18 @@ describe('StoryOrderClient', () => {
       render(<StoryOrderClient />);
 
       await waitFor(() => {
-        expect(global.fetch).toHaveBeenCalledWith(
-          '/api/posts?limit=100&sort=priority&where[showOnFrontPage][equals]=true&where[_status][equals]=published',
-        );
+        expect(global.fetch).toHaveBeenCalledTimes(1);
       });
+      const [calledUrl] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+      const params = new URL(calledUrl, 'http://localhost').searchParams;
+      expect(params.get('limit')).toBe('100');
+      expect(params.get('sort')).toBe('priority');
+      expect(params.get('where[showOnFrontPage][equals]')).toBe('true');
+      expect(params.get('where[_status][equals]')).toBe('published');
+      // Only currently-active stories should be fetched — without this, every
+      // story ever published (hundreds of expired/future ones) piles up here.
+      expect(params.get('where[endDate][greater_than_equal]')).toBeTruthy();
+      expect(params.get('where[startDate][less_than_equal]')).toBeTruthy();
     });
 
     it('should display stories after loading', async () => {
