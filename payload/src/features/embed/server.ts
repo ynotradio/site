@@ -15,6 +15,7 @@ export {
 export const EmbedBlock: Block = {
   slug: 'embed',
   labels: { singular: 'Embed', plural: 'Embeds' },
+  admin: { disableBlockName: true },
   fields: [
     {
       name: 'url',
