@@ -232,12 +232,12 @@ export const postSlugify: Slugify = ({ data, valueToSlugify }) => {
 export const pageSlugify: Slugify = ({ data, valueToSlugify }) => {
   const title = data?.title;
   if (!title) {
-    return valueToSlugify ? slugifyText(String(valueToSlugify)) : undefined;
+    return valueToSlugify ? slugifyHeadline(String(valueToSlugify)) : undefined;
   }
   if (valueToSlugify && String(valueToSlugify) !== String(title)) {
-    return slugifyText(String(valueToSlugify));
+    return slugifyHeadline(String(valueToSlugify));
   }
-  return slugifyText(String(title)) || undefined;
+  return slugifyHeadline(String(title)) || undefined;
 };
 
 /**
