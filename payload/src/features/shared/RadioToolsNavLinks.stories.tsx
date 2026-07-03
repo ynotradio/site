@@ -14,6 +14,7 @@ Navigation links for Radio Tools in the Payload admin sidebar.
 
 Provides quick access to:
 - **DJ Order** - Drag-and-drop DJ reordering tool
+- **Story Order** - Drag-and-drop front-page story reordering tool
 - **Show Cloner** - Clone shows from one date range to another
 
 **Usage:**
@@ -28,11 +29,12 @@ This component is registered in the Payload admin config to appear in the sideba
   tags: ['autodocs'],
   decorators: [
     (Story) => (
-      <div style={{
-        width: '250px',
-        backgroundColor: '#f5f5f5',
-        borderRadius: '8px',
-      }}
+      <div
+        style={{
+          width: '250px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '8px',
+        }}
       >
         <Story />
       </div>

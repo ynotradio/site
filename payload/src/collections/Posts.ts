@@ -33,6 +33,9 @@ export const Posts: CollectionConfig = {
     groupBy: true,
     description:
       'Front-page stories. Each story is visible on the site between its start and end dates.',
+    components: {
+      beforeList: ['/payload/src/features/story-order/PostsListHeader#PostsListHeader'],
+    },
   },
   defaultSort: ['priority', '-startDate'],
   access: {
@@ -140,7 +143,7 @@ export const Posts: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description:
-          'Display order on the front page — higher numbers appear first. Same priority sorts by date.',
+          'Display order on the front page — lower numbers appear first. Same priority sorts by date. Use the Story Order tool (/admin/story-order) to reorder visually.',
       },
     },
     legacyIdField,
