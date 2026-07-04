@@ -89,8 +89,13 @@ trait RendersLexicalEmbeds
 
         // Mixcloud -> player widget (the dominant provider in legacy custom text)
         if (str_contains($url, 'mixcloud.com')) {
-            if (str_contains($url, 'player-widget.mixcloud.com')) {
-                // Already a widget embed URL — use as-is.
+            if (str_contains($url, '/widget/iframe/')) {
+                // Already a widget embed URL — either the current
+                // player-widget.mixcloud.com host or the legacy
+                // www.mixcloud.com/widget/iframe/?feed=... form used throughout
+                // older custom-text pages (e.g. rodney-anonymous). Use as-is;
+                // re-deriving the feed from the path here would read
+                // "/widget/iframe/" itself as the feed and produce a broken embed.
                 // The mini player (mini=1) renders at 60 px; the full widget at 120 px.
                 $height = $this->isMixcloudMiniPlayer($url) ? 60 : 120;
                 return ['provider' => 'mixcloud', 'src' => $url, 'layout' => 'audio', 'height' => $height];

@@ -209,6 +209,25 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringNotContainsString('height="120"', $html);
     }
 
+    public function testEmbedBlockPassesThroughLegacyWwwMixcloudWidgetUrl(): void
+    {
+        // The format actually stored in ~180 of the 35 active custom-text pages
+        // (e.g. rodney-anonymous): the widget path on the plain www.mixcloud.com
+        // host, predating the player-widget.mixcloud.com host. Must be
+        // recognized as already-a-widget-URL, not re-parsed as a show permalink
+        // (which would read "/widget/iframe/" itself as the feed).
+        $widget = 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&' .
+            'feed=%2Fynotradio%2Frodney-anonymous-tells-you-how-to-live-9823%2F';
+        $html = $this->converter->convert($this->embedBlockJson($widget));
+
+        $this->assertStringContainsString(
+            'feed=%2Fynotradio%2Frodney-anonymous-tells-you-how-to-live-9823%2F',
+            $html
+        );
+        $this->assertStringNotContainsString('feed=%2Fwidget%2Fiframe%2F', $html);
+        $this->assertStringContainsString('height="120"', $html);
+    }
+
     public function testEmbedBlockRendersOpenDrivePlayer(): void
     {
         $html = $this->converter->convert(

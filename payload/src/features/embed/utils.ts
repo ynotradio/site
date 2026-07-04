@@ -111,8 +111,12 @@ export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {
 
   // Mixcloud — the dominant provider in the legacy custom-text content.
   if (url.includes('mixcloud.com')) {
-    if (url.includes('player-widget.mixcloud.com')) {
-      // Already a widget embed URL — use as-is.
+    if (url.includes('/widget/iframe/')) {
+      // Already a widget embed URL — either the current player-widget.mixcloud.com
+      // host or the legacy www.mixcloud.com/widget/iframe/?feed=... form used
+      // throughout older custom-text pages (e.g. rodney-anonymous). Use as-is;
+      // re-deriving the feed from the path here would read "/widget/iframe/"
+      // itself as the feed and produce a broken embed.
       return { type: 'mixcloud', embedUrl: url, originalUrl: url };
     }
     const feed = extractMixcloudFeed(url);
