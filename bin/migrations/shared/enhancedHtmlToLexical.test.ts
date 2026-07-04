@@ -185,6 +185,34 @@ describe('enhancedHtmlToLexical', () => {
       expect(listItem.type).toBe('listitem');
       expect(listItem.children.some((n: any) => n.format === 1)).toBe(true);
     });
+
+    it('should set a numeric indent on every list item (Lexical rejects null/undefined)', () => {
+      // Regression test: listitem nodes without `indent` crashed the Payload
+      // admin editor with "Invalid indent value" on real imported pages that
+      // used <li value="N"> for tied countdown rankings.
+      const html = '<ol><li>First</li><li>Second</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const listItems = result.root.children[0].children;
+      listItems.forEach((item: any) => {
+        expect(typeof item.indent).toBe('number');
+      });
+    });
+
+    it('should use an explicit li value attribute as the listitem value', () => {
+      const html = '<ol><li value="7">Tied for 7th</li><li value="7">Also tied for 7th</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const [first, second] = result.root.children[0].children;
+      expect(first.value).toBe(7);
+      expect(second.value).toBe(7);
+    });
+
+    it('should fall back to positional numbering when li has no value attribute', () => {
+      const html = '<ol><li>First</li><li>Second</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const [first, second] = result.root.children[0].children;
+      expect(first.value).toBe(1);
+      expect(second.value).toBe(2);
+    });
   });
 
   describe('Block Quotes', () => {
