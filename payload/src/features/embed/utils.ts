@@ -1,11 +1,5 @@
 export type EmbedType =
-  | 'youtube'
-  | 'vimeo'
-  | 'spotify'
-  | 'soundcloud'
-  | 'mixcloud'
-  | 'opendrive'
-  | 'generic';
+  'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'mixcloud' | 'opendrive' | 'generic';
 
 export interface EmbedInfo {
   type: EmbedType;
@@ -65,35 +59,55 @@ export function detectEmbedType(url: string): EmbedInfo {
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const videoId = extractYouTubeId(url);
     if (videoId) {
-      return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${videoId}`, originalUrl: url };
+      return {
+        type: 'youtube',
+        embedUrl: `https://www.youtube.com/embed/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('vimeo.com')) {
     const videoId = extractVimeoId(url);
     if (videoId) {
-      return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${videoId}`, originalUrl: url };
+      return {
+        type: 'vimeo',
+        embedUrl: `https://player.vimeo.com/video/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('spotify.com')) {
     const info = extractSpotifyInfo(url);
     if (info) {
-      return { type: 'spotify', embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`, originalUrl: url };
+      return {
+        type: 'spotify',
+        embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('soundcloud.com')) {
     const trackInfo = extractSoundCloudInfo(url);
     if (trackInfo) {
-      return { type: 'soundcloud', embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`, originalUrl: url };
+      return {
+        type: 'soundcloud',
+        embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`,
+        originalUrl: url,
+      };
     }
   }
 
   // Mixcloud — the dominant provider in the legacy custom-text content.
   if (url.includes('mixcloud.com')) {
-    if (url.includes('player-widget.mixcloud.com')) {
-      // Already a widget embed URL — use as-is.
+    if (url.includes('/widget/iframe/')) {
+      // Already a widget embed URL — either the current player-widget.mixcloud.com
+      // host or the legacy www.mixcloud.com/widget/iframe/?feed=... form used
+      // throughout older custom-text pages (e.g. rodney-anonymous). Use as-is;
+      // re-deriving the feed from the path here would read "/widget/iframe/"
+      // itself as the feed and produce a broken embed.
       return { type: 'mixcloud', embedUrl: url, originalUrl: url };
     }
     const feed = extractMixcloudFeed(url);
