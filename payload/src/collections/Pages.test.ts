@@ -94,6 +94,18 @@ describe('Pages', () => {
     expect(checkbox?.type).toBe('checkbox');
   });
 
+  it('has headerImage as an optional upload field relating to media', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const headerImageField = fields.find((f) => f.name === 'headerImage') as {
+      type?: string;
+      relationTo?: string;
+      required?: boolean;
+    };
+    expect(headerImageField?.type).toBe('upload');
+    expect(headerImageField?.relationTo).toBe('media');
+    expect(headerImageField?.required).toBeFalsy();
+  });
+
   it('has content as a richText field', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content');

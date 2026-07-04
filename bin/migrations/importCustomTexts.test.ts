@@ -39,6 +39,11 @@ vi.mock('./shared/enhancedHtmlToLexical', () => ({
   resolveImageUploads: (...args: [unknown, unknown]) => mockResolveImageUploads(...args),
 }));
 
+const mockImportImageFromUrl = vi.fn();
+vi.mock('./shared/mediaImporter', () => ({
+  importImageFromUrl: (...args: unknown[]) => mockImportImageFromUrl(...args),
+}));
+
 vi.mock('./shared/logger', () => ({
   createLogger: () => ({
     info: vi.fn(),
@@ -67,6 +72,7 @@ describe('importCustomTexts', () => {
       },
     }));
     mockResolveImageUploads.mockImplementation((_payload: unknown, content: unknown) => Promise.resolve(content));
+    mockImportImageFromUrl.mockResolvedValue({ success: false, error: 'not mocked' });
 
     mockPayload = {
       find: vi.fn(),
@@ -343,6 +349,86 @@ describe('importCustomTexts', () => {
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
       const text = callData.content.root.children[0].children[0].text;
       expect(text).toBe('(No content available)');
+    });
+
+    it('should extract and import a stylized <img> title as headerImage', async () => {
+      mockImportImageFromUrl.mockResolvedValue({
+        success: true,
+        mediaId: 'media-banner-123',
+        cloudinaryUrl: 'https://cloudinary.example/banner.png',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top220' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/QRvzAZV.png" width="685">',
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      expect(mockImportImageFromUrl).toHaveBeenCalledWith(
+        mockPayload,
+        'https://i.imgur.com/QRvzAZV.png',
+        expect.objectContaining({ legacyUrl: 'https://i.imgur.com/QRvzAZV.png' }),
+      );
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.headerImage).toBe('media-banner-123');
+      expect(callData.title).toBe('Top220of2020');
+    });
+
+    it('should omit headerImage when the banner image import fails', async () => {
+      mockImportImageFromUrl.mockResolvedValue({
+        success: false,
+        error: 'Failed to download image',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top221' });
+
+      const customText: CustomText = {
+        id: 50,
+        title: '<img src="https://i.imgur.com/p7LzXZv.gif" width="685">',
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top221of2021',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('headerImage');
+      expect(callData.title).toBe('Top221of2021');
+    });
+
+    it('should not attempt an image import when title HTML has no <img>', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-centered' });
+
+      const customText: CustomText = {
+        id: 73,
+        title: '<center>Y-Not Sessions 2025</center>',
+        html: '<p>Sessions info</p>',
+        permalink: 'ynotsessions2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('headerImage');
     });
   });
 });
