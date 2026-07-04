@@ -1,5 +1,9 @@
 # Environment File Changes - January 2026
 
+> Looking for which file to use and common footguns? See
+> [ENV_FILE_REFERENCE.md](./ENV_FILE_REFERENCE.md). This document is a
+> historical changelog of the January 2026 restructuring.
+
 ## What Changed
 
 We consolidated the environment file structure from the complex multi-file setup to a cleaner, more maintainable structure.
