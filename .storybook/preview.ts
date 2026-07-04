@@ -84,6 +84,14 @@ const FetchMockProvider: React.FC<{
 
 const preview: Preview = {
   parameters: {
+    a11y: {
+      // Run axe-core accessibility checks for every story. Violations will
+      // surface as test failures when running `yarn test:storybook` — the CI
+      // step is marked soft_fail so these never block a merge, but they remain
+      // visible in build output so they can be progressively fixed.
+      // Set to 'todo' on a per-story basis for known issues pending remediation.
+      test: 'error',
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,

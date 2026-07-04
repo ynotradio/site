@@ -117,6 +117,8 @@ export const useConfig = () => ({
     },
     serverURL: 'http://localhost:3000',
   },
+  // Returns undefined for any slug — components should handle the missing-config case gracefully
+  getEntityConfig: () => undefined,
 });
 
 // Helper to set mock values (used by stories)
@@ -152,8 +154,13 @@ export const RenderFields: React.FC<{ fields?: unknown }> = () => (
   <div data-testid="render-fields" />
 );
 
+// Stable reference — avoids infinite re-render loops when components list
+// getFormState as a useEffect dependency (a new function reference on every
+// render would otherwise re-trigger the effect on every state update).
+const stableGetFormState = async () => ({ state: {} });
+
 export const useServerFunctions = () => ({
-  getFormState: async () => ({ state: {} }),
+  getFormState: stableGetFormState,
 });
 
 export const toast = {

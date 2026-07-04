@@ -82,6 +82,24 @@ steps:
     agents:
       queue: "default"
 
+  # Storybook Accessibility Tests (axe-core via Vitest + Playwright browser mode)
+  # soft_fail: a11y issues are visible in CI output but never block a merge.
+  # Fix violations progressively; override parameters.a11y.test = 'todo' on a
+  # per-story basis for known issues that are not yet remediated.
+  - label: ":wheelchair: Storybook A11y Tests"
+    key: "storybook-a11y"
+    soft_fail: true
+    command: |
+      corepack enable && yarn install --immutable && \
+      npx playwright install --with-deps chromium && \
+      yarn test:storybook
+    plugins:
+      - docker#v5.11.0:
+          image: "node:22"
+          propagate-environment: true
+    agents:
+      queue: "default"
+
   # PHP Lint (CodeSniffer) — skipped on JS-only PRs
   - label: ":php: PHP Lint"
     key: "php-lint"
