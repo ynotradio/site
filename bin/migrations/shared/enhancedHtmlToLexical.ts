@@ -56,6 +56,7 @@ function sanitizeHtml(html: string): string {
       'href', 'title', 'target', 'rel',
       'src', 'alt', 'width', 'height',
       'class', 'id',
+      'value',
       'data-*',
     ],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
@@ -300,12 +301,16 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   // Lists
   else if (tagName === 'ul' || tagName === 'ol') {
     const listItems = Array.from(element.querySelectorAll(':scope > li'));
-    const children = listItems.map((li) => {
+    const children = listItems.map((li, index) => {
       const itemChildren = parseInlineHTML(li.innerHTML);
+      const liValue = li.getAttribute('value');
+      const parsedValue = liValue ? parseInt(liValue, 10) : NaN;
       return {
         type: 'listitem',
-        value: 1,
+        value: Number.isNaN(parsedValue) ? index + 1 : parsedValue,
         checked: undefined,
+        format: '',
+        indent: 0,
         version: 1,
         children: itemChildren.length > 0 ? itemChildren : [{
           type: 'text',
