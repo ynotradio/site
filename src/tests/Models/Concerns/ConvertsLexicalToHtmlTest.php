@@ -9,6 +9,13 @@ class ConvertsLexicalToHtmlTestHarness
 {
     use ConvertsLexicalToHtml;
 
+    private ?\PDO $db = null;
+
+    public function __construct(?\PDO $db = null)
+    {
+        $this->db = $db;
+    }
+
     public function convert(?string $lexicalJson, bool $forceNewTabLinks = false): string
     {
         return $this->convertLexicalToHtml($lexicalJson, $forceNewTabLinks);
@@ -255,5 +262,164 @@ class ConvertsLexicalToHtmlTest extends TestCase
         );
 
         $this->assertStringNotContainsString('<iframe', $html);
+    }
+
+    public function testHorizontalRuleRendersAsHr(): void
+    {
+        $html = $this->converter->convert(json_encode([
+            'root' => ['children' => [['type' => 'horizontalrule']]],
+        ]));
+
+        $this->assertStringContainsString('<hr>', $html);
+    }
+
+    public function testQuoteNodeRendersAsBlockquote(): void
+    {
+        $html = $this->converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'quote',
+                        'children' => [['type' => 'text', 'text' => 'To be or not to be']],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<blockquote>To be or not to be</blockquote>', $html);
+    }
+
+    public function testTableNodesRenderAsRealTable(): void
+    {
+        $html = $this->converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'table',
+                        'children' => [
+                            [
+                                'type' => 'tablerow',
+                                'children' => [
+                                    [
+                                        'type' => 'tablecell',
+                                        'headerState' => 1,
+                                        'children' => [['type' => 'text', 'text' => 'Rank']],
+                                    ],
+                                    [
+                                        'type' => 'tablecell',
+                                        'children' => [['type' => 'text', 'text' => 'Artist']],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<table>', $html);
+        $this->assertStringContainsString('<tr>', $html);
+        $this->assertStringContainsString('<th>Rank</th>', $html);
+        $this->assertStringContainsString('<td>Artist</td>', $html);
+    }
+
+    public function testLegacyTableMarkerStillRendersAsHtmlTable(): void
+    {
+        // Older custom-text imports flattened tabular content into a
+        // "[Table]\n..." text marker (enhancedHtmlToLexical.ts) instead of a
+        // real Lexical table. Already-migrated content still needs this.
+        $html = $this->converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => "[Table]\nRank | Artist\n220 | Pottery"],
+                        ],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<table', $html);
+        $this->assertStringContainsString('Pottery', $html);
+        $this->assertStringNotContainsString('[Table]', $html);
+    }
+
+    public function testUploadNodeRendersImageFromMedia(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (5, 'https://cdn.example/banner.png', 'Banner')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    ['type' => 'upload', 'relationTo' => 'media', 'value' => 5],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringContainsString('src="https://cdn.example/banner.png"', $html);
+        $this->assertStringContainsString('alt="Banner"', $html);
+    }
+
+    public function testUploadNodeAppliesAlignmentClass(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (7, 'https://cdn.example/photo.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 7,
+                        'fields' => ['alignment' => 'left'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('lexical-image--left', $html);
+    }
+
+    public function testUploadNodeRendersNothingWhenMediaMissing(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    ['type' => 'upload', 'relationTo' => 'media', 'value' => 999],
+                ],
+            ],
+        ]));
+
+        $this->assertStringNotContainsString('<img', $html);
+    }
+
+    public function testUploadNodeSkipsDbQueryWhenNoUploadNodes(): void
+    {
+        // No PDO at all (test harness default) — must not attempt any query.
+        $html = $this->converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [['type' => 'text', 'text' => 'No images here']],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('No images here', $html);
     }
 }

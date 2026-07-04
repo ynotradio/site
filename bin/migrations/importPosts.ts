@@ -20,7 +20,7 @@ import { connectToDatabase, getActivePosts, type Post } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger, logProgress, logSummary } from './shared/logger';
 import { convertHtmlToLexical } from './shared/importUtils';
-import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
+import { convertHtmlToLexicalEnhanced, resolveImageUploads } from './shared/enhancedHtmlToLexical';
 import { importImageFromUrl } from './shared/mediaImporter';
 import { cleanHeadline } from './shared/slugify';
 import { slugifyHeadline, formatDatePrefix } from '../../payload/src/collections/hooks/slugUtils';
@@ -359,9 +359,14 @@ async function importPost(payload: Payload, post: Post): Promise<'success' | 'sk
 
     // Convert HTML content to Lexical format
     // Use enhanced converter for custom texts (complex HTML), simple converter for stories
-    content = post.source === 'custom_text'
-      ? convertHtmlToLexicalEnhanced(post.content)
-      : convertHtmlToLexical(post.content);
+    if (post.source === 'custom_text') {
+      content = convertHtmlToLexicalEnhanced(post.content);
+      // Download and upload each inline <img> to Media/Cloudinary, turning
+      // the converter's placeholder upload nodes into real Media references.
+      content = await resolveImageUploads(payload, content);
+    } else {
+      content = convertHtmlToLexical(post.content);
+    }
 
     // Ensure content has valid structure - provide fallback for empty/invalid content
     if (

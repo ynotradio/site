@@ -434,6 +434,28 @@ nav a:hover {
   color: #666;
 }
 
+/* Lexical upload nodes (ConvertsLexicalToHtml's renderLexicalUploadNode).
+   Matches the float/wrap behavior of legacy <img align="left|right">. */
+.lexical-image {
+  max-width: 100%;
+  height: auto;
+}
+
+.lexical-image--left {
+  float: left;
+  margin: 0 16px 8px 0;
+}
+
+.lexical-image--right {
+  float: right;
+  margin: 0 0 8px 16px;
+}
+
+.lexical-image--center {
+  display: block;
+  margin: 0 auto 12px;
+}
+
 .pagination {
   padding: 20px;
 }

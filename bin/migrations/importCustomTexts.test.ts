@@ -30,8 +30,13 @@ const mockConvertHtmlToLexicalEnhanced = vi.fn((html: string) => ({
   },
 }));
 
+// Passthrough by default (no images to resolve); individual tests override
+// this with mockResolvedValueOnce to simulate a successful or failed import.
+const mockResolveImageUploads = vi.fn((_payload: unknown, content: unknown) => Promise.resolve(content));
+
 vi.mock('./shared/enhancedHtmlToLexical', () => ({
   convertHtmlToLexicalEnhanced: (html: string) => mockConvertHtmlToLexicalEnhanced(html),
+  resolveImageUploads: (...args: [unknown, unknown]) => mockResolveImageUploads(...args),
 }));
 
 vi.mock('./shared/logger', () => ({
@@ -61,6 +66,7 @@ describe('importCustomTexts', () => {
         ],
       },
     }));
+    mockResolveImageUploads.mockImplementation((_payload: unknown, content: unknown) => Promise.resolve(content));
 
     mockPayload = {
       find: vi.fn(),
@@ -216,19 +222,28 @@ describe('importCustomTexts', () => {
       expect(result).toBe('error');
     });
 
-    it('should not use the generic empty-content fallback for an image-only body', async () => {
+    it('should not use the generic empty-content fallback when an image-only body imports successfully', async () => {
       // Regression test: a body that converts to a single `upload` node has
-      // real content, but previously got nulled to "(No content available)"
-      // because the emptiness check ran after upload nodes were stripped.
+      // real content and should keep it once resolveImageUploads resolves
+      // the placeholder to a real Media reference.
       mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
         root: {
           type: 'root',
           children: [
             {
               type: 'upload',
-              value: { id: 'https://i.imgur.com/banner.png' },
+              value: null,
+              src: 'https://i.imgur.com/banner.png',
               children: [],
             },
+          ],
+        },
+      });
+      mockResolveImageUploads.mockResolvedValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            { type: 'upload', version: 3, relationTo: 'media', value: 'media-banner-123' },
           ],
         },
       });
@@ -250,9 +265,51 @@ describe('importCustomTexts', () => {
 
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
       const [firstChild] = callData.content.root.children;
+      expect(firstChild.type).toBe('upload');
+      expect(firstChild.value).toBe('media-banner-123');
+    });
+
+    it('should fall back to a note (not the generic empty-content message) when an image-only body fails to import', async () => {
+      // hasContent is computed from the pre-resolveImageUploads tree, so a
+      // failed image import gets its own message rather than being confused
+      // with a body that was truly empty from the start.
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'upload',
+              value: null,
+              src: 'https://i.imgur.com/banner.png',
+              children: [],
+            },
+          ],
+        },
+      });
+      mockResolveImageUploads.mockResolvedValueOnce({
+        root: { type: 'root', children: [] },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-banner' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/banner.png" width="685">',
+        html: '<img src="https://i.imgur.com/banner.png" width="685">',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const [firstChild] = callData.content.root.children;
       const text = firstChild.children[0].text;
       expect(text).not.toBe('(No content available)');
-      expect(text).toBe('(Image content not yet migrated)');
+      expect(text).toBe('(Image content failed to import)');
     });
 
     it('should still use the generic empty-content fallback when there is truly no content', async () => {

@@ -20,8 +20,10 @@ vi.mock('./shared/importUtils', () => ({
   convertHtmlToLexical: vi.fn((html) => ({ root: { children: [{ text: html }] } })),
 }));
 
+const mockResolveImageUploads = vi.fn((_payload: unknown, content: unknown) => Promise.resolve(content));
 vi.mock('./shared/enhancedHtmlToLexical', () => ({
   convertHtmlToLexicalEnhanced: vi.fn((html) => ({ root: { children: [{ text: html }] } })),
+  resolveImageUploads: (...args: [unknown, unknown]) => mockResolveImageUploads(...args),
 }));
 
 vi.mock('./shared/logger', () => ({
