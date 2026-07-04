@@ -110,16 +110,23 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: var(--theme-text, #222);
+  background-color: var(--theme-elevation-0, #fff);
+  background-image: none;
   text-decoration: none;
+  text-transform: none;
+  text-shadow: none;
   padding: 5px 11px;
+  line-height: normal;
   border: 1px solid var(--theme-border-color, #ddd);
   border-radius: 20px;
-  transition: background 0.15s;
+  transition: background-color 0.15s;
   white-space: nowrap;
 }
 
 .top11-controls-tab__related-link:hover {
-  background: var(--theme-elevation-50, #f3f4f6);
+  color: var(--theme-text, #222);
+  background-color: var(--theme-elevation-50, #f3f4f6);
+  text-decoration: none;
 }
 
 /* ---- Actions ---- */
