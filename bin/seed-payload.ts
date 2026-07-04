@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 /**
  * Seed Payload database with sample data for testing
@@ -17,6 +18,8 @@ import config from '@payload-config';
  */
 
 async function seed() {
+  assertNotConnectedToProd();
+
   console.log('🌱 Seeding Payload database with sample data...\n');
 
   const payload = await getPayloadHMR({ config });
@@ -414,7 +417,9 @@ async function seed() {
       },
     });
 
-    console.log(`   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}", "${donatePost.headline}" (donate page)`);
+    console.log(
+      `   ✅ Created "${post1.headline}", "${post2.headline}", "${post3.headline}", "${donatePost.headline}" (donate page)`,
+    );
 
     // Create sample DJs first (for Shows)
     console.log('🎧 Creating sample DJs...');

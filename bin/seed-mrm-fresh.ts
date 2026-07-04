@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 /**
  * Seed a fresh Modern Rock Madness tournament into Payload database.
@@ -41,6 +42,8 @@ function r1BandPair(matchNumber: number): [number, number] {
 }
 
 async function seedMrmFresh() {
+  assertNotConnectedToProd();
+
   console.log('🏆 Seeding fresh Modern Rock Madness tournament...\n');
 
   const payload = await getPayloadHMR({ config });
