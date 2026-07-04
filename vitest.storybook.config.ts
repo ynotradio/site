@@ -1,5 +1,6 @@
 import { defineProject } from 'vitest/config';
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 
 /**
  * Vitest project configuration for Storybook component and accessibility tests.
@@ -23,7 +24,7 @@ export default defineProject({
     browser: {
       enabled: true,
       headless: true,
-      provider: 'playwright',
+      provider: playwright(),
       instances: [{ browser: 'chromium' }],
     },
     setupFiles: ['.storybook/vitest.setup.ts'],
