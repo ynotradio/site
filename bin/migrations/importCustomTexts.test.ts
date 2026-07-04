@@ -18,18 +18,20 @@ vi.mock('./shared/payloadClient', () => ({
   getPayloadClient: vi.fn(),
 }));
 
+const mockConvertHtmlToLexicalEnhanced = vi.fn((html: string) => ({
+  root: {
+    type: 'root',
+    children: [
+      {
+        type: 'paragraph',
+        children: [{ type: 'text', text: html, format: 0 }],
+      },
+    ],
+  },
+}));
+
 vi.mock('./shared/enhancedHtmlToLexical', () => ({
-  convertHtmlToLexicalEnhanced: vi.fn((html: string) => ({
-    root: {
-      type: 'root',
-      children: [
-        {
-          type: 'paragraph',
-          children: [{ type: 'text', text: html, format: 0 }],
-        },
-      ],
-    },
-  })),
+  convertHtmlToLexicalEnhanced: (html: string) => mockConvertHtmlToLexicalEnhanced(html),
 }));
 
 vi.mock('./shared/logger', () => ({
@@ -48,6 +50,17 @@ describe('importCustomTexts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockConvertHtmlToLexicalEnhanced.mockImplementation((html: string) => ({
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [{ type: 'text', text: html, format: 0 }],
+          },
+        ],
+      },
+    }));
 
     mockPayload = {
       find: vi.fn(),
@@ -201,6 +214,78 @@ describe('importCustomTexts', () => {
       const result = await importCustomText(mockPayload as Payload, customText);
 
       expect(result).toBe('error');
+    });
+
+    it('should not use the generic empty-content fallback for an image-only body', async () => {
+      // Regression test: a body that converts to a single `upload` node has
+      // real content, but previously got nulled to "(No content available)"
+      // because the emptiness check ran after upload nodes were stripped.
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'upload',
+              value: { id: 'https://i.imgur.com/banner.png' },
+              children: [],
+            },
+          ],
+        },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-banner' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/banner.png" width="685">',
+        html: '<img src="https://i.imgur.com/banner.png" width="685">',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const [firstChild] = callData.content.root.children;
+      const text = firstChild.children[0].text;
+      expect(text).not.toBe('(No content available)');
+      expect(text).toBe('(Image content not yet migrated)');
+    });
+
+    it('should still use the generic empty-content fallback when there is truly no content', async () => {
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'paragraph',
+              children: [{ type: 'text', text: '   ', format: 0 }],
+            },
+          ],
+        },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-empty' });
+
+      const customText: CustomText = {
+        id: 52,
+        title: 'Y-Not Sessions 2021',
+        html: '<p>   </p>',
+        permalink: 'ynotsessions2021',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const text = callData.content.root.children[0].children[0].text;
+      expect(text).toBe('(No content available)');
     });
   });
 });

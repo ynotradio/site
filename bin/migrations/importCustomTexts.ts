@@ -72,6 +72,18 @@ async function importCustomText(
     try {
       content = convertHtmlToLexicalEnhanced(customText.html || '');
 
+      // Check if content is empty or just has empty paragraph. This must run
+      // BEFORE stripping upload nodes below — otherwise a body that's entirely
+      // an image (a banner <img>, a show-directory grid, etc.) looks empty
+      // after stripping and gets replaced with the "(No content available)"
+      // fallback, silently discarding pages that had real (if unhandled) content.
+      const hasContent = content.root.children.some((child: any) => {
+        if (child.type === 'paragraph') {
+          return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
+        }
+        return true;
+      });
+
       // Strip out upload nodes (images) since they have placeholder IDs that fail validation
       // Images will need to be re-added manually or via a separate import process
       const stripUploadNodes = (nodes: any[]): any[] => nodes
@@ -85,13 +97,34 @@ async function importCustomText(
 
       content.root.children = stripUploadNodes(content.root.children);
 
-      // Check if content is empty or just has empty paragraph
-      const hasContent = content.root.children.some((child: any) => {
-        if (child.type === 'paragraph') {
-          return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
-        }
-        return true;
-      });
+      // An image-only body has real content (hasContent === true) but strips
+      // down to zero children — Payload's rich-text field needs at least one
+      // block, so leave a note rather than an empty root.
+      if (hasContent && content.root.children.length === 0) {
+        logger.warn(
+          `  Custom text ${customText.id} had only image content, which was stripped`,
+        );
+        content.root.children = [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [
+              {
+                type: 'text',
+                text: '(Image content not yet migrated)',
+                format: 0,
+                mode: 'normal',
+                style: '',
+                detail: 0,
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+          },
+        ];
+      }
 
       if (!hasContent) {
         logger.warn(`  Custom text ${customText.id} has empty content, using fallback`);
