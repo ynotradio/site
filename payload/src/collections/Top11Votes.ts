@@ -30,7 +30,15 @@ export const Top11Votes: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      async ({ operation, data, req }) => {
+      async ({ operation, data: incomingData, req }) => {
+        // voterKey is a Postgres GENERATED ALWAYS column (see migration
+        // 20260701_170648_add_top11_vote_dedup_and_lookback) — Postgres computes
+        // and writes it, so Payload must never attempt to set it itself.
+        const data = incomingData;
+        if (data) {
+          delete (data as Record<string, unknown>).voterKey;
+        }
+
         if (operation !== 'create' || !data) {
           return data;
         }
@@ -148,6 +156,15 @@ export const Top11Votes: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: 'voterKey',
+      type: 'text',
+      admin: {
+        readOnly: true,
+        description:
+          'Auto-generated dedup key (voterAuth0Id || voterUserId || voterEmail). Computed by Postgres, not editable.',
+      },
     },
     {
       name: 'voteSource',

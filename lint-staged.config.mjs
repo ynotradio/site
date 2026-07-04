@@ -6,7 +6,8 @@ const filterLintIgnored = (files) =>
     (f) =>
       !f.includes('/.storybook/') &&
       !f.endsWith('next-env.d.ts') &&
-      !f.includes('/bin/migrations/'),
+      !f.includes('/bin/migrations/') &&
+      !f.includes('/payload/migrations/'),
   );
 
 export default {
