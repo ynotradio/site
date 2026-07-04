@@ -92,6 +92,54 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('</a> by The Blackburns.', $html);
     }
 
+    public function testTextNodeWithSmallFontSizeStateGetsSmallClass(): void
+    {
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'text',
+                                'text' => 'Terms and conditions apply.',
+                                '$' => ['fontSize' => 'small'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--small">Terms and conditions apply.</span>',
+            $html
+        );
+    }
+
+    public function testTextNodeWithoutStateIsUnaffected(): void
+    {
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => 'Normal text'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        $this->assertStringNotContainsString('lexical-text--small', $html);
+        $this->assertStringContainsString('Normal text', $html);
+    }
+
     public function testForceNewTabLinksOverridesLexicalNewTabFlag(): void
     {
         $lexicalJson = json_encode([
@@ -139,6 +187,37 @@ class ConvertsLexicalToHtmlTest extends TestCase
             'root' => [
                 'children' => [
                     ['type' => 'block', 'fields' => $fields],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Build a Lexical document containing a single embed block with
+     * arbitrary extra fields (e.g. layoutOverride/heightOverride).
+     */
+    private function embedBlockJsonWithFields(string $url, array $extraFields): string
+    {
+        $fields = array_merge(['blockType' => 'embed', 'url' => $url], $extraFields);
+
+        return json_encode([
+            'root' => [
+                'children' => [
+                    ['type' => 'block', 'fields' => $fields],
+                ],
+            ],
+        ]);
+    }
+
+    /**
+     * Build a Lexical document containing a single paypalButton block.
+     */
+    private function paypalButtonBlockJson(array $fields): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    ['type' => 'block', 'fields' => array_merge(['blockType' => 'paypalButton'], $fields)],
                 ],
             ],
         ]);
@@ -218,6 +297,55 @@ class ConvertsLexicalToHtmlTest extends TestCase
 
         $this->assertStringContainsString('https://www.opendrive.com/player/216190430_XqukK', $html);
         $this->assertStringContainsString('height="60"', $html);
+    }
+
+    public function testEmbedBlockRendersLive365Player(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://live365.com/embed/player.html?station=a54553&s=xl&m=light')
+        );
+
+        $this->assertStringContainsString('live365.com/embed/player.html', $html);
+        $this->assertStringContainsString('class="embed embed--live365"', $html);
+        $this->assertStringContainsString('height="156"', $html);
+    }
+
+    public function testEmbedBlockHeightOverrideAppliesToAudioLayout(): void
+    {
+        // Google Forms/Sheets fall through to the generic 'audio' layout with
+        // a fixed 152px default; heightOverride lets an editor give it more room.
+        $html = $this->converter->convert($this->embedBlockJsonWithFields(
+            'https://docs.google.com/forms/d/e/abc/viewform',
+            ['heightOverride' => 600]
+        ));
+
+        $this->assertStringContainsString('height="600"', $html);
+        $this->assertStringNotContainsString('height="152"', $html);
+    }
+
+    public function testEmbedBlockLayoutOverrideForcesVideoLayout(): void
+    {
+        // A generic iframe URL forced into the responsive 16:9 video wrapper.
+        $html = $this->converter->convert($this->embedBlockJsonWithFields(
+            'https://example.com/some-video-embed',
+            ['layoutOverride' => 'video']
+        ));
+
+        $this->assertStringContainsString('embed--video', $html);
+        $this->assertStringContainsString('padding-bottom:56.25%', $html);
+    }
+
+    public function testEmbedBlockIgnoresHeightOverrideForVideoLayout(): void
+    {
+        // heightOverride only makes sense for the audio layout; a YouTube
+        // video should stay purely responsive even if heightOverride is set.
+        $html = $this->converter->convert($this->embedBlockJsonWithFields(
+            'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            ['heightOverride' => 999]
+        ));
+
+        $this->assertStringNotContainsString('height="999"', $html);
+        $this->assertStringContainsString('padding-bottom:56.25%', $html);
     }
 
     public function testEmbedBlockRendersCaption(): void
@@ -396,5 +524,51 @@ class ConvertsLexicalToHtmlTest extends TestCase
         ]));
 
         $this->assertStringContainsString('No images here', $html);
+    }
+
+    public function testPayPalButtonBlockRendersHostedButtonForm(): void
+    {
+        $html = $this->converter->convert(
+            $this->paypalButtonBlockJson(['hostedButtonId' => '5EHFMBVNYRVA8'])
+        );
+
+        $this->assertStringContainsString('<form class="paypal-button"', $html);
+        $this->assertStringContainsString('action="https://www.paypal.com/cgi-bin/webscr"', $html);
+        $this->assertStringContainsString('value="5EHFMBVNYRVA8"', $html);
+        $this->assertStringNotContainsString('<select', $html);
+    }
+
+    public function testPayPalButtonBlockRendersPriceOptionsDropdown(): void
+    {
+        $html = $this->converter->convert($this->paypalButtonBlockJson([
+            'hostedButtonId' => '5EHFMBVNYRVA8',
+            'buttonLabel' => 'Donation Options',
+            'options' => [
+                ['label' => 'Album Download', 'priceLabel' => '$15.00 USD'],
+                ['label' => 'T-Shirt', 'priceLabel' => '$35.00 USD'],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<select name="os0">', $html);
+        $this->assertStringContainsString('Album Download', $html);
+        $this->assertStringContainsString('$35.00 USD', $html);
+        $this->assertStringContainsString('name="on0" value="Donation Options Options"', $html);
+    }
+
+    public function testPayPalButtonBlockRejectsUnsafeHostedButtonId(): void
+    {
+        $html = $this->converter->convert(
+            $this->paypalButtonBlockJson(['hostedButtonId' => '<script>alert(1)</script>'])
+        );
+
+        $this->assertStringNotContainsString('<form', $html);
+        $this->assertStringNotContainsString('<script>alert', $html);
+    }
+
+    public function testPayPalButtonBlockRendersNothingWithoutHostedButtonId(): void
+    {
+        $html = $this->converter->convert($this->paypalButtonBlockJson([]));
+
+        $this->assertSame('', $html);
     }
 }

@@ -35,6 +35,32 @@ export const EmbedBlock: Block = {
         description: 'Optional caption displayed below the embed',
       },
     },
+    {
+      name: 'layoutOverride',
+      type: 'select',
+      label: 'Layout override',
+      options: [
+        { label: 'Auto (detect from URL)', value: '' },
+        { label: 'Video (responsive 16:9)', value: 'video' },
+        { label: 'Audio / fixed height', value: 'audio' },
+      ],
+      defaultValue: '',
+      admin: {
+        description:
+          'Most providers pick the right layout automatically. Override for things like a Google '
+          + 'Form or Sheet, which need a taller fixed-height box rather than the audio-player default.',
+      },
+    },
+    {
+      name: 'heightOverride',
+      type: 'number',
+      label: 'Height override (px)',
+      admin: {
+        description:
+          'Only applies to the "Audio / fixed height" layout — overrides the default height.',
+        condition: (_, siblingData) => siblingData?.layoutOverride === 'audio',
+      },
+    },
   ],
 };
 

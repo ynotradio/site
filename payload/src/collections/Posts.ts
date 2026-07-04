@@ -4,6 +4,7 @@ import { lexicalEditor, EXPERIMENTAL_TableFeature } from '@payloadcms/richtext-l
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
+import { SmallTextFeature } from '../features/text-size';
 import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { postSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
@@ -99,6 +100,7 @@ export const Posts: CollectionConfig = {
           ImageAlignmentUploadFeature(),
           EmbedFeature(),
           EXPERIMENTAL_TableFeature(),
+          SmallTextFeature(),
         ],
       }),
       required: true,

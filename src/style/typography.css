@@ -456,6 +456,23 @@ nav a:hover {
   margin: 0 auto 12px;
 }
 
+/* PayPal hosted-button block (RendersPayPalButton trait) */
+.paypal-button {
+  margin: 0 0 16px;
+}
+
+.paypal-button select {
+  display: block;
+  margin: 0 0 8px;
+}
+
+/* Lexical TextStateFeature "small" state (payload/src/features/text-size) —
+   the semantic replacement for legacy <font size="1|2"> small print. Keep
+   this font-size in sync with the state's `css` config in that feature. */
+.lexical-text--small {
+  font-size: 0.85em;
+}
+
 .pagination {
   padding: 20px;
 }
