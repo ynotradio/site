@@ -37,6 +37,7 @@ import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } f
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PostsListHeader as PostsListHeader_bb65c0e3a5c16be042e54d2df483005c } from '../../../payload/src/features/story-order/PostsListHeader'
 import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
+import { Top11ContestControlsTab as Top11ContestControlsTab_c62a514aa40af66220ce4d0523972d90 } from '../../../payload/src/features/top11/Top11ContestControlsTab'
 import { TournamentBracketTab as TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27 } from '../../../payload/src/features/mrm-bracket/TournamentBracketTab'
 import { MatchControlsTab as MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953 } from '../../../payload/src/features/mrm-live/MatchControlsTab'
 import { QueryPresetsAccessCell as QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
@@ -99,6 +100,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/story-order/PostsListHeader#PostsListHeader": PostsListHeader_bb65c0e3a5c16be042e54d2df483005c,
   "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
+  "/payload/src/features/top11/Top11ContestControlsTab#Top11ContestControlsTab": Top11ContestControlsTab_c62a514aa40af66220ce4d0523972d90,
   "/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab": TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27,
   "/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab": MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953,
   "@payloadcms/next/client#QueryPresetsAccessCell": QueryPresetsAccessCell_2b8867833a34864a02ddf429b0728a40,
