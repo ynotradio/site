@@ -54,7 +54,7 @@
 
 .top11-controls-tab__hint {
   font-size: 0.8rem;
-  color: var(--theme-text, #888);
+  color: var(--theme-text, #666);
   margin: 8px 0 0;
 }
 
@@ -92,7 +92,7 @@
 
 .top11-controls-tab__status-badge--archived {
   background: #f3f4f6;
-  color: #6b7280;
+  color: #4b5563;
 }
 
 /* ---- Related-entity links ---- */
@@ -197,7 +197,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: var(--theme-text, #888);
+  color: var(--theme-text, #666);
 }
 
 .top11-controls-tab__stat dd {
@@ -220,7 +220,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  color: var(--theme-text, #888);
+  color: var(--theme-text, #666);
   border-bottom: 2px solid var(--theme-border-color, #eee);
 }
 
@@ -236,7 +236,7 @@
 
 .top11-controls-tab__ranking-order {
   font-weight: 700;
-  color: var(--theme-text, #888);
+  color: var(--theme-text, #666);
   width: 48px;
 }
 
