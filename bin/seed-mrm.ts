@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 /**
  * Seed Modern Rock Madness data into Payload database
@@ -18,6 +19,8 @@ import config from '@payload-config';
  */
 
 async function seedMrm() {
+  assertNotConnectedToProd();
+
   console.log('🏆 Seeding Modern Rock Madness data...\n');
 
   const payload = await getPayloadHMR({ config });

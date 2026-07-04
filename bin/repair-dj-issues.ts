@@ -19,6 +19,7 @@
 
 import { getPayload } from 'payload';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 process.env.PAYLOAD_MIGRATING = 'true';
 
@@ -43,6 +44,7 @@ async function main() {
     console.log('    Run with --confirm to actually delete records.\n');
   } else {
     console.log('🔥 CONFIRM MODE: Records will be DELETED!\n');
+    assertNotConnectedToProd();
   }
 
   const payload = await getPayload({ config });

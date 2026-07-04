@@ -77,10 +77,12 @@ describe('payloadClient', () => {
     });
 
     it('should throw when NEON_PROD_DATABASE_URL is not set for prod-neon target', async () => {
+      process.env.YES_I_MEAN_PROD = 'true';
       const { getPayloadClient } = await import('./payloadClient');
       await expect(getPayloadClient('prod-neon')).rejects.toThrow(
         'Database URI not found for target "prod-neon"',
       );
+      delete process.env.YES_I_MEAN_PROD;
     });
 
     it('should throw when neither NEON_DEV_DATABASE_URL nor DATABASE_URI is set for local-postgres', async () => {
@@ -110,8 +112,44 @@ describe('payloadClient', () => {
       expect(process.env.DATABASE_URI).toBe('postgresql://local/fallback');
     });
 
-    it('should return uri for prod-neon when NEON_PROD_DATABASE_URL is set', async () => {
+    it('should prefer DATABASE_URI over NEON_DEV_DATABASE_URL for local-postgres target', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/actual';
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://dev/should-not-be-used';
+      const { getPayload } = await import('payload');
+      const mockLocal = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockLocal);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      await getPayloadClient('local-postgres');
+
+      expect(process.env.DATABASE_URI).toBe('postgresql://local/actual');
+    });
+
+    it('should default to local-postgres when no target is given', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/default';
+      const { getPayload } = await import('payload');
+      const mockDefault = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockDefault);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient();
+
+      expect(result).toBe(mockDefault);
+    });
+
+    it('should refuse prod-neon target without YES_I_MEAN_PROD=true', async () => {
       process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+      delete process.env.YES_I_MEAN_PROD;
+
+      const { getPayloadClient } = await import('./payloadClient');
+      await expect(getPayloadClient('prod-neon')).rejects.toThrow(
+        'Refusing to connect to production database',
+      );
+    });
+
+    it('should return uri for prod-neon when NEON_PROD_DATABASE_URL is set and YES_I_MEAN_PROD=true', async () => {
+      process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+      process.env.YES_I_MEAN_PROD = 'true';
       const { getPayload } = await import('payload');
       const mockProd = { find: vi.fn(), create: vi.fn() };
       (getPayload as Mock).mockResolvedValueOnce(mockProd);
@@ -121,6 +159,8 @@ describe('payloadClient', () => {
 
       expect(result).toBe(mockProd);
       expect(process.env.DATABASE_URI).toBe('postgresql://prod/db');
+
+      delete process.env.YES_I_MEAN_PROD;
     });
 
     it('should return uri for dev-neon when NEON_DEV_DATABASE_URL is set', async () => {
@@ -146,6 +186,93 @@ describe('payloadClient', () => {
       const result = await getPayloadClient('local-postgres');
 
       expect(result).toBe(mockLocal);
+    });
+  });
+
+  describe('prod-write guard', () => {
+    const savedEnv: Record<string, string | undefined> = {};
+
+    beforeEach(() => {
+      savedEnv.NEON_PROD_DATABASE_URL = process.env.NEON_PROD_DATABASE_URL;
+      savedEnv.DATABASE_URI = process.env.DATABASE_URI;
+      savedEnv.YES_I_MEAN_PROD = process.env.YES_I_MEAN_PROD;
+      delete process.env.NEON_PROD_DATABASE_URL;
+      delete process.env.DATABASE_URI;
+      delete process.env.YES_I_MEAN_PROD;
+    });
+
+    afterEach(() => {
+      process.env.NEON_PROD_DATABASE_URL = savedEnv.NEON_PROD_DATABASE_URL;
+      process.env.DATABASE_URI = savedEnv.DATABASE_URI;
+      process.env.YES_I_MEAN_PROD = savedEnv.YES_I_MEAN_PROD;
+    });
+
+    describe('isProdTarget', () => {
+      it('is true for prod and prod-neon', async () => {
+        const { isProdTarget } = await import('./payloadClient');
+        expect(isProdTarget('prod')).toBe(true);
+        expect(isProdTarget('prod-neon')).toBe(true);
+      });
+
+      it('is false for non-prod targets', async () => {
+        const { isProdTarget } = await import('./payloadClient');
+        expect(isProdTarget('dev')).toBe(false);
+        expect(isProdTarget('dev-neon')).toBe(false);
+        expect(isProdTarget('local-postgres')).toBe(false);
+      });
+    });
+
+    describe('assertProdWriteAllowed', () => {
+      it('does not throw for non-prod targets', async () => {
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('local-postgres')).not.toThrow();
+        expect(() => assertProdWriteAllowed('dev-neon')).not.toThrow();
+      });
+
+      it('throws for prod targets without YES_I_MEAN_PROD=true', async () => {
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('prod-neon')).toThrow(
+          'Refusing to connect to production database',
+        );
+      });
+
+      it('does not throw for prod targets when YES_I_MEAN_PROD=true', async () => {
+        process.env.YES_I_MEAN_PROD = 'true';
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('prod-neon')).not.toThrow();
+      });
+    });
+
+    describe('assertNotConnectedToProd', () => {
+      it('does not throw when DATABASE_URI is unset', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
+
+      it('does not throw when DATABASE_URI differs from prod', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://dev/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
+
+      it('throws when DATABASE_URI matches prod without YES_I_MEAN_PROD=true', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://prod/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).toThrow(
+          'DATABASE_URI is currently set to the production database',
+        );
+      });
+
+      it('does not throw when DATABASE_URI matches prod and YES_I_MEAN_PROD=true', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://prod/db';
+        process.env.YES_I_MEAN_PROD = 'true';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
     });
   });
 

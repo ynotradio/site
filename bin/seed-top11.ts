@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 /**
  * Seed a realistic Top 11 contest into the Payload database for demos/dev.
@@ -191,6 +192,8 @@ async function findOrCreateSong(
 }
 
 async function seedTop11() {
+  assertNotConnectedToProd();
+
   console.log('🎵 Seeding Top 11 demo contest (week of 2026-06-25)...\n');
 
   const payload = await getPayloadHMR({ config });
