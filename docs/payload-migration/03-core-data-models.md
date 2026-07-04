@@ -30,7 +30,7 @@
 | 18       | Top11Votes                   | `top11_votes`                      | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
 | 19       | YearEndPolls                 | `year_end_polls`                   | ✅ Complete | Annual poll config                                                                     |
 | 20       | YearEndPollCategories        | `year_end_poll_categories`         | ✅ Complete | Poll categories with nominees and denormalized vote counts                             |
-| 21       | YearEndPollVotes             | `year_end_poll_votes`              | ✅ Complete | IP-based individual vote records                                                       |
+| 21       | YearEndPollVotes             | `year_end_poll_votes`              | ✅ Complete | Auth0-authenticated individual vote records; `userId` used for duplicate prevention    |
 | 22       | ModernRockMadnessTournaments | `modern-rock-madness-tournaments`  | ✅ Complete | Tournament config                                                                      |
 | 23       | ModernRockMadnessGroups      | `modern-rock-madness-groups`       | ✅ Complete | Tournament participants — groups of one or more artists; optional name/image overrides |
 | 24       | ModernRockMadnessMatches     | `modern-rock-madness-matches`      | ✅ Complete | Bracket matchups with bracket progression via `nextMatch` field                        |

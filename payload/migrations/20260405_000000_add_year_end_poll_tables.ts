@@ -6,7 +6,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     CREATE TYPE "public"."enum_year_end_polls_status" AS ENUM('draft', 'open', 'closed', 'archived');
   `);
   await db.execute(sql`
-    CREATE TYPE "public"."enum_year_end_poll_categories_category_type" AS ENUM('songs', 'albums', 'artists', 'concerts', 'custom');
+    CREATE TYPE "public"."enum_year_end_poll_categories_category_type" AS ENUM('songs', 'records', 'artists', 'concerts', 'custom');
   `);
 
   // Create year_end_polls table
@@ -30,11 +30,10 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     CREATE TABLE IF NOT EXISTS "year_end_poll_categories" (
       "id" serial PRIMARY KEY NOT NULL,
       "poll_id" integer NOT NULL,
-      "name" varchar NOT NULL,
+      "slug" varchar NOT NULL,
       "display_name" varchar NOT NULL,
       "category_type" "enum_year_end_poll_categories_category_type" NOT NULL,
       "max_picks" numeric DEFAULT 3 NOT NULL,
-      "sort_order" numeric DEFAULT 0,
       "voting_opens_at" timestamp(3) with time zone,
       "voting_closes_at" timestamp(3) with time zone,
       "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -82,9 +81,9 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     ALTER TABLE "year_end_polls" ADD CONSTRAINT "year_end_polls_slug_unique" UNIQUE("slug");
   `);
 
-  // Add unique constraint on (poll_id, name) for categories — prevents ambiguous lookup
+  // Add unique constraint on (poll_id, slug) for categories — prevents ambiguous lookup
   await db.execute(sql`
-    ALTER TABLE "year_end_poll_categories" ADD CONSTRAINT "year_end_poll_categories_poll_id_name_unique" UNIQUE("poll_id", "name");
+    ALTER TABLE "year_end_poll_categories" ADD CONSTRAINT "year_end_poll_categories_poll_id_slug_unique" UNIQUE("poll_id", "slug");
   `);
 
   // Add indexes for year_end_polls

@@ -30,7 +30,7 @@ export const YearEndPollVotes: CollectionConfig = {
     plural: 'Votes',
   },
   admin: {
-    defaultColumns: ['poll', 'category', 'nomineeId', 'userId', 'createdAt'],
+    defaultColumns: ['poll', 'category', 'userId', 'createdAt'],
     group: 'Polls & Contests',
     description:
       'Individual vote records for Year End Poll categories. Every voter is authenticated via Auth0.',

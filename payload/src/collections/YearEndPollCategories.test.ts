@@ -36,7 +36,7 @@ describe('YearEndPollCategories', () => {
     const allFields = flattenRowFields(YearEndPollCategories.fields);
     const requiredNames = allFields.filter((f) => f.required).map((f) => f.name);
     expect(requiredNames).toContain('poll');
-    expect(requiredNames).toContain('name');
+    expect(requiredNames).toContain('slug');
     expect(requiredNames).toContain('displayName');
     expect(requiredNames).toContain('categoryType');
     expect(requiredNames).toContain('maxPicks');
@@ -56,7 +56,7 @@ describe('YearEndPollCategories', () => {
     const typeField = allFields.find((f) => f.name === 'categoryType');
     const values = (typeField?.options as Array<{ value: string }>).map((o) => o.value);
     expect(values).toContain('songs');
-    expect(values).toContain('albums');
+    expect(values).toContain('records');
     expect(values).toContain('artists');
     expect(values).toContain('concerts');
     expect(values).toContain('custom');
@@ -116,14 +116,6 @@ describe('YearEndPollCategories', () => {
   it('has a validateNominees beforeChange hook', () => {
     expect(Array.isArray(YearEndPollCategories.hooks?.beforeChange)).toBe(true);
     expect(YearEndPollCategories.hooks?.beforeChange?.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('has a sortOrder field for ballot ordering', () => {
-    const allFields = flattenRowFields(YearEndPollCategories.fields);
-    const sortOrderField = allFields.find((f) => f.name === 'sortOrder');
-    expect(sortOrderField).toBeDefined();
-    expect(sortOrderField?.type).toBe('number');
-    expect(sortOrderField?.defaultValue).toBe(0);
   });
 
   it('voteCount is read-only in admin', () => {

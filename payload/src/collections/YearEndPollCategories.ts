@@ -57,11 +57,11 @@ export const YearEndPollCategories: CollectionConfig = {
       type: 'row',
       fields: [
         {
-          name: 'name',
+          name: 'slug',
           type: 'text',
           required: true,
           admin: {
-            description: 'URL-friendly category identifier (e.g., "songs", "albums", "artists")',
+            description: 'URL-friendly category identifier (e.g., "songs", "records", "artists")',
             width: '40%',
           },
         },
@@ -85,7 +85,7 @@ export const YearEndPollCategories: CollectionConfig = {
           required: true,
           options: [
             { label: 'Songs', value: 'songs' },
-            { label: 'Albums / Records', value: 'albums' },
+            { label: 'Records / Albums', value: 'records' },
             { label: 'Artists', value: 'artists' },
             { label: 'Concerts', value: 'concerts' },
             { label: 'Custom (movies, TV, etc.)', value: 'custom' },
@@ -104,20 +104,6 @@ export const YearEndPollCategories: CollectionConfig = {
           min: 1,
           admin: {
             description: 'Maximum selections allowed per voter for this category',
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'sortOrder',
-          type: 'number',
-          defaultValue: 0,
-          admin: {
-            description: 'Display order on the ballot (lower numbers appear first)',
             width: '50%',
           },
         },
