@@ -36,6 +36,7 @@
     "src/types/**/*.ts",
     "src/**/*.tsx",
     "vitest.config.ts",
+  "vitest.storybook.config.ts",
     "payload/**/*.ts",
     "payload/**/*.tsx",
     "netlify/**/*.ts",
