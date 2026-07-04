@@ -60,6 +60,9 @@ stacks.**
   show URL → `player-widget…?feed=<encoded path>` (widget URLs pass through);
   OpenDrive `/player/<id>` as-is; Vimeo/Spotify/SoundCloud → their embed URLs;
   everything else → generic iframe.
+- The `embed` block has a `hideCoverImage` checkbox (default on, only shown in
+  the admin UI for Mixcloud URLs) controlling the widget's `hide_cover` param —
+  editors can opt back into showing the cover art per embed.
 
 **Trade-off:** the provider logic is duplicated across TypeScript and PHP. Kept
 honest by mirrored unit tests and "keep in sync" comments, but it is genuine
@@ -94,7 +97,7 @@ drift risk (see Option C).
 
 ## Alternatives considered
 
-### Option A — Generic embed block + runtime detection *(chosen, shipped)*
+### Option A — Generic embed block + runtime detection _(chosen, shipped)_
 
 One block, paste any URL, detect provider at render time.
 

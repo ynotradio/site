@@ -121,11 +121,14 @@ class ConvertsLexicalToHtmlTest extends TestCase
     /**
      * Build a Lexical document containing a single embed block.
      */
-    private function embedBlockJson(string $url, ?string $caption = null): string
+    private function embedBlockJson(string $url, ?string $caption = null, ?bool $hideCoverImage = null): string
     {
         $fields = ['blockType' => 'embed', 'url' => $url];
         if ($caption !== null) {
             $fields['caption'] = $caption;
+        }
+        if ($hideCoverImage !== null) {
+            $fields['hideCoverImage'] = $hideCoverImage;
         }
 
         return json_encode([
@@ -160,6 +163,28 @@ class ConvertsLexicalToHtmlTest extends TestCase
             'feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
             $html
         );
+    }
+
+    public function testEmbedBlockConvertsMixcloudUrlHidingCoverByDefault(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/')
+        );
+
+        $this->assertStringContainsString('hide_cover=1', $html);
+    }
+
+    public function testEmbedBlockShowsCoverImageWhenHideCoverImageIsFalse(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson(
+                'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/',
+                null,
+                false
+            )
+        );
+
+        $this->assertStringContainsString('hide_cover=0', $html);
     }
 
     public function testEmbedBlockPassesThroughMixcloudWidgetUrl(): void

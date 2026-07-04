@@ -252,6 +252,20 @@ describe('detectEmbedType', () => {
       const result = detectEmbedType(url);
       expect(result.type).toBe('generic');
     });
+
+    it('should hide the cover image by default', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url);
+      expect(result.embedUrl).toContain('hide_cover=1');
+    });
+
+    it('should show the cover image when hideCoverImage is false', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url, { hideCoverImage: false });
+      expect(result.embedUrl).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=0&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+      );
+    });
   });
 
   describe('OpenDrive detection', () => {
