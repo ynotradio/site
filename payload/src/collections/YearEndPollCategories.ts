@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
+import { validateNominees } from './hooks/yearEndPollCategoryHooks';
 
 /**
  * YearEndPollCategories Collection
@@ -37,6 +38,9 @@ export const YearEndPollCategories: CollectionConfig = {
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
+  },
+  hooks: {
+    beforeChange: [validateNominees],
   },
   fields: [
     {
@@ -100,6 +104,20 @@ export const YearEndPollCategories: CollectionConfig = {
           min: 1,
           admin: {
             description: 'Maximum selections allowed per voter for this category',
+            width: '50%',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'sortOrder',
+          type: 'number',
+          defaultValue: 0,
+          admin: {
+            description: 'Display order on the ballot (lower numbers appear first)',
             width: '50%',
           },
         },
@@ -206,6 +224,7 @@ export const YearEndPollCategories: CollectionConfig = {
               defaultValue: 0,
               admin: {
                 description: 'Running vote total (updated when votes are cast)',
+                readOnly: true,
                 width: '30%',
               },
             },

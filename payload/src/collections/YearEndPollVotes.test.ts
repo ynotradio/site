@@ -58,6 +58,11 @@ describe('YearEndPollVotes', () => {
     expect(names).not.toContain('ipAddress');
   });
 
+  it('has beforeChange hooks for userId enforcement, dupe prevention, and maxPicks', () => {
+    expect(Array.isArray(YearEndPollVotes.hooks?.beforeChange)).toBe(true);
+    expect(YearEndPollVotes.hooks?.beforeChange?.length).toBeGreaterThanOrEqual(3);
+  });
+
   it('has no legacyId or migratedAt fields', () => {
     const allFields = flattenRowFields(YearEndPollVotes.fields);
     const names = allFields.map((f) => f.name);

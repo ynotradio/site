@@ -113,6 +113,24 @@ describe('YearEndPollCategories', () => {
     expect(recordField?.relationTo).toBe('records');
   });
 
+  it('has a validateNominees beforeChange hook', () => {
+    expect(Array.isArray(YearEndPollCategories.hooks?.beforeChange)).toBe(true);
+    expect(YearEndPollCategories.hooks?.beforeChange?.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('has a sortOrder field for ballot ordering', () => {
+    const allFields = flattenRowFields(YearEndPollCategories.fields);
+    const sortOrderField = allFields.find((f) => f.name === 'sortOrder');
+    expect(sortOrderField).toBeDefined();
+    expect(sortOrderField?.type).toBe('number');
+    expect(sortOrderField?.defaultValue).toBe(0);
+  });
+
+  it('voteCount is read-only in admin', () => {
+    const voteCountField = flattenNomineeFields().find((f) => f.name === 'voteCount');
+    expect((voteCountField as { admin?: { readOnly?: boolean } })?.admin?.readOnly).toBe(true);
+  });
+
   it('has no legacyId or migratedAt fields', () => {
     const allFields = flattenRowFields(YearEndPollCategories.fields);
     const names = allFields.map((f) => f.name);

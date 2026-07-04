@@ -1,9 +1,11 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-postgres';
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
-  // Create enums
+  // Create enums (one per execute to avoid multi-statement issues on some drivers)
   await db.execute(sql`
     CREATE TYPE "public"."enum_year_end_polls_status" AS ENUM('draft', 'open', 'closed', 'archived');
+  `);
+  await db.execute(sql`
     CREATE TYPE "public"."enum_year_end_poll_categories_category_type" AS ENUM('songs', 'albums', 'artists', 'concerts', 'custom');
   `);
 
@@ -32,6 +34,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
       "display_name" varchar NOT NULL,
       "category_type" "enum_year_end_poll_categories_category_type" NOT NULL,
       "max_picks" numeric DEFAULT 3 NOT NULL,
+      "sort_order" numeric DEFAULT 0,
       "voting_opens_at" timestamp(3) with time zone,
       "voting_closes_at" timestamp(3) with time zone,
       "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -79,6 +82,11 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     ALTER TABLE "year_end_polls" ADD CONSTRAINT "year_end_polls_slug_unique" UNIQUE("slug");
   `);
 
+  // Add unique constraint on (poll_id, name) for categories — prevents ambiguous lookup
+  await db.execute(sql`
+    ALTER TABLE "year_end_poll_categories" ADD CONSTRAINT "year_end_poll_categories_poll_id_name_unique" UNIQUE("poll_id", "name");
+  `);
+
   // Add indexes for year_end_polls
   await db.execute(sql`
     CREATE INDEX "year_end_polls_year_idx" ON "year_end_polls" USING btree ("year");
@@ -111,17 +119,22 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     CREATE INDEX "year_end_poll_votes_created_at_idx" ON "year_end_poll_votes" USING btree ("created_at");
   `);
 
+  // Unique index on (category_id, nominee_id, user_id) — hard duplicate prevention at DB level
+  await db.execute(sql`
+    CREATE UNIQUE INDEX "year_end_poll_votes_category_nominee_user_unique" ON "year_end_poll_votes" USING btree ("category_id", "nominee_id", "user_id");
+  `);
+
   // Add foreign key constraints
   await db.execute(sql`
     ALTER TABLE "year_end_polls" ADD CONSTRAINT "year_end_polls_banner_image_id_media_id_fk" FOREIGN KEY ("banner_image_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
-    ALTER TABLE "year_end_poll_categories" ADD CONSTRAINT "year_end_poll_categories_poll_id_year_end_polls_id_fk" FOREIGN KEY ("poll_id") REFERENCES "public"."year_end_polls"("id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "year_end_poll_categories" ADD CONSTRAINT "year_end_poll_categories_poll_id_year_end_polls_id_fk" FOREIGN KEY ("poll_id") REFERENCES "public"."year_end_polls"("id") ON DELETE restrict ON UPDATE no action;
     ALTER TABLE "year_end_poll_categories_nominees" ADD CONSTRAINT "year_end_poll_categories_nominees_parent_fk" FOREIGN KEY ("_parent_id") REFERENCES "public"."year_end_poll_categories"("id") ON DELETE cascade ON UPDATE no action;
     ALTER TABLE "year_end_poll_categories_nominees" ADD CONSTRAINT "year_end_poll_categories_nominees_song_id_songs_id_fk" FOREIGN KEY ("song_id") REFERENCES "public"."songs"("id") ON DELETE set null ON UPDATE no action;
     ALTER TABLE "year_end_poll_categories_nominees" ADD CONSTRAINT "year_end_poll_categories_nominees_record_id_records_id_fk" FOREIGN KEY ("record_id") REFERENCES "public"."records"("id") ON DELETE set null ON UPDATE no action;
     ALTER TABLE "year_end_poll_categories_nominees" ADD CONSTRAINT "year_end_poll_categories_nominees_artist_id_artists_id_fk" FOREIGN KEY ("artist_id") REFERENCES "public"."artists"("id") ON DELETE set null ON UPDATE no action;
     ALTER TABLE "year_end_poll_categories_nominees" ADD CONSTRAINT "year_end_poll_categories_nominees_concert_id_concerts_id_fk" FOREIGN KEY ("concert_id") REFERENCES "public"."concerts"("id") ON DELETE set null ON UPDATE no action;
-    ALTER TABLE "year_end_poll_votes" ADD CONSTRAINT "year_end_poll_votes_poll_id_year_end_polls_id_fk" FOREIGN KEY ("poll_id") REFERENCES "public"."year_end_polls"("id") ON DELETE set null ON UPDATE no action;
-    ALTER TABLE "year_end_poll_votes" ADD CONSTRAINT "year_end_poll_votes_category_id_year_end_poll_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."year_end_poll_categories"("id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "year_end_poll_votes" ADD CONSTRAINT "year_end_poll_votes_poll_id_year_end_polls_id_fk" FOREIGN KEY ("poll_id") REFERENCES "public"."year_end_polls"("id") ON DELETE cascade ON UPDATE no action;
+    ALTER TABLE "year_end_poll_votes" ADD CONSTRAINT "year_end_poll_votes_category_id_year_end_poll_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."year_end_poll_categories"("id") ON DELETE cascade ON UPDATE no action;
   `);
 
   // Add locked_documents_rels foreign keys and indexes
@@ -136,6 +149,13 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {
+  // Drop FK constraints on payload_locked_documents_rels before dropping columns
+  await db.execute(sql`
+    ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_year_end_polls_fk";
+    ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_year_end_poll_categories_fk";
+    ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_year_end_poll_votes_fk";
+  `);
+
   await db.execute(sql`
     DROP TABLE IF EXISTS "year_end_poll_votes" CASCADE;
     DROP TABLE IF EXISTS "year_end_poll_categories_nominees" CASCADE;

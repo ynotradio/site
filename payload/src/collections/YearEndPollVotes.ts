@@ -1,5 +1,10 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
+import {
+  enforceUserId,
+  rejectDuplicateVote,
+  enforceMaxPicks,
+} from './hooks/yearEndPollVoteHooks';
 
 /**
  * YearEndPollVotes Collection
@@ -35,6 +40,10 @@ export const YearEndPollVotes: CollectionConfig = {
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin']),
     delete: ({ req }) => hasRole(req.user, ['admin']),
+  },
+  hooks: {
+    // Run in order: enforce identity → check dupe → check maxPicks
+    beforeChange: [enforceUserId, rejectDuplicateVote, enforceMaxPicks],
   },
   fields: [
     {
@@ -81,7 +90,7 @@ export const YearEndPollVotes: CollectionConfig = {
       index: true,
       admin: {
         description:
-          'Auth0 user ID (sub claim). Used as the unique voter identifier for duplicate prevention.',
+          'Auth0 user ID (sub claim). Populated server-side from the authenticated user — client-supplied values are overwritten.',
       },
     },
   ],
