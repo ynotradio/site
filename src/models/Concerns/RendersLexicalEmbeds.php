@@ -28,6 +28,7 @@ trait RendersLexicalEmbeds
 
         $hideCoverImage = !array_key_exists('hideCoverImage', $fields) || $fields['hideCoverImage'] !== false;
         $embed = $this->normalizeEmbedUrl($url, $hideCoverImage);
+        $embed = $this->applyEmbedLayoutOverride($embed, $fields);
         $src = htmlspecialchars($embed['src'], ENT_QUOTES, 'UTF-8');
 
         if ($embed['layout'] === 'video') {
@@ -138,8 +139,39 @@ trait RendersLexicalEmbeds
             ];
         }
 
+        // Live365 -> the embed/played.html and embed/player.html widgets are
+        // already embeddable as-is (used by the player-test custom text).
+        if (str_contains($url, 'live365.com')) {
+            return ['provider' => 'live365', 'src' => $url, 'layout' => 'audio', 'height' => 156];
+        }
+
         // Generic — embed the URL as-is (matches the block's "any iframe URL").
         return ['provider' => 'generic', 'src' => $url, 'layout' => 'audio', 'height' => 152];
+    }
+
+    /**
+     * Apply the embed block's optional layoutOverride/heightOverride fields
+     * (see payload/src/features/embed/server.ts) on top of the provider's
+     * auto-detected layout/height — e.g. forcing a Google Form/Sheet embed
+     * into a taller fixed-height box instead of the 152px audio default.
+     *
+     * @param array{provider:string, src:string, layout:string, height:int} $embed
+     */
+    protected function applyEmbedLayoutOverride(array $embed, array $fields): array
+    {
+        $layoutOverride = is_string($fields['layoutOverride'] ?? null) ? $fields['layoutOverride'] : '';
+        if ($layoutOverride === 'video' || $layoutOverride === 'audio') {
+            $embed['layout'] = $layoutOverride;
+        }
+
+        if ($embed['layout'] === 'audio') {
+            $heightOverride = $fields['heightOverride'] ?? null;
+            if (is_numeric($heightOverride) && (int) $heightOverride > 0) {
+                $embed['height'] = (int) $heightOverride;
+            }
+        }
+
+        return $embed;
     }
 
     protected function extractYouTubeId(string $url): ?string

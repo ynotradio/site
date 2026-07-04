@@ -287,6 +287,20 @@ describe('detectEmbedType', () => {
       expect(result).toEqual({ type: 'opendrive', embedUrl: url, originalUrl: url });
     });
   });
+
+  describe('Live365 detection', () => {
+    it('should pass through a Live365 embed player URL', () => {
+      const url = 'https://live365.com/embed/player.html?station=a54553&s=xl&m=light';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'live365', embedUrl: url, originalUrl: url });
+    });
+
+    it('should pass through a Live365 "played" embed URL', () => {
+      const url = 'https://live365.com/embed/played.html?station=a54553&s=lg&m=light';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('live365');
+    });
+  });
 });
 
 describe('extractMixcloudFeed', () => {

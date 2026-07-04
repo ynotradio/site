@@ -1,5 +1,5 @@
 export type EmbedType =
-  'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'mixcloud' | 'opendrive' | 'generic';
+  'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'mixcloud' | 'opendrive' | 'live365' | 'generic';
 
 export interface EmbedInfo {
   type: EmbedType;
@@ -132,6 +132,12 @@ export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {
   // OpenDrive — the /player/<id> URL is already an embeddable audio bar.
   if (url.includes('opendrive.com')) {
     return { type: 'opendrive', embedUrl: url, originalUrl: url };
+  }
+
+  // Live365 — the embed/played.html and embed/player.html widgets are
+  // already embeddable as-is (used by the player-test custom text).
+  if (url.includes('live365.com')) {
+    return { type: 'live365', embedUrl: url, originalUrl: url };
   }
 
   return { type: 'generic', embedUrl: url, originalUrl: url };

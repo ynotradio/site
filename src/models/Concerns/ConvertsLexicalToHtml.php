@@ -12,6 +12,7 @@ namespace YNotRadio\Models\Concerns;
 trait ConvertsLexicalToHtml
 {
     use RendersLexicalEmbeds;
+    use RendersPayPalButton;
 
     // Lexical text format bit flags
     private static int $LEXICAL_FORMAT_BOLD = 1;
@@ -168,8 +169,12 @@ trait ConvertsLexicalToHtml
                 return $this->renderLexicalUploadNode($node, $mediaMap);
 
             case 'block':
-                // Payload block nodes (e.g. the EmbedFeature embed block).
+                // Payload block nodes — dispatch by blockType since more than
+                // one BlocksFeature block can appear in the same field.
                 $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                if (($fields['blockType'] ?? '') === 'paypalButton') {
+                    return $this->renderLexicalPayPalButtonBlock($fields);
+                }
                 return $this->renderLexicalEmbedBlock($fields);
 
             case 'text':
@@ -187,6 +192,15 @@ trait ConvertsLexicalToHtml
                 }
                 if ($format & self::$LEXICAL_FORMAT_UNDERLINE) {
                     $text = "<u>$text</u>";
+                }
+
+                // TextStateFeature's node-state key ('$', see Lexical core's
+                // NODE_STATE_KEY) — only the semantic "small" fontSize state
+                // is wired up today (payload/src/features/text-size), the
+                // modern replacement for legacy <font size> small print.
+                $textState = is_array($node['$'] ?? null) ? $node['$'] : [];
+                if (($textState['fontSize'] ?? null) === 'small') {
+                    $text = '<span class="lexical-text--small">' . $text . '</span>';
                 }
 
                 return $text;

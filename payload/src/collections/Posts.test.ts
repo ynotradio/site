@@ -7,6 +7,7 @@ vi.mock('@payloadcms/richtext-lexical', () => ({
   BlocksFeature: vi.fn((config) => ({ _type: 'blocks', ...config })),
   EXPERIMENTAL_TableFeature: vi.fn(() => ({ _type: 'table' })),
   UploadFeature: vi.fn((config) => ({ _type: 'upload', key: 'upload', ...config })),
+  TextStateFeature: vi.fn((config) => ({ _type: 'textState', ...config })),
 }));
 
 describe('Posts', () => {
@@ -168,7 +169,7 @@ describe('Posts', () => {
     ];
     const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
 
-    expect(result).toHaveLength(5);
+    expect(result).toHaveLength(6);
     expect(result[0]).toEqual({ id: 'paragraph', key: 'paragraph' });
     expect(result[1]).toEqual({ id: 'text', key: 'text' });
     // The plain default upload feature (id: 'default-upload') is filtered
@@ -180,6 +181,9 @@ describe('Posts', () => {
     expect((result[3] as any)._type).toBe('blocks');
     // EXPERIMENTAL_TableFeature()
     expect((result[4] as any)._type).toBe('table');
+    // SmallTextFeature() (TextStateFeature mock returns { _type: 'textState', ... })
+    expect((result[5] as any)._type).toBe('textState');
+    expect((result[5] as any).state.fontSize.small.label).toBe('Small');
   });
 
   it('does not register EXPERIMENTAL_TableFeature twice', () => {
