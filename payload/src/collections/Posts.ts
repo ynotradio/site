@@ -1,8 +1,9 @@
 import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
-import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { lexicalEditor, EXPERIMENTAL_TableFeature } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
+import { ImageAlignmentUploadFeature } from '../features/image-alignment';
 import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { postSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
@@ -90,7 +91,15 @@ export const Posts: CollectionConfig = {
       name: 'content',
       type: 'richText',
       editor: lexicalEditor({
-        features: ({ defaultFeatures }) => [...defaultFeatures, EmbedFeature()],
+        features: ({ defaultFeatures }) => [
+          // Swap the plain default UploadFeature for one with an alignment
+          // field (see ../features/image-alignment) so inline images can
+          // float left/right like the legacy <img align> markup did.
+          ...defaultFeatures.filter((feature) => feature.key !== 'upload'),
+          ImageAlignmentUploadFeature(),
+          EmbedFeature(),
+          EXPERIMENTAL_TableFeature(),
+        ],
       }),
       required: true,
       admin: {

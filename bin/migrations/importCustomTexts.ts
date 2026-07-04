@@ -15,7 +15,7 @@ import { Command } from 'commander';
 import { connectToDatabase, type CustomText } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
-import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
+import { convertHtmlToLexicalEnhanced, resolveImageUploads } from './shared/enhancedHtmlToLexical';
 
 const logger = createLogger('CustomTextsImport');
 
@@ -73,10 +73,11 @@ async function importCustomText(
       content = convertHtmlToLexicalEnhanced(customText.html || '');
 
       // Check if content is empty or just has empty paragraph. This must run
-      // BEFORE stripping upload nodes below — otherwise a body that's entirely
-      // an image (a banner <img>, a show-directory grid, etc.) looks empty
-      // after stripping and gets replaced with the "(No content available)"
-      // fallback, silently discarding pages that had real (if unhandled) content.
+      // BEFORE resolving image uploads below — otherwise a body that's
+      // entirely an image (a banner <img>, a show-directory grid, etc.) looks
+      // empty if every image import fails and gets replaced with the
+      // "(No content available)" fallback, silently discarding pages that
+      // had real (if unmigrated) content.
       const hasContent = content.root.children.some((child: any) => {
         if (child.type === 'paragraph') {
           return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
@@ -84,25 +85,19 @@ async function importCustomText(
         return true;
       });
 
-      // Strip out upload nodes (images) since they have placeholder IDs that fail validation
-      // Images will need to be re-added manually or via a separate import process
-      const stripUploadNodes = (nodes: any[]): any[] => nodes
-        .filter((node) => node.type !== 'upload')
-        .map((node) => {
-          if (node.children && Array.isArray(node.children)) {
-            return { ...node, children: stripUploadNodes(node.children) };
-          }
-          return node;
-        });
+      // Download and upload each inline <img> to Media/Cloudinary via the
+      // same importImageFromUrl helper the headerImage import uses, turning
+      // the converter's placeholder upload nodes into real Media references.
+      // Images that fail to import are dropped rather than left broken.
+      content = await resolveImageUploads(payload, content);
 
-      content.root.children = stripUploadNodes(content.root.children);
-
-      // An image-only body has real content (hasContent === true) but strips
-      // down to zero children — Payload's rich-text field needs at least one
-      // block, so leave a note rather than an empty root.
+      // An image-only body has real content (hasContent === true) but ends
+      // up with zero children if every image failed to import — Payload's
+      // rich-text field needs at least one block, so leave a note rather
+      // than an empty root.
       if (hasContent && content.root.children.length === 0) {
         logger.warn(
-          `  Custom text ${customText.id} had only image content, which was stripped`,
+          `  Custom text ${customText.id} had only image content, which failed to import`,
         );
         content.root.children = [
           {
@@ -113,7 +108,7 @@ async function importCustomText(
             children: [
               {
                 type: 'text',
-                text: '(Image content not yet migrated)',
+                text: '(Image content failed to import)',
                 format: 0,
                 mode: 'normal',
                 style: '',
