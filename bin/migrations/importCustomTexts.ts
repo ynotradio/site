@@ -16,6 +16,7 @@ import { connectToDatabase, type CustomText } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
 import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
+import { importImageFromUrl } from './shared/mediaImporter';
 
 const logger = createLogger('CustomTextsImport');
 
@@ -53,8 +54,26 @@ async function importCustomText(
 
     // Generate proper title from permalink if title is HTML
     let { title } = customText;
+    let headerImage: string | undefined;
     if (title && title.trim().startsWith('<')) {
-      // Title is HTML (likely an image tag), use permalink instead
+      // Title is HTML — usually a stylized banner <img> used in place of a
+      // real heading. Extract and import that image as the page's headerImage
+      // so the banner isn't lost, then fall back to a readable text title.
+      const imgMatch = title.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (imgMatch) {
+        const [, imageUrl] = imgMatch;
+        const result = await importImageFromUrl(payload, imageUrl, {
+          alt: `Banner image for ${customText.permalink || `custom text ${customText.id}`}`,
+          legacyUrl: imageUrl,
+        });
+        if (result.success && result.mediaId) {
+          headerImage = result.mediaId;
+          logger.info(`  Imported header image: ${imageUrl} -> media ${result.mediaId}`);
+        } else {
+          logger.warn(`  Failed to import header image ${imageUrl}: ${result.error}`);
+        }
+      }
+
       if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
         title = customText.permalink
@@ -195,7 +214,7 @@ async function importCustomText(
     // Generate slug from permalink
     const slug = customText.permalink || `custom-text-${customText.id}`;
 
-    const data = {
+    const data: Record<string, unknown> = {
       title,
       content,
       slug,
@@ -205,6 +224,9 @@ async function importCustomText(
       _status: 'published' as const,
       legacyId,
     };
+    if (headerImage) {
+      data.headerImage = headerImage;
+    }
 
     if (existingId !== undefined) {
       await payload.update({ collection: 'pages', id: existingId, data });

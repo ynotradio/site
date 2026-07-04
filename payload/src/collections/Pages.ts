@@ -53,6 +53,17 @@ export const Pages: CollectionConfig = {
     },
     slugField({ useAsSlug: 'title', slugify: pageSlugify }),
     {
+      name: 'headerImage',
+      type: 'upload',
+      relationTo: 'media',
+      admin: {
+        description:
+          'Optional banner graphic shown above the title. Some legacy pages used a '
+          + 'stylized image in place of a real text title — this preserves that banner '
+          + 'without losing a plain-text `title` for admin lists, search, and SEO.',
+      },
+    },
+    {
       name: 'content',
       type: 'richText',
       editor: lexicalEditor({
