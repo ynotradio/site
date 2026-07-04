@@ -26,6 +26,16 @@ yarn test:e2e                 # Playwright integration tests
 # Use Playwright browser tools to capture evidence
 ```
 
+## Environment Files
+
+There are several `.env*` files (`.env`, `.env.local`, `.env.preview`,
+`.env.production`, `.env.php`, `.env.production.mysql`) and it is easy to
+connect to the wrong database by assumption. **Before running any script
+that touches a database, read
+[docs/ENV_FILE_REFERENCE.md](./docs/ENV_FILE_REFERENCE.md)** — it covers
+which file is used where, why `.env`'s Neon vars don't load by default for
+local scripts, and the prod-write safety guards already in place.
+
 ## Available Skills
 
 Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starting any task.** Invoke them when relevant—they contain specialized knowledge that prevents common mistakes.
