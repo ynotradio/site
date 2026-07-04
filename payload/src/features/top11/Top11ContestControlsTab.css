@@ -109,7 +109,7 @@
 .top11-controls-tab__related-link {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--theme-text-link, #2563eb);
+  color: var(--theme-text, #222);
   text-decoration: none;
   padding: 5px 11px;
   border: 1px solid var(--theme-border-color, #ddd);
@@ -138,7 +138,8 @@
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: opacity 0.2s;
+  background-image: none;
+  transition: background-color 0.15s;
 }
 
 .top11-controls-tab__action-btn:disabled {
@@ -146,24 +147,27 @@
   cursor: not-allowed;
 }
 
-.top11-controls-tab__action-btn:hover:not(:disabled) {
-  opacity: 0.85;
-}
-
-.top11-controls-tab__action-btn--primary {
-  background: var(--theme-text, #374151);
+/* --primary and --warning share the brand-red "important action" style —
+   only --secondary (a neutral action like Clone) gets the gray outline. */
+.top11-controls-tab__action-btn--primary,
+.top11-controls-tab__action-btn--warning {
+  background-color: #cc2200;
   color: #fff;
 }
 
+.top11-controls-tab__action-btn--primary:hover:not(:disabled),
+.top11-controls-tab__action-btn--warning:hover:not(:disabled) {
+  background-color: #a31c00;
+}
+
 .top11-controls-tab__action-btn--secondary {
-  background: transparent;
+  background-color: transparent;
   color: var(--theme-text, #374151);
   border: 1px solid var(--theme-border-color, #ddd);
 }
 
-.top11-controls-tab__action-btn--warning {
-  background: #f39c12;
-  color: #fff;
+.top11-controls-tab__action-btn--secondary:hover:not(:disabled) {
+  background-color: var(--theme-elevation-50, #f3f4f6);
 }
 
 /* ---- Stats ---- */
@@ -241,7 +245,7 @@
 }
 
 .top11-controls-tab__song-link:hover {
-  color: var(--theme-text-link, #2563eb);
+  color: #cc2200;
   text-decoration: underline;
 }
 

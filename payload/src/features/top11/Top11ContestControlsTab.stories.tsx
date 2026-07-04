@@ -40,7 +40,7 @@ const baseStats = (overrides: object) => ({
 });
 
 const meta: Meta<typeof Top11ContestControlsTab> = {
-  title: 'Features/Top11/Top11ContestControlsTab',
+  title: 'Features/Top 11/Top11ContestControlsTab',
   component: Top11ContestControlsTab,
   parameters: { layout: 'fullscreen' },
   tags: ['autodocs'],

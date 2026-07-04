@@ -7,7 +7,7 @@ import {
 } from './Top11ContestControlsPanels';
 
 const meta: Meta = {
-  title: 'Features/Top11/Top11ContestControlsPanels',
+  title: 'Features/Top 11/Top11ContestControlsPanels',
   parameters: { layout: 'padded' },
   tags: ['autodocs'],
 };

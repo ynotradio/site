@@ -8,6 +8,7 @@ import type {
   Top11ContestStatus,
   Top11PickWinnerResult,
 } from './types';
+import './Top11ContestControlsTab.css';
 
 export const NEXT_STATUSES: Record<Top11ContestStatus, Top11ContestStatus[]> = {
   draft: ['open'],
