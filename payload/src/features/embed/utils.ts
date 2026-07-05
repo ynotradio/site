@@ -1,11 +1,5 @@
 export type EmbedType =
-  | 'youtube'
-  | 'vimeo'
-  | 'spotify'
-  | 'soundcloud'
-  | 'mixcloud'
-  | 'opendrive'
-  | 'generic';
+  'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'mixcloud' | 'opendrive' | 'generic';
 
 export interface EmbedInfo {
   type: EmbedType;
@@ -61,32 +55,57 @@ export function extractMixcloudFeed(url: string): string | null {
   return `/${segments.join('/')}/`;
 }
 
-export function detectEmbedType(url: string): EmbedInfo {
+export interface DetectEmbedTypeOptions {
+  /**
+   * Mixcloud only: hide the show's cover art in the player widget.
+   * Defaults to true — most Mixcloud embeds on this site hide the cover.
+   */
+  hideCoverImage?: boolean;
+}
+
+export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {}): EmbedInfo {
+  const { hideCoverImage = true } = options;
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const videoId = extractYouTubeId(url);
     if (videoId) {
-      return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${videoId}`, originalUrl: url };
+      return {
+        type: 'youtube',
+        embedUrl: `https://www.youtube.com/embed/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('vimeo.com')) {
     const videoId = extractVimeoId(url);
     if (videoId) {
-      return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${videoId}`, originalUrl: url };
+      return {
+        type: 'vimeo',
+        embedUrl: `https://player.vimeo.com/video/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('spotify.com')) {
     const info = extractSpotifyInfo(url);
     if (info) {
-      return { type: 'spotify', embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`, originalUrl: url };
+      return {
+        type: 'spotify',
+        embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('soundcloud.com')) {
     const trackInfo = extractSoundCloudInfo(url);
     if (trackInfo) {
-      return { type: 'soundcloud', embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`, originalUrl: url };
+      return {
+        type: 'soundcloud',
+        embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`,
+        originalUrl: url,
+      };
     }
   }
 
@@ -100,7 +119,7 @@ export function detectEmbedType(url: string): EmbedInfo {
     if (feed) {
       return {
         type: 'mixcloud',
-        embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=${encodeURIComponent(feed)}`,
+        embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
         originalUrl: url,
       };
     }

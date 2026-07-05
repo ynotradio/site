@@ -35,6 +35,16 @@ export const EmbedBlock: Block = {
         description: 'Optional caption displayed below the embed',
       },
     },
+    {
+      name: 'hideCoverImage',
+      type: 'checkbox',
+      label: 'Hide cover image',
+      defaultValue: true,
+      admin: {
+        description: 'Mixcloud only: hides the show cover art in the player. Uncheck to show it.',
+        condition: (_data, siblingData) => typeof siblingData?.url === 'string' && siblingData.url.includes('mixcloud.com'),
+      },
+    },
   ],
 };
 

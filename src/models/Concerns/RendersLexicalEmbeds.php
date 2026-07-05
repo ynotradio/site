@@ -26,7 +26,8 @@ trait RendersLexicalEmbeds
             return '';
         }
 
-        $embed = $this->normalizeEmbedUrl($url);
+        $hideCoverImage = !array_key_exists('hideCoverImage', $fields) || $fields['hideCoverImage'] !== false;
+        $embed = $this->normalizeEmbedUrl($url, $hideCoverImage);
         $src = htmlspecialchars($embed['src'], ENT_QUOTES, 'UTF-8');
 
         if ($embed['layout'] === 'video') {
@@ -61,7 +62,7 @@ trait RendersLexicalEmbeds
      *
      * @return array{provider:string, src:string, layout:string, height:int}
      */
-    protected function normalizeEmbedUrl(string $url): array
+    protected function normalizeEmbedUrl(string $url, bool $hideCoverImage = true): array
     {
         // YouTube -> /embed/<id>
         if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
@@ -96,7 +97,8 @@ trait RendersLexicalEmbeds
             }
             $feed = $this->extractMixcloudFeed($url);
             if ($feed !== null) {
-                $src = 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed='
+                $hideCover = $hideCoverImage ? '1' : '0';
+                $src = "https://player-widget.mixcloud.com/widget/iframe/?hide_cover={$hideCover}&feed="
                     . rawurlencode($feed);
                 return ['provider' => 'mixcloud', 'src' => $src, 'layout' => 'audio', 'height' => 120];
             }
