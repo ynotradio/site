@@ -412,28 +412,6 @@ nav a:hover {
   margin-top: 0.4em;
 }
 
-/* Lexical embed blocks (RendersLexicalEmbeds trait). The video/audio sizing
-   itself is inline (padding-bottom hack / width+height attrs) so it works
-   without CSS; these rules just add breathing room between stacked embeds
-   (custom-text pages like rodney-anonymous chain 100+ in a row) and style
-   the optional caption. */
-.embed {
-  display: block;
-  margin: 0 0 12px;
-}
-
-.embed--video {
-  max-width: 100%;
-  margin: 0 0 16px;
-}
-
-.embed-caption {
-  margin: 4px 0 16px;
-  font-size: 13px;
-  font-style: italic;
-  color: #666;
-}
-
 /* Lexical upload nodes (ConvertsLexicalToHtml's renderLexicalUploadNode).
    Matches the float/wrap behavior of legacy <img align="left|right">. */
 .lexical-image {
@@ -1205,6 +1183,7 @@ footer a:hover {
 .embed--opendrive,
 .embed--spotify,
 .embed--soundcloud,
+.embed--live365,
 .embed--generic {
   display: block;
   width: 100%;
