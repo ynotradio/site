@@ -226,6 +226,23 @@ class ConvertsLexicalToHtmlTest extends TestCase
         ]);
     }
 
+    /**
+     * Build a Lexical document containing a single paypalSmartButtons block.
+     */
+    private function paypalSmartButtonsBlockJson(array $fields): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'block',
+                        'fields' => array_merge(['blockType' => 'paypalSmartButtons'], $fields),
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     public function testEmbedBlockRendersYouTubeAsResponsiveVideo(): void
     {
         $html = $this->converter->convert(
@@ -595,5 +612,97 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $html = $this->converter->convert($this->paypalButtonBlockJson([]));
 
         $this->assertSame('', $html);
+    }
+
+    protected function tearDown(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID');
+        parent::tearDown();
+    }
+
+    public function testPayPalSmartButtonsBlockRendersSdkScriptAndButtonContainer(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => 'Select how many entries you would like.',
+            'items' => [
+                ['label' => '1 Raffle Entry', 'price' => 1],
+                ['label' => '5 Raffle Entries', 'price' => 5],
+            ],
+        ]));
+
+        $this->assertStringContainsString(
+            'https://www.paypal.com/sdk/js?client-id=test-client-id-123',
+            $html
+        );
+        $this->assertStringContainsString('Select how many entries you would like.', $html);
+        $this->assertStringContainsString('1 Raffle Entry', $html);
+        $this->assertStringContainsString('5 Raffle Entries', $html);
+        $this->assertStringContainsString('paypal-smart-buttons__button-container', $html);
+        $this->assertStringNotContainsString('<select class="paypal-smart-buttons__quantity-select"', $html);
+    }
+
+    public function testPayPalSmartButtonsBlockRendersQuantitySelectWhenAllowed(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => 'desc',
+            'items' => [['label' => 'Item', 'price' => 2.5]],
+            'allowQuantity' => true,
+        ]));
+
+        $this->assertStringContainsString('paypal-smart-buttons__quantity-select', $html);
+    }
+
+    public function testPayPalSmartButtonsBlockRendersNothingWithoutClientId(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => 'desc',
+            'items' => [['label' => 'Item', 'price' => 2.5]],
+        ]));
+
+        $this->assertSame('', $html);
+    }
+
+    public function testPayPalSmartButtonsBlockRendersNothingWithoutItems(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => 'desc',
+            'items' => [],
+        ]));
+
+        $this->assertSame('', $html);
+    }
+
+    public function testPayPalSmartButtonsBlockRendersNothingWithoutOrderDescription(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => '',
+            'items' => [['label' => 'Item', 'price' => 2.5]],
+        ]));
+
+        $this->assertSame('', $html);
+    }
+
+    public function testPayPalSmartButtonsBlockDoesNotTrustClientFields(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $html = $this->converter->convert($this->paypalSmartButtonsBlockJson([
+            'orderDescription' => 'desc',
+            'items' => [['label' => 'Item', 'price' => 2.5]],
+            'clientId' => 'attacker-controlled-client-id',
+        ]));
+
+        $this->assertStringContainsString('client-id=test-client-id-123', $html);
+        $this->assertStringNotContainsString('attacker-controlled-client-id', $html);
     }
 }

@@ -13,6 +13,7 @@ trait ConvertsLexicalToHtml
 {
     use RendersLexicalEmbeds;
     use RendersPayPalButton;
+    use RendersPayPalSmartButtons;
 
     // Lexical text format bit flags
     private static int $LEXICAL_FORMAT_BOLD = 1;
@@ -174,6 +175,9 @@ trait ConvertsLexicalToHtml
                 $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
                 if (($fields['blockType'] ?? '') === 'paypalButton') {
                     return $this->renderLexicalPayPalButtonBlock($fields);
+                }
+                if (($fields['blockType'] ?? '') === 'paypalSmartButtons') {
+                    return $this->renderLexicalPayPalSmartButtonsBlock($fields);
                 }
                 return $this->renderLexicalEmbedBlock($fields);
 

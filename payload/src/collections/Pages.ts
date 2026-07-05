@@ -5,6 +5,7 @@ import { hasRole } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
 import { PayPalButtonFeature } from '../features/paypal-button/server';
+import { PayPalSmartButtonsFeature } from '../features/paypal-smart-buttons/server';
 import { SmallTextFeature } from '../features/text-size';
 import { pageSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
@@ -69,6 +70,7 @@ export const Pages: CollectionConfig = {
           EXPERIMENTAL_TableFeature(),
           SmallTextFeature(),
           PayPalButtonFeature(),
+          PayPalSmartButtonsFeature(),
         ],
       }),
       admin: {

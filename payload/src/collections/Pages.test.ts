@@ -119,7 +119,7 @@ describe('Pages', () => {
     ];
     const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
 
-    expect(result).toHaveLength(7);
+    expect(result).toHaveLength(8);
     expect(result[0]).toEqual({ id: 'paragraph', key: 'paragraph' });
     expect(result[1]).toEqual({ id: 'text', key: 'text' });
     // The plain default upload feature (id: 'default-upload') is filtered
@@ -135,9 +135,11 @@ describe('Pages', () => {
     expect((result[5] as any)._type).toBe('textState');
     // PayPalButtonFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
     expect((result[6] as any)._type).toBe('blocks');
+    // PayPalSmartButtonsFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
+    expect((result[7] as any)._type).toBe('blocks');
   });
 
-  it('registers PayPalButtonBlock as a distinct BlocksFeature entry', () => {
+  it('registers PayPalButtonBlock and PayPalSmartButtonsBlock as distinct BlocksFeature entries', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content') as {
       editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
@@ -147,9 +149,9 @@ describe('Pages', () => {
     const result = featuresCallback!({ defaultFeatures: [] });
 
     const blockFeatures = result.filter((f: any) => f._type === 'blocks');
-    expect(blockFeatures).toHaveLength(2);
+    expect(blockFeatures).toHaveLength(3);
     const slugs = blockFeatures.flatMap((f: any) => f.blocks.map((b: any) => b.slug));
-    expect(slugs).toEqual(['embed', 'paypalButton']);
+    expect(slugs).toEqual(['embed', 'paypalButton', 'paypalSmartButtons']);
   });
 
   it('does not include date-window or front-page fields (unlike Posts)', () => {
