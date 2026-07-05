@@ -295,6 +295,94 @@ directly).
 
 ---
 
+## Proposal: dynamic widgets (19, 21, 22, 24, 25) and legacy routing
+
+Written to give Josh something concrete to react to on open questions #1 and
+#3 above, specifically for the five pages flagged as "structural/non-portable"
+in the priority-gaps list, plus the `pages.php?page=<slug>` URL pattern.
+
+### The routing question is already solved, not open
+
+`src/pages.php` is a single query-string dispatcher, not per-slug PHP files:
+it reads `$_GET['page']`, resolves it via `CustomTextFactory::create($db)
+->findByPermalink($page)`, and renders whatever `title`/`html` comes back.
+`pages.php?page=<slug>` already works today for any permalink in
+`custom_texts` (or, once `use_postgres_customtext` is flipped, `pages`) — no
+new routing code is needed to keep serving the 35 pages at their existing
+URLs. The "gap" noted in the audit was just documenting the URL shape, not
+identifying missing work.
+
+One loose end this surfaced: `pages.php` unconditionally renders
+`"<h1>".$custom_text['title']."</h1>"` and has no concept of the new
+`headerImage` field — `PostgresCustomText` doesn't expose it, and `pages.php`
+doesn't render it. Pages imported with a `headerImage` (banner-image titles
+like `future-friday`) won't show that banner on the live site until both are
+updated. Small, contained fix — worth its own follow-up PR rather than folding
+into #815.
+
+### Dynamic widgets (19, 21, 22, 24, 25): three options, recommendation below
+
+These pages pair static content (rankings tables, embed lists) that already
+imports cleanly with **dynamic UI the static-page model fundamentally can't
+express** — interactive raffle checkout, year-end poll voting. The audit
+already correctly separated this from importer bugs; this section is about
+what to build instead, not a bug to fix in `Pages`.
+
+**Option A — Leave them as `Pages` with a "this feature is retired" note.**
+All five of these pages 404 on the live site already (no current traffic to
+preserve). Import the static remnants (rankings/embeds) as read-only `Pages`
+content, and don't attempt to rebuild the interactive layer at all. Zero new
+collections, zero new UI work.
+
+- Fits: this is a historical-archive migration, not a product relaunch.
+- Risk: if these are meant to come back for the next year-end cycle, this
+  punts that decision to whoever revives them, with no infrastructure ready.
+
+**Option B — Graduate to purpose-built collections now, matching archetype C.**
+Chapter 13 already ships `YearEndPollResults`/voting collections (#518,
+merged) for the ranked-list + voting archetype pages 21/22/24/25 belong to.
+Wire the existing PR #518 collections in for those four, and treat page 19
+(raffle) as its own one-off — since PayPal Smart Buttons (#815) already
+covers its checkout mechanism, it may not need a bespoke collection at all,
+just the `Pages` content plus the Smart Buttons block already built.
+
+- Fits: reuses infrastructure that's already built and tested (#518), so
+  incremental cost is mostly wiring, not new design.
+- Risk: revives four dormant voting pages product hasn't asked for; scope
+  creep if nobody's actually running another year-end poll.
+
+**Option C — Do nothing until product asks.** Don't import these five pages
+at all (or import as unpublished drafts) until there's a concrete plan to
+relaunch the raffle/poll flow. Revisit archetype C wiring at that point.
+
+- Fits: least speculative work; avoids building UI nobody's confirmed is
+  coming back.
+- Risk: content sits unimported/unpublished indefinitely; page 19's dormant
+  live URL (confirmed 200, not 404, contradicting the audit table — see
+  below) suggests at least the raffle page might still be semi-live.
+
+**Recommendation: Option A for now**, with a flag to revisit page 19
+specifically. Rationale: the four year-end poll pages (21/22/24/25) are
+confirmed 404 on production — no live traffic depends on reviving them, and
+#518's collections exist and can be wired in later at low cost if a future
+year-end cycle needs them. Page 19 is the outlier — it currently returns
+**200**, not 404 as the original audit table states (verified via direct
+fetch against `pages.php?page=dollar-stroll-raffle-contest-1` during the
+Smart Buttons work), meaning the raffle checkout may still be an active,
+if unlinked, flow. Worth a quick confirmation with Josh on whether that URL
+is still meant to be reachable before treating it identically to the other
+four.
+
+### Related PRs since this doc was last updated
+
+- #815 — Lexical editor gaps (embeds, tables, images, PayPal classic +
+  Smart Buttons, small text) — covers page 19's checkout mechanism if it's
+  kept.
+- #518 — Year End Poll voting collections — the reusable target for
+  21/22/24/25 under Option B.
+
+---
+
 ## Related Documentation
 
 - [Chapter 16: Rich-Text Embeds](./16-rich-text-embeds.md) — Phase 1 embed detail
