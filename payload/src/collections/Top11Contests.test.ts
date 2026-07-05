@@ -110,23 +110,17 @@ describe('Top11Contests', () => {
     expect(names).not.toContain('externalTemplateUrl');
   });
 
-  it('has recording fields for the show recording embed', () => {
+  it('embeds the show recording via the body rich text instead of dedicated fields', () => {
     const messageSnapshotField = Top11Contests.fields.find(
       (field) => field.name === 'messageSnapshot',
     ) as { fields?: Array<Record<string, unknown>> };
     const nestedFields = flattenRowFields(messageSnapshotField.fields ?? []);
     const names = nestedFields.map((field) => field.name);
-    expect(names).toContain('recordingUrl');
-    expect(names).toContain('recordingSource');
+    expect(names).not.toContain('recordingUrl');
+    expect(names).not.toContain('recordingSource');
 
-    const sourceField = nestedFields.find((field) => field.name === 'recordingSource') as {
-      options?: Array<{ value: string }>;
-    };
-    expect(sourceField.options?.map((option) => option.value)).toEqual([
-      'mixcloud',
-      'opendrive',
-      'other',
-    ]);
+    const bodyField = nestedFields.find((field) => field.name === 'body');
+    expect(bodyField?.type).toBe('richText');
   });
 
   it('hides displayOrder from the entries admin form', () => {
@@ -142,14 +136,12 @@ describe('Top11Contests', () => {
 
     it('renumbers entries to match row position', () => {
       const data = {
-        entries: [
-          { song: 3 },
-          { song: 1 },
-          { song: 2 },
-        ],
+        entries: [{ song: 3 }, { song: 1 }, { song: 2 }],
       };
 
-      const result = renumberHook?.({ data } as never) as { entries: Array<{ displayOrder: number; song: number }> };
+      const result = renumberHook?.({ data } as never) as {
+        entries: Array<{ displayOrder: number; song: number }>;
+      };
 
       expect(result.entries.map((e) => e.displayOrder)).toEqual([1, 2, 3]);
       expect(result.entries.map((e) => e.song)).toEqual([3, 1, 2]);
@@ -260,13 +252,25 @@ describe('Top11Contests', () => {
 
       expect(body.rankedSongs).toEqual([
         {
-          song: 7, songTitle: 'Song Seven', songArtist: 'Artist A', displayOrder: 1, votes: 0,
+          song: 7,
+          songTitle: 'Song Seven',
+          songArtist: 'Artist A',
+          displayOrder: 1,
+          votes: 0,
         },
         {
-          song: 3, songTitle: 'Song Three', songArtist: 'Artist B', displayOrder: 2, votes: 0,
+          song: 3,
+          songTitle: 'Song Three',
+          songArtist: 'Artist B',
+          displayOrder: 2,
+          votes: 0,
         },
         {
-          song: 9, songTitle: 'Song Nine', songArtist: 'Artist C', displayOrder: 3, votes: 0,
+          song: 9,
+          songTitle: 'Song Nine',
+          songArtist: 'Artist C',
+          displayOrder: 3,
+          votes: 0,
         },
       ]);
     });
@@ -289,7 +293,11 @@ describe('Top11Contests', () => {
 
       expect(body.rankedSongs).toEqual([
         {
-          song: 42, songTitle: null, songArtist: null, displayOrder: 1, votes: 0,
+          song: 42,
+          songTitle: null,
+          songArtist: null,
+          displayOrder: 1,
+          votes: 0,
         },
       ]);
     });

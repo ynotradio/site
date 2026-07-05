@@ -140,6 +140,17 @@ const MESSAGE_SNAPSHOT = {
             },
           ],
         },
+        {
+          type: 'block',
+          format: '',
+          version: 2,
+          fields: {
+            blockType: 'embed',
+            blockName: '',
+            url: 'https://www.mixcloud.com/ynotradio/top-11-11-62526/',
+            id: 'seed-top11-recording-embed',
+          },
+        },
       ],
       direction: 'ltr',
       format: '',
@@ -147,8 +158,6 @@ const MESSAGE_SNAPSHOT = {
       version: 1,
     },
   },
-  recordingUrl: 'https://www.mixcloud.com/ynotradio/top-11-11-62526/',
-  recordingSource: 'mixcloud',
 };
 
 async function findOrCreateArtist(
