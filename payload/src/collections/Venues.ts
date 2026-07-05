@@ -4,6 +4,7 @@ import { hasRole } from '../utils/auth';
 
 export const Venues: CollectionConfig = {
   slug: 'venues',
+  enableQueryPresets: true,
   labels: {
     singular: 'Venue',
     plural: 'Venues',
@@ -13,13 +14,14 @@ export const Venues: CollectionConfig = {
     defaultColumns: ['name', 'city', 'updatedAt'],
     group: 'Events',
     description: 'Concert venues. Create a venue here, then select it when adding a concert.',
+    groupBy: true,
   },
   defaultSort: 'name',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -28,7 +30,7 @@ export const Venues: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       type: 'row',
       fields: [

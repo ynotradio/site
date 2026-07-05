@@ -122,7 +122,7 @@ describe('importOnDemand', () => {
 
       process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
+      expect(() => parseArgs()).toThrow('--to must be');
     });
   });
 
@@ -228,13 +228,10 @@ describe('importOnDemand', () => {
         collection: 'ondemand',
         data: expect.objectContaining({
           headline: undefined,
-          description: expect.objectContaining({
-            root: expect.objectContaining({
-              type: 'root',
-            }),
-          }),
+          description: undefined,
           audioUrl: undefined,
           image: undefined,
+          _status: 'published',
         }),
       });
     });

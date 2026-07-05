@@ -11,6 +11,7 @@ const PRIMARY_COLLECTIONS = [
     label: 'Posts',
     icon: '📰',
     description: 'Add or edit front-page stories. Set date ranges to control when they appear.',
+    tool: { href: '/admin/story-order', label: 'Sort Order' },
   },
   {
     slug: 'songs',
@@ -23,6 +24,7 @@ const PRIMARY_COLLECTIONS = [
     label: 'CD of the Week',
     icon: '💿',
     description: 'Pick an album, write a review, and set the date. Only one should be current.',
+    tool: { href: '/admin/cd-of-the-week-wizard', label: 'Wizard' },
   },
   {
     slug: 'concerts',
@@ -41,12 +43,20 @@ const PRIMARY_COLLECTIONS = [
     label: 'Shows',
     icon: '📻',
     description: 'Build the weekly schedule. Use Show Cloner to copy a week to new dates.',
+    tool: { href: '/admin/show-cloner', label: 'Clone' },
   },
   {
     slug: 'djs',
     label: 'DJs',
     icon: '🎙️',
     description: 'Manage DJ profiles. Toggle "On Air" to show or hide them on the website.',
+    tool: { href: '/admin/dj-order', label: 'Sort Order' },
+  },
+  {
+    slug: 'top11-contests',
+    label: 'Top 11',
+    icon: '🎶',
+    description: 'Run the weekly Top 11 contest: open voting, pick a winner, publish results.',
   },
 ] as const;
 
@@ -160,6 +170,11 @@ export const CustomDashboard: React.FC = () => {
                 >
                   + Add New
                 </Link>
+                {'tool' in collection && collection.tool && (
+                  <Link href={collection.tool.href} className="primary-card-action">
+                    {collection.tool.label}
+                  </Link>
+                )}
               </div>
             </div>
           ))}

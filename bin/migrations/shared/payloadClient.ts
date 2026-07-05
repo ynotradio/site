@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 import type { Payload } from 'payload';
 import { getPayload } from 'payload';
 import { createLogger } from './logger';
-import { getArtistMbid } from './musicbrainz';
+import { getArtistMbid, getRecordingMbid } from './musicbrainz';
 import { generateSlug, generateMusicSlug, stripHtmlTags } from './importUtils';
 
 const logger = createLogger('PayloadClient');
@@ -38,17 +38,105 @@ async function findDocBySlug(
   return result.docs.length > 0 ? (result.docs[0].id as number) : null;
 }
 
+function isProdTarget(target: PostgresTarget): boolean {
+  return target === 'prod-neon' || target === 'prod';
+}
+
 /**
- * PostgreSQL/Neon target types for import scripts
+ * Prod writes must be explicit. Any script connecting to prod-neon/prod has to be
+ * invoked with YES_I_MEAN_PROD=true, otherwise we throw before a connection is made.
+ *
+ * Why: a prior agent session ran bin/seed-top11.ts against production Neon by accident
+ * (DATABASE_URI happened to resolve to prod), seeding demo data hours before the
+ * feature was meant to go live. This guard makes that class of mistake impossible
+ * without a deliberate, named opt-in.
  */
-export type PostgresTarget = 'local-postgres' | 'prod-neon';
+function assertProdWriteAllowed(target: PostgresTarget): void {
+  if (!isProdTarget(target)) {
+    return;
+  }
+  if (process.env.YES_I_MEAN_PROD === 'true') {
+    return;
+  }
+  throw new Error(
+    `Refusing to connect to production database (target "${target}") without explicit confirmation.\n`
+      + 'If you really mean to write to production, re-run with YES_I_MEAN_PROD=true.',
+  );
+}
+
+function getDatabaseUri(target: PostgresTarget): string {
+  if (target === 'prod-neon' || target === 'prod') {
+    const uri = process.env.NEON_PROD_DATABASE_URL;
+    if (!uri) {
+      throw new Error(
+        `Database URI not found for target "${target}". Please set NEON_PROD_DATABASE_URL in .env.local`,
+      );
+    }
+    return uri;
+  }
+  if (target === 'dev-neon' || target === 'dev') {
+    const uri = process.env.NEON_DEV_DATABASE_URL;
+    if (!uri) {
+      throw new Error(
+        `Database URI not found for target "${target}". Please set NEON_DEV_DATABASE_URL in .env.local`,
+      );
+    }
+    return uri;
+  }
+  const uri = process.env.DATABASE_URI || process.env.NEON_DEV_DATABASE_URL;
+  if (!uri) {
+    throw new Error(
+      `Database URI not found for target "${target}". Please set DATABASE_URI or NEON_DEV_DATABASE_URL in .env.local`,
+    );
+  }
+  return uri;
+}
+
+/**
+ * Guard for scripts (e.g. seed-top11.ts) that connect via getPayloadHMR/getPayload
+ * directly instead of going through getPayloadClient, and so have no target param
+ * to check. These scripts pick up whatever DATABASE_URI is already in the process
+ * environment — this compares that value against the known prod URI and refuses
+ * to proceed unless YES_I_MEAN_PROD=true.
+ */
+function assertNotConnectedToProd(): void {
+  const prodUri = process.env.NEON_PROD_DATABASE_URL;
+  const activeUri = process.env.DATABASE_URI;
+  if (!prodUri || !activeUri || activeUri !== prodUri) {
+    return;
+  }
+  if (process.env.YES_I_MEAN_PROD === 'true') {
+    return;
+  }
+  throw new Error(
+    'Refusing to run: DATABASE_URI is currently set to the production database.\n'
+      + 'If you really mean to write to production, re-run with YES_I_MEAN_PROD=true.',
+  );
+}
+
+export {
+  getDatabaseUri, isProdTarget, assertProdWriteAllowed, assertNotConnectedToProd,
+};
+
+export type PostgresTarget = 'local-postgres' | 'prod-neon' | 'dev-neon' | 'dev' | 'prod';
 
 /**
  * Get the Payload instance configured for the specified target database
  *
- * @param target - 'prod-neon' for production Neon, 'local-postgres' for local/dev
+ * @param target - 'local-postgres' for local/dev (default), 'prod-neon'/'prod' for production
+ *   (requires YES_I_MEAN_PROD=true)
  */
-export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Promise<Payload> {
+export async function getPayloadClient(
+  target: PostgresTarget = 'local-postgres',
+): Promise<Payload> {
+  // NOTE: Scripts that call this must run with
+  //   `yarn tsx --import ./bin/preload-nextenv-fix.mjs <script>.ts`
+  // Otherwise payload's collection imports transitively load `bin/loadEnv.js`,
+  // which crashes under tsx because of an @next/env default-export interop bug.
+  // See bin/preload-nextenv-fix.mjs for the full explanation.
+
+  assertProdWriteAllowed(target);
+
   // Load environment variables from .env.local with override
   dotenv.config({
     path: path.resolve(process.cwd(), '.env.local'),
@@ -56,16 +144,7 @@ export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Pr
   });
 
   // Select database URL based on target
-  const databaseUri = target === 'prod-neon'
-    ? process.env.NEON_PROD_DATABASE_URL
-    : process.env.NEON_DEV_DATABASE_URL || process.env.DATABASE_URI;
-
-  if (!databaseUri) {
-    throw new Error(
-      `Database URI not found for target "${target}". `
-        + `Please set ${target === 'prod-neon' ? 'NEON_PROD_DATABASE_URL' : 'NEON_DEV_DATABASE_URL or DATABASE_URI'} in .env.local`,
-    );
-  }
+  const databaseUri = getDatabaseUri(target);
 
   logger.info(`Connecting to ${target} database...`);
 
@@ -87,10 +166,7 @@ export async function getPayloadClient(target: PostgresTarget = 'prod-neon'): Pr
  * Find or create an artist by name
  * Returns the artist ID
  */
-export async function findOrCreateArtist(
-  payload: Payload,
-  name: string,
-): Promise<number> {
+export async function findOrCreateArtist(payload: Payload, name: string): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
 
@@ -152,7 +228,9 @@ export async function findOrCreateArtist(
     logger.debug(`Created artist: ${cleanName}`);
     return newArtist.id;
   } catch (error: any) {
-    logger.debug(`Error creating artist "${name}": status=${error.status}, errors=${JSON.stringify(error.data?.errors)}`);
+    logger.debug(
+      `Error creating artist "${name}": status=${error.status}, errors=${JSON.stringify(error.data?.errors)}`,
+    );
 
     const isMbidError = isFieldError(error, 'musicbrainzId');
     const isSlugError = isFieldError(error, 'slug');
@@ -166,7 +244,9 @@ export async function findOrCreateArtist(
         limit: 1,
       });
       if (retryExisting.docs.length > 0) {
-        logger.debug(`Found existing artist after race condition: "${name}" (id: ${retryExisting.docs[0].id})`);
+        logger.debug(
+          `Found existing artist after race condition: "${name}" (id: ${retryExisting.docs[0].id})`,
+        );
         return retryExisting.docs[0].id;
       }
     }
@@ -213,10 +293,7 @@ export async function findOrCreateArtist(
  * Find or create a venue by name
  * Returns the venue ID
  */
-export async function findOrCreateVenue(
-  payload: Payload,
-  name: string,
-): Promise<number> {
+export async function findOrCreateVenue(payload: Payload, name: string): Promise<number> {
   // Strip HTML tags from name
   const cleanName = stripHtmlTags(name);
 
@@ -322,10 +399,7 @@ export async function findOrCreatePerson(
  * Find a DJ by legacy ID
  * Returns the DJ ID or null if not found
  */
-export async function findDJByLegacyId(
-  payload: Payload,
-  legacyId: number,
-): Promise<number | null> {
+export async function findDJByLegacyId(payload: Payload, legacyId: number): Promise<number | null> {
   const existing = await payload.find({
     collection: 'djs',
     where: { legacyId: { equals: legacyId } },
@@ -357,10 +431,7 @@ export async function findOrCreateRecord(
   const existing = await payload.find({
     collection: 'records',
     where: {
-      and: [
-        { title: { equals: title } },
-        { artist: { equals: artistId } },
-      ],
+      and: [{ title: { equals: title } }, { artist: { equals: artistId } }],
     },
     limit: 1,
   });
@@ -392,7 +463,9 @@ export async function findOrCreateRecord(
       try {
         const artist = await payload.findByID({ collection: 'artists', id: artistId });
         artistName = artist?.name || '';
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       const slug = generateMusicSlug(artistName, title);
       const id = await findDocBySlug(payload, 'records', slug);
@@ -484,37 +557,77 @@ export async function findOrCreateSong(
     return existing.docs[0].id;
   }
 
+  let recordingMbid: string | null = null;
+  let artistName = '';
+  if (artistId) {
+    try {
+      const artist = await payload.findByID({ collection: 'artists', id: artistId });
+      artistName = artist?.name || '';
+    } catch {
+      /* ignore */
+    }
+  }
   try {
-    const songData = {
-      title: cleanTitle,
-      ...(artistId && { artist: artistId }),
-    };
+    recordingMbid = await getRecordingMbid(cleanTitle, artistName || undefined);
+  } catch {
+    logger.debug(`MusicBrainz recording lookup failed for "${cleanTitle}"`);
+  }
 
+  const baseSongData = {
+    title: cleanTitle,
+    ...(artistId && { artist: artistId }),
+  };
+
+  const resolveBySlug = async (resolvedArtistName: string) => {
+    const slug = generateMusicSlug(resolvedArtistName, cleanTitle);
+    return findDocBySlug(payload, 'songs', slug);
+  };
+
+  const fetchArtistName = async (): Promise<string> => {
+    if (!artistId) return '';
+    try {
+      const artist = await payload.findByID({ collection: 'artists', id: artistId });
+      return artist?.name || '';
+    } catch {
+      return '';
+    }
+  };
+
+  try {
     const newSong = await payload.create({
       collection: 'songs',
-      data: songData,
+      data: { ...baseSongData, musicbrainzId: recordingMbid || undefined },
     });
-
     logger.debug(`Created song: ${cleanTitle}`);
     return newSong.id;
   } catch (error: any) {
-    const isSlugError = isFieldError(error, 'slug');
+    const isMbidError = isFieldError(error, 'musicbrainzId');
 
-    if (isSlugError) {
-      logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
-
-      let artistName = '';
-      if (artistId) {
-        try {
-          const artist = await payload.findByID({ collection: 'artists', id: artistId });
-          artistName = artist?.name || '';
-        } catch { /* ignore */ }
+    if (isMbidError) {
+      logger.debug(`MusicBrainz ID conflict for song "${cleanTitle}", retrying without MBID`);
+      try {
+        const newSong = await payload.create({ collection: 'songs', data: baseSongData });
+        logger.debug(`Created song without MBID: ${cleanTitle}`);
+        return newSong.id;
+      } catch (retryError) {
+        if (isFieldError(retryError, 'slug')) {
+          const name = artistName || (await fetchArtistName());
+          const id = await resolveBySlug(name);
+          if (id !== null) {
+            logger.debug(`Found existing song by slug after MBID retry: "${cleanTitle}" (id: ${id})`);
+            return id;
+          }
+        }
+        throw retryError;
       }
+    }
 
-      const slug = generateMusicSlug(artistName, cleanTitle);
-      const id = await findDocBySlug(payload, 'songs', slug);
+    if (isFieldError(error, 'slug')) {
+      logger.debug(`Slug validation failed for song: ${cleanTitle}, searching by slug...`);
+      const name = artistName || (await fetchArtistName());
+      const id = await resolveBySlug(name);
       if (id !== null) {
-        logger.debug(`Found existing song by slug: "${cleanTitle}" -> "${slug}" (id: ${id})`);
+        logger.debug(`Found existing song by slug: "${cleanTitle}" (id: ${id})`);
         return id;
       }
     }

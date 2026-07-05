@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\Story;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresStory implements Story {
+    use ConvertsLexicalToHtml;
+    
     private PDO $db;
 
     // Lexical text format bit flags
@@ -294,7 +297,8 @@ class PostgresStory implements Story {
         switch ($type) {
             case 'paragraph':
                 $content = $this->convertLexicalChildren($node);
-                return "<p>$content</p>\n";
+                $format = $node['format'] ?? '';
+                return $this->wrapInBlock('p', $content, $format);
                 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';
@@ -316,9 +320,20 @@ class PostgresStory implements Story {
                 // Validate URL first, then apply fallback if invalid
                 $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                $newTab = (bool)($fields['newTab'] ?? false);
+                $target = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
                 $content = $this->convertLexicalChildren($node);
-                return "<a href=\"$url\">$content</a>";
-                
+                return "<a href=\"$url\"$target>$content</a>";
+
+            case 'linebreak':
+                // Soft line breaks (Shift+Enter in the Payload editor) are
+                // emitted as standalone `linebreak` nodes with no children.
+                // Without this case the default arm would call
+                // convertLexicalChildren() and yield an empty string,
+                // collapsing adjacent text runs together.
+                return '<br>';
+
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;

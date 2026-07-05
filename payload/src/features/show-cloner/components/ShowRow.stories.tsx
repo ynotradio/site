@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ShowRow } from './ShowRow';
 
 const meta = {
-  title: 'Features/ShowCloner/ShowRow',
+  title: 'Features/Show Cloner/ShowRow',
   component: ShowRow,
   parameters: {
     layout: 'padded',

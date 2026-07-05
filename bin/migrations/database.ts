@@ -108,12 +108,15 @@ export interface CdOfTheWeek {
 export interface ImportOptions {
   fromLast?: boolean;
   startId?: number;
+  storiesStartId?: number;
+  customTextsStartId?: number;
 }
 
 export async function connectToDatabase() {
   try {
     const connection = await mysql.createConnection({
       host: dbConfig.host,
+      port: dbConfig.port,
       database: dbConfig.database,
       user: dbConfig.user,
       password: dbConfig.password,
@@ -235,14 +238,16 @@ export async function getActivePosts(
 ): Promise<Post[]> {
   try {
     const posts: Post[] = [];
+    const storiesStartId = options.storiesStartId ?? options.startId;
+    const customTextsStartId = options.customTextsStartId ?? options.startId;
 
     // Fetch stories - import all records
     let storiesQuery = 'SELECT * FROM stories WHERE 1=1';
     const storiesParams: any[] = [];
 
-    if (options.startId) {
+    if (storiesStartId) {
       storiesQuery += ' AND id >= ?';
-      storiesParams.push(options.startId);
+      storiesParams.push(storiesStartId);
     }
 
     storiesQuery += ' ORDER BY id ASC';
@@ -269,9 +274,9 @@ export async function getActivePosts(
     let customTextsQuery = 'SELECT * FROM custom_texts WHERE status = ?';
     const customTextsParams: any[] = ['active'];
 
-    if (options.startId) {
+    if (customTextsStartId) {
       customTextsQuery += ' AND id >= ?';
-      customTextsParams.push(options.startId);
+      customTextsParams.push(customTextsStartId);
     }
 
     customTextsQuery += ' ORDER BY id ASC';
@@ -307,7 +312,8 @@ export async function getActivePosts(
     });
 
     let filterMsg = '';
-    if (options.startId) filterMsg += ` startId=${options.startId}`;
+    if (storiesStartId) filterMsg += ` storiesStartId=${storiesStartId}`;
+    if (customTextsStartId) filterMsg += ` customTextsStartId=${customTextsStartId}`;
 
     console.log(
       `Retrieved ${stories.length} stories and ${customTexts.length} custom texts (${posts.length} total posts) from the database.${filterMsg ? ` Filters:${filterMsg}` : ''}`,

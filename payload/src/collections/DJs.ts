@@ -2,9 +2,11 @@ import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateDJDisplayName } from './hooks/displayNameHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
+  enableQueryPresets: true,
   labels: {
     singular: 'DJ',
     plural: 'DJs',
@@ -18,7 +20,7 @@ export const DJs: CollectionConfig = {
     group: 'Radio',
     description:
       'DJ profiles shown on the website. Toggle "On Air" to control visibility. Use the DJ Order tool to set listing position.',
-
+    groupBy: true,
     components: {
       beforeList: ['/payload/src/features/dj-order/DJsListHeader#DJsListHeader'],
     },
@@ -31,7 +33,7 @@ export const DJs: CollectionConfig = {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor', 'dj']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -39,9 +41,8 @@ export const DJs: CollectionConfig = {
       type: 'text',
       admin: {
         position: 'sidebar',
-        readOnly: true,
         description:
-          'Shown on the website — generated automatically from the linked person name(s)',
+          'Shown on the website — auto-generated from linked person name(s), but can be overridden',
       },
     },
     {
@@ -119,17 +120,7 @@ export const DJs: CollectionConfig = {
         },
       ],
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

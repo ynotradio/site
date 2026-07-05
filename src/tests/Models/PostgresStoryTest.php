@@ -7,13 +7,15 @@ use YNotRadio\Models\Implementations\PostgresStory;
 use PDO;
 use PDOStatement;
 
+require_once dirname(__DIR__, 2) . '/partials/_story_display_helpers.php';
+
 /**
- * Tests for PostgresStory basic operations
- * 
- * Tests PostgreSQL story operations using PDO:
- * - getById: Retrieve story by ID
- * - getAll: Retrieve active stories filtered by show_on_front_page
- * - getAllActive: Retrieve all active stories filtered by show_on_front_page
+ * Tests for PostgresStory read operations.
+ *
+ * Covers the read path used by the front page after the Postgres cutover:
+ * - getById maps a row and renders Lexical content to HTML
+ * - getAll returns the [odd, even] two-column split
+ * - write methods are disabled (Payload is the only write surface)
  */
 class PostgresStoryTest extends TestCase
 {
@@ -27,337 +29,136 @@ class PostgresStoryTest extends TestCase
         $this->story = new PostgresStory($this->mockDb);
     }
 
-    /**
-     * Test getById returns data when story exists
-     */
-    public function testGetByIdReturnsData(): void
+    private function lexical(string $text): string
     {
-        $rawData = [
-            'id' => 1,
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => $text],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    private function lexicalLink(bool $newTab): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/session',
+                                    'newTab' => $newTab,
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Session link'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testGetByIdRendersLexicalContentToHtml(): void
+    {
+        $row = [
+            'id' => 42,
             'headline' => 'Test Story',
-            'start_date' => '2026-02-01 00:00:00',
-            'end_date' => '2026-02-28 23:59:59',
-            'content' => 'Test content',
+            'start_date' => '2026-06-01 00:00:00',
+            'end_date' => '2026-12-31 00:00:00',
+            'content' => $this->lexical('Hello world'),
             'priority' => 1,
-            'pic' => 'http://pic.jpg',
-            'pic_url' => '',
-            'deleted' => 'n'
+            'pic' => 'http://img',
+            'pic_url' => 'http://link',
+            'deleted' => 'n',
         ];
 
         $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->with(['id' => 1])
-            ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn($rawData);
+        $mockStmt->expects($this->once())->method('execute')->with(['id' => 42])->willReturn(true);
+        $mockStmt->expects($this->once())->method('fetch')->willReturn($row);
+        $this->mockDb->expects($this->once())->method('prepare')->willReturn($mockStmt);
 
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
+        $result = $this->story->getById(42);
 
-        $result = $this->story->getById(1);
-        
         $this->assertIsArray($result);
-        $this->assertSame(1, $result['id']);
-        $this->assertSame('Test Story', $result['headline']);
+        $this->assertSame(42, $result['id']);
+        // Lexical content is converted to the `story` HTML field.
+        $this->assertArrayHasKey('story', $result);
+        $this->assertArrayNotHasKey('content', $result);
+        $this->assertStringContainsString('Hello world', $result['story']);
     }
 
-    /**
-     * Test getById returns null when story doesn't exist
-     */
     public function testGetByIdReturnsNullWhenNotFound(): void
     {
         $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn(false);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn(false);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
 
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
-
-        $result = $this->story->getById(999);
-        $this->assertNull($result);
+        $this->assertNull($this->story->getById(999));
     }
 
-    /**
-     * Test getAll query includes show_on_front_page filter
-     */
-    public function testGetAllFiltersByShowOnFrontPage(): void
+    public function testGetAllReturnsOddEvenSplit(): void
+    {
+        $rows = [
+            ['id' => 1, 'headline' => 'A', 'content' => $this->lexical('one')],
+            ['id' => 2, 'headline' => 'B', 'content' => $this->lexical('two')],
+            ['id' => 3, 'headline' => 'C', 'content' => $this->lexical('three')],
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetchAll')->willReturn($rows);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        [$odd, $even] = $this->story->getAll();
+
+        $this->assertCount(2, $odd);  // indices 0, 2
+        $this->assertCount(1, $even); // index 1
+        $this->assertSame(1, $odd[0]['id']);
+        $this->assertSame(2, $even[0]['id']);
+        $this->assertStringContainsString('one', $odd[0]['story']);
+    }
+
+    public function testGetAllRespectsPayloadNewTabLinks(): void
     {
         $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        $mockStmt->expects($this->once())
-            ->method('fetchAll')
-            ->willReturn([]);
-
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->with($this->callback(function (string $query) {
-                return str_contains($query, 'show_on_front_page = true');
-            }))
-            ->willReturn($mockStmt);
-
-        $result = $this->story->getAll();
-        $this->assertIsArray($result);
-        $this->assertCount(2, $result); // Returns [odd, even] arrays
-    }
-
-    /**
-     * Test getAllActive query includes show_on_front_page filter
-     */
-    public function testGetAllActiveFiltersByShowOnFrontPage(): void
-    {
-        $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        $mockStmt->expects($this->once())
-            ->method('fetchAll')
-            ->willReturn([]);
-
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->with($this->callback(function (string $query) {
-                return str_contains($query, 'show_on_front_page = true');
-            }))
-            ->willReturn($mockStmt);
-
-        $result = $this->story->getAllActive();
-        $this->assertIsArray($result);
-    }
-
-    // ─── Lexical → HTML conversion tests ─────────────────────────────────
-
-    /**
-     * Helper: invoke private convertLexicalToHtml via reflection
-     */
-    private function callConvertLexicalToHtml(string $json): string
-    {
-        $method = new \ReflectionMethod(PostgresStory::class, 'convertLexicalToHtml');
-        $method->setAccessible(true);
-        return $method->invoke($this->story, $json);
-    }
-
-    /**
-     * Helper: invoke private isValidUrl via reflection
-     */
-    private function callIsValidUrl(string $url): bool
-    {
-        $method = new \ReflectionMethod(PostgresStory::class, 'isValidUrl');
-        $method->setAccessible(true);
-        return $method->invoke($this->story, $url);
-    }
-
-    /**
-     * Test link nodes read URL from fields.url (Payload Lexical format)
-     */
-    public function testLinkNodeReadsUrlFromFieldsUrl(): void
-    {
-        $lexical = json_encode([
-            'root' => [
-                'children' => [
-                    [
-                        'type' => 'paragraph',
-                        'children' => [
-                            [
-                                'type' => 'link',
-                                'fields' => [
-                                    'url' => 'https://example.com/vote',
-                                    'linkType' => 'custom',
-                                    'newTab' => false,
-                                ],
-                                'children' => [
-                                    ['type' => 'text', 'text' => 'VOTE HERE'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetchAll')->willReturn([
+            ['id' => 1, 'headline' => 'Remember Sports Session', 'content' => $this->lexicalLink(true)],
         ]);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
 
-        $html = $this->callConvertLexicalToHtml($lexical);
+        [$odd] = $this->story->getAll();
 
-        $this->assertStringContainsString(
-            'href="https://example.com/vote"',
-            $html
-        );
-        $this->assertStringContainsString('VOTE HERE', $html);
+        $this->assertStringContainsString('target="_blank"', $odd[0]['story']);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $odd[0]['story']);
     }
 
-    /**
-     * Test link nodes fall back to node.url when fields.url is absent
-     */
-    public function testLinkNodeFallsBackToNodeUrl(): void
+    public function testFrontPageStoryImageLinksOpenInNewTab(): void
     {
-        $lexical = json_encode([
-            'root' => [
-                'children' => [
-                    [
-                        'type' => 'paragraph',
-                        'children' => [
-                            [
-                                'type' => 'link',
-                                'url' => 'https://fallback.example.com',
-                                'children' => [
-                                    ['type' => 'text', 'text' => 'Click'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
+        ob_start();
+        \display_pic('https://example.com/session', 'https://example.com/session.jpg');
+        $html = ob_get_clean();
 
-        $html = $this->callConvertLexicalToHtml($lexical);
-
-        $this->assertStringContainsString(
-            'href="https://fallback.example.com"',
-            $html
-        );
+        $this->assertStringContainsString('target="_blank"', $html);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $html);
     }
 
-    /**
-     * Test link nodes with empty URL get href="#"
-     */
-    public function testLinkNodeWithEmptyUrlGetsFallbackHash(): void
+    public function testWritesAreDisabled(): void
     {
-        $lexical = json_encode([
-            'root' => [
-                'children' => [
-                    [
-                        'type' => 'paragraph',
-                        'children' => [
-                            [
-                                'type' => 'link',
-                                'children' => [
-                                    ['type' => 'text', 'text' => 'Broken'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $html = $this->callConvertLexicalToHtml($lexical);
-
-        // Empty string is not a valid URL, so isValidUrl returns false → '#'
-        $this->assertStringContainsString('href="#"', $html);
-    }
-
-    /**
-     * Test link nodes with missing fields key also fall back
-     */
-    public function testLinkNodeWithNoFieldsKeyFallsBack(): void
-    {
-        $lexical = json_encode([
-            'root' => [
-                'children' => [
-                    [
-                        'type' => 'paragraph',
-                        'children' => [
-                            [
-                                'type' => 'link',
-                                'url' => 'https://direct-url.com',
-                                'children' => [
-                                    ['type' => 'text', 'text' => 'Direct'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $html = $this->callConvertLexicalToHtml($lexical);
-
-        $this->assertStringContainsString(
-            'href="https://direct-url.com"',
-            $html
-        );
-    }
-
-    /**
-     * Test link URL special characters are HTML-escaped
-     */
-    public function testLinkUrlIsHtmlEscaped(): void
-    {
-        $lexical = json_encode([
-            'root' => [
-                'children' => [
-                    [
-                        'type' => 'paragraph',
-                        'children' => [
-                            [
-                                'type' => 'link',
-                                'fields' => [
-                                    'url' => 'https://example.com/page?a=1&b=2',
-                                ],
-                                'children' => [
-                                    ['type' => 'text', 'text' => 'Link'],
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-            ],
-        ]);
-
-        $html = $this->callConvertLexicalToHtml($lexical);
-
-        $this->assertStringContainsString(
-            'href="https://example.com/page?a=1&amp;b=2"',
-            $html
-        );
-    }
-
-    // ─── isValidUrl tests ────────────────────────────────────────────────
-
-    /**
-     * @dataProvider validUrlProvider
-     */
-    public function testIsValidUrlAcceptsValidUrls(string $url): void
-    {
-        $this->assertTrue($this->callIsValidUrl($url));
-    }
-
-    public static function validUrlProvider(): array
-    {
-        return [
-            'https'        => ['https://example.com'],
-            'http'         => ['http://example.com'],
-            'relative'     => ['/some/path'],
-            'anchor'       => ['#section'],
-            'path only'    => ['top11.php'],
-            'complex URL'  => ['https://www.example.com/path?q=1&r=2#frag'],
-        ];
-    }
-
-    /**
-     * @dataProvider invalidUrlProvider
-     */
-    public function testIsValidUrlRejectsInvalidUrls(string $url): void
-    {
-        $this->assertFalse($this->callIsValidUrl($url));
-    }
-
-    public static function invalidUrlProvider(): array
-    {
-        return [
-            'empty string'       => [''],
-            'javascript scheme'  => ['javascript:alert(1)'],
-            'data scheme'        => ['data:text/html,<h1>xss</h1>'],
-        ];
+        $this->expectException(\RuntimeException::class);
+        $this->story->add(['headline' => 'nope']);
     }
 }

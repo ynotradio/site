@@ -91,4 +91,11 @@ describe('ThumbnailCell', () => {
     fireEvent.error(img);
     expect(screen.getByText('—')).toBeInTheDocument();
   });
+
+  it('renders placeholder when field has no relationTo property', () => {
+    const fieldWithoutRelationTo = { name: 'photo', type: 'upload' as const };
+    render(<ThumbnailCell cellData="123" field={fieldWithoutRelationTo as any} collectionSlug="artists" rowData={{}} />);
+    expect(screen.getByText('—')).toBeInTheDocument();
+    expect(mockGetRelationships).not.toHaveBeenCalled();
+  });
 });

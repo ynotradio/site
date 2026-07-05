@@ -188,6 +188,7 @@ describe('importDJs', () => {
           sortOrder: 1,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -249,6 +250,7 @@ describe('importDJs', () => {
           sortOrder: 10,
           legacyId: 34,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -422,6 +424,7 @@ describe('importDJs', () => {
         data: expect.objectContaining({
           legacyId: 42,
           migratedAt: expect.any(String),
+          _status: 'published',
         }),
       });
     });

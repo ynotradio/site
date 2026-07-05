@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\OnDemand;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 use PDOException;
 
@@ -11,6 +12,8 @@ use PDOException;
  * Reads from Neon PostgreSQL database created by Payload CMS
  */
 class PostgresOnDemand implements OnDemand {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     public function __construct(PDO $db) {
@@ -31,7 +34,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r.\"order\") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
@@ -49,6 +52,9 @@ class PostgresOnDemand implements OnDemand {
         
         // Convert PostgreSQL timestamp to MySQL date format
         $result['date'] = $this->formatDate($result['date']);
+        if (isset($result['note'])) {
+            $result['note'] = $this->convertLexicalToHtml($result['note'], true);
+        }
         
         return $result;
     }
@@ -79,7 +85,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r.\"order\") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 od.source
             FROM ondemand od
@@ -204,7 +210,7 @@ class PostgresOnDemand implements OnDemand {
                 COALESCE(m.url, m.filename, '') as image,
                 od.headline,
                 od.description as note,
-                '' as songs,
+                COALESCE((SELECT string_agg(s.title, ' / ' ORDER BY r.\"order\") FROM ondemand_rels r JOIN songs s ON s.id = r.songs_id WHERE r.parent_id = od.id AND r.path = 'songs'), '') as songs,
                 od.audio_url,
                 COALESCE(od.source, 'opendrive') as source
             FROM ondemand od
@@ -251,6 +257,9 @@ class PostgresOnDemand implements OnDemand {
             if (isset($row['date'])) {
                 $row['fdate'] = $this->formatDateShort($row['date']);
                 $row['date'] = $this->formatDate($row['date']);
+            }
+            if (isset($row['note'])) {
+                $row['note'] = $this->convertLexicalToHtml($row['note'], true);
             }
             return $row;
         }, $results);

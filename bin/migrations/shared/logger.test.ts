@@ -409,6 +409,27 @@ describe('logger', () => {
         expect(markdown).toContain('| 1 | Bad Post | validation_error | Field missing |');
       });
 
+      it('should handle error with empty message in error details table', () => {
+        const stats = createExtendedStats();
+        recordError(stats, 2, 'Empty Msg Post', ErrorCategory.DATABASE_ERROR, '');
+
+        const markdown = generateStatsMarkdown(stats, 'Posts');
+
+        expect(markdown).toContain('### Error Details');
+        expect(markdown).toContain('| 2 | Empty Msg Post | database_error |  |');
+      });
+
+      it('should truncate error details when there are more than 20 errors', () => {
+        const stats = createExtendedStats();
+        for (let i = 1; i <= 25; i++) {
+          recordError(stats, i, `Item ${i}`, ErrorCategory.VALIDATION_ERROR, `Error ${i}`);
+        }
+
+        const markdown = generateStatsMarkdown(stats, 'Posts');
+
+        expect(markdown).toContain('*5 more errors*');
+      });
+
       it('should escape pipe characters in error table', () => {
         const stats = createExtendedStats();
         recordError(
@@ -422,6 +443,34 @@ describe('logger', () => {
         const markdown = generateStatsMarkdown(stats, 'Posts');
 
         expect(markdown).toContain('Title with \\| pipe');
+      });
+
+      it('includes error categories but skips error details when results array is empty', () => {
+        const stats = createExtendedStats();
+        // Simulate stats.errors > 0 without actual result entries (edge case in manual stats manipulation)
+        stats.errors = 1;
+        stats.total = 1;
+        stats.errorCategoryCounts[ErrorCategory.VALIDATION_ERROR] = 1;
+
+        const markdown = generateStatsMarkdown(stats, 'Posts');
+
+        expect(markdown).toContain('### Error Categories');
+        expect(markdown).not.toContain('### Error Details');
+      });
+    });
+
+    describe('logExtendedSummary - edge cases', () => {
+      it('logs error categories but skips sample errors when results array is empty', () => {
+        const stats = createExtendedStats();
+        // Simulate stats.errors > 0 without actual result entries
+        stats.errors = 1;
+        stats.total = 1;
+        stats.errorCategoryCounts[ErrorCategory.VALIDATION_ERROR] = 1;
+
+        logExtendedSummary(stats);
+
+        expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('Error Categories:'));
+        expect(consoleSpy.log).not.toHaveBeenCalledWith(expect.stringContaining('Sample Errors:'));
       });
     });
   });

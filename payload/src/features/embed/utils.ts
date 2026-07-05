@@ -1,4 +1,5 @@
-export type EmbedType = 'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'generic';
+export type EmbedType =
+  'youtube' | 'vimeo' | 'spotify' | 'soundcloud' | 'mixcloud' | 'opendrive' | 'generic';
 
 export interface EmbedInfo {
   type: EmbedType;
@@ -30,33 +31,103 @@ export function extractSoundCloudInfo(url: string): string | null {
   return match ? match[1] : null;
 }
 
-export function detectEmbedType(url: string): EmbedInfo {
+/**
+ * Pull a Mixcloud feed path (e.g. `/ynotradio/some-show/`) from a public
+ * mixcloud.com show URL. Genre/discover/search hub pages aren't single feeds,
+ * so return null and let the caller fall back to a generic embed.
+ *
+ * Keep in sync with extractMixcloudFeed() in
+ * src/models/Concerns/RendersLexicalEmbeds.php.
+ */
+export function extractMixcloudFeed(url: string): string | null {
+  let path: string;
+  try {
+    path = new URL(url).pathname;
+  } catch {
+    return null;
+  }
+  const segments = path.split('/').filter(Boolean);
+  const hubs = ['genres', 'discover', 'categories', 'tag', 'search', 'upload', 'live'];
+  if (segments.length < 2 || hubs.includes(segments[0])) {
+    return null;
+  }
+  // Mixcloud feeds are addressed with a leading and trailing slash.
+  return `/${segments.join('/')}/`;
+}
+
+export interface DetectEmbedTypeOptions {
+  /**
+   * Mixcloud only: hide the show's cover art in the player widget.
+   * Defaults to true — most Mixcloud embeds on this site hide the cover.
+   */
+  hideCoverImage?: boolean;
+}
+
+export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {}): EmbedInfo {
+  const { hideCoverImage = true } = options;
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const videoId = extractYouTubeId(url);
     if (videoId) {
-      return { type: 'youtube', embedUrl: `https://www.youtube.com/embed/${videoId}`, originalUrl: url };
+      return {
+        type: 'youtube',
+        embedUrl: `https://www.youtube.com/embed/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('vimeo.com')) {
     const videoId = extractVimeoId(url);
     if (videoId) {
-      return { type: 'vimeo', embedUrl: `https://player.vimeo.com/video/${videoId}`, originalUrl: url };
+      return {
+        type: 'vimeo',
+        embedUrl: `https://player.vimeo.com/video/${videoId}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('spotify.com')) {
     const info = extractSpotifyInfo(url);
     if (info) {
-      return { type: 'spotify', embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`, originalUrl: url };
+      return {
+        type: 'spotify',
+        embedUrl: `https://open.spotify.com/embed/${info.type}/${info.id}`,
+        originalUrl: url,
+      };
     }
   }
 
   if (url.includes('soundcloud.com')) {
     const trackInfo = extractSoundCloudInfo(url);
     if (trackInfo) {
-      return { type: 'soundcloud', embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`, originalUrl: url };
+      return {
+        type: 'soundcloud',
+        embedUrl: `https://w.soundcloud.com/player/?url=https://soundcloud.com/${trackInfo}`,
+        originalUrl: url,
+      };
     }
+  }
+
+  // Mixcloud — the dominant provider in the legacy custom-text content.
+  if (url.includes('mixcloud.com')) {
+    if (url.includes('player-widget.mixcloud.com')) {
+      // Already a widget embed URL — use as-is.
+      return { type: 'mixcloud', embedUrl: url, originalUrl: url };
+    }
+    const feed = extractMixcloudFeed(url);
+    if (feed) {
+      return {
+        type: 'mixcloud',
+        embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
+        originalUrl: url,
+      };
+    }
+  }
+
+  // OpenDrive — the /player/<id> URL is already an embeddable audio bar.
+  if (url.includes('opendrive.com')) {
+    return { type: 'opendrive', embedUrl: url, originalUrl: url };
   }
 
   return { type: 'generic', embedUrl: url, originalUrl: url };

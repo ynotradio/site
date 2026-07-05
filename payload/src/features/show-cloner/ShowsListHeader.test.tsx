@@ -7,7 +7,6 @@ import { ShowsListHeader } from './ShowsListHeader';
 describe('ShowsListHeader', () => {
   it('renders the Show Cloner link', () => {
     render(<ShowsListHeader />);
-
     const link = screen.getByText('Show Cloner');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/admin/show-cloner');
@@ -15,18 +14,12 @@ describe('ShowsListHeader', () => {
 
   it('applies correct CSS classes', () => {
     const { container } = render(<ShowsListHeader />);
-
-    const wrapper = container.querySelector('.shows-list-header');
-    expect(wrapper).toBeInTheDocument();
-
-    const link = container.querySelector('.shows-list-header__link');
-    expect(link).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill-row')).toBeInTheDocument();
+    expect(container.querySelector('.tool-link-pill')).toBeInTheDocument();
   });
 
   it('renders as a navigation link', () => {
     render(<ShowsListHeader />);
-
-    const link = screen.getByRole('link', { name: 'Show Cloner' });
-    expect(link).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Show Cloner' })).toBeInTheDocument();
   });
 });

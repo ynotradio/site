@@ -11,7 +11,8 @@ body {
   border: 5px solid white;
   margin: 0 auto;
   padding-bottom: 10px;
-  width: 960px;
+  width: 100%;
+  max-width: 960px;
 }
 
 img {
@@ -191,16 +192,35 @@ nav a:hover {
   background: #F0F0F0;
   border-radius: 4px 4px 0 0;
   padding-bottom: 10px;
+  margin-top: 10px;
   box-shadow: 0 0px 8px #B6B6B6;
+  container-type: inline-size;
 }
 
 .feature-box h3 {
   background-color: #CC3333;
   border-radius: 4px 4px 0 0;
   color: white;
-  margin: 10px 0;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0 0 10px;
   padding: 3px 6px;
-  text-shadow: 0.1em 0.1em black
+  text-shadow: 0.1em 0.1em black;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Container queries: reduce font size only for very narrow containers (mobile) */
+@container (width < 280px) {
+  .feature-box h3 {
+    font-size: 12px;
+  }
+}
+
+/* For long headlines (like "Rodney Anonymous Tells You How To Live"), 
+   use smaller font to prevent wrapping in narrow containers */
+.feature-box h3.long-headline {
+  font-size: 13px;
 }
 
 .feature-box img {
@@ -215,6 +235,38 @@ nav a:hover {
 
 .feature-box div p {
   margin: 0;
+}
+
+/* Front-page two-column story layout.
+   Desktop: flex row of two .stories-col children, each flowing independently
+   (mirrors the legacy `.row > .six.columns` layout — heights are NOT
+   row-aligned, unlike a CSS grid).
+   Mobile: collapse the .stories-col wrappers with `display: contents` so
+   .feature-box becomes a direct flex child of .stories-container, and use
+   the inline `order` style emitted by display_stories() to interleave
+   stories back into strict priority order (1, 2, 3, …). */
+.stories-container {
+  display: flex;
+  align-items: flex-start;
+  margin: 0 -10px;
+}
+
+.stories-col {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 10px;
+}
+
+@media only screen and (max-width: 959px) {
+  .stories-container {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+  }
+
+  .stories-col {
+    display: contents;
+  }
 }
 
 .ads {
@@ -350,6 +402,16 @@ nav a:hover {
   height: 100px;
 }
 
+/* Lexical note paragraphs collapse visually to match the legacy MySQL frontend */
+.ondemand td > div p {
+  margin: 0;
+  display: inline;
+}
+.ondemand td > div p + p {
+  display: block;
+  margin-top: 0.4em;
+}
+
 .pagination {
   padding: 20px;
 }
@@ -401,11 +463,6 @@ footer a:hover {
   font-weight: bold;
 }
 
-#control_panel dt:before,
-dt:after {
-  content: " -- ";
-}
-
 #control_panel td {
   vertical-align: top;
 }
@@ -419,6 +476,664 @@ dt:after {
   display: none;
 }
 
+/* Desktop: hamburger, structured mobile header, and slide-in drawer are hidden */
+.nav-toggle,
+.header-mobile,
+.mobile-drawer,
+.mobile-drawer-overlay {
+  display: none;
+}
+
+/* ── Animations available everywhere (used by mobile header) ── */
+@keyframes ynot-ticker {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes ynot-ripple {
+  0%   { box-shadow: 0 0 0 0 rgba(204, 51, 51, 0.6); }
+  70%  { box-shadow: 0 0 0 8px rgba(204, 51, 51, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(204, 51, 51, 0); }
+}
+
 .no-border {
   border: none !important;
+}
+
+/* ── Mobile / small-tablet responsive overrides (≤ 959px) ── */
+@media only screen and (max-width: 959px) {
+  /* Container loses its decorative white border on small screens */
+  #container {
+    border-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* ── Header: swap bitmap+imagemap for the four-zone Variant B layout ── */
+  header {
+    height: auto;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: #1a1a1a;
+  }
+
+  .header-bitmap { display: none; }
+
+  .header-mobile {
+    display: block;
+    background: #222;
+  }
+
+  /* Zone 1: logo hero on textured concrete */
+  .header-mobile__brand {
+    display: block;
+    padding: 38px 16px 12px;
+    background: url('../imgs/header_background.png') repeat-x;
+    background-size: auto 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+
+  .header-mobile__brand img {
+    display: inline-block;
+    width: auto;
+    height: 58px;
+    max-width: 80%;
+    /* Override the desktop `header img { min-width: 950px }` rule */
+    min-width: 0;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  }
+
+  /* Zone 2: three-column action bar */
+  .header-mobile__actions {
+    display: flex;
+    align-items: stretch;
+    background: #222;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  }
+
+  .action-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 6px;
+    background: #333;
+    color: #fff;
+    font: bold 11px/1.1 Verdana, Geneva, Tahoma, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    text-align: center;
+    border: 0;
+    border-right: 1px solid rgba(0, 0, 0, 0.6);
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: background 0.18s ease-out;
+  }
+
+  .action-btn:last-child { border-right: 0; }
+
+  .action-btn:hover,
+  .action-btn:focus-visible {
+    background: #444;
+    color: #fff;
+    text-decoration: none;
+    outline: none;
+  }
+
+  .action-btn:focus-visible {
+    box-shadow: inset 0 0 0 2px #cc3333;
+  }
+
+  .action-btn__row {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .action-btn__label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+
+  .action-btn__eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    opacity: 0.8;
+  }
+
+  .action-btn__icon {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .action-btn__chevron {
+    font-size: 11px;
+    line-height: 1;
+    transition: transform 0.2s ease-out;
+  }
+
+  .action-btn--live {
+    background: #cc3333;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+  .action-btn--live:hover,
+  .action-btn--live:focus-visible {
+    background: #a82828;
+  }
+
+  .action-btn--onair[aria-expanded="true"] {
+    background: #444;
+  }
+  .action-btn--onair[aria-expanded="true"] .action-btn__chevron {
+    transform: rotate(180deg);
+  }
+
+  .onair-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #cc3333;
+    flex-shrink: 0;
+    animation: ynot-ripple 1.6s ease-out infinite;
+  }
+
+  /* Hamburger glyph for the Menu button */
+  .hamburger {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 16px;
+  }
+  .hamburger > span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+  }
+
+  /* Zone 2b: Now Playing expandable panel */
+  .np-panel {
+    overflow: hidden;
+    max-height: 0;
+    background: #393939;
+    transition: max-height 0.3s ease, border-bottom-color 0.3s ease;
+    border-bottom: 2px solid transparent;
+  }
+  .np-panel.is-open {
+    max-height: 240px;
+    border-bottom-color: #cc3333;
+  }
+  .np-panel[hidden] { display: block; }
+
+  .np-panel__inner {
+    padding: 10px 14px 12px;
+    color: #fff;
+    font: 12px/1.4 Verdana, Geneva, Tahoma, sans-serif;
+  }
+
+  .np-panel__eyebrow {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #cc3333;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .np-panel__list {
+    list-style: none;
+    counter-reset: np;
+    margin: 0;
+    padding: 0;
+  }
+
+  .np-panel__list li {
+    counter-increment: np;
+    display: block;
+    padding: 5px 0 5px 22px;
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .np-panel__list li:first-child { border-top: 0; }
+
+  .np-panel__list li::before {
+    content: counter(np);
+    position: absolute;
+    left: 0;
+    top: 5px;
+    width: 16px;
+    text-align: right;
+    font-size: 10px;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .np-panel__list strong { font-weight: 600; }
+  .np-panel__list em { font-style: italic; color: rgba(255, 255, 255, 0.78); }
+  .np-panel__sep { color: rgba(255, 255, 255, 0.4); }
+  .np-panel__empty {
+    padding: 6px 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+  }
+
+  /* Zone 3: persistent marquee strip */
+  .np-marquee {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    background: #cc3333;
+    color: #fff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+  }
+
+  .header-mobile.is-marquee-paused .np-marquee {
+    display: none;
+  }
+
+  .np-marquee__badge {
+    flex-shrink: 0;
+    background: #fff;
+    color: #cc3333;
+    font: bold 9px/1 Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 3px 6px;
+    border-radius: 2px;
+    text-shadow: none;
+  }
+
+  .np-marquee__viewport {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .np-marquee__text {
+    display: inline-block;
+    white-space: nowrap;
+    font: italic 11px/1.4 Georgia, "Times New Roman", serif;
+    will-change: transform;
+    animation: ynot-ticker 18s linear infinite;
+  }
+
+  .np-marquee:hover .np-marquee__text,
+  .np-marquee:focus-within .np-marquee__text {
+    animation-play-state: paused;
+  }
+
+  /* On-air strip remains hidden on mobile (info is in Zone 2 + drawer instead) */
+  #on-air { display: none; }
+
+  /* ── Hide the desktop nav entirely on mobile (drawer takes over) ── */
+  nav {
+    display: none;
+  }
+
+  /* ── Mobile drawer ── */
+  .mobile-drawer-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1000;
+  }
+  .mobile-drawer-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mobile-drawer-overlay[hidden] { display: block; }
+
+  .mobile-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 320px;
+    background: #222;
+    color: #fff;
+    z-index: 1001;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.5);
+  }
+  .mobile-drawer[aria-hidden="false"] {
+    transform: translateX(0);
+  }
+
+  .mobile-drawer__logo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: url('../imgs/header_background.png') repeat-x;
+    background-size: auto 100%;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+  }
+  .mobile-drawer__logo img {
+    height: 42px;
+    width: auto;
+    min-width: 0;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  }
+  .mobile-drawer__close {
+    background: transparent;
+    border: 0;
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+  }
+  .mobile-drawer__close:focus-visible {
+    outline: 2px solid #cc3333;
+    outline-offset: 2px;
+  }
+
+  .mobile-drawer__onair {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #cc3333;
+    font: bold 11px/1.2 Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+  .mobile-drawer__onair-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    flex-shrink: 0;
+  }
+
+  .mobile-drawer__np {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 16px;
+    background: #2a2a2a;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.5);
+    font: 12px/1.4 Verdana, sans-serif;
+  }
+  .mobile-drawer__np-label {
+    font-size: 9px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #cc3333;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+  }
+  .mobile-drawer__np-track em { font-style: italic; }
+
+  .mobile-drawer__nav {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+  }
+  .mobile-drawer__nav a {
+    display: block;
+    padding: 14px 16px;
+    background: #222;
+    color: #fff;
+    font: bold 13px/1 Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.4);
+  }
+  .mobile-drawer__nav a:hover,
+  .mobile-drawer__nav a:focus-visible {
+    background: #333;
+    outline: none;
+  }
+  .mobile-drawer__nav a:focus-visible {
+    box-shadow: inset 3px 0 0 #cc3333;
+  }
+  .mobile-drawer__nav a.active {
+    background: #cc3333;
+    box-shadow: inset 3px 0 0 #fff;
+  }
+
+  .mobile-drawer__social {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    background: #1a1a1a;
+    border-top: 1px solid rgba(0, 0, 0, 0.6);
+  }
+  .mobile-drawer__social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #444;
+    color: #fff;
+    font: italic bold 16px/1 Georgia, serif;
+    text-decoration: none;
+    border-radius: 4px;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6);
+  }
+  .mobile-drawer__social a:hover,
+  .mobile-drawer__social a:focus-visible {
+    background: #cc3333;
+    outline: none;
+  }
+
+  /* Body scroll lock when drawer is open */
+  body.drawer-open {
+    overflow: hidden;
+  }
+
+  /* ── Forms and inputs ── */
+  #contact_us,
+  #login,
+  #admin,
+  .shorten {
+    width: 100%;
+    margin: 0;
+    padding: 0 10px;
+  }
+
+  .input-l,
+  .input-xl {
+    width: 100%;
+  }
+
+  .half {
+    float: none;
+    width: 100%;
+  }
+
+  .inline label {
+    float: none;
+    height: auto;
+    line-height: 1.4;
+    margin-right: 0;
+    text-align: left;
+  }
+
+  .inline .controls {
+    margin-left: 0;
+  }
+
+  .inline .form-actions {
+    padding-left: 0;
+  }
+
+  /* ── Tables: fit narrow viewports ── */
+  /* Neutralize fixed colgroup widths inherited from desktop tables */
+  table colgroup col {
+    width: auto !important;
+  }
+
+  table {
+    width: 100%;
+    font-size: 13px;
+    table-layout: auto;
+  }
+
+  table th,
+  table td {
+    padding: 6px 8px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Constrain media inside table cells so fixed-pixel widths don't push pages wide */
+  table td img,
+  table td iframe,
+  table td video,
+  table td embed,
+  table td object {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Allow wide content tables to scroll horizontally rather than overflow page */
+  .table-responsive,
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* On Demand: stack thumbnail above show details so 180px image + iframe + text fit */
+  table.ondemand,
+  table.ondemand tbody,
+  table.ondemand tr {
+    display: block;
+    width: 100%;
+  }
+
+  table.ondemand td {
+    display: block;
+    width: 100% !important;
+    box-sizing: border-box;
+    padding: 8px 0;
+    border: 0;
+  }
+
+  table.ondemand tr {
+    border-bottom: 1px solid #e5e5e5;
+    padding: 12px 0;
+  }
+
+  table.ondemand td img {
+    display: block;
+    float: none;
+    margin: 0 auto 4px;
+    max-width: 240px;
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  table.ondemand .t {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+
+  /* Defensive: long tokens (URLs, raw JSON) must wrap rather than expand the page */
+  #content,
+  .content,
+  main {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* ── Main content padding so text doesn't kiss the viewport edges ── */
+  #content,
+  .content,
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  /* Headings: tighten margins on small screens */
+  h1 { font-size: 24px; line-height: 1.2; }
+  h2 { font-size: 20px; line-height: 1.25; }
+  h3 { font-size: 17px; line-height: 1.3; }
+
+  /* Mixcloud / sidebar widgets stacked below content via grid.css.
+     No extra width override needed here. */
+
+  /* Footer: tighten and center */
+  footer {
+    padding: 16px 12px;
+    text-align: center;
+  }
+
+  .feature-box .clearfix {
+    text-align: left;
+  }
+
+  .feature-box iframe {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+  }
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    -webkit-animation-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    -webkit-transition-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* Marquee: snap to a static, truncated single line instead of scrolling */
+  .np-marquee__text {
+    animation: none !important;
+    transform: none !important;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+  }
+
+  /* On-air dot: hold a single subtle ring instead of pulsing */
+  .onair-dot {
+    animation: none !important;
+    box-shadow: 0 0 0 2px rgba(204, 51, 51, 0.4);
+  }
 }

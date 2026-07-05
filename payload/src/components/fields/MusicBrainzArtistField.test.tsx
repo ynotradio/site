@@ -30,9 +30,7 @@ describe('MusicBrainzArtistField', () => {
       setValue: mockSetValue,
     } as any);
 
-    vi.mocked(useFormFields).mockReturnValue({
-      value: 'Test Artist',
-    } as any);
+    vi.mocked(useFormFields).mockImplementation((selector: any) => selector([{ name: { value: 'Test Artist' } }, null]));
   });
 
   it('renders the search button', () => {
@@ -368,5 +366,15 @@ describe('MusicBrainzArtistField', () => {
       // formatArtistInfo renders life-span with begin and end: "1960–1970"
       expect(screen.getByText(/1960–1970/)).toBeInTheDocument();
     });
+  });
+
+  it('guards against search when artist name is empty (covers early-return branch)', async () => {
+    vi.mocked(useFormFields).mockReturnValue({ value: '' } as any);
+
+    render(<MusicBrainzArtistField path="musicbrainzId" />);
+
+    fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+    expect(vi.mocked(musicbrainzApi.searchArtists)).not.toHaveBeenCalled();
   });
 });

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   formatDuration,
+  getArtistCreditName,
   searchArtists,
   searchReleases,
   searchRecordings,
@@ -81,6 +82,16 @@ describe('MusicBrainz API Utils', () => {
 
         const result = await searchArtists('Test Artist');
         expect(result).toEqual(mockArtists);
+      });
+
+      it('returns empty array when API response has no artists field', async () => {
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({}),
+        });
+
+        const result = await searchArtists('Test Artist');
+        expect(result).toEqual([]);
         expect(fetchMock).toHaveBeenCalledWith(
           expect.stringContaining('https://musicbrainz.org/ws/2/artist?query='),
           expect.objectContaining({
@@ -128,6 +139,38 @@ describe('MusicBrainz API Utils', () => {
         const callUrl = fetchMock.mock.calls[0][0];
         expect(callUrl).toContain('limit=25');
       });
+
+      it('serializes concurrent requests via busy-wait when first holds the rate-limit lock', async () => {
+        vi.useFakeTimers();
+
+        // Prime the rate limiter: call once so lastRequestTime gets set to "now"
+        fetchMock.mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [] }) });
+        const prime = searchArtists('prime');
+        await vi.runAllTimersAsync();
+        await prime;
+
+        // Advance time by 500ms — less than MIN_REQUEST_INTERVAL (1000ms)
+        // so the next waitForRateLimit call will hold the lock while waiting
+        vi.advanceTimersByTime(500);
+
+        // Start two concurrent calls.
+        // p1: acquires lock, finds 500ms remaining, awaits setTimeout(500ms) → suspends
+        // p2: tries to acquire lock, sees requestInProgress=true, enters while-loop (lines 95-96)
+        fetchMock
+          .mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [{ id: '1' }] }) })
+          .mockResolvedValueOnce({ ok: true, json: async () => ({ artists: [{ id: '2' }] }) });
+        const p1 = searchArtists('query1');
+        const p2 = searchArtists('query2');
+
+        await vi.runAllTimersAsync();
+        const [r1, r2] = await Promise.all([p1, p2]);
+
+        expect(r1).toEqual([{ id: '1' }]);
+        expect(r2).toEqual([{ id: '2' }]);
+        expect(fetchMock).toHaveBeenCalledTimes(3); // prime + 2 concurrent
+
+        vi.useRealTimers();
+      });
     });
 
     describe('searchReleases', () => {
@@ -156,6 +199,16 @@ describe('MusicBrainz API Utils', () => {
         expect(result).toEqual(mockReleases);
       });
 
+      it('returns empty array when API response has no releases field', async () => {
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({}),
+        });
+
+        const result = await searchReleases('Test Album');
+        expect(result).toEqual([]);
+      });
+
       it('includes artist name in query when provided', async () => {
         fetchMock.mockResolvedValueOnce({
           ok: true,
@@ -176,6 +229,271 @@ describe('MusicBrainz API Utils', () => {
         await searchReleases('Album (Deluxe)', 'AC/DC');
         const callUrl = fetchMock.mock.calls[0][0];
         expect(callUrl).toContain('%5C'); // Escaped backslash
+      });
+
+      it('sorts artist-matching releases before non-matching when artist name provided', async () => {
+        const releases = [
+          {
+            id: 'no-match',
+            title: 'Test Album',
+            score: 100,
+            'artist-credit': [{ name: 'Other Artist', artist: { id: 'x', name: 'Other Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'match',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'y', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test Album', 'Test Artist');
+        expect(result[0].id).toBe('match');
+        expect(result[1].id).toBe('no-match');
+      });
+
+      it('ranks by release type when artist match is equal', async () => {
+        const releases = [
+          {
+            id: 'single',
+            title: 'Test',
+            score: 100,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Single' },
+          },
+          {
+            id: 'album',
+            title: 'Test',
+            score: 90,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('album');
+        expect(result[1].id).toBe('single');
+      });
+
+      it('ranks preferred release type first (rank 0) above all other types', async () => {
+        const releases = [
+          {
+            id: 'ep',
+            title: 'Test',
+            score: 100,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'EP' },
+          },
+          {
+            id: 'preferred',
+            title: 'Test',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'EP' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        // When preferredType is 'EP', both have same type rank, falls through to score
+        const result = await searchReleases('Test', 'Test Artist', 'EP');
+        expect(result[0].id).toBe('ep'); // higher score
+      });
+
+      it('falls through to score comparison when artist match and type rank are equal', async () => {
+        const releases = [
+          {
+            id: 'low-score',
+            title: 'Test Album',
+            score: 75,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'high-score',
+            title: 'Test Album',
+            score: 95,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('high-score');
+        expect(result[1].id).toBe('low-score');
+      });
+
+      it('handles releases with no artist-credit field when sorting', async () => {
+        const releases = [
+          {
+            id: 'no-credit',
+            title: 'Test Album',
+            score: 100,
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'with-credit',
+            title: 'Test Album',
+            score: 90,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test Album', 'Test Artist');
+        expect(result[0].id).toBe('with-credit'); // artist match comes first
+      });
+
+      it('handles releases with no release-group field (undefined type rank)', async () => {
+        const releases = [
+          {
+            id: 'no-group',
+            title: 'Test Album',
+            score: 100,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+          },
+          {
+            id: 'with-album-type',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        // Album (rank 1) comes before undefined type (DEFAULT_TYPE_RANK = 4)
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('with-album-type');
+      });
+
+      it('handles releases with unknown release type (falls back to default rank)', async () => {
+        const releases = [
+          {
+            id: 'unknown-type',
+            title: 'Test Album',
+            score: 100,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'UnknownType' },
+          },
+          {
+            id: 'album-type',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        // Album (rank 1) before UnknownType (DEFAULT_TYPE_RANK = 4)
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('album-type');
+      });
+
+      it('returns releases unsorted when no artist name provided', async () => {
+        const releases = [
+          { id: 'first', title: 'Test', score: 50 },
+          { id: 'second', title: 'Test', score: 100 },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test');
+        expect(result[0].id).toBe('first'); // original order preserved
+      });
+
+      it('uses 0 as score fallback when score is missing during score comparison', async () => {
+        const releases = [
+          {
+            id: 'no-score',
+            title: 'Test Album',
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'has-score',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        // 80 (has-score) > 0 (no-score fallback) → has-score first
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
+      it('covers score comparison when b has no score and a has score', async () => {
+        const releases = [
+          {
+            id: 'has-score',
+            title: 'Test Album',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+          {
+            id: 'no-score',
+            title: 'Test Album',
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+            'release-group': { 'primary-type': 'Album' },
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ releases }),
+        });
+
+        // Comparator called as (has-score, no-score): b.score=undefined (→0), a.score=80 (→80)
+        // Result: 0 - 80 = -80 → has-score remains first
+        const result = await searchReleases('Test Album', 'Test Artist', 'Album');
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
       });
 
       it('returns empty array on API error', async () => {
@@ -200,6 +518,16 @@ describe('MusicBrainz API Utils', () => {
         const result = await searchRecordings('');
         expect(result).toEqual([]);
         expect(fetchMock).not.toHaveBeenCalled();
+      });
+
+      it('returns empty array when API response has no recordings field', async () => {
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({}),
+        });
+
+        const result = await searchRecordings('Test Song');
+        expect(result).toEqual([]);
       });
 
       it('fetches recordings from MusicBrainz API', async () => {
@@ -243,6 +571,58 @@ describe('MusicBrainz API Utils', () => {
         expect(callUrl).toContain('NOT%20video%3Atrue');
       });
 
+      it('sorts artist-matching recordings first when artist name provided', async () => {
+        const recordings = [
+          {
+            id: 'no-match',
+            title: 'Test Song',
+            score: 100,
+            'artist-credit': [{ name: 'Other Artist', artist: { id: 'x', name: 'Other Artist' } }],
+          },
+          {
+            id: 'match',
+            title: 'Test Song',
+            score: 80,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'y', name: 'Test Artist' } }],
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        const result = await searchRecordings('Test Song', 'Test Artist');
+        expect(result[0].id).toBe('match');
+        expect(result[1].id).toBe('no-match');
+      });
+
+      it('uses score as tiebreaker when artist matches and live status are equal', async () => {
+        const recordings = [
+          {
+            id: 'low-score',
+            title: 'Test Song',
+            score: 70,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'a', name: 'Test Artist' } }],
+          },
+          {
+            id: 'high-score',
+            title: 'Test Song',
+            score: 95,
+            'artist-credit': [{ name: 'Test Artist', artist: { id: 'b', name: 'Test Artist' } }],
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        const result = await searchRecordings('Test Song', 'Test Artist');
+        expect(result[0].id).toBe('high-score');
+        expect(result[1].id).toBe('low-score');
+      });
+
       it('sorts live recordings to the bottom', async () => {
         const mockRecordings = [
           {
@@ -276,6 +656,84 @@ describe('MusicBrainz API Utils', () => {
         expect(result[2].id).toBe('1'); // Live version last (despite highest score)
       });
 
+      it('uses 0 as score fallback when score is missing during score comparison', async () => {
+        const recordings = [
+          {
+            id: 'no-score',
+            title: 'Test Song',
+            // no score field - should fall back to 0 in (b.score || 0) - (a.score || 0)
+          },
+          {
+            id: 'has-score',
+            title: 'Test Song',
+            score: 70,
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        const result = await searchRecordings('Test Song');
+        // 70 (has-score) > 0 (no-score fallback) → has-score first
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
+      it('covers score comparison when b has no score and a has score', async () => {
+        const recordings = [
+          {
+            id: 'has-score',
+            title: 'Test Song',
+            score: 70,
+          },
+          {
+            id: 'no-score',
+            title: 'Test Song',
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        // Comparator called as (has-score, no-score): b.score=undefined (→0), a.score=70 (→70)
+        // Result: 0 - 70 = -70 → has-score remains first
+        const result = await searchRecordings('Test Song');
+        expect(result[0].id).toBe('has-score');
+        expect(result[1].id).toBe('no-score');
+      });
+
+      it('handles recording without disambiguation as first element in input', async () => {
+        const recordings = [
+          {
+            id: 'no-disambiguation',
+            title: 'Test Song',
+            score: 90,
+          },
+          {
+            id: 'live',
+            title: 'Test Song',
+            score: 100,
+            disambiguation: 'live at venue',
+          },
+        ];
+
+        fetchMock.mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({ recordings }),
+        });
+
+        // Comparator called as (no-disambiguation, live): a.disambiguation is undefined
+        // → a.disambiguation?.toLowerCase() short-circuits to undefined → aIsLive = 0
+        // bIsLive = 1, aIsLive !== bIsLive → live goes to bottom
+        const result = await searchRecordings('Test Song');
+        expect(result[0].id).toBe('no-disambiguation');
+        expect(result[1].id).toBe('live');
+      });
+
       it('returns empty array on API error', async () => {
         fetchMock.mockResolvedValueOnce({
           ok: false,
@@ -291,6 +749,32 @@ describe('MusicBrainz API Utils', () => {
         const result = await searchRecordings('Test Song');
         expect(result).toEqual([]);
       });
+    });
+  });
+
+  describe('getArtistCreditName', () => {
+    it('returns Unknown Artist when credits is undefined', () => {
+      expect(getArtistCreditName(undefined)).toBe('Unknown Artist');
+    });
+
+    it('returns Unknown Artist when credits is an empty array', () => {
+      expect(getArtistCreditName([])).toBe('Unknown Artist');
+    });
+
+    it('returns the single artist name for a one-element array', () => {
+      expect(getArtistCreditName([{ name: 'Radiohead' }])).toBe('Radiohead');
+    });
+
+    it('joins multiple artist names with a comma and space', () => {
+      expect(
+        getArtistCreditName([{ name: 'Tom Petty' }, { name: 'The Heartbreakers' }]),
+      ).toBe('Tom Petty, The Heartbreakers');
+    });
+
+    it('joins three or more artist names', () => {
+      expect(
+        getArtistCreditName([{ name: 'A' }, { name: 'B' }, { name: 'C' }]),
+      ).toBe('A, B, C');
     });
   });
 });

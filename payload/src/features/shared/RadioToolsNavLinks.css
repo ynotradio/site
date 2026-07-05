@@ -1,28 +1,21 @@
+/*
+ * Payload has no slot to inject links inside its native nav groups (Radio,
+ * Content, Music, etc.), so these tool links render as one section appended
+ * after all groups. Reusing .nav-group / .nav-group__label / .nav__link
+ * keeps the font, color, and spacing identical to the real groups above —
+ * a divider is the only thing marking it as a separate section.
+ */
 .radio-tools-nav {
-  padding: 16px 16px 8px 16px;
-  border-top: 1px solid #ddd;
+  padding: 16px 0 0 0;
   margin-top: 8px;
+  border-top: 1px solid var(--theme-elevation-150, #e8e8e8);
 }
 
-.radio-tools-nav__heading {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #666;
-  margin-bottom: 8px;
-}
-
-.radio-tools-nav__link {
-  display: block;
-  padding: 8px 12px;
-  font-size: 14px;
-  color: #333;
-  text-decoration: none;
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-
-.radio-tools-nav__link:last-child {
-  margin-bottom: 0;
+/*
+ * Real nav-group labels get their muted color from .nav-group__toggle (a
+ * <button> — groups with links are collapsible). This section has no
+ * toggle, so the label falls back to default text color unless set here.
+ */
+.radio-tools-nav .nav-group__label {
+  color: var(--theme-elevation-400, #9a9a9a);
 }

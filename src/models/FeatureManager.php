@@ -7,20 +7,9 @@ require_once __DIR__ . '/../lib/feature-flags.php';
 class FeatureManager {
     private static $features = null;
     private static $featureFlags = null;
-    private static bool $cpContext = false;
-
-    /**
-     * Mark the current request as a control panel page.
-     * PostgreSQL feature flags are suppressed in this context because
-     * the CP is legacy code that will be replaced by Payload CMS.
-     */
-    public static function setCpContext(): void {
-        self::$cpContext = true;
-    }
 
     public static function isEnabled(string $feature): bool {
-        // CP pages always use MySQL — they're legacy and will be replaced by Payload
-        if (self::$cpContext && str_starts_with($feature, 'use_postgres_')) {
+        if (self::isControlPanelRequest() && str_starts_with($feature, 'use_postgres_')) {
             return false;
         }
 
@@ -37,11 +26,9 @@ class FeatureManager {
         }
 
         // Second, check environment variables (from .env file)
-        // Convert feature name to env var format: use_postgres_concerts -> USE_POSTGRES_CONCERTS
         $envVarName = strtoupper($feature);
         $envValue = getenv($envVarName);
         if ($envValue !== false) {
-            // Environment variable is set, so it overrides config file
             // Check for truthy values: 'true', '1', 'yes', 'on'
             $envValue = strtolower(trim($envValue));
             return in_array($envValue, ['true', '1', 'yes', 'on'], true);
@@ -53,5 +40,11 @@ class FeatureManager {
         }
 
         return self::$features[$feature] ?? false;
+    }
+
+    private static function isControlPanelRequest(): bool
+    {
+        $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+        return str_contains($scriptName, '/cp/') || str_ends_with($scriptName, '/cp.php');
     }
 } 

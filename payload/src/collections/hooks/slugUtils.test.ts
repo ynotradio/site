@@ -15,7 +15,11 @@ import {
   formatDatePrefix,
   buildMusicSlug,
   musicSlugify,
+  generateMusicSlugBeforeChangeHook,
+  resolveArtistName,
   setCdOfTheWeekSlugFromRecord,
+  postSlugify,
+  cdSlugify,
 } from './slugUtils';
 
 // Helper to create a mock request object
@@ -103,6 +107,20 @@ describe('musicSlugify (Songs/Records)', () => {
     });
   });
 
+  it('should return pre-computed slug synchronously when data.slug was set by collection hook', () => {
+    // Simulates the generateMusicSlugBeforeChangeHook having already run and
+    // set data.slug before Payload's field-level generateSlug hook calls musicSlugify.
+    // This is the fix for the async-Promise validation bug on create/update.
+    const result = musicSlugify({
+      data: { artist: 1, title: 'Hey Jude', slug: 'the-beatles--hey-jude' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('the-beatles--hey-jude');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
   it('should generate artist--title slug from populated artist object (sync)', () => {
     const result = musicSlugify({
       data: { artist: { id: 1, name: 'Pink Floyd' }, title: 'Comfortably Numb' },
@@ -111,6 +129,27 @@ describe('musicSlugify (Songs/Records)', () => {
 
     // Populated artist = synchronous return
     expect(result).toBe('pink-floyd--comfortably-numb');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('should return title-only slug when populated artist has empty name', () => {
+    const result = musicSlugify({
+      data: { artist: { id: 1, name: '' }, title: 'Some Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    // Empty artist name falls back to title-only slug
+    expect(result).toBe('some-song');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('should return title-only slug when populated artist has null name', () => {
+    const result = musicSlugify({
+      data: { artist: { id: 1, name: null }, title: 'Another Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('another-song');
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
@@ -205,6 +244,17 @@ describe('musicSlugify (Songs/Records)', () => {
     });
   });
 
+  it('should return title-only slug when artist DB lookup returns record with no name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 1 });
+
+    const result = await musicSlugify({
+      data: { artist: 1, title: 'Mystery Song' },
+      req: createMockReq(mockPayload) as any,
+    });
+
+    expect(result).toBe('mystery-song');
+  });
+
   it('should return raw valueToSlugify when title and valueToSlugify both contain only special chars', () => {
     const result = musicSlugify({
       data: { title: '♪♫★' },
@@ -229,6 +279,206 @@ describe('buildMusicSlug', () => {
 
   it('returns title slug when artistName is empty string', () => {
     expect(buildMusicSlug('', 'my-song')).toBe('my-song');
+  });
+});
+
+describe('resolveArtistName', () => {
+  let mockPayload: Partial<Payload>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPayload = {
+      findByID: vi.fn(),
+    };
+  });
+
+  it('returns empty string when no artist in data', async () => {
+    const result = await resolveArtistName({}, mockPayload as Payload);
+    expect(result).toBe('');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('returns name directly from populated artist object', async () => {
+    const result = await resolveArtistName(
+      { artist: { id: 1, name: 'David Bowie' } },
+      mockPayload as Payload,
+    );
+    expect(result).toBe('David Bowie');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('returns empty string when populated artist has null name', async () => {
+    const result = await resolveArtistName(
+      { artist: { id: 1, name: null } },
+      mockPayload as Payload,
+    );
+    expect(result).toBe('');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('performs DB lookup when artist is a numeric ID', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 7,
+      name: 'Radiohead',
+    });
+
+    const result = await resolveArtistName({ artist: 7 }, mockPayload as Payload);
+
+    expect(result).toBe('Radiohead');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({ collection: 'artists', id: 7 });
+  });
+
+  it('performs DB lookup when artist is an object with id but no name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 3,
+      name: 'The Cure',
+    });
+
+    const result = await resolveArtistName({ artist: { id: 3 } }, mockPayload as Payload);
+
+    expect(result).toBe('The Cure');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({ collection: 'artists', id: 3 });
+  });
+
+  it('returns empty string on DB lookup failure', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
+
+    const result = await resolveArtistName({ artist: 99 }, mockPayload as Payload);
+    expect(result).toBe('');
+  });
+
+  it('returns empty string when DB lookup returns record without name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 2 });
+
+    const result = await resolveArtistName({ artist: 2 }, mockPayload as Payload);
+    expect(result).toBe('');
+  });
+});
+
+describe('generateMusicSlugBeforeChangeHook', () => {
+  let mockPayload: Partial<Payload>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPayload = {
+      findByID: vi.fn(),
+    };
+  });
+
+  it('pre-computes artist--title slug when artist is a numeric ID', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 5,
+      name: 'Tom Waits',
+    });
+
+    const data: Record<string, unknown> = { artist: 5, title: 'Tom Traubert Blues' };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBe('tom-waits--tom-traubert-blues');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({ collection: 'artists', id: 5 });
+  });
+
+  it('sets title-only slug when artist DB lookup fails', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
+
+    const data: Record<string, unknown> = { artist: 99, title: 'Unknown Artist Song' };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBe('unknown-artist-song');
+  });
+
+  it('skips when artist is already a populated object with name', async () => {
+    const data: Record<string, unknown> = {
+      artist: { id: 1, name: 'Nina Simone' },
+      title: 'Feeling Good',
+    };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    // musicSlugify handles populated objects synchronously; hook should not touch slug
+    expect(result.slug).toBeUndefined();
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('skips when no artist present', async () => {
+    const data: Record<string, unknown> = { title: 'No Artist Song' };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBeUndefined();
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('skips when no title present', async () => {
+    const data: Record<string, unknown> = { artist: 5 };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBeUndefined();
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('respects manual slug override (generateSlug = false)', async () => {
+    const data: Record<string, unknown> = {
+      artist: 5,
+      title: 'Test Song',
+      slug: 'my-custom-slug',
+      generateSlug: false,
+    };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'update',
+    });
+
+    // Should preserve manual slug, not overwrite it
+    expect(result.slug).toBe('my-custom-slug');
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
+  });
+
+  it('handles title with special characters gracefully', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 5,
+      name: "Sinead O'Connor",
+    });
+
+    const data: Record<string, unknown> = { artist: 5, title: 'Nothing Compares 2 U' };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBe('sinead-oconnor--nothing-compares-2-u');
+  });
+
+  it('skips when title cannot be slugified', async () => {
+    const data: Record<string, unknown> = { artist: 5, title: '♪♫★' };
+    const result = await generateMusicSlugBeforeChangeHook({
+      data,
+      req: createMockReq(mockPayload) as any,
+      operation: 'create',
+    });
+
+    expect(result.slug).toBeUndefined();
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 });
 
@@ -302,6 +552,21 @@ describe('setCdOfTheWeekSlugFromRecord', () => {
     expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
+  it('should leave slug unchanged when found record has no slug', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 10,
+      // no slug field
+    });
+
+    const result = await setCdOfTheWeekSlugFromRecord({
+      data: { record: 10, date: '2026-01-15' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.slug).toBeUndefined();
+  });
+
   it('should handle record fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
@@ -312,5 +577,97 @@ describe('setCdOfTheWeekSlugFromRecord', () => {
     });
 
     expect(result.slug).toBeUndefined();
+  });
+});
+
+describe('postSlugify', () => {
+  const req = createMockReq({}) as never;
+
+  it('builds YYYY-MM-DD--headline from headline + startDate', () => {
+    const result = postSlugify({
+      data: { headline: 'Hello World', startDate: '2025-01-15T00:00:00.000Z' },
+      req,
+    });
+    expect(result).toBe('2025-01-15--hello-world');
+  });
+
+  it('omits the date prefix when startDate is missing', () => {
+    const result = postSlugify({
+      data: { headline: 'No Date Post' },
+      req,
+    });
+    expect(result).toBe('no-date-post');
+  });
+
+  it('honors a user-typed slug via valueToSlugify', () => {
+    const result = postSlugify({
+      data: { headline: 'Hello World', startDate: '2025-01-15T00:00:00.000Z' },
+      req,
+      valueToSlugify: 'My Custom Slug',
+    });
+    expect(result).toBe('my-custom-slug');
+  });
+
+  it('returns undefined when neither headline nor valueToSlugify is present', () => {
+    expect(postSlugify({ data: {}, req })).toBeUndefined();
+  });
+
+  it('returns slugified valueToSlugify when headline is absent', () => {
+    const result = postSlugify({ data: {}, req, valueToSlugify: 'Custom Title' });
+    expect(result).toBe('custom-title');
+  });
+
+  it('returns undefined when headline slugifies to empty string', () => {
+    const result = postSlugify({ data: { headline: '<br><br>' }, req });
+    expect(result).toBeUndefined();
+  });
+
+  it('strips HTML tags from headlines', () => {
+    const result = postSlugify({
+      data: { headline: '<em>Bold</em> News', startDate: '2025-02-20T00:00:00.000Z' },
+      req,
+    });
+    expect(result).toBe('2025-02-20--bold-news');
+  });
+});
+
+describe('cdSlugify', () => {
+  const req = createMockReq({}) as never;
+
+  it('returns the precomputed slug from data.slug synchronously', () => {
+    const result = cdSlugify({
+      data: { slug: '2025-01-15--some-record' },
+      req,
+    });
+    expect(result).toBe('2025-01-15--some-record');
+  });
+
+  it('falls back to slugified valueToSlugify when no precomputed slug exists', () => {
+    const result = cdSlugify({
+      data: {},
+      req,
+      valueToSlugify: 'Manual Override',
+    });
+    expect(result).toBe('manual-override');
+  });
+
+  it('returns undefined when nothing is available', () => {
+    expect(cdSlugify({ data: {}, req })).toBeUndefined();
+  });
+});
+
+describe('setCdOfTheWeekSlugFromRecord override guard', () => {
+  it('respects the user override when generateSlug is false', async () => {
+    const findByID = vi.fn();
+    const result = await setCdOfTheWeekSlugFromRecord({
+      data: { generateSlug: false, slug: 'manual-slug', record: 1, date: '2025-01-15' },
+      req: createMockReq({ findByID }) as never,
+      operation: 'update',
+      collection: { slug: 'cdoftheweek' } as never,
+      context: {} as never,
+    } as never);
+
+    expect(findByID).not.toHaveBeenCalled();
+    expect((result as { slug: string }).slug).toBe('manual-slug');
   });
 });

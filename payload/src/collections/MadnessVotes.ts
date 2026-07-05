@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const ModernRockMadnessVotes: CollectionConfig = {
   slug: 'modern-rock-madness-votes',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Vote',
     plural: 'Votes',
@@ -12,12 +15,13 @@ export const ModernRockMadnessVotes: CollectionConfig = {
     group: 'Modern Rock Madness',
     description:
       'Individual vote records for tournament matches. Every voter is authenticated via Auth0.',
+    groupBy: true,
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

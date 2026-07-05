@@ -6,14 +6,15 @@ import { detectEmbedType } from './utils';
 export interface EmbedComponentProps {
   url: string;
   caption?: string;
+  hideCoverImage?: boolean;
 }
 
-export const EmbedComponent: React.FC<EmbedComponentProps> = ({ url, caption }) => {
+export const EmbedComponent: React.FC<EmbedComponentProps> = ({ url, caption, hideCoverImage }) => {
   // Convert to proper embed URL if needed
-  const { embedUrl } = detectEmbedType(url);
+  const { embedUrl, type } = detectEmbedType(url, { hideCoverImage });
 
   return (
-    <div className="embed-container">
+    <div className={`embed-container embed-container--${type}`}>
       <div className="embed-wrapper">
         <iframe
           src={embedUrl}

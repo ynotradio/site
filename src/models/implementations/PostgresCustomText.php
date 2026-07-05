@@ -3,6 +3,7 @@
 namespace YNotRadio\Models\Implementations;
 
 use YNotRadio\Models\CustomText;
+use YNotRadio\Models\Concerns\ConvertsLexicalToHtml;
 use PDO;
 
 /**
@@ -10,6 +11,8 @@ use PDO;
  * Reads from Neon PostgreSQL database (posts collection, type='custom_text')
  */
 class PostgresCustomText implements CustomText {
+    use ConvertsLexicalToHtml;
+
     private PDO $db;
 
     // Lexical text format bit flags
@@ -156,7 +159,7 @@ class PostgresCustomText implements CustomText {
             // Remove the plain text paragraph and replace with styled link
             $row['html'] = preg_replace(
                 '/<p>FIND MORE PREVIOUS EPISODES HERE >><\/p>\s*$/s',
-                '<a href="http://rodneyanonymous.com/" target=_blank><b><i>FIND MORE PREVIOUS EPISODES HERE >></i></b></a>' . "\n",
+                '<a href="http://rodneyanonymous.com/" target="_blank"><b><i>FIND MORE PREVIOUS EPISODES HERE >></i></b></a>' . "\n",
                 $row['html']
             );
         }
@@ -203,7 +206,8 @@ class PostgresCustomText implements CustomText {
                     return $this->convertTableMarkupToHtml($content);
                 }
                 
-                return "<p>$content</p>\n";
+                $format = $node['format'] ?? '';
+                return $this->wrapInBlock('p', $content, $format);
                 
             case 'heading':
                 $tag = $node['tag'] ?? 'h2';
@@ -225,29 +229,20 @@ class PostgresCustomText implements CustomText {
                 $rawUrl = $node['fields']['url'] ?? $node['url'] ?? '';
                 $url = $this->isValidUrl($rawUrl) ? $rawUrl : '#';
                 $url = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                $newTab = (bool)($fields['newTab'] ?? false);
+                $target = $newTab ? ' target="_blank" rel="noopener noreferrer"' : '';
                 $content = $this->convertLexicalChildren($node);
-                return "<a href=\"$url\">$content</a>";
+                return "<a href=\"$url\"$target>$content</a>";
                 
             case 'block':
-                // Handle Payload CMS block types (embeds, etc.)
-                $fields = $node['fields'] ?? [];
-                $blockType = $fields['blockType'] ?? '';
-                
-                if ($blockType === 'embed' && !empty($fields['url'])) {
-                    $url = $fields['url'];
-                    $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
-                    
-                    // Check if it's a MixCloud embed
-                    if (strpos($url, 'mixcloud.com') !== false) {
-                        return "<br><br>\n<iframe width=\"100%\" height=\"60\" src=\"$escapedUrl\" frameborder=\"0\" ></iframe>\n<br><br>\n";
-                    }
-                    
-                    // Generic iframe for other embeds
-                    return "<br><br>\n<iframe src=\"$escapedUrl\" frameborder=\"0\"></iframe>\n<br><br>\n";
-                }
-                
-                return '';
-                
+                // Payload block nodes (e.g. the EmbedFeature embed block).
+                // Rendered via the shared RendersLexicalEmbeds helper so the
+                // legacy front end embeds Mixcloud/YouTube/OpenDrive/etc. the
+                // same way here as in every other Postgres-backed model.
+                $fields = is_array($node['fields'] ?? null) ? $node['fields'] : [];
+                return $this->renderLexicalEmbedBlock($fields);
+
             case 'text':
                 $text = $node['text'] ?? '';
                 $format = $node['format'] ?? 0;

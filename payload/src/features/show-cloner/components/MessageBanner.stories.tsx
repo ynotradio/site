@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MessageBanner } from './MessageBanner';
 
 const meta = {
-  title: 'Features/ShowCloner/MessageBanner',
+  title: 'Features/Show Cloner/MessageBanner',
   component: MessageBanner,
   parameters: {
     layout: 'padded',

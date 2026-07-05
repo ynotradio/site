@@ -2,30 +2,47 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify } from './hooks/slugUtils';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
+import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
+  enableQueryPresets: true,
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
   labels: {
     singular: 'Song',
     plural: 'Songs',
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'artist', 'musicbrainzId', 'releaseDate', 'featureOnNewMusic', 'updatedAt'],
+    defaultColumns: [
+      'displayName',
+      'artist',
+      'musicbrainzId',
+      'releaseDate',
+      'featureOnNewMusic',
+      'updatedAt',
+    ],
     group: 'Music',
     description:
       'Song catalog. Toggle "Feature on New Music" in the sidebar to control the New Music page.',
+    groupBy: true,
   },
   defaultSort: '-releaseDate',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
-    beforeChange: [generateMusicDisplayName('Song')],
+    beforeChange: [
+      normalizeFieldToNoon('releaseDate'),
+      generateMusicSlugBeforeChangeHook,
+      generateMusicDisplayName('Song'),
+    ],
   },
   fields: [
     {
@@ -72,6 +89,7 @@ export const Songs: CollectionConfig = {
         description: 'Date the song was released',
         date: {
           displayFormat: 'yyyy-MM-dd',
+          pickerAppearance: 'dayOnly',
         },
       },
     },
@@ -88,6 +106,9 @@ export const Songs: CollectionConfig = {
       name: 'musicbrainzId',
       type: 'text',
       unique: true,
+      hooks: {
+        beforeDuplicate: [() => null],
+      },
       admin: {
         position: 'sidebar',
         description:
@@ -99,17 +120,7 @@ export const Songs: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

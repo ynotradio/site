@@ -1,0 +1,54 @@
+name: Smoke Test
+
+on:
+  deployment_status:
+
+jobs:
+  smoke-test:
+    # Only run when Netlify marks a production deploy as succeeded
+    if: >
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.environment == 'production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check admin login page
+        run: |
+          URL="https://ynotradio-admin.netlify.app/admin/login"
+          STATUS=$(curl -s -o /tmp/body.txt -w "%{http_code}" --max-time 30 "$URL")
+          echo "HTTP $STATUS for $URL"
+
+          if [ "$STATUS" -ge 500 ]; then
+            echo "::error::Admin site returned HTTP $STATUS — possible runtime error"
+            echo "--- Response body (first 50 lines) ---"
+            head -50 /tmp/body.txt
+            exit 1
+          fi
+
+          if [ "$STATUS" -ge 400 ]; then
+            echo "::warning::Admin site returned HTTP $STATUS"
+          fi
+
+          echo "OK — admin login page is up (HTTP $STATUS)"
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const sha = context.payload.deployment.sha.slice(0, 8);
+            const deployUrl = context.payload.deployment_status.target_url;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Production smoke test failed after deploy (${sha})`,
+              body: [
+                '**Smoke test failed after a successful Netlify deploy.**',
+                '',
+                `- Commit: \`${sha}\``,
+                `- Deploy: ${deployUrl}`,
+                `- Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+                '',
+                'The admin site may be throwing 5xx errors. Check Netlify function logs.',
+              ].join('\n'),
+              labels: ['bug', 'production'],
+            });

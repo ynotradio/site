@@ -5,15 +5,28 @@
 
 set -euo pipefail
 
-# --- GHCR login
-echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin
-
-# --- Pull pre-built images in parallel; build Payload locally (esbuild DinD mismatch)
+# --- Image prep
 echo "📦 Building and pulling images..."
-docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest &
-docker pull ghcr.io/ynotradio/site/playwright:latest &
+
+PULL_PHPFPM_OK=false
+PULL_PLAYWRIGHT_OK=false
+
+if [ -n "${GHCR_TOKEN:-}" ] && [ -n "${GHCR_USERNAME:-}" ]; then
+  if echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USERNAME" --password-stdin; then
+    docker pull ghcr.io/ynotradio/site/phpfpm-dev:latest && PULL_PHPFPM_OK=true || echo "⚠️ Failed to pull phpfpm image from GHCR, falling back to local build"
+    docker pull ghcr.io/ynotradio/site/playwright:latest && PULL_PLAYWRIGHT_OK=true || echo "⚠️ Failed to pull playwright image from GHCR, falling back to local build"
+  else
+    echo "⚠️ GHCR login failed, falling back to local builds for phpfpm/playwright"
+  fi
+else
+  echo "⚠️ GHCR credentials not set, falling back to local builds for phpfpm/playwright"
+fi
+
+[ "$PULL_PHPFPM_OK" = true ] || docker build --load -t ghcr.io/ynotradio/site/phpfpm-dev:latest -f ./bin/docker/phpfpm/Dockerfile .
+[ "$PULL_PLAYWRIGHT_OK" = true ] || docker build --load -t ghcr.io/ynotradio/site/playwright:latest -f ./Dockerfile.playwright .
+
+# Build Payload locally (esbuild DinD mismatch)
 docker build --load -t ghcr.io/ynotradio/site/payload-dev:latest -f Dockerfile.payload .
-wait
 
 # --- Start databases
 echo "🗄️ Starting databases..."
@@ -87,6 +100,11 @@ if [ "$APACHE_FINAL" != "healthy" ]; then
   docker compose -f docker-compose.e2e.yml down -v
   exit 1
 fi
+
+# --- Pre-create writable artifact dirs so the playwright container (running
+# as root in the bind mount) can write to them and host can read them back.
+mkdir -p test-results playwright-report
+chmod -R 0777 test-results playwright-report
 
 # --- Run tests
 echo "🎭 Running Playwright E2E tests..."

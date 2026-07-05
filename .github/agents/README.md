@@ -5,20 +5,23 @@ AI-powered automation for code quality maintenance.
 ## Available Workflows
 
 ### Code Simplifier (`code-simplifier.md`)
-- **Schedule**: Daily at 2 AM UTC
+
+- **Schedule**: Weekdays at 2 AM UTC
 - **Scope**: Code merged in last 24 hours
 - **Actions**: Reduces complexity, removes dead code, extracts inline styles, applies project conventions
 - **PR Label**: `code-quality`, `automation`
 - **Expiration**: 7 days
 
 ### Test Coverage Improver (`test-coverage-improver.md`)
-- **Schedule**: Daily at 3 AM UTC
+
+- **Schedule**: Mondays at 3 AM UTC
 - **Phases**: Research → Configuration → Implementation
 - **Target**: 80% test coverage
 - **Actions**: Adds tests to under-tested areas, creates story files
 - **PR Label**: `testing`, `automation`
 
 ### Code Refactoring Assistant (`code-refactoring.md`)
+
 - **Schedule**: Weekly on Mondays at 4 AM UTC
 - **Source**: REFACTOR_CHECKLIST.md priorities
 - **Actions**: Splits large components, extracts hooks/utilities, adds missing test/story files
@@ -27,7 +30,7 @@ AI-powered automation for code quality maintenance.
 ## Execution Flow
 
 ```
-Schedule trigger → Read workflow .md → Analyze repo → Make changes → 
+Schedule trigger → Read workflow .md → Analyze repo → Make changes →
 Validate (test/lint/build) → Create PR → Human review → Merge/close → Learn
 ```
 
@@ -52,13 +55,21 @@ Workflows use these project resources:
 Edit workflow Markdown files to change behavior:
 
 ```bash
-vi .github/agents/code-simplifier.md
+vi .github/workflows/code-simplifier.md
 gh aw compile
 git add .github/ && git commit -m "chore: update workflow" && git push
 ```
 
+> **Note**: Source `.md` files live in `.github/workflows/` (not `.github/agents/`)
+> so that `gh aw compile` finds them by default and the compiled `.lock.yml`
+> files stay in sync.
+
 Common customizations:
+
 - Adjust schedules (change cron in YAML front matter)
+- Set default model with repository/org variable `GH_AW_MODEL_AGENT_COPILOT`
+- Optionally set `GH_AW_MODEL_AGENT_COPILOT_DISPATCH` for stronger manual `workflow_dispatch` runs
+- Tune `max-runs` and `max-effective-tokens` to control per-run token spend
 - Add/remove validation steps
 - Change PR expiration times
 - Modify agent instructions

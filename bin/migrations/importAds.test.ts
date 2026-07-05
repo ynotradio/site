@@ -159,6 +159,7 @@ describe('importAds', () => {
           priority: 5,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });

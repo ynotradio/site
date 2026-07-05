@@ -1,30 +1,36 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { normalizeDateToNoon } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Shows: CollectionConfig = {
   slug: 'shows',
+  enableQueryPresets: true,
   labels: {
     singular: 'Show',
     plural: 'Shows',
   },
   admin: {
     useAsTitle: 'date',
-    defaultColumns: ['date', 'startTime', 'endTime', 'host', 'updatedAt'],
+    defaultColumns: ['date', 'startTime', 'endTime', 'host', 'name', 'updatedAt'],
     group: 'Radio',
     description:
       'Weekly show schedule. Each entry is one time slot. Use Show Cloner to copy a full week to new dates.',
-
+    groupBy: true,
     components: {
       beforeList: ['/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader'],
     },
   },
-  defaultSort: '-date',
+  defaultSort: 'date',
+  hooks: {
+    beforeChange: [normalizeDateToNoon],
+  },
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor', 'dj']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -39,6 +45,7 @@ export const Shows: CollectionConfig = {
             description: 'Show date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '40%',
           },
@@ -46,21 +53,27 @@ export const Shows: CollectionConfig = {
         {
           name: 'startTime',
           type: 'text',
+          label: 'Start time',
           required: true,
           admin: {
-            description: 'Start time',
-            placeholder: 'HH:MM',
             width: '30%',
+            components: {
+              Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
+              Cell: '/payload/src/components/cells/TimeCell#TimeCell',
+            },
           },
         },
         {
           name: 'endTime',
           type: 'text',
+          label: 'End time',
           required: true,
           admin: {
-            description: 'End time',
-            placeholder: 'HH:MM',
             width: '30%',
+            components: {
+              Field: '/payload/src/components/fields/TimePickerField#TimePickerField',
+              Cell: '/payload/src/components/cells/TimeCell#TimeCell',
+            },
           },
         },
       ],
@@ -88,17 +101,7 @@ export const Shows: CollectionConfig = {
         description: 'Notes shown alongside this time slot (e.g., "Best Of" episode, guest DJ)',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

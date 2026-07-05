@@ -1,0 +1,90 @@
+name: Deploy PR to production
+
+# When a PR is labeled `deploy-to-prod`, trigger a Buildkite build on the
+# y-not-radio-deploy-pr pipeline at the PR's head SHA. The label is
+# removed afterward so re-applying it triggers another deploy.
+#
+# Requires the repo secret BUILDKITE_API_TOKEN (Buildkite REST API token
+# with `write_builds` scope, scoped to the y-not-radio-deploy-pr pipeline).
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  deploy:
+    if: github.event.label.name == 'deploy-to-prod'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Buildkite deploy build
+        id: trigger
+        env:
+          BUILDKITE_API_TOKEN: ${{ secrets.BUILDKITE_API_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_REF: ${{ github.event.pull_request.head.ref }}
+          PR_USER: ${{ github.event.pull_request.user.login }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          payload=$(jq -n \
+            --arg commit "$PR_SHA" \
+            --arg branch "$PR_REF" \
+            --arg message "Deploy PR #${PR_NUMBER}: ${PR_TITLE} (labeled by @${ACTOR})" \
+            --arg author_name "$PR_USER" \
+            --arg author_email "${PR_USER}@users.noreply.github.com" \
+            --arg pr "$PR_NUMBER" \
+            '{commit: $commit, branch: $branch, message: $message,
+              author: {name: $author_name, email: $author_email},
+              env: {DEPLOY_PR_NUMBER: $pr}}')
+          response=$(curl -fsS -X POST \
+            "https://api.buildkite.com/v2/organizations/tj-nicolaides/pipelines/y-not-radio-deploy-pr/builds" \
+            -H "Authorization: Bearer ${BUILDKITE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          web_url=$(echo "$response" | jq -r '.web_url')
+          echo "Triggered Buildkite build: $web_url"
+          echo "web_url=$web_url" >> "$GITHUB_OUTPUT"
+
+      - name: Remove deploy label
+        if: always() && steps.trigger.outcome == 'success'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              name: 'deploy-to-prod',
+            });
+
+      - name: Comment on PR
+        if: steps.trigger.outcome == 'success'
+        uses: actions/github-script@v9
+        env:
+          BUILD_URL: ${{ steps.trigger.outputs.web_url }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `🚀 Production deploy triggered for this PR's head commit.\n\nBuildkite build: ${process.env.BUILD_URL}`,
+            });
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `❌ Failed to trigger production deploy from label. Check the workflow run for details.`,
+            });

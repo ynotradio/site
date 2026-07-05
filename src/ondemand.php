@@ -26,16 +26,16 @@ $id = "";
     <h1>On Demand</h1>
     <?php
       if ($id == "") {
-        echo '<div class="center">Sort: [ <a href="ondemand.php?sort=date">Newest</a> | <a href="ondemand.php?sort=artist">Artist</a> | <a href="ondemand.php?sort=text">List</a> | <a href="http://www.youtube.com/ynotradio" target="_new">Videos</a> | <a href="shows.php">Specialty Shows</a>  ] </div>';
-        
+        echo '<div class="center">Sort: [ <a href="ondemand.php?sort=date">Newest</a> | <a href="ondemand.php?sort=artist">Artist</a> | <a href="ondemand.php?sort=text">List</a> | <a target="_blank" rel="noopener noreferrer" href="http://www.youtube.com/ynotradio">Videos</a> | <a href="shows.php">Specialty Shows</a>  ] </div>';
+
         // Get sorting parameters
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = 5;
         $adjacents = 3;
-        
+
         // Get the total number of entries
         $total_pages = $onDemandModel->getTotalCount();
-        
+
         // Set target page for pagination
         if ($sort == "date") {
             $targetpage = "ondemand.php?sort=date";
@@ -44,27 +44,27 @@ $id = "";
         } else {
             $targetpage = "ondemand.php?sort=text";
         }
-        
+
         // Calculate pagination
         if ($page == 0) $page = 1;                  // If no page var is given, default to 1
         $lastpage = ceil($total_pages/$limit);      // Last page is total pages / items per page, rounded up
         $lpm1 = $lastpage - 1;                      // Last page minus 1
-        
+
         // Get entries for the current page
         $entries = $onDemandModel->getAll($sort, $page, $limit);
-        
+
         if ($sort != "text") {
             echo '<table class="ondemand">';
             foreach ($entries as $entry) {
                 on_demand_player($entry['id']);
             }
             echo '</table>';
-            
+
             echo paginate($lastpage, $targetpage, $adjacents, $page, $lpm1);
         } else {
             echo '<table class="ondemand">';
             foreach ($entries as $entry) {
-                echo "<tr>\n<td>\n<a href=\"ondemand.php?id=". $entry['id']. "\">". $entry['headline'] ."\n( ". $entry['fdate']." )</a></td>\n</tr>\n";
+                echo "<tr>\n<td>\n<a href=\"ondemand.php?id=". $entry['id']. "\">". $entry['headline'] ."\n( ". $entry['fdate'].")</a></td>\n</tr>\n";
             }
             echo '</table>';
         }

@@ -4,6 +4,9 @@ import { scaffoldTournamentMatches } from './hooks/scaffoldTournamentMatches';
 
 export const ModernRockMadnessTournaments: CollectionConfig = {
   slug: 'modern-rock-madness-tournaments',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Tournament',
     plural: 'Tournaments',
@@ -16,6 +19,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     defaultColumns: ['name', 'year', 'status', 'startDate', 'updatedAt'],
     group: 'Modern Rock Madness',
     description: 'Annual Modern Rock Madness tournament configuration.',
+    groupBy: true,
     components: {
       views: {
         edit: {
@@ -36,7 +40,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     read: () => true,
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

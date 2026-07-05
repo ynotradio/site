@@ -1,7 +1,12 @@
 import path from 'node:path';
+import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  plugins: [react()],
+  esbuild: {
+    jsx: 'automatic',
+  },
   resolve: {
     alias: {
       '@payload-config': path.resolve(import.meta.dirname, './payload.config.ts'),
@@ -12,6 +17,10 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['**/*.test.ts', '**/*.test.tsx'],
     setupFiles: ['./test/setup.ts'],
+    clearMocks: true,
+    restoreMocks: true,
+    unstubGlobals: true,
+    unstubEnvs: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
@@ -19,7 +28,6 @@ export default defineConfig({
         'bin/migrations/shared/**/*.ts',
         'src/js/countdown.js',
         'src/js/yr_end_poll.js',
-        'src/js/admin-madness.js',
         'src/js/components/mrm-bracket-match.js',
         'src/js/components/mrm-scoreboard.js',
         'src/js/components/mrm-match-card.js',
@@ -27,7 +35,13 @@ export default defineConfig({
         'payload/src/cloudinary/generateFileURL.ts',
         'payload/src/utils/auth.ts',
         'payload/src/utils/createAdminView.tsx',
+        'payload/src/utils/concertTitle.ts',
+        'payload/src/utils/date-formatting.ts',
         'payload/src/utils/musicbrainz-api.ts',
+        'payload/src/collections/Artists.ts',
+        'payload/src/collections/DJs.ts',
+        'payload/src/collections/Shows.ts',
+        'payload/src/collections/Songs.ts',
         'payload/src/collections/hooks/**/*.ts',
         'payload/src/features/embed/utils.ts',
         'payload/src/features/mrm-bracket/bracketUtils.ts',
@@ -41,7 +55,7 @@ export default defineConfig({
         'payload/src/components/branding/**/*.tsx',
         'payload/src/components/providers/**/*.tsx',
         'payload/src/components/dashboard/**/*.tsx',
-        'payload/src/components/fields/**/*.tsx',
+        'payload/src/components/fields/**/*.{ts,tsx}',
         'payload/src/features/shared/**/*.tsx',
         'payload/src/features/dj-order/**/*.tsx',
         'payload/src/features/embed/client.tsx',
@@ -49,6 +63,25 @@ export default defineConfig({
         'payload/src/features/mrm-live/**/*.tsx',
         'payload/src/features/mrm-shared/**/*.tsx',
         'payload/src/features/show-cloner/**/*.tsx',
+        'payload/src/collections/Ads.ts',
+        'payload/src/collections/CdOfTheWeek.ts',
+        'payload/src/collections/Concerts.ts',
+        'payload/src/collections/MadnessBands.ts',
+        'payload/src/collections/MadnessMatchEvents.ts',
+        'payload/src/collections/MadnessMatches.ts',
+        'payload/src/collections/MadnessTournaments.ts',
+        'payload/src/collections/MadnessVotes.ts',
+        'payload/src/collections/Media.ts',
+        'payload/src/collections/OnDemand.ts',
+        'payload/src/collections/People.ts',
+        'payload/src/collections/Posts.ts',
+        'payload/src/collections/Records.ts',
+        'payload/src/collections/Venues.ts',
+        'payload/src/collections/Users.ts',
+        'payload/src/collections/YearEndPollResults.ts',
+        'payload/src/collections/hooks/scaffoldTournamentMatches.ts',
+        'app/api/v1/ondemand/route.ts',
+        'app/api/v1/ondemand/[id]/route.ts',
       ],
       exclude: [
         '**/*.test.ts',

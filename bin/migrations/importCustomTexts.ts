@@ -40,17 +40,14 @@ async function importCustomText(
   const legacyId = customText.id + 10000; // Offset to avoid collisions with story IDs
 
   try {
-    // Check if already imported
+    // Check if already imported — if so we update in place so re-running the
+    // script refreshes stale custom-text content (e.g. new Mixcloud embeds).
     const existing = await payload.find({
       collection: 'posts',
       where: { legacyId: { equals: legacyId } },
       limit: 1,
     });
-
-    if (existing.totalDocs > 0) {
-      logger.info(`Skipping custom_text ${customText.id} (${customText.title}) - already imported`);
-      return 'skipped';
-    }
+    const existingId = existing.totalDocs > 0 ? existing.docs[0].id : undefined;
 
     logger.info(`Importing custom_text ${customText.id}: ${customText.title}`);
 
@@ -77,12 +74,14 @@ async function importCustomText(
 
       // Strip out upload nodes (images) since they have placeholder IDs that fail validation
       // Images will need to be re-added manually or via a separate import process
-      const stripUploadNodes = (nodes: any[]): any[] => nodes.filter((node) => node.type !== 'upload').map((node) => {
-        if (node.children && Array.isArray(node.children)) {
-          return { ...node, children: stripUploadNodes(node.children) };
-        }
-        return node;
-      });
+      const stripUploadNodes = (nodes: any[]): any[] => nodes
+        .filter((node) => node.type !== 'upload')
+        .map((node) => {
+          if (node.children && Array.isArray(node.children)) {
+            return { ...node, children: stripUploadNodes(node.children) };
+          }
+          return node;
+        });
 
       content.root.children = stripUploadNodes(content.root.children);
 
@@ -102,22 +101,26 @@ async function importCustomText(
             format: '',
             indent: 0,
             version: 1,
-            children: [{
-              type: 'paragraph',
-              format: '',
-              indent: 0,
-              version: 1,
-              children: [{
-                type: 'text',
-                text: '(No content available)',
-                format: 0,
-                mode: 'normal',
-                style: '',
-                detail: 0,
+            children: [
+              {
+                type: 'paragraph',
+                format: '',
+                indent: 0,
                 version: 1,
-              }],
-              direction: 'ltr',
-            }],
+                children: [
+                  {
+                    type: 'text',
+                    text: '(No content available)',
+                    format: 0,
+                    mode: 'normal',
+                    style: '',
+                    detail: 0,
+                    version: 1,
+                  },
+                ],
+                direction: 'ltr',
+              },
+            ],
             direction: 'ltr',
           },
         };
@@ -131,22 +134,26 @@ async function importCustomText(
           format: '',
           indent: 0,
           version: 1,
-          children: [{
-            type: 'paragraph',
-            format: '',
-            indent: 0,
-            version: 1,
-            children: [{
-              type: 'text',
-              text: '(No content available)',
-              format: 0,
-              mode: 'normal',
-              style: '',
-              detail: 0,
+          children: [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
               version: 1,
-            }],
-            direction: 'ltr',
-          }],
+              children: [
+                {
+                  type: 'text',
+                  text: '(No content available)',
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  detail: 0,
+                  version: 1,
+                },
+              ],
+              direction: 'ltr',
+            },
+          ],
           direction: 'ltr',
         },
       };
@@ -155,22 +162,27 @@ async function importCustomText(
     // Generate slug from permalink
     const slug = customText.permalink || `custom-text-${customText.id}`;
 
-    // Create post in Payload
-    const newPost = await payload.create({
-      collection: 'posts',
-      data: {
-        headline,
-        content,
-        slug,
-        startDate: '2000-01-01T00:00:00.000Z', // Always visible content
-        endDate: '2099-12-31T23:59:59.999Z', // Far future date
-        showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
-        status: 'published',
-        legacyId,
-      },
-    });
+    const data = {
+      headline,
+      content,
+      slug,
+      // generateSlug: false ensures the postSlugify hook doesn't overwrite
+      // our permalink-derived slug with a date-prefixed value.
+      generateSlug: false,
+      startDate: '2000-01-01T00:00:00.000Z', // Always visible content
+      endDate: '2099-12-31T23:59:59.999Z', // Far future date
+      showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
+      status: 'published',
+      legacyId,
+    };
 
-    logger.info(`  ✓ Successfully imported custom_text ${customText.id} as post ${newPost.id}`);
+    if (existingId !== undefined) {
+      await payload.update({ collection: 'posts', id: existingId, data });
+      logger.info(`  ✓ Updated custom_text ${customText.id} (post ${existingId})`);
+    } else {
+      const newPost = await payload.create({ collection: 'posts', data });
+      logger.info(`  ✓ Imported custom_text ${customText.id} as post ${newPost.id}`);
+    }
     return 'success';
   } catch (error: any) {
     logger.error(`  ✗ Failed to import custom_text ${customText.id}`);
@@ -222,7 +234,9 @@ async function importCustomTexts(options: ImportOptions): Promise<void> {
       // Progress indicator every 10 items
       if ((i + 1) % 10 === 0) {
         const percentage = Math.round(((i + 1) / stats.total) * 100);
-        logger.info(`Progress: ${i + 1}/${stats.total} (${percentage}%) - Custom text ${customText.id}`);
+        logger.info(
+          `Progress: ${i + 1}/${stats.total} (${percentage}%) - Custom text ${customText.id}`,
+        );
       }
 
       const result = await importCustomText(payload, customText);
@@ -262,23 +276,34 @@ async function importCustomTexts(options: ImportOptions): Promise<void> {
   }
 }
 
-// CLI setup
-const program = new Command();
+function isMainModule(): boolean {
+  if (typeof import.meta !== 'undefined' && import.meta.url) {
+    return import.meta.url === `file://${process.argv[1]}`;
+  }
+  return require.main === module;
+}
 
-program
-  .name('importCustomTexts')
-  .description('Import custom_texts from MySQL to Payload CMS')
-  .option('--env <environment>', 'Target environment (dev or prod)', 'dev')
-  .action(async (options) => {
-    try {
-      await importCustomTexts({
-        env: options.env,
-      });
-      process.exit(0);
-    } catch (error) {
-      logger.error('Import failed:', error);
-      process.exit(1);
-    }
-  });
+// CLI setup — only runs when executed directly, not when imported by tests
+if (isMainModule()) {
+  const program = new Command();
 
-program.parse(process.argv);
+  program
+    .name('importCustomTexts')
+    .description('Import custom_texts from MySQL to Payload CMS')
+    .option('--env <environment>', 'Target environment (dev or prod)', 'dev')
+    .action(async (options) => {
+      try {
+        await importCustomTexts({
+          env: options.env,
+        });
+        process.exit(0);
+      } catch (error) {
+        logger.error('Import failed:', error);
+        process.exit(1);
+      }
+    });
+
+  program.parse(process.argv);
+}
+
+export { importCustomText, importCustomTexts };

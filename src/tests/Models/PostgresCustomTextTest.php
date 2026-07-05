@@ -8,11 +8,13 @@ use PDO;
 use PDOStatement;
 
 /**
- * Tests for PostgresCustomText basic operations
- * 
- * Tests PostgreSQL custom text operations using PDO:
- * - getById: Retrieve custom text by ID
- * - findByPermalink: Find custom text by permalink/slug
+ * Tests for PostgresCustomText read operations.
+ *
+ * Covers the read path used by custom-text pages (donate, contests, rodney,
+ * etc.) after the Postgres cutover:
+ * - findByPermalink renders Lexical content to HTML
+ * - the future-friday permalink gets its special image title + table CSS
+ * - write methods are disabled (Payload is the only write surface)
  */
 class PostgresCustomTextTest extends TestCase
 {
@@ -26,115 +28,128 @@ class PostgresCustomTextTest extends TestCase
         $this->customText = new PostgresCustomText($this->mockDb);
     }
 
-    /**
-     * Test getById returns data when custom text exists
-     */
-    public function testGetByIdReturnsData(): void
+    private function lexical(string $text): string
     {
-        $rawData = [
-            'id' => 1,
-            'permalink' => 'test-page',
-            'title' => 'Test Page',
-            'html' => '<p>Test content</p>',
-            'legacy_id' => 123
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => $text],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    private function lexicalLink(bool $newTab): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => [
+                                    'url' => 'https://example.com/custom-text',
+                                    'newTab' => $newTab,
+                                ],
+                                'children' => [
+                                    ['type' => 'text', 'text' => 'Custom link'],
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testFindByPermalinkRendersLexicalToHtml(): void
+    {
+        $row = [
+            'id' => 7,
+            'permalink' => 'donate',
+            'title' => 'Support Us',
+            'html' => $this->lexical('Please donate'),
+            'legacy_id' => 641,
         ];
 
         $mockStmt = $this->createMock(PDOStatement::class);
         $mockStmt->expects($this->once())
             ->method('execute')
-            ->with(['id' => 1])
+            ->with(['permalink' => 'donate'])
             ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn($rawData);
+        $mockStmt->expects($this->once())->method('fetch')->willReturn($row);
+        $this->mockDb->expects($this->once())->method('prepare')->willReturn($mockStmt);
 
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
+        $result = $this->customText->findByPermalink('donate');
 
-        $result = $this->customText->getById(1);
-        
         $this->assertIsArray($result);
-        $this->assertSame(1, $result['id']);
-        $this->assertSame('Test Page', $result['title']);
+        $this->assertSame('donate', $result['permalink']);
+        $this->assertStringContainsString('Please donate', $result['html']);
+        $this->assertStringContainsString('<p>', $result['html']);
     }
 
-    /**
-     * Test getById returns null when custom text doesn't exist
-     */
-    public function testGetByIdReturnsNullWhenNotFound(): void
-    {
-        $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn(false);
-
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
-
-        $result = $this->customText->getById(999);
-        $this->assertNull($result);
-    }
-
-    /**
-     * Test findByPermalink returns data when permalink exists
-     */
-    public function testFindByPermalinkReturnsData(): void
-    {
-        $rawData = [
-            'id' => 1,
-            'permalink' => 'test-page',
-            'title' => 'Test Page',
-            'html' => '<p>Test content</p>',
-            'legacy_id' => 123
-        ];
-
-        $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->with(['permalink' => 'test-page'])
-            ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn($rawData);
-
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
-
-        $result = $this->customText->findByPermalink('test-page');
-        
-        $this->assertIsArray($result);
-        $this->assertSame('test-page', $result['permalink']);
-        $this->assertSame('Test Page', $result['title']);
-    }
-
-    /**
-     * Test findByPermalink returns null when permalink doesn't exist
-     */
     public function testFindByPermalinkReturnsNullWhenNotFound(): void
     {
         $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->expects($this->once())
-            ->method('execute')
-            ->willReturn(true);
-        
-        $mockStmt->expects($this->once())
-            ->method('fetch')
-            ->willReturn(false);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn(false);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
 
-        $this->mockDb->expects($this->once())
-            ->method('prepare')
-            ->willReturn($mockStmt);
+        $this->assertNull($this->customText->findByPermalink('missing'));
+    }
 
-        $result = $this->customText->findByPermalink('nonexistent');
-        $this->assertNull($result);
+    public function testFindByPermalinkRespectsPayloadNewTabLinks(): void
+    {
+        $row = [
+            'id' => 9,
+            'permalink' => 'links-page',
+            'title' => 'Links Page',
+            'html' => $this->lexicalLink(true),
+            'legacy_id' => 99,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('links-page');
+
+        $this->assertStringContainsString('target="_blank"', $result['html']);
+        $this->assertStringContainsString('rel="noopener noreferrer"', $result['html']);
+    }
+
+    public function testFutureFridayPermalinkGetsImageTitleAndTableCss(): void
+    {
+        $row = [
+            'id' => 8,
+            'permalink' => 'future-friday',
+            'title' => 'Future Friday',
+            'html' => $this->lexical('schedule'),
+            'legacy_id' => 18,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('future-friday');
+
+        $this->assertStringContainsString('<img src="https://i.imgur.com/1QIvI46.png"', $result['title']);
+        $this->assertStringContainsString('font-size: small', $result['html']);
+    }
+
+    public function testWritesAreDisabled(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->customText->add(['title' => 'nope']);
     }
 }

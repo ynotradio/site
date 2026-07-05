@@ -17,6 +17,9 @@ const hasRole = (user: unknown, role: AppUserRole): boolean => {
 
 export const Users: CollectionConfig = {
   slug: 'users',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'User',
     plural: 'Users',
@@ -27,6 +30,7 @@ export const Users: CollectionConfig = {
     group: 'People',
     description: 'User accounts and access management.',
     hidden: ({ user }) => !hasRole(user, 'admin'),
+    groupBy: true,
   },
   auth: {
     tokenExpiration: 60 * 60 * 4, // 4 hours

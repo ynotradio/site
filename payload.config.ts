@@ -26,11 +26,17 @@ import { YearEndPolls } from './payload/src/collections/YearEndPolls';
 import { YearEndPollCategories } from './payload/src/collections/YearEndPollCategories';
 import { YearEndPollVotes } from './payload/src/collections/YearEndPollVotes';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
+import { Top11Contests } from './payload/src/collections/Top11Contests';
+import { Top11Votes } from './payload/src/collections/Top11Votes';
+import { Top11WriteIns } from './payload/src/collections/Top11WriteIns';
+import { Top11Contestants } from './payload/src/collections/Top11Contestants';
+import { Top11WinnerDraws } from './payload/src/collections/Top11WinnerDraws';
 import { ModernRockMadnessTournaments } from './payload/src/collections/MadnessTournaments';
 import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands';
 import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
 import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
 import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
+import { DEPLOY_ORIGIN } from './payload/generated/deploy-origin';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -46,6 +52,19 @@ const coerceList = (value: string): string[] => value
   .split(',')
   .map((entry) => entry.trim())
   .filter(Boolean);
+
+// Netlify's per-deploy origin (https://my-branch--site.netlify.app) is only
+// available during the build, not at function runtime where this config runs.
+// scripts/netlify-bake-deploy-origin.sh freezes DEPLOY_PRIME_URL into
+// DEPLOY_ORIGIN at build time. Payload's CSRF check is an exact string match
+// (no globs), so this origin must be in the allowlist or cookie auth is
+// rejected on Server Actions (the wizard's form-state POST).
+const withDeployOrigin = (origins: string[]): string[] => {
+  if (!DEPLOY_ORIGIN || origins.includes(DEPLOY_ORIGIN)) {
+    return origins;
+  }
+  return [...origins, DEPLOY_ORIGIN];
+};
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -69,7 +88,19 @@ if (isProduction && !isBuild && !payloadSecret) {
 export default buildConfig({
   secret: payloadSecret || 'development-secret',
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
+  queryPresets: {
+    access: {
+      create: ({ req }) => Boolean(req.user),
+      read: ({ req }) => Boolean(req.user),
+      update: ({ req }) => Boolean(req.user),
+      delete: ({ req }) => Boolean(req.user),
+    },
+    // No custom constraints — use Payload's built-in defaults:
+    // "Only Me", "Everyone", and "Specific Users"
+    constraints: {},
+  },
   admin: {
+    dateFormat: 'EEEE, MMMM do, yyyy',
     user: Users.slug,
     // Auto-login for development: Pre-fills credentials but user must click login
     // https://payloadcms.com/docs/authentication/overview#auto-login
@@ -99,12 +130,28 @@ export default buildConfig({
             title: 'DJ Order',
           },
         },
+        StoryOrder: {
+          Component: '/payload/src/features/story-order#StoryOrderTool',
+          path: '/story-order',
+          exact: true,
+          meta: {
+            title: 'Story Order',
+          },
+        },
         ShowCloner: {
           Component: '/payload/src/features/show-cloner#ShowClonerTool',
           path: '/show-cloner',
           exact: true,
           meta: {
             title: 'Show Cloner',
+          },
+        },
+        CdOfTheWeekWizard: {
+          Component: '/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool',
+          path: '/cd-of-the-week-wizard',
+          exact: true,
+          meta: {
+            title: 'New CD of the Week + Album',
           },
         },
         MRMLive: {
@@ -125,12 +172,16 @@ export default buildConfig({
     },
   },
   // CORS: Allow requests from these origins (set PAYLOAD_CORS env var in production)
-  cors: coerceList(
-    process.env.PAYLOAD_CORS
-      ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+  cors: withDeployOrigin(
+    coerceList(
+      process.env.PAYLOAD_CORS
+        ?? 'http://localhost:3000,http://localhost:3002,http://localhost:5173,http://127.0.0.1:5173',
+    ),
   ),
   // CSRF: Protect against CSRF attacks (set PAYLOAD_CSRF env var in production)
-  csrf: coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  csrf: withDeployOrigin(
+    coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
+  ),
   collections: [
     Users,
     Media,
@@ -150,6 +201,11 @@ export default buildConfig({
     YearEndPolls,
     YearEndPollCategories,
     YearEndPollVotes,
+    Top11Contests,
+    Top11Votes,
+    Top11WriteIns,
+    Top11Contestants,
+    Top11WinnerDraws,
     ModernRockMadnessTournaments,
     ModernRockMadnessGroups,
     ModernRockMadnessMatches,

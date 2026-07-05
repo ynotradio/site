@@ -115,4 +115,25 @@ describe('MrmScoreboard', () => {
     expect(root.querySelector('.band1-bar').style.flexBasis).toBe('50%');
     expect(root.querySelector('.band2-bar').style.flexBasis).toBe('50%');
   });
+
+  it('is safe to re-import when element is already registered', () => {
+    const modulePath = require.resolve('../../src/js/components/mrm-scoreboard.js');
+    delete require.cache[modulePath];
+
+    // Re-requiring must not throw even though 'mrm-scoreboard' is already in the registry
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
+    expect(() => { require('../../src/js/components/mrm-scoreboard.js'); }).not.toThrow();
+    expect(customElements.get('mrm-scoreboard')).toBeDefined();
+  });
+
+  it('attributeChangedCallback is a no-op when shadowRoot is null', () => {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions, global-require
+    const { MrmScoreboard } = require('../../src/js/components/mrm-scoreboard.js');
+    // Create a plain object with a null shadowRoot to exercise the false branch of
+    // `if (this.shadowRoot)` in attributeChangedCallback without going through the full
+    // custom element lifecycle.
+    const el = { shadowRoot: null } as any;
+    MrmScoreboard.prototype.attributeChangedCallback.call(el);
+    // No assertion needed — we just verify it does not throw
+  });
 });

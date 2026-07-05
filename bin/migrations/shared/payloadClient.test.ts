@@ -31,16 +31,24 @@ vi.mock('dotenv', () => ({
 // Mock musicbrainz
 vi.mock('./musicbrainz', () => ({
   getArtistMbid: vi.fn(),
+  getRecordingMbid: vi.fn(),
+}));
+
+// Mock payload.config for getPayloadClient success path
+vi.mock('../../../payload.config', () => ({
+  default: { db: {}, collections: [] },
 }));
 
 describe('payloadClient', () => {
   let mockPayload: Partial<Payload>;
   let mockGetArtistMbid: Mock;
+  let mockGetRecordingMbid: Mock;
 
   beforeEach(async () => {
     vi.clearAllMocks();
     const musicbrainz = await import('./musicbrainz');
     mockGetArtistMbid = musicbrainz.getArtistMbid as Mock;
+    mockGetRecordingMbid = musicbrainz.getRecordingMbid as Mock;
 
     mockPayload = {
       find: vi.fn(),
@@ -69,10 +77,12 @@ describe('payloadClient', () => {
     });
 
     it('should throw when NEON_PROD_DATABASE_URL is not set for prod-neon target', async () => {
+      process.env.YES_I_MEAN_PROD = 'true';
       const { getPayloadClient } = await import('./payloadClient');
       await expect(getPayloadClient('prod-neon')).rejects.toThrow(
         'Database URI not found for target "prod-neon"',
       );
+      delete process.env.YES_I_MEAN_PROD;
     });
 
     it('should throw when neither NEON_DEV_DATABASE_URL nor DATABASE_URI is set for local-postgres', async () => {
@@ -80,6 +90,189 @@ describe('payloadClient', () => {
       await expect(getPayloadClient('local-postgres')).rejects.toThrow(
         'Database URI not found for target "local-postgres"',
       );
+    });
+
+    it('should throw when NEON_DEV_DATABASE_URL is not set for dev-neon target', async () => {
+      const { getPayloadClient } = await import('./payloadClient');
+      await expect(getPayloadClient('dev-neon')).rejects.toThrow(
+        'Database URI not found for target "dev-neon"',
+      );
+    });
+
+    it('should use DATABASE_URI fallback when NEON_DEV_DATABASE_URL is not set for local-postgres', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/fallback';
+      const { getPayload } = await import('payload');
+      const mockFallback = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockFallback);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockFallback);
+      expect(process.env.DATABASE_URI).toBe('postgresql://local/fallback');
+    });
+
+    it('should prefer DATABASE_URI over NEON_DEV_DATABASE_URL for local-postgres target', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/actual';
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://dev/should-not-be-used';
+      const { getPayload } = await import('payload');
+      const mockLocal = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockLocal);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      await getPayloadClient('local-postgres');
+
+      expect(process.env.DATABASE_URI).toBe('postgresql://local/actual');
+    });
+
+    it('should default to local-postgres when no target is given', async () => {
+      process.env.DATABASE_URI = 'postgresql://local/default';
+      const { getPayload } = await import('payload');
+      const mockDefault = { find: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockDefault);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient();
+
+      expect(result).toBe(mockDefault);
+    });
+
+    it('should refuse prod-neon target without YES_I_MEAN_PROD=true', async () => {
+      process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+      delete process.env.YES_I_MEAN_PROD;
+
+      const { getPayloadClient } = await import('./payloadClient');
+      await expect(getPayloadClient('prod-neon')).rejects.toThrow(
+        'Refusing to connect to production database',
+      );
+    });
+
+    it('should return uri for prod-neon when NEON_PROD_DATABASE_URL is set and YES_I_MEAN_PROD=true', async () => {
+      process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+      process.env.YES_I_MEAN_PROD = 'true';
+      const { getPayload } = await import('payload');
+      const mockProd = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockProd);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('prod-neon');
+
+      expect(result).toBe(mockProd);
+      expect(process.env.DATABASE_URI).toBe('postgresql://prod/db');
+
+      delete process.env.YES_I_MEAN_PROD;
+    });
+
+    it('should return uri for dev-neon when NEON_DEV_DATABASE_URL is set', async () => {
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://dev/db';
+      const { getPayload } = await import('payload');
+      const mockDev = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockDev);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('dev-neon');
+
+      expect(result).toBe(mockDev);
+      expect(process.env.DATABASE_URI).toBe('postgresql://dev/db');
+    });
+
+    it('should connect successfully for local-postgres when NEON_DEV_DATABASE_URL is set', async () => {
+      process.env.NEON_DEV_DATABASE_URL = 'postgresql://local/dev';
+      const { getPayload } = await import('payload');
+      const mockLocal = { find: vi.fn(), create: vi.fn() };
+      (getPayload as Mock).mockResolvedValueOnce(mockLocal);
+
+      const { getPayloadClient } = await import('./payloadClient');
+      const result = await getPayloadClient('local-postgres');
+
+      expect(result).toBe(mockLocal);
+    });
+  });
+
+  describe('prod-write guard', () => {
+    const savedEnv: Record<string, string | undefined> = {};
+
+    beforeEach(() => {
+      savedEnv.NEON_PROD_DATABASE_URL = process.env.NEON_PROD_DATABASE_URL;
+      savedEnv.DATABASE_URI = process.env.DATABASE_URI;
+      savedEnv.YES_I_MEAN_PROD = process.env.YES_I_MEAN_PROD;
+      delete process.env.NEON_PROD_DATABASE_URL;
+      delete process.env.DATABASE_URI;
+      delete process.env.YES_I_MEAN_PROD;
+    });
+
+    afterEach(() => {
+      process.env.NEON_PROD_DATABASE_URL = savedEnv.NEON_PROD_DATABASE_URL;
+      process.env.DATABASE_URI = savedEnv.DATABASE_URI;
+      process.env.YES_I_MEAN_PROD = savedEnv.YES_I_MEAN_PROD;
+    });
+
+    describe('isProdTarget', () => {
+      it('is true for prod and prod-neon', async () => {
+        const { isProdTarget } = await import('./payloadClient');
+        expect(isProdTarget('prod')).toBe(true);
+        expect(isProdTarget('prod-neon')).toBe(true);
+      });
+
+      it('is false for non-prod targets', async () => {
+        const { isProdTarget } = await import('./payloadClient');
+        expect(isProdTarget('dev')).toBe(false);
+        expect(isProdTarget('dev-neon')).toBe(false);
+        expect(isProdTarget('local-postgres')).toBe(false);
+      });
+    });
+
+    describe('assertProdWriteAllowed', () => {
+      it('does not throw for non-prod targets', async () => {
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('local-postgres')).not.toThrow();
+        expect(() => assertProdWriteAllowed('dev-neon')).not.toThrow();
+      });
+
+      it('throws for prod targets without YES_I_MEAN_PROD=true', async () => {
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('prod-neon')).toThrow(
+          'Refusing to connect to production database',
+        );
+      });
+
+      it('does not throw for prod targets when YES_I_MEAN_PROD=true', async () => {
+        process.env.YES_I_MEAN_PROD = 'true';
+        const { assertProdWriteAllowed } = await import('./payloadClient');
+        expect(() => assertProdWriteAllowed('prod-neon')).not.toThrow();
+      });
+    });
+
+    describe('assertNotConnectedToProd', () => {
+      it('does not throw when DATABASE_URI is unset', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
+
+      it('does not throw when DATABASE_URI differs from prod', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://dev/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
+
+      it('throws when DATABASE_URI matches prod without YES_I_MEAN_PROD=true', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://prod/db';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).toThrow(
+          'DATABASE_URI is currently set to the production database',
+        );
+      });
+
+      it('does not throw when DATABASE_URI matches prod and YES_I_MEAN_PROD=true', async () => {
+        process.env.NEON_PROD_DATABASE_URL = 'postgresql://prod/db';
+        process.env.DATABASE_URI = 'postgresql://prod/db';
+        process.env.YES_I_MEAN_PROD = 'true';
+        const { assertNotConnectedToProd } = await import('./payloadClient');
+        expect(() => assertNotConnectedToProd()).not.toThrow();
+      });
     });
   });
 
@@ -194,6 +387,20 @@ describe('payloadClient', () => {
           musicbrainzId: undefined,
         },
       });
+    });
+
+    it('should skip MusicBrainz update when existing artist already has musicbrainzId', async () => {
+      const { findOrCreateArtist } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({
+        docs: [{ id: 'existing-with-mbid', musicbrainzId: 'mbid-already-set' }],
+      });
+
+      const artistId = await findOrCreateArtist(mockPayload as Payload, 'Known Artist');
+
+      expect(artistId).toBe('existing-with-mbid');
+      expect(mockPayload.update).not.toHaveBeenCalled();
+      expect(mockGetArtistMbid).not.toHaveBeenCalled();
     });
 
     it('should handle slug validation error by finding existing artist', async () => {
@@ -452,6 +659,8 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValue({ name: 'New Song Artist' });
+      mockGetRecordingMbid.mockResolvedValue('recording-mbid-123');
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-789' });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'New Song', 42);
@@ -462,6 +671,7 @@ describe('payloadClient', () => {
         data: {
           title: 'New Song',
           artist: 42,
+          musicbrainzId: 'recording-mbid-123',
         },
       });
     });
@@ -470,6 +680,7 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValue({ docs: [] });
+      mockGetRecordingMbid.mockResolvedValue(null);
       (mockPayload.create as Mock).mockResolvedValue({ id: 'new-song-999' });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'Orphan Song');
@@ -489,6 +700,31 @@ describe('payloadClient', () => {
       await expect(findOrCreateSong(mockPayload as Payload, '')).rejects.toThrow(
         'Song title is required',
       );
+    });
+
+    it('retries song creation without MBID on musicbrainzId conflict', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Conflict Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce('duplicate-mbid');
+      const mbidError = {
+        status: 400,
+        data: { errors: [{ path: 'musicbrainzId', message: 'Value must be unique' }] },
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(mbidError);
+      (mockPayload.create as Mock).mockResolvedValueOnce({ id: 'song-without-mbid' });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Conflict Song', 99);
+
+      expect(songId).toBe('song-without-mbid');
+      expect(mockPayload.create).toHaveBeenNthCalledWith(2, {
+        collection: 'songs',
+        data: {
+          title: 'Conflict Song',
+          artist: 99,
+        },
+      });
     });
   });
 
@@ -890,6 +1126,24 @@ describe('payloadClient', () => {
       expect(recordId).toBe('record-no-artist');
     });
 
+    it('should handle slug conflict when artist has no name', async () => {
+      const { findOrCreateRecord } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 5 }); // no name field
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'record-nameless-artist' }] });
+
+      const recordId = await findOrCreateRecord(mockPayload as Payload, 'Nameless Artist Album', 5);
+
+      expect(recordId).toBe('record-nameless-artist');
+    });
+
     it('should rethrow non-slug errors', async () => {
       const { findOrCreateRecord } = await import('./payloadClient');
 
@@ -926,13 +1180,14 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Song Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
         message: 'Duplicate slug',
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
-      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Song Artist' });
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-by-slug' }] });
 
       const songId = await findOrCreateSong(mockPayload as Payload, 'Duplicate Song', 10);
@@ -945,6 +1200,7 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
@@ -959,10 +1215,31 @@ describe('payloadClient', () => {
       expect(mockPayload.findByID).not.toHaveBeenCalled();
     });
 
+    it('should handle slug conflict when artist has no name', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ id: 10 }); // no name field
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-nameless-artist' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Nameless Artist Song', 10);
+
+      expect(songId).toBe('song-nameless-artist');
+    });
+
     it('should rethrow non-slug errors in song creation', async () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Some Artist' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const genericError = { status: 500, message: 'Database error' };
       (mockPayload.create as Mock).mockRejectedValueOnce(genericError);
 
@@ -975,18 +1252,41 @@ describe('payloadClient', () => {
       const { findOrCreateSong } = await import('./payloadClient');
 
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Artist Name' });
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
       const slugError = {
         status: 400,
         data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
         message: 'Duplicate slug',
       };
       (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
-      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Artist Name' });
       (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
 
       await expect(
         findOrCreateSong(mockPayload as Payload, 'Ghost Song', 12),
       ).rejects.toEqual(slugError);
+    });
+
+    it('should resolve slug conflict when artist name fetch fails before create', async () => {
+      const { findOrCreateSong } = await import('./payloadClient');
+
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [] });
+      // pre-create artist fetch throws — artistName stays ''
+      (mockPayload.findByID as Mock).mockRejectedValueOnce(new Error('DB timeout'));
+      mockGetRecordingMbid.mockResolvedValueOnce(null);
+      const slugError = {
+        status: 400,
+        data: { errors: [{ path: 'slug', message: 'Duplicate slug' }] },
+        message: 'Duplicate slug',
+      };
+      (mockPayload.create as Mock).mockRejectedValueOnce(slugError);
+      // retry fetch inside slug handler succeeds
+      (mockPayload.findByID as Mock).mockResolvedValueOnce({ name: 'Recovered Artist' });
+      (mockPayload.find as Mock).mockResolvedValueOnce({ docs: [{ id: 'song-recovered' }] });
+
+      const songId = await findOrCreateSong(mockPayload as Payload, 'Recovered Song', 20);
+
+      expect(songId).toBe('song-recovered');
     });
   });
 });

@@ -36,7 +36,6 @@ class PostgresConcertTest extends TestCase
             'venue_id' => 1,
             'ticketinfo' => 'On Sale',
             'ticketurl' => 'http://example.com',
-            'featured' => true,
             'venue' => 'Test Venue',
             'artist' => 'Test Band',
             'band_url' => 'http://band.com',
@@ -63,7 +62,7 @@ class PostgresConcertTest extends TestCase
         $this->assertIsArray($result);
         $this->assertSame(1, $result['id']);
         $this->assertSame('Test Band', $result['artist']);
-        $this->assertSame('Yes', $result['featured']); // boolean converted to Yes/No
+        $this->assertSame('No', $result['featured']); // featured field has been removed; always 'No'
     }
 
     /**
@@ -89,37 +88,13 @@ class PostgresConcertTest extends TestCase
     }
 
     /**
-     * Test getById converts featured boolean to Yes
+     * Test getById always reports featured as 'No' since the field was removed
      */
-    public function testGetByIdConvertsFeaturedBooleanToYes(): void
+    public function testGetByIdAlwaysReportsFeaturedAsNo(): void
     {
         $rawData = [
             'id' => 1,
             'date' => '2026-03-15 00:00:00',
-            'featured' => true,
-            'artist' => 'Test',
-            'venue' => 'Venue'
-        ];
-
-        $mockStmt = $this->createMock(PDOStatement::class);
-        $mockStmt->method('execute')->willReturn(true);
-        $mockStmt->method('fetch')->willReturn($rawData);
-
-        $this->mockDb->method('prepare')->willReturn($mockStmt);
-
-        $result = $this->concert->getById(1);
-        $this->assertSame('Yes', $result['featured']);
-    }
-
-    /**
-     * Test getById converts featured boolean to No
-     */
-    public function testGetByIdConvertsFeaturedBooleanToNo(): void
-    {
-        $rawData = [
-            'id' => 1,
-            'date' => '2026-03-15 00:00:00',
-            'featured' => false,
             'artist' => 'Test',
             'venue' => 'Venue'
         ];
@@ -132,5 +107,46 @@ class PostgresConcertTest extends TestCase
 
         $result = $this->concert->getById(1);
         $this->assertSame('No', $result['featured']);
+    }
+
+    /**
+     * Test that getFeatured always returns an empty array (feature removed)
+     */
+    public function testGetFeaturedReturnsEmptyArray(): void
+    {
+        $this->mockDb->expects($this->never())->method('prepare');
+        $result = $this->concert->getFeatured(5);
+        $this->assertSame([], $result);
+    }
+
+    /**
+     * Test getUpcoming uses timezone-safe date filtering and returns rows
+     */
+    public function testGetUpcomingUsesTimezoneSafeDateFilter(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('bindValue')
+            ->with(':limit', 500, PDO::PARAM_INT);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->willReturn(true);
+        $mockStmt->expects($this->once())
+            ->method('fetchAll')
+            ->willReturn([]);
+
+        $this->mockDb->expects($this->once())
+            ->method('prepare')
+            ->with($this->callback(function ($sql) {
+                return str_contains(
+                    $sql,
+                    "(c.date AT TIME ZONE 'America/New_York')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date"
+                );
+            }))
+            ->willReturn($mockStmt);
+
+        $result = $this->concert->getUpcoming();
+
+        $this->assertSame([], $result);
     }
 }

@@ -169,8 +169,26 @@ describe('EmbedComponent', () => {
 
       render(<EmbedComponent url={testUrl} />);
 
-      expect(spy).toHaveBeenCalledWith(testUrl);
+      expect(spy).toHaveBeenCalledWith(testUrl, { hideCoverImage: undefined });
       spy.mockRestore();
+    });
+  });
+
+  describe('Mixcloud cover image', () => {
+    const mixcloudUrl = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+
+    it('should hide the cover image by default', () => {
+      const { container } = render(<EmbedComponent url={mixcloudUrl} />);
+
+      const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+      expect(iframe.src).toContain('hide_cover=1');
+    });
+
+    it('should show the cover image when hideCoverImage is false', () => {
+      const { container } = render(<EmbedComponent url={mixcloudUrl} hideCoverImage={false} />);
+
+      const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+      expect(iframe.src).toContain('hide_cover=0');
     });
   });
 });

@@ -51,15 +51,15 @@ DELETE FROM cdotw;
 
 -- Seed stories based on real ynotradio.net content with realistic HTML markup
 INSERT INTO stories (start_date, end_date, headline, story, pic, pic_url, priority, deleted) VALUES
-('2026-02-01', '2026-03-31', 'Top 11 @ 11:<br>Vote & Win The Hives Tickets', 
-'Every Thursday at 11am and 11pm, Y-Not Radio counts down the Top 11 indie rock songs of the week.  Vote this week and you\'ll be entered to win tickets for <b>The Hives</b> on Monday, March 16th at The Fillmore.<br><br>
+(DATE_SUB(CURDATE(), INTERVAL 7 DAY), DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'Top 11 @ 11:<br>Vote &amp; Win The Hives Tickets', 
+'Every Thursday at 11am and 11pm, Y-Not Radio counts down the Top 11 indie rock songs of the week.  Vote this week and you\'ll be entered to win tickets for <b>The Hives</b> at The Fillmore Philadelphia.<br><br>
 <center>
 <b><a href="top11.php">VOTE HERE</a></b></center>', 
 'https://i.imgur.com/QjZCxwM.jpeg', 'top11.php', 1, 'n'),
-('2026-02-01', '2026-03-31', '<font size=2>Rodney Anonymous Tells You How To Live</font>', 
-'On the first Friday of each month <b>Rodney Anonymous</b> takes us on a 2 hour trip into his world of industrial, goth, and dark wave music!  <!--Tune in this Friday, February 6th from 9-11pm or Sunday the 8th from 7-9pm for a dance-party episode!  -->If you missed Rodney\'s February dance party show, catch the replay this Sunday from 7-9pm, or you can hear it any time <a href="rodney.php">On Demand</a>.', 
+(DATE_SUB(CURDATE(), INTERVAL 14 DAY), DATE_ADD(CURDATE(), INTERVAL 30 DAY), '<font size=2>Rodney Anonymous Tells You How To Live</font>', 
+'On the first Friday of each month <b>Rodney Anonymous</b> takes us on a 2 hour trip into his world of industrial, goth, and dark wave music!  If you missed Rodney\'s latest show, catch the replay this Sunday from 7-9pm, or you can hear it any time <a href="rodney.php">On Demand</a>.', 
 'images/rodney.png', 'rodney.php', 2, 'n'),
-('2026-02-01', '2026-03-31', 'Trainwreck Boyfriend Y-Not Session', 
+(DATE_SUB(CURDATE(), INTERVAL 3 DAY), DATE_ADD(CURDATE(), INTERVAL 30 DAY), 'Trainwreck Boyfriend Y-Not Session', 
 'Philly newcomers <b>Trainwreck Boyfriend</b> just released their self-titled debut album and joined Y-Not\'s <strong>Josh T. Landow </strong>to chat about it and perform an acoustic set.  If you missed Trainwreck Boyfriend\'s <em>Y-Not Session</em>, you can listen to it any time  <a href="ondemand.php">On Demand</a>. <em>Get Trainwreck Boyfriend\'s album on <a href="https://trainwreckboyfriend.bandcamp.com" target="_blank">Bandcamp</a>.</em>', 
 'https://i.imgur.com/TH7qD6Y.jpeg', 'ondemand.php', 3, 'n');
 
@@ -69,13 +69,13 @@ INSERT INTO deejays (id, name, `show`, email, external_connect_text, external_co
 (2, 'Test DJ', 'Mondays 1-5pm', 'test@ynotradio.net', '', '', 'https://i.imgur.com/example.jpg', 2, 'no'),
 (3, 'Sample Host', 'Wednesdays 8-10pm', 'sample@ynotradio.net', 'Follow on Twitter', 'http://twitter.com/sample', 'https://i.imgur.com/example.jpg', 3, 'no');
 
--- Seed sample concerts
+-- Seed sample concerts (dates always in the future relative to today)
 INSERT INTO concerts (date, artist, band_pic_url, band_url, venue, ticketinfo, ticketurl, featured, deleted) VALUES
-('2026-02-01', 'Sample Artist', 'https://i.imgur.com/band1.jpg', 'https://sampleartist.com', 'The Foundry', 'Tickets', 'https://ticketmaster.com/example1', 'yes', 'n'),
-('2026-02-05', 'Test Band with Special Guest', 'https://i.imgur.com/band2.jpg', 'https://testband.com', 'Union Transfer', 'Sold Out', '', 'no', 'n'),
-('2026-02-10', 'Demo Group', 'https://i.imgur.com/band3.jpg', 'https://demogroup.com', 'World Cafe Live', 'Buy Tickets', 'https://ticketmaster.com/example2', 'yes', 'n'),
-('2026-02-15', 'Example Artist', 'https://i.imgur.com/band4.jpg', 'https://exampleartist.com', 'The Fillmore', 'Tickets', 'https://ticketmaster.com/example3', 'no', 'n'),
-('2026-02-20', 'Another Band', 'https://i.imgur.com/band5.jpg', 'https://anotherband.com', 'Johnny Brenda\'s', 'Tickets', 'https://johnnybrendas.com', 'no', 'n');
+(DATE_ADD(CURDATE(), INTERVAL 5 DAY),  'The Hives', 'https://i.imgur.com/QjZCxwM.jpeg', 'https://thehives.com', 'The Fillmore Philadelphia', 'Buy Tickets', 'https://www.livenation.com', 'yes', 'n'),
+(DATE_ADD(CURDATE(), INTERVAL 9 DAY),  'Wet Leg', 'https://i.imgur.com/TH7qD6Y.jpeg', 'https://wetlegband.com', 'Union Transfer', 'Buy Tickets', 'https://www.ticketmaster.com', 'yes', 'n'),
+(DATE_ADD(CURDATE(), INTERVAL 14 DAY), 'Franz Ferdinand', 'https://i.imgur.com/band3.jpg', 'https://franzferdinand.com', 'World Cafe Live', 'Sold Out', '', 'no', 'n'),
+(DATE_ADD(CURDATE(), INTERVAL 18 DAY), 'The Beths', 'https://i.imgur.com/band4.jpg', 'https://thebeths.com', 'Boot & Saddle', 'Buy Tickets', 'https://www.ticketmaster.com', 'no', 'n'),
+(DATE_ADD(CURDATE(), INTERVAL 23 DAY), 'Fontaines D.C.', 'https://i.imgur.com/band5.jpg', 'https://fontainesdublin.com', 'Johnny Brenda''s', 'Buy Tickets', 'https://johnnybrendas.com', 'no', 'n');
 
 -- Seed sample CD of the Week
 INSERT INTO cdotw (artist, title, label, review, cd_pic_url, band, reviewer, date, deleted) VALUES

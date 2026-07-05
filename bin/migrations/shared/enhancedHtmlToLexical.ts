@@ -105,14 +105,14 @@ function parseInlineHTML(html: string): LexicalNode[] {
   const dom = new JSDOM(sanitizeHtml(html));
   const nodes: LexicalNode[] = [];
 
-  function processNode(node: Node): void {
+  function processNode(node: Node, inheritedFormat: number = 0): void {
     if (node.nodeType === 3) { // Text node
       const text = node.textContent || '';
       if (text.trim()) {
         nodes.push({
           type: 'text',
           text: text.replace(/\s+/g, ' '),
-          format: 0,
+          format: inheritedFormat,
           mode: 'normal',
           style: '',
           detail: 0,
@@ -123,7 +123,8 @@ function parseInlineHTML(html: string): LexicalNode[] {
       const element = node as Element;
       const tagName = element.tagName.toLowerCase();
 
-      let format = 0;
+      // Accumulate format bits from parent down through nested inline elements
+      let format = inheritedFormat;
       // Bold: 1, Italic: 2, Strikethrough: 4, Underline: 8, Code: 16
       // eslint-disable-next-line no-bitwise
       if (tagName === 'b' || tagName === 'strong') format |= 1;
@@ -138,8 +139,14 @@ function parseInlineHTML(html: string): LexicalNode[] {
 
       if (tagName === 'a') {
         const href = element.getAttribute('href') || '';
-        const text = element.textContent || '';
         const target = element.getAttribute('target');
+
+        // Build the link's children by recursing into its contents so that
+        // formatting *inside* the anchor (e.g. <a><em>Album</em></a>) is
+        // preserved as text-node format bits, not flattened to plain text.
+        const before = nodes.length;
+        Array.from(element.childNodes).forEach((child) => processNode(child, format));
+        const linkChildren = nodes.splice(before);
 
         nodes.push({
           type: 'link',
@@ -151,10 +158,10 @@ function parseInlineHTML(html: string): LexicalNode[] {
             url: toAbsoluteUrl(href),
             newTab: target === '_blank' || target === '_new',
           },
-          children: [{
+          children: linkChildren.length > 0 ? linkChildren : [{
             type: 'text',
-            text,
-            format: 0,
+            text: element.textContent || '',
+            format,
             mode: 'normal',
             style: '',
             detail: 0,
@@ -162,27 +169,14 @@ function parseInlineHTML(html: string): LexicalNode[] {
           }],
           direction: 'ltr',
         });
-      } else if (format > 0) {
-        const text = element.textContent || '';
-        if (text.trim()) {
-          nodes.push({
-            type: 'text',
-            text,
-            format,
-            mode: 'normal',
-            style: '',
-            detail: 0,
-            version: 1,
-          });
-        }
       } else {
-        // Process children for other elements
-        Array.from(element.childNodes).forEach(processNode);
+        // Recursively process children, propagating accumulated format
+        Array.from(element.childNodes).forEach((child) => processNode(child, format));
       }
     }
   }
 
-  Array.from(dom.window.document.body.childNodes).forEach(processNode);
+  Array.from(dom.window.document.body.childNodes).forEach((child) => processNode(child, 0));
 
   // Fallback: if no nodes, create plain text node
   if (nodes.length === 0 && html.trim()) {
@@ -229,11 +223,57 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
 
   // Paragraphs
   else if (tagName === 'p') {
+    // Legacy markup sometimes nests block content (tables of embeds, images)
+    // inside a <p>, which is invalid HTML but renders fine in browsers. Inline
+    // flattening would silently drop those embeds, so when block descendants
+    // are present, walk the children in order and route block elements through
+    // the block converter.
+    const blockTags = new Set(['table', 'iframe', 'img', 'ul', 'ol', 'blockquote', 'hr', 'div', 'center']);
+    const hasBlockDescendant = element.querySelector('table, iframe, img, ul, ol, blockquote, hr') !== null;
+
+    if (hasBlockDescendant) {
+      let inlineBuffer = '';
+      const flushInline = () => {
+        const inline = parseInlineHTML(inlineBuffer);
+        inlineBuffer = '';
+        if (inline.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: inline,
+            direction: 'ltr',
+          });
+        }
+      };
+      Array.from(element.childNodes).forEach((node) => {
+        const el = node.nodeType === 1 ? (node as Element) : null;
+        if (el && blockTags.has(el.tagName.toLowerCase())) {
+          flushInline();
+          nodes.push(...htmlElementToLexicalNodes(el));
+        } else if (el) {
+          inlineBuffer += el.outerHTML;
+        } else if (node.nodeType === 3) {
+          inlineBuffer += node.textContent ?? '';
+        }
+      });
+      flushInline();
+      return nodes;
+    }
+
     const children = parseInlineHTML(element.innerHTML);
     if (children.length > 0) {
+      // Detect alignment from align attribute or inline style
+      const alignAttr = element.getAttribute('align') || '';
+      const styleAlign = (element as HTMLElement).style?.textAlign || '';
+      const alignment = alignAttr || styleAlign;
+      const paragraphFormat = alignment === 'center' || alignment === 'right'
+        ? alignment
+        : '';
       nodes.push({
         type: 'paragraph',
-        format: '',
+        format: paragraphFormat,
         indent: 0,
         version: 1,
         children,
@@ -346,39 +386,116 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
     });
   }
 
-  // Tables - simplify to paragraph with structured text
+  // Tables. Legacy content frequently abuses tables purely as layout wrappers
+  // around block media (iframes, images) — e.g. the y100-rocks playlist. If any
+  // cell contains block-level content, recurse into the cells so those embeds
+  // survive. Only fall back to the flattened "[Table]" text representation for
+  // genuinely text-only tabular data.
   else if (tagName === 'table') {
-    const rows = Array.from(element.querySelectorAll('tr'));
-    const tableText = rows.map((row) => {
-      const cells = Array.from(row.querySelectorAll('td, th'));
-      return cells.map((cell) => cell.textContent?.trim() || '').join(' | ');
-    }).join('\n');
+    const blockSelector = 'iframe, img, ul, ol, blockquote, table, hr';
+    const hasBlockContent = element.querySelector(blockSelector) !== null;
 
-    if (tableText) {
-      nodes.push({
-        type: 'paragraph',
-        format: '',
-        indent: 0,
-        version: 1,
-        children: [{
-          type: 'text',
-          text: `[Table]\n${tableText}`,
-          format: 0,
-          mode: 'normal',
-          style: '',
-          detail: 0,
-          version: 1,
-        }],
-        direction: 'ltr',
+    if (hasBlockContent) {
+      const blockTags = new Set(['iframe', 'img', 'ul', 'ol', 'blockquote', 'table', 'hr']);
+      // Flush accumulated inline HTML (text, <b>, <a>, <br>…) as a paragraph so
+      // labels stay attached above their embed, in document order.
+      const flushInline = (htmlBuffer: string) => {
+        const inline = parseInlineHTML(htmlBuffer);
+        if (inline.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: inline,
+            direction: 'ltr',
+          });
+        }
+      };
+
+      Array.from(element.querySelectorAll('td, th')).forEach((cell) => {
+        let inlineBuffer = '';
+        Array.from(cell.childNodes).forEach((node) => {
+          const el = node.nodeType === 1 ? (node as Element) : null;
+          if (el && blockTags.has(el.tagName.toLowerCase())) {
+            flushInline(inlineBuffer);
+            inlineBuffer = '';
+            nodes.push(...htmlElementToLexicalNodes(el));
+          } else if (el) {
+            inlineBuffer += el.outerHTML;
+          } else if (node.nodeType === 3) {
+            inlineBuffer += node.textContent ?? '';
+          }
+        });
+        flushInline(inlineBuffer);
       });
+    } else {
+      const rows = Array.from(element.querySelectorAll('tr'));
+      const tableText = rows.map((row) => {
+        const cells = Array.from(row.querySelectorAll('td, th'));
+        return cells.map((cell) => cell.textContent?.trim() || '').join(' | ');
+      }).join('\n');
+
+      if (tableText) {
+        nodes.push({
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: [{
+            type: 'text',
+            text: `[Table]\n${tableText}`,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            detail: 0,
+            version: 1,
+          }],
+          direction: 'ltr',
+        });
+      }
     }
   }
 
   // Divs and other containers - process children
-  else if (tagName === 'div' || tagName === 'section' || tagName === 'article' || tagName === 'center') {
+  else if (tagName === 'div' || tagName === 'section' || tagName === 'article') {
     Array.from(element.children).forEach((child) => {
       nodes.push(...htmlElementToLexicalNodes(child as Element));
     });
+  }
+
+  // Center element - process children and apply center alignment to block nodes
+  else if (tagName === 'center') {
+    const blockTags = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'table', 'hr']);
+    const hasBlockChildren = Array.from(element.children).some(
+      (child) => blockTags.has(child.tagName.toLowerCase()),
+    );
+
+    if (hasBlockChildren) {
+      Array.from(element.children).forEach((child) => {
+        const childNodes = htmlElementToLexicalNodes(child as Element);
+        childNodes.forEach((n) => {
+          if (n.type === 'paragraph' || n.type === 'heading') {
+            // eslint-disable-next-line no-param-reassign
+            n.format = 'center';
+          }
+          nodes.push(n);
+        });
+      });
+    } else {
+      // Inline-only content (e.g. <center><b><a>VOTE HERE</a></b></center>)
+      const children = parseInlineHTML(element.innerHTML);
+      if (children.length > 0) {
+        nodes.push({
+          type: 'paragraph',
+          format: 'center',
+          indent: 0,
+          version: 1,
+          children,
+          direction: 'ltr',
+        });
+      }
+    }
   }
 
   // Line breaks

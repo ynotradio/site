@@ -1,0 +1,110 @@
+import { test, expect } from '@playwright/test';
+import { checkForPhpErrors } from './utils/test-helpers';
+
+/**
+ * Regression coverage for the Postgres-backed PHP pages exercised in PR #584
+ * (fix/postgres-readiness). These tests guard against the specific defects
+ * we shipped fixes for so they cannot silently regress:
+ *
+ *   - PostgresOnDemand.php parse error from unescaped `order` in a SQL
+ *     identifier (also used in paginated listings).
+ *   - PostgresCdOfTheWeek.php "error loading" caused by an `_status IN
+ *     ('published','draft')` filter that surfaced unmigrated drafts.
+ *   - DJs page rendering stub names like "DJ #123" when the migrator
+ *     left placeholder People rows.
+ *
+ * Every collection below is now served from Postgres unconditionally (the
+ * legacy `?ff=use_postgres_*` flags were dissolved at cutover), so the pages
+ * are hit at their plain URLs.
+ */
+
+const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
+
+// Use 'domcontentloaded' instead of 'networkidle' — ondemand pages embed
+// audio players whose network requests never go idle.
+async function gotoPhp(page: import('@playwright/test').Page, url: string) {
+  const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  return response?.status() ?? null;
+}
+
+const POSTGRES_PAGES = [
+  'concerts.php',
+  'cdoftheweek.php',
+  'deejays.php',
+  'ondemand.php',
+  'donate.php',
+] as const;
+
+test.describe('Postgres-backed PHP pages', () => {
+  POSTGRES_PAGES.forEach((path) => {
+    test(`${path} loads with no PHP errors`, async ({ page }) => {
+      const url = `${LEGACY_BASE_URL}/${path}`;
+      const status = await gotoPhp(page, url);
+      expect(status).toBe(200);
+      const errors = checkForPhpErrors(await page.content());
+      expect(errors, `Found PHP errors on ${path}: ${errors.join(', ')}`).toEqual([]);
+    });
+  });
+
+  // Regression: ondemand parse error was inside the paginated SQL, so we
+  // exercise the first few pages explicitly.
+  [1, 2, 3].forEach((pageNum) => {
+    test(`ondemand.php page ${pageNum} renders without parse error`, async ({ page }) => {
+      const url = `${LEGACY_BASE_URL}/ondemand.php?page=${pageNum}`;
+      const status = await gotoPhp(page, url);
+      expect(status).toBe(200);
+      const content = await page.content();
+      expect(content).not.toContain('Parse error');
+      expect(content).not.toContain('syntax error');
+    });
+  });
+
+  test('deejays.php does not render stub "DJ #N" placeholder names', async ({ page }) => {
+    const url = `${LEGACY_BASE_URL}/deejays.php`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    const stubMatches = await page.locator('h2', { hasText: /^DJ #\d+$/ }).count();
+    expect(stubMatches).toBe(0);
+  });
+
+  test('cdoftheweek.php main panel does not show "error loading" fallback', async ({ page }) => {
+    const url = `${LEGACY_BASE_URL}/cdoftheweek.php`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    // Scope to the main panel (first .row) to avoid false matches in the
+    // "see other reviews" archive section.
+    const mainPanel = page.locator('.row').first();
+    await expect(mainPanel).not.toContainText(/error loading the CD of the Week/i);
+  });
+
+  test('concerts.php preserves rich-text formatting (italic) in titles', async ({ page }) => {
+    // Pete Yorn concert in production uses an italic album title in the
+    // concert title — verifies the title_html column flows through the
+    // PHP sanitizer with <em> intact.
+    const url = `${LEGACY_BASE_URL}/concerts.php`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    const peteYornCell = page.locator('td', { hasText: /Pete Yorn/ }).first();
+    if ((await peteYornCell.count()) === 0) {
+      test.skip(true, 'Pete Yorn concert not present (likely past); skipping italic assertion.');
+    }
+    await expect(peteYornCell.locator('em')).toBeVisible();
+  });
+
+  test('donate.php displays donation content from Postgres', async ({ page }) => {
+    const url = `${LEGACY_BASE_URL}/donate.php`;
+    const status = await gotoPhp(page, url);
+    expect(status).toBe(200);
+    const errors = checkForPhpErrors(await page.content());
+    expect(errors, `Found PHP errors on donate.php: ${errors.join(', ')}`).toEqual([]);
+    // The h1 title should be visible (comes from the 'donate' post headline)
+    await expect(page.locator('h1').first()).toBeVisible();
+    // The content area must contain meaningful text, not be blank
+    const contentArea = page.locator('.content').first();
+    const contentText = await contentArea.innerText();
+    expect(
+      contentText.trim().length,
+      'Donate page content area should not be blank',
+    ).toBeGreaterThan(0);
+  });
+});

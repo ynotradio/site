@@ -6,10 +6,11 @@ Pipeline configurations for Y-Not Radio CI/CD.
 
 - **`pipeline.yml`** - Entry-point gate: checks for code changes, uploads `pipeline-ci.yml` if found, or skips for doc-only PRs
 - **`pipeline-ci.yml`** - Full CI steps: quality checks → tests → build → E2E (uploaded dynamically by `pipeline.yml`)
-- **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: manual unblock gate → rsync + composer deploy to production (uploaded alongside `pipeline-ci.yml` on master pushes)
+- **`pipeline-deploy-legacy.yml`** - Legacy PHP site deploy: rsync + composer deploy to production, runs automatically after CI passes on master pushes (uploaded alongside `pipeline-ci.yml`)
+- **`pipeline-deploy-pr.yml`** - PR-to-production deploy: triggered via Buildkite REST API by `.github/workflows/deploy-pr-on-label.yml` when a PR is labeled `deploy-to-prod` (no CI gate, no branch filter — deploys exactly the PR head SHA)
 - **`build-images.yml`** - Docker image building → GHCR (triggers on push to main)
 - **`scheduled-db-sync.yml`** - Weekly prod→dev Neon branch reset (Monday 2 AM UTC, safety net)
-- **`nightly-gap-report.yml`** - Nightly import + gap report + dev branch reset: imports from prod MySQL → Neon, resets dev branch from prod, posts import summary and gap report
+- **`nightly-gap-report.yml`** - No-op placeholder; nightly content imports and integrity checks are retired
 
 ## Required Environment Variables
 
@@ -33,13 +34,8 @@ CLOUDINARY_API_SECRET=<api-secret>
 # CodeCov (optional)
 CODECOV_TOKEN=<codecov-token>
 
-# Nightly gap report
-PROD_MYSQL_HOST=<production-mysql-hostname>
-PROD_MYSQL_USER=<production-mysql-username>
-PROD_MYSQL_PASSWORD=<production-mysql-password>
-PROD_MYSQL_DATABASE=<production-mysql-database>  # default: ynot_site
-GITHUB_PR_TOKEN=<fine-grained-pat-with-issues-write>  # also used by storybook deploy
-GAP_REPORT_ISSUE_NUMBER=<github-issue-number-to-update>
+# GitHub API, used by Storybook deploy when enabled
+GITHUB_PR_TOKEN=<fine-grained-pat>
 
 # Legacy PHP deploy (pipeline-deploy-legacy.yml)
 DEPLOY_SSH_KEY=<ssh-private-key-for-production-server>
@@ -81,15 +77,9 @@ ENV_PHP_CONTENTS=<full-contents-of-production-env.php>
 4. Build Schedule: `0 2 * * 1` on `master`
 5. Add secret: `NEON_API_KEY`
 
-### Nightly Import & Gap Report
+### Nightly Content Sync
 
-1. New Pipeline: "Y-Not Radio - Nightly Sync"
-2. Configuration path: `.buildkite/nightly-gap-report.yml`
-3. Disable webhooks
-4. Build Schedule: `0 3 * * *` (daily at 3 AM UTC) on `master`
-5. Add secrets: `PROD_MYSQL_HOST`, `PROD_MYSQL_USER`, `PROD_MYSQL_PASSWORD`,
-   `PROD_MYSQL_DATABASE`, `NEON_PROD_DATABASE_URL`, `NEON_API_KEY`, `GITHUB_PR_TOKEN`, `GAP_REPORT_ISSUE_NUMBER`
-6. Create a GitHub issue to track migration progress (note the issue number)
+The old nightly import/gap/integrity workflow is retired. `.buildkite/nightly-gap-report.yml` now only resets the Neon development branch from production and requires `NEON_API_KEY`. It no longer needs MySQL or GitHub issue secrets.
 
 ### Legacy PHP Deploy Pipeline
 
@@ -100,10 +90,10 @@ Automatically appended to every master-push build by `check-changes.sh`. No sepa
 1. Merge a PR to `master` in the GitHub app (works from mobile 📱)
 2. Buildkite picks up the push, runs full CI (`pipeline-ci.yml`)
 3. The deploy pipeline (`pipeline-deploy-legacy.yml`) is uploaded at the same time
-4. A **block step** ("🚀 Deploy legacy site to production?") pauses the deploy until you manually unblock it from the Buildkite web UI or mobile app
-5. After unblocking, the deploy step (via `.buildkite/scripts/deploy-legacy.sh`):
+4. Once `eslint`, `vitest`, `php-lint`, and `php-test` all pass, the deploy step runs automatically — no manual unblock. (A red CI build blocks the deploy via `depends_on`.)
+5. The deploy step (via `.buildkite/scripts/deploy-legacy.sh`):
    - Installs `rsync` and `openssh-client` in the `composer:2` container
-   - Fetches `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS`, and `ENV_PHP_CONTENTS` from Buildkite secrets
+   - Reads `DEPLOY_SSH_KEY`, `DEPLOY_SSH_HOST`, `DEPLOY_SSH_KNOWN_HOSTS`, and `ENV_PHP_CONTENTS` from env vars (fetched in the agent's pre-command hook from Buildkite secrets)
    - Runs `composer install --no-dev` locally in `src/`
    - Creates a timestamped backup of `htdocs` on the server (keeps latest 15)
    - Rsyncs `src/` to `~/htdocs/` on the production server
@@ -112,14 +102,38 @@ Automatically appended to every master-push build by `check-changes.sh`. No sepa
 
 **Required secrets** (add via Buildkite UI → Pipeline Settings → Secrets):
 
-| Secret | Description |
-|---|---|
-| `DEPLOY_SSH_KEY` | SSH private key for the production server (`bitnami` user) |
-| `DEPLOY_SSH_HOST` | Production server hostname or IP address |
+| Secret                   | Description                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| `DEPLOY_SSH_KEY`         | SSH private key for the production server (`bitnami` user)           |
+| `DEPLOY_SSH_HOST`        | Production server hostname or IP address                             |
 | `DEPLOY_SSH_KNOWN_HOSTS` | Known-hosts entry for the server (get with `ssh-keyscan <hostname>`) |
-| `ENV_PHP_CONTENTS` | Full contents of the production `.env.php` file |
+| `ENV_PHP_CONTENTS`       | Full contents of the production `.env.php` file                      |
 
 > **Note:** `bin/deploy.sh` and `bin/pre-deploy.sh` continue to work unchanged for local manual deploys.
+
+### PR-to-Production Deploy Pipeline
+
+Lets you deploy any PR's head commit to production by applying the
+`deploy-to-prod` label on GitHub. Skips CI and branch filters — use with care.
+
+**One-time setup:**
+
+1. New Buildkite pipeline: "Y-Not Radio - Deploy PR"
+   - Slug: `y-not-radio-deploy-pr` (must match the slug used by the GitHub workflow)
+   - Repository: `https://github.com/ynotradio/site`
+   - Configuration path: `.buildkite/pipeline-deploy-pr.yml`
+   - Disable webhooks (this pipeline is triggered exclusively via the REST API)
+   - Add the same four `DEPLOY_*` / `ENV_PHP_CONTENTS` secrets as the legacy deploy pipeline
+2. Create a Buildkite REST API token with `write_builds` scope
+3. Add it to the GitHub repo as the `BUILDKITE_API_TOKEN` Actions secret
+4. Create the `deploy-to-prod` label in the GitHub repo
+
+**How it works:**
+
+1. Apply the `deploy-to-prod` label to any open PR
+2. `.github/workflows/deploy-pr-on-label.yml` POSTs to the Buildkite REST API to create a build at the PR head SHA
+3. The Buildkite pipeline runs `deploy-legacy.sh` (same script as the master deploy)
+4. The workflow removes the label so re-applying re-triggers the deploy, and comments on the PR with the build URL
 
 ## Troubleshooting
 

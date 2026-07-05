@@ -14,8 +14,18 @@ require_once __DIR__ . '/../lib/Database.php';
  * Return the Payload admin base URL (no trailing slash), e.g. "http://localhost:3000/admin".
  */
 function get_payload_admin_url(): string {
-    $base = $_ENV['PAYLOAD_PUBLIC_SERVER_URL'] ?? getenv('PAYLOAD_PUBLIC_SERVER_URL') ?: 'https://ynotradio-admin.netlify.app';
-    return rtrim($base, '/') . '/admin';
+    $base = $_ENV['PAYLOAD_ADMIN_SERVER_URL'] ?? getenv('PAYLOAD_ADMIN_SERVER_URL');
+    $payload_public_url = $_ENV['PAYLOAD_PUBLIC_SERVER_URL'] ?? getenv('PAYLOAD_PUBLIC_SERVER_URL');
+
+    if (
+        !$base
+        && $payload_public_url
+        && preg_match('#^https?://(localhost|127\.0\.0\.1)(:[0-9]+)?$#', $payload_public_url)
+    ) {
+        $base = $payload_public_url;
+    }
+
+    return rtrim($base ?: 'https://ynotradio-admin.netlify.app', '/') . '/admin';
 }
 
 /**

@@ -1,11 +1,17 @@
 import path from 'path';
 import type { CollectionConfig } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { legacyIdField } from './shared/legacyIdField';
 
 const mediaDir = path.resolve(process.cwd(), 'payload', 'media');
 
 export const Media: CollectionConfig = {
   slug: 'media',
+  // Hide from internal-link / relationship pickers in rich-text editors.
+  // Editors should select images via the upload field, not via internal links.
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Media File',
     plural: 'Media Files',
@@ -47,6 +53,7 @@ export const Media: CollectionConfig = {
     defaultColumns: ['filename', 'alt', 'filesize', 'updatedAt'],
     group: 'Content',
     description: 'Shared image library. Upload images here, then select them from any collection.',
+    groupBy: true,
   },
   fields: [
     {
@@ -76,16 +83,7 @@ export const Media: CollectionConfig = {
         condition: adminOnlyCondition,
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

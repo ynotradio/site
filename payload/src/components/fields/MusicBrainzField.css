@@ -85,8 +85,8 @@
 .musicbrainz-view-btn {
   padding: 6px 12px;
   background: transparent;
-  color: var(--theme-primary-500, #3b82f6);
-  border: 1px solid var(--theme-primary-200, #bfdbfe);
+  color: var(--theme-text, #111111);
+  border: 1px solid var(--theme-elevation-200, #e5e7eb);
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -97,15 +97,15 @@
 }
 
 .musicbrainz-view-btn:hover {
-  background: var(--theme-primary-50, #eff6ff);
-  border-color: var(--theme-primary-300, #93c5fd);
+  background: var(--theme-elevation-100, #f3f4f6);
+  border-color: var(--theme-elevation-400, #9ca3af);
 }
 
 .musicbrainz-clear-btn {
   padding: 6px 12px;
   background: transparent;
-  color: var(--theme-error-500, #ef4444);
-  border: 1px solid var(--theme-error-200, #fecaca);
+  color: #cc2200;
+  border: 1px solid #cc2200;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -115,8 +115,8 @@
 }
 
 .musicbrainz-clear-btn:hover {
-  background: var(--theme-error-50, #fef2f2);
-  border-color: var(--theme-error-300, #fca5a5);
+  background: #fee;
+  border-color: #a31c00;
 }
 
 /* Search Wrapper */
@@ -151,7 +151,8 @@
 
 .musicbrainz-search-btn {
   padding: 8px 16px;
-  background: var(--theme-primary-500, #3b82f6);
+  background: #cc2200;
+  background-image: none;
   color: white;
   border: none;
   border-radius: 4px;
@@ -163,7 +164,7 @@
 }
 
 .musicbrainz-search-btn:hover:not(:disabled) {
-  background: var(--theme-primary-600, #2563eb);
+  background: #a31c00;
 }
 
 .musicbrainz-search-btn:disabled {

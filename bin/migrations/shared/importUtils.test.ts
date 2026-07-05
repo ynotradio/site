@@ -134,6 +134,32 @@ describe('convertHtmlToLexical', () => {
     expect(fullText).toBe('Check out the latest episode of The Show!');
   });
 
+  it('should preserve the space between a link and following text', () => {
+    const html = '<p><a href="https://example.com/album">Album</a> by The Band.</p>';
+    const result = convertHtmlToLexical(html);
+    const last = result.root.children[0].children.at(-1);
+    expect(last.type).toBe('text');
+    expect(last.text).toBe(' by The Band.');
+  });
+
+  it('should preserve italic formatting nested inside a link', () => {
+    const html = '<p><a href="https://example.com/album"><em>Album Title</em></a></p>';
+    const result = convertHtmlToLexical(html);
+    const link = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(link).toBeDefined();
+    expect(link.children[0].text).toBe('Album Title');
+    expect(link.children[0].format).toBe(2); // italic
+  });
+
+  it('should keep the link when wrapped in an italic tag', () => {
+    const html = '<p><em><a href="https://example.com/album">Album Title</a></em></p>';
+    const result = convertHtmlToLexical(html);
+    const link = result.root.children[0].children.find((n: any) => n.type === 'link');
+    expect(link).toBeDefined();
+    expect(link.fields.url).toBe('https://example.com/album');
+    expect(link.children[0].format).toBe(2); // italic inherited from <em>
+  });
+
   it('should handle complex HTML', () => {
     const html = '<div><h1>Title</h1><p>Paragraph with <a href="#">link</a></p></div>';
     const result = convertHtmlToLexical(html);
@@ -154,6 +180,33 @@ describe('convertHtmlToLexical', () => {
     expect(result.root.direction).toBe('ltr');
     expect(result.root.children[0].type).toBe('paragraph');
     expect(result.root.children[0].direction).toBe('ltr');
+  });
+
+  it('should set format:center on paragraph wrapped in <center> tags', () => {
+    const result = convertHtmlToLexical('<center><b><a href="https://example.com/vote">VOTE HERE</a></b></center>');
+    expect(result.root.children[0].format).toBe('center');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+  });
+
+  it('should set format:center for <p align="center"> paragraphs', () => {
+    const result = convertHtmlToLexical('<p align="center">Centered text</p>');
+    expect(result.root.children[0].format).toBe('center');
+    expect(result.root.children[0].children[0].text).toBe('Centered text');
+  });
+
+  it('should keep non-centered paragraphs with empty format', () => {
+    const result = convertHtmlToLexical('<p>Normal paragraph</p>');
+    expect(result.root.children[0].format).toBe('');
+  });
+
+  it('should handle mixed centered and non-centered content', () => {
+    const result = convertHtmlToLexical(
+      '<p>Normal text</p><center>Centered text</center><p>Normal again</p>',
+    );
+    expect(result.root.children[0].format).toBe('');
+    expect(result.root.children[1].format).toBe('center');
+    expect(result.root.children[2].format).toBe('');
   });
 
   it('should return minimal paragraph when parsing yields no nodes', () => {
@@ -234,6 +287,60 @@ describe('convertHtmlToLexical', () => {
     const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
     expect(linkNode).toBeDefined();
     expect(linkNode.fields.url).toBe('https://www.ynotradio.net/artists/miles-davis');
+  });
+
+  it('should set newTab=true for link with target="_blank"', () => {
+    const result = convertHtmlToLexical('<a href="http://example.com" target="_blank">click here</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should set newTab=true for link with target="_new"', () => {
+    const result = convertHtmlToLexical('<a href="http://example.com" target="_new">click here</a>');
+    const linkNode = result.root.children[0].children.find((c: any) => c.type === 'link');
+    expect(linkNode).toBeDefined();
+    expect(linkNode.fields.newTab).toBe(true);
+  });
+
+  it('should convert <i> tag to italic text node', () => {
+    const result = convertHtmlToLexical('<i>italic text</i>');
+    const italicNode = result.root.children[0].children.find((c: any) => c.format === 2);
+    expect(italicNode).toBeDefined();
+    expect(italicNode.text).toBe('italic text');
+  });
+
+  it('should not create a trailing text node for whitespace-only trailing content', () => {
+    // Covers line 190 false branch: normalizedText.trim() is empty (only whitespace remains)
+    const result = convertHtmlToLexical('<strong>bold</strong>   ');
+    const children = result.root.children[0].children;
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(boldNode).toBeDefined();
+    // No plain text node should be added for the trailing whitespace
+    const plainTextNodes = children.filter((c: any) => c.type === 'text' && c.format === 0);
+    expect(plainTextNodes).toHaveLength(0);
+  });
+
+  it('should not append space when appendSpaceToLastNode is called with empty nodes array', () => {
+    // Covers the nodes.length === 0 early-return branch in appendSpaceToLastNode.
+    // A leading space before the first tag calls appendSpaceToLastNode with an empty nodes list.
+    const result = convertHtmlToLexical(' <strong>bold</strong>');
+    const children = result.root.children[0].children;
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(boldNode).toBeDefined();
+    expect(boldNode.text).toBe('bold');
+  });
+
+  it('should not append space to link node (no text property) when followed by space and inline element', () => {
+    // Covers the false branch of appendSpaceToLastNode where lastNode.text is falsy (link nodes
+    // have no top-level .text; space after link should not crash or modify the link node).
+    const result = convertHtmlToLexical('<a href="http://example.com">click</a> <strong>bold</strong>');
+    const children = result.root.children[0].children;
+    const linkNode = children.find((c: any) => c.type === 'link');
+    const boldNode = children.find((c: any) => c.format === 1);
+    expect(linkNode).toBeDefined();
+    expect(boldNode).toBeDefined();
+    expect(boldNode.text).toBe('bold');
   });
 });
 

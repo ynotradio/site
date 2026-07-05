@@ -64,6 +64,35 @@ describe('ModernRockMadnessGroups', () => {
     expect((readFn as () => boolean)()).toBe(true);
   });
 
+  it('restricts create to admin and editor roles', () => {
+    const createFn = ModernRockMadnessGroups.access?.create as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(createFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(createFn({ req: { user: { role: 'dj' } } })).toBe(false);
+    expect(createFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts update to admin and editor roles', () => {
+    const updateFn = ModernRockMadnessGroups.access?.update as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(updateFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(updateFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(updateFn({ req: { user: { role: 'readonly' } } })).toBe(false);
+    expect(updateFn({ req: { user: null } })).toBe(false);
+  });
+
+  it('restricts delete to admin and editor roles', () => {
+    const deleteFn = ModernRockMadnessGroups.access?.delete as (args: {
+      req: { user: unknown };
+    }) => boolean;
+    expect(deleteFn({ req: { user: { role: 'admin' } } })).toBe(true);
+    expect(deleteFn({ req: { user: { role: 'editor' } } })).toBe(true);
+    expect(deleteFn({ req: { user: null } })).toBe(false);
+  });
+
   it('has timestamps enabled', () => {
     expect(ModernRockMadnessGroups.timestamps).toBe(true);
   });

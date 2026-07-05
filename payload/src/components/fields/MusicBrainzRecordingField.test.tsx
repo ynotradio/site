@@ -19,6 +19,10 @@ vi.mock('../../utils/musicbrainz-api', () => ({
     const seconds = Math.floor((ms % 60000) / 1000);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }),
+  getArtistCreditName: vi.fn((credits: Array<{ name: string }> | undefined) => {
+    if (!credits?.length) return 'Unknown Artist';
+    return credits.map((ac) => ac.name).join(', ');
+  }),
 }));
 
 const { useField, useFormFields } = await import('@payloadcms/ui');
@@ -35,13 +39,9 @@ describe('MusicBrainzRecordingField', () => {
       setValue: mockSetValue,
     } as any);
 
-    // Default: return title="Test Song" and artist={name: "Test Artist"}
-    let callCount = 0;
-    vi.mocked(useFormFields).mockImplementation(() => {
-      const call = callCount;
-      callCount += 1;
-      if (call % 2 === 0) return { value: 'Test Song' } as any;
-      return { value: { name: 'Test Artist' } } as any;
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: 'Test Song' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
     });
   });
 
@@ -97,6 +97,26 @@ describe('MusicBrainzRecordingField', () => {
     render(<MusicBrainzRecordingField path="musicbrainzId" />);
 
     expect(screen.getByText('Unknown Song')).toBeInTheDocument();
+  });
+
+  it('disables the search button when song title is empty', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
+  it('disables the search button when song title is whitespace-only', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '   ' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
   });
 
   it('performs search when button is clicked', async () => {
@@ -472,5 +492,21 @@ describe('MusicBrainzRecordingField', () => {
         expect(screen.getByText(/by Unknown Artist/)).toBeInTheDocument();
       });
     });
+  });
+
+  it('guards against search when song title is empty (covers early-return branch)', async () => {
+    let callCount = 0;
+    vi.mocked(useFormFields).mockImplementation(() => {
+      const call = callCount;
+      callCount += 1;
+      if (call % 2 === 0) return { value: '' } as any;
+      return { value: { name: 'Test Artist' } } as any;
+    });
+
+    render(<MusicBrainzRecordingField path="musicbrainzId" />);
+
+    fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+    expect(vi.mocked(musicbrainzApi.searchRecordings)).not.toHaveBeenCalled();
   });
 });

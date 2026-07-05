@@ -143,6 +143,7 @@ async function importConcert(payload: Payload, concert: Concert): Promise<boolea
         featured: concert.featured === 'Yes',
         legacyId: concert.id,
         migratedAt: new Date().toISOString(),
+        _status: 'published' as const,
       },
     });
 

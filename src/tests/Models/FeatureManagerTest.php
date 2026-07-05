@@ -16,18 +16,13 @@ use YNotRadio\Models\FeatureManager;
 class FeatureManagerTest extends TestCase
 {
     /**
-     * Test that a feature enabled in config returns true
+     * Test that a feature missing from config returns false
      */
-    public function testFeatureEnabledInConfig(): void
+    public function testFeatureMissingFromConfig(): void
     {
-        // Note: This test relies on the actual config file
-        // If all features are false in src/config/features.php, we'll test that behavior
-        
-        // Since we know use_postgres_concerts exists in config and is false by default
-        // We test the fallback behavior
-        $result = FeatureManager::isEnabled('use_postgres_concerts');
-        
-        // Should be false since it's false in the config file
+        // Generic feature name not present in src/config/features.php — exercises the disabled path.
+        $result = FeatureManager::isEnabled('disabled_feature_xyz');
+
         $this->assertFalse($result);
     }
     
@@ -45,14 +40,14 @@ class FeatureManagerTest extends TestCase
      */
     public function testEnvironmentVariableOverridesConfig(): void
     {
-        // Set an environment variable that overrides the config
-        putenv('USE_POSTGRES_CONCERTS=true');
-        
-        $result = FeatureManager::isEnabled('use_postgres_concerts');
+        // Set an environment variable for a feature that's not in the config (defaults to false)
+        putenv('SOME_FEATURE=true');
+
+        $result = FeatureManager::isEnabled('some_feature');
         $this->assertTrue($result);
-        
+
         // Clean up
-        putenv('USE_POSTGRES_CONCERTS');
+        putenv('SOME_FEATURE');
     }
     
     /**
@@ -94,5 +89,24 @@ class FeatureManagerTest extends TestCase
         $result = FeatureManager::isEnabled('test_feature');
         $this->assertTrue($result);
         putenv('TEST_FEATURE');
+    }
+
+    /**
+     * Test that CP routes suppress use_postgres_* flags
+     */
+    public function testControlPanelRequestSuppressesPostgresFlags(): void
+    {
+        $originalScriptName = $_SERVER['SCRIPT_NAME'] ?? null;
+        $_SERVER['SCRIPT_NAME'] = '/cp/top11_song_view_all.php';
+        putenv('USE_POSTGRES_TOP11=true');
+
+        $this->assertFalse(FeatureManager::isEnabled('use_postgres_top11'));
+
+        putenv('USE_POSTGRES_TOP11');
+        if ($originalScriptName === null) {
+            unset($_SERVER['SCRIPT_NAME']);
+        } else {
+            $_SERVER['SCRIPT_NAME'] = $originalScriptName;
+        }
     }
 }

@@ -119,6 +119,16 @@ describe('organizeForBracket', () => {
     const layout = organizeForBracket(matches);
     expect(layout.regions[3].round1).toHaveLength(1);
   });
+
+  it('ignores matches with an out-of-bounds round (round 0)', () => {
+    const matches = [makeMatch(1, '0', 1)];
+    const layout = organizeForBracket(matches);
+    const allRoundKeys = ['round1', 'round2', 'round3', 'round4'] as const;
+    const totalMatches = ([1, 2, 3, 4] as const).flatMap(
+      (r) => allRoundKeys.flatMap((k) => layout.regions[r][k]),
+    );
+    expect(totalMatches).toHaveLength(0);
+  });
 });
 
 describe('getBandAbbr', () => {

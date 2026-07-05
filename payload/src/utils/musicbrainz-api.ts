@@ -114,39 +114,36 @@ async function waitForRateLimit(): Promise<void> {
 }
 
 /**
+ * Fetch from MusicBrainz API with rate limiting and error handling.
+ * Returns parsed JSON on success, null on failure or non-OK response.
+ */
+async function fetchMusicBrainz<T>(
+  endpoint: string,
+  encodedQuery: string,
+  limit: number,
+): Promise<T | null> {
+  try {
+    await waitForRateLimit();
+    const url = `${API_BASE}/${endpoint}?query=${encodedQuery}&fmt=json&limit=${limit}`;
+    const response = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Search for artists by name
  */
 export async function searchArtists(
   query: string,
   limit: number = 10,
 ): Promise<MusicBrainzArtist[]> {
-  if (!query.trim()) {
-    return [];
-  }
-
-  try {
-    await waitForRateLimit();
-
-    // Escape Lucene special characters before encoding
-    const escapedQuery = escapeLuceneSpecialChars(query);
-    const encodedQuery = encodeURIComponent(escapedQuery);
-    const url = `${API_BASE}/artist?query=${encodedQuery}&fmt=json&limit=${limit}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-      },
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data: MusicBrainzArtistSearchResponse = await response.json();
-    return data.artists || [];
-  } catch (error) {
-    return [];
-  }
+  if (!query.trim()) return [];
+  const encodedQuery = encodeURIComponent(escapeLuceneSpecialChars(query));
+  const data = await fetchMusicBrainz<MusicBrainzArtistSearchResponse>('artist', encodedQuery, limit);
+  return data?.artists ?? [];
 }
 
 /**
@@ -195,59 +192,30 @@ export async function searchReleases(
   preferredType: string = 'Album',
   limit: number = 10,
 ): Promise<MusicBrainzRelease[]> {
-  if (!title.trim()) {
-    return [];
+  if (!title.trim()) return [];
+
+  const queryParts = [escapeLuceneSpecialChars(title)];
+  if (artistName?.trim()) {
+    queryParts.push(`artist:${escapeLuceneSpecialChars(artistName)}`);
   }
+  const encodedQuery = encodeURIComponent(queryParts.join(' AND '));
 
-  try {
-    await waitForRateLimit();
+  const data = await fetchMusicBrainz<MusicBrainzReleaseSearchResponse>('release', encodedQuery, limit);
+  const releases = data?.releases ?? [];
 
-    // Build query with proper escaping
-    const escapedTitle = escapeLuceneSpecialChars(title);
-    const queryParts = [escapedTitle];
-    if (artistName?.trim()) {
-      const escapedArtist = escapeLuceneSpecialChars(artistName);
-      queryParts.push(`artist:${escapedArtist}`);
-    }
-    const query = encodeURIComponent(queryParts.join(' AND '));
-    const url = `${API_BASE}/release?query=${query}&fmt=json&limit=${limit}`;
+  if (!artistName?.trim()) return releases;
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-      },
-    });
+  return releases.sort((a, b) => {
+    const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+    const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+    if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
 
-    if (!response.ok) {
-      return [];
-    }
+    const aTypeRank = releaseTypeRank(a['release-group']?.['primary-type'], preferredType);
+    const bTypeRank = releaseTypeRank(b['release-group']?.['primary-type'], preferredType);
+    if (aTypeRank !== bTypeRank) return aTypeRank - bTypeRank;
 
-    const data: MusicBrainzReleaseSearchResponse = await response.json();
-    const releases = data.releases || [];
-
-    // Re-rank results to prioritize artist matches and preferred release type
-    if (artistName?.trim()) {
-      return releases.sort((a, b) => {
-        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
-        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
-
-        // Artist matches come first
-        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
-
-        // Within same artist match tier, rank by release type
-        const aTypeRank = releaseTypeRank(a['release-group']?.['primary-type'], preferredType);
-        const bTypeRank = releaseTypeRank(b['release-group']?.['primary-type'], preferredType);
-        if (aTypeRank !== bTypeRank) return aTypeRank - bTypeRank;
-
-        // Then by MusicBrainz score
-        return (b.score || 0) - (a.score || 0);
-      });
-    }
-
-    return releases;
-  } catch (error) {
-    return [];
-  }
+    return (b.score || 0) - (a.score || 0);
+  });
 }
 
 /**
@@ -260,60 +228,41 @@ export async function searchRecordings(
   artistName?: string,
   limit: number = 10,
 ): Promise<MusicBrainzRecording[]> {
-  if (!title.trim()) {
-    return [];
+  if (!title.trim()) return [];
+
+  const queryParts = [escapeLuceneSpecialChars(title)];
+  if (artistName?.trim()) {
+    queryParts.push(`artist:${escapeLuceneSpecialChars(artistName)}`);
   }
+  queryParts.push('NOT video:true');
+  const encodedQuery = encodeURIComponent(queryParts.join(' AND '));
 
-  try {
-    await waitForRateLimit();
+  const data = await fetchMusicBrainz<MusicBrainzRecordingSearchResponse>('recording', encodedQuery, limit);
+  const recordings = data?.recordings ?? [];
 
-    // Build query with proper escaping
-    const escapedTitle = escapeLuceneSpecialChars(title);
-    const queryParts = [escapedTitle];
+  return recordings.sort((a, b) => {
     if (artistName?.trim()) {
-      const escapedArtist = escapeLuceneSpecialChars(artistName);
-      queryParts.push(`artist:${escapedArtist}`);
+      const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
+      const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
+      if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
     }
 
-    // Filter out live and video recordings to prioritize studio versions
-    queryParts.push('NOT video:true');
+    const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+    const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
+    if (aIsLive !== bIsLive) return aIsLive - bIsLive;
 
-    const query = encodeURIComponent(queryParts.join(' AND '));
-    const url = `${API_BASE}/recording?query=${query}&fmt=json&limit=${limit}`;
+    return (b.score || 0) - (a.score || 0);
+  });
+}
 
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': USER_AGENT,
-      },
-    });
-
-    if (!response.ok) {
-      return [];
-    }
-
-    const data: MusicBrainzRecordingSearchResponse = await response.json();
-    const recordings = data.recordings || [];
-
-    // Sort to prioritize artist matches and non-live versions
-    return recordings.sort((a, b) => {
-      // Artist matches come first (when artist name is provided)
-      if (artistName?.trim()) {
-        const aArtistMatch = artistCreditMatches(a['artist-credit'], artistName) ? 1 : 0;
-        const bArtistMatch = artistCreditMatches(b['artist-credit'], artistName) ? 1 : 0;
-        if (aArtistMatch !== bArtistMatch) return bArtistMatch - aArtistMatch;
-      }
-
-      // Live recordings go to the bottom
-      const aIsLive = a.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
-      const bIsLive = b.disambiguation?.toLowerCase().includes('live') ? 1 : 0;
-      if (aIsLive !== bIsLive) return aIsLive - bIsLive;
-
-      // Otherwise maintain original score order
-      return (b.score || 0) - (a.score || 0);
-    });
-  } catch (error) {
-    return [];
-  }
+/**
+ * Format a list of artist credits into a display string.
+ */
+export function getArtistCreditName(
+  credits: Array<{ name: string }> | undefined,
+): string {
+  if (!credits?.length) return 'Unknown Artist';
+  return credits.map((ac) => ac.name).join(', ');
 }
 
 /**

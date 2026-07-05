@@ -124,6 +124,9 @@ Converted inline styles to CSS files across all affected components:
 - [x] **ShowClonerClient.tsx** ✅ CSS extracted → `ShowClonerClient.css`
 - [x] **SourceDateRangeSelector.tsx** ✅ CSS extracted → `SourceDateRangeSelector.css`
 - [x] **TargetDateSelector.tsx** ✅ CSS extracted → `TargetDateSelector.css`
+- [x] **MessageBanner.tsx** ✅ CSS extracted → `MessageBanner.css` (BEM modifier classes for error/success)
+- [x] **CloneButton.tsx** ✅ CSS extracted → `CloneButton.css` (`clone-button--cloning` modifier)
+- [x] **TimeCell.tsx** ✅ CSS extracted → `TimeCell.css`
 
 ## 🎯 Summary Statistics
 
@@ -176,7 +179,40 @@ Converted inline styles to CSS files across all affected components:
    - ✅ `ShowClonerClient.css`, `SourceDateRangeSelector.css`, `TargetDateSelector.css`
    - ✅ Updated tests checking inline styles to check CSS classes instead
 
-## 📝 Notes
+## 🔧 Recent Refactoring
+
+### Phase 5: Shared Hook Extraction ✅ COMPLETED
+
+- [x] **Extract `useResolveArtistName` hook** ✅
+  - Path: `payload/src/components/fields/useResolveArtistName.ts`
+  - Removed ~65 lines of identical `resolveArtistName` code from `MusicBrainzRecordingField.tsx` and `MusicBrainzReleaseField.tsx`
+  - Added `useResolveArtistName.test.ts` with 17 unit tests covering all resolution paths
+  - `MusicBrainzRecordingField` reduced: 291 → 227 lines
+  - `MusicBrainzReleaseField` reduced: 294 → 230 lines
+
+### Phase 6: Shared Fetch Helper Extraction ✅ COMPLETED
+
+- [x] **Extract `fetchMusicBrainz` helper in `musicbrainz-api.ts`** ✅
+  - Path: `payload/src/utils/musicbrainz-api.ts`
+  - Removed duplicated fetch+rate-limit+error-handling pattern from `searchArtists`, `searchReleases`, and `searchRecordings`
+  - File reduced: 338 → 278 lines (18% reduction)
+  - All 3 search functions simplified to: build query → call helper → sort results
+
+## ✅ New Completions (hooks)
+
+- [x] **showDateHooks.ts** ✅ Test added
+  - Path: `payload/src/collections/hooks/`
+  - 9 unit tests covering: string dates, Date objects, calendar date preservation, field spreading, idempotency, and missing/null/empty date values
+
+### Phase 7: Utility File Size Reduction ✅ COMPLETED
+
+- [x] **Extract `bracketDefinitions.ts` from `scaffoldTournamentMatches.ts`** ✅
+  - Path: `payload/src/collections/hooks/bracketDefinitions.ts`
+  - Extracted all pure computation: types, constants (`TOTAL_MATCHES`, `STANDARD_SLOTS`, `ROUNDS`), and functions (`buildScheduleSlots`, `generateBracketDefinitions`)
+  - `scaffoldTournamentMatches.ts` reduced: 334 → 60 lines (82% reduction)
+  - `bracketDefinitions.ts`: 270 lines (pure logic, no Payload dependency)
+  - Test updated to import from `bracketDefinitions.ts` for pure functions, `scaffoldTournamentMatches.ts` for the hook
+  - All 38 existing tests pass unchanged
 
 - PR #173 established the coding standards
 - Current refactoring reduced ShowClonerClient from 606 to 126 lines (79% reduction)

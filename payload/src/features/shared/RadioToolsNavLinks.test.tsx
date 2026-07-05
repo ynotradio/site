@@ -21,6 +21,13 @@ describe('RadioToolsNavLinks', () => {
     expect(djOrderLink).toHaveAttribute('href', '/admin/dj-order');
   });
 
+  it('renders the Story Order link', () => {
+    render(<RadioToolsNavLinks />);
+    const storyOrderLink = screen.getByRole('link', { name: /Story Order/i });
+    expect(storyOrderLink).toBeInTheDocument();
+    expect(storyOrderLink).toHaveAttribute('href', '/admin/story-order');
+  });
+
   it('renders the Show Cloner link', () => {
     render(<RadioToolsNavLinks />);
     const showClonerLink = screen.getByRole('link', { name: /Show Cloner/i });
@@ -28,15 +35,24 @@ describe('RadioToolsNavLinks', () => {
     expect(showClonerLink).toHaveAttribute('href', '/admin/show-cloner');
   });
 
+  it('renders the CD of the Week wizard link', () => {
+    render(<RadioToolsNavLinks />);
+    const wizardLink = screen.getByRole('link', { name: /New CD of the Week/i });
+    expect(wizardLink).toBeInTheDocument();
+    expect(wizardLink).toHaveAttribute('href', '/admin/cd-of-the-week-wizard');
+  });
+
   it('renders emoji icons with the links', () => {
     render(<RadioToolsNavLinks />);
     expect(screen.getByText(/🎧/)).toBeInTheDocument();
+    expect(screen.getByText(/📰/)).toBeInTheDocument();
     expect(screen.getByText(/📋/)).toBeInTheDocument();
+    expect(screen.getByText(/💿/)).toBeInTheDocument();
   });
 
-  it('has both navigation links', () => {
+  it('has all four navigation links', () => {
     render(<RadioToolsNavLinks />);
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(2);
+    expect(links).toHaveLength(4);
   });
 });

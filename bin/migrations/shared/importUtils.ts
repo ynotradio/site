@@ -48,13 +48,37 @@ export function generateSlug(text: string): string {
  */
 export function generateMusicSlug(artistName: string, title: string): string {
   const titleSlug = generateSlug(title);
-  if (artistName) {
-    const artistSlug = generateSlug(artistName);
-    if (artistSlug) {
-      return `${artistSlug}--${titleSlug}`;
+  const artistSlug = generateSlug(artistName);
+  return artistSlug ? `${artistSlug}--${titleSlug}` : titleSlug;
+}
+
+function appendSpaceToLastNode(nodes: any[]): void {
+  if (nodes.length === 0) return;
+  const lastNode = nodes[nodes.length - 1];
+  if (lastNode.text && !lastNode.text.endsWith(' ')) {
+    lastNode.text += ' ';
+  }
+}
+
+// A boundary space can be attached to a preceding plain-text node, but not to a
+// link node (whose text lives in children). When the previous node is a link,
+// the leading space must be kept on the following text node instead.
+function lastNodeIsLink(nodes: any[]): boolean {
+  return nodes.length > 0 && nodes[nodes.length - 1].type === 'link';
+}
+
+// OR a Lexical format bit into every text node, recursing into link children,
+// so wrapping tags (e.g. <em><a>…</a></em>) propagate formatting to the text.
+function applyFormat(nodes: any[], formatBit: number): any[] {
+  for (const node of nodes) {
+    if (node.type === 'text') {
+      // eslint-disable-next-line no-bitwise, no-param-reassign
+      node.format |= formatBit;
+    } else if (node.type === 'link' && Array.isArray(node.children)) {
+      applyFormat(node.children, formatBit);
     }
   }
-  return titleSlug;
+  return nodes;
 }
 
 /**
@@ -64,150 +88,169 @@ export function generateMusicSlug(artistName: string, title: string): string {
 function parseInlineElements(html: string): any[] {
   const nodes: any[] = [];
 
-  // Match opening tags with their content
-  const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
+  // First, split on <br> tags to handle line breaks as separate nodes
+  const brParts = html.split(/<br\s*\/?>/gi);
 
-  // Track last processed position
-  let lastProcessedIndex = 0;
+  for (const [brIndex, partHtml] of brParts.entries()) {
+    // Match opening tags with their content in this part
+    const tagRegex = /<(a|b|strong|em|i)([^>]*)>(.*?)<\/\1>/gi;
 
-  const matches = [];
-  let match = tagRegex.exec(html);
-  while (match !== null) {
-    matches.push({
-      start: match.index,
-      end: match.index + match[0].length,
-      tag: match[1],
-      attributes: match[2],
-      innerHtml: match[3],
-      fullMatch: match[0],
-    });
-    match = tagRegex.exec(html);
-  }
+    let lastProcessedIndex = 0;
 
-  // Process text and tags in order
-  for (const m of matches) {
-    // Add any plain text before this tag
-    if (m.start > lastProcessedIndex) {
-      const plainText = html.substring(lastProcessedIndex, m.start);
-      // Normalize whitespace but preserve at least one space where there was any
+    const matches = [];
+    let match = tagRegex.exec(partHtml);
+    while (match !== null) {
+      matches.push({
+        start: match.index,
+        end: match.index + match[0].length,
+        tag: match[1],
+        attributes: match[2],
+        innerHtml: match[3],
+      });
+      match = tagRegex.exec(partHtml);
+    }
+
+    // Process text and tags in order
+    for (const m of matches) {
+      // Add any plain text before this tag
+      if (m.start > lastProcessedIndex) {
+        const plainText = partHtml.substring(lastProcessedIndex, m.start);
+        const normalizedText = plainText.replace(/\s+/g, ' ');
+        if (normalizedText && normalizedText !== ' ') {
+          nodes.push({
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: normalizedText,
+            type: 'text',
+            version: 1,
+          });
+        } else if (normalizedText === ' ') {
+          if (lastNodeIsLink(nodes)) {
+            // Space between a link and the next tag — emit it as its own node
+            // since it can't be appended to the link's text.
+            nodes.push({
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: ' ',
+              type: 'text',
+              version: 1,
+            });
+          } else {
+            appendSpaceToLastNode(nodes);
+          }
+        }
+      }
+
+      // Process the tag
+      const tag = m.tag.toLowerCase();
+      const { innerHtml } = m;
+
+      if (tag === 'a') {
+        const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
+        const href = hrefMatch ? hrefMatch[1] : '';
+
+        // Recurse so formatting inside the anchor (e.g. <a><em>Album</em></a>)
+        // is preserved as text-node format bits instead of being flattened.
+        const linkChildren = innerHtml.includes('<')
+          ? parseInlineElements(innerHtml)
+          : [{
+            detail: 0,
+            format: 0,
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          }];
+
+        const hasText = linkChildren.some(
+          (c) => (c.text && c.text.trim()) || c.type === 'link',
+        );
+
+        if (hasText && href) {
+          const absoluteUrl = toAbsoluteUrl(href);
+          const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
+          const target = targetMatch ? targetMatch[1] : null;
+
+          nodes.push({
+            type: 'link',
+            format: '',
+            indent: 0,
+            version: 3,
+            fields: {
+              linkType: 'custom',
+              url: absoluteUrl,
+              newTab: target === '_blank' || target === '_new',
+            },
+            children: linkChildren,
+            direction: 'ltr',
+          });
+        }
+      } else if (tag === 'b' || tag === 'strong') {
+        if (innerHtml.includes('<')) {
+          nodes.push(...applyFormat(parseInlineElements(innerHtml), 1)); // Bold
+        } else {
+          nodes.push({
+            detail: 0,
+            format: 1, // Bold
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          });
+        }
+      } else if (tag === 'em' || tag === 'i') {
+        if (innerHtml.includes('<')) {
+          nodes.push(...applyFormat(parseInlineElements(innerHtml), 2)); // Italic
+        } else {
+          nodes.push({
+            detail: 0,
+            format: 2, // Italic
+            mode: 'normal',
+            style: '',
+            text: innerHtml.trim(),
+            type: 'text',
+            version: 1,
+          });
+        }
+      }
+
+      lastProcessedIndex = m.end;
+    }
+
+    // Add any remaining plain text in this part
+    if (lastProcessedIndex < partHtml.length) {
+      const plainText = partHtml.substring(lastProcessedIndex);
       const normalizedText = plainText.replace(/\s+/g, ' ');
-      if (normalizedText && normalizedText !== ' ') {
+      if (normalizedText.trim()) {
+        const hasLeadingSpace = !!plainText.match(/^\s/);
+        // Keep the leading space on this node when it can't be appended to a
+        // preceding link node (links store text in children, not on the node).
+        const keepLeadingSpace = hasLeadingSpace && lastNodeIsLink(nodes);
+        if (hasLeadingSpace && !keepLeadingSpace) {
+          appendSpaceToLastNode(nodes);
+        }
         nodes.push({
           detail: 0,
           format: 0,
           mode: 'normal',
           style: '',
-          text: normalizedText,
-          type: 'text',
-          version: 1,
-        });
-      } else if (normalizedText === ' ' && nodes.length > 0) {
-        // Add a space to the previous node if it doesn't already end with one
-        const lastNode = nodes[nodes.length - 1];
-        if (lastNode.text && !lastNode.text.endsWith(' ')) {
-          lastNode.text += ' ';
-        }
-      }
-    }
-
-    // Process the tag
-    const tag = m.tag.toLowerCase();
-    const { innerHtml } = m;
-
-    if (tag === 'a') {
-      // Extract href
-      const hrefMatch = m.attributes.match(/href=["']([^"']+)["']/);
-      const href = hrefMatch ? hrefMatch[1] : '';
-
-      // Get link text (may contain nested formatting)
-      const linkText = innerHtml.replace(/<[^>]*>/g, '').trim();
-
-      if (linkText && href) {
-        const absoluteUrl = toAbsoluteUrl(href);
-        // Extract target attribute
-        const targetMatch = m.attributes.match(/target=["']([^"']+)["']/);
-        const target = targetMatch ? targetMatch[1] : null;
-
-        nodes.push({
-          type: 'link',
-          format: '',
-          indent: 0,
-          version: 3,
-          fields: {
-            linkType: 'custom',
-            url: absoluteUrl,
-            newTab: target === '_blank' || target === '_new',
-          },
-          children: [
-            {
-              detail: 0,
-              format: 0,
-              mode: 'normal',
-              style: '',
-              text: linkText,
-              type: 'text',
-              version: 1,
-            },
-          ],
-          direction: 'ltr',
-        });
-      }
-    } else if (tag === 'b' || tag === 'strong') {
-      // Check if inner content has links or other tags
-      if (innerHtml.includes('<')) {
-        // Recursively parse inner content
-        const innerNodes = parseInlineElements(innerHtml);
-        nodes.push(...innerNodes);
-      } else {
-        // Plain bold text
-        nodes.push({
-          detail: 0,
-          format: 1, // Bold
-          mode: 'normal',
-          style: '',
-          text: innerHtml.trim(),
+          text: keepLeadingSpace ? ` ${normalizedText.trim()}` : normalizedText.trim(),
           type: 'text',
           version: 1,
         });
       }
-    } else if (tag === 'em' || tag === 'i') {
-      // Plain italic text
-      nodes.push({
-        detail: 0,
-        format: 2, // Italic
-        mode: 'normal',
-        style: '',
-        text: innerHtml.replace(/<[^>]*>/g, '').trim(),
-        type: 'text',
-        version: 1,
-      });
     }
 
-    lastProcessedIndex = m.end;
-  }
-
-  // Add any remaining plain text
-  if (lastProcessedIndex < html.length) {
-    const plainText = html.substring(lastProcessedIndex);
-    // Normalize whitespace but preserve meaningful content
-    const normalizedText = plainText.replace(/\s+/g, ' ');
-    if (normalizedText.trim()) {
-      // If text starts with whitespace and there's a previous node, add leading space
-      const leadingSpace = plainText.match(/^\s/) && nodes.length > 0 ? ' ' : '';
-      const cleanText = normalizedText.trim();
-      if (leadingSpace && nodes.length > 0) {
-        const lastNode = nodes[nodes.length - 1];
-        if (lastNode.text && !lastNode.text.endsWith(' ')) {
-          lastNode.text += ' ';
-        }
-      }
+    // Add linebreak node after each <br> (except after the last part)
+    if (brIndex < brParts.length - 1) {
       nodes.push({
-        detail: 0,
-        format: 0,
-        mode: 'normal',
-        style: '',
-        text: cleanText,
-        type: 'text',
+        type: 'linebreak',
         version: 1,
       });
     }
@@ -215,7 +258,10 @@ function parseInlineElements(html: string): any[] {
 
   // Fallback: if no nodes created, just strip all tags
   if (nodes.length === 0 && html.trim()) {
-    const text = html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    const text = html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
     if (text) {
       nodes.push({
         type: 'text',
@@ -236,35 +282,49 @@ function parseInlineElements(html: string): any[] {
 function parseHtmlToLexicalNodes(htmlInput: string): any[] {
   const nodes: any[] = [];
 
-  // Remove <center> tags but keep content (use local copy to avoid mutating parameter)
-  const html = htmlInput.replace(/<\/?center>/gi, '');
+  // Normalize <p align="center">...</p> to <center>...</center> so both
+  // patterns are handled by the same code path below.
+  const normalizedHtml = htmlInput.replace(
+    /<p\s[^>]*align\s*=\s*["']center["'][^>]*>([\s\S]*?)<\/p>/gi,
+    '<center>$1</center>',
+  );
 
-  // Split by paragraph and br tags
-  const segments = html.split(/<\/?p>|<br\s*\/?>/gi).filter((s) => s.trim());
+  // Split on <center>...</center> blocks to preserve alignment metadata.
+  // Each alternating element in the resulting array is either plain HTML or
+  // a full "<center>...</center>" string.
+  const parts = normalizedHtml.split(/(<center>[\s\S]*?<\/center>)/gi);
 
-  for (const segment of segments) {
-    const trimmedSegment = segment.trim();
-    if (!trimmedSegment) {
-      // Skip empty segments
-    } else {
-      const children = parseInlineElements(trimmedSegment);
+  for (const part of parts) {
+    const isCentered = /^<center>/i.test(part);
+    const content = isCentered ? part.replace(/<\/?center>/gi, '') : part;
 
-      if (children.length > 0) {
-        nodes.push({
-          type: 'paragraph',
-          format: '',
-          indent: 0,
-          version: 1,
-          children,
-          direction: 'ltr',
-        });
+    if (content.trim()) {
+      const format = isCentered ? 'center' : '';
+
+      // Split by paragraph tags only (NOT by <br> tags)
+      // parseInlineElements now handles <br> tags and converts them to linebreak nodes
+      const segments = content.split(/<\/?p>/gi).filter((s) => s.trim());
+
+      for (const segment of segments) {
+        const children = parseInlineElements(segment.trim());
+        if (children.length > 0) {
+          nodes.push({
+            type: 'paragraph',
+            format,
+            indent: 0,
+            version: 1,
+            children,
+            direction: 'ltr',
+          });
+        }
       }
     }
   }
 
   // If no paragraphs were created, wrap everything in one
-  if (nodes.length === 0 && html.trim()) {
-    const children = parseInlineElements(html.trim());
+  if (nodes.length === 0 && htmlInput.trim()) {
+    const plain = htmlInput.replace(/<\/?center>/gi, '');
+    const children = parseInlineElements(plain.trim());
     if (children.length > 0) {
       nodes.push({
         type: 'paragraph',
@@ -280,73 +340,28 @@ function parseHtmlToLexicalNodes(htmlInput: string): any[] {
   return nodes;
 }
 
-/**
- * Convert HTML content to Lexical JSON format
- * Preserves links, formatting (bold, italic), and basic structure
- *
- * @param html - HTML string to convert
- * @returns Lexical JSON structure
- */
-export function convertHtmlToLexical(html: string): any {
-  if (!html || html.trim() === '') {
-    // Return a minimal valid Lexical structure with an empty paragraph
-    // Lexical requires at least one node in children
-    return {
-      root: {
-        type: 'root',
-        format: '',
-        indent: 0,
+function makeEmptyParagraph(): any {
+  return {
+    type: 'paragraph',
+    format: '',
+    indent: 0,
+    version: 1,
+    children: [
+      {
+        type: 'text',
+        format: 0,
         version: 1,
-        children: [
-          {
-            type: 'paragraph',
-            format: '',
-            indent: 0,
-            version: 1,
-            children: [
-              {
-                type: 'text',
-                format: 0,
-                version: 1,
-                text: '',
-                mode: 'normal',
-                style: '',
-                detail: 0,
-              },
-            ],
-            direction: 'ltr',
-          },
-        ],
-        direction: 'ltr',
+        text: '',
+        mode: 'normal',
+        style: '',
+        detail: 0,
       },
-    };
-  }
+    ],
+    direction: 'ltr',
+  };
+}
 
-  // Parse HTML into Lexical nodes
-  const children = parseHtmlToLexicalNodes(html);
-
-  // If parsing resulted in empty children, add a minimal paragraph
-  if (children.length === 0) {
-    children.push({
-      type: 'paragraph',
-      format: '',
-      indent: 0,
-      version: 1,
-      children: [
-        {
-          type: 'text',
-          format: 0,
-          version: 1,
-          text: '',
-          mode: 'normal',
-          style: '',
-          detail: 0,
-        },
-      ],
-      direction: 'ltr',
-    });
-  }
-
+function makeLexicalRoot(children: any[]): any {
   return {
     root: {
       type: 'root',
@@ -357,6 +372,26 @@ export function convertHtmlToLexical(html: string): any {
       direction: 'ltr',
     },
   };
+}
+
+/**
+ * Convert HTML content to Lexical JSON format
+ * Preserves links, formatting (bold, italic), and basic structure
+ *
+ * @param html - HTML string to convert
+ * @returns Lexical JSON structure
+ */
+export function convertHtmlToLexical(html: string): any {
+  if (!html?.trim()) {
+    return makeLexicalRoot([makeEmptyParagraph()]);
+  }
+
+  const children = parseHtmlToLexicalNodes(html);
+  if (children.length === 0) {
+    children.push(makeEmptyParagraph());
+  }
+
+  return makeLexicalRoot(children);
 }
 
 /**

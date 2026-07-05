@@ -1,0 +1,105 @@
+.tp-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.tp-input {
+  all: unset;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-s, 4px);
+  background: var(--theme-input-bg);
+  color: var(--theme-elevation-800);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+  cursor: text;
+  transition: border-color 0.1s, box-shadow 0.1s;
+}
+
+.tp-input::selection {
+  background: var(--theme-elevation-200);
+}
+
+.tp-input:hover {
+  border-color: var(--theme-elevation-250);
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.18);
+}
+
+.tp-input:focus {
+  border-color: var(--theme-elevation-400);
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.18);
+  outline: none;
+}
+
+.tp-input--open {
+  border-color: var(--theme-elevation-400);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.tp-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 9999;
+  min-width: 100%;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--theme-bg);
+  border: 1px solid var(--theme-elevation-200);
+  border-top: none;
+  border-radius: 0 0 var(--style-radius-s, 4px) var(--style-radius-s, 4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  scroll-behavior: smooth;
+
+  /* Custom scrollbar — thin, unobtrusive */
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-elevation-200) transparent;
+}
+
+.tp-dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.tp-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tp-dropdown::-webkit-scrollbar-thumb {
+  background: var(--theme-elevation-200);
+  border-radius: 2px;
+}
+
+.tp-option {
+  display: block;
+  width: 100%;
+  padding: 9px 14px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-elevation-800);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.08s;
+}
+
+.tp-option:hover,
+.tp-option--focused {
+  background: var(--theme-elevation-100);
+}
+
+.tp-option--selected {
+  font-weight: 600;
+  color: var(--theme-elevation-1000);
+  background: var(--theme-elevation-50);
+}

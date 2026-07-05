@@ -5,6 +5,7 @@ import { hasRole } from '../utils/auth';
 
 export const Artists: CollectionConfig = {
   slug: 'artists',
+  enableQueryPresets: true,
   labels: {
     singular: 'Artist',
     plural: 'Artists',
@@ -15,13 +16,14 @@ export const Artists: CollectionConfig = {
     group: 'Music',
     description:
       'Bands and artists. Referenced by Songs, Concerts, and Records — create the artist first, then link.',
+    groupBy: true,
   },
   defaultSort: 'name',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -30,7 +32,7 @@ export const Artists: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       name: 'bio',
       type: 'richText',
@@ -71,6 +73,9 @@ export const Artists: CollectionConfig = {
       name: 'musicbrainzId',
       type: 'text',
       unique: true,
+      hooks: {
+        beforeDuplicate: [() => null],
+      },
       admin: {
         position: 'sidebar',
         description:

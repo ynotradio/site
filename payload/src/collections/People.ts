@@ -2,9 +2,11 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const People: CollectionConfig = {
   slug: 'people',
+  enableQueryPresets: true,
   labels: {
     singular: 'Person',
     plural: 'People',
@@ -15,6 +17,7 @@ export const People: CollectionConfig = {
     group: 'People',
     description:
       'Real people behind DJs and reviewers. Create a person here, then link them from a DJ profile.',
+    groupBy: true,
   },
   access: {
     read: () => true, // Public read access
@@ -29,7 +32,7 @@ export const People: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField(),
+    slugField({ useAsSlug: 'name' }),
     {
       name: 'bio',
       type: 'richText',
@@ -58,17 +61,7 @@ export const People: CollectionConfig = {
         position: 'sidebar',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

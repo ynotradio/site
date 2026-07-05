@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const ModernRockMadnessGroups: CollectionConfig = {
   slug: 'modern-rock-madness-groups',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Group',
     plural: 'Groups',
@@ -13,12 +16,13 @@ export const ModernRockMadnessGroups: CollectionConfig = {
     group: 'Modern Rock Madness',
     description:
       'Tournament participants. Each group can represent one or more artists (e.g., a supergroup).',
+    groupBy: true,
   },
   access: {
     read: () => true,
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

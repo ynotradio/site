@@ -1,107 +1,108 @@
-version: 2
 updates:
-  # Keep npm dependencies up to date
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    # Ignore major versions that are incompatible with current ESLint version
-    # ESLint 8 is intentionally kept due to eslint-config-airbnb-typescript not supporting ESLint 9's flat config
-    ignore:
-      # @sanity/eslint-config-studio v5+ requires ESLint 9
-      - dependency-name: "@sanity/eslint-config-studio"
-        update-types: ["version-update:semver-major"]
-      # ESLint 9 uses flat config which is incompatible with current setup
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-      # typescript-eslint v8 requires ESLint 9
-      - dependency-name: "@typescript-eslint/eslint-plugin"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "@typescript-eslint/parser"
-        update-types: ["version-update:semver-major"]
-      # eslint-config-next v16+ requires Next.js 16 and ESLint 9
-      - dependency-name: "eslint-config-next"
-        update-types: ["version-update:semver-major"]
-      # @types/node should stay aligned with project's Node version (currently using v22 types)
-      - dependency-name: "@types/node"
-        update-types: ["version-update:semver-major"]
-    # Group updates to reduce PR noise
-    groups:
-      # Group all Sanity-related packages together
-      sanity:
-        patterns:
-          - "sanity"
-          - "@sanity/*"
-      # Group React packages together
-      react:
-        patterns:
-          - "react"
-          - "react-*"
-          - "@types/react"
-      # Group testing libraries together
-      testing:
-        patterns:
-          - "@testing-library/*"
-          - "vitest"
-          - "@vitest/*"
-          - "jsdom"
-      # Group TypeScript and ESLint tooling together
-      tooling:
-        patterns:
-          - "typescript"
-          - "eslint"
-          - "eslint-*"
-          - "@typescript-eslint/*"
-          - "prettier"
-      # Group DnD-kit packages together
-      dnd-kit:
-        patterns:
-          - "@dnd-kit/*"
-      # Group MCP server packages together
-      mcp:
-        patterns:
-          - "@sanity/mcp-server"
-          - "@benborla29/mcp-server-mysql"
-          - "@modelcontextprotocol/*"
-          - "mcp-*"
-    # Automatically rebase PRs when they become out of date
-    rebase-strategy: "auto"
-    # Limit open PRs to avoid overwhelming the team
-    open-pull-requests-limit: 10
-    # Add labels for easier identification
-    labels:
-      - "dependencies"
-      - "automated"
-    # Assign reviewers (customize with your team members)
-    # reviewers:
-    #   - "username1"
-    #   - "username2"
-    # Prefix commit messages
-    commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-
-  # Keep GitHub Actions up to date
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    # Group all GitHub Actions updates together
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-    rebase-strategy: "auto"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
-      - "automated"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
+- commit-message:
+    include: scope
+    prefix: chore
+    prefix-development: chore
+  directory: /
+  groups:
+    dnd-kit:
+      patterns:
+      - "@dnd-kit/*"
+    mcp:
+      patterns:
+      - "@sanity/mcp-server"
+      - "@benborla29/mcp-server-mysql"
+      - "@modelcontextprotocol/*"
+      - mcp-*
+    netlify:
+      patterns:
+      - "@netlify/*"
+    nextjs:
+      patterns:
+      - next
+      - eslint-config-next
+    payload:
+      patterns:
+      - payload
+      - "@payloadcms/*"
+    react:
+      patterns:
+      - react
+      - react-*
+      - "@types/react"
+    sanity:
+      patterns:
+      - sanity
+      - "@sanity/*"
+    storybook:
+      patterns:
+      - storybook
+      - "@storybook/*"
+      - "@chromatic-com/storybook"
+    testing:
+      patterns:
+      - "@testing-library/*"
+      - vitest
+      - "@vitest/*"
+      - jsdom
+      - "@playwright/test"
+    tooling:
+      patterns:
+      - typescript
+      - eslint
+      - eslint-*
+      - "@typescript-eslint/*"
+      - prettier
+      - husky
+      - lint-staged
+      - ts-node
+      - tsx
+  ignore:
+  - dependency-name: "@sanity/eslint-config-studio"
+    update-types:
+    - version-update:semver-major
+  - dependency-name: "eslint"
+    update-types:
+    - version-update:semver-major
+  - dependency-name: "@typescript-eslint/eslint-plugin"
+    update-types:
+    - version-update:semver-major
+  - dependency-name: "@typescript-eslint/parser"
+    update-types:
+    - version-update:semver-major
+  - dependency-name: "eslint-config-next"
+    update-types:
+    - version-update:semver-major
+  - dependency-name: "@types/node"
+    update-types:
+    - version-update:semver-major
+  labels:
+  - dependencies
+  - automated
+  open-pull-requests-limit: 10
+  package-ecosystem: npm
+  rebase-strategy: auto
+  schedule:
+    interval: monthly
+- commit-message:
+    include: scope
+    prefix: chore
+  directory: /
+  groups:
+    github-actions:
+      patterns:
+      - "*"
+  ignore:
+  - dependency-name: "github/gh-aw-actions"
+  - dependency-name: "github/gh-aw"
+  - dependency-name: "github/gh-aw-actions/**" # Managed by gh aw compile. Version-locked to the gh-aw compiler; do not bump.
+  labels:
+  - dependencies
+  - github-actions
+  - automated
+  open-pull-requests-limit: 5
+  package-ecosystem: github-actions
+  rebase-strategy: auto
+  schedule:
+    interval: monthly
+version: 2

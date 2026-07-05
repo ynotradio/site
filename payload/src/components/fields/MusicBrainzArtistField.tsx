@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * MusicBrainz Artist Picker Field Component
- *
- * Custom field component for selecting a MusicBrainz artist
- * and populating the musicbrainzId field
- */
-
 import React, {
   useState, useCallback, useEffect, useRef,
 } from 'react';
@@ -24,10 +17,22 @@ interface MusicBrainzArtistFieldProps {
   path: string;
 }
 
+function formatArtistInfo(artist: MusicBrainzArtist): string {
+  const parts = [];
+  if (artist.disambiguation) parts.push(`(${artist.disambiguation})`);
+  if (artist.type) parts.push(`[${artist.type}]`);
+  if (artist['life-span']?.begin) {
+    const years = artist['life-span'].end
+      ? `${artist['life-span'].begin}–${artist['life-span'].end}`
+      : `${artist['life-span'].begin}–`;
+    parts.push(years);
+  }
+  return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+}
+
 export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
 
-  // Try to get the artist name from the form context
   const nameField = useFormFields(([fields]) => fields?.name);
   const artistName = (nameField?.value as string | undefined) || '';
 
@@ -37,10 +42,8 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
   const [selectedArtist, setSelectedArtist] = useState<MusicBrainzArtist | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
-  // Load selected artist data if value exists (only once on initial load)
   useEffect(() => {
     if (value && !initializedRef.current) {
       setSelectedArtist({
@@ -91,19 +94,6 @@ export const MusicBrainzArtistField: React.FC<MusicBrainzArtistFieldProps> = ({ 
     setError(null);
     initializedRef.current = false;
   }, [setValue]);
-
-  const formatArtistInfo = (artist: MusicBrainzArtist) => {
-    const parts = [];
-    if (artist.disambiguation) parts.push(`(${artist.disambiguation})`);
-    if (artist.type) parts.push(`[${artist.type}]`);
-    if (artist['life-span']?.begin) {
-      const years = artist['life-span'].end
-        ? `${artist['life-span'].begin}–${artist['life-span'].end}`
-        : `${artist['life-span'].begin}–`;
-      parts.push(years);
-    }
-    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
-  };
 
   return (
     <div className="musicbrainz-field">

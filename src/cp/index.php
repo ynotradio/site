@@ -4,6 +4,7 @@ $page_file = "index.php";
 $page_title = "Control Panel";
 
 require ("../functions/main_fns.php");
+require ("../functions/payload_fns.php");
 require ("../partials/_header.php");
 
 if (!$_SESSION["logged_in"]) {
@@ -19,40 +20,28 @@ if (!$_SESSION["logged_in"]) {
         <tr>
           <td width="275px">
             <dt>Ads</dt>
-              <dd><a href="ad_add.php">Add an Ad</a></dd>
-              <dd><a href="ad_view_all_active.php">View all Active Ads (<?php echo active_ad_count() ?>)</a></dd>
-              <dd><a href="ads_order.php">Order Ads</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('ads'); ?>">Payload &rarr; Ads</a></dd>
             <dt>CD of The Week</dt>
-              <dd><a href="cdotw_add.php">Add CD Of The Week</a></dd>
-              <dd><a href="cdotw_view_all.php">View all CD Of The Weeks</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('cdoftheweek'); ?>">Payload &rarr; CD of The Week</a></dd>
             <dt>Concerts</dt>
-              <dd><a href="concert_add.php">Add a Concert</a></dd>
-              <dd><a href="concert_view_all.php">View all Concerts</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('concerts'); ?>">Payload &rarr; Concerts</a></dd>
             <dt>Custom Text Pages</dt>
               <dd><a href="custom_text_add.php">Add Custom Text</a></dd>
               <dd><a href="custom_text_view_all.php">View all Custom Text</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('posts'); ?>">Payload &rarr; Posts</a></dd>
             <dt>Deejays</dt>
-              <dd><a href="deejay_add.php">Add a Deejay</a></dd>
-              <dd><a href="deejay_view_all.php">View all Deejays</a></dd>
-            <dt>Experiments</dt>
-              <dd><a href="experiments.php">Manage Feature Flags</a></dd>
-            <dt>Images</dt>
-              <dd><a href="image_view_all.php">View all Images</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('djs'); ?>">Payload &rarr; Deejays</a></dd>
           </td>
           <td width="275px">
             <dt>New Music</dt>
-              <dd><a href="music_add.php">Add New Music</a></dd>
-              <dd><a href="music_view_all.php">View all New Music</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('records'); ?>">Payload &rarr; Records</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('songs'); ?>">Payload &rarr; Songs</a></dd>
             <dt>On Demand</dt>
-              <dd><a href="ondemand_add.php">Add an On Demand entry</a></dd>
-              <dd><a href="ondemand_view_all.php">View all On Demands</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('ondemand'); ?>">Payload &rarr; On Demand</a></dd>
             <dt>Schedule</dt>
-              <dd><a href="schedule_add.php">Add to Schedule</a></dd>
-              <dd><a href="schedule_view_all.php">View Schedule</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('shows'); ?>">Payload &rarr; Schedule</a></dd>
             <dt>Stories</dt>
-              <dd><a href="story_add.php">Add a Story</a></dd>
-              <dd><a href="story_view_all.php">View all Stories</a></dd>
-              <dd><a href="stories_order.php">Order Stories</a></dd>
+              <dd>Edit in <a href="<?php echo get_payload_collection_url('posts'); ?>">Payload &rarr; Stories</a></dd>
           </td>
           <td width="275px">
             <dt>Top 11 @ 11</dt>

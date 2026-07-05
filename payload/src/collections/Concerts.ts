@@ -1,8 +1,56 @@
-import type { CollectionConfig } from 'payload';
+import type { CollectionConfig, FieldHook } from 'payload';
+import {
+  BoldFeature,
+  InlineToolbarFeature,
+  ItalicFeature,
+  LinkFeature,
+  ParagraphFeature,
+  lexicalEditor,
+} from '@payloadcms/richtext-lexical';
+import type { SerializedEditorState } from 'lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { convertConcertTitleToHtml, convertConcertTitleToPlain } from '../utils/concertTitle';
+import { normalizeDateToNoon } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
+
+type ConcertSiblingData = {
+  title?: SerializedEditorState | null;
+  artists?: unknown[] | null;
+};
+
+const syncTitleHtml: FieldHook = ({ siblingData }) => {
+  const data = siblingData as ConcertSiblingData;
+  return convertConcertTitleToHtml(data.title);
+};
+
+const syncTitlePlain: FieldHook = ({ siblingData }) => {
+  const data = siblingData as ConcertSiblingData;
+  return convertConcertTitleToPlain(data.title);
+};
+
+const syncArtistsText: FieldHook = async ({ siblingData, req }) => {
+  const artists = (siblingData as ConcertSiblingData).artists ?? [];
+  if (!artists.length) return '';
+  const ids = artists.map((a) => {
+    if (typeof a === 'object' && a !== null && 'id' in a) return (a as { id: unknown }).id;
+    return a;
+  });
+  try {
+    const { docs } = await req.payload.find({
+      collection: 'artists',
+      where: { id: { in: ids } },
+      limit: ids.length,
+      depth: 0,
+    });
+    return docs.map((a: { name?: string }) => a.name ?? '').join(', ');
+  } catch {
+    return '';
+  }
+};
 
 export const Concerts: CollectionConfig = {
   slug: 'concerts',
+  enableQueryPresets: true,
   labels: {
     singular: 'Concert',
     plural: 'Concerts',
@@ -11,25 +59,72 @@ export const Concerts: CollectionConfig = {
     drafts: true,
   },
   admin: {
-    useAsTitle: 'title',
-    defaultColumns: ['artists', 'date', 'venue', 'featured', '_status', 'updatedAt'],
+    useAsTitle: 'titlePlain',
+    defaultColumns: ['titlePlain', 'artists', 'date', 'venue', '_status', 'updatedAt'],
+    listSearchableFields: ['titlePlain', 'artistsText'],
     group: 'Events',
-    description:
-      'Concert listings. Toggle "Featured" in the sidebar to promote a show on the homepage.',
+    description: 'Concert listings.',
+    groupBy: true,
   },
-  defaultSort: '-date',
+  defaultSort: 'date',
+  hooks: {
+    beforeChange: [normalizeDateToNoon],
+  },
   access: {
-    read: () => true, // Public read access
+    read: () => true,
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
       name: 'title',
+      type: 'richText',
+      editor: lexicalEditor({
+        features: () => [
+          ParagraphFeature(),
+          BoldFeature(),
+          ItalicFeature(),
+          LinkFeature(),
+          InlineToolbarFeature(),
+        ],
+      }),
+      admin: {
+        description:
+          'Optional custom title for the concert (falls back to artist names). Supports bold, italics, and links.',
+      },
+    },
+    {
+      name: 'titleHtml',
       type: 'text',
       admin: {
-        description: 'Optional custom title for the concert (falls back to artist names)',
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncTitleHtml],
+      },
+    },
+    {
+      name: 'titlePlain',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncTitlePlain],
+      },
+    },
+    {
+      name: 'artistsText',
+      type: 'text',
+      admin: {
+        hidden: true,
+        readOnly: true,
+      },
+      hooks: {
+        beforeChange: [syncArtistsText],
       },
     },
     {
@@ -41,6 +136,7 @@ export const Concerts: CollectionConfig = {
         description: 'Concert date',
         date: {
           displayFormat: 'yyyy-MM-dd',
+          pickerAppearance: 'dayOnly',
         },
       },
     },
@@ -78,26 +174,7 @@ export const Concerts: CollectionConfig = {
         placeholder: 'https://',
       },
     },
-    {
-      name: 'featured',
-      type: 'checkbox',
-      defaultValue: false,
-      admin: {
-        position: 'sidebar',
-        description: 'When checked, this concert is promoted on the homepage',
-      },
-    },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

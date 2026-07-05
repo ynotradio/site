@@ -3,6 +3,9 @@ import { hasRole } from '../utils/auth';
 
 export const ModernRockMadnessMatches: CollectionConfig = {
   slug: 'modern-rock-madness-matches',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Match',
     plural: 'Matches',
@@ -12,6 +15,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
     defaultColumns: ['matchNumber', 'round', 'region', 'band1', 'band2', 'startTime', 'winner'],
     group: 'Modern Rock Madness',
     description: 'Tournament bracket matchups (63 matches per tournament).',
+    groupBy: true,
     components: {
       views: {
         edit: {
@@ -31,7 +35,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
     read: () => true,
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {

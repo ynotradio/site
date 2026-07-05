@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 
 /**
  * Seed a fresh Modern Rock Madness tournament into Payload database.
@@ -41,22 +42,87 @@ function r1BandPair(matchNumber: number): [number, number] {
 }
 
 async function seedMrmFresh() {
+  assertNotConnectedToProd();
+
   console.log('🏆 Seeding fresh Modern Rock Madness tournament...\n');
 
   const payload = await getPayloadHMR({ config });
+  const forceReseed = process.env.MRM_SEED_FORCE === 'true';
+  const SHOW_DATE_A = '2030-06-15T12:00:00.000Z'; // 2 shows on this date
+  const SHOW_DATE_B = '2030-06-22T12:00:00.000Z'; // 1 show on this date
 
   try {
     // ── Idempotency check ───────────────────────────────────────────────────
     const existingActive = await payload.find({
       collection: 'modern-rock-madness-tournaments',
       where: { status: { equals: 'active' } },
-      limit: 1,
+      limit: 100,
     });
 
     if (existingActive.docs.length > 0) {
-      console.log('⏭️  Active MRM tournament already exists. Skipping fresh seed.');
-      console.log('   To re-seed, first delete the active tournament.');
-      process.exit(0);
+      if (forceReseed) {
+        console.log('🔁 MRM_SEED_FORCE=true: clearing previous MRM test data before reseeding...');
+
+        const allTournaments = await payload.find({
+          collection: 'modern-rock-madness-tournaments',
+          limit: 500,
+        });
+        const allGroups = await payload.find({
+          collection: 'modern-rock-madness-groups',
+          limit: 500,
+        });
+        const allMatches = await payload.find({
+          collection: 'modern-rock-madness-matches',
+          limit: 500,
+        });
+        const existingTestShows = await payload.find({
+          collection: 'shows',
+          where: {
+            or: [{ date: { equals: SHOW_DATE_A } }, { date: { equals: SHOW_DATE_B } }],
+          },
+          limit: 100,
+        });
+
+        /* eslint-disable no-await-in-loop */
+        for (const doc of allGroups.docs) {
+          await payload.delete({
+            collection: 'modern-rock-madness-groups',
+            id: doc.id,
+          });
+        }
+
+        for (const doc of allMatches.docs) {
+          await payload.delete({
+            collection: 'modern-rock-madness-matches',
+            id: doc.id,
+          });
+        }
+
+        for (const doc of allTournaments.docs) {
+          await payload.delete({
+            collection: 'modern-rock-madness-tournaments',
+            id: doc.id,
+          });
+        }
+
+        for (const doc of existingTestShows.docs) {
+          await payload.delete({
+            collection: 'shows',
+            id: doc.id,
+          });
+        }
+        /* eslint-enable no-await-in-loop */
+
+        console.log(
+          `   ✅ Cleared ${allTournaments.docs.length} tournaments, `
+            + `${allGroups.docs.length} groups, ${allMatches.docs.length} matches, `
+            + `${existingTestShows.docs.length} test shows`,
+        );
+      } else {
+        console.log('⏭️  Active MRM tournament already exists. Skipping fresh seed.');
+        console.log('   To re-seed, first delete the active tournament.');
+        process.exit(0);
+      }
     }
 
     // Ensure admin user exists (required for Payload operations)
@@ -723,6 +789,25 @@ async function seedMrmFresh() {
     /* eslint-enable no-await-in-loop */
     console.log('   ✅ Round 1 bands assigned');
 
+    // ── Shows for date-filter E2E tests ────────────────────────────────────
+    // Two fixed dates in the far future to avoid conflicts with other data.
+    // Shows are stored at noon UTC to match Payload's dayOnly picker normalization,
+    // ensuring the admin list date filter (exact equality) works correctly.
+    console.log('📻 Seeding shows for date-filter tests...');
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_A, startTime: '06:11', endTime: '08:11' },
+    });
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_A, startTime: '10:22', endTime: '12:22' },
+    });
+    await payload.create({
+      collection: 'shows',
+      data: { date: SHOW_DATE_B, startTime: '14:33', endTime: '16:33' },
+    });
+    console.log('   ✅ Created 3 test shows (2 on 2030-06-15, 1 on 2030-06-22)');
+
     console.log('\n✅ Fresh MRM tournament seeded successfully!\n');
     console.log('📊 Summary:');
     console.log('   Tournament: Modern Rock Madness 2026 (active)');
@@ -730,6 +815,7 @@ async function seedMrmFresh() {
     console.log('   Matches: 63 (match 1 currently running, rest in future)');
     console.log('   Winners: none (fresh tournament)');
     console.log('   Votes: none (fresh tournament)');
+    console.log('   Shows: 3 (for date-filter E2E tests)');
     console.log('\n🎭 Run e2e tests: yarn test:e2e');
 
     process.exit(0);

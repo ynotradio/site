@@ -1,12 +1,5 @@
 'use client';
 
-/**
- * MusicBrainz Recording Picker Field Component
- *
- * Custom field component for selecting a MusicBrainz recording (song)
- * and populating the musicbrainzId field
- */
-
 import React, {
   useState, useCallback, useEffect, useRef,
 } from 'react';
@@ -15,8 +8,10 @@ import { useField, useFormFields } from '@payloadcms/ui';
 import {
   searchRecordings,
   formatDuration,
+  getArtistCreditName,
   type MusicBrainzRecording,
 } from '../../utils/musicbrainz-api';
+import { useResolveArtistName } from './useResolveArtistName';
 
 import './MusicBrainzField.css';
 
@@ -28,10 +23,23 @@ interface MusicBrainzRecordingFieldProps {
   path: string;
 }
 
+function formatRecordingInfo(recording: MusicBrainzRecording): string {
+  const parts = [];
+  if (recording['artist-credit']) {
+    parts.push(`by ${getArtistCreditName(recording['artist-credit'])}`);
+  }
+  if (recording.disambiguation) {
+    parts.push(`(${recording.disambiguation})`);
+  }
+  if (recording.length) {
+    parts.push(`[${formatDuration(recording.length)}]`);
+  }
+  return parts.length > 0 ? ` ${parts.join(' ')}` : '';
+}
+
 export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps> = ({ path }) => {
   const { value, setValue } = useField<string>({ path });
 
-  // Try to get the song title and artist from the form context
   const titleField = useFormFields(([fields]) => fields?.title);
   const artistField = useFormFields(([fields]) => fields?.artist);
   const songTitle = (titleField?.value as string | undefined) || '';
@@ -42,10 +50,8 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
   const [selectedRecording, setSelectedRecording] = useState<MusicBrainzRecording | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Track if we've initialized from the value to prevent unnecessary updates
   const initializedRef = useRef(false);
 
-  // Load selected recording data if value exists (only once on initial load)
   useEffect(() => {
     if (value && !initializedRef.current) {
       setSelectedRecording({
@@ -57,73 +63,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     }
   }, [value, songTitle]);
 
-  const resolveArtistName = useCallback(async (): Promise<string> => {
-    const rawArtist = artistField?.value;
-
-    if (!rawArtist) {
-      return '';
-    }
-
-    if (
-      typeof rawArtist === 'object'
-      && 'name' in rawArtist
-      && typeof rawArtist.name === 'string'
-      && rawArtist.name.trim()
-    ) {
-      return rawArtist.name.trim();
-    }
-
-    let artistId = '';
-
-    if (typeof rawArtist === 'string' || typeof rawArtist === 'number') {
-      artistId = String(rawArtist);
-    } else if (
-      typeof rawArtist === 'object'
-      && 'id' in rawArtist
-      && typeof rawArtist.id === 'string'
-    ) {
-      artistId = rawArtist.id;
-    } else if (typeof rawArtist === 'object' && 'value' in rawArtist) {
-      const relationValue = rawArtist.value;
-
-      if (typeof relationValue === 'string' || typeof relationValue === 'number') {
-        artistId = String(relationValue);
-      } else if (
-        typeof relationValue === 'object'
-        && relationValue
-        && 'id' in relationValue
-        && typeof relationValue.id === 'string'
-      ) {
-        artistId = relationValue.id;
-      }
-
-      if (
-        typeof relationValue === 'object'
-        && relationValue
-        && 'name' in relationValue
-        && typeof relationValue.name === 'string'
-        && relationValue.name.trim()
-      ) {
-        return relationValue.name.trim();
-      }
-    }
-
-    if (!artistId) {
-      return '';
-    }
-
-    try {
-      const response = await fetch(`/api/artists/${artistId}?depth=0`);
-      if (!response.ok) {
-        return '';
-      }
-
-      const artistData = (await response.json()) as { name?: string };
-      return artistData.name?.trim() || '';
-    } catch {
-      return '';
-    }
-  }, [artistField?.value]);
+  const resolveArtistName = useResolveArtistName(artistField?.value);
 
   const searchMusicBrainz = useCallback(async () => {
     if (!songTitle?.trim()) {
@@ -136,8 +76,6 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     setShowResults(true);
 
     try {
-      // Include artist name if available for better results.
-      // Relationship fields are commonly stored as IDs, so resolve when needed.
       const artistName = await resolveArtistName();
       const results = await searchRecordings(songTitle, artistName || undefined);
       setSearchResults(results);
@@ -171,27 +109,6 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
     initializedRef.current = false;
   }, [setValue]);
 
-  const getArtistName = (recording: MusicBrainzRecording): string => {
-    if (recording['artist-credit'] && recording['artist-credit'].length > 0) {
-      return recording['artist-credit'].map((ac) => ac.name).join(', ');
-    }
-    return 'Unknown Artist';
-  };
-
-  const formatRecordingInfo = (recording: MusicBrainzRecording) => {
-    const parts = [];
-    if (recording['artist-credit']) {
-      parts.push(`by ${getArtistName(recording)}`);
-    }
-    if (recording.disambiguation) {
-      parts.push(`(${recording.disambiguation})`);
-    }
-    if (recording.length) {
-      parts.push(`[${formatDuration(recording.length)}]`);
-    }
-    return parts.length > 0 ? ` ${parts.join(' ')}` : '';
-  };
-
   return (
     <div className="musicbrainz-field">
       {selectedRecording && value ? (
@@ -206,7 +123,7 @@ export const MusicBrainzRecordingField: React.FC<MusicBrainzRecordingFieldProps>
               )}
             </div>
             {selectedRecording['artist-credit'] && (
-              <div className="musicbrainz-artist">by {getArtistName(selectedRecording)}</div>
+              <div className="musicbrainz-artist">by {getArtistCreditName(selectedRecording['artist-credit'])}</div>
             )}
             {selectedRecording.disambiguation && (
               <div className="musicbrainz-disambiguation">{selectedRecording.disambiguation}</div>

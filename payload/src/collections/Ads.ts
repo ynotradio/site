@@ -1,8 +1,13 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Ads: CollectionConfig = {
   slug: 'ads',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Advertisement',
     plural: 'Advertisements',
@@ -16,13 +21,14 @@ export const Ads: CollectionConfig = {
     group: 'Marketing',
     description:
       'Site advertisements. Each ad is visible between its start and end dates. Higher priority appears first.',
+    groupBy: true,
   },
   defaultSort: ['-startDate', '-priority'],
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -44,6 +50,7 @@ export const Ads: CollectionConfig = {
             description: 'Ad is visible on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -56,6 +63,7 @@ export const Ads: CollectionConfig = {
             description: 'Ad is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -98,17 +106,7 @@ export const Ads: CollectionConfig = {
         description: 'Display order — higher numbers appear first. Same priority sorts by date.',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',
@@ -120,5 +118,8 @@ export const Ads: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [normalizeFieldToNoon('startDate'), normalizeFieldToNoon('endDate')],
+  },
   timestamps: true,
 };

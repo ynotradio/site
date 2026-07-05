@@ -10,14 +10,13 @@ import {
   extractVimeoId,
   extractSpotifyInfo,
   extractSoundCloudInfo,
+  extractMixcloudFeed,
   detectEmbedType,
 } from './utils';
 
 describe('extractYouTubeId', () => {
   it('should extract ID from standard watch URL', () => {
-    expect(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe(
-      'dQw4w9WgXcQ',
-    );
+    expect(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
   });
 
   it('should extract ID from short URL', () => {
@@ -25,9 +24,7 @@ describe('extractYouTubeId', () => {
   });
 
   it('should extract ID from embed URL', () => {
-    expect(extractYouTubeId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe(
-      'dQw4w9WgXcQ',
-    );
+    expect(extractYouTubeId('https://www.youtube.com/embed/dQw4w9WgXcQ')).toBe('dQw4w9WgXcQ');
   });
 
   it('should extract ID from watch URL with additional parameters', () => {
@@ -100,9 +97,7 @@ describe('extractSoundCloudInfo', () => {
   });
 
   it('should handle URLs with dashes and underscores', () => {
-    const result = extractSoundCloudInfo(
-      'https://soundcloud.com/artist_name-123/track-name_456',
-    );
+    const result = extractSoundCloudInfo('https://soundcloud.com/artist_name-123/track-name_456');
     expect(result).toBe('artist_name-123/track-name_456');
   });
 
@@ -213,5 +208,97 @@ describe('detectEmbedType', () => {
         originalUrl: url,
       });
     });
+
+    it('should return generic type for invalid Vimeo URL', () => {
+      const url = 'https://vimeo.com/invalid-no-id';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({
+        type: 'generic',
+        embedUrl: url,
+        originalUrl: url,
+      });
+    });
+
+    it('should return generic type for invalid SoundCloud URL', () => {
+      const url = 'https://soundcloud.com/';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({
+        type: 'generic',
+        embedUrl: url,
+        originalUrl: url,
+      });
+    });
+  });
+
+  describe('Mixcloud detection', () => {
+    it('should convert a public show URL to the player widget', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('mixcloud');
+      expect(result.embedUrl).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+      );
+      expect(result.originalUrl).toBe(url);
+    });
+
+    it('should pass through an existing player-widget URL', () => {
+      const url = 'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&feed=%2Fynotradio%2Fshow%2F';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'mixcloud', embedUrl: url, originalUrl: url });
+    });
+
+    it('should fall back to generic for a genre/hub URL', () => {
+      const url = 'https://www.mixcloud.com/genres/british%2Bynotradio/?order=latest';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('generic');
+    });
+
+    it('should hide the cover image by default', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url);
+      expect(result.embedUrl).toContain('hide_cover=1');
+    });
+
+    it('should show the cover image when hideCoverImage is false', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/rodney-anonymous-6526/';
+      const result = detectEmbedType(url, { hideCoverImage: false });
+      expect(result.embedUrl).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=0&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
+      );
+    });
+  });
+
+  describe('OpenDrive detection', () => {
+    it('should pass through an OpenDrive player URL', () => {
+      const url = 'https://www.opendrive.com/player/216190430_XqukK';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'opendrive', embedUrl: url, originalUrl: url });
+    });
+  });
+});
+
+describe('extractMixcloudFeed', () => {
+  it('should extract the feed path from a public show URL', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/some-show/')).toBe(
+      '/ynotradio/some-show/',
+    );
+  });
+
+  it('should add a trailing slash when missing', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/some-show')).toBe(
+      '/ynotradio/some-show/',
+    );
+  });
+
+  it('should return null for genre/hub URLs', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/genres/punk%2Bynotradio/')).toBeNull();
+  });
+
+  it('should return null for a single-segment path', () => {
+    expect(extractMixcloudFeed('https://www.mixcloud.com/ynotradio/')).toBeNull();
+  });
+
+  it('should return null for an unparseable URL', () => {
+    expect(extractMixcloudFeed('not a url')).toBeNull();
   });
 });

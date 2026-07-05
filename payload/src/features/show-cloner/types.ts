@@ -54,4 +54,5 @@ export interface NewShowPayload {
   endTime: string;
   name?: string;
   host?: number | string;
+  note?: unknown;
 }

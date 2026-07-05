@@ -126,6 +126,30 @@ Guide for migrating from PHP/MySQL to Payload CMS with PostgreSQL. Covers:
 
 **Use when:** Working on Payload migration tasks, understanding data models, or implementing Payload collections.
 
+### payload
+
+Comprehensive development guidance for Payload projects. Covers:
+
+- Collections, auth/uploads/drafts/live preview, and relationship patterns
+- Field types, joins, virtual fields, and field type guards
+- Hooks (`beforeChange`, `afterChange`, `beforeValidate`, field hooks)
+- Access control patterns (collection, field, global, RBAC, multi-tenant)
+- Local API / REST / GraphQL query patterns
+- Database adapters, transactions, jobs queue, custom endpoints, and plugins
+
+**Use when:** Working on Payload CMS implementation details, debugging Payload behavior, or building advanced Payload features.
+
+### cms-migration
+
+Interactive workflow for designing Payload collections from source CMS data. Covers:
+
+- Source data analysis (JSON/CSV exports, relationships, type inference)
+- Config-first collection design before importing content
+- Field mapping patterns from WordPress, Contentful, Strapi, and similar CMSes
+- Common migration pitfalls and disambiguation strategies
+
+**Use when:** Migrating content into Payload from another CMS or mapping external content models into Payload collections.
+
 ## Skill Structure
 
 Each skill follows this structure:

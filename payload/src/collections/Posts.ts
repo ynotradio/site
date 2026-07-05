@@ -1,11 +1,15 @@
 import type { CollectionConfig } from 'payload';
+import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
-import { slugifyHeadline, formatDatePrefix } from './hooks/slugUtils';
+import { normalizeFieldToNoon } from './hooks/showDateHooks';
+import { postSlugify } from './hooks/slugUtils';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',
+  enableQueryPresets: true,
   labels: {
     singular: 'Story',
     plural: 'Stories',
@@ -26,16 +30,19 @@ export const Posts: CollectionConfig = {
     ],
     group: 'Content',
     listSearchableFields: ['headline', 'slug'],
-
+    groupBy: true,
     description:
       'Front-page stories. Each story is visible on the site between its start and end dates.',
+    components: {
+      beforeList: ['/payload/src/features/story-order/PostsListHeader#PostsListHeader'],
+    },
   },
-  defaultSort: ['-startDate', '-priority'],
+  defaultSort: ['priority', '-startDate'],
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -47,32 +54,7 @@ export const Posts: CollectionConfig = {
         description: 'Post headline (max 100 characters)',
       },
     },
-    {
-      name: 'slug',
-      type: 'text',
-      required: true,
-      unique: true,
-      index: true,
-      admin: {
-        position: 'sidebar',
-        description: 'URL-friendly slug (auto-generated as YYYY-MM-DD--headline)',
-      },
-      hooks: {
-        beforeValidate: [
-          ({ data, operation, value }) => {
-            if (operation === 'create' && !value && data?.headline) {
-              const headlineSlug = slugifyHeadline(data.headline);
-              if (!headlineSlug) return value;
-              const dateStr = data.startDate
-                ? formatDatePrefix(new Date(data.startDate as string))
-                : '';
-              return dateStr ? `${dateStr}--${headlineSlug}` : headlineSlug;
-            }
-            return value;
-          },
-        ],
-      },
-    },
+    slugField({ useAsSlug: 'headline', slugify: postSlugify }),
     {
       type: 'row',
       fields: [
@@ -84,6 +66,7 @@ export const Posts: CollectionConfig = {
             description: 'Story appears on the site starting this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -96,6 +79,7 @@ export const Posts: CollectionConfig = {
             description: 'Story is removed from the site after this date',
             date: {
               displayFormat: 'yyyy-MM-dd',
+              pickerAppearance: 'dayOnly',
             },
             width: '50%',
           },
@@ -159,20 +143,10 @@ export const Posts: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description:
-          'Display order on the front page — higher numbers appear first. Same priority sorts by date.',
+          'Display order on the front page — lower numbers appear first. Same priority sorts by date. Use the Story Order tool (/admin/story-order) to reorder visually.',
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',
@@ -184,5 +158,8 @@ export const Posts: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeChange: [normalizeFieldToNoon('startDate'), normalizeFieldToNoon('endDate')],
+  },
   timestamps: true,
 };

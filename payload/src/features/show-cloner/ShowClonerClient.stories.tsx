@@ -35,7 +35,7 @@ const mockShows = {
 };
 
 const meta = {
-  title: 'Features/ShowCloner/ShowClonerClient',
+  title: 'Features/Show Cloner/ShowClonerClient',
   component: ShowClonerClient,
   parameters: {
     layout: 'fullscreen',

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { DJOrderClient } from './DJOrderClient';
 
 const meta = {
-  title: 'Features/DJOrder/DJOrderClient',
+  title: 'Features/DJ Order/DJOrderClient',
   component: DJOrderClient,
   parameters: {
     layout: 'fullscreen',

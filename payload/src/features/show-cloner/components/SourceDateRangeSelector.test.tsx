@@ -112,4 +112,40 @@ describe('SourceDateRangeSelector', () => {
     expect(screen.getByText(/Monday/)).toBeInTheDocument();
     expect(screen.getByText(/1 show\b/)).toBeInTheDocument();
   });
+
+  it('pluralises "shows" when a date group has more than one show', () => {
+    const multiShowGroups: DateGroup[] = [
+      {
+        date: '2024-01-15',
+        formattedDate: 'Monday, Jan 15, 2024',
+        dayName: 'Monday',
+        shows: [
+          {
+            id: '1',
+            date: '2024-01-15',
+            startTime: '10:00:00',
+            endTime: '12:00:00',
+            name: 'Morning Show',
+            hostName: 'DJ A',
+          },
+          {
+            id: '2',
+            date: '2024-01-15',
+            startTime: '12:00:00',
+            endTime: '14:00:00',
+            name: 'Afternoon Show',
+            hostName: 'DJ B',
+          },
+        ],
+      },
+    ];
+    render(
+      <SourceDateRangeSelector
+        {...defaultProps}
+        selectedRangeDateGroups={multiShowGroups}
+        selectedRangeShows={2}
+      />,
+    );
+    expect(screen.getByText(/2 shows\b/)).toBeInTheDocument();
+  });
 });

@@ -39,6 +39,8 @@ interface ImportOptions {
   to: PostgresTarget;
   startId?: number;
   syncActive?: boolean;
+  storiesStartId?: number;
+  customTextsStartId?: number;
 }
 
 /**
@@ -67,6 +69,20 @@ function parseArgs(): ImportOptions {
       }
       options.startId = startId;
       i += 1;
+    } else if (arg === '--stories-start-id') {
+      const startId = parseInt(args[i + 1], 10);
+      if (Number.isNaN(startId) || startId < 0) {
+        throw new Error('--stories-start-id must be a positive number');
+      }
+      options.storiesStartId = startId;
+      i += 1;
+    } else if (arg === '--custom-texts-start-id') {
+      const startId = parseInt(args[i + 1], 10);
+      if (Number.isNaN(startId) || startId < 0) {
+        throw new Error('--custom-texts-start-id must be a positive number');
+      }
+      options.customTextsStartId = startId;
+      i += 1;
     } else if (arg === '--sync-active') {
       options.syncActive = true;
     } else if (arg === '--help' || arg === '-h') {
@@ -74,14 +90,17 @@ function parseArgs(): ImportOptions {
 Usage: tsx bin/migrations/importPosts.ts [options]
 
 Options:
-  --to TARGET      Target database: 'prod-neon' (default) or 'local-postgres'
-  --start-id ID    Optional ID to start import from (for incremental imports)
-  --sync-active    Refresh currently-visible stories that have changed in MySQL
-  --help, -h       Show this help message
+  --to TARGET                 Target database: 'prod-neon' (default) or 'local-postgres'
+  --start-id ID               Optional ID to start stories + custom texts from
+  --stories-start-id ID       Optional story ID to start import from
+  --custom-texts-start-id ID  Optional custom_texts ID to start import from
+  --sync-active               Refresh currently-visible stories that have changed in MySQL
+  --help, -h                  Show this help message
 
 Examples:
   tsx bin/migrations/importPosts.ts --to prod-neon
   tsx bin/migrations/importPosts.ts --to local-postgres --start-id 100
+  tsx bin/migrations/importPosts.ts --stories-start-id 700 --custom-texts-start-id 220
   tsx bin/migrations/importPosts.ts --to prod-neon --sync-active
       `);
       process.exit(0);
@@ -476,6 +495,12 @@ async function importPosts(options: ImportOptions): Promise<void> {
   if (options.startId) {
     logger.info(`Starting from ID: ${options.startId}`);
   }
+  if (options.storiesStartId) {
+    logger.info(`Stories starting from ID: ${options.storiesStartId}`);
+  }
+  if (options.customTextsStartId) {
+    logger.info(`Custom texts starting from ID: ${options.customTextsStartId}`);
+  }
   if (options.syncActive) {
     logger.info('Sync-active mode: will refresh changed active stories');
   }
@@ -514,6 +539,8 @@ async function importPosts(options: ImportOptions): Promise<void> {
     logger.info('Fetching posts from MySQL...');
     const posts = await getActivePosts(mysqlConnection, {
       startId: options.startId,
+      storiesStartId: options.storiesStartId,
+      customTextsStartId: options.customTextsStartId,
     });
 
     stats.total = posts.length;

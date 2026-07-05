@@ -33,6 +33,25 @@ interface ImportOptions {
   startId?: number;
 }
 
+interface ExistingCdOfTheWeekDoc {
+  id: number | string;
+  artistUrl?: string | null;
+}
+
+interface ExistingArtistDoc {
+  id: number | string;
+  website?: string | null;
+}
+
+function normalizeArtistUrl(raw: string | null | undefined): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^www\./i.test(trimmed)) return `https://${trimmed}`;
+  return undefined;
+}
+
 /**
  * Parse command line arguments
  */
@@ -47,8 +66,8 @@ function parseArgs(): ImportOptions {
 
     if (arg === '--to') {
       const toValue = args[i + 1];
-      if (toValue !== 'prod-neon' && toValue !== 'local-postgres') {
-        throw new Error('--to must be "prod-neon" or "local-postgres"');
+      if (toValue !== 'prod-neon' && toValue !== 'local-postgres' && toValue !== 'dev-neon') {
+        throw new Error('--to must be "prod-neon", "dev-neon" or "local-postgres"');
       }
       options.to = toValue;
       i += 1;
@@ -80,9 +99,12 @@ Examples:
 }
 
 /**
- * Check if a CD of the Week entry with the given legacy ID already exists
+ * Get CD of the Week entry by legacy ID
  */
-async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<boolean> {
+async function getExistingCdOfTheWeek(
+  payload: Payload,
+  legacyId: number,
+): Promise<ExistingCdOfTheWeekDoc | null> {
   const existing = await payload.find({
     collection: 'cdoftheweek',
     where: {
@@ -90,10 +112,49 @@ async function cdOfTheWeekExists(payload: Payload, legacyId: number): Promise<bo
         equals: legacyId,
       },
     },
+    select: {
+      id: true,
+      artistUrl: true,
+    },
     limit: 1,
   });
 
-  return existing.docs.length > 0;
+  return (existing.docs[0] as ExistingCdOfTheWeekDoc | undefined) ?? null;
+}
+
+async function backfillArtistWebsite(
+  payload: Payload,
+  artistName: string,
+  website: string | undefined,
+): Promise<boolean> {
+  if (!website) return false;
+
+  const existingArtist = await payload.find({
+    collection: 'artists',
+    where: {
+      name: {
+        equals: artistName,
+      },
+    },
+    select: {
+      id: true,
+      website: true,
+    },
+    limit: 1,
+  });
+
+  const artist = (existingArtist.docs[0] as ExistingArtistDoc | undefined) ?? null;
+  if (!artist || artist.website) return false;
+
+  await payload.update({
+    collection: 'artists',
+    id: artist.id,
+    data: {
+      website,
+    },
+  });
+
+  return true;
 }
 
 /**
@@ -110,9 +171,33 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
       return false;
     }
 
+    const artistUrl = normalizeArtistUrl(item.band);
+    const existingCd = await getExistingCdOfTheWeek(payload, item.id);
+
     // Check if already imported
-    if (await cdOfTheWeekExists(payload, item.id)) {
-      logger.debug(`CD of the Week ${item.id} already exists, skipping`);
+    if (existingCd) {
+      let updatedExisting = false;
+
+      if (artistUrl && !existingCd.artistUrl) {
+        await payload.update({
+          collection: 'cdoftheweek',
+          id: existingCd.id,
+          data: {
+            artistUrl,
+          },
+        });
+        updatedExisting = true;
+        logger.info(`Backfilled cdoftheweek.artistUrl for legacy CD ${item.id}`);
+      }
+
+      if (await backfillArtistWebsite(payload, item.artist, artistUrl)) {
+        updatedExisting = true;
+        logger.info(`Backfilled artists.website for "${item.artist}" from legacy CD ${item.id}`);
+      }
+
+      if (!updatedExisting) {
+        logger.debug(`CD of the Week ${item.id} already exists, skipping`);
+      }
       return false;
     }
 
@@ -208,6 +293,7 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
             musicbrainzId: releaseMbid || undefined,
             legacyId: item.id,
             migratedAt: new Date().toISOString(),
+            _status: 'published' as const,
           },
         });
         recordId = newRecord.id;
@@ -285,11 +371,13 @@ async function importCdOfTheWeekItem(payload: Payload, item: CdOfTheWeek): Promi
         collection: 'cdoftheweek',
         data: {
           record: recordId as any,
+          artistUrl,
           review,
           reviewer: reviewerId,
           date: item.date,
           legacyId: item.id,
           migratedAt: new Date().toISOString(),
+          _status: 'published' as const,
         },
       });
 

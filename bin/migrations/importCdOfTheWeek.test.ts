@@ -51,6 +51,7 @@ describe('importCdOfTheWeek', () => {
     mockPayload = {
       find: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
     };
   });
 
@@ -87,7 +88,7 @@ describe('importCdOfTheWeek', () => {
 
       process.argv = ['node', 'script.ts', '--to', 'invalid'];
 
-      expect(() => parseArgs()).toThrow('--to must be "prod-neon" or "local-postgres"');
+      expect(() => parseArgs()).toThrow('--to must be "prod-neon", "dev-neon" or "local-postgres"');
     });
   });
 
@@ -116,6 +117,7 @@ describe('importCdOfTheWeek', () => {
 
       expect(result).toBe(false);
       expect(mockPayload.create).not.toHaveBeenCalled();
+      expect(mockPayload.update).not.toHaveBeenCalled();
     });
 
     it('should import new CD of the Week with new artist and record', async () => {
@@ -163,6 +165,7 @@ describe('importCdOfTheWeek', () => {
           musicbrainzId: undefined,
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
 
@@ -171,11 +174,13 @@ describe('importCdOfTheWeek', () => {
         collection: 'cdoftheweek',
         data: {
           record: 'record-id-456',
+          artistUrl: undefined,
           review: expect.any(Object),
           reviewer: 'reviewer-id-999',
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -217,11 +222,13 @@ describe('importCdOfTheWeek', () => {
         collection: 'cdoftheweek',
         data: {
           record: 'existing-record-id',
+          artistUrl: undefined,
           review: expect.any(Object),
           reviewer: undefined,
           date: '2024-01-15',
           legacyId: 1,
           migratedAt: expect.any(String),
+          _status: 'published',
         },
       });
     });
@@ -262,6 +269,39 @@ describe('importCdOfTheWeek', () => {
           coverImage: undefined,
         }),
       });
+    });
+
+    it('should backfill artistUrl for existing records when legacy band URL is present', async () => {
+      const { importCdOfTheWeekItem } = await import('./importCdOfTheWeek');
+
+      (mockPayload.find as Mock).mockResolvedValue({
+        docs: [{ id: 'existing-cdotw', artistUrl: '' }],
+      });
+
+      const item: CdOfTheWeek = {
+        id: 42,
+        artist: 'Test Artist',
+        title: 'Test Album',
+        label: 'Test Label',
+        review: '<p>Great album!</p>',
+        cd_pic_url: '',
+        band: 'https://artist.example',
+        reviewer: '',
+        date: '2024-01-15',
+        deleted: 'n',
+      };
+
+      const result = await importCdOfTheWeekItem(mockPayload as Payload, item);
+
+      expect(result).toBe(false);
+      expect(mockPayload.update).toHaveBeenCalledWith({
+        collection: 'cdoftheweek',
+        id: 'existing-cdotw',
+        data: {
+          artistUrl: 'https://artist.example',
+        },
+      });
+      expect(mockPayload.create).not.toHaveBeenCalled();
     });
   });
 });

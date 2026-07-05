@@ -23,6 +23,9 @@ import { getMySQLConfig, parseFromToArgs, type MySQLSource } from '../../config/
 import { getPayloadClient, type PostgresTarget } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
 
+// Skip Drizzle pushDevSchema — this script only reads data, never alters schema
+process.env.PAYLOAD_MIGRATING = 'true';
+
 const logger = createLogger('ImportGapReport');
 
 interface GapReportOptions {
@@ -101,7 +104,7 @@ Usage: tsx bin/migrations/importGapReport.ts [options]
 
 Options:
   --from SOURCE       MySQL source: 'local-mysql' (default) or 'prod-mysql'
-  --to TARGET         Payload target: 'prod-neon' (default) or 'local-postgres'
+  --to TARGET         Payload target: 'prod-neon' (default), 'dev-neon', or 'local-postgres'
   --output, -o FILE   Output file path (default: stdout)
   --collection, -c    Filter to specific collection
   --limit, -l N       Limit missing records per collection (default: 50)
@@ -159,60 +162,6 @@ const COLLECTIONS: CollectionConfig[] = [
     deletedFilter: "status = 'active'",
     legacyIdField: 'legacyId',
   },
-  {
-    name: 'Songs (Music)',
-    mysqlTable: 'music',
-    payloadCollection: 'songs',
-    idField: 'id',
-    identifierField: 'song',
-    deletedFilter: "deleted = 'n'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'Concerts',
-    mysqlTable: 'concerts',
-    payloadCollection: 'concerts',
-    idField: 'id',
-    identifierField: 'artist',
-    deletedFilter: "deleted != 'Y'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'On Demand',
-    mysqlTable: 'ondemand',
-    payloadCollection: 'ondemand',
-    idField: 'id',
-    identifierField: 'headline',
-    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'CD of the Week',
-    mysqlTable: 'cdotw',
-    payloadCollection: 'cdoftheweek',
-    idField: 'id',
-    identifierField: 'title',
-    deletedFilter: "deleted = 'no'", // Uses 'no'/'yes' not 'n'/'y'
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'Ads (Sponsors)',
-    mysqlTable: 'ads',
-    payloadCollection: 'ads',
-    idField: 'id',
-    identifierField: 'name',
-    deletedFilter: "deleted = 'n'",
-    legacyIdField: 'legacyId',
-  },
-  {
-    name: 'DJs',
-    mysqlTable: 'deejays',
-    payloadCollection: 'djs',
-    idField: 'id',
-    identifierField: 'name',
-    // DJs table has no deleted column, import all
-    legacyIdField: 'legacyId',
-  },
 ];
 
 /**
@@ -268,6 +217,7 @@ async function getPayloadLegacyIds(
       where: whereClause,
       limit,
       page,
+      depth: 0,
       select: {
         legacyId: true,
       },

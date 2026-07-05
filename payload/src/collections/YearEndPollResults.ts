@@ -1,5 +1,6 @@
-import type { Block, CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { randomUUID } from 'node:crypto';
+import type { Block, CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
 
 /**
@@ -270,6 +271,9 @@ const TextContentBlock: Block = {
  */
 export const YearEndPollResults: CollectionConfig = {
   slug: 'year-end-poll-results',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Year End Poll Result',
     plural: 'Year End Poll Results',
@@ -282,14 +286,14 @@ export const YearEndPollResults: CollectionConfig = {
     defaultColumns: ['title', 'year', 'pageType', 'publishedAt', 'updatedAt'],
     group: 'Polls & Contests',
     description: 'Year-end poll results and staff picks pages.',
-
+    groupBy: true,
     hidden: true, // Temporarily hidden from navigation
   },
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   fields: [
     {
@@ -345,6 +349,9 @@ export const YearEndPollResults: CollectionConfig = {
       type: 'text',
       required: true,
       unique: true,
+      hooks: {
+        beforeDuplicate: [({ value }) => `${String(value)}-copy-${randomUUID().slice(0, 8)}`],
+      },
       admin: {
         position: 'sidebar',
         description: 'URL identifier (e.g., "top225of2025")',

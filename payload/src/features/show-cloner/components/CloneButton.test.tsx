@@ -56,7 +56,7 @@ describe('CloneButton', () => {
       <CloneButton cloning={false} disabled={true} showCount={0} onClick={vi.fn()} />,
     );
     const button = screen.getByRole('button');
-    expect(button).toHaveStyle({ opacity: 0.5 });
+    expect(button).toBeDisabled();
   });
 
   it('renders with full opacity when enabled', () => {
@@ -64,6 +64,20 @@ describe('CloneButton', () => {
       <CloneButton cloning={false} disabled={false} showCount={3} onClick={vi.fn()} />,
     );
     const button = screen.getByRole('button');
-    expect(button).toHaveStyle({ opacity: 1 });
+    expect(button).not.toBeDisabled();
+  });
+
+  it('applies cloning class when cloning', () => {
+    render(
+      <CloneButton cloning={true} disabled={true} showCount={3} onClick={vi.fn()} />,
+    );
+    expect(screen.getByRole('button')).toHaveClass('clone-button--cloning');
+  });
+
+  it('does not apply cloning class when not cloning', () => {
+    render(
+      <CloneButton cloning={false} disabled={false} showCount={3} onClick={vi.fn()} />,
+    );
+    expect(screen.getByRole('button')).not.toHaveClass('clone-button--cloning');
   });
 });

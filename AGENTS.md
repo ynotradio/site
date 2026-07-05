@@ -8,7 +8,7 @@ You are an expert full-stack engineer. Behave self-sufficiently, smoke-test your
 
 ```bash
 # ── Bootstrap (run FIRST, every session) ───────────────────────────────────
-bash bin/agent-helpers/bootstrap.sh   # installs node_modules (~12s from cache)
+source bin/agent-helpers/bootstrap.sh   # installs node_modules, ensures Node.js 22 (~12s from cache)
 
 # ── Payload CMS development ─────────────────────────────────────────────────
 yarn payload:dev              # Start at http://localhost:3000/admin
@@ -26,6 +26,16 @@ yarn test:e2e                 # Playwright integration tests
 # Use Playwright browser tools to capture evidence
 ```
 
+## Environment Files
+
+There are several `.env*` files (`.env`, `.env.local`, `.env.preview`,
+`.env.production`, `.env.php`, `.env.production.mysql`) and it is easy to
+connect to the wrong database by assumption. **Before running any script
+that touches a database, read
+[docs/ENV_FILE_REFERENCE.md](./docs/ENV_FILE_REFERENCE.md)** — it covers
+which file is used where, why `.env`'s Neon vars don't load by default for
+local scripts, and the prod-write safety guards already in place.
+
 ## Available Skills
 
 Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starting any task.** Invoke them when relevant—they contain specialized knowledge that prevents common mistakes.
@@ -33,6 +43,8 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
 | Skill                               | When to Use                                                                                                                   |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | **testing-pr-changes**              | Before submitting any PR. Success criteria and proof requirements.                                                            |
+| **payload**                         | When working on Payload collections, fields, hooks, access control, queries, adapters, jobs queue, endpoints, or plugins.   |
+| **cms-migration**                   | When migrating data from another CMS (WordPress, Contentful, Strapi, etc.) into Payload collections.                         |
 | **payload-migration-workflow**      | When working on Payload collections, data models, or PHP→Payload migration.                                                   |
 | **code-quality-standards**          | When writing new TypeScript/React code. Airbnb style, React 19, Next.js 15 patterns.                                          |
 | **test-story-coupling**             | When creating components. Ensures matching test and story files exist.                                                        |
@@ -52,6 +64,8 @@ Skills are in `.claude/skills/`. **YOU MUST check available skills BEFORE starti
    - Components? → `test-story-coupling`
    - Adding dependencies? → `dependency-best-practices`
    - TypeScript/React code? → `code-quality-standards`
+   - Working on Payload CMS features? → `payload`
+   - Migrating external CMS data to Payload? → `cms-migration`
    - Payload CMS? → `payload-migration-workflow`
    - Creating a PR? → `testing-pr-changes` (ALWAYS)
    - E2E test failures? → `e2e-debugging-workflow`
@@ -216,7 +230,7 @@ When modifying code, actively look for and remove dead code:
 
 **Pre-push verification workflow**:
 
-1. Run `bash bin/agent-helpers/bootstrap.sh` — installs node_modules if missing
+1. Run `source bin/agent-helpers/bootstrap.sh` — installs node_modules, ensures Node.js 22
 2. Run `yarn lint` - must exit 0
 3. Run `yarn test` - must exit 0
 4. Run `yarn build` - must exit 0

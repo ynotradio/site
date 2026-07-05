@@ -14,6 +14,10 @@ vi.mock('@payloadcms/ui', () => ({
 // Mock the MusicBrainz API
 vi.mock('../../utils/musicbrainz-api', () => ({
   searchReleases: vi.fn(),
+  getArtistCreditName: vi.fn((credits: Array<{ name: string }> | undefined) => {
+    if (!credits?.length) return 'Unknown Artist';
+    return credits.map((ac) => ac.name).join(', ');
+  }),
 }));
 
 const { useField, useFormFields } = await import('@payloadcms/ui');
@@ -30,13 +34,9 @@ describe('MusicBrainzReleaseField', () => {
       setValue: mockSetValue,
     } as any);
 
-    // Default: return title="Test Album" and artist={name: "Test Artist"}
-    let callCount = 0;
-    vi.mocked(useFormFields).mockImplementation(() => {
-      const call = callCount;
-      callCount += 1;
-      if (call % 2 === 0) return { value: 'Test Album' } as any;
-      return { value: { name: 'Test Artist' } } as any;
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: 'Test Album' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
     });
   });
 
@@ -92,6 +92,26 @@ describe('MusicBrainzReleaseField', () => {
     render(<MusicBrainzReleaseField path="musicbrainzId" />);
 
     expect(screen.getByText('Unknown Album')).toBeInTheDocument();
+  });
+
+  it('disables the search button when album title is empty', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
+  });
+
+  it('disables the search button when album title is whitespace-only', () => {
+    vi.mocked(useFormFields).mockImplementation((selector: any) => {
+      const fields = { title: { value: '   ' }, artist: { value: { name: 'Test Artist' } } };
+      return selector([fields, null]);
+    });
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+    expect(screen.getByText('Search MusicBrainz').closest('button')).toBeDisabled();
   });
 
   it('performs search when button is clicked', async () => {
@@ -577,5 +597,21 @@ describe('MusicBrainzReleaseField', () => {
         expect(screen.getByText(/\[Album\]/)).toBeInTheDocument();
       });
     });
+  });
+
+  it('guards against search when album title is empty (covers early-return branch)', async () => {
+    let callCount = 0;
+    vi.mocked(useFormFields).mockImplementation(() => {
+      const call = callCount;
+      callCount += 1;
+      if (call % 2 === 0) return { value: '' } as any;
+      return { value: { name: 'Test Artist' } } as any;
+    });
+
+    render(<MusicBrainzReleaseField path="musicbrainzId" />);
+
+    fireEvent.click(screen.getByText('Search MusicBrainz'));
+
+    expect(vi.mocked(musicbrainzApi.searchReleases)).not.toHaveBeenCalled();
   });
 });

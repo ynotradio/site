@@ -2,30 +2,43 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify } from './hooks/slugUtils';
+import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import { legacyIdField } from './shared/legacyIdField';
 
 export const Records: CollectionConfig = {
   slug: 'records',
+  enableRichTextLink: false,
+  enableRichTextRelationship: false,
+  enableQueryPresets: true,
   labels: {
     singular: 'Record',
     plural: 'Records',
   },
   admin: {
     useAsTitle: 'displayName',
-    defaultColumns: ['displayName', 'coverImage', 'artist', 'musicbrainzId', 'label', 'releaseDate', 'updatedAt'],
+    defaultColumns: [
+      'displayName',
+      'coverImage',
+      'artist',
+      'musicbrainzId',
+      'label',
+      'releaseDate',
+      'updatedAt',
+    ],
     group: 'Music',
     description:
       'Albums and EPs. Referenced by Songs and CD of the Week — create the record first, then link it.',
+    groupBy: true,
   },
   defaultSort: '-releaseDate',
   access: {
     read: () => true, // Public read access
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    delete: ({ req }) => hasRole(req.user, ['admin']),
+    delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
-    beforeChange: [generateMusicDisplayName('Record')],
+    beforeChange: [generateMusicSlugBeforeChangeHook, generateMusicDisplayName('Record')],
   },
   fields: [
     {
@@ -96,6 +109,9 @@ export const Records: CollectionConfig = {
       name: 'musicbrainzId',
       type: 'text',
       unique: true,
+      hooks: {
+        beforeDuplicate: [() => null],
+      },
       admin: {
         position: 'sidebar',
         description:
@@ -106,17 +122,7 @@ export const Records: CollectionConfig = {
         },
       },
     },
-    {
-      name: 'legacyId',
-      type: 'number',
-      unique: true,
-      admin: {
-        position: 'sidebar',
-        readOnly: true,
-        description: 'Original MySQL ID for migration tracking',
-        condition: adminOnlyCondition,
-      },
-    },
+    legacyIdField,
     {
       name: 'migratedAt',
       type: 'date',

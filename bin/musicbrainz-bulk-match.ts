@@ -17,6 +17,7 @@
 import { getPayload, type Payload } from 'payload';
 import config from '@payload-config';
 import { getArtistMbid, getReleaseMbid, getRecordingMbid } from './migrations/shared/musicbrainz';
+import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
 import {
   parseArgs,
   getArtistName,
@@ -273,6 +274,10 @@ async function processSongs(payload: Payload, options: CliOptions): Promise<Coll
 
 async function main() {
   const options = parseArgs(process.argv);
+
+  if (options.fix) {
+    assertNotConnectedToProd();
+  }
 
   const mode = options.fix ? '🔧 FIX MODE' : '👀 DRY RUN';
   console.log(`\n🎵 MusicBrainz Bulk Match — ${mode}`);

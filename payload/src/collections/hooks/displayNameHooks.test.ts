@@ -24,6 +24,17 @@ describe('DJs displayName beforeChange hook', () => {
     };
   });
 
+  it('should preserve manually entered displayName', async () => {
+    const result = await generateDJDisplayName({
+      data: { displayName: 'Custom DJ Name', person: [1] },
+      req: createMockReq(mockPayload),
+      operation: 'update',
+    });
+
+    expect(result.displayName).toBe('Custom DJ Name');
+    expect(mockPayload.find).not.toHaveBeenCalled();
+  });
+
   it('should generate displayName from single person', async () => {
     (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
       docs: [{ id: 1, name: 'John Doe' }],
@@ -93,6 +104,35 @@ describe('DJs displayName beforeChange hook', () => {
     });
 
     expect(result.displayName).toBe('DJ #New');
+  });
+
+  it('should use fallback displayName when person IDs are given but no docs returned', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({ docs: [] });
+
+    const result = await generateDJDisplayName({
+      data: { person: [999], id: 42 },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('DJ #42');
+  });
+
+  it('should handle person with null name, joining non-null names', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [
+        { id: 1, name: null },
+        { id: 2, name: 'Jane Smith' },
+      ],
+    });
+
+    const result = await generateDJDisplayName({
+      data: { person: [1, 2] },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe(', Jane Smith');
   });
 
   it('should handle person fetch error gracefully', async () => {
@@ -200,6 +240,18 @@ describe('Songs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('Song #New');
   });
 
+  it('should use title-only displayName when artist ID lookup returns null', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await songHook({
+      data: { artist: 999, title: 'Mystery Song' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Mystery Song');
+  });
+
   it('should handle artist fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
@@ -282,6 +334,18 @@ describe('Records displayName beforeChange hook', () => {
     expect(result.displayName).toBe('Record #New');
   });
 
+  it('should use title-only displayName when artist ID lookup returns null', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+
+    const result = await recordHook({
+      data: { artist: 999, title: 'Unknown Album' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Unknown Album');
+  });
+
   it('should handle artist fetch error gracefully', async () => {
     (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
 
@@ -292,5 +356,24 @@ describe('Records displayName beforeChange hook', () => {
     });
 
     expect(result.displayName).toBe('Test Album');
+  });
+
+  it('should look up artist by id when artist is an object without name', async () => {
+    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
+      id: 1,
+      name: 'Pink Floyd',
+    });
+
+    const result = await recordHook({
+      data: { artist: { id: 1 }, title: 'The Dark Side of the Moon' },
+      req: createMockReq(mockPayload),
+      operation: 'create',
+    });
+
+    expect(result.displayName).toBe('Pink Floyd - The Dark Side of the Moon');
+    expect(mockPayload.findByID).toHaveBeenCalledWith({
+      collection: 'artists',
+      id: 1,
+    });
   });
 });
