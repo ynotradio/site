@@ -20,15 +20,25 @@ interface Shot {
   buffer: Buffer | null;
 }
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 async function screenshotFullPage(
   browser: import('@playwright/test').Browser,
   url: string,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<Shot> {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+
   const response = await page
-    .goto(url, { waitUntil: 'networkidle', timeout: 30000 })
+    .goto(url, { waitUntil: 'load', timeout: timeoutMs })
     .catch(() => null);
   const status = response ? response.status() : null;
+
+  // Heavy pages (dozens of Mixcloud iframes) may never reach true
+  // networkidle -- widgets keep polling. Wait for it as a best effort, but
+  // don't let a timeout here throw away an otherwise-loaded page.
+  await page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => null);
+
   const buffer = await page.screenshot({ fullPage: true }).catch(() => null);
   await page.close();
   return { status, buffer };
@@ -59,11 +69,13 @@ export async function runDiff(targets: DiffTarget[], outDir: string): Promise<Di
   try {
     // eslint-disable-next-line no-restricted-syntax -- sequential by design, one pair at a time
     for (const target of targets) {
-      const { label, localUrl, prodUrl } = target;
+      const {
+        label, localUrl, prodUrl, timeoutMs,
+      } = target;
       // eslint-disable-next-line no-await-in-loop
       const [localShot, prodShot] = await Promise.all([
-        screenshotFullPage(browser, localUrl),
-        screenshotFullPage(browser, prodUrl),
+        screenshotFullPage(browser, localUrl, timeoutMs),
+        screenshotFullPage(browser, prodUrl, timeoutMs),
       ]);
 
       const result: DiffResult = {
