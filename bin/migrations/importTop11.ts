@@ -195,6 +195,10 @@ async function importVotes(
 }
 
 async function main(): Promise<void> {
+  // Data-only script: suppress the Postgres adapter's dev-mode schema push
+  // (and its interactive data-loss prompt). See docs/ENV_FILE_REFERENCE.md.
+  process.env.PAYLOAD_MIGRATING = 'true';
+
   const options = parseArgs();
   logger.info(`Importing Top 11 from ${options.from} to ${options.to}`);
 
