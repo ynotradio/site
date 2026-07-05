@@ -63,6 +63,36 @@ export interface DetectEmbedTypeOptions {
   hideCoverImage?: boolean;
 }
 
+/**
+ * Detect and normalize a Mixcloud embed URL. Returns null if `url` isn't a
+ * mixcloud.com URL, so the caller can fall through to the generic embed type.
+ */
+function detectMixcloudEmbed(url: string, hideCoverImage: boolean): EmbedInfo | null {
+  if (!url.includes('mixcloud.com')) {
+    return null;
+  }
+
+  if (url.includes('/widget/iframe/')) {
+    // Already a widget embed URL — either the current player-widget.mixcloud.com
+    // host or the legacy www.mixcloud.com/widget/iframe/?feed=... form used
+    // throughout older custom-text pages (e.g. rodney-anonymous). Use as-is;
+    // re-deriving the feed from the path here would read "/widget/iframe/"
+    // itself as the feed and produce a broken embed.
+    return { type: 'mixcloud', embedUrl: url, originalUrl: url };
+  }
+
+  const feed = extractMixcloudFeed(url);
+  if (feed) {
+    return {
+      type: 'mixcloud',
+      embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
+      originalUrl: url,
+    };
+  }
+
+  return null;
+}
+
 export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {}): EmbedInfo {
   const { hideCoverImage = true } = options;
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
@@ -110,23 +140,9 @@ export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {
   }
 
   // Mixcloud — the dominant provider in the legacy custom-text content.
-  if (url.includes('mixcloud.com')) {
-    if (url.includes('/widget/iframe/')) {
-      // Already a widget embed URL — either the current player-widget.mixcloud.com
-      // host or the legacy www.mixcloud.com/widget/iframe/?feed=... form used
-      // throughout older custom-text pages (e.g. rodney-anonymous). Use as-is;
-      // re-deriving the feed from the path here would read "/widget/iframe/"
-      // itself as the feed and produce a broken embed.
-      return { type: 'mixcloud', embedUrl: url, originalUrl: url };
-    }
-    const feed = extractMixcloudFeed(url);
-    if (feed) {
-      return {
-        type: 'mixcloud',
-        embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
-        originalUrl: url,
-      };
-    }
+  const mixcloudEmbed = detectMixcloudEmbed(url, hideCoverImage);
+  if (mixcloudEmbed) {
+    return mixcloudEmbed;
   }
 
   // OpenDrive — the /player/<id> URL is already an embeddable audio bar.
