@@ -25,9 +25,9 @@
 | 13       | Posts                        | `posts`                            | ✅ Complete | Content blocks (unified Story + CustomText)                                            |
 | 14       | Users                        | `users`                            | ✅ Complete | Authentication and admin access                                                        |
 | 15       | YearEndPollResults           | `year_end_poll_results`            | ✅ Complete | Published results pages (Top 225, Staff Picks) - [Docs](./13-year-end-poll-results.md) |
-| 16       | Top11Contests                | `top11_contests`                   | 🔲 Todo     | Weekly contest config                                                                  |
-| 17       | Top11Results                 | `top11_results`                    | 🔲 Todo     | Published weekly results                                                               |
-| 18       | Top11Votes                   | `top11_votes`                      | 🔲 Todo     | User votes (PostgreSQL native, not NoSQL)                                              |
+| 16       | Top11Contests                | `top11_contests`                   | ✅ Complete | Weekly contest config                                                                  |
+| 17       | Top11Results                 | `top11_results`                    | ✅ Complete | Published weekly results                                                               |
+| 18       | Top11Votes                   | `top11_votes`                      | ✅ Complete | Auth0-authenticated user votes                                                         |
 | 19       | YearEndPolls                 | `year_end_polls`                   | ✅ Complete | Annual poll config                                                                     |
 | 20       | YearEndPollCategories        | `year_end_poll_categories`         | ✅ Complete | Poll categories with nominees and denormalized vote counts                             |
 | 21       | YearEndPollVotes             | `year_end_poll_votes`              | ✅ Complete | Auth0-authenticated individual vote records; `userId` used for duplicate prevention    |
@@ -39,8 +39,8 @@
 
 ### Summary
 
-- **Completed:** 23 collections (all core content types + Year End Poll Results + Year End Poll voting system + all 5 MRM collections)
-- **Remaining:** 3 collections (Top 11 voting system)
+- **Completed:** 26 collections (all core content types + Year End Poll Results + Year End Poll voting system + Top 11 voting system + all 5 MRM collections)
+- **Remaining:** 0 collections — migration complete
 
 ---
 

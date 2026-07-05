@@ -6,7 +6,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
     CREATE TYPE "public"."enum_year_end_polls_status" AS ENUM('draft', 'open', 'closed', 'archived');
   `);
   await db.execute(sql`
-    CREATE TYPE "public"."enum_year_end_poll_categories_category_type" AS ENUM('songs', 'records', 'artists', 'concerts', 'custom');
+    CREATE TYPE "public"."enum_year_end_poll_categories_category_type" AS ENUM('songs', 'albums', 'artists', 'concerts', 'custom');
   `);
 
   // Create year_end_polls table

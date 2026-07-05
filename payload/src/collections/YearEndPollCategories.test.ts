@@ -56,7 +56,7 @@ describe('YearEndPollCategories', () => {
     const typeField = allFields.find((f) => f.name === 'categoryType');
     const values = (typeField?.options as Array<{ value: string }>).map((o) => o.value);
     expect(values).toContain('songs');
-    expect(values).toContain('records');
+    expect(values).toContain('albums');
     expect(values).toContain('artists');
     expect(values).toContain('concerts');
     expect(values).toContain('custom');

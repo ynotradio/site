@@ -85,7 +85,7 @@ export const YearEndPollCategories: CollectionConfig = {
           required: true,
           options: [
             { label: 'Songs', value: 'songs' },
-            { label: 'Records / Albums', value: 'records' },
+            { label: 'Albums / Records', value: 'albums' },
             { label: 'Artists', value: 'artists' },
             { label: 'Concerts', value: 'concerts' },
             { label: 'Custom (movies, TV, etc.)', value: 'custom' },
