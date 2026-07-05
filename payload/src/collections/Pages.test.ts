@@ -131,7 +131,7 @@ describe('Pages', () => {
     ];
     const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
 
-    expect(result).toHaveLength(8);
+    expect(result).toHaveLength(6);
     expect(result[0]).toEqual({ id: 'paragraph', key: 'paragraph' });
     expect(result[1]).toEqual({ id: 'text', key: 'text' });
     // The plain default upload feature (id: 'default-upload') is filtered
@@ -139,19 +139,21 @@ describe('Pages', () => {
     expect(result.some((f: any) => f.id === 'default-upload')).toBe(false);
     expect((result[2] as any)._type).toBe('upload');
     expect((result[2] as any).collections.media.fields[0].name).toBe('alignment');
-    // EmbedFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
+    // Single BlocksFeature() call covering embed + both PayPal blocks
+    // (BlocksFeature mock returns { _type: 'blocks', ... })
     expect((result[3] as any)._type).toBe('blocks');
     // EXPERIMENTAL_TableFeature()
     expect((result[4] as any)._type).toBe('table');
     // SmallTextFeature() (TextStateFeature mock returns { _type: 'textState', ... })
     expect((result[5] as any)._type).toBe('textState');
-    // PayPalButtonFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
-    expect((result[6] as any)._type).toBe('blocks');
-    // PayPalSmartButtonsFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
-    expect((result[7] as any)._type).toBe('blocks');
   });
 
-  it('registers PayPalButtonBlock and PayPalSmartButtonsBlock as distinct BlocksFeature entries', () => {
+  it('registers embed, PayPalButtonBlock, and PayPalSmartButtonsBlock in a single BlocksFeature call', () => {
+    // Payload keys block-node validation by Lexical nodeType, not feature
+    // key, so multiple separate BlocksFeature() calls in one editor would
+    // silently overwrite each other's validators (only the last-registered
+    // block type would actually validate on save). All block types must be
+    // registered together in one BlocksFeature() call.
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content') as {
       editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
@@ -161,8 +163,8 @@ describe('Pages', () => {
     const result = featuresCallback!({ defaultFeatures: [] });
 
     const blockFeatures = result.filter((f: any) => f._type === 'blocks');
-    expect(blockFeatures).toHaveLength(3);
-    const slugs = blockFeatures.flatMap((f: any) => f.blocks.map((b: any) => b.slug));
+    expect(blockFeatures).toHaveLength(1);
+    const slugs = blockFeatures[0].blocks.map((b: any) => b.slug);
     expect(slugs).toEqual(['embed', 'paypalButton', 'paypalSmartButtons']);
   });
 

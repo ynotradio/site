@@ -1,11 +1,15 @@
 import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
-import { lexicalEditor, EXPERIMENTAL_TableFeature } from '@payloadcms/richtext-lexical';
+import {
+  lexicalEditor,
+  EXPERIMENTAL_TableFeature,
+  BlocksFeature,
+} from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
-import { EmbedFeature } from '../features/embed';
+import { EmbedBlock } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
-import { PayPalButtonFeature } from '../features/paypal-button/server';
-import { PayPalSmartButtonsFeature } from '../features/paypal-smart-buttons/server';
+import { PayPalButtonBlock } from '../features/paypal-button/server';
+import { PayPalSmartButtonsBlock } from '../features/paypal-smart-buttons/server';
 import { SmallTextFeature } from '../features/text-size';
 import { pageSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
@@ -77,11 +81,16 @@ export const Pages: CollectionConfig = {
           // float left/right like the legacy <img align> markup did.
           ...defaultFeatures.filter((feature) => feature.key !== 'upload'),
           ImageAlignmentUploadFeature(),
-          EmbedFeature(),
+          // A single BlocksFeature() call registers all block-type nodes —
+          // Payload keys block-node validation by Lexical nodeType, not by
+          // feature key, so multiple separate BlocksFeature() calls silently
+          // overwrite each other's validators and only the last-registered
+          // block type survives ("Block embed not found" on save/import).
+          BlocksFeature({
+            blocks: [EmbedBlock, PayPalButtonBlock, PayPalSmartButtonsBlock],
+          }),
           EXPERIMENTAL_TableFeature(),
           SmallTextFeature(),
-          PayPalButtonFeature(),
-          PayPalSmartButtonsFeature(),
         ],
       }),
       admin: {
