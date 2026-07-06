@@ -1,4 +1,5 @@
 import { SlugField as SlugField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
+import { InlineDateField as InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1 } from '../../../payload/src/components/fields/InlineDateField'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -30,10 +31,11 @@ import { MusicBrainzRecordingCell as MusicBrainzRecordingCell_24d82142d38adfa7da
 import { MusicBrainzRecordingField as MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5 } from '../../../payload/src/components/fields/MusicBrainzRecordingField'
 import { MusicBrainzReleaseCell as MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a } from '../../../payload/src/components/cells/MusicBrainzCell'
 import { MusicBrainzReleaseField as MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252 } from '../../../payload/src/components/fields/MusicBrainzReleaseField'
-import { InlineDateField as InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1 } from '../../../payload/src/components/fields/InlineDateField'
 import { TimeCell as TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1 } from '../../../payload/src/components/cells/TimeCell'
 import { TimePickerField as TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb } from '../../../payload/src/components/fields/TimePickerField'
 import { ShowsListHeader as ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194 } from '../../../payload/src/features/show-cloner/ShowsListHeader'
+import { TextStateFeatureClient as TextStateFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
+import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PostsListHeader as PostsListHeader_bb65c0e3a5c16be042e54d2df483005c } from '../../../payload/src/features/story-order/PostsListHeader'
 import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
@@ -62,6 +64,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/next/client#SlugField": SlugField_2b8867833a34864a02ddf429b0728a40,
+  "/payload/src/components/fields/InlineDateField#InlineDateField": InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -93,10 +96,11 @@ export const importMap = {
   "/payload/src/components/fields/MusicBrainzRecordingField#MusicBrainzRecordingField": MusicBrainzRecordingField_0de47052373a516a3d4bca1bd589fad5,
   "/payload/src/components/cells/MusicBrainzCell#MusicBrainzReleaseCell": MusicBrainzReleaseCell_24d82142d38adfa7da4ac6e34779081a,
   "/payload/src/components/fields/MusicBrainzReleaseField#MusicBrainzReleaseField": MusicBrainzReleaseField_855400d2c914ad0913741e87e3378252,
-  "/payload/src/components/fields/InlineDateField#InlineDateField": InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1,
   "/payload/src/components/cells/TimeCell#TimeCell": TimeCell_e5cab0f3d1909d05be3a3aa8f6ea42f1,
   "/payload/src/components/fields/TimePickerField#TimePickerField": TimePickerField_3a2320a660bde9c4f6a0db2e650eefcb,
   "/payload/src/features/show-cloner/ShowsListHeader#ShowsListHeader": ShowsListHeader_e96a80f183c77fab5adfdd7d9efb9194,
+  "@payloadcms/richtext-lexical/client#TextStateFeatureClient": TextStateFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
+  "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/story-order/PostsListHeader#PostsListHeader": PostsListHeader_bb65c0e3a5c16be042e54d2df483005c,
   "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
