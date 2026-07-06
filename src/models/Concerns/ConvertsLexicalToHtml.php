@@ -157,7 +157,12 @@ trait ConvertsLexicalToHtml
                 return '<blockquote>' . $this->convertLexicalChildren($node, $forceNewTabLinks, $mediaMap) . "</blockquote>\n";
 
             case 'table':
-                return '<table>' . $this->convertLexicalChildren($node, $forceNewTabLinks, $mediaMap) . "</table>\n";
+                // .table for the base cell padding/border/header styling, plus
+                // .table-striped to recreate the alternating-row shading the
+                // legacy HTML did with manual bgcolor attributes (intentionally
+                // not preserved by the migration) without reintroducing inline
+                // presentational markup.
+                return '<table class="table table-striped">' . $this->convertLexicalChildren($node, $forceNewTabLinks, $mediaMap) . "</table>\n";
 
             case 'tablerow':
                 return '<tr>' . $this->convertLexicalChildren($node, $forceNewTabLinks, $mediaMap) . "</tr>\n";

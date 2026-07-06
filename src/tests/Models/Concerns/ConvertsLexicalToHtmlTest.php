@@ -462,7 +462,7 @@ class ConvertsLexicalToHtmlTest extends TestCase
             ],
         ]));
 
-        $this->assertStringContainsString('<table>', $html);
+        $this->assertStringContainsString('<table class="table table-striped">', $html);
         $this->assertStringContainsString('<tr>', $html);
         $this->assertStringContainsString('<th>Rank</th>', $html);
         $this->assertStringContainsString('<td>Artist</td>', $html);
