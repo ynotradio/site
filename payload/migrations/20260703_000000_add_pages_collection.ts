@@ -14,6 +14,12 @@ import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
  *
  * `payload_locked_documents_rels` gains a `pages_id` column so Payload can
  * track which editor has a page locked for editing.
+ *
+ * Includes `headerImage` (a Media reference for legacy pages whose title
+ * was a stylized `<img>` rather than plain text) from the start — this
+ * migration originally shipped without it, then gained it in a follow-up
+ * migration; both are combined here into a single file since Pages hasn't
+ * reached production yet and there's no reason to preserve that history.
  */
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   // Status enums
@@ -35,6 +41,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       "title" varchar,
       "generate_slug" boolean DEFAULT true,
       "slug" varchar,
+      "header_image_id" integer,
       "content" jsonb,
       "legacy_id" numeric,
       "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
@@ -51,6 +58,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       "version_title" varchar,
       "version_generate_slug" boolean DEFAULT true,
       "version_slug" varchar,
+      "version_header_image_id" integer,
       "version_content" jsonb,
       "version_legacy_id" numeric,
       "version_updated_at" timestamp(3) with time zone,
@@ -65,9 +73,25 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   // FK constraints
   await db.execute(sql`
     DO $$ BEGIN
+      ALTER TABLE "pages"
+        ADD CONSTRAINT "pages_header_image_id_media_id_fk"
+        FOREIGN KEY ("header_image_id") REFERENCES "public"."media"("id")
+        ON DELETE set null ON UPDATE no action;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+  `);
+  await db.execute(sql`
+    DO $$ BEGIN
       ALTER TABLE "_pages_v"
         ADD CONSTRAINT "_pages_v_parent_id_pages_id_fk"
         FOREIGN KEY ("parent_id") REFERENCES "public"."pages"("id")
+        ON DELETE set null ON UPDATE no action;
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+  `);
+  await db.execute(sql`
+    DO $$ BEGIN
+      ALTER TABLE "_pages_v"
+        ADD CONSTRAINT "_pages_v_version_header_image_id_media_id_fk"
+        FOREIGN KEY ("version_header_image_id") REFERENCES "public"."media"("id")
         ON DELETE set null ON UPDATE no action;
     EXCEPTION WHEN duplicate_object THEN NULL; END $$;
   `);
@@ -76,6 +100,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
     CREATE UNIQUE INDEX IF NOT EXISTS "pages_slug_idx"      ON "pages" USING btree ("slug");
     CREATE UNIQUE INDEX IF NOT EXISTS "pages_legacy_id_idx" ON "pages" USING btree ("legacy_id");
+    CREATE INDEX        IF NOT EXISTS "pages_header_image_idx" ON "pages" USING btree ("header_image_id");
     CREATE INDEX        IF NOT EXISTS "pages_updated_at_idx" ON "pages" USING btree ("updated_at");
     CREATE INDEX        IF NOT EXISTS "pages_created_at_idx" ON "pages" USING btree ("created_at");
     CREATE INDEX        IF NOT EXISTS "pages__status_idx"    ON "pages" USING btree ("_status");
@@ -87,6 +112,8 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       ON "_pages_v" USING btree ("parent_id");
     CREATE INDEX IF NOT EXISTS "_pages_v_version_version_slug_idx"
       ON "_pages_v" USING btree ("version_slug");
+    CREATE INDEX IF NOT EXISTS "_pages_v_version_version_header_image_idx"
+      ON "_pages_v" USING btree ("version_header_image_id");
     CREATE INDEX IF NOT EXISTS "_pages_v_version_version_legacy_id_idx"
       ON "_pages_v" USING btree ("version_legacy_id");
     CREATE INDEX IF NOT EXISTS "_pages_v_version_version__status_idx"
