@@ -15,6 +15,7 @@ import * as migration_20260701_203840_add_top11_recording_fields_and_drop_title 
 import * as migration_20260701_221242_add_top11_display_title from './20260701_221242_add_top11_display_title';
 import * as migration_20260703_000000_add_pages_collection from './20260703_000000_add_pages_collection';
 import * as migration_20260704_000000_add_top11_votes_voterkey_field from './20260704_000000_add_top11_votes_voterkey_field';
+import * as migration_20260705_000000_drop_top11_recording_fields from './20260705_000000_drop_top11_recording_fields';
 
 export const migrations = [
   {
@@ -101,5 +102,10 @@ export const migrations = [
     up: migration_20260704_000000_add_top11_votes_voterkey_field.up,
     down: migration_20260704_000000_add_top11_votes_voterkey_field.down,
     name: '20260704_000000_add_top11_votes_voterkey_field',
+  },
+  {
+    up: migration_20260705_000000_drop_top11_recording_fields.up,
+    down: migration_20260705_000000_drop_top11_recording_fields.down,
+    name: '20260705_000000_drop_top11_recording_fields',
   },
 ];

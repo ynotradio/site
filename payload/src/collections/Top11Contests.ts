@@ -2,6 +2,7 @@ import { randomInt } from 'node:crypto';
 import type { CollectionConfig } from 'payload';
 import { APIError, slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { EmbedFeature } from '../features/embed';
 import {
   assertPublishedContestImmutability,
   findAllDocs,
@@ -76,7 +77,11 @@ const formatWeekOfTitle = (weekOf: string): string => {
     return weekOf;
   }
   return date.toLocaleDateString('en-US', {
-    weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC',
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
   });
 };
 
@@ -375,9 +380,7 @@ export const Top11Contests: CollectionConfig = {
         const rankedSongs = (contest.entries ?? [])
           .map((entry, index) => {
             const song = songsById.get(entry.song);
-            const artistName = song?.artist && typeof song.artist === 'object'
-              ? song.artist.name
-              : undefined;
+            const artistName = song?.artist && typeof song.artist === 'object' ? song.artist.name : undefined;
             return {
               song: entry.song,
               songTitle: song?.title ?? null,
@@ -478,8 +481,10 @@ export const Top11Contests: CollectionConfig = {
           });
 
           // 0 means no lookback limit: check the full all-time winner history.
-          const recentPriorWinners = lookbackContests > 0
-            ? priorWinners.slice(0, lookbackContests) : priorWinners;
+          let recentPriorWinners = priorWinners;
+          if (lookbackContests > 0) {
+            recentPriorWinners = priorWinners.slice(0, lookbackContests);
+          }
 
           const priorWinnerEmails = new Set(
             recentPriorWinners.map((winner) => winner.contestantEmail).filter(Boolean),
@@ -579,9 +584,7 @@ export const Top11Contests: CollectionConfig = {
       useAsSlug: 'weekOf',
       slugify: ({ valueToSlugify }) => {
         const date = new Date(String(valueToSlugify));
-        return Number.isNaN(date.getTime())
-          ? undefined
-          : date.toISOString().slice(0, 10);
+        return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
       },
     }),
     {
@@ -624,39 +627,13 @@ export const Top11Contests: CollectionConfig = {
         {
           name: 'body',
           type: 'richText',
-          editor: lexicalEditor(),
-        },
-        {
-          type: 'row',
-          fields: [
-            {
-              name: 'recordingUrl',
-              type: 'text',
-              admin: {
-                description:
-                  'The audio file ID or URL — for OpenDrive, paste the file ID; for MixCloud, the full URL',
-                placeholder: 'file-id or URL',
-                width: '70%',
-              },
-            },
-            {
-              name: 'recordingSource',
-              type: 'select',
-              options: [
-                { label: 'MixCloud', value: 'mixcloud' },
-                { label: 'OpenDrive', value: 'opendrive' },
-                { label: 'Other', value: 'other' },
-              ],
-              admin: {
-                description: 'Where is the show recording hosted?',
-                width: '30%',
-              },
-            },
-          ],
+          editor: lexicalEditor({
+            features: ({ defaultFeatures }) => [...defaultFeatures, EmbedFeature()],
+          }),
         },
       ],
       admin: {
-        description: 'Weekly Top 11 message snapshot and a link to the show recording.',
+        description: 'Weekly Top 11 message snapshot. Embed the show recording in the body.',
       },
     },
     {

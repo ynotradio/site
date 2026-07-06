@@ -2,20 +2,20 @@
 
 Quick reference for which `.env*` file is used where, and the footguns that
 have actually bitten people (including agents) in this repo. For the history
-of *how* we got to this file layout, see
+of _how_ we got to this file layout, see
 [ENVIRONMENT_FILE_CHANGES.md](./ENVIRONMENT_FILE_CHANGES.md).
 
 ## Which file is which
 
-| File                       | Used by                                  | Committed? |
-| -------------------------- | ----------------------------------------- | ---------- |
-| `.env`                     | Production Postgres/Neon vars, read by `payload.config.ts` **only when `NODE_ENV=production`** | No (gitignored) |
-| `.env.local`               | Local development — `yarn dev`, `yarn payload:dev`, most `bin/*.ts` scripts | No (gitignored) |
-| `.env.preview`             | Netlify preview deploys (Next.js/Payload) | No (gitignored) |
-| `.env.production`          | Netlify production deploys (Next.js/Payload) | No (gitignored) |
-| `.env.php`                 | Deployed to the production PHP server as `~/htdocs/.env` (legacy site) | No (gitignored) |
-| `.env.production.mysql`    | Import scripts only (legacy MySQL access) | No (gitignored) |
-| `.env.example` (+ variants)| Templates showing required keys, no real values | Yes |
+| File                        | Used by                                                                                        | Committed?      |
+| --------------------------- | ---------------------------------------------------------------------------------------------- | --------------- |
+| `.env`                      | Production Postgres/Neon vars, read by `payload.config.ts` **only when `NODE_ENV=production`** | No (gitignored) |
+| `.env.local`                | Local development — `yarn dev`, `yarn payload:dev`, most `bin/*.ts` scripts                    | No (gitignored) |
+| `.env.preview`              | Netlify preview deploys (Next.js/Payload)                                                      | No (gitignored) |
+| `.env.production`           | Netlify production deploys (Next.js/Payload)                                                   | No (gitignored) |
+| `.env.php`                  | Deployed to the production PHP server as `~/htdocs/.env` (legacy site)                         | No (gitignored) |
+| `.env.production.mysql`     | Import scripts only (legacy MySQL access)                                                      | No (gitignored) |
+| `.env.example` (+ variants) | Templates showing required keys, no real values                                                | Yes             |
 
 **Rule of thumb:** if you're running something with `yarn dev`, `yarn tsx ...`,
 or any `bin/*.ts` script from your own terminal, you're reading `.env.local`.
@@ -58,7 +58,7 @@ This has caused real confusion:
 Scripts that go through `getPayloadClient()` (`bin/migrations/shared/payloadClient.ts`)
 refuse to connect to `prod-neon`/`prod` targets unless `YES_I_MEAN_PROD=true`
 is set — see `assertProdWriteAllowed`. Scripts that connect directly via
-`getPayloadHMR`/`getPayload` (e.g. `bin/seed-top11.ts`, `bin/seed-mrm.ts`) use
+`getPayloadHMR`/`getPayload` (e.g. `bin/seed-mrm.ts`) use
 `assertNotConnectedToProd()`, which compares the active `DATABASE_URI` against
 `NEON_PROD_DATABASE_URL` and refuses the same way. **Don't bypass this by
 setting `YES_I_MEAN_PROD=true` unless you actually mean to write to
