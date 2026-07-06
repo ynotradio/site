@@ -25,7 +25,7 @@ database.
 > single `longtext` HTML blob. Porting that blob to a Lexical rich-text field
 > preserves the bad model and is the direct source of the HTML→Lexical
 > embed-dropping and whitespace bugs fixed in #780. The real question is how the
-> content should be *modelled*.
+> content should be _modelled_.
 
 ---
 
@@ -35,13 +35,13 @@ There are **35 active rows** in `custom_texts`. Every one is a single freeform
 HTML blob in one `longtext` column, authored as raw HTML in a `<textarea>`. They
 fall into five archetypes — only one of which is genuinely "a rich-text article."
 
-| # | Archetype | Count | Representative pages | What it really is |
-|---|-----------|-------|----------------------|-------------------|
-| **A** | Specialty-show episode archive | 2 | `rodney-anonymous` (143 embeds), `quarantine-takeovers` (35) | A flat list of hand-pasted Mixcloud `<iframe>`s separated by `<br><br>` |
-| **B** | Show directory / hub | 1 | `shows` | A 4-column HTML `<table>` of program tiles (thumbnail + link) → Mixcloud or sibling pages |
-| **C** | Year-end ranked lists & poll results | 12 | `top220of2020`…`top225of2025`, `yearendpoll2020`…`2025` | Ranked **data** (rank / artist / title; album lists) hand-typed as 220–230-row `<table>`s |
-| **D** | Multimedia retrospective | 4 | `y100:-20-years-gone`, `future-friday`, `words-with-nerds`, `y100-rocks` | Genuine rich articles: prose + dozens of mixed embeds (Mixcloud / YouTube / OpenDrive) |
-| **E** | Landing / marketing / stub | 16 | `donate`, `t-shirts`, `contests`, `ynotsessions20XX`×6, `remembering-starla`, `player-test` | Simple pages; a few carry PayPal **forms** / **scripts** |
+| #     | Archetype                            | Count | Representative pages                                                                        | What it really is                                                                         |
+| ----- | ------------------------------------ | ----- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **A** | Specialty-show episode archive       | 2     | `rodney-anonymous` (143 embeds), `quarantine-takeovers` (35)                                | A flat list of hand-pasted Mixcloud `<iframe>`s separated by `<br><br>`                   |
+| **B** | Show directory / hub                 | 1     | `shows`                                                                                     | A 4-column HTML `<table>` of program tiles (thumbnail + link) → Mixcloud or sibling pages |
+| **C** | Year-end ranked lists & poll results | 12    | `top220of2020`…`top225of2025`, `yearendpoll2020`…`2025`                                     | Ranked **data** (rank / artist / title; album lists) hand-typed as 220–230-row `<table>`s |
+| **D** | Multimedia retrospective             | 4     | `y100:-20-years-gone`, `future-friday`, `words-with-nerds`, `y100-rocks`                    | Genuine rich articles: prose + dozens of mixed embeds (Mixcloud / YouTube / OpenDrive)    |
+| **E** | Landing / marketing / stub           | 16    | `donate`, `t-shirts`, `contests`, `ynotsessions20XX`×6, `remembering-starla`, `player-test` | Simple pages; a few carry PayPal **forms** / **scripts**                                  |
 
 ### Concrete problems observed in the stored content
 
@@ -78,11 +78,11 @@ Custom texts get their **own `Pages` collection, separate and distinct from
 `Posts`** — they are not stories, and the two content types should not share a
 table:
 
-| | `Posts` (Stories) | `Pages` (Custom Text) |
-|---|---|---|
+|            | `Posts` (Stories)                                                                         | `Pages` (Custom Text)                             |
+| ---------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | Addressing | Front-page rotation, date-windowed (`startDate`/`endDate`, `priority`, `showOnFrontPage`) | Evergreen, addressed by a stable `permalink`/slug |
-| Lifecycle | Time-bound news items that age off the front page | Long-lived reference / marketing pages |
-| Identity | A headline + dated body | A titled page at a fixed URL |
+| Lifecycle  | Time-bound news items that age off the front page                                         | Long-lived reference / marketing pages            |
+| Identity   | A headline + dated body                                                                   | A titled page at a fixed URL                      |
 
 `Pages` is the baseline home for the 35 custom texts and preserves the permalinks
 the front end already routes on — `pages.php?page=…`, plus `donate.php`,
@@ -93,8 +93,8 @@ permalink via `CustomTextFactory`. Minimum fields: `title`, `slug`/`permalink`
 `use_postgres_customtext` flag toggles — repoints from `custom_texts` to the
 `pages` table once content is migrated, so no front-end call sites change.
 
-The archetype work below refines this baseline: pages that are really *structured
-data* (A/B specialty shows, C year-end lists) graduate **out of** freeform
+The archetype work below refines this baseline: pages that are really _structured
+data_ (A/B specialty shows, C year-end lists) graduate **out of** freeform
 `Pages` into purpose-built collections; the genuine rich-text pages (D/E) stay in
 `Pages` with rich text + embed blocks. (Whether every custom text must live in
 `Pages` or the structured archetypes graduate out is tracked in Open Questions.)
@@ -127,7 +127,7 @@ data* (A/B specialty shows, C year-end lists) graduate **out of** freeform
 Sequenced by pain:
 
 1. **A + B — Specialty Shows (highest pain, genuinely unbuilt).**
-   The existing `Shows` collection is the *airing schedule* (date / host /
+   The existing `Shows` collection is the _airing schedule_ (date / host /
    start–end time), **not** a directory of programs — so neither A nor B is
    served today. Introduce a program/episode model that powers both:
    - `SpecialtyShow` (program): `name`, `slug`, `thumbnail` (Media),
@@ -176,14 +176,100 @@ Sequenced by pain:
 Baseline home for all custom text is the new **`Pages`** collection; the
 structured archetypes graduate out of it into purpose-built collections.
 
-| Archetype | Target | Status |
-|-----------|--------|--------|
-| A — episode archives | `SpecialtyShow` (+ episodes) | **New work** (biggest gap) |
-| B — show hub | `SpecialtyShow` directory view | **New work** (with A) |
-| C — year-end lists | `YearEndPollResults` (Ch. 13 / #154) | **Exists** — reuse |
-| C — voting | `YearEndPolls*` (PR #518) | **Open PR** — land |
-| D — retrospectives | `Pages` + embed blocks | Needs `Pages` + Phase 1 blocks |
-| E — landing/forms | `Pages` + form components | Needs `Pages` + Phase 1 blocks |
+| Archetype            | Target                               | Status                         |
+| -------------------- | ------------------------------------ | ------------------------------ |
+| A — episode archives | `SpecialtyShow` (+ episodes)         | **New work** (biggest gap)     |
+| B — show hub         | `SpecialtyShow` directory view       | **New work** (with A)          |
+| C — year-end lists   | `YearEndPollResults` (Ch. 13 / #154) | **Exists** — reuse             |
+| C — voting           | `YearEndPolls*` (PR #518)            | **Open PR** — land             |
+| D — retrospectives   | `Pages` + embed blocks               | Needs `Pages` + Phase 1 blocks |
+| E — landing/forms    | `Pages` + form components            | Needs `Pages` + Phase 1 blocks |
+
+---
+
+## Import audit (all 35 pages vs. live site)
+
+Ran on 2026-07-04 against a local Payload instance pointed at the Neon `dev`
+branch, comparing each imported `pages` row to its live `ynotradio.net`
+counterpart (legacy URL pattern is `pages.php?page=<slug>`, not `/<slug>`
+directly).
+
+| id  | title                        | live URL found?                 | gap summary                                                                                                                         | severity              |
+| --- | ---------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| 1   | Support Y-Not Radio          | Yes                             | Text/links/tables preserved; tables collapsed to `[Table]` text placeholders (loses column structure)                               | minor                 |
+| 2   | Y-Not Radio Contests         | Yes                             | Local empty, but live page itself is pure JS/AJAX widget — nothing to import                                                        | none                  |
+| 3   | Modern Rock Madness          | Yes                             | Local content empty; live has tournament description, sponsorship pricing, bracket link, banner image, Mixcloud embed — all missing | major                 |
+| 4   | Y-Not Radio Contests (v2)    | Yes                             | Local empty; live also just a dynamic widget — not a bug                                                                            | none                  |
+| 5   | Future Friday                | Yes                             | Local empty; live has large weekly playlist tables spanning many weeks — all missing                                                | major                 |
+| 6   | Y100Rocks → Y-Not            | Yes                             | Local empty; live has narrative text + ~23 Mixcloud embeds + banner image — all missing                                             | major                 |
+| 7   | Specialty Shows On Demand    | Yes                             | Confirmed fallback bug; live is a grid of ~20 show-logo images (visual show directory) — all missing                                | major                 |
+| 8   | Rodney Anonymous             | Yes                             | Local empty; live has ~90 Mixcloud episode embeds — all missing                                                                     | major                 |
+| 9   | Words With Nerds             | Yes                             | Local empty; live has ~44 Mixcloud embeds + 2 "Full Interview" entries — all missing                                                | major                 |
+| 10  | Modern Rock Madness Draft    | Yes                             | Banner `<img>` title lost; embedded Google Forms voting iframe dropped (stray "Loading…" text remains)                              | major                 |
+| 11  | Top1000                      | Yes                             | Banner image lost; Google Sheets embed preserved correctly                                                                          | minor                 |
+| 12  | Quarantine Takeovers         | Yes                             | Intro text + ~35 Mixcloud embeds preserved well; inline banner image possibly dropped                                               | minor                 |
+| 13  | Top220of2020                 | Yes                             | Banner image lost; nav table flattened (acceptable); sponsor link lost as hyperlink; song tables/embeds preserved                   | minor                 |
+| 14  | Yearendpoll2020              | Yes                             | Same banner-loss/nav-flatten pattern; top lists preserved well otherwise                                                            | minor                 |
+| 15  | Y-Not Sessions 2020          | Yes                             | Confirmed fallback bug — shows literal "(No content available)"; live has download link + banner image                              | major                 |
+| 16  | Top221of2021                 | Yes                             | Banner image lost; embeds/tables preserved                                                                                          | minor                 |
+| 17  | Yearendpoll2021              | Yes                             | Same banner-loss pattern; lists preserved                                                                                           | minor                 |
+| 18  | Y-Not Sessions 2021          | No (404, retired from live nav) | Fallback "(No content available)" — root-caused to import script bug                                                                | major                 |
+| 19  | Dollar Stroll Raffle Contest | No (404)                        | Text preserved; live had interactive entry-purchase widget — not portable to static page                                            | minor (structural)    |
+| 20  | Player Test                  | No (404)                        | 4 Live365 embeds preserved correctly (dev/test page)                                                                                | none                  |
+| 21  | Top222of2022                 | No (404)                        | Countdown table + 5 Mixcloud embeds preserved; original had dynamic countdown UI (not portable)                                     | minor                 |
+| 22  | Yearendpoll2022              | No (404)                        | Text/tables preserved; original had voting UI (not portable)                                                                        | minor                 |
+| 23  | Y-Not Sessions 2022          | No (404)                        | Same fallback bug as 18                                                                                                             | major                 |
+| 24  | Top223of2023                 | No (404)                        | Countdown table + 6 Mixcloud embeds preserved; voting UI not portable                                                               | minor                 |
+| 25  | Yearendpoll2023              | No (404)                        | Text/tables preserved; voting UI not portable                                                                                       | minor                 |
+| 26  | Y-Not Sessions 2023          | No (404)                        | Same fallback bug as 18/23                                                                                                          | major                 |
+| 27  | T-Shirts                     | Yes                             | All 15 shirt-color swatch images stripped; only color names survive as plain list, no table layout                                  | major                 |
+| 28  | Top224of2024                 | Yes                             | Banner image, embeds, song tables all preserved                                                                                     | none (OK)             |
+| 29  | Yearendpoll2024              | Yes                             | Admin editor crash: "Invalid indent value" — numbered list conversion bug makes page unviewable/uneditable                          | major                 |
+| 30  | Y-Not Sessions 2024          | Yes                             | Fallback "(No content available)"; live has download link + banner image + Mixcloud follow-widget                                   | major                 |
+| 31  | Y100: 20 Years Gone          | No — live page itself now 404s  | Migration preserved real content (embeds, interviews) that live site has since lost; no baseline to compare                         | minor (informational) |
+| 32  | Remembering Starla           | Yes                             | Severe content loss: full memorial prose + 3 photos stripped; only 8 bare bolded names survive as isolated lines                    | major                 |
+| 33  | Top225of2025                 | Yes                             | Banner image, embeds, tables all preserved                                                                                          | none (OK)             |
+| 34  | Yearendpoll2025              | Yes                             | Same "Invalid indent value" crash as page 29                                                                                        | major                 |
+| 35  | Ynotsessions2025             | Yes                             | Fallback "(No content available)"; live has download link + banner image                                                            | major                 |
+
+### Priority gaps found
+
+1. **Systemic empty-content bug (≥11 of 35 pages: 3, 5, 6, 7, 8, 9, 15, 18, 23,
+   26, 30, 35).** `bin/migrations/importCustomTexts.ts` strips `upload` nodes
+   _before_ checking whether content is empty (see `importCustomText`), so any
+   body dominated by an image/embed gets nulled and hits the
+   "(No content available)" fallback. Highest-value fix — affects the most
+   pages by far. **Status: fixed** (see below).
+2. **Admin-breaking crash on numbered lists (pages 29, 34).** The HTML→Lexical
+   converter (`bin/migrations/shared/enhancedHtmlToLexical.ts`) emitted
+   `listitem` nodes without an `indent` field for `<ol><li value="N">` markup
+   (used for tied rankings in year-end countdown lists), which crashes
+   Payload's Lexical editor with "Invalid indent value" — these pages were
+   unviewable/uneditable in admin. **Status: fixed** (see below).
+3. **Banner/inline image loss (10, 11, 13, 14, 16, 17, 27, 32).** `<img>`-as-
+   banner graphics are dropped everywhere they occur; inline images mixed with
+   prose (T-Shirts color swatches, Starla memorial photos) are stripped too.
+   Page 32 is the worst case — full memorial tribute reduced to 8 disconnected
+   bolded names. Root cause: images convert to `upload` Lexical nodes with
+   placeholder IDs that fail Payload validation, so the importer strips them
+   rather than fixing the ID. **Status: open** — needs a real asset-import step
+   (upload images to Media/Cloudinary, then reference the real ID) rather than
+   stripping.
+4. **Real informational loss on pages 3 and 10** (Modern Rock Madness pages) —
+   not just images, actual tournament rules/pricing text and a Google Forms
+   voting iframe were dropped. Same root cause as #1.
+5. **Structural/non-portable items (19, 21, 22, 24, 25).** Raffle
+   entry-purchase widgets, poll voting UIs, and countdown widgets are
+   inherently dynamic — the static-page model can't capture them. Not
+   importer bugs; flag as expected limitations to design around (per the
+   archetype plan above — these are graduating out of `Pages` anyway).
+6. **Legacy URL pattern**: live custom pages resolve via
+   `ynotradio.net/pages.php?page=<slug>`, not `ynotradio.net/<slug>` directly.
+7. **Pages 18–26 range (legacy IDs 52–64) have no live counterpart** —
+   production nav no longer links to these; comparison for those relied on
+   code inspection rather than a live baseline.
+8. **Page 31 is the inverse case** — live site 404s, but the imported page
+   retains real content. Worth confirming this is intentional retention.
 
 ---
 
@@ -206,6 +292,94 @@ structured archetypes graduate out of it into purpose-built collections.
    make `rodney-anonymous`-style archives self-maintaining.
 5. **Asset hosting.** Whether to backfill imgur/Mixcloud-thumbnail images into
    Cloudinary/Media as part of each archetype migration.
+
+---
+
+## Proposal: dynamic widgets (19, 21, 22, 24, 25) and legacy routing
+
+Written to give Josh something concrete to react to on open questions #1 and
+#3 above, specifically for the five pages flagged as "structural/non-portable"
+in the priority-gaps list, plus the `pages.php?page=<slug>` URL pattern.
+
+### The routing question is already solved, not open
+
+`src/pages.php` is a single query-string dispatcher, not per-slug PHP files:
+it reads `$_GET['page']`, resolves it via `CustomTextFactory::create($db)
+->findByPermalink($page)`, and renders whatever `title`/`html` comes back.
+`pages.php?page=<slug>` already works today for any permalink in
+`custom_texts` (or, once `use_postgres_customtext` is flipped, `pages`) — no
+new routing code is needed to keep serving the 35 pages at their existing
+URLs. The "gap" noted in the audit was just documenting the URL shape, not
+identifying missing work.
+
+One loose end this surfaced: `pages.php` unconditionally renders
+`"<h1>".$custom_text['title']."</h1>"` and has no concept of the new
+`headerImage` field — `PostgresCustomText` doesn't expose it, and `pages.php`
+doesn't render it. Pages imported with a `headerImage` (banner-image titles
+like `future-friday`) won't show that banner on the live site until both are
+updated. Small, contained fix — worth its own follow-up PR rather than folding
+into #815.
+
+### Dynamic widgets (19, 21, 22, 24, 25): three options, recommendation below
+
+These pages pair static content (rankings tables, embed lists) that already
+imports cleanly with **dynamic UI the static-page model fundamentally can't
+express** — interactive raffle checkout, year-end poll voting. The audit
+already correctly separated this from importer bugs; this section is about
+what to build instead, not a bug to fix in `Pages`.
+
+**Option A — Leave them as `Pages` with a "this feature is retired" note.**
+All five of these pages 404 on the live site already (no current traffic to
+preserve). Import the static remnants (rankings/embeds) as read-only `Pages`
+content, and don't attempt to rebuild the interactive layer at all. Zero new
+collections, zero new UI work.
+
+- Fits: this is a historical-archive migration, not a product relaunch.
+- Risk: if these are meant to come back for the next year-end cycle, this
+  punts that decision to whoever revives them, with no infrastructure ready.
+
+**Option B — Graduate to purpose-built collections now, matching archetype C.**
+Chapter 13 already ships `YearEndPollResults`/voting collections (#518,
+merged) for the ranked-list + voting archetype pages 21/22/24/25 belong to.
+Wire the existing PR #518 collections in for those four, and treat page 19
+(raffle) as its own one-off — since PayPal Smart Buttons (#815) already
+covers its checkout mechanism, it may not need a bespoke collection at all,
+just the `Pages` content plus the Smart Buttons block already built.
+
+- Fits: reuses infrastructure that's already built and tested (#518), so
+  incremental cost is mostly wiring, not new design.
+- Risk: revives four dormant voting pages product hasn't asked for; scope
+  creep if nobody's actually running another year-end poll.
+
+**Option C — Do nothing until product asks.** Don't import these five pages
+at all (or import as unpublished drafts) until there's a concrete plan to
+relaunch the raffle/poll flow. Revisit archetype C wiring at that point.
+
+- Fits: least speculative work; avoids building UI nobody's confirmed is
+  coming back.
+- Risk: content sits unimported/unpublished indefinitely; page 19's dormant
+  live URL (confirmed 200, not 404, contradicting the audit table — see
+  below) suggests at least the raffle page might still be semi-live.
+
+**Recommendation: Option A for now**, with a flag to revisit page 19
+specifically. Rationale: the four year-end poll pages (21/22/24/25) are
+confirmed 404 on production — no live traffic depends on reviving them, and
+#518's collections exist and can be wired in later at low cost if a future
+year-end cycle needs them. Page 19 is the outlier — it currently returns
+**200**, not 404 as the original audit table states (verified via direct
+fetch against `pages.php?page=dollar-stroll-raffle-contest-1` during the
+Smart Buttons work), meaning the raffle checkout may still be an active,
+if unlinked, flow. Worth a quick confirmation with Josh on whether that URL
+is still meant to be reachable before treating it identically to the other
+four.
+
+### Related PRs since this doc was last updated
+
+- #815 — Lexical editor gaps (embeds, tables, images, PayPal classic +
+  Smart Buttons, small text) — covers page 19's checkout mechanism if it's
+  kept.
+- #518 — Year End Poll voting collections — the reusable target for
+  21/22/24/25 under Option B.
 
 ---
 

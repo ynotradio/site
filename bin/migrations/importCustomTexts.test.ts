@@ -1,9 +1,8 @@
 /**
  * Unit tests for importCustomTexts migration script
  *
- * Focuses on the donate page scenario described in GitHub issue:
- * "Donate page is blank in Postgres version" — the root cause was that
- * the 'donate' custom_text was not present in the Postgres posts table.
+ * Covers the import of custom_texts from MySQL into the dedicated `pages`
+ * Payload collection (distinct from `posts` / stories).
  */
 
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
@@ -19,18 +18,30 @@ vi.mock('./shared/payloadClient', () => ({
   getPayloadClient: vi.fn(),
 }));
 
+const mockConvertHtmlToLexicalEnhanced = vi.fn((html: string) => ({
+  root: {
+    type: 'root',
+    children: [
+      {
+        type: 'paragraph',
+        children: [{ type: 'text', text: html, format: 0 }],
+      },
+    ],
+  },
+}));
+
+// Passthrough by default (no images to resolve); individual tests override
+// this with mockResolvedValueOnce to simulate a successful or failed import.
+const mockResolveImageUploads = vi.fn((_payload: unknown, content: unknown) => Promise.resolve(content));
+
 vi.mock('./shared/enhancedHtmlToLexical', () => ({
-  convertHtmlToLexicalEnhanced: vi.fn((html: string) => ({
-    root: {
-      type: 'root',
-      children: [
-        {
-          type: 'paragraph',
-          children: [{ type: 'text', text: html, format: 0 }],
-        },
-      ],
-    },
-  })),
+  convertHtmlToLexicalEnhanced: (html: string) => mockConvertHtmlToLexicalEnhanced(html),
+  resolveImageUploads: (...args: [unknown, unknown]) => mockResolveImageUploads(...args),
+}));
+
+const mockImportImageFromUrl = vi.fn();
+vi.mock('./shared/mediaImporter', () => ({
+  importImageFromUrl: (...args: unknown[]) => mockImportImageFromUrl(...args),
 }));
 
 vi.mock('./shared/logger', () => ({
@@ -49,6 +60,19 @@ describe('importCustomTexts', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockConvertHtmlToLexicalEnhanced.mockImplementation((html: string) => ({
+      root: {
+        type: 'root',
+        children: [
+          {
+            type: 'paragraph',
+            children: [{ type: 'text', text: html, format: 0 }],
+          },
+        ],
+      },
+    }));
+    mockResolveImageUploads.mockImplementation((_payload: unknown, content: unknown) => Promise.resolve(content));
+    mockImportImageFromUrl.mockResolvedValue({ success: false, error: 'not mocked' });
 
     mockPayload = {
       find: vi.fn(),
@@ -58,11 +82,11 @@ describe('importCustomTexts', () => {
   });
 
   describe('importCustomText', () => {
-    it('should import donate custom_text with slug "donate"', async () => {
+    it('should import donate custom_text into the pages collection with slug "donate"', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-donate' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-donate' });
 
       const donateCustomText: CustomText = {
         id: 5,
@@ -77,13 +101,11 @@ describe('importCustomTexts', () => {
       expect(result).toBe('success');
       expect(mockPayload.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          collection: 'posts',
+          collection: 'pages',
           data: expect.objectContaining({
             slug: 'donate',
-            headline: 'Support Y-Not Radio',
-            showOnFrontPage: false,
-            startDate: '2000-01-01T00:00:00.000Z',
-            endDate: '2099-12-31T23:59:59.999Z',
+            title: 'Support Y-Not Radio',
+            _status: 'published',
           }),
         }),
       );
@@ -93,7 +115,7 @@ describe('importCustomTexts', () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-about' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-about' });
 
       const aboutCustomText: CustomText = {
         id: 10,
@@ -134,16 +156,16 @@ describe('importCustomTexts', () => {
       // Upsert: existing docs are refreshed in place, not skipped or duplicated.
       expect(result).toBe('success');
       expect(mockPayload.update).toHaveBeenCalledWith(
-        expect.objectContaining({ collection: 'posts', id: 'existing' }),
+        expect.objectContaining({ collection: 'pages', id: 'existing' }),
       );
       expect(mockPayload.create).not.toHaveBeenCalled();
     });
 
-    it('should set showOnFrontPage to false for custom text pages', async () => {
+    it('should not include Posts-specific fields (startDate, endDate, showOnFrontPage)', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-id' });
 
       const customText: CustomText = {
         id: 7,
@@ -155,18 +177,18 @@ describe('importCustomTexts', () => {
 
       await importCustomText(mockPayload as Payload, customText);
 
-      expect(mockPayload.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ showOnFrontPage: false }),
-        }),
-      );
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('showOnFrontPage');
+      expect(callData).not.toHaveProperty('startDate');
+      expect(callData).not.toHaveProperty('endDate');
+      expect(callData).not.toHaveProperty('priority');
     });
 
-    it('should apply legacyId offset of 10000 to avoid collision with story IDs', async () => {
+    it('should use the raw MySQL id as legacyId (no offset needed in pages collection)', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
-      (mockPayload.create as Mock).mockResolvedValue({ id: 'post-id' });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-id' });
 
       const customText: CustomText = {
         id: 5,
@@ -178,10 +200,11 @@ describe('importCustomTexts', () => {
 
       await importCustomText(mockPayload as Payload, customText);
 
-      // Verify the find call used legacyId = 5 + 10000 = 10005
+      // Find uses the raw MySQL id (no +10000 offset; pages has no story ID collisions)
       expect(mockPayload.find).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { legacyId: { equals: 10005 } },
+          collection: 'pages',
+          where: { legacyId: { equals: 5 } },
         }),
       );
     });
@@ -204,5 +227,209 @@ describe('importCustomTexts', () => {
 
       expect(result).toBe('error');
     });
+
+    it('should not use the generic empty-content fallback when an image-only body imports successfully', async () => {
+      // Regression test: a body that converts to a single `upload` node has
+      // real content and should keep it once resolveImageUploads resolves
+      // the placeholder to a real Media reference.
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'upload',
+              value: null,
+              src: 'https://i.imgur.com/banner.png',
+              children: [],
+            },
+          ],
+        },
+      });
+      mockResolveImageUploads.mockResolvedValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            { type: 'upload', version: 3, relationTo: 'media', value: 'media-banner-123' },
+          ],
+        },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-banner' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/banner.png" width="685">',
+        html: '<img src="https://i.imgur.com/banner.png" width="685">',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const [firstChild] = callData.content.root.children;
+      expect(firstChild.type).toBe('upload');
+      expect(firstChild.value).toBe('media-banner-123');
+    });
+
+    it('should fall back to a note (not the generic empty-content message) when an image-only body fails to import', async () => {
+      // hasContent is computed from the pre-resolveImageUploads tree, so a
+      // failed image import gets its own message rather than being confused
+      // with a body that was truly empty from the start.
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'upload',
+              value: null,
+              src: 'https://i.imgur.com/banner.png',
+              children: [],
+            },
+          ],
+        },
+      });
+      mockResolveImageUploads.mockResolvedValueOnce({
+        root: { type: 'root', children: [] },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-banner' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/banner.png" width="685">',
+        html: '<img src="https://i.imgur.com/banner.png" width="685">',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const [firstChild] = callData.content.root.children;
+      const text = firstChild.children[0].text;
+      expect(text).not.toBe('(No content available)');
+      expect(text).toBe('(Image content failed to import)');
+    });
+
+    it('should still use the generic empty-content fallback when there is truly no content', async () => {
+      mockConvertHtmlToLexicalEnhanced.mockReturnValueOnce({
+        root: {
+          type: 'root',
+          children: [
+            {
+              type: 'paragraph',
+              children: [{ type: 'text', text: '   ', format: 0 }],
+            },
+          ],
+        },
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-empty' });
+
+      const customText: CustomText = {
+        id: 52,
+        title: 'Y-Not Sessions 2021',
+        html: '<p>   </p>',
+        permalink: 'ynotsessions2021',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      const text = callData.content.root.children[0].children[0].text;
+      expect(text).toBe('(No content available)');
+    });
+
+    it('should extract and import a stylized <img> title as headerImage', async () => {
+      mockImportImageFromUrl.mockResolvedValue({
+        success: true,
+        mediaId: 'media-banner-123',
+        cloudinaryUrl: 'https://cloudinary.example/banner.png',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top220' });
+
+      const customText: CustomText = {
+        id: 47,
+        title: '<img src="https://i.imgur.com/QRvzAZV.png" width="685">',
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top220of2020',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      expect(mockImportImageFromUrl).toHaveBeenCalledWith(
+        mockPayload,
+        'https://i.imgur.com/QRvzAZV.png',
+        expect.objectContaining({ legacyUrl: 'https://i.imgur.com/QRvzAZV.png' }),
+      );
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.headerImage).toBe('media-banner-123');
+      expect(callData.title).toBe('Top220of2020');
+    });
+
+    it('should omit headerImage when the banner image import fails', async () => {
+      mockImportImageFromUrl.mockResolvedValue({
+        success: false,
+        error: 'Failed to download image',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top221' });
+
+      const customText: CustomText = {
+        id: 50,
+        title: '<img src="https://i.imgur.com/p7LzXZv.gif" width="685">',
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top221of2021',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('headerImage');
+      expect(callData.title).toBe('Top221of2021');
+    });
+
+    it('should not attempt an image import when title HTML has no <img>', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-centered' });
+
+      const customText: CustomText = {
+        id: 73,
+        title: '<center>Y-Not Sessions 2025</center>',
+        html: '<p>Sessions info</p>',
+        permalink: 'ynotsessions2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData).not.toHaveProperty('headerImage');
+    });
   });
 });
+

@@ -247,6 +247,18 @@ describe('detectEmbedType', () => {
       expect(result).toEqual({ type: 'mixcloud', embedUrl: url, originalUrl: url });
     });
 
+    it('should pass through the legacy www.mixcloud.com/widget/iframe/ URL unchanged', () => {
+      // The format actually stored in ~180 of the 35 active custom-text pages
+      // (e.g. rodney-anonymous): the widget path on the plain www.mixcloud.com
+      // host, predating the player-widget.mixcloud.com host. Re-deriving the
+      // feed from the path here would read "/widget/iframe/" itself as the
+      // feed and produce a broken embed.
+      const url = 'https://www.mixcloud.com/widget/iframe/?hide_cover=1&'
+        + 'feed=%2Fynotradio%2Frodney-anonymous-tells-you-how-to-live-9823%2F';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'mixcloud', embedUrl: url, originalUrl: url });
+    });
+
     it('should fall back to generic for a genre/hub URL', () => {
       const url = 'https://www.mixcloud.com/genres/british%2Bynotradio/?order=latest';
       const result = detectEmbedType(url);
@@ -273,6 +285,20 @@ describe('detectEmbedType', () => {
       const url = 'https://www.opendrive.com/player/216190430_XqukK';
       const result = detectEmbedType(url);
       expect(result).toEqual({ type: 'opendrive', embedUrl: url, originalUrl: url });
+    });
+  });
+
+  describe('Live365 detection', () => {
+    it('should pass through a Live365 embed player URL', () => {
+      const url = 'https://live365.com/embed/player.html?station=a54553&s=xl&m=light';
+      const result = detectEmbedType(url);
+      expect(result).toEqual({ type: 'live365', embedUrl: url, originalUrl: url });
+    });
+
+    it('should pass through a Live365 "played" embed URL', () => {
+      const url = 'https://live365.com/embed/played.html?station=a54553&s=lg&m=light';
+      const result = detectEmbedType(url);
+      expect(result.type).toBe('live365');
     });
   });
 });

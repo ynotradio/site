@@ -2,8 +2,15 @@
  * Unit tests for Enhanced HTML to Lexical Converter
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { convertHtmlToLexicalEnhanced } from './enhancedHtmlToLexical';
+import {
+  describe, it, expect, vi, beforeEach,
+} from 'vitest';
+import { convertHtmlToLexicalEnhanced, resolveImageUploads } from './enhancedHtmlToLexical';
+
+const mockImportImageFromUrl = vi.fn();
+vi.mock('./mediaImporter', () => ({
+  importImageFromUrl: (...args: unknown[]) => mockImportImageFromUrl(...args),
+}));
 
 describe('enhancedHtmlToLexical', () => {
   describe('Basic Content', () => {
@@ -185,6 +192,34 @@ describe('enhancedHtmlToLexical', () => {
       expect(listItem.type).toBe('listitem');
       expect(listItem.children.some((n: any) => n.format === 1)).toBe(true);
     });
+
+    it('should set a numeric indent on every list item (Lexical rejects null/undefined)', () => {
+      // Regression test: listitem nodes without `indent` crashed the Payload
+      // admin editor with "Invalid indent value" on real imported pages that
+      // used <li value="N"> for tied countdown rankings.
+      const html = '<ol><li>First</li><li>Second</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const listItems = result.root.children[0].children;
+      listItems.forEach((item: any) => {
+        expect(typeof item.indent).toBe('number');
+      });
+    });
+
+    it('should use an explicit li value attribute as the listitem value', () => {
+      const html = '<ol><li value="7">Tied for 7th</li><li value="7">Also tied for 7th</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const [first, second] = result.root.children[0].children;
+      expect(first.value).toBe(7);
+      expect(second.value).toBe(7);
+    });
+
+    it('should fall back to positional numbering when li has no value attribute', () => {
+      const html = '<ol><li>First</li><li>Second</li></ol>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const [first, second] = result.root.children[0].children;
+      expect(first.value).toBe(1);
+      expect(second.value).toBe(2);
+    });
   });
 
   describe('Block Quotes', () => {
@@ -211,6 +246,83 @@ describe('enhancedHtmlToLexical', () => {
       const imageNode = result.root.children[0];
       expect(imageNode.width).toBe(800);
       expect(imageNode.height).toBe(600);
+    });
+
+    it('should be a pending upload (value: null) until resolveImageUploads runs', () => {
+      const result = convertHtmlToLexicalEnhanced('<img src="/image.jpg" alt="Test" />');
+      expect(result.root.children[0].value).toBeNull();
+    });
+
+    it('should map align=left/right/center to fields.alignment', () => {
+      const left = convertHtmlToLexicalEnhanced('<img src="/a.jpg" align="left" />');
+      expect(left.root.children[0].fields).toEqual({ alignment: 'left' });
+
+      const right = convertHtmlToLexicalEnhanced('<img src="/a.jpg" align="right" />');
+      expect(right.root.children[0].fields).toEqual({ alignment: 'right' });
+    });
+
+    it('should not set fields when align is absent or unrecognized', () => {
+      const noAlign = convertHtmlToLexicalEnhanced('<img src="/a.jpg" />');
+      expect(noAlign.root.children[0].fields).toBeUndefined();
+
+      const badAlign = convertHtmlToLexicalEnhanced('<img src="/a.jpg" align="middle" />');
+      expect(badAlign.root.children[0].fields).toBeUndefined();
+    });
+  });
+
+  describe('resolveImageUploads', () => {
+    const mockPayload = {} as never;
+
+    beforeEach(() => {
+      mockImportImageFromUrl.mockReset();
+    });
+
+    it('replaces a pending upload node with a real media id', async () => {
+      mockImportImageFromUrl.mockResolvedValue({ success: true, mediaId: 'media-123' });
+
+      const doc = convertHtmlToLexicalEnhanced('<img src="/image.jpg" alt="Banner" align="left" />');
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      expect(mockImportImageFromUrl).toHaveBeenCalledWith(
+        mockPayload,
+        '/image.jpg',
+        expect.objectContaining({ alt: 'Banner', legacyUrl: '/image.jpg' }),
+      );
+      const node = resolved.root.children[0];
+      expect(node.value).toBe('media-123');
+      expect(node.fields).toEqual({ alignment: 'left' });
+      expect(node.src).toBeUndefined();
+    });
+
+    it('drops the node entirely when the image import fails', async () => {
+      mockImportImageFromUrl.mockResolvedValue({ success: false, error: 'Failed to download image' });
+
+      const doc = convertHtmlToLexicalEnhanced('<p>Before</p><img src="/broken.jpg" /><p>After</p>');
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      expect(resolved.root.children).toHaveLength(2);
+      expect(resolved.root.children.some((n: any) => n.type === 'upload')).toBe(false);
+    });
+
+    it('resolves upload nodes nested inside table cells', async () => {
+      mockImportImageFromUrl.mockResolvedValue({ success: true, mediaId: 'media-nested' });
+
+      const doc = convertHtmlToLexicalEnhanced(
+        '<table><tr><td><img src="/cell.jpg" /></td></tr></table>',
+      );
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      const json = JSON.stringify(resolved);
+      expect(json).toContain('media-nested');
+      expect(json).not.toContain('/cell.jpg');
+    });
+
+    it('is a no-op when there are no upload nodes', async () => {
+      const doc = convertHtmlToLexicalEnhanced('<p>No images here</p>');
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+      expect(resolved.root.children[0].children[0].text).toContain('No images here');
     });
   });
 
@@ -244,18 +356,40 @@ describe('enhancedHtmlToLexical', () => {
   });
 
   describe('Tables', () => {
-    it('should convert table to structured text', () => {
+    it('should convert a genuinely tabular (no embeds/images) table into real table nodes', () => {
       const html = `
         <table>
+          <tr><th>Rank</th><th>Artist</th></tr>
           <tr><td>Cell 1</td><td>Cell 2</td></tr>
           <tr><td>Cell 3</td><td>Cell 4</td></tr>
         </table>
       `;
       const result = convertHtmlToLexicalEnhanced(html);
-      const { text } = result.root.children[0].children[0];
-      expect(text).toContain('[Table]');
-      expect(text).toContain('Cell 1');
-      expect(text).toContain('Cell 4');
+      const table = result.root.children[0];
+      expect(table.type).toBe('table');
+      expect(table.children).toHaveLength(3);
+      expect(table.children[0].type).toBe('tablerow');
+
+      const headerCell = table.children[0].children[0];
+      expect(headerCell.type).toBe('tablecell');
+      expect(headerCell.headerState).toBe(1);
+      expect(headerCell.children[0].children[0].text).toBe('Rank');
+
+      const dataCell = table.children[1].children[0];
+      expect(dataCell.headerState).toBe(0);
+      expect(dataCell.children[0].children[0].text).toBe('Cell 1');
+
+      const lastCell = table.children[2].children[1];
+      expect(lastCell.children[0].children[0].text).toBe('Cell 4');
+    });
+
+    it('should skip empty cells and drop rows left with no cells', () => {
+      const html = '<table><tr><td>Only</td><td></td></tr><tr><td></td></tr></table>';
+      const result = convertHtmlToLexicalEnhanced(html);
+      const table = result.root.children[0];
+      expect(table.type).toBe('table');
+      expect(table.children).toHaveLength(1);
+      expect(table.children[0].children).toHaveLength(1);
     });
 
     it('should preserve iframe embeds inside table cells instead of flattening', () => {
@@ -620,10 +754,14 @@ describe('enhancedHtmlToLexical', () => {
       expect(result.root.children[0].format).toBe('');
     });
 
-    it('should not apply alignment when style textAlign is stripped by sanitizer', () => {
+    it('should apply alignment from the align attribute (kept for image float/alignment)', () => {
+      // `align` is now allowlisted so <img align="left|right"> can carry
+      // float/alignment through to the upload node's fields.alignment; as a
+      // side effect, <p align="..."> alignment (widely used in legacy
+      // custom-text nav tables) now works too instead of being stripped.
       const result = convertHtmlToLexicalEnhanced('<p align="right">Right aligned</p>');
       expect(result.root.children[0].type).toBe('paragraph');
-      expect(result.root.children[0].format).toBe('');
+      expect(result.root.children[0].format).toBe('right');
     });
   });
 

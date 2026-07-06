@@ -1,7 +1,7 @@
 /**
  * Import only custom_texts from MySQL to Payload
  *
- * This script imports custom_texts as Posts with special handling:
+ * This script imports custom_texts as Pages with special handling:
  * - Uses enhanced HTML-to-Lexical converter for complex content
  * - Generates slugs from permalinks
  * - Sets appropriate dates for always-visible content
@@ -15,7 +15,8 @@ import { Command } from 'commander';
 import { connectToDatabase, type CustomText } from './database';
 import { getPayloadClient } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
-import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
+import { convertHtmlToLexicalEnhanced, resolveImageUploads } from './shared/enhancedHtmlToLexical';
+import { importImageFromUrl } from './shared/mediaImporter';
 
 const logger = createLogger('CustomTextsImport');
 
@@ -37,13 +38,13 @@ async function importCustomText(
   payload: any,
   customText: CustomText,
 ): Promise<'success' | 'skipped' | 'error'> {
-  const legacyId = customText.id + 10000; // Offset to avoid collisions with story IDs
+  const legacyId = customText.id;
 
   try {
     // Check if already imported — if so we update in place so re-running the
     // script refreshes stale custom-text content (e.g. new Mixcloud embeds).
     const existing = await payload.find({
-      collection: 'posts',
+      collection: 'pages',
       where: { legacyId: { equals: legacyId } },
       limit: 1,
     });
@@ -51,20 +52,38 @@ async function importCustomText(
 
     logger.info(`Importing custom_text ${customText.id}: ${customText.title}`);
 
-    // Generate proper headline from permalink if title is HTML
-    let headline = customText.title;
-    if (headline.trim().startsWith('<')) {
-      // Title is HTML (likely an image tag), use permalink instead
+    // Generate proper title from permalink if title is HTML
+    let { title } = customText;
+    let headerImage: string | undefined;
+    if (title && title.trim().startsWith('<')) {
+      // Title is HTML — usually a stylized banner <img> used in place of a
+      // real heading. Extract and import that image as the page's headerImage
+      // so the banner isn't lost, then fall back to a readable text title.
+      const imgMatch = title.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (imgMatch) {
+        const [, imageUrl] = imgMatch;
+        const result = await importImageFromUrl(payload, imageUrl, {
+          alt: `Banner image for ${customText.permalink || `custom text ${customText.id}`}`,
+          legacyUrl: imageUrl,
+        });
+        if (result.success && result.mediaId) {
+          headerImage = result.mediaId;
+          logger.info(`  Imported header image: ${imageUrl} -> media ${result.mediaId}`);
+        } else {
+          logger.warn(`  Failed to import header image ${imageUrl}: ${result.error}`);
+        }
+      }
+
       if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
-        headline = customText.permalink
+        title = customText.permalink
           .split('-')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
       } else {
-        headline = `Custom Text ${customText.id}`;
+        title = `Custom Text ${customText.id}`;
       }
-      logger.info(`  Converted HTML title to: "${headline}"`);
+      logger.info(`  Converted HTML title to: "${title}"`);
     }
 
     // Convert HTML content to Lexical format using enhanced converter
@@ -72,26 +91,54 @@ async function importCustomText(
     try {
       content = convertHtmlToLexicalEnhanced(customText.html || '');
 
-      // Strip out upload nodes (images) since they have placeholder IDs that fail validation
-      // Images will need to be re-added manually or via a separate import process
-      const stripUploadNodes = (nodes: any[]): any[] => nodes
-        .filter((node) => node.type !== 'upload')
-        .map((node) => {
-          if (node.children && Array.isArray(node.children)) {
-            return { ...node, children: stripUploadNodes(node.children) };
-          }
-          return node;
-        });
-
-      content.root.children = stripUploadNodes(content.root.children);
-
-      // Check if content is empty or just has empty paragraph
+      // Check if content is empty or just has empty paragraph. This must run
+      // BEFORE resolving image uploads below — otherwise a body that's
+      // entirely an image (a banner <img>, a show-directory grid, etc.) looks
+      // empty if every image import fails and gets replaced with the
+      // "(No content available)" fallback, silently discarding pages that
+      // had real (if unmigrated) content.
       const hasContent = content.root.children.some((child: any) => {
         if (child.type === 'paragraph') {
           return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
         }
         return true;
       });
+
+      // Download and upload each inline <img> to Media/Cloudinary via the
+      // same importImageFromUrl helper the headerImage import uses, turning
+      // the converter's placeholder upload nodes into real Media references.
+      // Images that fail to import are dropped rather than left broken.
+      content = await resolveImageUploads(payload, content);
+
+      // An image-only body has real content (hasContent === true) but ends
+      // up with zero children if every image failed to import — Payload's
+      // rich-text field needs at least one block, so leave a note rather
+      // than an empty root.
+      if (hasContent && content.root.children.length === 0) {
+        logger.warn(
+          `  Custom text ${customText.id} had only image content, which failed to import`,
+        );
+        content.root.children = [
+          {
+            type: 'paragraph',
+            format: '',
+            indent: 0,
+            version: 1,
+            children: [
+              {
+                type: 'text',
+                text: '(Image content failed to import)',
+                format: 0,
+                mode: 'normal',
+                style: '',
+                detail: 0,
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+          },
+        ];
+      }
 
       if (!hasContent) {
         logger.warn(`  Custom text ${customText.id} has empty content, using fallback`);
@@ -162,26 +209,26 @@ async function importCustomText(
     // Generate slug from permalink
     const slug = customText.permalink || `custom-text-${customText.id}`;
 
-    const data = {
-      headline,
+    const data: Record<string, unknown> = {
+      title,
       content,
       slug,
-      // generateSlug: false ensures the postSlugify hook doesn't overwrite
-      // our permalink-derived slug with a date-prefixed value.
+      // generateSlug: false ensures the pageSlugify hook doesn't overwrite
+      // our permalink-derived slug.
       generateSlug: false,
-      startDate: '2000-01-01T00:00:00.000Z', // Always visible content
-      endDate: '2099-12-31T23:59:59.999Z', // Far future date
-      showOnFrontPage: false, // Custom texts are standalone pages, not front page stories
-      status: 'published',
+      _status: 'published' as const,
       legacyId,
     };
+    if (headerImage) {
+      data.headerImage = headerImage;
+    }
 
     if (existingId !== undefined) {
-      await payload.update({ collection: 'posts', id: existingId, data });
-      logger.info(`  ✓ Updated custom_text ${customText.id} (post ${existingId})`);
+      await payload.update({ collection: 'pages', id: existingId, data });
+      logger.info(`  ✓ Updated custom_text ${customText.id} (page ${existingId})`);
     } else {
-      const newPost = await payload.create({ collection: 'posts', data });
-      logger.info(`  ✓ Imported custom_text ${customText.id} as post ${newPost.id}`);
+      const newPage = await payload.create({ collection: 'pages', data });
+      logger.info(`  ✓ Imported custom_text ${customText.id} as page ${newPage.id}`);
     }
     return 'success';
   } catch (error: any) {

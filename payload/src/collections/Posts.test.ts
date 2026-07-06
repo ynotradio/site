@@ -5,6 +5,9 @@ import { flattenRowFields } from './testUtils';
 vi.mock('@payloadcms/richtext-lexical', () => ({
   lexicalEditor: vi.fn((config) => ({ _type: 'lexical', _config: config })),
   BlocksFeature: vi.fn((config) => ({ _type: 'blocks', ...config })),
+  EXPERIMENTAL_TableFeature: vi.fn(() => ({ _type: 'table' })),
+  UploadFeature: vi.fn((config) => ({ _type: 'upload', key: 'upload', ...config })),
+  TextStateFeature: vi.fn((config) => ({ _type: 'textState', ...config })),
 }));
 
 describe('Posts', () => {
@@ -147,7 +150,7 @@ describe('Posts', () => {
     expect(Posts.admin?.listSearchableFields).toContain('slug');
   });
 
-  it('configures content field editor with EmbedFeature appended to default features', () => {
+  it('configures content field editor with EmbedFeature and TableFeature appended to default features', () => {
     const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content') as {
       editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
@@ -157,13 +160,41 @@ describe('Posts', () => {
     const featuresCallback = contentField?.editor?._config?.features;
     expect(typeof featuresCallback).toBe('function');
 
-    const mockDefaultFeatures = [{ id: 'paragraph' }, { id: 'text' }];
+    // Includes a stand-in for the plain default UploadFeature (key: 'upload')
+    // to verify it gets swapped out for the alignment-aware one.
+    const mockDefaultFeatures = [
+      { id: 'paragraph', key: 'paragraph' },
+      { id: 'text', key: 'text' },
+      { id: 'default-upload', key: 'upload' },
+    ];
     const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
 
-    expect(result).toHaveLength(3);
-    expect(result[0]).toEqual({ id: 'paragraph' });
-    expect(result[1]).toEqual({ id: 'text' });
-    // EmbedFeature() is the third entry (BlocksFeature mock returns { _type: 'blocks', ... })
-    expect((result[2] as any)._type).toBe('blocks');
+    expect(result).toHaveLength(6);
+    expect(result[0]).toEqual({ id: 'paragraph', key: 'paragraph' });
+    expect(result[1]).toEqual({ id: 'text', key: 'text' });
+    // The plain default upload feature (id: 'default-upload') is filtered
+    // out and replaced with the alignment-aware ImageAlignmentUploadFeature.
+    expect(result.some((f: any) => f.id === 'default-upload')).toBe(false);
+    expect((result[2] as any)._type).toBe('upload');
+    expect((result[2] as any).collections.media.fields[0].name).toBe('alignment');
+    // EmbedFeature() (BlocksFeature mock returns { _type: 'blocks', ... })
+    expect((result[3] as any)._type).toBe('blocks');
+    // EXPERIMENTAL_TableFeature()
+    expect((result[4] as any)._type).toBe('table');
+    // SmallTextFeature() (TextStateFeature mock returns { _type: 'textState', ... })
+    expect((result[5] as any)._type).toBe('textState');
+    expect((result[5] as any).state.fontSize.small.label).toBe('Small');
+  });
+
+  it('does not register EXPERIMENTAL_TableFeature twice', () => {
+    const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
+    const contentField = fields.find((f) => f.name === 'content') as {
+      editor?: { _config?: { features?: (args: { defaultFeatures: unknown[] }) => unknown[] } };
+    };
+    // eslint-disable-next-line no-underscore-dangle -- Payload uses `_config` internally
+    const featuresCallback = contentField?.editor?._config?.features;
+    const result = featuresCallback!({ defaultFeatures: [] });
+
+    expect(result.filter((f: any) => f._type === 'table')).toHaveLength(1);
   });
 });

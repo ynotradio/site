@@ -1,7 +1,7 @@
 <?php
 
-$page_file = "contests.php";
-$page_title = "Contests";
+$page_file = "rodney.php";
+$page_title = "Rodney Anonymous Tells You How To Live";
 
 require ("functions/main_fns.php");
 require_once ("models/CustomTextFactory.php");

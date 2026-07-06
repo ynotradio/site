@@ -21,8 +21,10 @@
 import { randomUUID } from 'crypto';
 import { JSDOM } from 'jsdom';
 import DOMPurify from 'dompurify';
+import type { Payload } from 'payload';
 import { createLogger } from './logger';
 import { migrationConfig } from '../config';
+import { importImageFromUrl } from './mediaImporter';
 
 const logger = createLogger('EnhancedHtmlToLexical');
 
@@ -54,8 +56,9 @@ function sanitizeHtml(html: string): string {
     ],
     ALLOWED_ATTR: [
       'href', 'title', 'target', 'rel',
-      'src', 'alt', 'width', 'height',
+      'src', 'alt', 'width', 'height', 'align',
       'class', 'id',
+      'value',
       'data-*',
     ],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
@@ -300,12 +303,16 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   // Lists
   else if (tagName === 'ul' || tagName === 'ol') {
     const listItems = Array.from(element.querySelectorAll(':scope > li'));
-    const children = listItems.map((li) => {
+    const children = listItems.map((li, index) => {
       const itemChildren = parseInlineHTML(li.innerHTML);
+      const liValue = li.getAttribute('value');
+      const parsedValue = liValue ? parseInt(liValue, 10) : NaN;
       return {
         type: 'listitem',
-        value: 1,
+        value: Number.isNaN(parsedValue) ? index + 1 : parsedValue,
         checked: undefined,
+        format: '',
+        indent: 0,
         version: 1,
         children: itemChildren.length > 0 ? itemChildren : [{
           type: 'text',
@@ -335,23 +342,29 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
     }
   }
 
-  // Images
+  // Images. Emits a *pending* upload node (value: null, legacy src/alt/width/
+  // height kept as scratch data) — resolveImageUploads() below does the
+  // actual async download-and-upload pass and turns this into a real
+  // `value: <media id>` reference. Payload's own upload node has no `src`;
+  // that's just how this converter tracks "still needs an upload."
   else if (tagName === 'img') {
     const src = element.getAttribute('src') || '';
     const alt = element.getAttribute('alt') || '';
     const width = element.getAttribute('width');
     const height = element.getAttribute('height');
+    const align = element.getAttribute('align');
+    const alignment = align === 'left' || align === 'right' || align === 'center' ? align : undefined;
 
     if (src) {
       nodes.push({
         type: 'upload',
-        value: {
-          id: src, // Will need proper upload handling
-        },
+        value: null,
         relationTo: 'media',
         format: '',
         version: 1,
-        // Store original attributes for reference
+        fields: alignment ? { alignment } : undefined,
+        // Scratch data consumed by resolveImageUploads(); not part of the
+        // final Payload upload node shape.
         src,
         alt,
         width: width ? parseInt(width, 10) : undefined,
@@ -430,28 +443,56 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
         flushInline(inlineBuffer);
       });
     } else {
+      // Genuinely tabular text data (no images/embeds in any cell) — emit a
+      // real table/tablerow/tablecell structure so it's an editable Lexical
+      // table (TableFeature) rather than a flattened text blob.
       const rows = Array.from(element.querySelectorAll('tr'));
-      const tableText = rows.map((row) => {
-        const cells = Array.from(row.querySelectorAll('td, th'));
-        return cells.map((cell) => cell.textContent?.trim() || '').join(' | ');
-      }).join('\n');
+      const tableRows = rows
+        .map((row) => {
+          const cells = Array.from(row.querySelectorAll('td, th'));
+          const cellNodes = cells
+            .filter((cell) => (cell.textContent ?? '').trim() !== '')
+            .map((cell) => ({
+              type: 'tablecell',
+              version: 1,
+              headerState: cell.tagName.toLowerCase() === 'th' ? 1 : 0,
+              colSpan: 1,
+              rowSpan: 1,
+              children: [{
+                type: 'paragraph',
+                format: '',
+                indent: 0,
+                version: 1,
+                children: parseInlineHTML((cell.textContent ?? '').trim()),
+                direction: 'ltr',
+              }],
+              direction: 'ltr',
+              format: '',
+              indent: 0,
+            }));
 
-      if (tableText) {
+          if (cellNodes.length === 0) {
+            return null;
+          }
+          return {
+            type: 'tablerow',
+            version: 1,
+            children: cellNodes,
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+          };
+        })
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+
+      if (tableRows.length > 0) {
         nodes.push({
-          type: 'paragraph',
+          type: 'table',
+          version: 1,
+          children: tableRows,
+          direction: 'ltr',
           format: '',
           indent: 0,
-          version: 1,
-          children: [{
-            type: 'text',
-            text: `[Table]\n${tableText}`,
-            format: 0,
-            mode: 'normal',
-            style: '',
-            detail: 0,
-            version: 1,
-          }],
-          direction: 'ltr',
         });
       }
     }
@@ -653,4 +694,77 @@ export function convertHtmlToLexicalEnhanced(html: string): any {
       },
     };
   }
+}
+
+/**
+ * Resolve a single pending upload node (value: null, src set) into a real
+ * Payload Media reference by downloading and uploading it via the same
+ * importImageFromUrl helper used for the Pages `headerImage` import. Returns
+ * null when the import fails, so the caller can drop the node rather than
+ * leave a broken reference (mirrors the graceful-degradation behavior for
+ * headerImage).
+ */
+async function resolvePendingUploadNode(
+  payload: Payload,
+  node: LexicalNode,
+): Promise<LexicalNode | null> {
+  const result = await importImageFromUrl(payload, node.src, {
+    alt: typeof node.alt === 'string' ? node.alt : '',
+    legacyUrl: node.src,
+  });
+
+  if (!result.success || !result.mediaId) {
+    logger.warn(`Dropping inline image (import failed): ${node.src} — ${result.error}`);
+    return null;
+  }
+
+  return {
+    type: 'upload',
+    version: 3,
+    relationTo: typeof node.relationTo === 'string' ? node.relationTo : 'media',
+    value: result.mediaId,
+    ...(node.fields ? { fields: node.fields } : {}),
+  };
+}
+
+async function resolveNodeListImageUploads(
+  payload: Payload,
+  nodes: LexicalNode[],
+): Promise<LexicalNode[]> {
+  const resolved: LexicalNode[] = [];
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const node of nodes) {
+    const isPendingUpload = node.type === 'upload' && node.value === null && typeof node.src === 'string';
+
+    if (isPendingUpload) {
+      // eslint-disable-next-line no-await-in-loop
+      const resolvedNode = await resolvePendingUploadNode(payload, node);
+      if (resolvedNode) {
+        resolved.push(resolvedNode);
+      }
+    } else {
+      if (Array.isArray(node.children)) {
+        // eslint-disable-next-line no-await-in-loop
+        node.children = await resolveNodeListImageUploads(payload, node.children);
+      }
+      resolved.push(node);
+    }
+  }
+
+  return resolved;
+}
+
+/**
+ * Resolve every pending `upload` node emitted for an <img> tag (value: null,
+ * with the original src/alt kept as scratch data) into a real Payload Media
+ * reference. Returns a new document; does not mutate the input.
+ */
+export async function resolveImageUploads(payload: Payload, lexicalData: any): Promise<any> {
+  const children = lexicalData?.root?.children;
+  if (!Array.isArray(children)) {
+    return lexicalData;
+  }
+  const resolvedChildren = await resolveNodeListImageUploads(payload, children);
+  return { ...lexicalData, root: { ...lexicalData.root, children: resolvedChildren } };
 }

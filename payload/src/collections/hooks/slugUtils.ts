@@ -226,6 +226,21 @@ export const postSlugify: Slugify = ({ data, valueToSlugify }) => {
 };
 
 /**
+ * Custom slugify function for Pages (custom-text pages).
+ * Generates a simple, stable permalink slug from the page title — no date prefix.
+ */
+export const pageSlugify: Slugify = ({ data, valueToSlugify }) => {
+  const title = data?.title;
+  if (!title) {
+    return valueToSlugify ? slugifyHeadline(String(valueToSlugify)) : undefined;
+  }
+  if (valueToSlugify && String(valueToSlugify) !== String(title)) {
+    return slugifyHeadline(String(valueToSlugify));
+  }
+  return slugifyHeadline(String(title)) || undefined;
+};
+
+/**
  * Custom slugify function for CdOfTheWeek.
  * Returns the slug pre-computed by setCdOfTheWeekSlugFromRecord (collection beforeChange hook
  * runs before field hooks). Falls back to valueToSlugify if no precomputed slug exists.

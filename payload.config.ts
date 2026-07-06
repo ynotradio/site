@@ -21,6 +21,7 @@ import { Concerts } from './payload/src/collections/Concerts';
 import { OnDemand } from './payload/src/collections/OnDemand';
 import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
+import { Pages } from './payload/src/collections/Pages';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
 import { Top11Contests } from './payload/src/collections/Top11Contests';
@@ -193,6 +194,7 @@ export default buildConfig({
     OnDemand,
     Shows,
     Posts,
+    Pages,
     CdOfTheWeek,
     YearEndPollResults,
     Top11Contests,
