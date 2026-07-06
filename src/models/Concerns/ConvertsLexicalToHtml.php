@@ -49,7 +49,7 @@ trait ConvertsLexicalToHtml
             foreach ($lexical['root']['children'] as $node) {
                 $html .= $this->convertLexicalNodeToHtml($node, $forceNewTabLinks, $mediaMap);
             }
-            return $this->stripLegacyHtmlComments($html);
+            return $this->normalizeLegacyHtmlArtifacts($html);
         } catch (\Throwable $e) {
             error_log(static::class . ': Failed to convert Lexical to HTML: ' . $e->getMessage());
             return $lexicalJson;
@@ -345,6 +345,27 @@ trait ConvertsLexicalToHtml
     }
 
     /**
+     * Legacy MySQL story content was raw HTML, and content migrated from it
+     * (or still pasted in that style) carries HTML that Lexical has no node
+     * for — comments, `<font size>` small print, and formatting tags left
+     * broken by the original importer's best-effort parser. Since Lexical
+     * has no comment/font-size/tag-repair concept, all of this survives as
+     * literal text and gets `htmlspecialchars`-escaped in convertLexicalToHtml,
+     * showing up as visible garbage instead of the hidden/formatted content
+     * an author intended. Clean up each pattern on the final assembled HTML,
+     * where escaped markup from every text node sits side by side regardless
+     * of which Lexical node it originated in.
+     */
+    private function normalizeLegacyHtmlArtifacts(string $html): string
+    {
+        $html = $this->stripLegacyHtmlComments($html);
+        $html = $this->normalizeNbsp($html);
+        $html = $this->recoverLegacyHorizontalRules($html);
+        $html = $this->recoverLegacyFormattingTags($html);
+        return $html;
+    }
+
+    /**
      * DJs carried the habit of hiding stale copy inside `<!-- -->` from the
      * old raw-HTML story editor, where the browser rendered actual HTML
      * comments as invisible. Lexical has no comment node, so that markup is
@@ -356,6 +377,121 @@ trait ConvertsLexicalToHtml
     private function stripLegacyHtmlComments(string $html): string
     {
         return preg_replace('/&lt;!--.*?--&gt;/s', '', $html) ?? $html;
+    }
+
+    /**
+     * Non-breaking spaces pasted from Word/Google Docs are invisible in the
+     * editor, so nobody notices them until one lands mid-word on a narrow
+     * viewport and blocks a wrap that should happen there. A regular space
+     * lets the browser wrap wherever it actually needs to.
+     */
+    private function normalizeNbsp(string $html): string
+    {
+        return str_replace(["\u{00a0}", '&nbsp;'], ' ', $html);
+    }
+
+    /**
+     * A literal `<hr />`/`<hr>` in escaped text (e.g. old dividers between a
+     * CD-of-the-week review's byline and body) has a direct Lexical
+     * equivalent (the `horizontalrule` node already renders real `<hr>`), so
+     * unlike the tag-pair recovery below there's no ambiguity to resolve —
+     * just convert it.
+     */
+    private function recoverLegacyHorizontalRules(string $html): string
+    {
+        return preg_replace('/&lt;hr\s*\/?&gt;/i', '<hr>', $html) ?? $html;
+    }
+
+    /**
+     * Legacy formatting tags (`<b>`, `<strong>`, `<i>`, `<em>`, `<u>`,
+     * `<font size="1|2">`) that survived migration as literal escaped text
+     * are consistently split across sibling Lexical text nodes — sometimes
+     * even across paragraph boundaries — because the original importer gave
+     * up at exactly the point the legacy HTML's tags stopped nesting
+     * cleanly. There's no reliable position-only heuristic for a lone open
+     * or close tag (e.g. `</b>Shana</b>` — bold could plausibly start before
+     * or after "Shana"; a stray `</font>` with no open anywhere nearby, seen
+     * in real migrated content, would otherwise produce an orphaned closing
+     * span), so this only recovers a tag pair that both find a real match
+     * somewhere in the document via a stack scan; anything left unmatched
+     * is dropped rather than guessed, leaving the surrounding text plain.
+     *
+     * `<font size="1|2">` maps to the same `lexical-text--small` class
+     * SmallTextFeature produces (payload/src/features/text-size) rather
+     * than being dropped, to preserve its small-print intent.
+     */
+    private function recoverLegacyFormattingTags(string $html): string
+    {
+        $simpleTags = ['b' => 'strong', 'strong' => 'strong', 'i' => 'em', 'em' => 'em', 'u' => 'u'];
+        $pattern = '/&lt;(\/?)\s*(?:(b|strong|i|em|u)|font\s+size=(?:&quot;|&#0?39;)?[12](?:&quot;|&#0?39;)?\s*|(\/font))\s*&gt;/i';
+
+        if (!preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
+            return $html;
+        }
+
+        $stack = [];
+        $toDelete = [];
+        $replacements = [];
+
+        foreach ($matches[0] as $i => $fullMatch) {
+            $simpleTag = $matches[2][$i][0] !== '' ? strtolower($matches[2][$i][0]) : null;
+            $isFontClose = $matches[3][$i][0] !== '';
+            $offset = $fullMatch[1];
+            $length = strlen($fullMatch[0]);
+
+            if ($simpleTag !== null) {
+                $isClosing = $matches[1][$i][0] !== '';
+                $tag = $simpleTags[$simpleTag];
+                $openHtml = "<$tag>";
+                $closeHtml = "</$tag>";
+            } else {
+                $isClosing = $isFontClose;
+                $tag = 'font';
+                $openHtml = '<span class="lexical-text--small">';
+                $closeHtml = '</span>';
+            }
+
+            if (!$isClosing) {
+                $stack[] = ['tag' => $tag, 'offset' => $offset, 'length' => $length, 'html' => $openHtml];
+                continue;
+            }
+
+            $openIndex = null;
+            for ($j = count($stack) - 1; $j >= 0; $j--) {
+                if ($stack[$j]['tag'] === $tag) {
+                    $openIndex = $j;
+                    break;
+                }
+            }
+
+            if ($openIndex === null) {
+                // Stray close with no matching open anywhere before it.
+                $toDelete[] = ['offset' => $offset, 'length' => $length];
+                continue;
+            }
+
+            $open = $stack[$openIndex];
+            array_splice($stack, $openIndex);
+            $replacements[] = ['offset' => $open['offset'], 'length' => $open['length'], 'html' => $open['html']];
+            $replacements[] = ['offset' => $offset, 'length' => $length, 'html' => $closeHtml];
+        }
+
+        // Anything still on the stack never found a close — drop it too.
+        foreach ($stack as $unmatched) {
+            $toDelete[] = ['offset' => $unmatched['offset'], 'length' => $unmatched['length']];
+        }
+
+        $edits = array_merge(
+            $replacements,
+            array_map(fn ($d) => ['offset' => $d['offset'], 'length' => $d['length'], 'html' => ''], $toDelete),
+        );
+
+        usort($edits, fn ($a, $b) => $b['offset'] <=> $a['offset']);
+        foreach ($edits as $edit) {
+            $html = substr_replace($html, $edit['html'], $edit['offset'], $edit['length']);
+        }
+
+        return $html;
     }
 
     /**

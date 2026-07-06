@@ -756,4 +756,112 @@ class ConvertsLexicalToHtmlTest extends TestCase
 
         $this->assertStringContainsString('Next paragraph still renders.', $html);
     }
+
+    /**
+     * Build a single-paragraph Lexical document from a list of plain text
+     * node strings, for testing legacy-artifact normalization across
+     * sibling text nodes.
+     */
+    private function textNodesJson(array $texts): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => array_map(
+                            fn ($text) => ['type' => 'text', 'text' => $text],
+                            $texts,
+                        ),
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testNonBreakingSpaceIsNormalizedToRegularSpace(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(["Lime\u{00a0}Garden"]));
+
+        $this->assertStringContainsString('Lime Garden', $html);
+        $this->assertStringNotContainsString("\u{00a0}", $html);
+    }
+
+    public function testLegacyFontSizeSmallPrintBecomesSemanticSmallTextSpan(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size=2>Terms and conditions apply.</font>',
+        ]));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--small">Terms and conditions apply.</span>',
+            $html,
+        );
+        $this->assertStringNotContainsString('&lt;font', $html);
+    }
+
+    public function testLegacyFontSizeWithQuotedAttributeIsRecognized(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size="1">Fine print.</font>',
+        ]));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--small">Fine print.</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyHorizontalRuleTextIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<hr />']));
+
+        $this->assertStringContainsString('<hr>', $html);
+        $this->assertStringNotContainsString('&lt;hr', $html);
+    }
+
+    public function testMatchedLegacyBoldTagAcrossSiblingTextNodesIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            'Album of the year: ',
+            '<b>The Canyon',
+            '</b> by JJerome87.',
+        ]));
+
+        $this->assertStringContainsString('<strong>The Canyon</strong> by JJerome87.', $html);
+        $this->assertStringNotContainsString('&lt;b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/b&gt;', $html);
+    }
+
+    public function testMatchedLegacyItalicAndUnderlineTagsAreRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<i>The Amazing Spider-Man 2',
+            '</i>, opening this Friday.',
+        ]));
+        $this->assertStringContainsString('<em>The Amazing Spider-Man 2</em>, opening this Friday.', $html);
+
+        $underlineHtml = $this->converter->convert($this->textNodesJson(['<u>Show Cancellations:</u>']));
+        $this->assertStringContainsString('<u>Show Cancellations:</u>', $underlineHtml);
+    }
+
+    /**
+     * Real example from a legacy story: a stray closing </b> with no
+     * preceding open, followed by an open <b> and an open <i> that never
+     * close anywhere in the document. None of the three should be guessed
+     * into a formatting span — only the tags themselves are dropped.
+     */
+    public function testUnmatchedLegacyTagsAreDroppedWithoutGuessing(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            'the man who started it all, </b>Jim McGuinn<b>! <i>Plus, check out photos',
+        ]));
+
+        $this->assertStringContainsString('the man who started it all, Jim McGuinn! Plus, check out photos', $html);
+        $this->assertStringNotContainsString('<strong>', $html);
+        $this->assertStringNotContainsString('<em>', $html);
+        $this->assertStringNotContainsString('&lt;b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;i&gt;', $html);
+    }
 }
