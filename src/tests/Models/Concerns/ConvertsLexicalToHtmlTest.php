@@ -803,13 +803,76 @@ class ConvertsLexicalToHtmlTest extends TestCase
     public function testLegacyFontSizeWithQuotedAttributeIsRecognized(): void
     {
         $html = $this->converter->convert($this->textNodesJson([
-            '<font size="1">Fine print.</font>',
+            '<font size="2">Fine print.</font>',
         ]));
 
         $this->assertStringContainsString(
             '<span class="lexical-text--small">Fine print.</span>',
             $html,
         );
+    }
+
+    /**
+     * The legacy site used the browser's built-in 1-7 HTML font-size scale
+     * across a real range, not just one "small print" tier: size=1 for
+     * smallest subtitles, size=4 for call-to-action banners, size=5 for
+     * large DJ-name headings (real examples from the legacy MySQL dump).
+     */
+    public function testLegacyFontSizeTinyTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=1>TELLS YOU HOW TO LIVE</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--tiny">TELLS YOU HOW TO LIVE</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeLargeTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=4>CLICK HERE TO ORDER</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--large">CLICK HERE TO ORDER</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeXLargeTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=5>Josh T. Landow</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--xlarge">Josh T. Landow</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeThreeIsBrowserDefaultAndLeftUnwrapped(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=3>Normal body text.</font>']));
+
+        $this->assertStringContainsString('Normal body text.', $html);
+        $this->assertStringNotContainsString('<span', $html);
+        $this->assertStringNotContainsString('&lt;font', $html);
+        $this->assertStringNotContainsString('&lt;/font', $html);
+    }
+
+    public function testLegacyFontSizeMatchingAcrossSiblingTextNodesIsRecovered(): void
+    {
+        // Real example from the legacy dump: DJ name at size=5, role/show at
+        // size=3 (default, unwrapped) in a following sibling text node.
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size=5>Rob Huff',
+            '</font>',
+            '<font size=3>Transmission',
+            '</font>',
+        ]));
+
+        $this->assertStringContainsString('<span class="lexical-text--xlarge">Rob Huff</span>', $html);
+        $this->assertStringContainsString('Transmission', $html);
+        $this->assertStringNotContainsString('&lt;font', $html);
+        $this->assertStringNotContainsString('&lt;/font', $html);
     }
 
     public function testLegacyHorizontalRuleTextIsRecovered(): void

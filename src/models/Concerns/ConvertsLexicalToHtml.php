@@ -404,7 +404,7 @@ trait ConvertsLexicalToHtml
 
     /**
      * Legacy formatting tags (`<b>`, `<strong>`, `<i>`, `<em>`, `<u>`,
-     * `<font size="1|2">`) that survived migration as literal escaped text
+     * `<font size="N">`) that survived migration as literal escaped text
      * are consistently split across sibling Lexical text nodes — sometimes
      * even across paragraph boundaries — because the original importer gave
      * up at exactly the point the legacy HTML's tags stopped nesting
@@ -416,14 +416,23 @@ trait ConvertsLexicalToHtml
      * somewhere in the document via a stack scan; anything left unmatched
      * is dropped rather than guessed, leaving the surrounding text plain.
      *
-     * `<font size="1|2">` maps to the same `lexical-text--small` class
-     * SmallTextFeature produces (payload/src/features/text-size) rather
-     * than being dropped, to preserve its small-print intent.
+     * `<font size="N">` maps to a `lexical-text--*` size class matching the
+     * legacy site's real usage of the browser's built-in 1-7 HTML font-size
+     * scale (1=smallest subtitle .. 5=large DJ-name heading — this site
+     * never used 6/7), rather than one flat "small" treatment. size=3 is
+     * the browser default, so it's left unwrapped.
      */
+    private const LEGACY_FONT_SIZE_CLASSES = [
+        '1' => 'lexical-text--tiny',
+        '2' => 'lexical-text--small',
+        '4' => 'lexical-text--large',
+        '5' => 'lexical-text--xlarge',
+    ];
+
     private function recoverLegacyFormattingTags(string $html): string
     {
         $simpleTags = ['b' => 'strong', 'strong' => 'strong', 'i' => 'em', 'em' => 'em', 'u' => 'u'];
-        $pattern = '/&lt;(\/?)\s*(?:(b|strong|i|em|u)|font\s+size=(?:&quot;|&#0?39;)?[12](?:&quot;|&#0?39;)?\s*|(\/font))\s*&gt;/i';
+        $pattern = '/&lt;(\/?)\s*(?:(b|strong|i|em|u)|font\s+size=(?:&quot;|&#0?39;)?([1-5])(?:&quot;|&#0?39;)?\s*|(\/font))\s*&gt;/i';
 
         if (!preg_match_all($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
             return $html;
@@ -435,7 +444,8 @@ trait ConvertsLexicalToHtml
 
         foreach ($matches[0] as $i => $fullMatch) {
             $simpleTag = $matches[2][$i][0] !== '' ? strtolower($matches[2][$i][0]) : null;
-            $isFontClose = $matches[3][$i][0] !== '';
+            $fontSize = $matches[3][$i][0] !== '' ? $matches[3][$i][0] : null;
+            $isFontClose = $matches[4][$i][0] !== '';
             $offset = $fullMatch[1];
             $length = strlen($fullMatch[0]);
 
@@ -444,15 +454,30 @@ trait ConvertsLexicalToHtml
                 $tag = $simpleTags[$simpleTag];
                 $openHtml = "<$tag>";
                 $closeHtml = "</$tag>";
+            } elseif ($fontSize !== null) {
+                // size=3 is the browser default — no wrapper needed, but the
+                // tag still needs tracking so its matching </font> is
+                // recognized and dropped rather than left as an orphan.
+                $isClosing = false;
+                $tag = 'font';
+                $class = self::LEGACY_FONT_SIZE_CLASSES[$fontSize] ?? null;
+                $openHtml = $class !== null ? "<span class=\"$class\">" : '';
+                $closeHtml = $class !== null ? '</span>' : '';
             } else {
+                // Closing </font> — its rendered HTML comes from the
+                // matched open's stored 'closeHtml' below, not from here.
                 $isClosing = $isFontClose;
                 $tag = 'font';
-                $openHtml = '<span class="lexical-text--small">';
-                $closeHtml = '</span>';
             }
 
             if (!$isClosing) {
-                $stack[] = ['tag' => $tag, 'offset' => $offset, 'length' => $length, 'html' => $openHtml];
+                $stack[] = [
+                    'tag' => $tag,
+                    'offset' => $offset,
+                    'length' => $length,
+                    'html' => $openHtml,
+                    'closeHtml' => $closeHtml,
+                ];
                 continue;
             }
 
@@ -473,7 +498,7 @@ trait ConvertsLexicalToHtml
             $open = $stack[$openIndex];
             array_splice($stack, $openIndex);
             $replacements[] = ['offset' => $open['offset'], 'length' => $open['length'], 'html' => $open['html']];
-            $replacements[] = ['offset' => $offset, 'length' => $length, 'html' => $closeHtml];
+            $replacements[] = ['offset' => $offset, 'length' => $length, 'html' => $open['closeHtml']];
         }
 
         // Anything still on the stack never found a close — drop it too.
