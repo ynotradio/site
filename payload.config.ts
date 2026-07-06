@@ -23,6 +23,9 @@ import { Shows } from './payload/src/collections/Shows';
 import { Posts } from './payload/src/collections/Posts';
 import { Pages } from './payload/src/collections/Pages';
 import { CdOfTheWeek } from './payload/src/collections/CdOfTheWeek';
+import { YearEndPolls } from './payload/src/collections/YearEndPolls';
+import { YearEndPollCategories } from './payload/src/collections/YearEndPollCategories';
+import { YearEndPollVotes } from './payload/src/collections/YearEndPollVotes';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
 import { Top11Contests } from './payload/src/collections/Top11Contests';
 import { Top11Votes } from './payload/src/collections/Top11Votes';
@@ -197,6 +200,9 @@ export default buildConfig({
     Pages,
     CdOfTheWeek,
     YearEndPollResults,
+    YearEndPolls,
+    YearEndPollCategories,
+    YearEndPollVotes,
     Top11Contests,
     Top11Votes,
     Top11WriteIns,
