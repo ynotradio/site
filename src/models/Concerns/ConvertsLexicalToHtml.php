@@ -49,7 +49,7 @@ trait ConvertsLexicalToHtml
             foreach ($lexical['root']['children'] as $node) {
                 $html .= $this->convertLexicalNodeToHtml($node, $forceNewTabLinks, $mediaMap);
             }
-            return $html;
+            return $this->stripLegacyHtmlComments($html);
         } catch (\Throwable $e) {
             error_log(static::class . ': Failed to convert Lexical to HTML: ' . $e->getMessage());
             return $lexicalJson;
@@ -342,6 +342,20 @@ trait ConvertsLexicalToHtml
         }
 
         return "<{$tag}{$style}>{$content}</{$tag}>\n";
+    }
+
+    /**
+     * DJs carried the habit of hiding stale copy inside `<!-- -->` from the
+     * old raw-HTML story editor, where the browser rendered actual HTML
+     * comments as invisible. Lexical has no comment node, so that markup is
+     * now typed as literal text and escaped to `&lt;!--...--&gt;`, showing up
+     * as visible garbage on the front end. Strip escaped comment spans from
+     * the assembled HTML so this old habit still hides content as authors
+     * expect.
+     */
+    private function stripLegacyHtmlComments(string $html): string
+    {
+        return preg_replace('/&lt;!--.*?--&gt;/s', '', $html) ?? $html;
     }
 
     /**

@@ -705,4 +705,55 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('client-id=test-client-id-123', $html);
         $this->assertStringNotContainsString('attacker-controlled-client-id', $html);
     }
+
+    public function testLegacyHtmlCommentTypedAsTextIsHidden(): void
+    {
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => 'Keep this. '],
+                            ['type' => 'text', 'text' => '<!--Stale copy from last month.-->'],
+                            ['type' => 'text', 'text' => ' Keep this too.'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        $this->assertStringContainsString('Keep this.', $html);
+        $this->assertStringContainsString('Keep this too.', $html);
+        $this->assertStringNotContainsString('Stale copy from last month.', $html);
+        $this->assertStringNotContainsString('&lt;!--', $html);
+    }
+
+    public function testUnterminatedLegacyHtmlCommentDoesNotSwallowFollowingContent(): void
+    {
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => '<!--No closing marker here.'],
+                        ],
+                    ],
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => 'Next paragraph still renders.'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        $this->assertStringContainsString('Next paragraph still renders.', $html);
+    }
 }
