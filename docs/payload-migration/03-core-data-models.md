@@ -26,14 +26,18 @@
 | Modern Rock Madness Matches      | `modern-rock-madness-matches`      | Production | Bracket matchups                    |
 | Modern Rock Madness Votes        | `modern-rock-madness-votes`        | Production | Vote records                        |
 | Modern Rock Madness Match Events | `modern-rock-madness-match-events` | Production | Audit log                           |
+| Top 11 Contests                  | `top11-contests`                   | Production | Weekly contest config               |
+| Top 11 Contestants               | `top11-contestants`                | Production | Song entries per contest            |
+| Top 11 Votes                     | `top11-votes`                      | Production | Auth0-authenticated vote records    |
+| Top 11 Write-ins                 | `top11-write-ins`                  | Production | Write-in song nominations           |
+| Top 11 Winner Draws              | `top11-winner-draws`               | Production | Weekly winner selection             |
+| Year End Polls                   | `year-end-polls`                   | Production | Annual poll config                  |
+| Year End Poll Categories         | `year-end-poll-categories`         | Production | Poll categories with nominees       |
+| Year End Poll Votes              | `year-end-poll-votes`              | Production | Auth0-authenticated vote records    |
 
 ## Not Yet Migrated
 
-| Area                       | Current Source     | Notes                                         |
-| -------------------------- | ------------------ | --------------------------------------------- |
-| Top 11                     | Legacy MySQL/admin | Needs requirements and Payload model          |
-| Year End Poll voting/admin | Legacy MySQL/admin | Results display exists, voting/admin does not |
-| Staff Picks                | Legacy MySQL/admin | Not ready for Payload                         |
+None — all collections have been migrated to Payload.
 
 ## Editing Policy
 
