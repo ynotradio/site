@@ -75,6 +75,42 @@ describe('enhancedHtmlToLexical', () => {
       const textPara = result.root.children.find((n: any) => n.type === 'paragraph');
       expect(textPara.children[0].text).toContain('Every Thursday at 11am.');
     });
+
+    it('should split top-level loose content into separate paragraphs on a double <br>', () => {
+      // Legacy top11message markup has no <p> tags at all -- "<br><br>" is
+      // the only paragraph-break signal between sentences.
+      const html = 'First sentence.<br><br>Second sentence.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      expect(result.root.children).toHaveLength(2);
+      expect(result.root.children[0].children[0].text).toBe('First sentence.');
+      expect(result.root.children[1].children[0].text).toBe('Second sentence.');
+    });
+
+    it('should preserve a link nested in a bare <i> that lands as a direct child of a block element', () => {
+      // Reproduces real top11message markup: an unclosed <center> causes the
+      // HTML parser to nest trailing siblings (including an <iframe>) inside
+      // it, which makes the <center> handler's block-recursion path visit
+      // its <i> child directly. <i> has no dedicated block-level case, so it
+      // used to fall into the "unknown element" branch, which reads
+      // .textContent (already stripped of tags) and lost the nested <a>.
+      const html = '<center><i>Tickets are <a href="https://example.com/tickets">available here</a>.</i>'
+        + '<iframe src="https://example.com/embed"></iframe></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const textPara = result.root.children.find(
+        (n: any) => n.type === 'paragraph' && n.children.some((c: any) => c.type === 'link'),
+      );
+      expect(textPara).toBeDefined();
+      const linkNode = textPara.children.find((c: any) => c.type === 'link');
+      expect(linkNode.fields.url).toBe('https://example.com/tickets');
+      expect(linkNode.children[0].text).toBe('available here');
+
+      const embedBlock = result.root.children.find(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embedBlock).toBeDefined();
+    });
   });
 
   describe('Headings', () => {
