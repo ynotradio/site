@@ -71,6 +71,11 @@ describe('enhancedHtmlToLexical', () => {
       const imageNode = result.root.children.find((n: any) => n.type === 'upload');
       expect(imageNode).toBeDefined();
       expect(imageNode.src).toBe('https://example.com/photo.jpg');
+      // The float lives on the wrapping <a>, not the <img> itself -- must
+      // carry through to the upload node's alignment field so the image
+      // actually renders floated on the frontend (see typography.css
+      // .lexical-image--right), matching real prod's layout.
+      expect(imageNode.fields?.alignment).toBe('right');
 
       const textPara = result.root.children.find((n: any) => n.type === 'paragraph');
       expect(textPara.children[0].text).toContain('Every Thursday at 11am.');
@@ -840,13 +845,16 @@ describe('enhancedHtmlToLexical', () => {
   });
 
   describe('Paragraph Alignment via style', () => {
-    it('should not apply alignment when align attribute is stripped by sanitizer', () => {
-      // DOMPurify strips `align` and `style` attributes — format stays ''
+    it('should apply alignment from a text-align style, now that style is allowlisted', () => {
+      // `style` is allowlisted (needed for legacy `<a style="float: right;">`
+      // image thumbnails) and DOMPurify sanitizes the CSS value itself, so
+      // this is no longer stripped -- the <p> handler already read
+      // style.textAlign, it just never had a chance to see it before.
       const result = convertHtmlToLexicalEnhanced(
         '<p style="text-align: center;">Styled center</p>',
       );
       expect(result.root.children[0].type).toBe('paragraph');
-      expect(result.root.children[0].format).toBe('');
+      expect(result.root.children[0].format).toBe('center');
     });
 
     it('should apply alignment from the align attribute (kept for image float/alignment)', () => {

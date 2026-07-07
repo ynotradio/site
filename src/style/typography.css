@@ -303,7 +303,12 @@ nav a:hover {
   float: none;
 }
 
-.top11-message img {
+/* Excludes .lexical-image -- the Postgres/Payload adapter's rendered images
+   carry their own float/alignment via .lexical-image--left/right/center
+   (see below), and this legacy rule's higher specificity (class+tag vs.
+   those rules' single class) would otherwise always win and force every
+   Lexical image left regardless of its actual alignment field. */
+.top11-message img:not(.lexical-image) {
   float: left;
   width: 100px;
   margin: 0 10px 0 5px;

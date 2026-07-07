@@ -60,6 +60,12 @@ function sanitizeHtml(html: string): string {
       'class', 'id',
       'value',
       'data-*',
+      // Legacy markup floats images via inline style rather than the align
+      // attribute (e.g. `<a style="float: right;"><img/></a>` artist
+      // thumbnails). DOMPurify sanitizes the CSS value itself (strips
+      // javascript:/expression() etc.); this converter only ever reads
+      // `float` back out of it, never re-emits the raw attribute.
+      'style',
     ],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
     KEEP_CONTENT: true,
@@ -361,6 +367,18 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   else if (isImageOnlyAnchor(element)) {
     const img = element.querySelector('img');
     if (img) {
+      // The <img> itself rarely carries alignment; legacy markup puts the
+      // float on the wrapping <a> instead (`style="float: right;"`), which
+      // htmlElementToLexicalNodes(img) can't see since it only inspects the
+      // element it's handed. Copy it onto the <img> before recursing so the
+      // upload node's alignment field ends up correct.
+      if (!img.getAttribute('align')) {
+        const anchorFloat = (element as HTMLElement).style?.float
+          || (element.getAttribute('style')?.match(/float:\s*(left|right)/)?.[1] ?? '');
+        if (anchorFloat === 'left' || anchorFloat === 'right') {
+          img.setAttribute('align', anchorFloat);
+        }
+      }
       nodes.push(...htmlElementToLexicalNodes(img));
     }
   }
