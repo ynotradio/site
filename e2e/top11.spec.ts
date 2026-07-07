@@ -157,7 +157,10 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     }
 
     // Verify form elements
-    // Song checkboxes
+    // Song checkboxes -- one per nominee-pool song (getAllSongs() reads
+    // top11songs directly today; PostgresTop11.php will read the equivalent
+    // Top11Contests.nominees array once the adapter lands, so this count is
+    // the baseline both implementations need to match).
     const checkboxes = page.locator('input[type="checkbox"][name="top11[]"]');
     const checkboxCount = await checkboxes.count();
     expect(checkboxCount).toBeGreaterThan(0);

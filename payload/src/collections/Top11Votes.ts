@@ -5,7 +5,12 @@ import { hasRole } from '../utils/auth';
 type ContestWithStatus = {
   id: number;
   status?: string;
+  nominees?: { song: number | { id: number } }[];
 };
+
+function nomineeSongId(nominee: { song: number | { id: number } }): number {
+  return typeof nominee.song === 'object' ? nominee.song.id : nominee.song;
+}
 
 export const Top11Votes: CollectionConfig = {
   slug: 'top11-votes',
@@ -58,6 +63,16 @@ export const Top11Votes: CollectionConfig = {
 
         if (contest.status !== 'open') {
           throw new APIError('Top 11 voting is not currently open for this contest', 400);
+        }
+
+        const songId = Number(data.song);
+        const nomineeSongIds = (contest.nominees ?? []).map(nomineeSongId);
+        // The DB-level trigger (top11_votes_song_is_nominee, see migration
+        // 20260706_210000_add_top11_votes_nominee_constraint) is the real
+        // source of truth -- this check just turns a constraint violation
+        // into a clean API error.
+        if (!nomineeSongIds.includes(songId)) {
+          throw new APIError('This song is not on the ballot for this contest', 400);
         }
 
         const voterAuth0Id = typeof data.voterAuth0Id === 'string' ? data.voterAuth0Id.trim() : '';
