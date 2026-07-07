@@ -60,6 +60,12 @@ function sanitizeHtml(html: string): string {
       'class', 'id',
       'value',
       'data-*',
+      // Legacy markup floats images via inline style rather than the align
+      // attribute (e.g. `<a style="float: right;"><img/></a>` artist
+      // thumbnails). DOMPurify sanitizes the CSS value itself (strips
+      // javascript:/expression() etc.); this converter only ever reads
+      // `float` back out of it, never re-emits the raw attribute.
+      'style',
     ],
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
     KEEP_CONTENT: true,
@@ -201,6 +207,16 @@ function parseInlineHTML(html: string): LexicalNode[] {
 }
 
 /**
+ * True for an <a> whose only meaningful content is an <img> (e.g. legacy
+ * `<a href="artist site"><img .../></a>` thumbnails). These need block-level
+ * handling: parseInlineHTML's <a> case only produces inline children, and
+ * Lexical's upload node has no link-wrapper field to hold the href.
+ */
+function isImageOnlyAnchor(el: Element): boolean {
+  return el.tagName.toLowerCase() === 'a' && el.querySelector('img') !== null && !el.textContent?.trim();
+}
+
+/**
  * Convert HTML element to Lexical nodes
  */
 function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
@@ -252,7 +268,7 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
       };
       Array.from(element.childNodes).forEach((node) => {
         const el = node.nodeType === 1 ? (node as Element) : null;
-        if (el && blockTags.has(el.tagName.toLowerCase())) {
+        if (el && (blockTags.has(el.tagName.toLowerCase()) || isImageOnlyAnchor(el))) {
           flushInline();
           nodes.push(...htmlElementToLexicalNodes(el));
         } else if (el) {
@@ -342,6 +358,31 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
     }
   }
 
+  // Anchor wrapping only an image (e.g. legacy `<a href="artist site"
+  // style="float: right;"><img .../></a>` thumbnails). Lexical's upload node
+  // has no link-wrapper field, and parseInlineHTML's <a> handling only
+  // produces inline (text) children, so an <img> child there is silently
+  // dropped. Treat this as an image block instead -- losing the click-through
+  // is preferable to losing the photo entirely.
+  else if (isImageOnlyAnchor(element)) {
+    const img = element.querySelector('img');
+    if (img) {
+      // The <img> itself rarely carries alignment; legacy markup puts the
+      // float on the wrapping <a> instead (`style="float: right;"`), which
+      // htmlElementToLexicalNodes(img) can't see since it only inspects the
+      // element it's handed. Copy it onto the <img> before recursing so the
+      // upload node's alignment field ends up correct.
+      if (!img.getAttribute('align')) {
+        const anchorFloat = (element as HTMLElement).style?.float
+          || (element.getAttribute('style')?.match(/float:\s*(left|right)/)?.[1] ?? '');
+        if (anchorFloat === 'left' || anchorFloat === 'right') {
+          img.setAttribute('align', anchorFloat);
+        }
+      }
+      nodes.push(...htmlElementToLexicalNodes(img));
+    }
+  }
+
   // Images. Emits a *pending* upload node (value: null, legacy src/alt/width/
   // height kept as scratch data) — resolveImageUploads() below does the
   // actual async download-and-upload pass and turns this into a real
@@ -349,7 +390,11 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   // that's just how this converter tracks "still needs an upload."
   else if (tagName === 'img') {
     const src = element.getAttribute('src') || '';
-    const alt = element.getAttribute('alt') || '';
+    // Media.alt is a required field; legacy <img> tags frequently have no
+    // alt attribute at all (e.g. decorative artist thumbnails), so fall
+    // back to a generic description rather than an empty string that's
+    // guaranteed to fail validation on import.
+    const alt = element.getAttribute('alt') || 'Image';
     const width = element.getAttribute('width');
     const height = element.getAttribute('height');
     const align = element.getAttribute('align');
@@ -430,7 +475,7 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
         let inlineBuffer = '';
         Array.from(cell.childNodes).forEach((node) => {
           const el = node.nodeType === 1 ? (node as Element) : null;
-          if (el && blockTags.has(el.tagName.toLowerCase())) {
+          if (el && (blockTags.has(el.tagName.toLowerCase()) || isImageOnlyAnchor(el))) {
             flushInline(inlineBuffer);
             inlineBuffer = '';
             nodes.push(...htmlElementToLexicalNodes(el));
@@ -507,9 +552,9 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
 
   // Center element - process children and apply center alignment to block nodes
   else if (tagName === 'center') {
-    const blockTags = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'table', 'hr']);
+    const blockTags = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'table', 'hr', 'iframe', 'img']);
     const hasBlockChildren = Array.from(element.children).some(
-      (child) => blockTags.has(child.tagName.toLowerCase()),
+      (child) => blockTags.has(child.tagName.toLowerCase()) || isImageOnlyAnchor(child),
     );
 
     if (hasBlockChildren) {
@@ -543,6 +588,28 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   else if (tagName === 'br') {
     // Add line break as part of parent paragraph
     // This is handled by the parent element
+  }
+
+  // Bare inline-formatting tags at block level (e.g. a whole paragraph's
+  // content wrapped in a single <i>...</i>, which happens when an unclosed
+  // <center> upstream causes the HTML parser to nest content one level
+  // deeper than the source markup intended). These have no dedicated block
+  // case, so they used to fall into the generic "unknown element" branch
+  // below, which reads .textContent (tags already stripped) and lost any
+  // nested links/formatting. Route through parseInlineHTML on the innerHTML
+  // instead, same as the <p>/<center> inline-only branches do.
+  else if (['i', 'em', 'b', 'strong', 's', 'strike', 'u', 'code', 'span'].includes(tagName)) {
+    const children = parseInlineHTML(element.outerHTML);
+    if (children.length > 0) {
+      nodes.push({
+        type: 'paragraph',
+        format: '',
+        indent: 0,
+        version: 1,
+        children,
+        direction: 'ltr',
+      });
+    }
   }
 
   // Unknown elements - extract text content
@@ -606,11 +673,61 @@ export function convertHtmlToLexicalEnhanced(html: string): any {
     const dom = new JSDOM(sanitized);
     const { body } = dom.window.document;
 
-    // Convert all elements
+    // Convert all elements. Legacy markup frequently has loose inline
+    // content (bare text, <a>, <b>, <i>, <br>) directly under <body> with no
+    // wrapping <p> -- walking body.children alone would silently drop that
+    // prose (text nodes aren't Elements) or mis-handle bare inline tags
+    // (which fall through to the "unknown element" branch and lose their
+    // surrounding text). Buffer consecutive inline/text siblings into a
+    // paragraph, same as the <p> handler already does for nested block
+    // content, and only recurse per-node for genuine block-level tags.
     const children: LexicalNode[] = [];
-    Array.from(body.children).forEach((element) => {
-      children.push(...htmlElementToLexicalNodes(element as Element));
+    const topBlockTags = new Set([
+      'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'ul', 'ol', 'blockquote', 'table', 'hr', 'iframe', 'img', 'center',
+    ]);
+    let inlineBuffer = '';
+    const flushInlineBuffer = () => {
+      const inline = parseInlineHTML(inlineBuffer);
+      inlineBuffer = '';
+      if (inline.length > 0) {
+        children.push({
+          type: 'paragraph',
+          format: '',
+          indent: 0,
+          version: 1,
+          children: inline,
+          direction: 'ltr',
+        });
+      }
+    };
+    // A double <br><br> is the legacy convention for a paragraph break (the
+    // real content has no <p> tags at all, just prose separated this way).
+    // Track a run of consecutive <br> siblings so two-in-a-row flushes the
+    // buffer as its own paragraph instead of being appended as literal tags.
+    let consecutiveBrCount = 0;
+    Array.from(body.childNodes).forEach((node) => {
+      const el = node.nodeType === 1 ? (node as Element) : null;
+      const isBr = el?.tagName.toLowerCase() === 'br';
+      if (el && (topBlockTags.has(el.tagName.toLowerCase()) || isImageOnlyAnchor(el))) {
+        flushInlineBuffer();
+        children.push(...htmlElementToLexicalNodes(el));
+        consecutiveBrCount = 0;
+      } else if (isBr) {
+        consecutiveBrCount += 1;
+        if (consecutiveBrCount >= 2) {
+          flushInlineBuffer();
+          consecutiveBrCount = 0;
+        }
+      } else if (el) {
+        inlineBuffer += el.outerHTML;
+        consecutiveBrCount = 0;
+      } else if (node.nodeType === 3) {
+        inlineBuffer += node.textContent ?? '';
+        if (node.textContent?.trim()) consecutiveBrCount = 0;
+      }
     });
+    flushInlineBuffer();
 
     // Handle case where body has no children but has text
     if (children.length === 0 && body.textContent?.trim()) {
@@ -724,6 +841,12 @@ async function resolvePendingUploadNode(
     relationTo: typeof node.relationTo === 'string' ? node.relationTo : 'media',
     value: result.mediaId,
     ...(node.fields ? { fields: node.fields } : {}),
+    // Legacy <img width/height> (e.g. top11message's <img height="100">)
+    // -- carried alongside `fields` rather than merged into it, since
+    // `fields` maps 1:1 onto the Lexical upload block's own field schema
+    // and display width/height aren't part of it.
+    ...(typeof node.width === 'number' ? { width: node.width } : {}),
+    ...(typeof node.height === 'number' ? { height: node.height } : {}),
   };
 }
 

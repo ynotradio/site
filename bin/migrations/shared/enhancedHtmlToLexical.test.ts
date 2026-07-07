@@ -30,6 +30,92 @@ describe('enhancedHtmlToLexical', () => {
       expect(result.root.children[0].type).toBe('paragraph');
       expect(result.root.children[0].children[0].text).toBe('Test paragraph');
     });
+
+    it('should preserve loose top-level text and inline formatting with no wrapping <p>', () => {
+      // Matches real top11message markup: a leading <a><img></a>, then bare
+      // text, <i>/<b> inline tags, and <br> with no block wrapper at all.
+      // The top-level walk used to only iterate body.children (Elements),
+      // dropping free text nodes, and bare <i>/<b> fell through to the
+      // "unknown element" branch which lost their surrounding sentence.
+      const html = 'Vote for the next <i>Top 11 @ 11</i> and win tickets for <b>Death Cab For Cutie</b>.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      expect(result.root.children).toHaveLength(1);
+      const para = result.root.children[0];
+      expect(para.type).toBe('paragraph');
+
+      const texts = para.children.map((n: any) => n.text);
+      expect(texts).toEqual([
+        'Vote for the next ',
+        'Top 11 @ 11',
+        ' and win tickets for ',
+        'Death Cab For Cutie',
+        '.',
+      ]);
+
+      const italic = para.children.find((n: any) => n.text === 'Top 11 @ 11');
+      expect(italic.format).toBe(2);
+      const bold = para.children.find((n: any) => n.text === 'Death Cab For Cutie');
+      expect(bold.format).toBe(1);
+    });
+
+    it('should convert a top-level <a> wrapping only an <img> into an image block', () => {
+      // Matches real top11message markup: a floated artist photo linked to
+      // the artist's site, immediately followed by loose prose. parseInlineHTML's
+      // <a> handling only produces inline (text) children, so the <img> was
+      // silently dropped when the anchor fell into the inline buffer.
+      const html = '<a href="https://example.com/artist" style="float: right;">'
+        + '<img src="https://example.com/photo.jpg"></a>Every Thursday at 11am.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const imageNode = result.root.children.find((n: any) => n.type === 'upload');
+      expect(imageNode).toBeDefined();
+      expect(imageNode.src).toBe('https://example.com/photo.jpg');
+      // The float lives on the wrapping <a>, not the <img> itself -- must
+      // carry through to the upload node's alignment field so the image
+      // actually renders floated on the frontend (see typography.css
+      // .lexical-image--right), matching real prod's layout.
+      expect(imageNode.fields?.alignment).toBe('right');
+
+      const textPara = result.root.children.find((n: any) => n.type === 'paragraph');
+      expect(textPara.children[0].text).toContain('Every Thursday at 11am.');
+    });
+
+    it('should split top-level loose content into separate paragraphs on a double <br>', () => {
+      // Legacy top11message markup has no <p> tags at all -- "<br><br>" is
+      // the only paragraph-break signal between sentences.
+      const html = 'First sentence.<br><br>Second sentence.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      expect(result.root.children).toHaveLength(2);
+      expect(result.root.children[0].children[0].text).toBe('First sentence.');
+      expect(result.root.children[1].children[0].text).toBe('Second sentence.');
+    });
+
+    it('should preserve a link nested in a bare <i> that lands as a direct child of a block element', () => {
+      // Reproduces real top11message markup: an unclosed <center> causes the
+      // HTML parser to nest trailing siblings (including an <iframe>) inside
+      // it, which makes the <center> handler's block-recursion path visit
+      // its <i> child directly. <i> has no dedicated block-level case, so it
+      // used to fall into the "unknown element" branch, which reads
+      // .textContent (already stripped of tags) and lost the nested <a>.
+      const html = '<center><i>Tickets are <a href="https://example.com/tickets">available here</a>.</i>'
+        + '<iframe src="https://example.com/embed"></iframe></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const textPara = result.root.children.find(
+        (n: any) => n.type === 'paragraph' && n.children.some((c: any) => c.type === 'link'),
+      );
+      expect(textPara).toBeDefined();
+      const linkNode = textPara.children.find((c: any) => c.type === 'link');
+      expect(linkNode.fields.url).toBe('https://example.com/tickets');
+      expect(linkNode.children[0].text).toBe('available here');
+
+      const embedBlock = result.root.children.find(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embedBlock).toBeDefined();
+    });
   });
 
   describe('Headings', () => {
@@ -294,6 +380,23 @@ describe('enhancedHtmlToLexical', () => {
       expect(node.src).toBeUndefined();
     });
 
+    it('carries the legacy width/height attributes through to the resolved node', async () => {
+      // Matches top11message's <img height="100"> artist thumbnail --
+      // ConvertsLexicalToHtml renders these as real width/height attributes
+      // so the browser's native aspect-ratio sizing applies, same as the
+      // legacy plain <img> did on prod. resolvePendingUploadNode used to
+      // only carry value/relationTo/fields through, silently dropping
+      // width/height even though the pending node already had them.
+      mockImportImageFromUrl.mockResolvedValue({ success: true, mediaId: 'media-sized' });
+
+      const doc = convertHtmlToLexicalEnhanced('<img src="/photo.jpg" height="100" />');
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      const node = resolved.root.children[0];
+      expect(node.height).toBe(100);
+      expect(node.width).toBeUndefined();
+    });
+
     it('drops the node entirely when the image import fails', async () => {
       mockImportImageFromUrl.mockResolvedValue({ success: false, error: 'Failed to download image' });
 
@@ -471,6 +574,20 @@ describe('enhancedHtmlToLexical', () => {
       const result = convertHtmlToLexicalEnhanced(html);
       expect(result.root.children[0].type).toBe('heading');
       expect(result.root.children[0].format).toBe('center');
+    });
+
+    it('should preserve an iframe embed nested inside <center> alongside inline content', () => {
+      // Matches legacy top11message markup: a <center> wrapping an inline
+      // link followed by an unwrapped iframe embed as a sibling.
+      const html = '<center><i>Tickets are <a href="https://example.com/tickets">available here</a>.</i>'
+        + '<iframe width="100%" height="60" src="https://player-widget.mixcloud.com/widget/iframe/?feed=%2Fynotradio%2Fshow"></iframe></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const embedBlock = result.root.children.find(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embedBlock).toBeDefined();
+      expect(embedBlock.fields.url).toBe('https://player-widget.mixcloud.com/widget/iframe/?feed=%2Fynotradio%2Fshow');
     });
   });
 
@@ -745,13 +862,16 @@ describe('enhancedHtmlToLexical', () => {
   });
 
   describe('Paragraph Alignment via style', () => {
-    it('should not apply alignment when align attribute is stripped by sanitizer', () => {
-      // DOMPurify strips `align` and `style` attributes — format stays ''
+    it('should apply alignment from a text-align style, now that style is allowlisted', () => {
+      // `style` is allowlisted (needed for legacy `<a style="float: right;">`
+      // image thumbnails) and DOMPurify sanitizes the CSS value itself, so
+      // this is no longer stripped -- the <p> handler already read
+      // style.textAlign, it just never had a chance to see it before.
       const result = convertHtmlToLexicalEnhanced(
         '<p style="text-align: center;">Styled center</p>',
       );
       expect(result.root.children[0].type).toBe('paragraph');
-      expect(result.root.children[0].format).toBe('');
+      expect(result.root.children[0].format).toBe('center');
     });
 
     it('should apply alignment from the align attribute (kept for image float/alignment)', () => {
