@@ -274,11 +274,28 @@ class PostgresTop11Test extends TestCase
         $insertStmt = $this->createMock(PDOStatement::class);
         $insertStmt->expects($this->once())
             ->method('execute')
-            ->with([':contest_id' => 1, ':write_in' => 'Some Band - Some Song'])
+            ->with([':contest_id' => 1, ':write_in' => 'Some Band - Some Song', ':voter_email' => null])
             ->willReturn(true);
 
         $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $insertStmt);
 
+        $result = $this->top11->addWriteIn('Some Band - Some Song');
+
+        $this->assertTrue($result);
+    }
+
+    public function testAddWriteInRecordsThePendingVoterEmail(): void
+    {
+        $contestStmt = $this->stubActiveContest(1);
+        $insertStmt = $this->createMock(PDOStatement::class);
+        $insertStmt->expects($this->once())
+            ->method('execute')
+            ->with([':contest_id' => 1, ':write_in' => 'Some Band - Some Song', ':voter_email' => 'jane@example.com'])
+            ->willReturn(true);
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $insertStmt);
+
+        $this->top11->pendingVoterEmail = 'jane@example.com';
         $result = $this->top11->addWriteIn('Some Band - Some Song');
 
         $this->assertTrue($result);
