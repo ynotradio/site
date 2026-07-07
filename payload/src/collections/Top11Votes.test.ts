@@ -92,13 +92,35 @@ describe('Top11Votes', () => {
       );
     });
 
-    it('rejects a duplicate vote from the same voter identity', async () => {
+    it('rejects a duplicate vote for the same song from the same voter identity', async () => {
       const req = makeReq(openContestWithNominees, { docs: [{ id: 5 }] });
       const data = { contest: 1, song: 10, voterEmail: 'jane@example.com' };
 
       await expect(beforeChangeHook?.({ operation: 'create', data, req } as never)).rejects.toThrow(
-        'This voter has already voted in the current Top 11 contest',
+        'This voter has already voted for this song',
       );
+      expect(req.payload.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            and: [
+              { contest: { equals: 1 } },
+              { song: { equals: 10 } },
+              { voterEmail: { equals: 'jane@example.com' } },
+            ],
+          },
+        }),
+      );
+    });
+
+    it('allows a voter to vote for a second, different nominee song in the same contest', async () => {
+      // Legacy MySQL lets one voter pick up to 3 songs (see
+      // 20260706_220000_relax_top11_votes_voterkey_uniqueness); this hook's
+      // dedup check must be scoped per-song, not per-contest, to match.
+      const req = makeReq(openContestWithNominees, { docs: [] });
+      const data = { contest: 1, song: 20, voterEmail: 'jane@example.com' };
+
+      const result = await beforeChangeHook?.({ operation: 'create', data, req } as never);
+      expect(result).toMatchObject({ song: 20 });
     });
 
     it('allows the first vote for a new voter identity', async () => {
