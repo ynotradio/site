@@ -261,10 +261,14 @@ class PostgresTop11 implements Top11
         }
 
         $stmt = $this->db->prepare("
-            INSERT INTO top11_write_ins (contest_id, write_in, display, updated_at, created_at)
-            VALUES (:contest_id, :write_in, true, NOW(), NOW())
+            INSERT INTO top11_write_ins (contest_id, write_in, voter_email, display, updated_at, created_at)
+            VALUES (:contest_id, :write_in, :voter_email, true, NOW(), NOW())
         ");
-        return $stmt->execute([':contest_id' => $contestId, ':write_in' => $writeIn]);
+        return $stmt->execute([
+            ':contest_id' => $contestId,
+            ':write_in' => $writeIn,
+            ':voter_email' => $this->pendingVoterEmail ?: null,
+        ]);
     }
 
     /** {@inheritdoc} */
