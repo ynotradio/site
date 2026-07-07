@@ -472,6 +472,20 @@ describe('enhancedHtmlToLexical', () => {
       expect(result.root.children[0].type).toBe('heading');
       expect(result.root.children[0].format).toBe('center');
     });
+
+    it('should preserve an iframe embed nested inside <center> alongside inline content', () => {
+      // Matches legacy top11message markup: a <center> wrapping an inline
+      // link followed by an unwrapped iframe embed as a sibling.
+      const html = '<center><i>Tickets are <a href="https://example.com/tickets">available here</a>.</i>'
+        + '<iframe width="100%" height="60" src="https://player-widget.mixcloud.com/widget/iframe/?feed=%2Fynotradio%2Fshow"></iframe></center>';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const embedBlock = result.root.children.find(
+        (n: any) => n.type === 'block' && n.fields?.blockType === 'embed',
+      );
+      expect(embedBlock).toBeDefined();
+      expect(embedBlock.fields.url).toBe('https://player-widget.mixcloud.com/widget/iframe/?feed=%2Fynotradio%2Fshow');
+    });
   });
 
   describe('Complex HTML', () => {

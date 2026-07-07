@@ -507,7 +507,7 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
 
   // Center element - process children and apply center alignment to block nodes
   else if (tagName === 'center') {
-    const blockTags = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'table', 'hr']);
+    const blockTags = new Set(['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'blockquote', 'table', 'hr', 'iframe', 'img']);
     const hasBlockChildren = Array.from(element.children).some(
       (child) => blockTags.has(child.tagName.toLowerCase()),
     );
