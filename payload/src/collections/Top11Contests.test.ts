@@ -37,6 +37,43 @@ describe('Top11Contests', () => {
     expect(entriesField.maxRows).toBe(11);
   });
 
+  describe('nominees field', () => {
+    const nomineesField = Top11Contests.fields.find((field) => field.name === 'nominees') as {
+      type?: string;
+      minRows?: number;
+      maxRows?: number;
+      validate?: (value: unknown) => true | string;
+    };
+
+    it('is an unbounded array distinct from entries', () => {
+      expect(nomineesField.type).toBe('array');
+      expect(nomineesField.minRows).toBeUndefined();
+      expect(nomineesField.maxRows).toBeUndefined();
+    });
+
+    it('accepts an empty or undefined nominee pool', () => {
+      expect(nomineesField.validate?.(undefined)).toBe(true);
+      expect(nomineesField.validate?.([])).toBe(true);
+    });
+
+    it('accepts a nominee pool larger than 11 songs', () => {
+      const pool = Array.from({ length: 57 }, (_, i) => ({ song: i + 1 }));
+      expect(nomineesField.validate?.(pool)).toBe(true);
+    });
+
+    it('rejects a nominee row with no song', () => {
+      expect(nomineesField.validate?.([{ song: undefined }])).toBe(
+        'Each nominee must reference a valid song',
+      );
+    });
+
+    it('rejects a duplicate song in the nominee pool', () => {
+      expect(nomineesField.validate?.([{ song: 5 }, { song: 5 }])).toBe(
+        'A song can only appear once in the nominee pool',
+      );
+    });
+  });
+
   it('does not have a title field; a derived displayTitle is used as the admin title', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     expect(allFields.some((field) => field.name === 'title')).toBe(false);
