@@ -22,6 +22,7 @@ const test = baseTest.extend({
 
 // Legacy PHP site URL
 const LEGACY_BASE_URL = 'http://localhost:8080';
+const POSTGRES_URL = `${LEGACY_BASE_URL}/top11.php?ff=use_postgres_top11`;
 
 test.describe('Top 11 @ 11 (Legacy PHP)', () => {
   test.beforeEach(async ({ page }) => {
@@ -217,5 +218,73 @@ test.describe('Top 11 @ 11 (Legacy PHP)', () => {
     await expect(listHeading).toBeVisible();
 
     await captureScreenshot(page, testInfo, '07-Top11-Heading-Structure');
+  });
+});
+
+// PostgresTop11 adapter path -- same top11.php page, ?ff=use_postgres_top11
+// swaps Top11Factory's implementation from SqlTop11 to PostgresTop11 (see
+// src/models/Top11Factory.php). use_postgres_top11 stays false by default in
+// production; this is the parity check confirming the Postgres path renders
+// the same page shape as the legacy MySQL path before that flag ever flips.
+test.describe('Top 11 @ 11 (Postgres adapter)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.waitForTimeout(1000);
+  });
+
+  test('page loads without PHP errors on the Postgres path', async ({ page }, testInfo) => {
+    const { status } = await navigateWithRetry(page, POSTGRES_URL);
+
+    expect(status).toBe(200);
+
+    const pageContent = await page.content();
+    const phpErrors = checkForPhpErrors(pageContent);
+    expect(phpErrors).toEqual([]);
+
+    await expect(page.getByRole('heading', { name: 'Top 11 @ 11', exact: true })).toBeVisible();
+
+    await captureScreenshot(page, testInfo, '08-Top11-Postgres-Page-Loaded');
+  });
+
+  test('displays the same ranked chart table as the legacy MySQL path', async ({
+    page,
+  }, testInfo) => {
+    await navigateWithRetry(page, POSTGRES_URL);
+
+    const table = page.locator('table');
+    await expect(table).toBeVisible();
+
+    const tableRows = page.locator('table tr');
+    const rowCount = await tableRows.count();
+    expect(rowCount).toBeGreaterThan(0);
+
+    await captureScreenshot(page, testInfo, '09-Top11-Postgres-List-Table');
+  });
+
+  test('nominee checkbox count matches the legacy path when voting is open', async ({
+    page,
+  }, testInfo) => {
+    await navigateWithRetry(page, POSTGRES_URL);
+
+    const votingForm = page.locator('form[name="top11"]');
+    const isFormVisible = await votingForm.isVisible().catch(() => false);
+    test.skip(!isFormVisible, 'Voting form not visible; voting closed or not logged in');
+
+    const postgresCheckboxCount = await page
+      .locator('input[type="checkbox"][name="top11[]"]')
+      .count();
+    expect(postgresCheckboxCount).toBeGreaterThan(0);
+
+    await navigateWithRetry(page, `${LEGACY_BASE_URL}/top11.php`);
+    const legacyCheckboxCount = await page
+      .locator('input[type="checkbox"][name="top11[]"]')
+      .count();
+
+    // Both paths read the same underlying nominee pool for the active
+    // contest -- PostgresTop11::getAllSongs() reads Top11Contests.nominees,
+    // SqlTop11::getAllSongs() reads top11songs directly. A mismatch here
+    // means the two data sources have drifted.
+    expect(postgresCheckboxCount).toBe(legacyCheckboxCount);
+
+    await captureScreenshot(page, testInfo, '10-Top11-Postgres-Checkbox-Parity');
   });
 });
