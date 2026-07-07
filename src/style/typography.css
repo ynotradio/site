@@ -464,6 +464,26 @@ nav a:hover {
   font-size: 0.85em;
 }
 
+/* Recovered legacy <font size="N"> text (see ConvertsLexicalToHtml.php's
+   recoverLegacyFormattingTags) that survived migration as literal escaped
+   text rather than a real Lexical node. The legacy site relied on browsers'
+   built-in HTML font-size scale (1=smallest .. 7=largest, 3=default), used
+   across a real range — size=1 subtitles, size=5 DJ-name headings, size=4
+   call-to-action banners — not just a single "small print" tier. size=2 and
+   size=3 map to the existing small/default tiers above; these cover the
+   rest of that scale actually seen in migrated content. */
+.lexical-text--tiny {
+  font-size: 0.7em;
+}
+
+.lexical-text--large {
+  font-size: 1.3em;
+}
+
+.lexical-text--xlarge {
+  font-size: 1.6em;
+}
+
 .pagination {
   padding: 20px;
 }
