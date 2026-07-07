@@ -372,7 +372,11 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
   // that's just how this converter tracks "still needs an upload."
   else if (tagName === 'img') {
     const src = element.getAttribute('src') || '';
-    const alt = element.getAttribute('alt') || '';
+    // Media.alt is a required field; legacy <img> tags frequently have no
+    // alt attribute at all (e.g. decorative artist thumbnails), so fall
+    // back to a generic description rather than an empty string that's
+    // guaranteed to fail validation on import.
+    const alt = element.getAttribute('alt') || 'Image';
     const width = element.getAttribute('width');
     const height = element.getAttribute('height');
     const align = element.getAttribute('align');
@@ -568,6 +572,28 @@ function htmlElementToLexicalNodes(element: Element): LexicalNode[] {
     // This is handled by the parent element
   }
 
+  // Bare inline-formatting tags at block level (e.g. a whole paragraph's
+  // content wrapped in a single <i>...</i>, which happens when an unclosed
+  // <center> upstream causes the HTML parser to nest content one level
+  // deeper than the source markup intended). These have no dedicated block
+  // case, so they used to fall into the generic "unknown element" branch
+  // below, which reads .textContent (tags already stripped) and lost any
+  // nested links/formatting. Route through parseInlineHTML on the innerHTML
+  // instead, same as the <p>/<center> inline-only branches do.
+  else if (['i', 'em', 'b', 'strong', 's', 'strike', 'u', 'code', 'span'].includes(tagName)) {
+    const children = parseInlineHTML(element.outerHTML);
+    if (children.length > 0) {
+      nodes.push({
+        type: 'paragraph',
+        format: '',
+        indent: 0,
+        version: 1,
+        children,
+        direction: 'ltr',
+      });
+    }
+  }
+
   // Unknown elements - extract text content
   else {
     const text = element.textContent?.trim();
@@ -657,15 +683,30 @@ export function convertHtmlToLexicalEnhanced(html: string): any {
         });
       }
     };
+    // A double <br><br> is the legacy convention for a paragraph break (the
+    // real content has no <p> tags at all, just prose separated this way).
+    // Track a run of consecutive <br> siblings so two-in-a-row flushes the
+    // buffer as its own paragraph instead of being appended as literal tags.
+    let consecutiveBrCount = 0;
     Array.from(body.childNodes).forEach((node) => {
       const el = node.nodeType === 1 ? (node as Element) : null;
+      const isBr = el?.tagName.toLowerCase() === 'br';
       if (el && (topBlockTags.has(el.tagName.toLowerCase()) || isImageOnlyAnchor(el))) {
         flushInlineBuffer();
         children.push(...htmlElementToLexicalNodes(el));
+        consecutiveBrCount = 0;
+      } else if (isBr) {
+        consecutiveBrCount += 1;
+        if (consecutiveBrCount >= 2) {
+          flushInlineBuffer();
+          consecutiveBrCount = 0;
+        }
       } else if (el) {
         inlineBuffer += el.outerHTML;
+        consecutiveBrCount = 0;
       } else if (node.nodeType === 3) {
         inlineBuffer += node.textContent ?? '';
+        if (node.textContent?.trim()) consecutiveBrCount = 0;
       }
     });
     flushInlineBuffer();
