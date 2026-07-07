@@ -124,8 +124,10 @@ class PostgresTop11 implements Top11
 
     private function formatWeekOf(string $weekOf): string
     {
+        // Matches legacy MySQL's placement-99 date row verbatim (e.g. "July 2,
+        // 2026", no weekday) -- SqlTop11::getAll() returns that string as-is.
         $date = new \DateTime($weekOf);
-        return $date->format('l, F j, Y');
+        return $date->format('F j, Y');
     }
 
     /** {@inheritdoc} */

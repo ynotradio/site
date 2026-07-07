@@ -105,6 +105,30 @@ class PostgresTop11Test extends TestCase
         $this->assertSame('closed', $this->top11->getStatus());
     }
 
+    public function testGetAllFormatsWeekOfWithoutAWeekdayToMatchLegacyMysql(): void
+    {
+        // SqlTop11::getAll() returns legacy MySQL's placement-99 row verbatim
+        // (e.g. "July 2, 2026", no weekday) -- PostgresTop11 must match that
+        // exact string shape since top11.php renders it directly into the
+        // "Top 11 @ 11 for {this}" heading.
+        $contestStmt = $this->stubActiveContest(1);
+
+        $entriesStmt = $this->createMock(PDOStatement::class);
+        $entriesStmt->method('execute')->willReturn(true);
+        $entriesStmt->method('fetch')->willReturn(false);
+
+        $weekOfStmt = $this->createMock(PDOStatement::class);
+        $weekOfStmt->method('execute')->willReturn(true);
+        $weekOfStmt->method('fetch')->willReturn(['week_of' => '2026-07-02', 'status' => 'open']);
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $entriesStmt, $weekOfStmt);
+
+        $entries = $this->top11->getAll();
+
+        $titleRow = array_values(array_filter($entries, fn ($e) => $e['placement'] === 99))[0];
+        $this->assertSame('July 2, 2026', $titleRow['artist']);
+    }
+
     public function testGetAllSongsReturnsNomineePoolNotEntries(): void
     {
         $contestStmt = $this->stubActiveContest(1);
