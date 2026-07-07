@@ -30,6 +30,51 @@ describe('enhancedHtmlToLexical', () => {
       expect(result.root.children[0].type).toBe('paragraph');
       expect(result.root.children[0].children[0].text).toBe('Test paragraph');
     });
+
+    it('should preserve loose top-level text and inline formatting with no wrapping <p>', () => {
+      // Matches real top11message markup: a leading <a><img></a>, then bare
+      // text, <i>/<b> inline tags, and <br> with no block wrapper at all.
+      // The top-level walk used to only iterate body.children (Elements),
+      // dropping free text nodes, and bare <i>/<b> fell through to the
+      // "unknown element" branch which lost their surrounding sentence.
+      const html = 'Vote for the next <i>Top 11 @ 11</i> and win tickets for <b>Death Cab For Cutie</b>.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      expect(result.root.children).toHaveLength(1);
+      const para = result.root.children[0];
+      expect(para.type).toBe('paragraph');
+
+      const texts = para.children.map((n: any) => n.text);
+      expect(texts).toEqual([
+        'Vote for the next ',
+        'Top 11 @ 11',
+        ' and win tickets for ',
+        'Death Cab For Cutie',
+        '.',
+      ]);
+
+      const italic = para.children.find((n: any) => n.text === 'Top 11 @ 11');
+      expect(italic.format).toBe(2);
+      const bold = para.children.find((n: any) => n.text === 'Death Cab For Cutie');
+      expect(bold.format).toBe(1);
+    });
+
+    it('should convert a top-level <a> wrapping only an <img> into an image block', () => {
+      // Matches real top11message markup: a floated artist photo linked to
+      // the artist's site, immediately followed by loose prose. parseInlineHTML's
+      // <a> handling only produces inline (text) children, so the <img> was
+      // silently dropped when the anchor fell into the inline buffer.
+      const html = '<a href="https://example.com/artist" style="float: right;">'
+        + '<img src="https://example.com/photo.jpg"></a>Every Thursday at 11am.';
+      const result = convertHtmlToLexicalEnhanced(html);
+
+      const imageNode = result.root.children.find((n: any) => n.type === 'upload');
+      expect(imageNode).toBeDefined();
+      expect(imageNode.src).toBe('https://example.com/photo.jpg');
+
+      const textPara = result.root.children.find((n: any) => n.type === 'paragraph');
+      expect(textPara.children[0].text).toContain('Every Thursday at 11am.');
+    });
   });
 
   describe('Headings', () => {

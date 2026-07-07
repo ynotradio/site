@@ -37,7 +37,7 @@ import {
 import type { PostgresTarget } from './shared/payloadClient';
 import { createLogger } from './shared/logger';
 import { convertTextToLexical } from './shared/importUtils';
-import { convertHtmlToLexicalEnhanced } from './shared/enhancedHtmlToLexical';
+import { convertHtmlToLexicalEnhanced, resolveImageUploads } from './shared/enhancedHtmlToLexical';
 import { getMySQLConfig, type MySQLSource } from '../../config/databases';
 
 const logger = createLogger('Top11Import');
@@ -282,6 +282,15 @@ async function main(): Promise<void> {
     // (entries, above). Every legacy nominee-pool song becomes a nominee row.
     const nominees = Array.from(songIdByLegacyId.values()).map((songId) => ({ song: songId }));
 
+    // Resolve any linked-photo <img> tags (e.g. the artist thumbnail in
+    // top11message) to real Media references -- same pass importCustomTexts.ts
+    // and importPosts.ts already run, since Payload's Lexical field rejects
+    // the converter's pending-upload placeholder (value: null) on save.
+    const messageBody = await resolveImageUploads(
+      payload,
+      convertHtmlToLexicalEnhanced(String(messageRows[0]?.message ?? '')),
+    );
+
     // Created open so the vote-creation hook accepts imported votes; the
     // real legacy status is applied after votes land.
     const contest = await payload.create({
@@ -291,7 +300,7 @@ async function main(): Promise<void> {
         status: 'open',
         messageSnapshot: {
           headline: `Top 11 @ 11 for ${dateRow.artist}`,
-          body: convertHtmlToLexicalEnhanced(String(messageRows[0]?.message ?? '')),
+          body: messageBody,
         },
         entries,
         nominees,
