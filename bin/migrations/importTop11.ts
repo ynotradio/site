@@ -275,6 +275,13 @@ async function main(): Promise<void> {
       });
     }
 
+    const songIdByLegacyId = await importSongPool(payload, nomineeRows as NomineeRow[]);
+    logger.info(`Song pool ready: ${songIdByLegacyId.size} nominee songs`);
+
+    // Distinct: this week's votable ballot, not last week's ranked chart
+    // (entries, above). Every legacy nominee-pool song becomes a nominee row.
+    const nominees = Array.from(songIdByLegacyId.values()).map((songId) => ({ song: songId }));
+
     // Created open so the vote-creation hook accepts imported votes; the
     // real legacy status is applied after votes land.
     const contest = await payload.create({
@@ -287,13 +294,11 @@ async function main(): Promise<void> {
           body: convertHtmlToLexicalEnhanced(String(messageRows[0]?.message ?? '')),
         },
         entries,
+        nominees,
       },
     });
     const contestId = contest.id as number;
     logger.info(`Created contest ${contestId} for week of ${dateRow.artist}`);
-
-    const songIdByLegacyId = await importSongPool(payload, nomineeRows as NomineeRow[]);
-    logger.info(`Song pool ready: ${songIdByLegacyId.size} nominee songs`);
 
     const voteResult = await importVotes(
       payload,

@@ -146,6 +146,49 @@ const validateContestEntries = (value: unknown): true | string => {
   return true;
 };
 
+const validateNominees = (value: unknown): true | string => {
+  if (value === undefined || value === null) {
+    return true;
+  }
+
+  if (!Array.isArray(value)) {
+    return 'Nominees must be an array';
+  }
+
+  const songs = new Set<number>();
+  let validationError: string | null = null;
+
+  value.forEach((row) => {
+    if (validationError) {
+      return;
+    }
+
+    if (!row || typeof row !== 'object') {
+      validationError = 'Each nominee must be an object';
+      return;
+    }
+
+    const typedRow = row as { song?: unknown };
+    const songId = Number(typedRow.song);
+    if (!Number.isInteger(songId) || songId <= 0) {
+      validationError = 'Each nominee must reference a valid song';
+      return;
+    }
+
+    if (songs.has(songId)) {
+      validationError = 'A song can only appear once in the nominee pool';
+      return;
+    }
+    songs.add(songId);
+  });
+
+  if (validationError) {
+    return validationError;
+  }
+
+  return true;
+};
+
 export const Top11Contests: CollectionConfig = {
   slug: 'top11-contests',
   enableRichTextLink: false,
@@ -671,6 +714,23 @@ export const Top11Contests: CollectionConfig = {
       admin: {
         description:
           'Top 11 songs for the week. Songs must come from the canonical Songs collection.',
+      },
+    },
+    {
+      name: 'nominees',
+      type: 'array',
+      validate: validateNominees,
+      fields: [
+        {
+          name: 'song',
+          type: 'relationship',
+          relationTo: 'songs',
+          required: true,
+        },
+      ],
+      admin: {
+        description:
+          "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart.",
       },
     },
     {
