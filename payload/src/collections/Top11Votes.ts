@@ -99,7 +99,7 @@ export const Top11Votes: CollectionConfig = {
         const existingVotes = await req.payload.find({
           collection: 'top11-votes',
           where: {
-            and: [{ contest: { equals: contestId } }, identityWhere],
+            and: [{ contest: { equals: contestId } }, { song: { equals: songId } }, identityWhere],
           },
           req,
           overrideAccess: true,
@@ -108,7 +108,7 @@ export const Top11Votes: CollectionConfig = {
         });
 
         if (existingVotes.docs.length > 0) {
-          throw new APIError('This voter has already voted in the current Top 11 contest', 409);
+          throw new APIError('This voter has already voted for this song', 409);
         }
 
         return data;
