@@ -387,7 +387,7 @@ trait ConvertsLexicalToHtml
      */
     private function normalizeNbsp(string $html): string
     {
-        return str_replace(["\u{00a0}", '&nbsp;'], ' ', $html);
+        return str_replace(["\u{00a0}", '&amp;nbsp;', '&nbsp;'], ' ', $html);
     }
 
     /**
@@ -495,8 +495,11 @@ trait ConvertsLexicalToHtml
                 continue;
             }
 
-            $open = $stack[$openIndex];
-            array_splice($stack, $openIndex);
+            $popped = array_splice($stack, $openIndex);
+            $open = array_shift($popped);
+            foreach ($popped as $unmatchedOpen) {
+                $toDelete[] = ['offset' => $unmatchedOpen['offset'], 'length' => $unmatchedOpen['length']];
+            }
             $replacements[] = ['offset' => $open['offset'], 'length' => $open['length'], 'html' => $open['html']];
             $replacements[] = ['offset' => $offset, 'length' => $length, 'html' => $open['closeHtml']];
         }
