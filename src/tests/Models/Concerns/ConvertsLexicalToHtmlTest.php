@@ -534,6 +534,34 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('lexical-image--left', $html);
     }
 
+    public function testUploadNodeRendersLegacyWidthAndHeightAttributes(): void
+    {
+        // Matches top11message's <img height="100"> artist thumbnail --
+        // width/height need to render as real HTML attributes so the
+        // browser's native aspect-ratio sizing applies (the .lexical-image
+        // CSS only forces height:auto when no height attribute is present).
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (9, 'https://cdn.example/thumb.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 9,
+                        'height' => 100,
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('height="100"', $html);
+        $this->assertStringNotContainsString('width="', $html);
+    }
+
     public function testUploadNodeRendersNothingWhenMediaMissing(): void
     {
         $db = new \PDO('sqlite::memory:');

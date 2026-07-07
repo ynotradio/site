@@ -841,6 +841,12 @@ async function resolvePendingUploadNode(
     relationTo: typeof node.relationTo === 'string' ? node.relationTo : 'media',
     value: result.mediaId,
     ...(node.fields ? { fields: node.fields } : {}),
+    // Legacy <img width/height> (e.g. top11message's <img height="100">)
+    // -- carried alongside `fields` rather than merged into it, since
+    // `fields` maps 1:1 onto the Lexical upload block's own field schema
+    // and display width/height aren't part of it.
+    ...(typeof node.width === 'number' ? { width: node.width } : {}),
+    ...(typeof node.height === 'number' ? { height: node.height } : {}),
   };
 }
 

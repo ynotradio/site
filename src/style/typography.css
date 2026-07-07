@@ -418,9 +418,17 @@ nav a:hover {
 }
 
 /* Lexical upload nodes (ConvertsLexicalToHtml's renderLexicalUploadNode).
-   Matches the float/wrap behavior of legacy <img align="left|right">. */
+   Matches the float/wrap behavior of legacy <img align="left|right">.
+   `height: auto` only applies when there's no explicit height attribute --
+   legacy markup like top11message's <img height="100"> relies on the
+   browser's native aspect-ratio-preserving behavior for that one dimension,
+   which forcing `height: auto` here would override and blow up to the
+   image's full natural size instead. */
 .lexical-image {
   max-width: 100%;
+}
+
+.lexical-image:not([height]) {
   height: auto;
 }
 
