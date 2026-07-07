@@ -784,4 +784,424 @@ class ConvertsLexicalToHtmlTest extends TestCase
 
         $this->assertStringContainsString('Next paragraph still renders.', $html);
     }
+
+    /**
+     * Build a single-paragraph Lexical document from a list of plain text
+     * node strings, for testing legacy-artifact normalization across
+     * sibling text nodes.
+     */
+    private function textNodesJson(array $texts): string
+    {
+        return json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'paragraph',
+                        'children' => array_map(
+                            fn ($text) => ['type' => 'text', 'text' => $text],
+                            $texts,
+                        ),
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function testNonBreakingSpaceIsNormalizedToRegularSpace(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(["Lime\u{00a0}Garden"]));
+
+        $this->assertStringContainsString('Lime Garden', $html);
+        $this->assertStringNotContainsString("\u{00a0}", $html);
+    }
+
+    public function testLegacyFontSizeSmallPrintBecomesSemanticSmallTextSpan(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size=2>Terms and conditions apply.</font>',
+        ]));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--small">Terms and conditions apply.</span>',
+            $html,
+        );
+        $this->assertStringNotContainsString('&lt;font', $html);
+    }
+
+    public function testLegacyFontSizeWithQuotedAttributeIsRecognized(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size="2">Fine print.</font>',
+        ]));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--small">Fine print.</span>',
+            $html,
+        );
+    }
+
+    /**
+     * The legacy site used the browser's built-in 1-7 HTML font-size scale
+     * across a real range, not just one "small print" tier: size=1 for
+     * smallest subtitles, size=4 for call-to-action banners, size=5 for
+     * large DJ-name headings (real examples from the legacy MySQL dump).
+     */
+    public function testLegacyFontSizeTinyTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=1>TELLS YOU HOW TO LIVE</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--tiny">TELLS YOU HOW TO LIVE</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeLargeTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=4>CLICK HERE TO ORDER</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--large">CLICK HERE TO ORDER</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeXLargeTierIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=5>Josh T. Landow</font>']));
+
+        $this->assertStringContainsString(
+            '<span class="lexical-text--xlarge">Josh T. Landow</span>',
+            $html,
+        );
+    }
+
+    public function testLegacyFontSizeThreeIsBrowserDefaultAndLeftUnwrapped(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<font size=3>Normal body text.</font>']));
+
+        $this->assertStringContainsString('Normal body text.', $html);
+        $this->assertStringNotContainsString('<span', $html);
+        $this->assertStringNotContainsString('&lt;font', $html);
+        $this->assertStringNotContainsString('&lt;/font', $html);
+    }
+
+    public function testLegacyFontSizeMatchingAcrossSiblingTextNodesIsRecovered(): void
+    {
+        // Real example from the legacy dump: DJ name at size=5, role/show at
+        // size=3 (default, unwrapped) in a following sibling text node.
+        $html = $this->converter->convert($this->textNodesJson([
+            '<font size=5>Rob Huff',
+            '</font>',
+            '<font size=3>Transmission',
+            '</font>',
+        ]));
+
+        $this->assertStringContainsString('<span class="lexical-text--xlarge">Rob Huff</span>', $html);
+        $this->assertStringContainsString('Transmission', $html);
+        $this->assertStringNotContainsString('&lt;font', $html);
+        $this->assertStringNotContainsString('&lt;/font', $html);
+    }
+
+    public function testLegacyHorizontalRuleTextIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<hr />']));
+
+        $this->assertStringContainsString('<hr>', $html);
+        $this->assertStringNotContainsString('&lt;hr', $html);
+    }
+
+    public function testMatchedLegacyBoldTagAcrossSiblingTextNodesIsRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            'Album of the year: ',
+            '<b>The Canyon',
+            '</b> by JJerome87.',
+        ]));
+
+        $this->assertStringContainsString('<strong>The Canyon</strong> by JJerome87.', $html);
+        $this->assertStringNotContainsString('&lt;b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/b&gt;', $html);
+    }
+
+    public function testMatchedLegacyItalicAndUnderlineTagsAreRecovered(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<i>The Amazing Spider-Man 2',
+            '</i>, opening this Friday.',
+        ]));
+        $this->assertStringContainsString('<em>The Amazing Spider-Man 2</em>, opening this Friday.', $html);
+
+        $underlineHtml = $this->converter->convert($this->textNodesJson(['<u>Show Cancellations:</u>']));
+        $this->assertStringContainsString('<u>Show Cancellations:</u>', $underlineHtml);
+    }
+
+    /**
+     * Real example from a legacy story: a stray closing </b> with no
+     * preceding open, followed by an open <b> and an open <i> that never
+     * close anywhere in the document. None of the three should be guessed
+     * into a formatting span — only the tags themselves are dropped.
+     */
+    public function testUnmatchedLegacyTagsAreDroppedWithoutGuessing(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            'the man who started it all, </b>Jim McGuinn<b>! <i>Plus, check out photos',
+        ]));
+
+        $this->assertStringContainsString('the man who started it all, Jim McGuinn! Plus, check out photos', $html);
+        $this->assertStringNotContainsString('<strong>', $html);
+        $this->assertStringNotContainsString('<em>', $html);
+        $this->assertStringNotContainsString('&lt;b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;i&gt;', $html);
+    }
+
+    /**
+     * "Kitchen sink" regression fixture — one Lexical document covering
+     * every node type convertLexicalNodeToHtml() handles, plus every legacy
+     * artifact normalizeLegacyHtmlArtifacts() recovers. The renderer is
+     * collection-agnostic (it doesn't know or care whether the JSON came
+     * from Posts or Pages), so this single test covers both, including the
+     * paypalButton/paypalSmartButtons blocks that only Pages' editor
+     * actually allows authoring today — see bin/seed-kitchen-sink-post.ts
+     * (Posts-authorable subset) and bin/seed-kitchen-sink-page.ts (full
+     * set, matching this fixture) for the real-Payload-authoring
+     * counterparts used for visual QA; keep those two and this test in sync
+     * when any of them changes. The point of testing everything in one
+     * document (not just in isolated per-feature tests elsewhere in this
+     * file) is to catch interactions between passes — e.g. the
+     * orphaned-</span> bug from a <font> that spanned a paragraph boundary
+     * only showed up once nbsp normalization, comment stripping, and tag
+     * recovery all ran on the same real HTML.
+     */
+    public function testKitchenSinkDocumentConvertsEveryNodeTypeAndLegacyArtifact(): void
+    {
+        putenv('PAYPAL_SMART_BUTTON_CLIENT_ID=test-client-id-123');
+
+        $lexicalJson = json_encode([
+            'root' => [
+                'children' => [
+                    // Headings h1-h6
+                    ['type' => 'heading', 'tag' => 'h1', 'children' => [['type' => 'text', 'text' => 'Heading One']]],
+                    ['type' => 'heading', 'tag' => 'h2', 'children' => [['type' => 'text', 'text' => 'Heading Two']]],
+                    ['type' => 'heading', 'tag' => 'h3', 'children' => [['type' => 'text', 'text' => 'Heading Three']]],
+                    ['type' => 'heading', 'tag' => 'h4', 'children' => [['type' => 'text', 'text' => 'Heading Four']]],
+                    ['type' => 'heading', 'tag' => 'h5', 'children' => [['type' => 'text', 'text' => 'Heading Five']]],
+                    ['type' => 'heading', 'tag' => 'h6', 'children' => [['type' => 'text', 'text' => 'Heading Six']]],
+                    // Text formatting: bold, italic, underline, combined
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => 'Bold', 'format' => 1],
+                            ['type' => 'text', 'text' => ' Italic', 'format' => 2],
+                            ['type' => 'text', 'text' => ' Underline', 'format' => 8],
+                            ['type' => 'text', 'text' => ' BoldItalic', 'format' => 3],
+                            ['type' => 'linebreak'],
+                            ['type' => 'text', 'text' => 'Small state', '$' => ['fontSize' => 'small']],
+                        ],
+                    ],
+                    // Paragraph alignment
+                    [
+                        'type' => 'paragraph',
+                        'format' => 'center',
+                        'children' => [['type' => 'text', 'text' => 'Centered paragraph']],
+                    ],
+                    // Links: default and new-tab
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'link',
+                                'fields' => ['url' => 'https://example.com'],
+                                'children' => [['type' => 'text', 'text' => 'A link']],
+                            ],
+                            ['type' => 'text', 'text' => ' and '],
+                            [
+                                'type' => 'link',
+                                'fields' => ['url' => 'https://example.com/new-tab', 'newTab' => true],
+                                'children' => [['type' => 'text', 'text' => 'a new-tab link']],
+                            ],
+                        ],
+                    ],
+                    // Lists: bullet and numbered
+                    [
+                        'type' => 'list',
+                        'listType' => 'bullet',
+                        'children' => [
+                            ['type' => 'listitem', 'children' => [['type' => 'text', 'text' => 'Bullet one']]],
+                            ['type' => 'listitem', 'children' => [['type' => 'text', 'text' => 'Bullet two']]],
+                        ],
+                    ],
+                    [
+                        'type' => 'list',
+                        'listType' => 'number',
+                        'children' => [
+                            ['type' => 'listitem', 'children' => [['type' => 'text', 'text' => 'Numbered one']]],
+                        ],
+                    ],
+                    // Quote and horizontal rule
+                    ['type' => 'quote', 'children' => [['type' => 'text', 'text' => 'A quotation']]],
+                    ['type' => 'horizontalrule'],
+                    // Real Lexical table
+                    [
+                        'type' => 'table',
+                        'children' => [
+                            [
+                                'type' => 'tablerow',
+                                'children' => [
+                                    [
+                                        'type' => 'tablecell',
+                                        'headerState' => 1,
+                                        'children' => [['type' => 'text', 'text' => 'Header Cell']],
+                                    ],
+                                ],
+                            ],
+                            [
+                                'type' => 'tablerow',
+                                'children' => [
+                                    [
+                                        'type' => 'tablecell',
+                                        'children' => [['type' => 'text', 'text' => 'Body Cell']],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
+                    // Legacy "[Table]" text-marker convention
+                    [
+                        'type' => 'paragraph',
+                        'children' => [['type' => 'text', 'text' => "[Table]\nRank | Artist\n1 | Sample Band"]],
+                    ],
+                    // Upload (image) with alignment
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'upload',
+                                'value' => ['id' => 1],
+                                'fields' => ['alignment' => 'center'],
+                            ],
+                        ],
+                    ],
+                    // Embed block
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'block',
+                                'fields' => ['blockType' => 'embed', 'url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'],
+                            ],
+                        ],
+                    ],
+                    // PayPal button block
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'block',
+                                'fields' => ['blockType' => 'paypalButton', 'hostedButtonId' => '5EHFMBVNYRVA8'],
+                            ],
+                        ],
+                    ],
+                    // PayPal smart buttons block
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            [
+                                'type' => 'block',
+                                'fields' => [
+                                    'blockType' => 'paypalSmartButtons',
+                                    'orderDescription' => 'Pick a tier',
+                                    'items' => [['label' => 'Tier One', 'price' => 1]],
+                                ],
+                            ],
+                        ],
+                    ],
+                    // Legacy artifacts: comment, nbsp, font sizes 1-5, hr,
+                    // malformed b/i/em/u split across sibling text nodes —
+                    // all inside a single paragraph, matching how migrated
+                    // legacy content actually looks.
+                    [
+                        'type' => 'paragraph',
+                        'children' => [
+                            ['type' => 'text', 'text' => '<!--Hidden legacy note.-->Visible after: '],
+                            ['type' => 'text', 'text' => "Lime\u{00a0}Garden"],
+                            ['type' => 'text', 'text' => ' <font size=1>tiny</font> '],
+                            ['type' => 'text', 'text' => '<font size=2>small</font> '],
+                            ['type' => 'text', 'text' => '<font size=3>default</font> '],
+                            ['type' => 'text', 'text' => '<font size=4>large</font> '],
+                            ['type' => 'text', 'text' => '<font size=5>xlarge</font> '],
+                            ['type' => 'text', 'text' => '<hr /> '],
+                            ['type' => 'text', 'text' => '<b>recovered bold'],
+                            ['type' => 'text', 'text' => '</b> <i>recovered italic'],
+                            ['type' => 'text', 'text' => '</i> <u>recovered underline</u>'],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $html = $this->converter->convert($lexicalJson);
+
+        // Headings
+        $this->assertStringContainsString('<h1>Heading One</h1>', $html);
+        $this->assertStringContainsString('<h6>Heading Six</h6>', $html);
+        // Real Lexical text formatting
+        $this->assertStringContainsString('<strong>Bold</strong>', $html);
+        $this->assertStringContainsString('<em> Italic</em>', $html);
+        $this->assertStringContainsString('<u> Underline</u>', $html);
+        $this->assertStringContainsString('<span class="lexical-text--small">Small state</span>', $html);
+        // Alignment
+        $this->assertStringContainsString('style="text-align: center;"', $html);
+        // Links
+        $this->assertStringContainsString('<a href="https://example.com">A link</a>', $html);
+        $this->assertStringContainsString('target="_blank" rel="noopener noreferrer">a new-tab link</a>', $html);
+        // Lists
+        $this->assertStringContainsString('<ul><li>Bullet one</li>', $html);
+        $this->assertStringContainsString('<ol><li>Numbered one</li>', $html);
+        // Quote and hr (real Lexical node)
+        $this->assertStringContainsString('<blockquote>A quotation</blockquote>', $html);
+        $this->assertStringContainsString('<hr>', $html);
+        // Real table
+        $this->assertStringContainsString('<th>Header Cell</th>', $html);
+        $this->assertStringContainsString('<td>Body Cell</td>', $html);
+        // Legacy [Table] marker
+        $this->assertStringContainsString('bgcolor="#000000"', $html);
+        $this->assertStringContainsString('Sample Band', $html);
+        // Embed block
+        $this->assertStringContainsString('youtube.com/embed/dQw4w9WgXcQ', $html);
+        // PayPal blocks
+        $this->assertStringContainsString('5EHFMBVNYRVA8', $html);
+        $this->assertStringContainsString('client-id=test-client-id-123', $html);
+        $this->assertStringContainsString('Tier One', $html);
+
+        // Legacy artifact recovery
+        $this->assertStringNotContainsString('&lt;!--', $html);
+        $this->assertStringNotContainsString('Hidden legacy note.', $html);
+        $this->assertStringContainsString('Lime Garden', $html);
+        $this->assertStringNotContainsString("\u{00a0}", $html);
+        $this->assertStringContainsString('<span class="lexical-text--tiny">tiny</span>', $html);
+        $this->assertStringContainsString('<span class="lexical-text--small">small</span>', $html);
+        $this->assertStringContainsString('default', $html);
+        $this->assertStringContainsString('<span class="lexical-text--large">large</span>', $html);
+        $this->assertStringContainsString('<span class="lexical-text--xlarge">xlarge</span>', $html);
+        $this->assertStringContainsString('<strong>recovered bold</strong>', $html);
+        $this->assertStringContainsString('<em>recovered italic</em>', $html);
+        $this->assertStringContainsString('<u>recovered underline</u>', $html);
+        // No escaped legacy markup should survive anywhere in the document
+        $this->assertStringNotContainsString('&lt;b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/b&gt;', $html);
+        $this->assertStringNotContainsString('&lt;i&gt;', $html);
+        $this->assertStringNotContainsString('&lt;/i&gt;', $html);
+        $this->assertStringNotContainsString('&lt;u&gt;', $html);
+        $this->assertStringNotContainsString('&lt;font', $html);
+        $this->assertStringNotContainsString('&lt;/font&gt;', $html);
+        $this->assertStringNotContainsString('&lt;hr', $html);
+        // No orphaned spans — every </span> pairs with a lexical-text-- open
+        $this->assertSame(
+            substr_count($html, '<span class="lexical-text--'),
+            substr_count($html, '</span>'),
+            'Found an orphaned </span> with no matching lexical-text-- opener',
+        );
+    }
 }
