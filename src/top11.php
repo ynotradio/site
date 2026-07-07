@@ -147,7 +147,12 @@ function renderContestNewsletterOptions() {
           } else {
             // User is logged in and hasn't voted - show voting form
             echo "<div class=\"information center\">Logged in as: <strong>" . htmlspecialchars($voter_email) . "</strong> | <a href=\"auth_logout.php?returnTo=/top11\">Log out</a></div>";
-            echo "<form action=\"" . $page_file . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
+            // Preserve the query string (e.g. ?ff=use_postgres_top11) so the
+            // Postgres-adapter flag override, which FeatureFlags only reads
+            // from $_GET per-request, survives the vote POST instead of
+            // silently falling back to the MySQL adapter on submit.
+            $formAction = $page_file . (!empty($_SERVER['QUERY_STRING']) ? '?' . htmlspecialchars($_SERVER['QUERY_STRING']) : '');
+            echo "<form action=\"" . $formAction . "\" method=\"post\" name=\"top11\" class=\"form-default\">\n<fieldset>\n";
             echo renderSongCheckboxes($songs);
             echo renderWriteInField();
             echo "<div class=\"control-group top-spacer_20 input-seperation\">\n";
