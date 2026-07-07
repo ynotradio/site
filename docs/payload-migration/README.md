@@ -48,7 +48,9 @@ Legacy MySQL/admin still owns:
 12. [Rich-Text Embeds (Custom Text Phase 1)](16-rich-text-embeds.md)
 13. [PHP Deletion](17-php-deletion.md)
 14. [Pages Readiness](18-pages-readiness.md)
-15. [Top 11 & Year End Poll Readiness](19-top11-yep-readiness.md)
+15. [Top 11 & Year End Poll — Cutover Overview](19-top11-yep-readiness.md)
+    - [Top 11 Readiness](19a-top11-readiness.md)
+    - [Year End Poll Readiness](19b-yearendpoll-readiness.md)
 
 ## Historical / Planning References
 
