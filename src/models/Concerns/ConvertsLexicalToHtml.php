@@ -263,7 +263,19 @@ trait ConvertsLexicalToHtml
         $alt = htmlspecialchars((string)($mediaMap[(int)$id]['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
         $src = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
 
-        return "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\" loading=\"lazy\">\n";
+        // Legacy <img width/height> (e.g. top11message's <img height="100">
+        // artist thumbnail) -- .lexical-image's `max-width: 100%; height:
+        // auto;` CSS keeps these responsive rather than hard-fixing size,
+        // matching the legacy rendered size only as an intrinsic hint.
+        $dimensionAttrs = '';
+        if (is_numeric($node['width'] ?? null)) {
+            $dimensionAttrs .= ' width="' . (int)$node['width'] . '"';
+        }
+        if (is_numeric($node['height'] ?? null)) {
+            $dimensionAttrs .= ' height="' . (int)$node['height'] . '"';
+        }
+
+        return "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\"{$dimensionAttrs} loading=\"lazy\">\n";
     }
 
     /**

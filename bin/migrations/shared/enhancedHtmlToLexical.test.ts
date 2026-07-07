@@ -380,6 +380,23 @@ describe('enhancedHtmlToLexical', () => {
       expect(node.src).toBeUndefined();
     });
 
+    it('carries the legacy width/height attributes through to the resolved node', async () => {
+      // Matches top11message's <img height="100"> artist thumbnail --
+      // ConvertsLexicalToHtml renders these as real width/height attributes
+      // so the browser's native aspect-ratio sizing applies, same as the
+      // legacy plain <img> did on prod. resolvePendingUploadNode used to
+      // only carry value/relationTo/fields through, silently dropping
+      // width/height even though the pending node already had them.
+      mockImportImageFromUrl.mockResolvedValue({ success: true, mediaId: 'media-sized' });
+
+      const doc = convertHtmlToLexicalEnhanced('<img src="/photo.jpg" height="100" />');
+      const resolved = await resolveImageUploads(mockPayload, doc);
+
+      const node = resolved.root.children[0];
+      expect(node.height).toBe(100);
+      expect(node.width).toBeUndefined();
+    });
+
     it('drops the node entirely when the image import fails', async () => {
       mockImportImageFromUrl.mockResolvedValue({ success: false, error: 'Failed to download image' });
 
