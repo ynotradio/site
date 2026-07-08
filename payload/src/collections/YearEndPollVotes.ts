@@ -1,6 +1,12 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
-import { enforceUserId, rejectDuplicateVote, enforceMaxPicks } from './hooks/yearEndPollVoteHooks';
+import {
+  enforceUserId,
+  rejectDuplicateVote,
+  enforceMaxPicks,
+  incrementNomineeVoteCount,
+  decrementNomineeVoteCount,
+} from './hooks/yearEndPollVoteHooks';
 
 /**
  * YearEndPollVotes Collection
@@ -40,6 +46,8 @@ export const YearEndPollVotes: CollectionConfig = {
   hooks: {
     // Run in order: enforce identity → check dupe → check maxPicks
     beforeChange: [enforceUserId, rejectDuplicateVote, enforceMaxPicks],
+    afterChange: [incrementNomineeVoteCount],
+    afterDelete: [decrementNomineeVoteCount],
   },
   fields: [
     {

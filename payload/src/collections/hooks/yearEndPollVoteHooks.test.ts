@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { enforceUserId, rejectDuplicateVote, enforceMaxPicks } from './yearEndPollVoteHooks';
+import {
+  enforceUserId,
+  rejectDuplicateVote,
+  enforceMaxPicks,
+  incrementNomineeVoteCount,
+  decrementNomineeVoteCount,
+} from './yearEndPollVoteHooks';
 
 type HookArgs = Parameters<typeof enforceUserId>[0];
 
@@ -132,5 +138,97 @@ describe('enforceMaxPicks', () => {
 
     const result = await enforceMaxPicks({ data, req, operation: 'create', collection: {} as any });
     expect(result).toEqual(data);
+  });
+});
+
+describe('incrementNomineeVoteCount', () => {
+  it('increments the matching nominee voteCount on create', async () => {
+    const payloadMock = {
+      findByID: vi.fn().mockResolvedValue({
+        id: 1,
+        nominees: [
+          { id: 'n1', voteCount: 2 },
+          { id: 'n2', voteCount: 0 },
+        ],
+      }),
+      update: vi.fn().mockResolvedValue({}),
+    };
+    const req = { ...makeReq({ id: 1 }), payload: payloadMock as any };
+    const doc = { category: 1, nomineeId: 'n1', userId: 'u1' };
+
+    const result = await incrementNomineeVoteCount({
+      doc,
+      req,
+      operation: 'create',
+      collection: {} as any,
+    } as any);
+
+    expect(payloadMock.update).toHaveBeenCalledWith({
+      collection: 'year-end-poll-categories',
+      id: 1,
+      data: {
+        nominees: [
+          { id: 'n1', voteCount: 3 },
+          { id: 'n2', voteCount: 0 },
+        ],
+      },
+    });
+    expect(result).toEqual(doc);
+  });
+
+  it('does nothing on update operations', async () => {
+    const payloadMock = { findByID: vi.fn(), update: vi.fn() };
+    const req = { ...makeReq({ id: 1 }), payload: payloadMock as any };
+    const doc = { category: 1, nomineeId: 'n1', userId: 'u1' };
+
+    await incrementNomineeVoteCount({
+      doc,
+      req,
+      operation: 'update',
+      collection: {} as any,
+    } as any);
+
+    expect(payloadMock.findByID).not.toHaveBeenCalled();
+    expect(payloadMock.update).not.toHaveBeenCalled();
+  });
+
+  it('silently skips when the nominee no longer exists', async () => {
+    const payloadMock = {
+      findByID: vi.fn().mockResolvedValue({ id: 1, nominees: [{ id: 'n1', voteCount: 0 }] }),
+      update: vi.fn(),
+    };
+    const req = { ...makeReq({ id: 1 }), payload: payloadMock as any };
+    const doc = { category: 1, nomineeId: 'stale-nominee', userId: 'u1' };
+
+    await incrementNomineeVoteCount({
+      doc,
+      req,
+      operation: 'create',
+      collection: {} as any,
+    } as any);
+
+    expect(payloadMock.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('decrementNomineeVoteCount', () => {
+  it('decrements the matching nominee voteCount', async () => {
+    const payloadMock = {
+      findByID: vi.fn().mockResolvedValue({
+        id: 1,
+        nominees: [{ id: 'n1', voteCount: 3 }],
+      }),
+      update: vi.fn().mockResolvedValue({}),
+    };
+    const req = { ...makeReq({ id: 1 }), payload: payloadMock as any };
+    const doc = { category: 1, nomineeId: 'n1', userId: 'u1' };
+
+    await decrementNomineeVoteCount({ doc, req, collection: {} as any } as any);
+
+    expect(payloadMock.update).toHaveBeenCalledWith({
+      collection: 'year-end-poll-categories',
+      id: 1,
+      data: { nominees: [{ id: 'n1', voteCount: 2 }] },
+    });
   });
 });
