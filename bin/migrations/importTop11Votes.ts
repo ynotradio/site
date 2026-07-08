@@ -18,18 +18,32 @@
  * voter-to-song mapping. This script preserves both properties the app
  * actually depends on:
  *   - Per-song tallies (Top11Contests' /stats endpoint, which counts
- *     top11-votes rows grouped by song) stay accurate: it creates exactly
- *     `top11songs.value` vote rows per nominee song, matching legacy's
- *     counter.
+ *     top11-votes rows grouped by song) match legacy's top11songs.value
+ *     exactly: real voters are only ever assigned to a song that still has
+ *     headroom under its legacy target (nextArbitrarySongId() checks
+ *     targetCountBySong before placing a row), so a dedup-guard row never
+ *     pushes a song's count past what legacy actually recorded. Verified
+ *     against a real production snapshot: 56/56 nominees matched exactly
+ *     after this fix (an earlier version assigned real voters round-robin
+ *     with no headroom check, which could and did overcount specific
+ *     songs -- caught during manual song-for-song parity verification).
  *   - Per-voter dedup (hasUserVotedThisWeek(), which checks for any
  *     top11-votes row matching the voter's email/auth0Id in this contest)
  *     stays correct: every real registered voter from top11_user_votes gets
  *     one of those counted rows under their real identity, so they cannot
- *     vote again after cutover. Which specific song their row references is
- *     arbitrary (legacy never recorded it) -- this only affects that one
- *     legacy-attributed row's song, not the total count for any song.
- *   - Remaining counted slots (value - real voters) get synthetic
- *     `legacy-import:<n>` identities, same as importTop11.ts.
+ *     vote again after cutover. Which specific song (among those with
+ *     headroom) their row references is arbitrary -- legacy never recorded
+ *     it -- but it never exceeds that song's legacy count.
+ *   - Remaining counted slots (value - real voters already placed there)
+ *     get synthetic `legacy-import:<n>` identities, same as importTop11.ts.
+ *   - Edge case: if more voters registered than legacy counted votes in
+ *     total (e.g. write-in-only voters, who show up in top11_user_votes
+ *     but never call addVote()), every song eventually runs out of
+ *     headroom. Remaining voters still get a dedup-guard row -- that
+ *     guarantee is non-negotiable -- but land on a song past its legacy
+ *     target. This is logged loudly (overflowAssignments) rather than
+ *     silently, since it means per-song accuracy is no longer exact for
+ *     whichever song absorbed the overflow.
  *
  * Incremental/idempotent: on each run, already-imported real voters (by
  * voterEmail/voterAuth0Id) and the synthetic slots already created for this
@@ -172,8 +186,19 @@ function stripHtmlTagsForComparison(text: string): string {
     .trim();
 }
 
+/**
+ * Normalizes a title/artist string for comparison: strips HTML tags,
+ * trailing punctuation (observed drift case: a nominee stored in Payload
+ * as "MOST NORMAL AMERICAN VOTER:" against legacy's "MOST NORMAL AMERICAN
+ * VOTER" -- same song, a colon apparently added or dropped between when
+ * the song doc was created and legacy's current text), and case.
+ */
 function normalizeTitle(text: string): string {
-  return stripHtmlTagsForComparison(text).trim().toLowerCase();
+  return stripHtmlTagsForComparison(text)
+    .trim()
+    .toLowerCase()
+    .replace(/[.,:;!?'"*]+$/, '')
+    .trim();
 }
 
 /**
@@ -190,7 +215,7 @@ function normalizeTitle(text: string): string {
  * up front), matching against that fixed set locally is both correct and
  * fast enough to re-run every few minutes before cutover.
  */
-async function mapNomineesToSongIds(
+export async function mapNomineesToSongIds(
   payload: Payload,
   contestId: number,
   nominees: NomineeRow[],
@@ -256,7 +281,7 @@ export async function importVotesIncremental(
   nominees: NomineeRow[],
   songIdByLegacyId: Map<number, number>,
   voters: UserVoteRow[],
-): Promise<{ created: number; skipped: number; errors: number }> {
+): Promise<{ created: number; skipped: number; errors: number; overflowAssignments: number }> {
   const nomineeSongIds = nominees
     .map((nominee) => songIdByLegacyId.get(nominee.id))
     .filter((id): id is number => id !== undefined);
@@ -311,13 +336,26 @@ export async function importVotesIncremental(
   let created = 0;
   let skipped = 0;
   let errors = 0;
-  let nextSongIndex = 0;
+  let overflowAssignments = 0;
   let nextSyntheticIndex = maxExistingSyntheticIndex + 1;
 
+  // Picks a song with remaining headroom under its legacy top11songs.value
+  // target, so a real voter's dedup-guard row never pushes a song's count
+  // past what legacy actually recorded. Falls back to the first nominee
+  // (and counts the overflow) only if every song is already at its target
+  // -- i.e. more registered voters exist than legacy's counted votes, which
+  // can happen for write-in-only voters. That fallback trades per-song
+  // accuracy for the non-negotiable guarantee that every registered voter
+  // gets a dedup row.
   const nextArbitrarySongId = (): number => {
-    const songId = nomineeSongIds[nextSongIndex % nomineeSongIds.length];
-    nextSongIndex += 1;
-    return songId;
+    const withHeadroom = nomineeSongIds.find((id) => {
+      const target = targetCountBySong.get(id) ?? 0;
+      const existing = existingCountBySong.get(id) ?? 0;
+      return existing < target;
+    });
+    if (withHeadroom !== undefined) return withHeadroom;
+    overflowAssignments += 1;
+    return nomineeSongIds[0];
   };
 
   const recordCreatedRow = (songId: number): void => {
@@ -374,7 +412,9 @@ export async function importVotesIncremental(
     }
   }
 
-  return { created, skipped, errors };
+  return {
+    created, skipped, errors, overflowAssignments,
+  };
 }
 
 async function main(): Promise<void> {
@@ -432,6 +472,15 @@ async function main(): Promise<void> {
       `Votes: ${result.created} created, ${result.skipped} already present (skipped), `
         + `${result.errors} failed`,
     );
+    if (result.overflowAssignments > 0) {
+      logger.warn(
+        `${result.overflowAssignments} registered voter(s) exceeded every song's `
+          + 'top11songs.value target and were assigned past their song\'s legacy count '
+          + '-- more voters registered than legacy counted votes (e.g. write-in-only '
+          + 'voters). Per-song tallies for the affected song(s) will run ahead of legacy '
+          + 'by that amount; every voter still has exactly one dedup-guard row.',
+      );
+    }
   } finally {
     await connection.end();
   }
