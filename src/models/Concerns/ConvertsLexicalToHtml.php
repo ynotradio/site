@@ -434,12 +434,19 @@ trait ConvertsLexicalToHtml
      * never used 6/7), rather than one flat "small" treatment. size=3 is
      * the browser default, so it's left unwrapped.
      */
-    private const LEGACY_FONT_SIZE_CLASSES = [
-        '1' => 'lexical-text--tiny',
-        '2' => 'lexical-text--small',
-        '4' => 'lexical-text--large',
-        '5' => 'lexical-text--xlarge',
-    ];
+    /**
+     * Trait constants require PHP 8.2+; this codebase runs on PHP 7.4, so the
+     * mapping is a static method returning the array instead of a `const`.
+     */
+    private static function legacyFontSizeClasses(): array
+    {
+        return [
+            '1' => 'lexical-text--tiny',
+            '2' => 'lexical-text--small',
+            '4' => 'lexical-text--large',
+            '5' => 'lexical-text--xlarge',
+        ];
+    }
 
     private function recoverLegacyFormattingTags(string $html): string
     {
@@ -472,7 +479,7 @@ trait ConvertsLexicalToHtml
                 // recognized and dropped rather than left as an orphan.
                 $isClosing = false;
                 $tag = 'font';
-                $class = self::LEGACY_FONT_SIZE_CLASSES[$fontSize] ?? null;
+                $class = self::legacyFontSizeClasses()[$fontSize] ?? null;
                 $openHtml = $class !== null ? "<span class=\"$class\">" : '';
                 $closeHtml = $class !== null ? '</span>' : '';
             } else {
