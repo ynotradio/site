@@ -183,6 +183,22 @@ true`, no row cap (legacy pool runs ~57). Backfilled by re-running
 8. **The image+link Lexical block** and **weekly re-import cadence** from
    "What's next" above are both open, ongoing items — not one-time PRs.
 
+9. **Contest Controls tab's `/stats` scoreboard only shows this week's chart
+   `entries` (≤11 songs), not the full `nominees` pool (~56 songs).**
+   Verified during preview-branch parity testing: `/stats`
+   (`Top11Contests.ts`'s handler) correctly aggregates `voteCounts` across
+   _every_ nominee's votes, but `rankedSongs` — what the tab actually
+   renders — is built by mapping over `contest.entries` only, so any
+   nominee not already on last week's frozen top-11 chart has its vote
+   count computed but never displayed anywhere in the admin UI. A song like
+   this week's current leader can be sitting at zero visibility if it
+   wasn't in last week's top 11. The underlying vote data is correct — this
+   is a display gap, not a data-integrity bug — but it means nobody
+   (including Josh) can see this week's actual leaderboard while voting is
+   open, only after it becomes next week's `entries` snapshot. Fix: build
+   `rankedSongs` from `contest.nominees` instead of (or in addition to)
+   `contest.entries`.
+
 ## Decisions locked
 
 | Question                  | Decision                                                                                                                                                                                                                                                                             |
