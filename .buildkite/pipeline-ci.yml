@@ -101,35 +101,35 @@ steps:
       queue: "default"
 
   # PHP Lint (CodeSniffer) — skipped on JS-only PRs
+  # Runs inside the pinned PHP_VERSION image (php:7.4-fpm, same base prod
+  # runs — see bin/docker/phpfpm/Dockerfile) instead of composer:2, which
+  # tracks latest PHP and would silently pass code that fatals on prod's
+  # actual PHP 7.4 (e.g. trait constants, which need PHP 8.2+).
   - label: ":php: PHP Lint"
     key: "php-lint"
     command: |
       if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
-      cd src && \
-      composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpcs --standard=phpcs.xml --warning-severity=0
-    plugins:
-      - docker#v5.11.0:
-          image: "composer:2"
-          propagate-environment: true
+      bash .buildkite/scripts/run-php-checks.sh lint
+    env:
+      GHCR_USERNAME: "${GHCR_USERNAME}"
+      GHCR_TOKEN: "${GHCR_TOKEN}"
     agents:
       queue: "default"
+      docker: "true"
 
   # PHP Unit Tests — skipped on JS-only PRs
+  # See php-lint above re: pinned PHP_VERSION image.
   - label: ":php: PHP Unit Tests"
     key: "php-test"
     command: |
       if [ "$${SKIP_PHP}" = "true" ]; then echo "No PHP changes — skipping."; exit 0; fi
-      docker-php-ext-install mysqli && \
-      cd src && \
-      composer install --no-interaction --prefer-dist && \
-      vendor/bin/phpunit --testdox
-    plugins:
-      - docker#v5.11.0:
-          image: "composer:2"
-          propagate-environment: true
+      bash .buildkite/scripts/run-php-checks.sh test
+    env:
+      GHCR_USERNAME: "${GHCR_USERNAME}"
+      GHCR_TOKEN: "${GHCR_TOKEN}"
     agents:
       queue: "default"
+      docker: "true"
 
   # === E2E Integration Tests ===
   # Only run after all fast checks pass — saves ~20 min on doomed builds.
