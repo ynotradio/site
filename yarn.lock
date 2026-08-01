@@ -1608,10 +1608,10 @@
   dependencies:
     "@netlify/types" "2.8.0"
 
-"@netlify/plugin-nextjs@^5.15.12":
-  version "5.15.12"
-  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.15.12.tgz#4c5d61781a18a2365dd91845e84b686089bd59fc"
-  integrity sha512-eydPd4gtc/OJOx9IbIJ5CRrC5K3rLxfEQS/S/fRNEAAT0qFvPoQVy23VdK3jRXKFJWXdCRl6ZudWLEZECQPSRQ==
+"@netlify/plugin-nextjs@^5.15.13":
+  version "5.15.13"
+  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.15.13.tgz#1e439fa3d20eb7db2cd6f66110934ae34706647a"
+  integrity sha512-gBmWtgG13ZW4ytNMCvacfwZemtdtV/Ekc+6RBYvI5fndjmDvKxgFHylsw7oli+PHMGAtNqaJrN8QccGnDReu6A==
 
 "@netlify/types@2.8.0":
   version "2.8.0"
