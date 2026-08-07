@@ -61,6 +61,7 @@ describe('Songs', () => {
     const artistField = fields.find((f) => f.name === 'artist');
     expect(artistField?.type).toBe('relationship');
     expect(artistField?.relationTo).toBe('artists');
+    expect(artistField?.required).toBe(true);
   });
 
   it('has releaseDate as a date field', () => {

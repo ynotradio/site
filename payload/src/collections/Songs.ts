@@ -69,6 +69,7 @@ export const Songs: CollectionConfig = {
       name: 'artist',
       type: 'relationship',
       relationTo: 'artists',
+      required: true,
       admin: {
         description: 'Select the artist — create them in the Artists collection first if needed',
       },
