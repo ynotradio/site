@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload';
 import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { normalizeFieldToNoon } from './hooks/showDateHooks';
+import { normalizeFieldToNoon, validateReleaseDateWhenFeatured } from './hooks/showDateHooks';
 import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
 
@@ -86,6 +86,7 @@ export const Songs: CollectionConfig = {
     {
       name: 'releaseDate',
       type: 'date',
+      validate: validateReleaseDateWhenFeatured,
       admin: {
         description: 'Date the song was released',
         date: {

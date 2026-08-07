@@ -64,6 +64,12 @@ describe('Songs', () => {
     expect(artistField?.required).toBe(true);
   });
 
+  it('validates releaseDate so featured songs cannot omit it', () => {
+    const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
+    const releaseDateField = fields.find((f) => f.name === 'releaseDate');
+    expect(typeof releaseDateField?.validate).toBe('function');
+  });
+
   it('has releaseDate as a date field', () => {
     const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
     const releaseDateField = fields.find((f) => f.name === 'releaseDate');

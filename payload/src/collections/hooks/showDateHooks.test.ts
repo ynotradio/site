@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeShowDate, normalizeFieldToNoon } from './showDateHooks';
+import {
+  normalizeShowDate,
+  normalizeFieldToNoon,
+  validateReleaseDateWhenFeatured,
+} from './showDateHooks';
 
-const makeArgs = (data: Record<string, unknown>) => ({ data } as Parameters<typeof normalizeShowDate>[0]);
+const makeArgs = (data: Record<string, unknown>) => ({ data }) as Parameters<typeof normalizeShowDate>[0];
 
 describe('normalizeShowDate', () => {
   describe('when data.date is present', () => {
@@ -74,7 +78,7 @@ describe('normalizeShowDate', () => {
 
 describe('normalizeFieldToNoon', () => {
   const hook = normalizeFieldToNoon('airDate');
-  const makeArgs = (data: Record<string, unknown>) => ({ data } as Parameters<typeof hook>[0]);
+  const makeArgs = (data: Record<string, unknown>) => ({ data }) as Parameters<typeof hook>[0];
 
   describe('when the target field is present', () => {
     it('normalizes a string date to noon UTC', async () => {
@@ -123,5 +127,29 @@ describe('normalizeFieldToNoon', () => {
       const result = await hook(makeArgs(data));
       expect(result).toEqual(data);
     });
+  });
+});
+
+describe('validateReleaseDateWhenFeatured', () => {
+  const validate = (value: unknown, featureOnNewMusic: unknown) => validateReleaseDateWhenFeatured(value, { siblingData: { featureOnNewMusic } });
+
+  it('rejects a featured song with no release date', () => {
+    expect(validate(null, true)).toMatch(/release date is required/i);
+  });
+
+  it('rejects a featured song with an empty release date', () => {
+    expect(validate('', true)).toMatch(/release date is required/i);
+  });
+
+  it('allows a featured song that has a release date', () => {
+    expect(validate('2026-08-10T12:00:00.000Z', true)).toBe(true);
+  });
+
+  it('allows an unfeatured song with no release date', () => {
+    expect(validate(null, false)).toBe(true);
+  });
+
+  it('allows an unfeatured song when the checkbox is undefined', () => {
+    expect(validate(null, undefined)).toBe(true);
   });
 });
