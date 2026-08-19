@@ -26,3 +26,23 @@ export const normalizeDateToNoon: CollectionBeforeChangeHook = normalizeFieldToN
 
 /** @deprecated Use `normalizeDateToNoon` instead */
 export const normalizeShowDate = normalizeDateToNoon;
+
+/**
+ * Require a release date whenever a song is featured on New Music.
+ *
+ * The New Music page filters on `release_date > CURRENT_DATE - INTERVAL '6 months'`
+ * and groups results by that date. A featured song with a null release date fails
+ * the comparison (NULL > date is NULL, not true) and has no group to sit in, so it
+ * silently never renders despite the checkbox being on.
+ *
+ * Unfeatured songs may still omit the date — most of the back catalog has none.
+ */
+export const validateReleaseDateWhenFeatured = (
+  value: unknown,
+  { siblingData }: { siblingData?: { featureOnNewMusic?: unknown } },
+): string | true => {
+  if (siblingData?.featureOnNewMusic && !value) {
+    return 'A release date is required when "Feature on New Music" is checked, otherwise the song will not appear on the New Music page.';
+  }
+  return true;
+};
