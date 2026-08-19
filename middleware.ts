@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  stationTodayNoonUTC,
+  stationTodayNoonUTCPlusMonths,
+} from './payload/src/utils/stationDate';
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
@@ -7,8 +11,7 @@ export function middleware(request: NextRequest) {
     const hasWhere = Array.from(searchParams.keys()).some((k) => k.startsWith('where'));
     if (!hasWhere) {
       const url = request.nextUrl.clone();
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      const today = stationTodayNoonUTC();
       url.searchParams.set('where[or][0][and][0][date][greater_than_equal]', today.toISOString());
       url.searchParams.set('sort', 'startTime');
       url.searchParams.set('groupBy', 'date');
@@ -20,8 +23,7 @@ export function middleware(request: NextRequest) {
     const hasWhere = Array.from(searchParams.keys()).some((k) => k.startsWith('where'));
     if (!hasWhere) {
       const url = request.nextUrl.clone();
-      const today = new Date();
-      today.setUTCHours(0, 0, 0, 0);
+      const today = stationTodayNoonUTC();
       url.searchParams.set('where[or][0][and][0][date][greater_than_equal]', today.toISOString());
       url.searchParams.set('sort', 'date');
       url.searchParams.set('groupBy', 'date');
@@ -33,9 +35,7 @@ export function middleware(request: NextRequest) {
     const hasWhere = Array.from(searchParams.keys()).some((k) => k.startsWith('where'));
     if (!hasWhere) {
       const url = request.nextUrl.clone();
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setUTCHours(12, 0, 0, 0);
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      const sixMonthsAgo = stationTodayNoonUTCPlusMonths(-6);
       url.searchParams.set('where[featureOnNewMusic][equals]', 'true');
       url.searchParams.set('where[releaseDate][greater_than_equal]', sixMonthsAgo.toISOString());
       url.searchParams.set('sort', '-releaseDate');
@@ -47,8 +47,7 @@ export function middleware(request: NextRequest) {
     const hasWhere = Array.from(searchParams.keys()).some((k) => k.startsWith('where'));
     if (!hasWhere) {
       const url = request.nextUrl.clone();
-      const now = new Date();
-      now.setUTCHours(12, 0, 0, 0);
+      const now = stationTodayNoonUTC();
       url.searchParams.set('where[or][0][and][0][_status][equals]', 'published');
       url.searchParams.set('where[or][0][and][1][showOnFrontPage][equals]', 'true');
       url.searchParams.set('where[or][0][and][2][endDate][greater_than_equal]', now.toISOString());
@@ -62,8 +61,7 @@ export function middleware(request: NextRequest) {
     const hasWhere = Array.from(searchParams.keys()).some((k) => k.startsWith('where'));
     if (!hasWhere) {
       const url = request.nextUrl.clone();
-      const now = new Date();
-      now.setUTCHours(12, 0, 0, 0);
+      const now = stationTodayNoonUTC();
       url.searchParams.set('where[endDate][greater_than_equal]', now.toISOString());
       url.searchParams.set('where[startDate][less_than_equal]', now.toISOString());
       url.searchParams.set('sort', 'priority');
