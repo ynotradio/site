@@ -38,6 +38,7 @@ export default defineConfig({
         'payload/src/utils/concertTitle.ts',
         'payload/src/utils/date-formatting.ts',
         'payload/src/utils/musicbrainz-api.ts',
+        'payload/src/utils/stationDate.ts',
         'payload/src/collections/Artists.ts',
         'payload/src/collections/DJs.ts',
         'payload/src/collections/Shows.ts',

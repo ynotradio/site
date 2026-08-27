@@ -19,6 +19,7 @@ DEPLOY_PATHS=(
   netlify/
   public/
   next.config.mjs
+  middleware.ts
   payload.config.ts
   package.json
   yarn.lock

@@ -41,8 +41,9 @@ describe('useShowCloner', () => {
     const cloned = new Set(['date', 'startTime', 'endTime', 'name', 'host', 'note']);
     const excluded = new Set(['legacyId', 'migratedAt']); // not meaningful on a fresh clone
 
-    const unaccounted = collectFieldNames(Shows.fields as Field[])
-      .filter((f) => !cloned.has(f) && !excluded.has(f));
+    const unaccounted = collectFieldNames(Shows.fields as Field[]).filter(
+      (f) => !cloned.has(f) && !excluded.has(f),
+    );
 
     expect(unaccounted).toEqual([]);
   });
@@ -187,9 +188,7 @@ describe('useShowCloner', () => {
       return { ok: true, json: async () => ({}) };
     });
     const onComplete = vi.fn().mockResolvedValue(undefined);
-    const showWithStringHost: Show[] = [
-      makeShow({ id: '1', date: '2024-01-15', host: '99' }),
-    ];
+    const showWithStringHost: Show[] = [makeShow({ id: '1', date: '2024-01-15', host: '99' })];
     const { result } = renderHook(() => useShowCloner(showWithStringHost, onComplete));
 
     await act(async () => {
@@ -225,10 +224,12 @@ describe('useShowCloner', () => {
       return { ok: true, json: async () => ({}) };
     });
     const onComplete = vi.fn().mockResolvedValue(undefined);
-    const lexicalNote = { root: { children: [{ type: 'paragraph', children: [{ type: 'text', text: 'Best Of episode' }] }] } };
-    const showWithNote: Show[] = [
-      makeShow({ id: '1', date: '2024-01-15', note: lexicalNote }),
-    ];
+    const lexicalNote = {
+      root: {
+        children: [{ type: 'paragraph', children: [{ type: 'text', text: 'Best Of episode' }] }],
+      },
+    };
+    const showWithNote: Show[] = [makeShow({ id: '1', date: '2024-01-15', note: lexicalNote })];
     const { result } = renderHook(() => useShowCloner(showWithNote, onComplete));
 
     await act(async () => {
@@ -245,9 +246,7 @@ describe('useShowCloner', () => {
       return { ok: true, json: async () => ({}) };
     });
     const onComplete = vi.fn().mockResolvedValue(undefined);
-    const showWithoutNote: Show[] = [
-      makeShow({ id: '1', date: '2024-01-15', note: undefined }),
-    ];
+    const showWithoutNote: Show[] = [makeShow({ id: '1', date: '2024-01-15', note: undefined })];
     const { result } = renderHook(() => useShowCloner(showWithoutNote, onComplete));
 
     await act(async () => {
@@ -255,6 +254,47 @@ describe('useShowCloner', () => {
     });
 
     expect(fetchedBodies[0].note).toBeUndefined();
+  });
+
+  it('reports a partial clone when a save is rejected instead of claiming success', async () => {
+    let call = 0;
+    global.fetch = vi.fn().mockImplementation(async () => {
+      call += 1;
+      return call === 1 ? { ok: true, json: async () => ({}) } : { ok: false, status: 500 };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useShowCloner(shows, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-16', '2024-02-05');
+    });
+
+    expect(result.current.successMessage).toBeNull();
+    expect(result.current.error).toMatch(/Only 1 of 2 show\(s\) were cloned/);
+    expect(onComplete).toHaveBeenCalled();
+  });
+
+  it('sends one create request at a time', async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    global.fetch = vi.fn().mockImplementation(async () => {
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      inFlight -= 1;
+      return { ok: true, json: async () => ({}) };
+    });
+    const onComplete = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() => useShowCloner(shows, onComplete));
+
+    await act(async () => {
+      await result.current.cloneShows('2024-01-15', '2024-01-16', '2024-02-05');
+    });
+
+    expect(maxInFlight).toBe(1);
+    expect(result.current.successMessage).toMatch(/Successfully cloned 2 show\(s\)/);
   });
 
   it('sets error on fetch failure', async () => {

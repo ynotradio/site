@@ -4,6 +4,76 @@ import {
   getDaysDifference, addDays, formatDateRange, getShowsInRange,
 } from '../utils';
 
+/** Build the create payload for a cloned show, landing it on `newDate`. */
+function buildClonedShow(show: Show, newDate: string): NewShowPayload {
+  const newShow: NewShowPayload = {
+    date: newDate,
+    startTime: show.startTime,
+    endTime: show.endTime,
+  };
+
+  if (show.name) {
+    newShow.name = show.name;
+  }
+  if (show.host) {
+    // Handle both object and string references - Payload expects numeric IDs
+    const hostId = typeof show.host === 'object' ? show.host.id : show.host;
+    if (hostId) {
+      // Convert to number if it's a valid numeric value
+      const numericId = Number(hostId);
+      newShow.host = !Number.isNaN(numericId) ? numericId : hostId;
+    }
+  }
+  if (show.note) {
+    newShow.note = show.note;
+  }
+
+  return newShow;
+}
+
+/**
+ * Create the cloned shows one request at a time and return how many were
+ * actually saved.
+ *
+ * Sequential on purpose: concurrent inserts race on Drizzle's `_rels` read-back
+ * and silently drop shows — the same reason bin/migrations/importSchedule.ts
+ * imports sequentially. And because `fetch` only rejects on network errors, a
+ * rejected save (validation, auth, 500) has to be checked explicitly, or the
+ * clone reports success for shows that were never written.
+ */
+async function createClonedShows(
+  sourceShows: Show[],
+  sourceStartDate: string,
+  targetStartDate: string,
+): Promise<number> {
+  let created = 0;
+
+  for (let i = 0; i < sourceShows.length; i += 1) {
+    const show = sourceShows[i];
+    const dayOffset = getDaysDifference(sourceStartDate, show.date);
+    const newDate = addDays(targetStartDate, dayOffset);
+    const newShow = buildClonedShow(show, newDate);
+
+    // eslint-disable-next-line no-await-in-loop
+    const response = await fetch('/api/shows', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newShow),
+    });
+
+    if (response.ok) {
+      created += 1;
+    } else {
+      // eslint-disable-next-line no-console
+      console.error(`Failed to clone show to ${newDate} ${show.startTime}: ${response.status}`);
+    }
+  }
+
+  return created;
+}
+
 export const useShowCloner = (shows: Show[], onComplete: () => Promise<void>) => {
   const [cloning, setCloning] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,49 +117,20 @@ export const useShowCloner = (shows: Show[], onComplete: () => Promise<void>) =>
         }
 
         // Create new shows for target date range, preserving day offsets
-        const createPromises = sourceShows.map((show) => {
-          // Calculate the day offset from source start date
-          const dayOffset = getDaysDifference(sourceStartDate, show.date);
-          const newDate = addDays(targetStartDate, dayOffset);
+        const created = await createClonedShows(sourceShows, sourceStartDate, targetStartDate);
 
-          const newShow: NewShowPayload = {
-            date: newDate,
-            startTime: show.startTime,
-            endTime: show.endTime,
-          };
-
-          if (show.name) {
-            newShow.name = show.name;
-          }
-          if (show.host) {
-            // Handle both object and string references - Payload expects numeric IDs
-            const hostId = typeof show.host === 'object' ? show.host.id : show.host;
-            if (hostId) {
-              // Convert to number if it's a valid numeric value
-              const numericId = Number(hostId);
-              newShow.host = !Number.isNaN(numericId) ? numericId : hostId;
-            }
-          }
-          if (show.note) {
-            newShow.note = show.note;
-          }
-
-          return fetch('/api/shows', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newShow),
-          });
-        });
-
-        await Promise.all(createPromises);
+        // Reload shows before reporting, so the list reflects what was actually saved
+        await onComplete();
 
         const targetRange = formatDateRange(targetStartDate, targetEndDate);
-        setSuccessMessage(`Successfully cloned ${sourceShows.length} show(s) to ${targetRange}`);
-
-        // Reload shows
-        await onComplete();
+        if (created === sourceShows.length) {
+          setSuccessMessage(`Successfully cloned ${sourceShows.length} show(s) to ${targetRange}`);
+        } else {
+          setError(
+            `Only ${created} of ${sourceShows.length} show(s) were cloned to ${targetRange}. `
+              + 'Check the schedule for the missing slots and try again.',
+          );
+        }
       } catch (err) {
         setError('Error cloning shows. Please try again.');
         // eslint-disable-next-line no-console
