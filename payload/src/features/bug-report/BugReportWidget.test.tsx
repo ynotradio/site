@@ -41,7 +41,8 @@ describe('BugReportWidget', () => {
     expect(screen.getByRole('heading', { name: 'Report a bug' })).toBeInTheDocument();
   });
 
-  it('walks through describe → questions → success', async () => {
+  it('walks through describe → AI questions → success', async () => {
+    vi.stubEnv('NEXT_PUBLIC_BUG_REPORT_AI_ENABLED', 'true');
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ questions: ['Which page?'] }) })
@@ -105,24 +106,25 @@ describe('BugReportWidget', () => {
     expect(screen.getByLabelText('What went wrong?')).toHaveValue('');
   });
 
-  it('shows a ready-to-file message when there are no follow-up questions', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ questions: [] }) })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ url: 'https://github/issues/8', number: 8 }),
-      });
+  it('skips questions and files directly when AI is gated off (default)', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ url: 'https://github/issues/8', number: 8 }),
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<BugReportWidget defaultOpen />);
     typeDescription('Broken thing');
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
+    // No triage round-trip; goes straight to the ready-to-file step.
     expect(await screen.findByText(/ready to file this report/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Submit report' }));
 
     await waitFor(() => expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument());
+    // Only the submit call happened — never the triage endpoint.
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/bug-report');
     fireEvent.click(screen.getByRole('button', { name: 'Done' }));
     expect(screen.getByRole('button', { name: 'Report a bug' })).toBeInTheDocument();
   });

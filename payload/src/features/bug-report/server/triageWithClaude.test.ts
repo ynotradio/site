@@ -22,7 +22,10 @@ const fakeClient = (text: string): AnthropicLike => ({
 });
 
 describe('getFollowUpQuestions', () => {
-  beforeEach(() => vi.unstubAllEnvs());
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('BUG_REPORT_AI_ENABLED', 'true');
+  });
 
   it('returns [] when no API key is configured', async () => {
     const createClient = vi.fn();
@@ -76,7 +79,10 @@ describe('getFollowUpQuestions', () => {
 });
 
 describe('composeIssue', () => {
-  beforeEach(() => vi.unstubAllEnvs());
+  beforeEach(() => {
+    vi.unstubAllEnvs();
+    vi.stubEnv('BUG_REPORT_AI_ENABLED', 'true');
+  });
 
   it('falls back to default labels and null title without an API key', async () => {
     const result = await composeIssue('desc', [], context());

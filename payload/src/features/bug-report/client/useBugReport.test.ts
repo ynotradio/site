@@ -31,7 +31,21 @@ describe('useBugReport', () => {
     vi.unstubAllGlobals();
   });
 
+  it('skips the triage call when AI is gated off (default)', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { result } = renderHook(() => useBugReport());
+    act(() => result.current.setDescription('It broke'));
+    await act(async () => {
+      await result.current.continueToFollowUps();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result.current.step).toBe('questions');
+    expect(result.current.questions).toEqual([]);
+  });
+
   it('fetches follow-up questions and advances to the questions step', async () => {
+    vi.stubEnv('NEXT_PUBLIC_BUG_REPORT_AI_ENABLED', 'true');
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ questions: ['Which page?'] }),
@@ -50,6 +64,7 @@ describe('useBugReport', () => {
   });
 
   it('advances with no questions when triage fails', async () => {
+    vi.stubEnv('NEXT_PUBLIC_BUG_REPORT_AI_ENABLED', 'true');
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
     const { result } = renderHook(() => useBugReport());
     act(() => result.current.setDescription('It broke'));

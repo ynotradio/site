@@ -20,7 +20,10 @@ export interface TriageDeps {
   createClient?: () => AnthropicLike;
 }
 
-const hasApiKey = (): boolean => Boolean(process.env.ANTHROPIC_API_KEY);
+// The AI triage step is OFF by default. It runs only when explicitly enabled
+// (BUG_REPORT_AI_ENABLED=true) AND an API key is present. Either missing means
+// reports still file — just without follow-up questions or AI-suggested titles.
+const isAiEnabled = (): boolean => process.env.BUG_REPORT_AI_ENABLED === 'true' && Boolean(process.env.ANTHROPIC_API_KEY);
 
 const defaultCreateClient = (): AnthropicLike => new Anthropic() as unknown as AnthropicLike;
 
@@ -75,7 +78,7 @@ export const getFollowUpQuestions = async (
   context: BugReportContext,
   deps: TriageDeps = {},
 ): Promise<string[]> => {
-  if (!hasApiKey() || !description.trim()) {
+  if (!isAiEnabled() || !description.trim()) {
     return [];
   }
 
@@ -132,7 +135,7 @@ export const composeIssue = async (
   deps: TriageDeps = {},
 ): Promise<ComposedIssue> => {
   const fallback: ComposedIssue = { title: null, labels: DEFAULT_LABELS };
-  if (!hasApiKey() || !description.trim()) {
+  if (!isAiEnabled() || !description.trim()) {
     return fallback;
   }
 

@@ -28,6 +28,11 @@ export interface UseBugReportResult {
 const TRIAGE_ENDPOINT = '/api/bug-report/triage';
 const SUBMIT_ENDPOINT = '/api/bug-report';
 
+// AI follow-up questions are gated off by default. Set
+// NEXT_PUBLIC_BUG_REPORT_AI_ENABLED=true (alongside the server-side flag) to
+// enable them; otherwise we skip the triage round-trip entirely.
+const aiEnabled = (): boolean => process.env.NEXT_PUBLIC_BUG_REPORT_AI_ENABLED === 'true';
+
 export const useBugReport = (): UseBugReportResult => {
   const [step, setStep] = useState<BugReportStep>('describe');
   const [description, setDescription] = useState('');
@@ -57,6 +62,12 @@ export const useBugReport = (): UseBugReportResult => {
 
   const continueToFollowUps = useCallback(async () => {
     if (!description.trim()) {
+      return;
+    }
+    // Skip the AI round-trip when follow-ups are gated off.
+    if (!aiEnabled()) {
+      setQuestions([]);
+      setStep('questions');
       return;
     }
     setLoadingFollowUps(true);
