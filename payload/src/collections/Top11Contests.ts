@@ -22,6 +22,11 @@ type ContestEntry = {
   weeklyNote?: unknown;
 };
 
+type ContestNominee = {
+  id?: string;
+  song: number;
+};
+
 type ContestDoc = {
   id: number;
   status: string;
@@ -31,6 +36,7 @@ type ContestDoc = {
     priorWinnerLookbackContests?: number;
   };
   entries?: ContestEntry[];
+  nominees?: ContestNominee[];
   messageSnapshot?: unknown;
 };
 
@@ -404,7 +410,13 @@ export const Top11Contests: CollectionConfig = {
           voterKeys.add(voterKey);
         });
 
-        const songIds = (contest.entries ?? []).map((entry) => entry.song);
+        // Built from the full nominees pool (this week's ballot), not
+        // entries (last week's frozen top-11 chart) -- entries only has
+        // room for 11 songs, so any nominee outside that set would have its
+        // votes correctly counted above but never appear here. This is the
+        // live, this-week leaderboard; entries becomes next week's chart
+        // only once the contest closes.
+        const songIds = (contest.nominees ?? []).map((nominee) => nominee.song);
         const songs = songIds.length > 0
           ? await findAllDocs<SongDoc>({
             payload: req.payload,
@@ -417,22 +429,22 @@ export const Top11Contests: CollectionConfig = {
           : [];
         const songsById = new Map(songs.map((song) => [song.id, song]));
 
-        // displayOrder is a hidden field (excluded from reads), so use the
-        // entries array's own position as the display order instead of
-        // relying on the stored value.
-        const rankedSongs = (contest.entries ?? [])
-          .map((entry, index) => {
-            const song = songsById.get(entry.song);
+        // Ranked purely by current vote count -- there's no "last position"
+        // concept for a nominee pool the way there is for entries, so ties
+        // break by song id for a stable sort instead of a prior displayOrder.
+        const rankedSongs = (contest.nominees ?? [])
+          .map((nominee) => {
+            const song = songsById.get(nominee.song);
             const artistName = song?.artist && typeof song.artist === 'object' ? song.artist.name : undefined;
             return {
-              song: entry.song,
+              song: nominee.song,
               songTitle: song?.title ?? null,
               songArtist: artistName ?? null,
-              displayOrder: index + 1,
-              votes: voteCounts.get(entry.song) ?? 0,
+              votes: voteCounts.get(nominee.song) ?? 0,
             };
           })
-          .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
+          .sort((a, b) => b.votes - a.votes || a.song - b.song)
+          .map((row, index) => ({ ...row, displayOrder: index + 1 }));
 
         const newsletterOnlyCount = contestants.filter(
           (contestant) => contestant.newsletterOptIn,

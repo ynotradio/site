@@ -217,7 +217,7 @@ describe('Top11Contests', () => {
       const findByID = vi.fn().mockResolvedValue({
         id: 1,
         status: 'closed',
-        entries: [],
+        nominees: [],
       });
       return {
         req: {
@@ -255,10 +255,52 @@ describe('Top11Contests', () => {
     });
   });
 
-  describe('/:id/stats rankedSongs displayOrder', () => {
+  describe('/:id/stats rankedSongs', () => {
     const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
 
-    it('derives displayOrder from entries array position, not the hidden field', async () => {
+    it('builds rankedSongs from the full nominees pool, not entries', async () => {
+      // Regression: rankedSongs used to be built from contest.entries (last
+      // week's frozen top-11 chart, capped at 11 rows), so any nominee
+      // outside that set had its votes counted but never surfaced here.
+      // song 3 is a nominee that was never on last week's chart.
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return {
+            docs: [
+              { id: 7, title: 'Song Seven', artist: { name: 'Artist A' } },
+              { id: 3, title: 'Song Three', artist: { name: 'Artist B' } },
+            ],
+          };
+        }
+        if (collection === 'top11-votes') {
+          return {
+            docs: [
+              { id: 1, song: 3 },
+              { id: 2, song: 3 },
+            ],
+          };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        entries: [{ song: 7 }],
+        nominees: [{ song: 7 }, { song: 3 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs.map((row: { song: number }) => row.song)).toEqual([3, 7]);
+    });
+
+    it('derives displayOrder from vote-count rank, not nominees array position', async () => {
       const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
         if (collection === 'songs') {
           return {
@@ -269,14 +311,22 @@ describe('Top11Contests', () => {
             ],
           };
         }
+        if (collection === 'top11-votes') {
+          // song 9 (listed last in nominees) has the most votes.
+          return {
+            docs: [
+              { id: 1, song: 9 },
+              { id: 2, song: 9 },
+              { id: 3, song: 7 },
+            ],
+          };
+        }
         return { docs: [] };
       });
-      // displayOrder is a hidden field, so a real read never includes it —
-      // this mock matches that runtime shape.
       const findByID = vi.fn().mockResolvedValue({
         id: 1,
-        status: 'closed',
-        entries: [{ song: 7 }, { song: 3 }, { song: 9 }],
+        status: 'open',
+        nominees: [{ song: 7 }, { song: 3 }, { song: 9 }],
       });
       const req = {
         user: { role: 'admin' },
@@ -289,27 +339,56 @@ describe('Top11Contests', () => {
 
       expect(body.rankedSongs).toEqual([
         {
+          song: 9,
+          songTitle: 'Song Nine',
+          songArtist: 'Artist C',
+          votes: 2,
+          displayOrder: 1,
+        },
+        {
           song: 7,
           songTitle: 'Song Seven',
           songArtist: 'Artist A',
-          displayOrder: 1,
-          votes: 0,
+          votes: 1,
+          displayOrder: 2,
         },
         {
           song: 3,
           songTitle: 'Song Three',
           songArtist: 'Artist B',
-          displayOrder: 2,
           votes: 0,
-        },
-        {
-          song: 9,
-          songTitle: 'Song Nine',
-          songArtist: 'Artist C',
           displayOrder: 3,
-          votes: 0,
         },
       ]);
+    });
+
+    it('breaks ties by song id for a stable sort', async () => {
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return {
+            docs: [
+              { id: 9, title: 'Song Nine', artist: { name: 'Artist C' } },
+              { id: 3, title: 'Song Three', artist: { name: 'Artist B' } },
+            ],
+          };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        nominees: [{ song: 9 }, { song: 3 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs.map((row: { song: number }) => row.song)).toEqual([3, 9]);
     });
 
     it('falls back gracefully when a song cannot be found', async () => {
@@ -317,7 +396,7 @@ describe('Top11Contests', () => {
       const findByID = vi.fn().mockResolvedValue({
         id: 1,
         status: 'closed',
-        entries: [{ song: 42 }],
+        nominees: [{ song: 42 }],
       });
       const req = {
         user: { role: 'admin' },
@@ -333,8 +412,8 @@ describe('Top11Contests', () => {
           song: 42,
           songTitle: null,
           songArtist: null,
-          displayOrder: 1,
           votes: 0,
+          displayOrder: 1,
         },
       ]);
     });
