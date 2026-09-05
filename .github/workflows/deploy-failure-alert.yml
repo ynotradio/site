@@ -1,0 +1,67 @@
+name: Deploy Failure Alert
+
+# Netlify cancels a queued production build when a newer commit supersedes it
+# ("Canceled build due to no content change"). If the winning build also fails,
+# nothing retries and master silently stops shipping — production drifted six
+# weeks behind master this way before anyone noticed.
+#
+# Smoke Test only runs on successful deploys, so it cannot catch this. This
+# workflow watches for the failure states instead.
+
+on:
+  deployment_status:
+
+jobs:
+  alert:
+    if: >
+      github.event.deployment.environment == 'production' &&
+      (github.event.deployment_status.state == 'failure' ||
+       github.event.deployment_status.state == 'error')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update a tracking issue
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const sha = (context.payload.deployment.sha || '').slice(0, 8);
+            const state = context.payload.deployment_status.state;
+            const deployUrl = context.payload.deployment_status.target_url || '(none)';
+            const desc = context.payload.deployment_status.description || '(no description)';
+            const title = '🚨 Production deploy is failing — master is not shipping';
+
+            const body = [
+              `**A production deploy finished in state \`${state}\`, so master is not live.**`,
+              '',
+              `- Commit: \`${sha}\``,
+              `- Netlify: ${deployUrl}`,
+              `- Reason: ${desc}`,
+              '',
+              'A "Canceled build due to no content change" here means Netlify superseded a',
+              'queued build. If no later build succeeded, **production is still serving an',
+              'older commit** — verify the published deploy matches master before assuming',
+              'a merge went out.',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'deploy-failure',
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['bug', 'production', 'deploy-failure'],
+              });
+            }

@@ -1,0 +1,94 @@
+name: Deploy Drift Check
+
+# Catches the *silent* version of a failed deploy: no failure event fires when a
+# build was cancelled long ago, so nothing alerts and production quietly serves a
+# stale commit. This compares what Netlify has published against master HEAD.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1' # Mondays 14:00 UTC
+  workflow_dispatch:
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compare published deploy to master
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          SITE_ID: da80f273-8b6f-4842-8b15-3b3aa94ec61f
+        run: |
+          if [ -z "${NETLIFY_AUTH_TOKEN:-}" ]; then
+            echo "::warning::NETLIFY_AUTH_TOKEN not set — skipping drift check"
+            exit 0
+          fi
+
+          PUBLISHED=$(curl -sf \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites/$SITE_ID" \
+            | python3 -c 'import sys,json; print((json.load(sys.stdin).get("published_deploy") or {}).get("commit_ref") or "")')
+
+          MASTER=$(git rev-parse origin/master)
+
+          echo "published: ${PUBLISHED:-unknown}"
+          echo "master:    $MASTER"
+
+          if [ -z "$PUBLISHED" ]; then
+            echo "::warning::Could not read published deploy from Netlify"
+            exit 0
+          fi
+
+          if [ "$PUBLISHED" = "$MASTER" ]; then
+            echo "In sync."
+            exit 0
+          fi
+
+          BEHIND=$(git rev-list --count "$PUBLISHED..$MASTER" 2>/dev/null || echo "?")
+          echo "::error::Production is $BEHIND commit(s) behind master"
+          echo "DRIFT_BEHIND=$BEHIND" >> "$GITHUB_ENV"
+          echo "DRIFT_PUBLISHED=${PUBLISHED:0:8}" >> "$GITHUB_ENV"
+          exit 1
+
+      - name: Open or update a tracking issue
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const behind = process.env.DRIFT_BEHIND || '?';
+            const published = process.env.DRIFT_PUBLISHED || 'unknown';
+            const title = '⚠️ Production is behind master';
+            const body = [
+              `**Production is ${behind} commit(s) behind master.**`,
+              '',
+              `- Published commit: \`${published}\``,
+              `- Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'Anything merged since that commit is **not live**. Check Netlify for a',
+              'cancelled or failed build and re-trigger a production deploy.',
+            ].join('\n');
+
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'deploy-drift',
+            });
+
+            if (existing.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.data[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['bug', 'production', 'deploy-drift'],
+              });
+            }
