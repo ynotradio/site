@@ -64,6 +64,12 @@ describe('Songs', () => {
     expect(artistField?.required).toBe(true);
   });
 
+  it('allows creating an artist inline from the song form', () => {
+    const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
+    const artistField = fields.find((f) => f.name === 'artist');
+    expect((artistField?.admin as { allowCreate?: boolean } | undefined)?.allowCreate).toBe(true);
+  });
+
   it('validates releaseDate so featured songs cannot omit it', () => {
     const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
     const releaseDateField = fields.find((f) => f.name === 'releaseDate');
