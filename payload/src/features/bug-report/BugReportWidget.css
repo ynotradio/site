@@ -120,6 +120,11 @@
   border-radius: 4px;
 }
 
+.bug-report-screenshot-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .bug-report-actions {
   display: flex;
   justify-content: flex-end;

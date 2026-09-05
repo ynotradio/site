@@ -16,6 +16,7 @@ export interface UseBugReportResult {
   screenshot: string | null;
   capturingScreenshot: boolean;
   takeScreenshot: (ignore?: HTMLElement | null) => Promise<void>;
+  setScreenshot: (value: string) => void;
   removeScreenshot: () => void;
   loadingFollowUps: boolean;
   continueToFollowUps: () => Promise<void>;
@@ -57,6 +58,8 @@ export const useBugReport = (): UseBugReportResult => {
       setCapturingScreenshot(false);
     }
   }, []);
+
+  const replaceScreenshot = useCallback((value: string) => setScreenshot(value), []);
 
   const removeScreenshot = useCallback(() => setScreenshot(null), []);
 
@@ -155,6 +158,7 @@ export const useBugReport = (): UseBugReportResult => {
     screenshot,
     capturingScreenshot,
     takeScreenshot,
+    setScreenshot: replaceScreenshot,
     removeScreenshot,
     loadingFollowUps,
     continueToFollowUps,

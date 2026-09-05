@@ -155,6 +155,9 @@ describe('useBugReport', () => {
     });
     expect(result.current.screenshot).toBe('data:image/png;base64,AAA');
 
+    act(() => result.current.setScreenshot('data:image/png;base64,BBB'));
+    expect(result.current.screenshot).toBe('data:image/png;base64,BBB');
+
     act(() => result.current.removeScreenshot());
     expect(result.current.screenshot).toBeNull();
   });

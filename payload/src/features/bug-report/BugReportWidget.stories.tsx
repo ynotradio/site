@@ -11,8 +11,9 @@ const meta: Meta<typeof BugReportWidget> = {
       description: {
         component:
           'Floating "Report a bug" widget mounted on every admin page. Collects a '
-          + 'description, an optional screenshot, and (when configured) AI follow-up '
-          + 'questions, then files a GitHub issue with captured page/browser/log context.',
+          + 'description, an optional screenshot (with in-place pen/box/arrow annotation), '
+          + 'and (when configured) AI follow-up questions, then files a GitHub issue with '
+          + 'captured page/browser/log context.',
       },
     },
   },

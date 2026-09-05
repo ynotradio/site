@@ -94,6 +94,43 @@ describe('BugReportWidget', () => {
     expect(screen.queryByAltText('Captured screenshot')).not.toBeInTheDocument();
   });
 
+  it('annotates a captured screenshot and returns to the form', async () => {
+    captureScreenshot.mockResolvedValue('data:image/png;base64,AAA');
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,OUT');
+
+    render(<BugReportWidget defaultOpen />);
+    fireEvent.click(screen.getByRole('button', { name: /Attach screenshot/ }));
+    await waitFor(() => expect(screen.getByAltText('Captured screenshot')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Annotate/ }));
+    expect(screen.getByRole('heading', { name: 'Annotate screenshot' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save annotation' }));
+
+    // Back on the describe step with the annotated image swapped in.
+    await waitFor(() => expect(screen.getByLabelText('What went wrong?')).toBeInTheDocument());
+    expect(screen.getByAltText('Captured screenshot')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,OUT',
+    );
+  });
+
+  it('cancels annotation without changing the screenshot', async () => {
+    captureScreenshot.mockResolvedValue('data:image/png;base64,AAA');
+    render(<BugReportWidget defaultOpen />);
+    fireEvent.click(screen.getByRole('button', { name: /Attach screenshot/ }));
+    await waitFor(() => expect(screen.getByAltText('Captured screenshot')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: /Annotate/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.getByLabelText('What went wrong?')).toBeInTheDocument();
+    expect(screen.getByAltText('Captured screenshot')).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAA',
+    );
+  });
+
   it('disables Continue until a description is entered', () => {
     render(<BugReportWidget defaultOpen />);
     expect(screen.getByRole('button', { name: 'Continue' })).toBeDisabled();
