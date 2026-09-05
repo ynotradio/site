@@ -69,6 +69,12 @@ describe('Records', () => {
     expect(artistField?.required).toBe(true);
   });
 
+  it('allows creating an artist inline from the record form', () => {
+    const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
+    const artistField = fields.find((f) => f.name === 'artist');
+    expect((artistField?.admin as { allowCreate?: boolean } | undefined)?.allowCreate).toBe(true);
+  });
+
   it('has label as a text field', () => {
     const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
     const labelField = fields.find((f) => f.name === 'label');
