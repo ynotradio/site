@@ -30,7 +30,7 @@ export const Venues: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField({ useAsSlug: 'name' }),
+    slugField({ useAsSlug: 'name', adminOnly: true }),
     {
       type: 'row',
       fields: [
