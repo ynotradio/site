@@ -84,8 +84,11 @@ export const Records: CollectionConfig = {
         {
           name: 'releaseDate',
           type: 'date',
+          // Default to today for new releases; editors can change it for reissues
+          // or back-catalog.
+          defaultValue: () => new Date(),
           admin: {
-            description: 'Release date',
+            description: 'Release date (defaults to today — change it for older releases)',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },
