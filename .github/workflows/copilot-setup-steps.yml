@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
       - name: Install gh-aw extension
-        uses: github/gh-aw/actions/setup-cli@bbb8042878459948333b15b66f27113f4b5c1b9a # v0.83.4
+        uses: github/gh-aw/actions/setup-cli@d7426cced84ccaedbcd1fa17aaf421d87513d74c # v0.87.7
         with:
           version: v0.56.0
       - name: Set up Node.js 22
