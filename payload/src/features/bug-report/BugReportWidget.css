@@ -1,0 +1,169 @@
+/* Floating bug reporter. Colors use Payload's admin theme variables so the
+   widget adapts to light and dark mode automatically. */
+
+.bug-report-launcher {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 90;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  border: 1px solid var(--theme-elevation-150, #ddd);
+  background: var(--theme-elevation-0, #fff);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.bug-report-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+
+.bug-report-dialog {
+  width: min(32rem, 92vw);
+  padding: 0;
+  border: 1px solid var(--theme-elevation-150, #ddd);
+  border-radius: 8px;
+  background: var(--theme-elevation-0, #fff);
+  color: var(--theme-elevation-1000, #111);
+}
+
+.bug-report-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.bug-report-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.bug-report-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--theme-elevation-100, #eee);
+}
+
+.bug-report-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.bug-report-close {
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--theme-elevation-600, #666);
+}
+
+.bug-report-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.bug-report-body label {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.bug-report-body textarea {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid var(--theme-elevation-150, #ccc);
+  border-radius: 4px;
+  background: var(--theme-input-bg, var(--theme-elevation-0, #fff));
+  color: inherit;
+  font: inherit;
+  resize: vertical;
+}
+
+.bug-report-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--theme-elevation-600, #666);
+}
+
+.bug-report-error {
+  color: var(--theme-error-500, #c0392b);
+}
+
+.bug-report-question {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bug-report-question label {
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.bug-report-screenshot-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.bug-report-screenshot-preview img {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border: 1px solid var(--theme-elevation-150, #ddd);
+  border-radius: 4px;
+}
+
+.bug-report-screenshot-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.bug-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.bug-report-primary,
+.bug-report-secondary {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.bug-report-primary {
+  background: var(--theme-success-500, #2d8a4e);
+  color: #fff;
+}
+
+.bug-report-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.bug-report-secondary {
+  background: transparent;
+  border-color: var(--theme-elevation-150, #ccc);
+  color: inherit;
+}
+
+.bug-report-status {
+  align-items: center;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bug-report-launcher {
+    transition: none;
+  }
+}

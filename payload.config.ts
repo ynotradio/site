@@ -118,7 +118,10 @@ export default buildConfig({
         Logo: '/payload/src/components/branding/Logo#Logo',
         Icon: '/payload/src/components/branding/Icon#Icon',
       },
-      providers: ['/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed'],
+      providers: [
+        '/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed',
+        '/payload/src/features/bug-report/BugReportProvider#BugReportProvider',
+      ],
       beforeDashboard: [],
       afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
       afterNavLinks: ['/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks'],
