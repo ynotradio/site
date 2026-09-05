@@ -1,26 +1,31 @@
-name: Deploy preview on label
+name: Deploy preview on label or comment
 
-# Request a Netlify preview from the GitHub UI (including mobile) by applying
-# the `preview` label to a PR — no branch renaming required.
+# Request a Netlify preview from the GitHub UI (including mobile) either by
+# applying the `preview` label to a PR, or by commenting a single 👀 on it.
 #
 # How it works:
 #   Netlify is configured to deploy branches matching `preview/*` (Project
-#   configuration → Build & deploy → Branches and deploy contexts). When the
-#   `preview` label is applied, this workflow mirrors the PR's head commit to a
-#   `preview/pr-<number>` branch. That push matches `preview/*`, so Netlify
-#   builds it under the branch-deploy context (see netlify.toml) and publishes
-#   it at https://preview-pr-<number>--ynotradio-admin.netlify.app.
+#   configuration → Build & deploy → Branches and deploy contexts). On trigger,
+#   this workflow mirrors the PR's head commit to a `preview/pr-<number>`
+#   branch. That push matches `preview/*`, so Netlify builds it under the
+#   branch-deploy context (see netlify.toml) and publishes it at
+#   https://preview-pr-<number>--ynotradio-admin.netlify.app.
 #
 # Notes:
-#   - The mirror branch is force-updated on each label, so re-applying `preview`
-#     after new commits refreshes the deploy to the latest head.
+#   - The mirror branch is force-updated on each trigger, so re-applying the
+#     label (or commenting 👀 again) after new commits refreshes the deploy.
 #   - The branch (and its Netlify deploy) is removed when the PR closes.
+#   - The 👀 trigger requires the comment to be exactly that emoji and the
+#     commenter to be an OWNER/MEMBER/COLLABORATOR, so drive-by comments can't
+#     spin up builds against the preview database.
 #   - The push is made with the built-in GITHUB_TOKEN; Netlify's webhook fires
 #     on any push, so no build hook or extra secret is needed.
 
 on:
   pull_request:
     types: [labeled, closed]
+  issue_comment:
+    types: [created]
 
 permissions:
   contents: write
@@ -28,17 +33,44 @@ permissions:
   issues: write
 
 jobs:
-  # Mirror the PR head to preview/pr-<n> when the `preview` label is applied.
+  # Mirror the PR head to preview/pr-<n> on `preview` label or a 👀 comment.
   open-preview:
-    if: github.event.action == 'labeled' && github.event.label.name == 'preview'
+    if: >
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label.name == 'preview') ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request &&
+       contains(github.event.comment.body, '👀') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     steps:
       - name: Mirror PR head to preview branch
         uses: actions/github-script@v9
         with:
           script: |
-            const pr = context.payload.pull_request.number;
-            const sha = context.payload.pull_request.head.sha;
+            const isComment = context.eventName === 'issue_comment';
+
+            // For the comment trigger, require the comment to be ONLY 👀.
+            if (isComment && context.payload.comment.body.trim() !== '👀') {
+              core.info('Comment is not exactly 👀 — skipping.');
+              return;
+            }
+
+            const pr = context.issue.number;
+            const { data: pull } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr,
+            });
+
+            // Don't deploy from a 👀 on an already-closed PR.
+            if (pull.state !== 'open') {
+              core.info(`PR #${pr} is ${pull.state} — skipping.`);
+              return;
+            }
+
+            const sha = pull.head.sha;
             const branch = `preview/pr-${pr}`;
             const ref = `heads/${branch}`;
 
@@ -60,13 +92,23 @@ jobs:
               });
             }
 
-            // Remove the label so re-applying it later re-triggers a refresh.
-            await github.rest.issues.removeLabel({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr,
-              name: 'preview',
-            }).catch(() => {});
+            // Acknowledge the trigger.
+            if (isComment) {
+              await github.rest.reactions.createForIssueComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: context.payload.comment.id,
+                content: 'rocket',
+              }).catch(() => {});
+            } else {
+              // Remove the label so re-applying it later re-triggers a refresh.
+              await github.rest.issues.removeLabel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr,
+                name: 'preview',
+              }).catch(() => {});
+            }
 
             const url = `https://preview-pr-${pr}--ynotradio-admin.netlify.app`;
             await github.rest.issues.createComment({
@@ -78,13 +120,13 @@ jobs:
                 ``,
                 `Netlify will build it (matches \`preview/*\`) at ${url}`,
                 ``,
-                `Re-apply the **preview** label after new commits to refresh it. The branch and its deploy are removed when this PR closes.`,
+                `Refresh it after new commits by re-applying the **preview** label or commenting 👀. The branch and its deploy are removed when this PR closes.`,
               ].join('\n'),
             });
 
   # Tear down the preview branch (and its Netlify deploy) when the PR closes.
   close-preview:
-    if: github.event.action == 'closed'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Delete preview branch if it exists
