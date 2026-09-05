@@ -16,6 +16,10 @@ describe('Records', () => {
     expect(Records.admin?.useAsTitle).toBe('displayName');
   });
 
+  it('makes the list search match displayName, title and label', () => {
+    expect(Records.admin?.listSearchableFields).toEqual(['displayName', 'title', 'label']);
+  });
+
   it('is grouped under Music', () => {
     expect(Records.admin?.group).toBe('Music');
   });

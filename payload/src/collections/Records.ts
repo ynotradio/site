@@ -16,6 +16,9 @@ export const Records: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
+    // Let the list-view search box match artist + title (displayName holds
+    // "Artist - Title"), the raw title, and the label.
+    listSearchableFields: ['displayName', 'title', 'label'],
     defaultColumns: [
       'displayName',
       'coverImage',
