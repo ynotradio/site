@@ -1,11 +1,11 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import {
   lexicalEditor,
   EXPERIMENTAL_TableFeature,
   BlocksFeature,
 } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { slugField } from './shared/slugField';
 import { EmbedBlock } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
 import { PayPalButtonBlock } from '../features/paypal-button/server';

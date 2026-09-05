@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { slugField } from './shared/slugField';
 
 export const Artists: CollectionConfig = {
   slug: 'artists',
