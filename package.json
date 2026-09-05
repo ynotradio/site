@@ -75,8 +75,8 @@
     "@storybook/addon-vitest": "^10.5.10",
     "@storybook/nextjs-vite": "^10.5.10",
     "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^7.0.0",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
     "@types/express": "^5.0.6",
     "@types/jquery": "^4.0.1",
     "@types/node": "^22.19.19",
@@ -86,8 +86,8 @@
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "6.0.3",
-    "@vitest/browser-playwright": "^4.1.10",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/browser-playwright": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "eslint": "^8.57.1",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -110,7 +110,7 @@
     "tsx": "^4.23.12",
     "typescript": "^6.0.3",
     "vite": "^8.0.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
