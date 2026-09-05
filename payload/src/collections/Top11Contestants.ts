@@ -3,7 +3,7 @@ import { APIError } from 'payload';
 import {
   buildCsv, findAllDocs, parseTop11Id, requireTop11Manager,
 } from '../features/top11/utils';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyNav } from '../utils/auth';
 
 type ContestantDoc = {
   id: number;
@@ -28,6 +28,7 @@ export const Top11Contestants: CollectionConfig = {
     plural: 'Contestants',
   },
   admin: {
+    hidden: adminOnlyNav,
     useAsTitle: 'email',
     defaultColumns: [
       'firstName',

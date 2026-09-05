@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyNav } from '../utils/auth';
 
 export const ModernRockMadnessVotes: CollectionConfig = {
   slug: 'modern-rock-madness-votes',
@@ -11,6 +11,7 @@ export const ModernRockMadnessVotes: CollectionConfig = {
     plural: 'Votes',
   },
   admin: {
+    hidden: adminOnlyNav,
     defaultColumns: ['match', 'group', 'userId', 'createdAt'],
     group: 'Modern Rock Madness',
     description:

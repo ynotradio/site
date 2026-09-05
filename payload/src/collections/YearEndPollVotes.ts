@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyNav } from '../utils/auth';
 import {
   enforceUserId,
   rejectDuplicateVote,
@@ -32,6 +32,7 @@ export const YearEndPollVotes: CollectionConfig = {
     plural: 'Votes',
   },
   admin: {
+    hidden: adminOnlyNav,
     defaultColumns: ['poll', 'category', 'userId', 'createdAt'],
     group: 'Polls & Contests',
     description:
