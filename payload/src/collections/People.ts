@@ -1,8 +1,8 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 export const People: CollectionConfig = {
   slug: 'people',

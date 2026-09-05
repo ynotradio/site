@@ -1,7 +1,8 @@
 import { randomInt } from 'node:crypto';
 import type { CollectionConfig } from 'payload';
-import { APIError, slugField } from 'payload';
+import { APIError } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import { slugField } from './shared/slugField';
 import { EmbedFeature } from '../features/embed';
 import {
   assertPublishedContestImmutability,
