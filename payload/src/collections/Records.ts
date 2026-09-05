@@ -60,7 +60,7 @@ export const Records: CollectionConfig = {
         description: 'Album title',
       },
     },
-    slugField({ slugify: musicSlugify }),
+    slugField({ slugify: musicSlugify, adminOnly: true }),
     {
       name: 'artist',
       type: 'relationship',
