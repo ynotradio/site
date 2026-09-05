@@ -1,4 +1,9 @@
-import type { CollectionBeforeChangeHook, Payload } from 'payload';
+import type {
+  CollectionBeforeChangeHook,
+  CollectionBeforeValidateHook,
+  Payload,
+  PayloadRequest,
+} from 'payload';
 import type { Slugify } from 'payload/shared';
 
 export function slugifyText(text: string): string {
@@ -169,6 +174,76 @@ export const generateMusicSlugBeforeChangeHook: CollectionBeforeChangeHook = asy
   const artistName = await resolveArtistName(updatedData as Record<string, unknown>, req.payload);
   updatedData.slug = buildMusicSlug(artistName, titleSlug);
 
+  return updatedData;
+};
+
+/**
+ * Find a slug based on `base` that no other row in `collection` already uses,
+ * appending -2, -3, … on collision. Excludes the current document on update.
+ */
+async function findUniqueSlug(
+  payload: Payload,
+  collection: 'songs' | 'records',
+  base: string,
+  excludeId: number | string | undefined,
+  req: PayloadRequest,
+): Promise<string> {
+  for (let n = 1; n < 100; n += 1) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    const where = excludeId != null
+      ? { and: [{ slug: { equals: candidate } }, { id: { not_equals: excludeId } }] }
+      : { slug: { equals: candidate } };
+    // eslint-disable-next-line no-await-in-loop -- sequential probing is intentional
+    const { totalDocs } = await payload.find({
+      collection,
+      where,
+      limit: 0,
+      depth: 0,
+      overrideAccess: true,
+      req,
+    });
+    if (totalDocs === 0) return candidate;
+  }
+  // Extremely unlikely fallback — keep the save unblocked with a unique value.
+  return `${base}-${Date.now()}`;
+}
+
+/**
+ * Collection beforeValidate hook for Songs and Records that guarantees a UNIQUE
+ * slug before Payload's unique-field validation runs.
+ *
+ * Two different titles can slugify to the same value ("test 🙈🙈" and
+ * "test 🙉🙉" both become "test"), so the derived artist--title slug collides
+ * with an existing row and Payload rejects the save with the same opaque
+ * "The following field is invalid: slug" message editors already struggle with.
+ * This resolves the artist name, builds the base slug, then de-duplicates it
+ * (-2, -3, …) so the save never blocks. Runs in beforeValidate (not
+ * beforeChange) because the unique check happens during validation.
+ *
+ * Respects a manual override (generateSlug === false) and locks the resulting
+ * slug so nothing downstream overwrites the de-duplicated value.
+ */
+export const dedupeMusicSlug = (collectionSlug: 'songs' | 'records'): CollectionBeforeValidateHook => async ({ data, req, originalDoc }) => {
+  const updatedData = data;
+  if (!updatedData) return updatedData;
+  if (updatedData.generateSlug === false) return updatedData;
+
+  const { title } = updatedData;
+  if (!title) return updatedData;
+
+  const titleSlug = slugifyText(String(title));
+  const artistName = await resolveArtistName(updatedData as Record<string, unknown>, req.payload);
+  let base = titleSlug ? buildMusicSlug(artistName, titleSlug) : '';
+  if (!base) {
+    // Title has no slug-safe characters — fall back to any typed slug, else a constant.
+    base = slugifyText(String(updatedData.slug ?? '')) || 'song';
+  }
+
+  const excludeId = (originalDoc as { id?: number | string } | undefined)?.id;
+  updatedData.slug = await findUniqueSlug(req.payload, collectionSlug, base, excludeId, req);
+  // Lock the de-duplicated slug so the generateSlug hooks don't rebuild the
+  // colliding base value.
+  updatedData.generateSlug = false;
   return updatedData;
 };
 

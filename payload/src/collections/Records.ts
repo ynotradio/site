@@ -1,7 +1,11 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import {
+  musicSlugify,
+  generateMusicSlugBeforeChangeHook,
+  dedupeMusicSlug,
+} from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
 import { slugField } from './shared/slugField';
 
@@ -38,6 +42,8 @@ export const Records: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
+    // De-duplicate the slug before validation so a collision never blocks a save.
+    beforeValidate: [dedupeMusicSlug('records')],
     beforeChange: [generateMusicSlugBeforeChangeHook, generateMusicDisplayName('Record')],
   },
   fields: [
