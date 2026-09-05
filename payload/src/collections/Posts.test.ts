@@ -103,6 +103,13 @@ describe('Posts', () => {
     expect(startDate?.required).toBe(true);
   });
 
+  it('defaults startDate to today', () => {
+    const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
+    const startDate = fields.find((f) => f.name === 'startDate');
+    expect(typeof startDate?.defaultValue).toBe('function');
+    expect((startDate?.defaultValue as () => Date)()).toBeInstanceOf(Date);
+  });
+
   it('has endDate as a required date field', () => {
     const fields = flattenRowFields(Posts.fields as Record<string, unknown>[]);
     const endDate = fields.find((f) => f.name === 'endDate');

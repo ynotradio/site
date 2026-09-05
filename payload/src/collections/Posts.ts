@@ -64,8 +64,11 @@ export const Posts: CollectionConfig = {
           name: 'startDate',
           type: 'date',
           required: true,
+          // Stories almost always start showing today; default it so the editor
+          // doesn't have to set it every time (still editable).
+          defaultValue: () => new Date(),
           admin: {
-            description: 'Story appears on the site starting this date',
+            description: 'Story appears on the site starting this date (defaults to today)',
             date: {
               displayFormat: 'yyyy-MM-dd',
               pickerAppearance: 'dayOnly',

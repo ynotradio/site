@@ -86,9 +86,14 @@ export const Songs: CollectionConfig = {
     {
       name: 'releaseDate',
       type: 'date',
+      // New music is usually current, so default to today; the editor can change
+      // it for back-catalog. This also pre-satisfies the "featured songs need a
+      // release date" rule so featuring a new song never stops on a blank date.
+      defaultValue: () => new Date(),
       validate: validateReleaseDateWhenFeatured,
       admin: {
-        description: 'Date the song was released',
+        description:
+          'Date the song was released (defaults to today — change it for older releases)',
         date: {
           displayFormat: 'yyyy-MM-dd',
           pickerAppearance: 'dayOnly',
