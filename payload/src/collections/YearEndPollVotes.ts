@@ -99,4 +99,5 @@ export const YearEndPollVotes: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

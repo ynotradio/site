@@ -112,6 +112,7 @@ export const ModernRockMadnessTournaments: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
 
 /** @deprecated Use ModernRockMadnessTournaments */

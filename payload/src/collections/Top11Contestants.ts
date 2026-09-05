@@ -227,4 +227,5 @@ export const Top11Contestants: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

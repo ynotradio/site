@@ -62,6 +62,7 @@ export const ModernRockMadnessVotes: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
 
 /** @deprecated Use ModernRockMadnessVotes */

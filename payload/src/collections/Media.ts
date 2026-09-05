@@ -95,4 +95,5 @@ export const Media: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

@@ -88,4 +88,5 @@ export const Artists: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

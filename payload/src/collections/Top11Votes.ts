@@ -198,4 +198,5 @@ export const Top11Votes: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

@@ -86,4 +86,8 @@ export const Users: CollectionConfig = {
     },
   ],
   timestamps: true,
+  // Explicit: Payload 4.0 defaults auth collections into versions too unless
+  // opted out here (only the built-in scaffolded "users" collection is
+  // excluded automatically). No version history needed for accounts.
+  versions: false,
 };

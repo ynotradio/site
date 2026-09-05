@@ -114,4 +114,5 @@ export const Shows: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

@@ -226,6 +226,7 @@ export const ModernRockMadnessMatches: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
 
 /** @deprecated Use ModernRockMadnessMatches */

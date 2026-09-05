@@ -58,4 +58,5 @@ export const Top11WriteIns: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

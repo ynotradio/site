@@ -117,4 +117,5 @@ export const YearEndPolls: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

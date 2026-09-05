@@ -59,4 +59,5 @@ export const Top11WinnerDraws: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

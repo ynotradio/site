@@ -63,4 +63,5 @@ export const Venues: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

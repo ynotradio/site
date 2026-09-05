@@ -135,4 +135,5 @@ export const Songs: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

@@ -135,4 +135,5 @@ export const Records: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

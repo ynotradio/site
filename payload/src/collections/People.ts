@@ -74,4 +74,5 @@ export const People: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

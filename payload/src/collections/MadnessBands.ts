@@ -123,6 +123,7 @@ export const ModernRockMadnessGroups: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
 
 /** @deprecated Use ModernRockMadnessGroups */

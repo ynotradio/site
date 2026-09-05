@@ -66,6 +66,7 @@ export const ModernRockMadnessMatchEvents: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
 
 /** @deprecated Use ModernRockMadnessMatchEvents */

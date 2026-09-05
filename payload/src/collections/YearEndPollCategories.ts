@@ -220,4 +220,5 @@ export const YearEndPollCategories: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };

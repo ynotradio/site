@@ -760,4 +760,5 @@ export const Top11Contests: CollectionConfig = {
     },
   ],
   timestamps: true,
+  versions: false,
 };
