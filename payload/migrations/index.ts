@@ -20,6 +20,7 @@ import * as migration_20260706_202828_add_top11_contests_nominees from './202607
 import * as migration_20260706_210000_add_top11_votes_nominee_constraint from './20260706_210000_add_top11_votes_nominee_constraint';
 import * as migration_20260706_220000_relax_top11_votes_voterkey_uniqueness from './20260706_220000_relax_top11_votes_voterkey_uniqueness';
 import * as migration_20260405_000000_add_year_end_poll_tables from './20260405_000000_add_year_end_poll_tables';
+import * as migration_20260905_000000_add_editor_events_collection from './20260905_000000_add_editor_events_collection';
 
 export const migrations = [
   {
@@ -131,5 +132,10 @@ export const migrations = [
     up: migration_20260405_000000_add_year_end_poll_tables.up,
     down: migration_20260405_000000_add_year_end_poll_tables.down,
     name: '20260405_000000_add_year_end_poll_tables',
+  },
+  {
+    up: migration_20260905_000000_add_editor_events_collection.up,
+    down: migration_20260905_000000_add_editor_events_collection.down,
+    name: '20260905_000000_add_editor_events_collection',
   },
 ];

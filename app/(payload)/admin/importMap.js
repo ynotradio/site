@@ -52,6 +52,7 @@ import { QueryPresetsGroupByField as QueryPresetsGroupByField_2b8867833a34864a02
 import { Icon as Icon_b60ecf12ac563c9d63b2827d1268ac0d } from '../../../payload/src/components/branding/Icon'
 import { Logo as Logo_7d5c0eb777646cee89558767757b099d } from '../../../payload/src/components/branding/Logo'
 import { CustomDashboard as CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a } from '../../../payload/src/components/dashboard/CustomDashboard'
+import { EditorHealthPanel as EditorHealthPanel_0b41266cef7b21ba31e3785d5bb2db86 } from '../../../payload/src/components/dashboard/EditorHealthPanel'
 import { RadioToolsNavLinks as RadioToolsNavLinks_35d4e33fc5eb5565bf9002df2a9ab166 } from '../../../payload/src/features/shared/RadioToolsNavLinks'
 import { NavDefaultClosed as NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631 } from '../../../payload/src/components/providers/NavDefaultClosed'
 import { DJOrderTool as DJOrderTool_09d96deaa6adc09316a3e54972e95d8b } from '../../../payload/src/features/dj-order'
@@ -117,6 +118,7 @@ export const importMap = {
   "/payload/src/components/branding/Icon#Icon": Icon_b60ecf12ac563c9d63b2827d1268ac0d,
   "/payload/src/components/branding/Logo#Logo": Logo_7d5c0eb777646cee89558767757b099d,
   "/payload/src/components/dashboard/CustomDashboard#CustomDashboard": CustomDashboard_b39c74dc5bbe7bf28443af200eebf45a,
+  "/payload/src/components/dashboard/EditorHealthPanel#EditorHealthPanel": EditorHealthPanel_0b41266cef7b21ba31e3785d5bb2db86,
   "/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks": RadioToolsNavLinks_35d4e33fc5eb5565bf9002df2a9ab166,
   "/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed": NavDefaultClosed_abdf66bd1f827c685a929d4892ea0631,
   "/payload/src/features/dj-order#DJOrderTool": DJOrderTool_09d96deaa6adc09316a3e54972e95d8b,
