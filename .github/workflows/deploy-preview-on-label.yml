@@ -1,84 +1,105 @@
 name: Deploy preview on label
 
-# When a PR is labeled `preview`, trigger a Netlify branch deploy for the PR's
-# head branch via a Netlify build hook. The deploy runs under Netlify's
-# branch-deploy context, inheriting `[context.branch-deploy.environment]` from
-# netlify.toml, and is served at https://<branch>--<site>.netlify.app.
+# Request a Netlify preview from the GitHub UI (including mobile) by applying
+# the `preview` label to a PR — no branch renaming required.
 #
-# The label is removed afterward so re-applying it triggers another preview
-# build.
+# How it works:
+#   Netlify is configured to deploy branches matching `preview/*` (Project
+#   configuration → Build & deploy → Branches and deploy contexts). When the
+#   `preview` label is applied, this workflow mirrors the PR's head commit to a
+#   `preview/pr-<number>` branch. That push matches `preview/*`, so Netlify
+#   builds it under the branch-deploy context (see netlify.toml) and publishes
+#   it at https://preview-pr-<number>--ynotradio-admin.netlify.app.
 #
-# Requires the repo secret NETLIFY_PREVIEW_BUILD_HOOK — a Netlify build hook
-# URL (Site settings → Build & deploy → Build hooks). Build hooks accept a
-# `trigger_branch` query param, used here to build the PR's head ref.
+# Notes:
+#   - The mirror branch is force-updated on each label, so re-applying `preview`
+#     after new commits refreshes the deploy to the latest head.
+#   - The branch (and its Netlify deploy) is removed when the PR closes.
+#   - The push is made with the built-in GITHUB_TOKEN; Netlify's webhook fires
+#     on any push, so no build hook or extra secret is needed.
 
 on:
   pull_request:
-    types: [labeled]
+    types: [labeled, closed]
 
 permissions:
+  contents: write
   pull-requests: write
   issues: write
 
 jobs:
-  preview:
-    if: github.event.label.name == 'preview'
+  # Mirror the PR head to preview/pr-<n> when the `preview` label is applied.
+  open-preview:
+    if: github.event.action == 'labeled' && github.event.label.name == 'preview'
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Netlify branch deploy
-        id: trigger
-        env:
-          NETLIFY_PREVIEW_BUILD_HOOK: ${{ secrets.NETLIFY_PREVIEW_BUILD_HOOK }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_REF: ${{ github.event.pull_request.head.ref }}
-          ACTOR: ${{ github.actor }}
-        run: |
-          set -euo pipefail
-          if [ -z "${NETLIFY_PREVIEW_BUILD_HOOK:-}" ]; then
-            echo "NETLIFY_PREVIEW_BUILD_HOOK secret is not set." >&2
-            exit 1
-          fi
-          # URL-encode the branch ref for safe use in the query string.
-          branch_enc=$(jq -rn --arg b "$PR_REF" '$b|@uri')
-          title_enc=$(jq -rn --arg t "preview-label-PR-${PR_NUMBER}-by-${ACTOR}" '$t|@uri')
-          curl -fsS -X POST \
-            "${NETLIFY_PREVIEW_BUILD_HOOK}?trigger_branch=${branch_enc}&trigger_title=${title_enc}"
-          echo "Triggered Netlify branch deploy for ${PR_REF}."
-
-      - name: Remove preview label
-        if: always() && steps.trigger.outcome == 'success'
+      - name: Mirror PR head to preview branch
         uses: actions/github-script@v9
         with:
           script: |
+            const pr = context.payload.pull_request.number;
+            const sha = context.payload.pull_request.head.sha;
+            const branch = `preview/pr-${pr}`;
+            const ref = `heads/${branch}`;
+
+            // Create the branch, or fast-forward/reset it to the current head.
+            try {
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref,
+                sha,
+                force: true,
+              });
+            } catch (e) {
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/${ref}`,
+                sha,
+              });
+            }
+
+            // Remove the label so re-applying it later re-triggers a refresh.
             await github.rest.issues.removeLabel({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
+              issue_number: pr,
               name: 'preview',
-            });
+            }).catch(() => {});
 
-      - name: Comment on PR
-        if: steps.trigger.outcome == 'success'
-        uses: actions/github-script@v9
-        env:
-          PR_REF: ${{ github.event.pull_request.head.ref }}
-        with:
-          script: |
+            const url = `https://preview-pr-${pr}--ynotradio-admin.netlify.app`;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `🌐 Preview deploy triggered for branch \`${process.env.PR_REF}\`.\n\nNetlify will publish it under the branch-deploy context (\`https://<branch>--<site>.netlify.app\`). Check the Netlify dashboard or the deploy log for the exact URL.`,
+              issue_number: pr,
+              body: [
+                `🌐 Preview requested — mirrored \`${sha.slice(0, 7)}\` to \`${branch}\`.`,
+                ``,
+                `Netlify will build it (matches \`preview/*\`) at ${url}`,
+                ``,
+                `Re-apply the **preview** label after new commits to refresh it. The branch and its deploy are removed when this PR closes.`,
+              ].join('\n'),
             });
 
-      - name: Comment on failure
-        if: failure()
+  # Tear down the preview branch (and its Netlify deploy) when the PR closes.
+  close-preview:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete preview branch if it exists
         uses: actions/github-script@v9
         with:
           script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `❌ Failed to trigger preview deploy from label. Check the workflow run for details.`,
-            });
+            const pr = context.payload.pull_request.number;
+            const ref = `heads/preview/pr-${pr}`;
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref,
+              });
+              core.info(`Deleted preview/pr-${pr}`);
+            } catch (e) {
+              core.info(`No preview branch to delete: ${e.message}`);
+            }
