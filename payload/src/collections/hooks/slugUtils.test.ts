@@ -87,24 +87,19 @@ describe('musicSlugify (Songs/Records)', () => {
     };
   });
 
-  it('should generate artist--title slug when artist is an ID (async)', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
-      id: 1,
-      name: 'The Beatles',
-    });
-
+  it('should return a valid title-only slug synchronously when artist is a bare ID', () => {
+    // A numeric artist ID cannot be resolved to a name synchronously. musicSlugify
+    // must NOT do an async DB lookup (a returned Promise fails slug validation) —
+    // it returns a valid title-only slug; the full artist--title slug is filled in
+    // by generateMusicSlugBeforeChangeHook before the row is persisted.
     const result = musicSlugify({
       data: { artist: 1, title: 'Hey Jude' },
       req: createMockReq(mockPayload) as any,
     });
 
-    // Artist ID requires DB lookup, so returns a Promise
-    expect(result).toBeInstanceOf(Promise);
-    expect(await result).toBe('the-beatles--hey-jude');
-    expect(mockPayload.findByID).toHaveBeenCalledWith({
-      collection: 'artists',
-      id: 1,
-    });
+    expect(result).toBe('hey-jude');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should return pre-computed slug synchronously when data.slug was set by collection hook', () => {
@@ -172,15 +167,15 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle artist fetch error gracefully (async)', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
-
-    const result = await musicSlugify({
+  it('should return a title-only slug synchronously and never touch the DB', () => {
+    const result = musicSlugify({
       data: { artist: 999, title: 'Test Song' },
       req: createMockReq(mockPayload) as any,
     });
 
     expect(result).toBe('test-song');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should handle special characters in artist and title (sync)', () => {
@@ -226,33 +221,27 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle artist object with id (no name) via async DB lookup', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
-      id: 1,
-      name: 'Led Zeppelin',
-    });
-
-    const result = await musicSlugify({
+  it('should return a title-only slug synchronously for an artist object without a name', () => {
+    // Artist object carries only an id — no name to resolve synchronously.
+    const result = musicSlugify({
       data: { artist: { id: 1 }, title: 'Stairway to Heaven' },
       req: createMockReq(mockPayload) as any,
     });
 
-    expect(result).toBe('led-zeppelin--stairway-to-heaven');
-    expect(mockPayload.findByID).toHaveBeenCalledWith({
-      collection: 'artists',
-      id: 1,
-    });
+    expect(result).toBe('stairway-to-heaven');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
-  it('should return title-only slug when artist DB lookup returns record with no name', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 1 });
-
-    const result = await musicSlugify({
-      data: { artist: 1, title: 'Mystery Song' },
+  it('should prefer a slug precomputed by the beforeChange hook over the title-only fallback', () => {
+    const result = musicSlugify({
+      data: { artist: 1, title: 'Mystery Song', slug: 'led-zeppelin--mystery-song' },
       req: createMockReq(mockPayload) as any,
     });
 
-    expect(result).toBe('mystery-song');
+    expect(result).toBe('led-zeppelin--mystery-song');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should return raw valueToSlugify when title and valueToSlugify both contain only special chars', () => {

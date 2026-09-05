@@ -1,10 +1,10 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
 import { normalizeFieldToNoon, validateReleaseDateWhenFeatured } from './hooks/showDateHooks';
 import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
