@@ -9,8 +9,16 @@
  * global auth setup project.
  */
 import { test as baseTest, expect } from '@playwright/test';
-import { captureScreenshot } from './utils/test-helpers';
+import type { Page } from '@playwright/test';
+import { captureScreenshot, generateUniqueId } from './utils/test-helpers';
 import { loginToPayload } from './utils/payload-auth';
+import {
+  navigateToPayloadCollectionCreate,
+  fillPayloadTextField,
+  clickPayloadSave,
+  waitForPayloadSave,
+  generateSlug,
+} from './utils/payload-helpers';
 
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 
@@ -98,6 +106,94 @@ test.describe('Slug field validation UX', () => {
       await expect(slugInput).toHaveValue('e2e-test-slug-validation');
 
       await captureScreenshot(page, testInfo, '04-slug-field-filled');
+    });
+  });
+});
+
+/**
+ * Regression tests for ynotradio/site#866 — slug generation must never block a
+ * save. A Song's slug is generated server-side from artist + title; the editor
+ * never types it. Previously that generation could yield an empty or unresolved
+ * (Promise) value and the required slug field rejected the save with a generic
+ * "invalid slug". These tests create a Song WITHOUT touching the slug field and
+ * assert the save succeeds with a valid, non-empty slug and no field error.
+ */
+test.describe('Slug generation never blocks a save (#866)', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginToPayload(page);
+  });
+
+  async function createArtist(page: Page, name: string): Promise<void> {
+    await navigateToPayloadCollectionCreate(page, 'artists');
+    await fillPayloadTextField(page, 'field-name', name);
+    await clickPayloadSave(page);
+    await waitForPayloadSave(page, 'artists');
+  }
+
+  async function selectArtist(page: Page, artistName: string): Promise<void> {
+    const artistField = page.locator('#field-artist');
+    await artistField.locator('input[id^="react-select"]').click();
+    await artistField.locator('input[id^="react-select"]').fill(artistName);
+    await page.waitForSelector('[role="listbox"]', { state: 'visible', timeout: 10000 });
+    await page.getByRole('option').first().click();
+  }
+
+  test('auto-generates a valid artist--title slug and saves without an error', async ({
+    page,
+  }, testInfo) => {
+    const id = generateUniqueId();
+    const artistName = `E2E Slug Artist ${id}`;
+    const songTitle = `E2E Slug Song ${id}`;
+    const expectedSlug = `${generateSlug(artistName)}--${generateSlug(songTitle)}`;
+
+    await test.step('Create the artist', async () => {
+      await createArtist(page, artistName);
+    });
+
+    await test.step('Create a song without touching the slug field', async () => {
+      await navigateToPayloadCollectionCreate(page, 'songs');
+      await fillPayloadTextField(page, 'field-title', songTitle);
+      await selectArtist(page, artistName);
+      await captureScreenshot(page, testInfo, '01-song-filled-no-slug');
+    });
+
+    await test.step('Save succeeds — no invalid-slug error, valid slug generated', async () => {
+      await clickPayloadSave(page);
+      // Resolves only if the save actually went through (times out if blocked).
+      await waitForPayloadSave(page, 'songs');
+      // No per-field validation error tooltip is shown.
+      await expect(page.locator('.field-error.tooltip--show')).toHaveCount(0);
+      // The slug was generated server-side into the expected artist--title form.
+      await expect(page.locator('#field-slug')).toHaveValue(expectedSlug);
+      await captureScreenshot(page, testInfo, '02-song-saved-with-slug');
+    });
+  });
+
+  test('saves a song whose title has slug-hostile characters', async ({ page }, testInfo) => {
+    const id = generateUniqueId();
+    const artistName = `E2E Symbol Artist ${id}`;
+    // A title dominated by characters that strip away when slugified; the unique
+    // id keeps the resulting slug valid AND unique so the run is repeatable.
+    const songTitle = `♪♫★ & / ? ${id}`;
+
+    await test.step('Create the artist', async () => {
+      await createArtist(page, artistName);
+    });
+
+    await test.step('Create the song with a slug-hostile title', async () => {
+      await navigateToPayloadCollectionCreate(page, 'songs');
+      await fillPayloadTextField(page, 'field-title', songTitle);
+      await selectArtist(page, artistName);
+      await captureScreenshot(page, testInfo, '01-symbol-song-filled');
+    });
+
+    await test.step('Save still succeeds with a valid, non-empty slug', async () => {
+      await clickPayloadSave(page);
+      await waitForPayloadSave(page, 'songs');
+      await expect(page.locator('.field-error.tooltip--show')).toHaveCount(0);
+      // Slug is non-empty and URL-safe (lowercase alphanumerics + hyphens).
+      await expect(page.locator('#field-slug')).toHaveValue(/^[a-z0-9]+(?:-+[a-z0-9]+)*$/);
+      await captureScreenshot(page, testInfo, '02-symbol-song-saved');
     });
   });
 });
