@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Artists } from './Artists';
+import { preventDuplicateArtistName } from './hooks/artistDedup';
 import { flattenRowFields } from './testUtils';
 
 describe('Artists', () => {
@@ -83,5 +84,9 @@ describe('Artists', () => {
     expect(Artists.admin?.defaultColumns).toContain('photo');
     expect(Artists.admin?.defaultColumns).toContain('musicbrainzId');
     expect(Artists.admin?.defaultColumns).toContain('slug');
+  });
+
+  it('registers the duplicate-name guard as a beforeValidate hook', () => {
+    expect(Artists.hooks?.beforeValidate).toContain(preventDuplicateArtistName);
   });
 });
