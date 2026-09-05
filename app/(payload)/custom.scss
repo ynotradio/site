@@ -60,3 +60,20 @@ html[data-theme='light'] {
   z-index: 4;
 }
 
+/*
+ * Prevent iOS Safari from auto-zooming the whole page when a form field is
+ * focused (e.g. the list-page search box or the login screen). Mobile Safari
+ * zooms in whenever a focused control's font-size is below 16px, and never
+ * zooms back out — leaving the layout stuck wider than the viewport. Forcing
+ * form controls to 16px on small screens disables that behaviour while keeping
+ * pinch-to-zoom available (unlike a viewport maximum-scale lock, which would
+ * hurt accessibility). Desktop styling is untouched.
+ */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
