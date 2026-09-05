@@ -12,6 +12,10 @@ describe('Shows', () => {
     expect(Shows.admin?.useAsTitle).toBe('date');
   });
 
+  it('makes the list search match the show name and date', () => {
+    expect(Shows.admin?.listSearchableFields).toEqual(['name', 'date']);
+  });
+
   it('is grouped under Radio', () => {
     expect(Shows.admin?.group).toBe('Radio');
   });

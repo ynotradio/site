@@ -17,6 +17,9 @@ export const Songs: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
+    // Let the list-view search box match the artist + title (displayName holds
+    // "Artist - Title") and the raw title, so editors find songs by either.
+    listSearchableFields: ['displayName', 'title'],
     defaultColumns: [
       'displayName',
       'artist',
