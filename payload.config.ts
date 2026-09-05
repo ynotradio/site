@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 
 import dotenv from 'dotenv';
 import { buildConfig } from 'payload';
+import type { CollectionConfig, CollectionAfterOperationHook } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage';
 
@@ -37,6 +38,11 @@ import { ModernRockMadnessGroups } from './payload/src/collections/MadnessBands'
 import { ModernRockMadnessMatches } from './payload/src/collections/MadnessMatches';
 import { ModernRockMadnessVotes } from './payload/src/collections/MadnessVotes';
 import { ModernRockMadnessMatchEvents } from './payload/src/collections/MadnessMatchEvents';
+import { EditorEvents } from './payload/src/collections/EditorEvents';
+import {
+  recordEditorError,
+  recordEmptySearch,
+} from './payload/src/collections/hooks/observability';
 import { DEPLOY_ORIGIN } from './payload/generated/deploy-origin';
 
 const filename = fileURLToPath(import.meta.url);
@@ -66,6 +72,24 @@ const withDeployOrigin = (origins: string[]): string[] => {
   }
   return [...origins, DEPLOY_ORIGIN];
 };
+
+// Attach empty-search observability to an editor-facing content collection.
+// Appends the afterOperation hook without disturbing any hooks the collection
+// already declares. See payload/src/collections/hooks/observability.ts.
+const withEmptySearchLogging = (collection: CollectionConfig): CollectionConfig => ({
+  ...collection,
+  hooks: {
+    ...collection.hooks,
+    afterOperation: [
+      ...(collection.hooks?.afterOperation ?? []),
+      recordEmptySearch as unknown as CollectionAfterOperationHook,
+    ],
+  },
+});
+
+type ConfigAfterErrorHook = NonNullable<
+NonNullable<Parameters<typeof buildConfig>[0]['hooks']>['afterError']
+>[number];
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
@@ -120,7 +144,10 @@ export default buildConfig({
       },
       providers: ['/payload/src/components/providers/NavDefaultClosed#NavDefaultClosed'],
       beforeDashboard: [],
-      afterDashboard: ['/payload/src/components/dashboard/CustomDashboard#CustomDashboard'],
+      afterDashboard: [
+        '/payload/src/components/dashboard/CustomDashboard#CustomDashboard',
+        '/payload/src/components/dashboard/EditorHealthPanel#EditorHealthPanel',
+      ],
       afterNavLinks: ['/payload/src/features/shared/RadioToolsNavLinks#RadioToolsNavLinks'],
       views: {
         DJOrder: {
@@ -183,22 +210,27 @@ export default buildConfig({
   csrf: withDeployOrigin(
     coerceList(process.env.PAYLOAD_CSRF ?? 'http://localhost:3000,http://localhost:3002'),
   ),
+  hooks: {
+    // Record errors surfaced to authenticated editors (failed saves, invalid
+    // slugs, permission errors) into the editor-events observability log.
+    afterError: [recordEditorError as unknown as ConfigAfterErrorHook],
+  },
   collections: [
     Users,
     Media,
-    People,
-    DJs,
-    Artists,
-    Venues,
+    withEmptySearchLogging(People),
+    withEmptySearchLogging(DJs),
+    withEmptySearchLogging(Artists),
+    withEmptySearchLogging(Venues),
     Ads,
-    Songs,
-    Records,
-    Concerts,
-    OnDemand,
-    Shows,
-    Posts,
-    Pages,
-    CdOfTheWeek,
+    withEmptySearchLogging(Songs),
+    withEmptySearchLogging(Records),
+    withEmptySearchLogging(Concerts),
+    withEmptySearchLogging(OnDemand),
+    withEmptySearchLogging(Shows),
+    withEmptySearchLogging(Posts),
+    withEmptySearchLogging(Pages),
+    withEmptySearchLogging(CdOfTheWeek),
     YearEndPollResults,
     YearEndPolls,
     YearEndPollCategories,
@@ -213,6 +245,7 @@ export default buildConfig({
     ModernRockMadnessMatches,
     ModernRockMadnessVotes,
     ModernRockMadnessMatchEvents,
+    EditorEvents,
   ],
   plugins: [
     cloudStoragePlugin({
