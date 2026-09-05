@@ -10,7 +10,7 @@ fi
 # Load nvm and use the correct node version
 if [ -f ~/.nvm/nvm.sh ]; then
   . ~/.nvm/nvm.sh
-  nvm use 22 2>/dev/null || true
+  nvm use "$(cat .nvmrc)" 2>/dev/null || true
 fi
 
 # Warn if Payload collection files are staged without a corresponding new migration.

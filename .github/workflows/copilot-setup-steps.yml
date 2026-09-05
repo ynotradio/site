@@ -24,10 +24,10 @@ jobs:
         uses: github/gh-aw/actions/setup-cli@d7426cced84ccaedbcd1fa17aaf421d87513d74c # v0.87.7
         with:
           version: v0.56.0
-      - name: Set up Node.js 22
+      - name: Set up Node.js 24
         uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '24'
           cache: 'yarn'
       - name: Pre-warm node_modules
         run: corepack enable && yarn install --frozen-lockfile

@@ -4,7 +4,7 @@
 # Uses Docker-in-Docker with workarounds for esbuild and Chromium DNS
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   PHP_VERSION: "7.4"
   CI: "true"
   # Set to "true" by check-changes.sh for PR builds when no PHP/JS files changed.
@@ -36,7 +36,7 @@ steps:
     command: "corepack enable && yarn install --immutable && yarn lint"
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "node:24-slim"
           propagate-environment: true
     retry:
       automatic:
@@ -53,7 +53,7 @@ steps:
     command: "corepack enable && yarn install --immutable && yarn test:coverage"
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "node:24-slim"
           propagate-environment: true
     artifact_paths:
       - "coverage/**/*"
@@ -74,7 +74,7 @@ steps:
     command: "bash .buildkite/scripts/build-storybook.sh"
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "node:24-slim"
           propagate-environment: true
           environment:
             - "NETLIFY_AUTH_TOKEN"
@@ -95,7 +95,7 @@ steps:
       yarn test:storybook
     plugins:
       - docker#v5.11.0:
-          image: "node:22"
+          image: "node:24"
           propagate-environment: true
     agents:
       queue: "default"

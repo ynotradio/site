@@ -38,7 +38,7 @@
   ]
 
 [build.environment]
-  NODE_VERSION = "22"
+  NODE_VERSION = "24"
   NPM_VERSION = "11"
   YARN_VERSION = "1.22.22"
   NPM_FLAGS = "--legacy-peer-deps"

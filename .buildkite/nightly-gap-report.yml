@@ -1,5 +1,5 @@
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: "24"
   NEON_PROJECT_ID: "flat-bird-55654203"
   NEON_ORG_ID: "org-cool-hat-59377226"
 
@@ -18,7 +18,7 @@ steps:
       echo "Development branch reset to production"
     plugins:
       - docker#v5.11.0:
-          image: "node:22-slim"
+          image: "node:24-slim"
           propagate-environment: true
           environment:
             - "NEON_API_KEY"
