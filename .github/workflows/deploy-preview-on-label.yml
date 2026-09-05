@@ -1,0 +1,84 @@
+name: Deploy preview on label
+
+# When a PR is labeled `preview`, trigger a Netlify branch deploy for the PR's
+# head branch via a Netlify build hook. The deploy runs under Netlify's
+# branch-deploy context, inheriting `[context.branch-deploy.environment]` from
+# netlify.toml, and is served at https://<branch>--<site>.netlify.app.
+#
+# The label is removed afterward so re-applying it triggers another preview
+# build.
+#
+# Requires the repo secret NETLIFY_PREVIEW_BUILD_HOOK — a Netlify build hook
+# URL (Site settings → Build & deploy → Build hooks). Build hooks accept a
+# `trigger_branch` query param, used here to build the PR's head ref.
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  preview:
+    if: github.event.label.name == 'preview'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify branch deploy
+        id: trigger
+        env:
+          NETLIFY_PREVIEW_BUILD_HOOK: ${{ secrets.NETLIFY_PREVIEW_BUILD_HOOK }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_REF: ${{ github.event.pull_request.head.ref }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          set -euo pipefail
+          if [ -z "${NETLIFY_PREVIEW_BUILD_HOOK:-}" ]; then
+            echo "NETLIFY_PREVIEW_BUILD_HOOK secret is not set." >&2
+            exit 1
+          fi
+          # URL-encode the branch ref for safe use in the query string.
+          branch_enc=$(jq -rn --arg b "$PR_REF" '$b|@uri')
+          title_enc=$(jq -rn --arg t "preview-label-PR-${PR_NUMBER}-by-${ACTOR}" '$t|@uri')
+          curl -fsS -X POST \
+            "${NETLIFY_PREVIEW_BUILD_HOOK}?trigger_branch=${branch_enc}&trigger_title=${title_enc}"
+          echo "Triggered Netlify branch deploy for ${PR_REF}."
+
+      - name: Remove preview label
+        if: always() && steps.trigger.outcome == 'success'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.removeLabel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              name: 'preview',
+            });
+
+      - name: Comment on PR
+        if: steps.trigger.outcome == 'success'
+        uses: actions/github-script@v9
+        env:
+          PR_REF: ${{ github.event.pull_request.head.ref }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `🌐 Preview deploy triggered for branch \`${process.env.PR_REF}\`.\n\nNetlify will publish it under the branch-deploy context (\`https://<branch>--<site>.netlify.app\`). Check the Netlify dashboard or the deploy log for the exact URL.`,
+            });
+
+      - name: Comment on failure
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `❌ Failed to trigger preview deploy from label. Check the workflow run for details.`,
+            });
