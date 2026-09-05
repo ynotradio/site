@@ -46,3 +46,13 @@ export const adminOnlyCondition = (
   _siblingData: Record<string, unknown>,
   { user }: { user: unknown },
 ): boolean => hasRole(user, 'admin');
+
+/**
+ * Collection `admin.hidden` helper: hides a collection from the admin nav for
+ * everyone except admins. The collection stays fully accessible (by URL,
+ * relationships, and the API) — this only declutters the sidebar for editors.
+ *
+ * Usage:
+ *   admin: { hidden: adminOnlyNav }
+ */
+export const adminOnlyNav = ({ user }: { user: unknown }): boolean => !hasRole(user, 'admin');

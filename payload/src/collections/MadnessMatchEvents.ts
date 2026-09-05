@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyNav } from '../utils/auth';
 
 export const ModernRockMadnessMatchEvents: CollectionConfig = {
   slug: 'modern-rock-madness-match-events',
@@ -11,6 +11,7 @@ export const ModernRockMadnessMatchEvents: CollectionConfig = {
     plural: 'Match Events',
   },
   admin: {
+    hidden: adminOnlyNav,
     defaultColumns: ['match', 'eventType', 'createdAt'],
     group: 'Modern Rock Madness',
     description: 'Audit log for match admin actions (overtime, rematch, admin vote, close).',

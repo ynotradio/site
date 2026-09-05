@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hasRole, adminOnlyCondition } from './auth';
+import { hasRole, adminOnlyCondition, adminOnlyNav } from './auth';
 
 describe('Auth Utils', () => {
   describe('hasRole', () => {
@@ -114,6 +114,18 @@ describe('Auth Utils', () => {
       const data = { someField: 'value' };
       const siblingData = { otherField: 'value' };
       expect(adminOnlyCondition(data, siblingData, { user: adminUser })).toBe(true);
+    });
+  });
+
+  describe('adminOnlyNav', () => {
+    it('shows the collection for admins (not hidden)', () => {
+      expect(adminOnlyNav({ user: { id: '1', role: 'admin' } })).toBe(false);
+    });
+
+    it('hides the collection for editors, DJs, and anonymous users', () => {
+      expect(adminOnlyNav({ user: { id: '1', role: 'editor' } })).toBe(true);
+      expect(adminOnlyNav({ user: { id: '2', role: 'dj' } })).toBe(true);
+      expect(adminOnlyNav({ user: null })).toBe(true);
     });
   });
 });
