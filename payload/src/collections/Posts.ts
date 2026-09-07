@@ -1,5 +1,4 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { lexicalEditor, EXPERIMENTAL_TableFeature } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { EmbedFeature } from '../features/embed';
@@ -8,6 +7,7 @@ import { SmallTextFeature } from '../features/text-size';
 import { normalizeFieldToNoon } from './hooks/showDateHooks';
 import { postSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 export const Posts: CollectionConfig = {
   slug: 'posts',

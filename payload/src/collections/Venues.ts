@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { hasRole } from '../utils/auth';
+import { slugField } from './shared/slugField';
 
 export const Venues: CollectionConfig = {
   slug: 'venues',
