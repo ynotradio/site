@@ -81,6 +81,13 @@ describe('Records', () => {
     expect(releaseDateField?.type).toBe('date');
   });
 
+  it('defaults releaseDate to today', () => {
+    const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
+    const releaseDateField = fields.find((f) => f.name === 'releaseDate');
+    expect(typeof releaseDateField?.defaultValue).toBe('function');
+    expect((releaseDateField?.defaultValue as () => Date)()).toBeInstanceOf(Date);
+  });
+
   it('has coverImage as an upload relationship to media', () => {
     const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
     const coverField = fields.find((f) => f.name === 'coverImage');

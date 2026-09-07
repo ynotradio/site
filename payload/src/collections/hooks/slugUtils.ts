@@ -1,4 +1,9 @@
-import type { CollectionBeforeChangeHook, Payload } from 'payload';
+import type {
+  CollectionBeforeChangeHook,
+  CollectionBeforeValidateHook,
+  Payload,
+  PayloadRequest,
+} from 'payload';
 import type { Slugify } from 'payload/shared';
 
 export function slugifyText(text: string): string {
@@ -74,21 +79,27 @@ export function buildMusicSlug(artistName: string, titleSlug: string): string {
 }
 
 /**
- * Custom slugify function for Songs and Records.
- * Generates "artist-name--title" format slugs.
+ * Custom slugify function for Songs and Records. Generates "artist-name--title"
+ * format slugs.
  *
- * IMPORTANT: This function returns synchronously whenever possible because Payload's
- * generateSlug wrapper does NOT await the slugify result. Returning a Promise causes
- * data.slug to be set to a Promise object, which fails text field validation.
- * Only falls back to async (returns Promise) when an artist DB lookup is required.
+ * IMPORTANT: This function is ALWAYS synchronous and never returns a Promise.
+ * Payload's generateSlug wrapper does not await the slugify result, so a Promise
+ * would be stored as data.slug and fail text-field validation — the intermittent
+ * "invalid slug" error editors hit when adding new music.
+ *
+ * When the artist name is not available synchronously (artist is a numeric ID),
+ * this returns a valid title-only slug. The full "artist--title" slug is resolved
+ * asynchronously and written by generateMusicSlugBeforeChangeHook (a collection
+ * beforeChange hook), which runs before the row is persisted. Either way the
+ * value reaching validation is a valid, non-empty slug.
  */
-export const musicSlugify: Slugify = ({ data, req, valueToSlugify }) => {
+export const musicSlugify: Slugify = ({ data, valueToSlugify }) => {
   const title = data?.title;
   if (!title) return undefined;
 
   // If a slug was explicitly pre-set (valueToSlugify differs from title),
-  // return it synchronously. valueToSlugify is data.slug || data.title,
-  // captured by Payload BEFORE generateSlug overwrites data.slug.
+  // return it. valueToSlugify is data.slug || data.title, captured by Payload
+  // BEFORE generateSlug overwrites data.slug.
   if (valueToSlugify && String(valueToSlugify) !== String(title)) {
     return String(valueToSlugify);
   }
@@ -105,24 +116,21 @@ export const musicSlugify: Slugify = ({ data, req, valueToSlugify }) => {
   const artist = data?.artist;
   if (!artist) return titleSlug;
 
-  // Populated artist object — resolve synchronously
+  // Populated artist object — resolve synchronously.
   if (typeof artist === 'object' && artist !== null && 'name' in artist) {
     return buildMusicSlug(String((artist as { name: unknown }).name || ''), titleSlug);
   }
 
-  // Artist is an ID — check if data.slug was pre-computed synchronously by the
-  // generateMusicSlugBeforeChangeHook (collection hook runs before field hooks).
-  // This avoids returning a Promise, which Payload's generateSlug wrapper does not await,
-  // causing data.slug to be set to a Promise object and failing text field validation.
+  // Artist is a numeric ID — prefer the slug already resolved by
+  // generateMusicSlugBeforeChangeHook when present; otherwise return a valid
+  // title-only slug. Never fall back to an async DB lookup here: returning a
+  // Promise is exactly what broke slug validation.
   const precomputedSlug = data?.slug;
   if (typeof precomputedSlug === 'string' && precomputedSlug) {
     return precomputedSlug;
   }
 
-  // Fall back to async DB lookup. Only reached when musicSlugify is called outside of
-  // the normal collection save flow (e.g. direct API usage without the collection hook).
-  const artistData = data as Record<string, unknown>;
-  return resolveArtistName(artistData, req.payload).then((name) => buildMusicSlug(name, titleSlug));
+  return titleSlug;
 };
 
 /**
@@ -166,6 +174,76 @@ export const generateMusicSlugBeforeChangeHook: CollectionBeforeChangeHook = asy
   const artistName = await resolveArtistName(updatedData as Record<string, unknown>, req.payload);
   updatedData.slug = buildMusicSlug(artistName, titleSlug);
 
+  return updatedData;
+};
+
+/**
+ * Find a slug based on `base` that no other row in `collection` already uses,
+ * appending -2, -3, … on collision. Excludes the current document on update.
+ */
+async function findUniqueSlug(
+  payload: Payload,
+  collection: 'songs' | 'records',
+  base: string,
+  excludeId: number | string | undefined,
+  req: PayloadRequest,
+): Promise<string> {
+  for (let n = 1; n < 100; n += 1) {
+    const candidate = n === 1 ? base : `${base}-${n}`;
+    const where = excludeId != null
+      ? { and: [{ slug: { equals: candidate } }, { id: { not_equals: excludeId } }] }
+      : { slug: { equals: candidate } };
+    // eslint-disable-next-line no-await-in-loop -- sequential probing is intentional
+    const { totalDocs } = await payload.find({
+      collection,
+      where,
+      limit: 0,
+      depth: 0,
+      overrideAccess: true,
+      req,
+    });
+    if (totalDocs === 0) return candidate;
+  }
+  // Extremely unlikely fallback — keep the save unblocked with a unique value.
+  return `${base}-${Date.now()}`;
+}
+
+/**
+ * Collection beforeValidate hook for Songs and Records that guarantees a UNIQUE
+ * slug before Payload's unique-field validation runs.
+ *
+ * Two different titles can slugify to the same value ("test 🙈🙈" and
+ * "test 🙉🙉" both become "test"), so the derived artist--title slug collides
+ * with an existing row and Payload rejects the save with the same opaque
+ * "The following field is invalid: slug" message editors already struggle with.
+ * This resolves the artist name, builds the base slug, then de-duplicates it
+ * (-2, -3, …) so the save never blocks. Runs in beforeValidate (not
+ * beforeChange) because the unique check happens during validation.
+ *
+ * Respects a manual override (generateSlug === false) and locks the resulting
+ * slug so nothing downstream overwrites the de-duplicated value.
+ */
+export const dedupeMusicSlug = (collectionSlug: 'songs' | 'records'): CollectionBeforeValidateHook => async ({ data, req, originalDoc }) => {
+  const updatedData = data;
+  if (!updatedData) return updatedData;
+  if (updatedData.generateSlug === false) return updatedData;
+
+  const { title } = updatedData;
+  if (!title) return updatedData;
+
+  const titleSlug = slugifyText(String(title));
+  const artistName = await resolveArtistName(updatedData as Record<string, unknown>, req.payload);
+  let base = titleSlug ? buildMusicSlug(artistName, titleSlug) : '';
+  if (!base) {
+    // Title has no slug-safe characters — fall back to any typed slug, else a constant.
+    base = slugifyText(String(updatedData.slug ?? '')) || 'song';
+  }
+
+  const excludeId = (originalDoc as { id?: number | string } | undefined)?.id;
+  updatedData.slug = await findUniqueSlug(req.payload, collectionSlug, base, excludeId, req);
+  // Lock the de-duplicated slug so the generateSlug hooks don't rebuild the
+  // colliding base value.
+  updatedData.generateSlug = false;
   return updatedData;
 };
 
@@ -219,9 +297,7 @@ export const postSlugify: Slugify = ({ data, valueToSlugify }) => {
   const headlineSlug = slugifyHeadline(String(headline));
   if (!headlineSlug) return undefined;
 
-  const dateStr = data?.startDate
-    ? formatDatePrefix(new Date(data.startDate as string))
-    : '';
+  const dateStr = data?.startDate ? formatDatePrefix(new Date(data.startDate as string)) : '';
   return dateStr ? `${dateStr}--${headlineSlug}` : headlineSlug;
 };
 

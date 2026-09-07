@@ -16,6 +16,7 @@ import {
   buildMusicSlug,
   musicSlugify,
   generateMusicSlugBeforeChangeHook,
+  dedupeMusicSlug,
   resolveArtistName,
   setCdOfTheWeekSlugFromRecord,
   postSlugify,
@@ -87,24 +88,19 @@ describe('musicSlugify (Songs/Records)', () => {
     };
   });
 
-  it('should generate artist--title slug when artist is an ID (async)', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
-      id: 1,
-      name: 'The Beatles',
-    });
-
+  it('should return a valid title-only slug synchronously when artist is a bare ID', () => {
+    // A numeric artist ID cannot be resolved to a name synchronously. musicSlugify
+    // must NOT do an async DB lookup (a returned Promise fails slug validation) —
+    // it returns a valid title-only slug; the full artist--title slug is filled in
+    // by generateMusicSlugBeforeChangeHook before the row is persisted.
     const result = musicSlugify({
       data: { artist: 1, title: 'Hey Jude' },
       req: createMockReq(mockPayload) as any,
     });
 
-    // Artist ID requires DB lookup, so returns a Promise
-    expect(result).toBeInstanceOf(Promise);
-    expect(await result).toBe('the-beatles--hey-jude');
-    expect(mockPayload.findByID).toHaveBeenCalledWith({
-      collection: 'artists',
-      id: 1,
-    });
+    expect(result).toBe('hey-jude');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should return pre-computed slug synchronously when data.slug was set by collection hook', () => {
@@ -172,15 +168,15 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle artist fetch error gracefully (async)', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
-
-    const result = await musicSlugify({
+  it('should return a title-only slug synchronously and never touch the DB', () => {
+    const result = musicSlugify({
       data: { artist: 999, title: 'Test Song' },
       req: createMockReq(mockPayload) as any,
     });
 
     expect(result).toBe('test-song');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should handle special characters in artist and title (sync)', () => {
@@ -226,33 +222,27 @@ describe('musicSlugify (Songs/Records)', () => {
     expect(result).toBeUndefined();
   });
 
-  it('should handle artist object with id (no name) via async DB lookup', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({
-      id: 1,
-      name: 'Led Zeppelin',
-    });
-
-    const result = await musicSlugify({
+  it('should return a title-only slug synchronously for an artist object without a name', () => {
+    // Artist object carries only an id — no name to resolve synchronously.
+    const result = musicSlugify({
       data: { artist: { id: 1 }, title: 'Stairway to Heaven' },
       req: createMockReq(mockPayload) as any,
     });
 
-    expect(result).toBe('led-zeppelin--stairway-to-heaven');
-    expect(mockPayload.findByID).toHaveBeenCalledWith({
-      collection: 'artists',
-      id: 1,
-    });
+    expect(result).toBe('stairway-to-heaven');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
-  it('should return title-only slug when artist DB lookup returns record with no name', async () => {
-    (mockPayload.findByID as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 1 });
-
-    const result = await musicSlugify({
-      data: { artist: 1, title: 'Mystery Song' },
+  it('should prefer a slug precomputed by the beforeChange hook over the title-only fallback', () => {
+    const result = musicSlugify({
+      data: { artist: 1, title: 'Mystery Song', slug: 'led-zeppelin--mystery-song' },
       req: createMockReq(mockPayload) as any,
     });
 
-    expect(result).toBe('mystery-song');
+    expect(result).toBe('led-zeppelin--mystery-song');
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(mockPayload.findByID).not.toHaveBeenCalled();
   });
 
   it('should return raw valueToSlugify when title and valueToSlugify both contain only special chars', () => {
@@ -669,5 +659,73 @@ describe('setCdOfTheWeekSlugFromRecord override guard', () => {
 
     expect(findByID).not.toHaveBeenCalled();
     expect((result as { slug: string }).slug).toBe('manual-slug');
+  });
+});
+
+describe('dedupeMusicSlug', () => {
+  const runHook = (
+    data: Record<string, unknown>,
+    find: ReturnType<typeof vi.fn>,
+    originalDoc?: Record<string, unknown>,
+  ) => dedupeMusicSlug('songs')({
+    data,
+    req: { payload: { find } } as never,
+    originalDoc,
+  } as never);
+
+  it('keeps the artist--title slug when it is unique', async () => {
+    const find = vi.fn().mockResolvedValue({ totalDocs: 0 });
+    const data = { title: 'Hey Jude', artist: { id: 1, name: 'The Beatles' } };
+    const result = (await runHook(data, find)) as { slug: string; generateSlug: boolean };
+    expect(result.slug).toBe('the-beatles--hey-jude');
+    expect(result.generateSlug).toBe(false);
+  });
+
+  it('appends a numeric suffix when the base slug already exists', async () => {
+    // First candidate collides, second is free.
+    const find = vi
+      .fn()
+      .mockResolvedValueOnce({ totalDocs: 1 })
+      .mockResolvedValueOnce({ totalDocs: 0 });
+    const data = { title: 'Collide', artist: { id: 1, name: 'The Band' } };
+    const result = (await runHook(data, find)) as { slug: string };
+    expect(result.slug).toBe('the-band--collide-2');
+  });
+
+  it('keeps incrementing until it finds a free slug', async () => {
+    const find = vi
+      .fn()
+      .mockResolvedValueOnce({ totalDocs: 1 })
+      .mockResolvedValueOnce({ totalDocs: 1 })
+      .mockResolvedValueOnce({ totalDocs: 0 });
+    const data = { title: 'Collide', artist: { id: 1, name: 'The Band' } };
+    const result = (await runHook(data, find)) as { slug: string };
+    expect(result.slug).toBe('the-band--collide-3');
+  });
+
+  it('respects a manual override (generateSlug === false) and does not query', async () => {
+    const find = vi.fn();
+    const data = { title: 'Hey Jude', artist: { id: 1, name: 'The Beatles' }, generateSlug: false };
+    const result = (await runHook(data, find)) as { slug?: string };
+    expect(find).not.toHaveBeenCalled();
+    expect(result.slug).toBeUndefined();
+  });
+
+  it('excludes the current document when checking uniqueness on update', async () => {
+    const find = vi.fn().mockResolvedValue({ totalDocs: 0 });
+    const data = { title: 'Hey Jude', artist: { id: 1, name: 'The Beatles' } };
+    await runHook(data, find, { id: 42 });
+    const { where } = find.mock.calls[0][0];
+    expect(where.and).toEqual([
+      { slug: { equals: 'the-beatles--hey-jude' } },
+      { id: { not_equals: 42 } },
+    ]);
+  });
+
+  it('passes through when there is no title', async () => {
+    const find = vi.fn();
+    const result = (await runHook({ artist: { id: 1, name: 'X' } }, find)) as { slug?: string };
+    expect(find).not.toHaveBeenCalled();
+    expect(result.slug).toBeUndefined();
   });
 });
