@@ -76,6 +76,13 @@ describe('Songs', () => {
     expect(releaseDateField?.type).toBe('date');
   });
 
+  it('defaults releaseDate to today', () => {
+    const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
+    const releaseDateField = fields.find((f) => f.name === 'releaseDate');
+    expect(typeof releaseDateField?.defaultValue).toBe('function');
+    expect((releaseDateField?.defaultValue as () => Date)()).toBeInstanceOf(Date);
+  });
+
   it('has featureOnNewMusic as a checkbox defaulting to false', () => {
     const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
     const featureField = fields.find((f) => f.name === 'featureOnNewMusic');
