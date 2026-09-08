@@ -43,8 +43,25 @@ export const EditorEvents: CollectionConfig = {
       options: [
         { label: 'Error', value: 'error' },
         { label: 'Empty search', value: 'empty-search' },
+        { label: 'Auto-resolved', value: 'auto-resolved' },
       ],
       admin: { description: 'What kind of event this is.' },
+    },
+    {
+      name: 'category',
+      type: 'select',
+      index: true,
+      options: [
+        { label: 'Validation', value: 'validation' },
+        { label: 'Unique collision', value: 'unique' },
+        { label: 'Permission', value: 'permission' },
+        { label: 'Not found', value: 'not-found' },
+        { label: 'Server', value: 'server' },
+      ],
+      admin: {
+        description:
+          'For errors: the subtype, so a uniqueness collision is distinct from a format/required failure.',
+      },
     },
     {
       name: 'collectionSlug',

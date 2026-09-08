@@ -18,10 +18,18 @@ import type { PayloadRequest } from 'payload';
 
 export const EDITOR_EVENTS_SLUG = 'editor-events';
 
-type EditorEventType = 'error' | 'empty-search';
+export type EditorEventType = 'error' | 'empty-search' | 'auto-resolved';
+
+/**
+ * Error subtype, so the log can distinguish (e.g.) a uniqueness collision from a
+ * format/required failure — both of which Payload surfaces with the same opaque
+ * "The following field is invalid" message.
+ */
+export type EditorErrorCategory = 'validation' | 'unique' | 'permission' | 'not-found' | 'server';
 
 type EditorEventInput = {
   type: EditorEventType;
+  category?: EditorErrorCategory;
   collectionSlug?: string;
   operation?: string;
   message: string;
@@ -53,17 +61,21 @@ function requestUrl(req: PayloadRequest): string | undefined {
 }
 
 /**
- * Write one event. Never throws. Runs in its own transaction (we intentionally
- * do NOT pass `req`) so it is unaffected by — and cannot interfere with — the
- * originating request, which may itself be erroring or rolling back.
+ * Write one editor event. Never throws. Runs in its own transaction (we
+ * intentionally do NOT pass `req`) so it is unaffected by — and cannot interfere
+ * with — the originating request, which may itself be erroring or rolling back.
+ *
+ * Exported so other hooks (e.g. the slug de-duplicator) can record notable,
+ * auto-resolved events through the same best-effort path.
  */
-async function writeEvent(req: PayloadRequest, event: EditorEventInput): Promise<void> {
+export async function logEditorEvent(req: PayloadRequest, event: EditorEventInput): Promise<void> {
   try {
     await req.payload.create({
       collection: EDITOR_EVENTS_SLUG,
       overrideAccess: true,
       data: {
         type: event.type,
+        category: event.category,
         collectionSlug: event.collectionSlug,
         operation: event.operation,
         // Keep messages sane even though varchar is unbounded in Postgres.
@@ -80,6 +92,43 @@ async function writeEvent(req: PayloadRequest, event: EditorEventInput): Promise
   } catch {
     // Observability is best-effort; a logging failure must not surface to the user.
   }
+}
+
+/**
+ * Classify a Payload error so the log can tell (e.g.) a uniqueness collision
+ * apart from a format/required failure — the exact ambiguity behind the
+ * "invalid slug" confusion.
+ */
+export function categorizeError(error: unknown): EditorErrorCategory {
+  const message = String((error as { message?: unknown })?.message ?? '').toLowerCase();
+  const name = String((error as { name?: unknown })?.name ?? '');
+  const status = (error as { status?: unknown })?.status;
+
+  // Payload's top-level message is often generic ("The following field is
+  // invalid: slug") while the real reason ("Value must be unique") is nested in
+  // data.errors — so search both.
+  const nested = (() => {
+    const errors = (error as { data?: { errors?: unknown } })?.data?.errors;
+    if (!Array.isArray(errors)) return '';
+    return errors
+      .map((e) => String((e as { message?: unknown })?.message ?? ''))
+      .join(' ')
+      .toLowerCase();
+  })();
+  const haystack = `${message} ${nested}`;
+
+  if (haystack.includes('must be unique') || haystack.includes('duplicate')) return 'unique';
+  if (
+    status === 403
+    || name === 'Forbidden'
+    || haystack.includes('not allowed')
+    || haystack.includes('forbidden')
+  ) {
+    return 'permission';
+  }
+  if (status === 404 || name === 'NotFound' || haystack.includes('not found')) return 'not-found';
+  if (name === 'ValidationError' || message.includes('following field')) return 'validation';
+  return 'server';
 }
 
 /**
@@ -124,8 +173,9 @@ export async function recordEditorError({ error, req, collection }: AfterErrorAr
   const { fieldPath, details } = extractValidationDetails(error);
   const message = typeof error?.message === 'string' && error.message ? error.message : 'Unknown error';
 
-  await writeEvent(req, {
+  await logEditorEvent(req, {
     type: 'error',
+    category: categorizeError(error),
     collectionSlug: collection?.slug,
     operation: typeof req.method === 'string' ? req.method : undefined,
     message,
@@ -176,7 +226,7 @@ export async function recordEmptySearch({
     searchQuery = undefined;
   }
 
-  await writeEvent(req, {
+  await logEditorEvent(req, {
     type: 'empty-search',
     collectionSlug: collection?.slug,
     operation: 'find',

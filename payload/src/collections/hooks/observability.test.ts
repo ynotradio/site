@@ -7,6 +7,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   extractValidationDetails,
+  categorizeError,
   recordEditorError,
   recordEmptySearch,
   EDITOR_EVENTS_SLUG,
@@ -43,6 +44,36 @@ describe('extractValidationDetails', () => {
   });
 });
 
+describe('categorizeError', () => {
+  it('classifies a uniqueness collision', () => {
+    expect(categorizeError({ message: 'The following field is invalid: slug' })).toBe('validation');
+    expect(categorizeError({ message: 'Value must be unique' })).toBe('unique');
+  });
+
+  it('detects uniqueness from the nested field error (generic top-level message)', () => {
+    expect(
+      categorizeError({
+        message: 'The following field is invalid: slug',
+        data: { errors: [{ path: 'slug', message: 'Value must be unique' }] },
+      }),
+    ).toBe('unique');
+  });
+
+  it('classifies permission and not-found errors', () => {
+    expect(categorizeError({ status: 403, message: 'You are not allowed' })).toBe('permission');
+    expect(categorizeError({ status: 404, message: 'Not Found' })).toBe('not-found');
+  });
+
+  it('classifies validation errors by name', () => {
+    expect(categorizeError({ name: 'ValidationError', message: 'x' })).toBe('validation');
+  });
+
+  it('falls back to server for anything else', () => {
+    expect(categorizeError(new Error('kaboom'))).toBe('server');
+    expect(categorizeError(null)).toBe('server');
+  });
+});
+
 describe('recordEditorError', () => {
   let req: ReturnType<typeof mockReq>;
   beforeEach(() => {
@@ -64,11 +95,28 @@ describe('recordEditorError', () => {
     expect(arg.overrideAccess).toBe(true);
     expect(arg.data).toMatchObject({
       type: 'error',
+      category: 'validation',
       collectionSlug: 'songs',
       fieldPath: 'slug',
       userEmail: 'josh@example.com',
       userId: '7',
     });
+  });
+
+  it('tags a uniqueness collision with the unique category', async () => {
+    await recordEditorError({
+      error: {
+        message: 'The following field is invalid: slug',
+        data: { errors: [{ path: 'slug', message: 'Value must be unique' }] },
+      },
+      req,
+      collection: { slug: 'songs' },
+    });
+    // The top-level message is generic; the "must be unique" reason is nested,
+    // and categorizeError must still surface it as a uniqueness collision.
+    const arg = req.payload.create.mock.calls[0][0];
+    expect(arg.data.type).toBe('error');
+    expect(arg.data.category).toBe('unique');
   });
 
   it('does nothing for unauthenticated (public) requests', async () => {

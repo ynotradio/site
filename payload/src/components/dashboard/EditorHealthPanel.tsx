@@ -16,12 +16,21 @@ const WINDOW_DAYS = 7;
 
 interface EditorEvent {
   id: number | string;
-  type: 'error' | 'empty-search';
+  type: 'error' | 'empty-search' | 'auto-resolved';
+  category?: string | null;
   collectionSlug?: string | null;
   message?: string | null;
   userEmail?: string | null;
   createdAt: string;
 }
+
+const CATEGORY_LABELS: Record<string, string> = {
+  validation: 'Validation',
+  unique: 'Duplicate collision',
+  permission: 'Permission',
+  'not-found': 'Not found',
+  server: 'Server',
+};
 
 function hasAdminRole(role: unknown): boolean {
   if (Array.isArray(role)) return role.includes('admin');
@@ -71,7 +80,9 @@ export const EditorHealthPanel: React.FC = () => {
 
   const errors = (events ?? []).filter((e) => e.type === 'error');
   const emptySearches = (events ?? []).filter((e) => e.type === 'empty-search');
+  const autoResolved = (events ?? []).filter((e) => e.type === 'auto-resolved');
   const byCollection = countBy(events ?? [], (e) => e.collectionSlug ?? undefined).slice(0, 5);
+  const byCategory = countBy(errors, (e) => e.category ?? undefined);
 
   const cardStyle: React.CSSProperties = {
     border: '1px solid var(--theme-elevation-150)',
@@ -117,7 +128,24 @@ export const EditorHealthPanel: React.FC = () => {
               <span style={statNum}>{emptySearches.length}</span>
               <span style={statLabel}>empty searches</span>
             </div>
+            <div style={stat}>
+              <span style={statNum}>{autoResolved.length}</span>
+              <span style={statLabel}>slug collisions auto-fixed</span>
+            </div>
           </div>
+
+          {byCategory.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <span style={statLabel}>Errors by type</span>
+              <ul style={{ margin: '0.35rem 0 0', paddingLeft: '1.1rem' }}>
+                {byCategory.map(([cat, count]) => (
+                  <li key={cat} style={{ fontSize: '0.9rem' }}>
+                    {CATEGORY_LABELS[cat] ?? cat} — {count}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {byCollection.length > 0 && (
             <div style={{ marginTop: '1rem' }}>

@@ -15,13 +15,17 @@ import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
  */
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
-    CREATE TYPE "public"."enum_editor_events_type" AS ENUM('error', 'empty-search');
+    CREATE TYPE "public"."enum_editor_events_type" AS ENUM('error', 'empty-search', 'auto-resolved');
+  `);
+  await db.execute(sql`
+    CREATE TYPE "public"."enum_editor_events_category" AS ENUM('validation', 'unique', 'permission', 'not-found', 'server');
   `);
 
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS "editor_events" (
       "id" serial PRIMARY KEY NOT NULL,
       "type" "enum_editor_events_type" NOT NULL,
+      "category" "enum_editor_events_category",
       "collection_slug" varchar,
       "operation" varchar,
       "message" varchar,
@@ -39,6 +43,9 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS "editor_events_type_idx" ON "editor_events" USING btree ("type");
+  `);
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS "editor_events_category_idx" ON "editor_events" USING btree ("category");
   `);
   await db.execute(sql`
     CREATE INDEX IF NOT EXISTS "editor_events_collection_slug_idx" ON "editor_events" USING btree ("collection_slug");
@@ -81,5 +88,8 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
   `);
   await db.execute(sql`
     DROP TYPE IF EXISTS "enum_editor_events_type";
+  `);
+  await db.execute(sql`
+    DROP TYPE IF EXISTS "enum_editor_events_category";
   `);
 }
