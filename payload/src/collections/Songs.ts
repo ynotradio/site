@@ -1,10 +1,14 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
 import { normalizeFieldToNoon, validateReleaseDateWhenFeatured } from './hooks/showDateHooks';
-import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import {
+  musicSlugify,
+  generateMusicSlugBeforeChangeHook,
+  dedupeMusicSlug,
+} from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 export const Songs: CollectionConfig = {
   slug: 'songs',
@@ -17,6 +21,9 @@ export const Songs: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
+    // Let the list-view search box match the artist + title (displayName holds
+    // "Artist - Title") and the raw title, so editors find songs by either.
+    listSearchableFields: ['displayName', 'title'],
     defaultColumns: [
       'displayName',
       'artist',
@@ -38,6 +45,8 @@ export const Songs: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
+    // De-duplicate the slug before validation so a collision never blocks a save.
+    beforeValidate: [dedupeMusicSlug('songs')],
     beforeChange: [
       normalizeFieldToNoon('releaseDate'),
       generateMusicSlugBeforeChangeHook,
@@ -86,9 +95,14 @@ export const Songs: CollectionConfig = {
     {
       name: 'releaseDate',
       type: 'date',
+      // New music is usually current, so default to today; the editor can change
+      // it for back-catalog. This also pre-satisfies the "featured songs need a
+      // release date" rule so featuring a new song never stops on a blank date.
+      defaultValue: () => new Date(),
       validate: validateReleaseDateWhenFeatured,
       admin: {
-        description: 'Date the song was released',
+        description:
+          'Date the song was released (defaults to today — change it for older releases)',
         date: {
           displayFormat: 'yyyy-MM-dd',
           pickerAppearance: 'dayOnly',

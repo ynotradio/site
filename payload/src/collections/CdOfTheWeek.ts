@@ -1,9 +1,9 @@
 import type { CollectionConfig, FieldHook } from 'payload';
-import { slugField } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { setCdOfTheWeekSlugFromRecord, cdSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 const syncRecordText: FieldHook = async ({ siblingData, req }) => {
   const raw = (siblingData as { record?: unknown }).record;

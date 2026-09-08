@@ -13,6 +13,9 @@ export const Shows: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'date',
+    // Without this, the list search only matches the date (the useAsTitle
+    // field). Add the show name so editors can find a slot by its name too.
+    listSearchableFields: ['name', 'date'],
     defaultColumns: ['date', 'startTime', 'endTime', 'host', 'name', 'updatedAt'],
     group: 'Radio',
     description:

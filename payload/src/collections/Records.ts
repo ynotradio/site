@@ -1,9 +1,13 @@
 import type { CollectionConfig } from 'payload';
-import { slugField } from 'payload';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
 import { generateMusicDisplayName } from './hooks/displayNameHooks';
-import { musicSlugify, generateMusicSlugBeforeChangeHook } from './hooks/slugUtils';
+import {
+  musicSlugify,
+  generateMusicSlugBeforeChangeHook,
+  dedupeMusicSlug,
+} from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
+import { slugField } from './shared/slugField';
 
 export const Records: CollectionConfig = {
   slug: 'records',
@@ -16,6 +20,9 @@ export const Records: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'displayName',
+    // Let the list-view search box match artist + title (displayName holds
+    // "Artist - Title"), the raw title, and the label.
+    listSearchableFields: ['displayName', 'title', 'label'],
     defaultColumns: [
       'displayName',
       'coverImage',
@@ -38,6 +45,8 @@ export const Records: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
   hooks: {
+    // De-duplicate the slug before validation so a collision never blocks a save.
+    beforeValidate: [dedupeMusicSlug('records')],
     beforeChange: [generateMusicSlugBeforeChangeHook, generateMusicDisplayName('Record')],
   },
   fields: [
@@ -84,8 +93,11 @@ export const Records: CollectionConfig = {
         {
           name: 'releaseDate',
           type: 'date',
+          // Default to today for new releases; editors can change it for reissues
+          // or back-catalog.
+          defaultValue: () => new Date(),
           admin: {
-            description: 'Release date',
+            description: 'Release date (defaults to today — change it for older releases)',
             date: {
               displayFormat: 'yyyy-MM-dd',
             },

@@ -11,6 +11,10 @@ describe('Songs', () => {
     expect(Songs.admin?.useAsTitle).toBe('displayName');
   });
 
+  it('makes the list search match displayName and title', () => {
+    expect(Songs.admin?.listSearchableFields).toEqual(['displayName', 'title']);
+  });
+
   it('is grouped under Music', () => {
     expect(Songs.admin?.group).toBe('Music');
   });
@@ -74,6 +78,13 @@ describe('Songs', () => {
     const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
     const releaseDateField = fields.find((f) => f.name === 'releaseDate');
     expect(releaseDateField?.type).toBe('date');
+  });
+
+  it('defaults releaseDate to today', () => {
+    const fields = flattenRowFields(Songs.fields as Record<string, unknown>[]);
+    const releaseDateField = fields.find((f) => f.name === 'releaseDate');
+    expect(typeof releaseDateField?.defaultValue).toBe('function');
+    expect((releaseDateField?.defaultValue as () => Date)()).toBeInstanceOf(Date);
   });
 
   it('has featureOnNewMusic as a checkbox defaulting to false', () => {

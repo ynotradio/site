@@ -16,6 +16,10 @@ describe('Records', () => {
     expect(Records.admin?.useAsTitle).toBe('displayName');
   });
 
+  it('makes the list search match displayName, title and label', () => {
+    expect(Records.admin?.listSearchableFields).toEqual(['displayName', 'title', 'label']);
+  });
+
   it('is grouped under Music', () => {
     expect(Records.admin?.group).toBe('Music');
   });
@@ -79,6 +83,13 @@ describe('Records', () => {
     const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
     const releaseDateField = fields.find((f) => f.name === 'releaseDate');
     expect(releaseDateField?.type).toBe('date');
+  });
+
+  it('defaults releaseDate to today', () => {
+    const fields = flattenRowFields(Records.fields as Record<string, unknown>[]);
+    const releaseDateField = fields.find((f) => f.name === 'releaseDate');
+    expect(typeof releaseDateField?.defaultValue).toBe('function');
+    expect((releaseDateField?.defaultValue as () => Date)()).toBeInstanceOf(Date);
   });
 
   it('has coverImage as an upload relationship to media', () => {
