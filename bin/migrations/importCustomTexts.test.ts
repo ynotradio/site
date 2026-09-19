@@ -410,6 +410,55 @@ describe('importCustomTexts', () => {
       expect(callData.title).toBe('Top221of2021');
     });
 
+    it('should import as raw HTML verbatim when rawHtml is true (no Lexical conversion)', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-rodney' });
+
+      const rawBlob = '<div class="episodes"><iframe src="https://mixcloud.com/x"></iframe></div>';
+      const customText: CustomText = {
+        id: 8,
+        title: 'Rodney Anonymous',
+        html: rawBlob,
+        permalink: 'rodney-anonymous',
+        status: 'active',
+      };
+
+      const result = await importCustomText(mockPayload as Payload, customText, true);
+
+      expect(result).toBe('success');
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('html');
+      expect(callData.contentHtml).toBe(rawBlob);
+      expect(callData).not.toHaveProperty('content');
+      // Raw mode skips the converter and its image-import side effects entirely.
+      expect(mockConvertHtmlToLexicalEnhanced).not.toHaveBeenCalled();
+      expect(mockResolveImageUploads).not.toHaveBeenCalled();
+    });
+
+    it('should tag Lexical imports with contentType "richText"', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-donate' });
+
+      const customText: CustomText = {
+        id: 5,
+        title: 'Support Y-Not Radio',
+        html: '<p>Donate!</p>',
+        permalink: 'donate',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('richText');
+      expect(callData).not.toHaveProperty('contentHtml');
+      expect(callData.content).toBeDefined();
+    });
+
     it('should not attempt an image import when title HTML has no <img>', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
