@@ -147,6 +147,63 @@ class PostgresCustomTextTest extends TestCase
         $this->assertStringContainsString('font-size: small', $result['html']);
     }
 
+    public function testHtmlModePagesAreRenderedVerbatim(): void
+    {
+        $rawHtml = '<div class="episodes"><iframe src="https://mixcloud.com/x"></iframe>'
+            . '<table><tr><td>1</td></tr></table></div>';
+        $row = [
+            'id' => 11,
+            'permalink' => 'rodney-anonymous',
+            'title' => 'Rodney Anonymous',
+            'html' => null,
+            'content_html' => $rawHtml,
+            'content_type' => 'html',
+            'legacy_id' => 143,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('rodney-anonymous');
+
+        // Raw HTML comes through untouched — no Lexical conversion, no escaping.
+        $this->assertSame($rawHtml, $result['html']);
+        // Intermediate columns are not leaked into the legacy output shape.
+        $this->assertArrayNotHasKey('content_html', $result);
+        $this->assertArrayNotHasKey('content_type', $result);
+    }
+
+    public function testHtmlModeSkipsLegacyPerPageFixups(): void
+    {
+        // future-friday gets an image-title + table-CSS fix-up on the lossy
+        // Lexical path. In HTML mode the raw blob already carries the real
+        // content, so that fix-up must NOT be applied.
+        $rawHtml = '<h2>This week\'s playlist</h2><table><tr><td>Song</td></tr></table>';
+        $row = [
+            'id' => 8,
+            'permalink' => 'future-friday',
+            'title' => 'Future Friday',
+            'html' => null,
+            'content_html' => $rawHtml,
+            'content_type' => 'html',
+            'legacy_id' => 18,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('future-friday');
+
+        $this->assertSame('Future Friday', $result['title']);
+        $this->assertStringNotContainsString('i.imgur.com', $result['title']);
+        $this->assertStringNotContainsString('font-size: small', $result['html']);
+        $this->assertSame($rawHtml, $result['html']);
+    }
+
     public function testWritesAreDisabled(): void
     {
         $this->expectException(\RuntimeException::class);

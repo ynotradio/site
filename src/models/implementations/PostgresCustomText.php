@@ -21,11 +21,13 @@ class PostgresCustomText implements CustomText {
 
     public function getAll(): array {
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 id,
                 slug as permalink,
                 title,
                 content as html,
+                content_html,
+                content_type,
                 legacy_id
             FROM pages
             WHERE _status = 'published'
@@ -40,14 +42,16 @@ class PostgresCustomText implements CustomText {
 
     public function getById(int $id): ?array {
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 id,
                 slug as permalink,
                 title,
                 content as html,
+                content_html,
+                content_type,
                 legacy_id
             FROM pages
-            WHERE id = :id 
+            WHERE id = :id
                 AND _status = 'published'
         ");
         
@@ -63,14 +67,16 @@ class PostgresCustomText implements CustomText {
 
     public function findByPermalink(string $permalink): ?array {
         $stmt = $this->db->prepare("
-            SELECT 
+            SELECT
                 id,
                 slug as permalink,
                 title,
                 content as html,
+                content_html,
+                content_type,
                 legacy_id
             FROM pages
-            WHERE slug = :permalink 
+            WHERE slug = :permalink
                 AND _status = 'published'
         ");
         
@@ -132,14 +138,34 @@ class PostgresCustomText implements CustomText {
     }
 
     /**
-     * Format result to match MySQL output and convert Lexical to HTML
+     * Format result to match the legacy MySQL output shape (id, permalink,
+     * title, html, legacy_id).
+     *
+     * The body is hybrid per page (see the Pages collection): 'html' pages
+     * carry a raw-HTML blob in `content_html` that is rendered verbatim;
+     * 'richText' pages carry Lexical JSON in `content` (aliased to `html` by
+     * the queries) that must be converted, and only those get the legacy
+     * per-page fix-ups the lossy conversion needs. Rows predating the split
+     * have no `content_type` and are treated as 'richText'.
      */
     private function formatResult(array $row): array {
+        $contentType = $row['content_type'] ?? 'richText';
+
+        if ($contentType === 'html') {
+            // Raw HTML authored in Payload — rendered as-is, no conversion and
+            // none of the Lexical-path fix-ups below.
+            $row['html'] = $row['content_html'] ?? '';
+            unset($row['content_html'], $row['content_type']);
+            return $row;
+        }
+
+        unset($row['content_html'], $row['content_type']);
+
         // Convert Lexical JSON content to HTML
         if (isset($row['html'])) {
             $row['html'] = $this->convertLexicalToHtml($row['html']);
         }
-        
+
         // Special handling for Future Friday page - use image instead of text title and add CSS
         if (isset($row['permalink']) && $row['permalink'] === 'future-friday') {
             if (isset($row['title'])) {
