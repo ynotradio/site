@@ -26,9 +26,24 @@ it onto Postgres losslessly with a real HTML editor instead of forcing it
 through Lexical. The archetype graduations below (A/B → SpecialtyShow, C →
 YearEndPollResults) still stand for the pages that are really structured data.
 Trade-off: raw HTML is unsanitized (trusted admin/editor authors only, same as
-the legacy CP). Remaining work: a raw-HTML mode on `importCustomTexts.ts` to
-bulk-migrate the 35 pages (currently Lexical-only), run against a
-**verified** Neon branch per the connection-string postmortem.
+the legacy CP).
+
+**Rollout mechanics now in place:**
+
+- **Per-permalink cutover.** `use_postgres_customtext` was all-or-nothing;
+  it now has a companion allowlist (`postgres_customtext_permalinks` in
+  `src/config/features.php`, unioned with the comma-separated
+  `USE_POSTGRES_CUSTOMTEXT_PERMALINKS` env var). A permalink on the list
+  serves from Postgres even while the global flag is off, so clean pages can
+  cut over one at a time. `FeatureManager::usePostgresForCustomText($permalink)`
+  is the decision point; front-end call sites pass their permalink to
+  `CustomTextFactory::create($db, $permalink)`. CP routes still force MySQL.
+- **Raw-HTML import.** `importCustomTexts.ts --raw-html` imports each
+  `custom_text` as a raw-HTML page (`contentType: 'html'`, blob stored
+  verbatim in `contentHtml`), skipping the lossy Lexical conversion and its
+  image-import side effects. Run it against a **verified** Neon branch per the
+  connection-string postmortem. Charset normalization (latin1 → UTF-8) is left
+  as a separate, verifiable step rather than guessed at during import.
 
 ---
 

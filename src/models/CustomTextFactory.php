@@ -18,16 +18,23 @@ class CustomTextFactory
      * Create a CustomText implementation.
      *
      * Custom text reads are flagged between MySQL and Postgres while we
-     * validate the Postgres/Payload front-end output. When
-     * `use_postgres_customtext` is enabled the read path is served from
-     * Postgres; otherwise (the default) it falls back to MySQL. Control
-     * Panel requests always resolve to MySQL because FeatureManager
-     * suppresses `use_postgres_*` flags there, so the restored CP edit
-     * screens continue to read and write the legacy `custom_texts` table.
+     * validate the Postgres/Payload front-end output. The read path is served
+     * from Postgres when the global `use_postgres_customtext` flag is enabled,
+     * OR when the given permalink is on the per-permalink cutover allowlist
+     * (letting clean pages move ahead of the global flip); otherwise (the
+     * default) it falls back to MySQL. Control Panel requests always resolve to
+     * MySQL because FeatureManager suppresses the cutover there, so the restored
+     * CP edit screens continue to read and write the legacy `custom_texts` table.
+     *
+     * @param mixed       $db        Legacy MySQL connection (used by SqlCustomText).
+     * @param string|null $permalink The permalink being resolved, so per-page
+     *                               gating can apply. Omit for callers without a
+     *                               single permalink (e.g. CP list views), which
+     *                               then only reach Postgres via the global flag.
      */
-    public static function create($db): CustomText
+    public static function create($db, ?string $permalink = null): CustomText
     {
-        if (FeatureManager::isEnabled('use_postgres_customtext')) {
+        if (FeatureManager::usePostgresForCustomText($permalink)) {
             return new PostgresCustomText(Database::getPostgres());
         }
 

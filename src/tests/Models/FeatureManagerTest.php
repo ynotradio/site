@@ -109,4 +109,66 @@ class FeatureManagerTest extends TestCase
             $_SERVER['SCRIPT_NAME'] = $originalScriptName;
         }
     }
+
+    /**
+     * Test that custom text defaults to MySQL for every permalink (and none)
+     */
+    public function testUsePostgresForCustomTextDefaultsFalse(): void
+    {
+        $this->assertFalse(FeatureManager::usePostgresForCustomText(null));
+        $this->assertFalse(FeatureManager::usePostgresForCustomText('donate'));
+    }
+
+    /**
+     * Test that the global flag moves every custom text page, permalink or not
+     */
+    public function testUsePostgresForCustomTextGlobalFlag(): void
+    {
+        putenv('USE_POSTGRES_CUSTOMTEXT=true');
+
+        $this->assertTrue(FeatureManager::usePostgresForCustomText(null));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('donate'));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('anything-at-all'));
+
+        putenv('USE_POSTGRES_CUSTOMTEXT');
+    }
+
+    /**
+     * Test the per-permalink allowlist via the env var (union, trimmed)
+     */
+    public function testUsePostgresForCustomTextPerPermalinkAllowlist(): void
+    {
+        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS=donate, shows');
+
+        // Listed permalinks cut over; unlisted ones stay on MySQL.
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('donate'));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('shows'));
+        $this->assertFalse(FeatureManager::usePostgresForCustomText('contests'));
+        // No single permalink (e.g. CP list views) never matches the allowlist.
+        $this->assertFalse(FeatureManager::usePostgresForCustomText(null));
+
+        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS');
+    }
+
+    /**
+     * Test that CP routes force MySQL even when a page is on the allowlist
+     */
+    public function testUsePostgresForCustomTextControlPanelForcesMysql(): void
+    {
+        $originalScriptName = $_SERVER['SCRIPT_NAME'] ?? null;
+        $_SERVER['SCRIPT_NAME'] = '/cp/custom_text_update.php';
+        putenv('USE_POSTGRES_CUSTOMTEXT=true');
+        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS=donate');
+
+        $this->assertFalse(FeatureManager::usePostgresForCustomText('donate'));
+        $this->assertFalse(FeatureManager::usePostgresForCustomText(null));
+
+        putenv('USE_POSTGRES_CUSTOMTEXT');
+        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS');
+        if ($originalScriptName === null) {
+            unset($_SERVER['SCRIPT_NAME']);
+        } else {
+            $_SERVER['SCRIPT_NAME'] = $originalScriptName;
+        }
+    }
 }
