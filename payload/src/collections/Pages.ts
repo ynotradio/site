@@ -20,7 +20,19 @@ import { legacyIdField } from './shared/legacyIdField';
  * Distinct from `Posts` (front-page stories with date windows): Pages are
  * long-lived reference / marketing pages. Minimum fields per Chapter 15:
  * title, slug (unique, matching legacy `custom_texts.permalink` values),
- * content (richText + embed blocks), status, legacyId.
+ * content, status, legacyId.
+ *
+ * Body authoring is hybrid, chosen per page via `contentType`:
+ *   - 'html'     -> `contentHtml`, a raw-HTML blob rendered verbatim. This is
+ *                   the legacy CP model (a `<textarea>` of hand-authored HTML)
+ *                   and the right fit for the embed/iframe/table/form-heavy
+ *                   pages that the HTML->Lexical->HTML round-trip mangled
+ *                   (dropped embeds/images, mojibake, admin crashes). New
+ *                   pages default here.
+ *   - 'richText' -> `content`, the Lexical editor + embed blocks, for genuine
+ *                   rich-text articles that benefit from a WYSIWYG.
+ * PostgresCustomText reads the matching column per row and only runs the
+ * Lexical->HTML converter for 'richText' pages.
  *
  * PostgresCustomText reads from this table once content is migrated;
  * `use_postgres_customtext` is the feature-flag safety net while migration
@@ -72,6 +84,35 @@ export const Pages: CollectionConfig = {
       },
     },
     {
+      name: 'contentType',
+      type: 'select',
+      required: true,
+      defaultValue: 'html',
+      options: [
+        { label: 'HTML', value: 'html' },
+        { label: 'Rich Text', value: 'richText' },
+      ],
+      admin: {
+        description:
+          'How this page body is authored. HTML = raw HTML rendered verbatim '
+          + '(best for embed/table/form-heavy legacy pages); Rich Text = the '
+          + 'Lexical editor for formatted articles.',
+      },
+    },
+    {
+      name: 'contentHtml',
+      type: 'code',
+      admin: {
+        language: 'html',
+        description:
+          'Raw HTML page body, rendered verbatim on the site. Trusted editors '
+          + 'only — markup is not sanitized (same as the legacy control panel).',
+        // Show for HTML pages, and for any page that hasn't chosen a type yet
+        // (new pages default to HTML).
+        condition: (data) => data?.contentType !== 'richText',
+      },
+    },
+    {
       name: 'content',
       type: 'richText',
       editor: lexicalEditor({
@@ -94,6 +135,7 @@ export const Pages: CollectionConfig = {
         ],
       }),
       admin: {
+        condition: (data) => data?.contentType === 'richText',
         description:
           'Page body — use the rich text editor for formatted text, images, and embedded media',
       },

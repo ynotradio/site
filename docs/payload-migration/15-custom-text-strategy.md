@@ -3,7 +3,32 @@
 [← Back to Index](./README.md)
 
 **Status:** Proposed (Plan 3 adopted; custom text targets a dedicated `Pages`
-collection) · **Last Updated:** July 2026
+collection) · **Last Updated:** September 2026
+
+---
+
+## Update (Sept 2026): Pages body is now hybrid — raw HTML or Lexical
+
+The `Pages.content` field is no longer Lexical-only. A `contentType`
+discriminator (`html` | `richText`, defaulting to **html**) selects between:
+
+- **`contentHtml`** — a raw-HTML `code` field, rendered **verbatim** by
+  `PostgresCustomText` (no conversion). This is the legacy CP model (a
+  `<textarea>` of hand-authored HTML) on Postgres, and the right fit for the
+  embed/iframe/table/form-heavy pages that the HTML→Lexical→HTML round-trip
+  mangled (dropped embeds/images, mojibake, "Invalid indent value" crashes).
+- **`content`** — the existing Lexical editor + embed blocks, for genuine
+  rich-text articles.
+
+This directly answers the "how should the content be _modelled_" question for
+the archetypes where the blob **is** the honest model: keep the blob, but get
+it onto Postgres losslessly with a real HTML editor instead of forcing it
+through Lexical. The archetype graduations below (A/B → SpecialtyShow, C →
+YearEndPollResults) still stand for the pages that are really structured data.
+Trade-off: raw HTML is unsanitized (trusted admin/editor authors only, same as
+the legacy CP). Remaining work: a raw-HTML mode on `importCustomTexts.ts` to
+bulk-migrate the 35 pages (currently Lexical-only), run against a
+**verified** Neon branch per the connection-string postmortem.
 
 ---
 

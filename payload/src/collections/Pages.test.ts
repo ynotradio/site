@@ -112,6 +112,46 @@ describe('Pages', () => {
     expect(contentField?.type).toBe('richText');
   });
 
+  it('has contentType as a required select defaulting to HTML', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentTypeField = fields.find((f) => f.name === 'contentType') as {
+      type?: string;
+      required?: boolean;
+      defaultValue?: string;
+      options?: { value: string }[];
+    };
+    expect(contentTypeField?.type).toBe('select');
+    expect(contentTypeField?.required).toBe(true);
+    expect(contentTypeField?.defaultValue).toBe('html');
+    expect(contentTypeField?.options?.map((o) => o.value)).toEqual(['html', 'richText']);
+  });
+
+  it('has contentHtml as an HTML code field shown for html (and untyped) pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      type?: string;
+      admin?: { language?: string; condition?: (data: unknown) => boolean };
+    };
+    expect(contentHtmlField?.type).toBe('code');
+    expect(contentHtmlField?.admin?.language).toBe('html');
+
+    const { condition } = contentHtmlField!.admin!;
+    expect(condition!({ contentType: 'html' })).toBe(true);
+    expect(condition!({})).toBe(true); // new page, defaults to HTML
+    expect(condition!({ contentType: 'richText' })).toBe(false);
+  });
+
+  it('shows the richText content field only for richText pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentField = fields.find((f) => f.name === 'content') as {
+      admin?: { condition?: (data: unknown) => boolean };
+    };
+    const { condition } = contentField!.admin!;
+    expect(condition!({ contentType: 'richText' })).toBe(true);
+    expect(condition!({ contentType: 'html' })).toBe(false);
+    expect(condition!({})).toBe(false);
+  });
+
   it('configures content field editor with the full custom-text feature set', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content') as {
