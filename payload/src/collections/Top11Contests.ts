@@ -32,6 +32,7 @@ type ContestDoc = {
     priorWinnerLookbackContests?: number;
   };
   entries?: ContestEntry[];
+  nominees?: { song: number }[];
   messageSnapshot?: unknown;
 };
 
@@ -405,12 +406,28 @@ export const Top11Contests: CollectionConfig = {
           voterKeys.add(voterKey);
         });
 
-        const songIds = (contest.entries ?? []).map((entry) => entry.song);
-        const songs = songIds.length > 0
+        // Build the scoreboard roster from this week's full nominee ballot,
+        // not just last week's frozen chart. `entries` is the <=11-row results
+        // chart; `nominees` is the ~57-song ballot voters actually pick from.
+        // Ranking only over `entries` hid the live leaderboard while voting was
+        // open -- a nominee that wasn't on last week's chart had its votes
+        // counted (voteCounts covers every vote) but was never shown anywhere.
+        // Union the two, entries first so the chart keeps its positions as the
+        // tiebreak order, then de-dupe.
+        const rosterSongIds: number[] = [];
+        const seenSongIds = new Set<number>();
+        [...(contest.entries ?? []), ...(contest.nominees ?? [])].forEach(({ song }) => {
+          if (!seenSongIds.has(song)) {
+            seenSongIds.add(song);
+            rosterSongIds.push(song);
+          }
+        });
+
+        const songs = rosterSongIds.length > 0
           ? await findAllDocs<SongDoc>({
             payload: req.payload,
             collection: 'songs',
-            where: { id: { in: songIds } },
+            where: { id: { in: rosterSongIds } },
             depth: 1,
             req,
             user: req.user,
@@ -418,19 +435,19 @@ export const Top11Contests: CollectionConfig = {
           : [];
         const songsById = new Map(songs.map((song) => [song.id, song]));
 
-        // displayOrder is a hidden field (excluded from reads), so use the
-        // entries array's own position as the display order instead of
-        // relying on the stored value.
-        const rankedSongs = (contest.entries ?? [])
-          .map((entry, index) => {
-            const song = songsById.get(entry.song);
+        // displayOrder is a hidden field (excluded from reads), so use each
+        // song's position in the roster (entries in chart order, then the
+        // remaining nominees) as a stable tiebreak for equal vote counts.
+        const rankedSongs = rosterSongIds
+          .map((songId, index) => {
+            const song = songsById.get(songId);
             const artistName = song?.artist && typeof song.artist === 'object' ? song.artist.name : undefined;
             return {
-              song: entry.song,
+              song: songId,
               songTitle: song?.title ?? null,
               songArtist: artistName ?? null,
               displayOrder: index + 1,
-              votes: voteCounts.get(entry.song) ?? 0,
+              votes: voteCounts.get(songId) ?? 0,
             };
           })
           .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
