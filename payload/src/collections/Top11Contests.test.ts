@@ -312,6 +312,80 @@ describe('Top11Contests', () => {
       ]);
     });
 
+    it("includes nominees not on last week's entries chart, ranked by votes", async () => {
+      // song 5 is a nominee that is NOT in entries -- before the fix its votes
+      // were counted but never surfaced in rankedSongs. It should now appear,
+      // and (with the most votes) rank first.
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return {
+            docs: [
+              { id: 7, title: 'Song Seven', artist: { name: 'Artist A' } },
+              { id: 3, title: 'Song Three', artist: { name: 'Artist B' } },
+              { id: 5, title: 'Song Five', artist: { name: 'Artist E' } },
+            ],
+          };
+        }
+        if (collection === 'top11-votes') {
+          return {
+            docs: [
+              { id: 1, song: 5, voterEmail: 'a@example.com' },
+              { id: 2, song: 5, voterEmail: 'b@example.com' },
+              { id: 3, song: 7, voterEmail: 'c@example.com' },
+            ],
+          };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        entries: [{ song: 7 }, { song: 3 }],
+        nominees: [{ song: 7 }, { song: 3 }, { song: 5 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs).toEqual([
+        { song: 5, songTitle: 'Song Five', songArtist: 'Artist E', displayOrder: 3, votes: 2 },
+        { song: 7, songTitle: 'Song Seven', songArtist: 'Artist A', displayOrder: 1, votes: 1 },
+        { song: 3, songTitle: 'Song Three', songArtist: 'Artist B', displayOrder: 2, votes: 0 },
+      ]);
+    });
+
+    it('de-dupes songs that appear in both entries and nominees', async () => {
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return { docs: [{ id: 7, title: 'Song Seven', artist: { name: 'Artist A' } }] };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        entries: [{ song: 7 }],
+        nominees: [{ song: 7 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs).toEqual([
+        { song: 7, songTitle: 'Song Seven', songArtist: 'Artist A', displayOrder: 1, votes: 0 },
+      ]);
+    });
+
     it('falls back gracefully when a song cannot be found', async () => {
       const find = vi.fn().mockResolvedValue({ docs: [] });
       const findByID = vi.fn().mockResolvedValue({
