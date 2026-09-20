@@ -39,6 +39,8 @@ import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c8
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PostsListHeader as PostsListHeader_bb65c0e3a5c16be042e54d2df483005c } from '../../../payload/src/features/story-order/PostsListHeader'
 import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
+import { Top11EntryRowLabel as Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
+import { Top11NomineeRowLabel as Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
 import { Top11ContestControlsTab as Top11ContestControlsTab_c62a514aa40af66220ce4d0523972d90 } from '../../../payload/src/features/top11/Top11ContestControlsTab'
 import { TournamentBracketTab as TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27 } from '../../../payload/src/features/mrm-bracket/TournamentBracketTab'
 import { MatchControlsTab as MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953 } from '../../../payload/src/features/mrm-live/MatchControlsTab'
@@ -104,6 +106,8 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/story-order/PostsListHeader#PostsListHeader": PostsListHeader_bb65c0e3a5c16be042e54d2df483005c,
   "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
+  "/payload/src/components/Top11ArrayRowLabel#Top11EntryRowLabel": Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90,
+  "/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel": Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90,
   "/payload/src/features/top11/Top11ContestControlsTab#Top11ContestControlsTab": Top11ContestControlsTab_c62a514aa40af66220ce4d0523972d90,
   "/payload/src/features/mrm-bracket/TournamentBracketTab#TournamentBracketTab": TournamentBracketTab_e19023718b6d39f17fc6ef0e34eeba27,
   "/payload/src/features/mrm-live/MatchControlsTab#MatchControlsTab": MatchControlsTab_bca23976d8cde5ca2b8fa493a2694953,
