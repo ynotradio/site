@@ -34,16 +34,28 @@ describe('Top11Contests', () => {
     ]);
   });
 
-  it('has entries array with max 11 rows', () => {
+  it('has entries array with max 11 rows and collapsed song labels', () => {
     const entriesField = Top11Contests.fields.find((field) => field.name === 'entries') as {
       type?: string;
       minRows?: number;
       maxRows?: number;
+      admin?: { initCollapsed?: boolean; components?: { RowLabel?: string } };
     };
 
     expect(entriesField.type).toBe('array');
     expect(entriesField.minRows).toBe(1);
     expect(entriesField.maxRows).toBe(11);
+    expect(entriesField.admin?.initCollapsed).toBe(true);
+    expect(entriesField.admin?.components?.RowLabel).toContain('Top11EntryRowLabel');
+  });
+
+  it('collapses nominee rows and uses song labels', () => {
+    const nomineesField = Top11Contests.fields.find((field) => field.name === 'nominees') as {
+      admin?: { initCollapsed?: boolean; components?: { RowLabel?: string } };
+    };
+
+    expect(nomineesField.admin?.initCollapsed).toBe(true);
+    expect(nomineesField.admin?.components?.RowLabel).toContain('Top11NomineeRowLabel');
   });
 
   describe('nominees field', () => {

@@ -757,6 +757,10 @@ export const Top11Contests: CollectionConfig = {
       admin: {
         description:
           'Top 11 songs for the week. Songs must come from the canonical Songs collection.',
+        initCollapsed: true,
+        components: {
+          RowLabel: '/payload/src/components/Top11ArrayRowLabel#Top11EntryRowLabel',
+        },
       },
     },
     {
@@ -774,6 +778,10 @@ export const Top11Contests: CollectionConfig = {
       admin: {
         description:
           "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart.",
+        initCollapsed: true,
+        components: {
+          RowLabel: '/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel',
+        },
       },
     },
     {
