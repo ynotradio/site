@@ -534,6 +534,54 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('lexical-image--left', $html);
     }
 
+    public function testUploadNodeAppliesSizeClass(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (8, 'https://cdn.example/artist.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 8,
+                        'fields' => ['alignment' => 'right', 'size' => 'sm'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('lexical-image--right lexical-image--sm', $html);
+    }
+
+    public function testUploadNodeEmitsNoSizeClassForNaturalSize(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (10, 'https://cdn.example/photo.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 10,
+                        'fields' => ['alignment' => 'left', 'size' => 'natural'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('lexical-image--left', $html);
+        $this->assertStringNotContainsString('lexical-image--sm', $html);
+        $this->assertStringNotContainsString('lexical-image--md', $html);
+    }
+
     public function testUploadNodeRendersLegacyWidthAndHeightAttributes(): void
     {
         // Matches top11message's <img height="100"> artist thumbnail --

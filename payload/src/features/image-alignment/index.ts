@@ -16,6 +16,13 @@ export const IMAGE_ALIGNMENT_OPTIONS = [
   { label: 'Centered', value: 'center' },
 ] as const;
 
+/** Preset rendered widths for inline images, as `lexical-image--{value}` classes. */
+export const IMAGE_SIZE_OPTIONS = [
+  { label: 'Natural', value: 'natural' },
+  { label: 'Small (100px)', value: 'sm' },
+  { label: 'Medium (300px)', value: 'md' },
+] as const;
+
 type ImageAlignmentFeature = FeatureProviderProviderServer<any, any, any>;
 
 export const ImageAlignmentUploadFeature = (): ImageAlignmentFeature => UploadFeature({
@@ -28,6 +35,13 @@ export const ImageAlignmentUploadFeature = (): ImageAlignmentFeature => UploadFe
           label: 'Image alignment',
           defaultValue: 'full',
           options: [...IMAGE_ALIGNMENT_OPTIONS],
+        },
+        {
+          name: 'size',
+          type: 'select',
+          label: 'Image size',
+          defaultValue: 'natural',
+          options: [...IMAGE_SIZE_OPTIONS],
         },
       ],
     },

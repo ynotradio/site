@@ -2,6 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 import { Top11Contests } from './Top11Contests';
 import { flattenRowFields } from './testUtils';
 
+// The real lexicalEditor only resolves its feature list inside a live Payload
+// instance, so mock it to expose the config for feature-swap assertions
+// (same pattern as Posts.test.ts).
+vi.mock('@payloadcms/richtext-lexical', () => ({
+  lexicalEditor: vi.fn((config) => ({ _type: 'lexical', _config: config })),
+  BlocksFeature: vi.fn((config) => ({ _type: 'blocks', ...config })),
+  UploadFeature: vi.fn((config) => ({ _type: 'upload', key: 'upload', ...config })),
+}));
+
 describe('Top11Contests', () => {
   it('has expected slug and grouping', () => {
     expect(Top11Contests.slug).toBe('top11-contests');
@@ -158,6 +167,35 @@ describe('Top11Contests', () => {
 
     const bodyField = nestedFields.find((field) => field.name === 'body');
     expect(bodyField?.type).toBe('richText');
+  });
+
+  it('swaps the body editor default upload for the alignment-aware one', () => {
+    const messageSnapshotField = Top11Contests.fields.find(
+      (field) => field.name === 'messageSnapshot',
+    ) as { fields?: Array<Record<string, unknown>> };
+    const bodyField = flattenRowFields(messageSnapshotField.fields ?? []).find(
+      (field) => field.name === 'body',
+    ) as { editor?: { _config?: { features?: unknown } } };
+
+    // eslint-disable-next-line no-underscore-dangle -- Payload uses `_config` internally
+    const featuresCallback = bodyField?.editor?._config?.features;
+    expect(typeof featuresCallback).toBe('function');
+
+    const mockDefaultFeatures = [
+      { id: 'paragraph', key: 'paragraph' },
+      { id: 'default-upload', key: 'upload' },
+    ];
+    const result = featuresCallback!({ defaultFeatures: mockDefaultFeatures });
+
+    // paragraph (default) + ImageAlignmentUploadFeature + EmbedFeature
+    expect(result).toHaveLength(3);
+    expect(result.some((f: any) => f.id === 'default-upload')).toBe(false);
+    const uploadFeature = result.find((f: any) => f._type === 'upload') as any;
+    expect(uploadFeature.collections.media.fields.map((f: any) => f.name)).toEqual([
+      'alignment',
+      'size',
+    ]);
+    expect(result[2]._type).toBe('blocks');
   });
 
   it('hides displayOrder from the entries admin form', () => {

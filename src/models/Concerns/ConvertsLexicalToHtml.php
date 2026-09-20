@@ -259,6 +259,12 @@ trait ConvertsLexicalToHtml
         if (in_array($alignment, ['left', 'right', 'center'], true)) {
             $class .= " lexical-image--{$alignment}";
         }
+        // Size presets (ImageAlignmentUploadFeature) constrain the rendered
+        // width via CSS; 'natural' emits no class so intrinsic attrs apply.
+        $size = is_string($fields['size'] ?? null) ? $fields['size'] : '';
+        if (in_array($size, ['sm', 'md'], true)) {
+            $class .= " lexical-image--{$size}";
+        }
 
         $alt = htmlspecialchars((string)($mediaMap[(int)$id]['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
         $src = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
