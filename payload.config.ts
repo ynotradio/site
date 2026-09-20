@@ -69,7 +69,16 @@ const withDeployOrigin = (origins: string[]): string[] => {
 
 const isProduction = process.env.NODE_ENV === 'production';
 const isBuild = process.env.NEXT_PHASE === 'phase-production-build';
+const hasCloudinaryCredentials = Boolean(
+  process.env.CLOUDINARY_CLOUD_NAME
+  && process.env.CLOUDINARY_API_KEY
+  && process.env.CLOUDINARY_API_SECRET,
+);
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
+
+if (isProduction && !hasCloudinaryCredentials) {
+  throw new Error('Cloudinary credentials are required in production.');
+}
 
 // Only require DATABASE_URI when not during build phase
 if (!databaseUri && !isBuild) {
@@ -214,18 +223,20 @@ export default buildConfig({
     ModernRockMadnessVotes,
     ModernRockMadnessMatchEvents,
   ],
-  plugins: [
-    cloudStoragePlugin({
-      collections: {
-        media: {
-          adapter: cloudinaryAdapter,
-          disableLocalStorage: true,
-          disablePayloadAccessControl: true,
-          generateFileURL: cloudinaryGenerateFileURL,
+  plugins: hasCloudinaryCredentials
+    ? [
+      cloudStoragePlugin({
+        collections: {
+          media: {
+            adapter: cloudinaryAdapter,
+            disableLocalStorage: true,
+            disablePayloadAccessControl: true,
+            generateFileURL: cloudinaryGenerateFileURL,
+          },
         },
-      },
-    }),
-  ],
+      }),
+    ]
+    : [],
   typescript: {
     outputFile: path.resolve(dirname, 'payload/types/payload-types.ts'),
   },
