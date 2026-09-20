@@ -6,11 +6,11 @@ vi.mock('@payloadcms/richtext-lexical', () => ({
 }));
 
 describe('ImageAlignmentUploadFeature', () => {
-  it('configures alignment and size select fields on the media collection', () => {
+  it('configures alignment, size, and linkUrl fields on the media collection', () => {
     const feature = ImageAlignmentUploadFeature() as any;
 
     const mediaFields = feature.collections.media.fields;
-    expect(mediaFields).toHaveLength(2);
+    expect(mediaFields).toHaveLength(3);
     expect(mediaFields[0]).toMatchObject({
       name: 'alignment',
       type: 'select',
@@ -20,6 +20,10 @@ describe('ImageAlignmentUploadFeature', () => {
       name: 'size',
       type: 'select',
       defaultValue: 'natural',
+    });
+    expect(mediaFields[2]).toMatchObject({
+      name: 'linkUrl',
+      type: 'text',
     });
   });
 

@@ -194,6 +194,7 @@ describe('Top11Contests', () => {
     expect(uploadFeature.collections.media.fields.map((f: any) => f.name)).toEqual([
       'alignment',
       'size',
+      'linkUrl',
     ]);
     expect(result[2]._type).toBe('blocks');
   });

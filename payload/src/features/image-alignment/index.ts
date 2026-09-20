@@ -43,6 +43,15 @@ export const ImageAlignmentUploadFeature = (): ImageAlignmentFeature => UploadFe
           defaultValue: 'natural',
           options: [...IMAGE_SIZE_OPTIONS],
         },
+        {
+          name: 'linkUrl',
+          type: 'text',
+          label: 'Link URL (optional)',
+          admin: {
+            description:
+                'Makes the image clickable, e.g. an artist or ticket page. Leave blank for no link.',
+          },
+        },
       ],
     },
   },

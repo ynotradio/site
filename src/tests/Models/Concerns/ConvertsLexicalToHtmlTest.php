@@ -582,6 +582,80 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringNotContainsString('lexical-image--md', $html);
     }
 
+    public function testUploadNodeWrapsInLinkWhenLinkUrlSet(): void
+    {
+        // Production top11 messages wrap the floated artist thumbnail in a
+        // link to the artist's site (target="_blank").
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (11, 'https://cdn.example/artist.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 11,
+                        'fields' => ['alignment' => 'right', 'size' => 'sm', 'linkUrl' => 'https://www.beabadoobee.com/'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<a href="https://www.beabadoobee.com/" target="_blank" rel="noopener noreferrer">', $html);
+        $this->assertStringContainsString('lexical-image--right lexical-image--sm', $html);
+    }
+
+    public function testUploadNodeDropsUnsafeLinkUrl(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (12, 'https://cdn.example/photo.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 12,
+                        'fields' => ['linkUrl' => 'javascript:alert(1)'],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringNotContainsString('<a href', $html);
+    }
+
+    public function testUploadNodeOmitsLinkWhenLinkUrlEmpty(): void
+    {
+        $db = new \PDO('sqlite::memory:');
+        $db->exec('CREATE TABLE media (id INTEGER PRIMARY KEY, url TEXT, alt TEXT)');
+        $db->exec("INSERT INTO media (id, url, alt) VALUES (13, 'https://cdn.example/photo.jpg', '')");
+        $converter = new ConvertsLexicalToHtmlTestHarness($db);
+
+        $html = $converter->convert(json_encode([
+            'root' => [
+                'children' => [
+                    [
+                        'type' => 'upload',
+                        'relationTo' => 'media',
+                        'value' => 13,
+                        'fields' => ['alignment' => 'left', 'linkUrl' => ''],
+                    ],
+                ],
+            ],
+        ]));
+
+        $this->assertStringContainsString('<img', $html);
+        $this->assertStringNotContainsString('<a href', $html);
+    }
+
     public function testUploadNodeRendersLegacyWidthAndHeightAttributes(): void
     {
         // Matches top11message's <img height="100"> artist thumbnail --

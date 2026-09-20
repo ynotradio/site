@@ -281,7 +281,18 @@ trait ConvertsLexicalToHtml
             $dimensionAttrs .= ' height="' . (int)$node['height'] . '"';
         }
 
-        return "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\"{$dimensionAttrs} loading=\"lazy\">\n";
+        $img = "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\"{$dimensionAttrs} loading=\"lazy\">\n";
+
+        // Production top11 messages wrap the floated image in a link (e.g. the
+        // artist's site); the optional linkUrl field reproduces that. Unsafe
+        // URLs are dropped rather than wrapped.
+        $linkUrl = is_string($fields['linkUrl'] ?? null) ? trim($fields['linkUrl']) : '';
+        if ($linkUrl !== '' && $this->isSafeLexicalUrl($linkUrl)) {
+            $escapedLink = htmlspecialchars($linkUrl, ENT_QUOTES, 'UTF-8');
+            return "<a href=\"{$escapedLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{$img}</a>\n";
+        }
+
+        return $img;
     }
 
     /**
