@@ -1,17 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRowLabel } from '@payloadcms/ui';
 
 type SongRelation =
   | {
     artist?: { name?: string } | number | null;
+    id?: number | string;
+    label?: string;
     name?: string;
     title?: string;
+    value?: number | string;
   }
   | number
+  | string
   | null
   | undefined;
+
+const songCache = new Map<string, SongRelation>();
+
+const getSongId = (song: SongRelation): string | null => {
+  if (typeof song === 'number' || typeof song === 'string') {
+    return song.toString();
+  }
+
+  if (song && typeof song === 'object') {
+    const id = song.id ?? song.value;
+    return id === undefined ? null : id.toString();
+  }
+
+  return null;
+};
 
 type RowData = {
   song?: SongRelation;
@@ -26,6 +45,10 @@ const formatSongLabel = (song: SongRelation): string | null => {
     return null;
   }
 
+  if (song.label) {
+    return song.label;
+  }
+
   const artist = typeof song.artist === 'object' && song.artist ? song.artist.name : undefined;
   const title = song.title || song.name;
 
@@ -38,7 +61,37 @@ const formatSongLabel = (song: SongRelation): string | null => {
 
 const Top11ArrayRowLabel: React.FC<RowLabelProps> = ({ kind }) => {
   const { data, rowNumber } = useRowLabel<RowData>();
-  const songLabel = formatSongLabel(data?.song);
+  const [loadedSong, setLoadedSong] = useState<SongRelation>(data?.song);
+  const songId = getSongId(data?.song);
+
+  useEffect(() => {
+    if (!songId || formatSongLabel(loadedSong)) {
+      return undefined;
+    }
+
+    const cachedSong = songCache.get(songId);
+    if (cachedSong) {
+      setLoadedSong(cachedSong);
+      return undefined;
+    }
+
+    let cancelled = false;
+    fetch(`/api/songs/${songId}?depth=1`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((song: SongRelation | null) => {
+        if (!cancelled && song) {
+          songCache.set(songId, song);
+          setLoadedSong(song);
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [loadedSong, songId]);
+
+  const songLabel = formatSongLabel(loadedSong);
   const fallback = `${kind === 'entry' ? 'Entry' : 'Nominee'} ${String(rowNumber + 1).padStart(2, '0')}`;
 
   return <>{songLabel || fallback}</>;

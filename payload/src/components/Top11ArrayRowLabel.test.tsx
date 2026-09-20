@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { Top11EntryRowLabel, Top11NomineeRowLabel } from './Top11ArrayRowLabel';
 
 const useRowLabel = vi.fn();
@@ -27,6 +27,23 @@ describe('Top11ArrayRowLabel', () => {
     render(<Top11EntryRowLabel />);
 
     expect(screen.getByText('Entry 02')).toBeInTheDocument();
+  });
+
+  it('loads the song label when the relationship value is an ID', async () => {
+    useRowLabel.mockReturnValue({ data: { song: 42 }, rowNumber: 0 });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ artist: { name: 'Metric' }, title: 'Time Is a Bomb' }),
+      }),
+    );
+
+    render(<Top11EntryRowLabel />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Metric — Time Is a Bomb')).toBeInTheDocument();
+    });
   });
 
   it('uses the numbered nominee label when the song is empty', () => {
