@@ -78,6 +78,9 @@ describe('ResultsCard', () => {
     render(<ResultsCard stats={STATS} />);
     expect(screen.getByText('120')).toBeInTheDocument();
     expect(screen.getByText('Kurt Vile — Chance to Bleed')).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Order' })).not.toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Song' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Votes' })).toBeInTheDocument();
   });
 
   it('links each song to its admin edit page', () => {

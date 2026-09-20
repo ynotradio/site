@@ -181,7 +181,6 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({ stats }) => (
         <table className="top11-controls-tab__ranking">
           <thead>
             <tr>
-              <th>Order</th>
               <th>Song</th>
               <th>Votes</th>
             </tr>
@@ -189,7 +188,6 @@ export const ResultsCard: React.FC<ResultsCardProps> = ({ stats }) => (
           <tbody>
             {stats.rankedSongs.map((row) => (
               <tr key={row.song}>
-                <td className="top11-controls-tab__ranking-order">{row.displayOrder}</td>
                 <td>
                   <a
                     className="top11-controls-tab__song-link"

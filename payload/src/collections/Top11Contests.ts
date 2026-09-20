@@ -444,9 +444,8 @@ export const Top11Contests: CollectionConfig = {
           : [];
         const songsById = new Map(songs.map((song) => [song.id, song]));
 
-        // displayOrder is a hidden field (excluded from reads), so use each
-        // song's position in the roster (entries in chart order, then the
-        // remaining nominees) as a stable tiebreak for equal vote counts.
+        // displayOrder is retained as a final fallback after alphabetical sorting
+        // so rows with identical vote counts and names remain deterministic.
         const rankedSongs = rosterSongIds
           .map((songId, index) => {
             const song = songsById.get(songId);
@@ -459,7 +458,18 @@ export const Top11Contests: CollectionConfig = {
               votes: voteCounts.get(songId) ?? 0,
             };
           })
-          .sort((a, b) => b.votes - a.votes || a.displayOrder - b.displayOrder);
+          .sort((a, b) => {
+            const artistOrder = (a.songArtist ?? '').localeCompare(b.songArtist ?? '', undefined, {
+              sensitivity: 'base',
+            });
+            const titleOrder = (a.songTitle ?? '').localeCompare(b.songTitle ?? '', undefined, {
+              sensitivity: 'base',
+            });
+
+            return (
+              b.votes - a.votes || artistOrder || titleOrder || a.displayOrder - b.displayOrder
+            );
+          });
 
         const newsletterOnlyCount = contestants.filter(
           (contestant) => contestant.newsletterOptIn,
