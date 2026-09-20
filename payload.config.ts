@@ -42,11 +42,13 @@ import { DEPLOY_ORIGIN } from './payload/generated/deploy-origin';
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
 
-const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
-dotenv.config({
-  path: path.resolve(process.cwd(), envFile),
-  override: false,
-  quiet: true,
+const envFiles = process.env.NODE_ENV === 'production' ? ['.env.production', '.env'] : ['.env.local'];
+envFiles.forEach((envFile) => {
+  dotenv.config({
+    path: path.resolve(process.cwd(), envFile),
+    override: false,
+    quiet: true,
+  });
 });
 
 const coerceList = (value: string): string[] => value
@@ -76,7 +78,7 @@ const hasCloudinaryCredentials = Boolean(
 );
 const databaseUri = process.env.DATABASE_URI ?? process.env.NEON_DEV_DATABASE_URL;
 
-if (isProduction && !hasCloudinaryCredentials) {
+if (isProduction && !isBuild && !hasCloudinaryCredentials) {
   throw new Error('Cloudinary credentials are required in production.');
 }
 

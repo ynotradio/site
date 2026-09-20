@@ -161,7 +161,7 @@ class PostgresTop11 implements Top11
             LEFT JOIN songs s ON s.id = n.song_id
             LEFT JOIN artists a ON a.id = s.artist_id
             WHERE n._parent_id = :id
-            ORDER BY a.name, s.title
+            ORDER BY LOWER(a.name), LOWER(s.title)
         ");
         $stmt->execute([':id' => $contestId]);
 
