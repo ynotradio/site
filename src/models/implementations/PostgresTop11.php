@@ -185,6 +185,13 @@ class PostgresTop11 implements Top11
             throw new \Exception('No active Top 11 contest to vote in');
         }
 
+        $statusStmt = $this->db->prepare("SELECT status FROM top11_contests WHERE id = :id");
+        $statusStmt->execute([':id' => $contestId]);
+        $status = $statusStmt->fetch();
+        if (!$status || $status['status'] !== 'open') {
+            throw new \Exception('Top 11 voting is not currently open for this contest');
+        }
+
         // The nominee-pool check mirrors Top11Votes' beforeChange hook; the
         // real guarantee is the top11_votes_song_is_nominee DB trigger (see
         // migration 20260706_210000_add_top11_votes_nominee_constraint),

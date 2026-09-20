@@ -158,14 +158,30 @@ class PostgresTop11Test extends TestCase
         $this->assertSame([], $this->top11->getAllSongs());
     }
 
+    public function testAddVoteRejectsWhenContestIsClosed(): void
+    {
+        $contestStmt = $this->stubActiveContest(1);
+        $statusStmt = $this->createMock(PDOStatement::class);
+        $statusStmt->method('execute')->willReturn(true);
+        $statusStmt->method('fetch')->willReturn(['status' => 'closed']);
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $statusStmt);
+
+        $this->expectExceptionMessage('Top 11 voting is not currently open for this contest');
+        $this->top11->addVote(10);
+    }
+
     public function testAddVoteRejectsASongNotInTheNomineePool(): void
     {
         $contestStmt = $this->stubActiveContest(1);
+        $statusStmt = $this->createMock(PDOStatement::class);
+        $statusStmt->method('execute')->willReturn(true);
+        $statusStmt->method('fetch')->willReturn(['status' => 'open']);
         $nomineeCheckStmt = $this->createMock(PDOStatement::class);
         $nomineeCheckStmt->method('execute')->willReturn(true);
         $nomineeCheckStmt->method('fetch')->willReturn(false);
 
-        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $nomineeCheckStmt);
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $statusStmt, $nomineeCheckStmt);
 
         $this->expectExceptionMessage('This song is not on the ballot for this contest');
         $this->top11->addVote(999);
@@ -174,6 +190,9 @@ class PostgresTop11Test extends TestCase
     public function testAddVoteInsertsAVoteForANomineeSong(): void
     {
         $contestStmt = $this->stubActiveContest(1);
+        $statusStmt = $this->createMock(PDOStatement::class);
+        $statusStmt->method('execute')->willReturn(true);
+        $statusStmt->method('fetch')->willReturn(['status' => 'open']);
         $nomineeCheckStmt = $this->createMock(PDOStatement::class);
         $nomineeCheckStmt->method('execute')->willReturn(true);
         $nomineeCheckStmt->method('fetch')->willReturn(['1' => 1]);
@@ -188,6 +207,7 @@ class PostgresTop11Test extends TestCase
 
         $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls(
             $contestStmt,
+            $statusStmt,
             $nomineeCheckStmt,
             $insertStmt,
         );
