@@ -29,14 +29,36 @@ describe('Top11WriteIns', () => {
     expect(displayField.defaultValue).toBe(true);
   });
 
-  it('permits public write-in creation and restricts read to managers', () => {
-    const createFn = Top11WriteIns.access?.create as () => boolean;
+  it('requires authentication for write-in creation and restricts read to managers', () => {
+    const createFn = Top11WriteIns.access?.create as (args: { req: { user: unknown } }) => boolean;
     const readFn = Top11WriteIns.access?.read as (args: { req: { user: unknown } }) => boolean;
 
-    expect(createFn()).toBe(true);
+    expect(createFn({ req: { user: null } })).toBe(false);
+    expect(createFn({ req: { user: { id: 1, email: 'jane@example.com' } } })).toBe(true);
     expect(readFn({ req: { user: { role: 'admin' } } })).toBe(true);
     expect(readFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(readFn({ req: { user: null } })).toBe(false);
+  });
+
+  describe('beforeChange identity validation', () => {
+    const beforeChangeHook = Top11WriteIns.hooks?.beforeChange?.[0];
+
+    it('uses the authenticated user email', () => {
+      const data = { voterEmail: 'JANE@example.com' };
+      const result = beforeChangeHook?.({
+        data,
+        req: { user: { email: 'Jane@example.com' } },
+      } as never);
+
+      expect(result).toMatchObject({ voterEmail: 'jane@example.com' });
+    });
+
+    it('rejects an impersonated voter email', () => {
+      expect(() => beforeChangeHook?.({
+        data: { voterEmail: 'other@example.com' },
+        req: { user: { email: 'jane@example.com' } },
+      } as never)).toThrow('The voter email must match the authenticated user');
+    });
   });
 
   it('restricts update and delete to admin/editor', () => {

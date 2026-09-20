@@ -29,7 +29,7 @@ export const Top11Votes: CollectionConfig = {
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    create: () => true,
+    create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
@@ -75,9 +75,25 @@ export const Top11Votes: CollectionConfig = {
           throw new APIError('This song is not on the ballot for this contest', 400);
         }
 
+        const requestUser = req.user as { id?: string | number; email?: string } | null | undefined;
+        const requestEmail = requestUser?.email?.trim().toLowerCase() ?? '';
+        const submittedEmail = typeof data.voterEmail === 'string' ? data.voterEmail.trim().toLowerCase() : '';
+
+        if (requestUser) {
+          if (!requestEmail) {
+            throw new APIError('The authenticated user has no email address', 400);
+          }
+          if (submittedEmail && submittedEmail !== requestEmail) {
+            throw new APIError('The voter email must match the authenticated user', 403);
+          }
+          data.voterEmail = requestEmail;
+          data.voterUserId = requestUser.id === undefined ? undefined : String(requestUser.id);
+          delete (data as Record<string, unknown>).voterAuth0Id;
+        }
+
         const voterAuth0Id = typeof data.voterAuth0Id === 'string' ? data.voterAuth0Id.trim() : '';
         const voterUserId = typeof data.voterUserId === 'string' ? data.voterUserId.trim() : '';
-        const voterEmail = typeof data.voterEmail === 'string' ? data.voterEmail.trim() : '';
+        const voterEmail = typeof data.voterEmail === 'string' ? data.voterEmail.trim().toLowerCase() : '';
 
         const voterIdentifier = voterAuth0Id || voterUserId || voterEmail;
         if (!voterIdentifier) {

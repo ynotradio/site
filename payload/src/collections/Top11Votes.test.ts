@@ -8,11 +8,12 @@ describe('Top11Votes', () => {
     expect(Top11Votes.admin?.group).toBe('Top 11');
   });
 
-  it('permits public vote creation and restricts read to managers', () => {
-    const createFn = Top11Votes.access?.create as () => boolean;
+  it('requires authentication for vote creation and restricts read to managers', () => {
+    const createFn = Top11Votes.access?.create as (args: { req: { user: unknown } }) => boolean;
     const readFn = Top11Votes.access?.read as (args: { req: { user: unknown } }) => boolean;
 
-    expect(createFn()).toBe(true);
+    expect(createFn({ req: { user: null } })).toBe(false);
+    expect(createFn({ req: { user: { id: 1, email: 'jane@example.com' } } })).toBe(true);
     expect(readFn({ req: { user: { role: 'admin' } } })).toBe(true);
     expect(readFn({ req: { user: null } })).toBe(false);
   });
@@ -69,6 +70,39 @@ describe('Top11Votes', () => {
 
       const result = await beforeChangeHook?.({ operation: 'create', data, req } as never);
       expect(result).toMatchObject({ song: 20 });
+    });
+
+    it('derives voter identity from an authenticated Payload user', async () => {
+      const req = {
+        ...makeReq(openContestWithNominees),
+        user: { id: 42, email: 'Jane@Example.com' },
+      };
+      const data = {
+        contest: 1,
+        song: 20,
+        voterEmail: 'Jane@Example.com',
+        voterAuth0Id: 'client-supplied',
+      };
+
+      const result = await beforeChangeHook?.({ operation: 'create', data, req } as never);
+
+      expect(result).toMatchObject({
+        voterEmail: 'jane@example.com',
+        voterUserId: '42',
+      });
+      expect(result).not.toHaveProperty('voterAuth0Id');
+    });
+
+    it('rejects an authenticated user impersonating another voter', async () => {
+      const req = {
+        ...makeReq(openContestWithNominees),
+        user: { id: 42, email: 'jane@example.com' },
+      };
+      const data = { contest: 1, song: 20, voterEmail: 'other@example.com' };
+
+      await expect(beforeChangeHook?.({ operation: 'create', data, req } as never)).rejects.toThrow(
+        'The voter email must match the authenticated user',
+      );
     });
 
     it('resolves populated nominee relationship objects, not just raw ids', async () => {

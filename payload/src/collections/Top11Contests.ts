@@ -19,8 +19,13 @@ type ContestEntry = {
   // Hidden field: excluded from reads. Row position in the entries array is
   // the source of truth for display order; see the beforeChange hook below.
   displayOrder?: number;
-  song: number;
+  song: number | { id: number };
   weeklyNote?: unknown;
+};
+
+type ContestNominee = {
+  id?: string;
+  song: number | { id: number };
 };
 
 type ContestDoc = {
@@ -32,7 +37,7 @@ type ContestDoc = {
     priorWinnerLookbackContests?: number;
   };
   entries?: ContestEntry[];
-  nominees?: { song: number }[];
+  nominees?: ContestNominee[];
   messageSnapshot?: unknown;
 };
 
@@ -69,6 +74,8 @@ type WinnerDrawDoc = {
   contestantEmail?: string | null;
   createdAt: string;
 };
+
+const relationshipId = (value: number | { id: number }): number => (typeof value === 'object' ? value.id : value);
 
 type CollectionEndpointHandler = NonNullable<CollectionConfig['endpoints']>[number]['handler'];
 type EndpointRequest = Parameters<CollectionEndpointHandler>[0];
@@ -417,9 +424,10 @@ export const Top11Contests: CollectionConfig = {
         const rosterSongIds: number[] = [];
         const seenSongIds = new Set<number>();
         [...(contest.entries ?? []), ...(contest.nominees ?? [])].forEach(({ song }) => {
-          if (!seenSongIds.has(song)) {
-            seenSongIds.add(song);
-            rosterSongIds.push(song);
+          const songId = relationshipId(song);
+          if (!seenSongIds.has(songId)) {
+            seenSongIds.add(songId);
+            rosterSongIds.push(songId);
           }
         });
 

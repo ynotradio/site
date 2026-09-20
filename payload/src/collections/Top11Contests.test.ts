@@ -359,6 +359,72 @@ describe('Top11Contests', () => {
       ]);
     });
 
+    it('uses entry order to break equal vote counts before nominee order', async () => {
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return {
+            docs: [
+              { id: 7, title: 'Chart Song', artist: { name: 'Artist A' } },
+              { id: 5, title: 'Ballot Song', artist: { name: 'Artist B' } },
+            ],
+          };
+        }
+        if (collection === 'top11-votes') {
+          return {
+            docs: [
+              { id: 1, song: 7, voterEmail: 'a@example.com' },
+              { id: 2, song: 5, voterEmail: 'b@example.com' },
+            ],
+          };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        entries: [{ song: 7 }],
+        nominees: [{ song: 5 }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs.map((song: { song: number }) => song.song)).toEqual([7, 5]);
+    });
+
+    it('normalizes populated entry and nominee relationships', async () => {
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'songs') {
+          return { docs: [{ id: 7, title: 'Song Seven', artist: { name: 'Artist A' } }] };
+        }
+        return { docs: [] };
+      });
+      const findByID = vi.fn().mockResolvedValue({
+        id: 1,
+        status: 'open',
+        entries: [{ song: { id: 7 } }],
+        nominees: [{ song: { id: 7 } }],
+      });
+      const req = {
+        user: { role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, findByID },
+      };
+
+      const response = await statsEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body.rankedSongs).toEqual([
+        { song: 7, songTitle: 'Song Seven', songArtist: 'Artist A', displayOrder: 1, votes: 0 },
+      ]);
+      expect(find).toHaveBeenCalledWith(expect.objectContaining({ where: { id: { in: [7] } } }));
+    });
+
     it('de-dupes songs that appear in both entries and nominees', async () => {
       const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
         if (collection === 'songs') {

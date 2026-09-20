@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { APIError } from 'payload';
 import { hasRole } from '../utils/auth';
 
 export const Top11WriteIns: CollectionConfig = {
@@ -18,9 +19,26 @@ export const Top11WriteIns: CollectionConfig = {
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    create: () => true,
+    create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
+  },
+  hooks: {
+    beforeChange: [
+      ({ data, req }) => {
+        const user = req.user as { email?: string } | null | undefined;
+        const email = user?.email?.trim().toLowerCase();
+        if (!email || !data) {
+          return data;
+        }
+
+        const submittedEmail = typeof data.voterEmail === 'string' ? data.voterEmail.trim().toLowerCase() : '';
+        if (submittedEmail && submittedEmail !== email) {
+          throw new APIError('The voter email must match the authenticated user', 403);
+        }
+        return { ...data, voterEmail: email };
+      },
+    ],
   },
   fields: [
     {
