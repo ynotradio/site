@@ -7,33 +7,37 @@ of _how_ we got to this file layout, see
 
 ## Which file is which
 
-| File                        | Used by                                                                                        | Committed?      |
-| --------------------------- | ---------------------------------------------------------------------------------------------- | --------------- |
-| `.env`                      | Production Postgres/Neon vars, read by `payload.config.ts` **only when `NODE_ENV=production`** | No (gitignored) |
-| `.env.local`                | Local development — `yarn dev`, `yarn payload:dev`, most `bin/*.ts` scripts                    | No (gitignored) |
-| `.env.preview`              | Netlify preview deploys (Next.js/Payload)                                                      | No (gitignored) |
-| `.env.production`           | Netlify production deploys (Next.js/Payload)                                                   | No (gitignored) |
-| `.env.php`                  | Deployed to the production PHP server as `~/htdocs/.env` (legacy site)                         | No (gitignored) |
-| `.env.production.mysql`     | Import scripts only (legacy MySQL access)                                                      | No (gitignored) |
-| `.env.example` (+ variants) | Templates showing required keys, no real values                                                | Yes             |
+| File                        | Used by                                                                         | Committed?      |
+| --------------------------- | ------------------------------------------------------------------------------- | --------------- |
+| `.env`                      | Production fallback vars, loaded by `payload.config.ts` after `.env.production` | No (gitignored) |
+| `.env.local`                | Local development — `yarn dev`, `yarn payload:dev`, most `bin/*.ts` scripts     | No (gitignored) |
+| `.env.preview`              | Netlify preview deploys (Next.js/Payload)                                       | No (gitignored) |
+| `.env.production`           | Production local config and Netlify production deploys (Next.js/Payload)        | No (gitignored) |
+| `.env.php`                  | Deployed to the production PHP server as `~/htdocs/.env` (legacy site)          | No (gitignored) |
+| `.env.production.mysql`     | Import scripts only (legacy MySQL access)                                       | No (gitignored) |
+| `.env.example` (+ variants) | Templates showing required keys, no real values                                 | Yes             |
 
 **Rule of thumb:** if you're running something with `yarn dev`, `yarn tsx ...`,
 or any `bin/*.ts` script from your own terminal, you're reading `.env.local`.
 `.env` is the odd one out — see below.
 
-## The `.env` footgun: it only loads under `NODE_ENV=production`
+## Environment loading and the `.env` footgun
 
 `payload.config.ts` does:
 
 ```ts
-const envFile = process.env.NODE_ENV === 'production' ? '.env' : '.env.local';
-dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+const envFiles =
+  process.env.NODE_ENV === 'production' ? ['.env.production', '.env'] : ['.env.local'];
+envFiles.forEach((envFile) => {
+  dotenv.config({ path: path.resolve(process.cwd(), envFile), override: false });
+});
 ```
 
-This loads **exactly one** of `.env` / `.env.local` — never both. Since
-`NEON_DEV_DATABASE_URL` and `NEON_PROD_DATABASE_URL` live only in `.env`, any
-script run the normal way (`NODE_ENV` unset or `development`) will **not** see
-them, even though `.env` exists right next to `.env.local` in the repo root.
+Production loads `.env.production` first, then fills missing values from `.env`.
+Local development loads `.env.local` only. Since `NEON_DEV_DATABASE_URL` and
+`NEON_PROD_DATABASE_URL` live only in `.env`, any script run the normal way
+(`NODE_ENV` unset or `development`) will **not** see them, even though `.env`
+exists right next to `.env.local` in the repo root.
 
 This has caused real confusion:
 
