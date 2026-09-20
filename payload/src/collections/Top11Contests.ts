@@ -4,6 +4,7 @@ import { APIError } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { slugField } from './shared/slugField';
 import { EmbedFeature } from '../features/embed';
+import { ImageAlignmentUploadFeature } from '../features/image-alignment';
 import {
   assertPublishedContestImmutability,
   findAllDocs,
@@ -697,7 +698,13 @@ export const Top11Contests: CollectionConfig = {
           name: 'body',
           type: 'richText',
           editor: lexicalEditor({
-            features: ({ defaultFeatures }) => [...defaultFeatures, EmbedFeature()],
+            features: ({ defaultFeatures }) => [
+              // Swap the plain default UploadFeature for one with
+              // alignment/size fields, matching Posts and Pages.
+              ...defaultFeatures.filter((feature) => feature.key !== 'upload'),
+              ImageAlignmentUploadFeature(),
+              EmbedFeature(),
+            ],
           }),
         },
       ],

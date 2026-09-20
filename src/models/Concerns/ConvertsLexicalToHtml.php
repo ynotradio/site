@@ -259,6 +259,12 @@ trait ConvertsLexicalToHtml
         if (in_array($alignment, ['left', 'right', 'center'], true)) {
             $class .= " lexical-image--{$alignment}";
         }
+        // Size presets (ImageAlignmentUploadFeature) constrain the rendered
+        // width via CSS; 'natural' emits no class so intrinsic attrs apply.
+        $size = is_string($fields['size'] ?? null) ? $fields['size'] : '';
+        if (in_array($size, ['sm', 'md'], true)) {
+            $class .= " lexical-image--{$size}";
+        }
 
         $alt = htmlspecialchars((string)($mediaMap[(int)$id]['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
         $src = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
@@ -275,7 +281,18 @@ trait ConvertsLexicalToHtml
             $dimensionAttrs .= ' height="' . (int)$node['height'] . '"';
         }
 
-        return "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\"{$dimensionAttrs} loading=\"lazy\">\n";
+        $img = "<img class=\"{$class}\" src=\"{$src}\" alt=\"{$alt}\"{$dimensionAttrs} loading=\"lazy\">\n";
+
+        // Production top11 messages wrap the floated image in a link (e.g. the
+        // artist's site); the optional linkUrl field reproduces that. Unsafe
+        // URLs are dropped rather than wrapped.
+        $linkUrl = is_string($fields['linkUrl'] ?? null) ? trim($fields['linkUrl']) : '';
+        if ($linkUrl !== '' && $this->isSafeLexicalUrl($linkUrl)) {
+            $escapedLink = htmlspecialchars($linkUrl, ENT_QUOTES, 'UTF-8');
+            return "<a href=\"{$escapedLink}\" target=\"_blank\" rel=\"noopener noreferrer\">{$img}</a>\n";
+        }
+
+        return $img;
     }
 
     /**

@@ -1,7 +1,15 @@
 FROM php:7.4-fpm
 
-# Install PostgreSQL client and dev libraries
-RUN apt-get update && apt-get install -y libpq-dev unzip curl \
+# Debian 11 (bullseye) reached end-of-LTS in Aug 2026: its packages were
+# removed from deb.debian.org and now live only on archive.debian.org. Point
+# apt at the archive and skip the expiry check on its frozen Release files so
+# the image stays buildable. The bullseye-security suite was folded into the
+# main archive at EOL (its Release file is gone), so only main + bullseye-updates
+# are listed.
+RUN printf 'deb http://archive.debian.org/debian bullseye main\ndeb http://archive.debian.org/debian bullseye-updates main\n' > /etc/apt/sources.list \
+    && printf 'Acquire::Check-Valid-Until "false";\n' > /etc/apt/apt.conf.d/99archive \
+    && apt-get update \
+    && apt-get install -y libpq-dev unzip curl \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql mysqli \
     && echo "clear_env = no" >> /usr/local/etc/php-fpm.d/www.conf \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \

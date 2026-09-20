@@ -447,6 +447,20 @@ nav a:hover {
   margin: 0 auto 12px;
 }
 
+/* Size presets (ImageAlignmentUploadFeature's size select). height:auto is
+   set unconditionally -- not via the :not([height]) rule above -- because
+   these images render with intrinsic width/height attrs that would otherwise
+   keep their attr height and distort when CSS shrinks only the width. */
+.lexical-image--sm {
+  width: 100px;
+  height: auto;
+}
+
+.lexical-image--md {
+  width: 300px;
+  height: auto;
+}
+
 /* PayPal hosted-button block (RendersPayPalButton trait) */
 .paypal-button {
   margin: 0 0 16px;
