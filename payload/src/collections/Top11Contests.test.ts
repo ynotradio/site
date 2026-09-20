@@ -398,13 +398,13 @@ describe('Top11Contests', () => {
       ]);
     });
 
-    it('uses entry order to break equal vote counts before nominee order', async () => {
+    it('uses alphabetical artist order to break equal vote counts', async () => {
       const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
         if (collection === 'songs') {
           return {
             docs: [
-              { id: 7, title: 'Chart Song', artist: { name: 'Artist A' } },
-              { id: 5, title: 'Ballot Song', artist: { name: 'Artist B' } },
+              { id: 7, title: 'Chart Song', artist: { name: 'Artist B' } },
+              { id: 5, title: 'Ballot Song', artist: { name: 'Artist A' } },
             ],
           };
         }
@@ -433,7 +433,7 @@ describe('Top11Contests', () => {
       const response = await statsEndpoint?.handler(req as never);
       const body = await (response as Response).json();
 
-      expect(body.rankedSongs.map((song: { song: number }) => song.song)).toEqual([7, 5]);
+      expect(body.rankedSongs.map((song: { song: number }) => song.song)).toEqual([5, 7]);
     });
 
     it('normalizes populated entry and nominee relationships', async () => {
