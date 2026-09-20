@@ -1,8 +1,8 @@
 <?php
 
 return [
-    // Top 11 @ 11 has no Postgres/Payload adapter yet, so it stays on MySQL.
-    'use_postgres_top11' => false,
+    // Top 11 @ 11 reads from Postgres/Payload. Cut over 2026-09-20.
+    'use_postgres_top11' => true,
 
     // Custom text reads are flagged between MySQL and Postgres while the
     // Postgres/Payload front-end output is validated. Default off (MySQL);
