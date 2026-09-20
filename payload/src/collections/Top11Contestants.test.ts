@@ -25,11 +25,14 @@ describe('Top11Contestants', () => {
     expect(endpoints.map((endpoint) => endpoint.path)).toContain('/export');
   });
 
-  it('permits public contestant creation and restricts read to managers', () => {
-    const createFn = Top11Contestants.access?.create as () => boolean;
+  it('requires authentication for contestant creation and restricts read to managers', () => {
+    const createFn = Top11Contestants.access?.create as (args: {
+      req: { user: unknown };
+    }) => boolean;
     const readFn = Top11Contestants.access?.read as (args: { req: { user: unknown } }) => boolean;
 
-    expect(createFn()).toBe(true);
+    expect(createFn({ req: { user: null } })).toBe(false);
+    expect(createFn({ req: { user: { id: 1, email: 'jane@example.com' } } })).toBe(true);
     expect(readFn({ req: { user: { role: 'admin' } } })).toBe(true);
     expect(readFn({ req: { user: { role: 'editor' } } })).toBe(true);
     expect(readFn({ req: { user: null } })).toBe(false);
@@ -58,6 +61,26 @@ describe('Top11Contestants', () => {
 
       const result = await beforeChangeHook?.({ operation: 'create', data, req } as never);
       expect(result).toBe(data);
+    });
+
+    it('derives contestant email from an authenticated user', async () => {
+      const find = vi.fn().mockResolvedValue({ docs: [] });
+      const req = { payload: { find }, user: { email: 'Jane@Example.com' } };
+      const data = { contest: 1 } as { contest: number; email?: string };
+
+      const result = await beforeChangeHook?.({ operation: 'create', data, req } as never);
+
+      expect(result).toMatchObject({ email: 'jane@example.com' });
+    });
+
+    it('rejects an impersonated contestant email', async () => {
+      const find = vi.fn();
+      const req = { payload: { find }, user: { email: 'jane@example.com' } };
+      const data = { contest: 1, email: 'other@example.com' };
+
+      await expect(beforeChangeHook?.({ operation: 'create', data, req } as never)).rejects.toThrow(
+        'The contestant email must match the authenticated user',
+      );
     });
 
     it('is case-insensitive when checking for a duplicate email', async () => {

@@ -44,7 +44,7 @@ export const Top11Contestants: CollectionConfig = {
   },
   access: {
     read: ({ req }) => hasRole(req.user, ['admin', 'editor']),
-    create: () => true,
+    create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
@@ -56,10 +56,17 @@ export const Top11Contestants: CollectionConfig = {
         }
 
         const contestId = Number(data.contest);
-        const email = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
+        const submittedEmail = typeof data.email === 'string' ? data.email.trim().toLowerCase() : '';
+        const user = req.user as { email?: string } | null | undefined;
+        const authenticatedEmail = user?.email?.trim().toLowerCase();
+        const email = authenticatedEmail || submittedEmail;
+
+        if (authenticatedEmail && submittedEmail && submittedEmail !== authenticatedEmail) {
+          throw new APIError('The contestant email must match the authenticated user', 403);
+        }
 
         if (!Number.isInteger(contestId) || contestId <= 0 || !email) {
-          return data;
+          return authenticatedEmail ? { ...data, email: authenticatedEmail } : data;
         }
 
         const existingEntries = await req.payload.find({
@@ -77,7 +84,7 @@ export const Top11Contestants: CollectionConfig = {
           throw new APIError('This email has already entered the current Top 11 contest', 409);
         }
 
-        return data;
+        return authenticatedEmail ? { ...data, email: authenticatedEmail } : data;
       },
     ],
   },
