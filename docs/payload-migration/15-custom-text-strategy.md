@@ -41,9 +41,21 @@ the legacy CP).
 - **Raw-HTML import.** `importCustomTexts.ts --raw-html` imports each
   `custom_text` as a raw-HTML page (`contentType: 'html'`, blob stored
   verbatim in `contentHtml`), skipping the lossy Lexical conversion and its
-  image-import side effects. Run it against a **verified** Neon branch per the
-  connection-string postmortem. Charset normalization (latin1 → UTF-8) is left
-  as a separate, verifiable step rather than guessed at during import.
+  image-import side effects. HTML titles (banner `<img>`s) are kept verbatim
+  in raw mode — the legacy front end renders `<h1>${title}</h1>`, and 15
+  active pages store the banner as the title, so converting it to plain text
+  would swap the banner for a synthetic text heading on cutover. Run it
+  against a **verified** Neon branch per the connection-string postmortem.
+- **Charset verification.** `custom_texts` is declared `CHARSET=latin1`, but
+  whether the bytes are really cp1252, already UTF-8, or mixed must be
+  verified, not assumed. `bin/migrations/verifyCustomTextCharset.ts` probes
+  the raw bytes (`CONVERT(... USING binary)`) per row, classifies them
+  (ascii / utf8 / latin1), and — decisively — reports whether a naive
+  utf8mb4 mysql2 read would alter each row. Run it against the source MySQL
+  before any import or normalization step. (Local snapshot result, Sept
+  2026: 22 ascii, 13 genuinely cp1252, 0 UTF-8 rows, 0 rows altered by the
+  naive read — MySQL's `latin1` is cp1252, so the default read decodes the
+  curly quotes correctly and no normalization is needed.)
 
 ---
 

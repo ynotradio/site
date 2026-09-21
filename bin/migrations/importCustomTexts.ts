@@ -102,8 +102,8 @@ async function importCustomText(
 
     // Raw-HTML mode stores the legacy blob verbatim, skipping the
     // HTML->Lexical conversion and its image-import side effects entirely.
-    // Charset normalization (legacy latin1 -> UTF-8) is handled as a separate,
-    // verifiable step rather than guessed at here.
+    // Before any charset normalization, run verifyCustomTextCharset.ts — it
+    // classifies the actual stored bytes per row instead of assuming.
     let content;
     let contentHtml: string | undefined;
     if (rawHtml) {
