@@ -459,6 +459,60 @@ describe('importCustomTexts', () => {
       expect(callData.content).toBeDefined();
     });
 
+    it('should keep an HTML title verbatim in raw-HTML mode (banner stays the h1)', async () => {
+      // pages.php renders `<h1>${title}</h1>` and the legacy MySQL path stores
+      // the banner <img> in the title column. Rewriting it to plain text would
+      // add a synthetic text heading and drop the banner on cutover, so raw
+      // mode must keep the title as-is (headerImage still gets imported).
+      mockImportImageFromUrl.mockResolvedValue({
+        success: true,
+        mediaId: 'media-banner-123',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top225' });
+
+      const bannerTitle = '<img src="https://i.imgur.com/U7gvgiH.gif" width="685">';
+      const customText: CustomText = {
+        id: 71,
+        title: bannerTitle,
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top225of2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe(bannerTitle);
+      expect(callData.headerImage).toBe('media-banner-123');
+    });
+
+    it('should keep a non-img HTML title verbatim in raw-HTML mode without a headerImage', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-sessions25' });
+
+      const centerTitle = '<center>Y-Not Sessions 2025</center>';
+      const customText: CustomText = {
+        id: 73,
+        title: centerTitle,
+        html: '<p>Sessions info</p>',
+        permalink: 'ynotsessions2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe(centerTitle);
+      expect(callData).not.toHaveProperty('headerImage');
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+    });
+
     it('should not attempt an image import when title HTML has no <img>', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 

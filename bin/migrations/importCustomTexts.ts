@@ -65,7 +65,7 @@ async function importCustomText(
     if (title && title.trim().startsWith('<')) {
       // Title is HTML — usually a stylized banner <img> used in place of a
       // real heading. Extract and import that image as the page's headerImage
-      // so the banner isn't lost, then fall back to a readable text title.
+      // (admin-side banner; the legacy front end renders it from the title).
       const imgMatch = title.match(/<img[^>]+src=["']([^"']+)["']/i);
       if (imgMatch) {
         const [, imageUrl] = imgMatch;
@@ -81,16 +81,23 @@ async function importCustomText(
         }
       }
 
-      if (customText.permalink) {
+      if (rawHtml) {
+        // Raw-HTML pages keep the HTML title verbatim: pages.php renders
+        // `<h1>${title}</h1>`, and the legacy MySQL path stores the banner
+        // <img> in the title column. Converting it to plain text would swap
+        // the banner for a synthetic text heading on cutover.
+        logger.info('  Keeping HTML title verbatim (raw-HTML mode)');
+      } else if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
         title = customText.permalink
           .split('-')
           .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
+        logger.info(`  Converted HTML title to: "${title}"`);
       } else {
         title = `Custom Text ${customText.id}`;
+        logger.info(`  Converted HTML title to: "${title}"`);
       }
-      logger.info(`  Converted HTML title to: "${title}"`);
     }
 
     // Raw-HTML mode stores the legacy blob verbatim, skipping the
