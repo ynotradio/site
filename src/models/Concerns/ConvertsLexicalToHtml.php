@@ -390,6 +390,7 @@ trait ConvertsLexicalToHtml
         $html = $this->stripLegacyHtmlComments($html);
         $html = $this->normalizeNbsp($html);
         $html = $this->recoverLegacyHorizontalRules($html);
+        $html = $this->recoverLegacyImgTags($html);
         $html = $this->recoverLegacyFormattingTags($html);
         return $html;
     }
@@ -429,6 +430,139 @@ trait ConvertsLexicalToHtml
     private function recoverLegacyHorizontalRules(string $html): string
     {
         return preg_replace('/&lt;hr\s*\/?&gt;/i', '<hr>', $html) ?? $html;
+    }
+
+    /**
+     * The legacy raw-HTML story editor let DJs hand-write `<img>` tags, and
+     * that habit carried over into Lexical (which has no raw-HTML node), so
+     * the tag survives as literal text and gets `htmlspecialchars`-escaped —
+     * showing the markup as visible code instead of an image, e.g. a second
+     * CD-of-the-Week blurb whose review image was pasted in by hand. Recover
+     * the escaped tag into a real `<img>`, but only from a strict attribute
+     * whitelist and only when `src` is an http(s)/relative URL: this
+     * re-renders author-typed markup, so event handlers and `javascript:`
+     * URLs must not come along for the ride.
+     */
+    private function recoverLegacyImgTags(string $html): string
+    {
+        return preg_replace_callback(
+            '/&lt;img\b(.*?)\/?&gt;/is',
+            function (array $matches): string {
+                return $this->renderRecoveredLegacyImgTag(
+                    html_entity_decode($matches[0], ENT_QUOTES, 'UTF-8'),
+                );
+            },
+            $html,
+        ) ?? $html;
+    }
+
+    /**
+     * Rebuild a decoded legacy `<img>` tag from whitelisted attributes only.
+     * Returns '' when it has no usable image (missing/unsafe src), so the
+     * caller drops the tag rather than emitting a broken or dangerous one.
+     */
+    private function renderRecoveredLegacyImgTag(string $tag): string
+    {
+        if (!preg_match_all(
+            '/([a-zA-Z][a-zA-Z0-9:._-]*)\s*=\s*("[^"]*"|\'[^\']*\')/',
+            $tag,
+            $attrMatches,
+            PREG_SET_ORDER,
+        )) {
+            return '';
+        }
+
+        $attrs = [];
+        foreach ($attrMatches as $match) {
+            $name = strtolower($match[1]);
+            // $match[2] is the quoted token (either quote style); the value is
+            // everything between the quotes.
+            $value = substr($match[2], 1, -1);
+
+            switch ($name) {
+                case 'src':
+                    if (!$this->isSafeLexicalUrl($value)) {
+                        return '';
+                    }
+                    $attrs['src'] = $value;
+                    break;
+                case 'alt':
+                case 'title':
+                case 'class':
+                    $attrs[$name] = $value;
+                    break;
+                case 'width':
+                case 'height':
+                    if (preg_match('/^\d+%?$/', $value)) {
+                        $attrs[$name] = $value;
+                    }
+                    break;
+                case 'border':
+                    if (preg_match('/^\d+$/', $value)) {
+                        $attrs[$name] = $value;
+                    }
+                    break;
+                case 'align':
+                    if (in_array(strtolower($value), ['left', 'right', 'top', 'middle', 'bottom'], true)) {
+                        $attrs['align'] = strtolower($value);
+                    }
+                    break;
+                case 'style':
+                    $style = $this->sanitizeLegacyImgStyle($value);
+                    if ($style !== '') {
+                        $attrs['style'] = $style;
+                    }
+                    break;
+            }
+        }
+
+        if (!isset($attrs['src'])) {
+            return '';
+        }
+
+        $html = '<img';
+        foreach ($attrs as $name => $value) {
+            $html .= ' ' . $name . '="' . htmlspecialchars($value, ENT_QUOTES, 'UTF-8') . '"';
+        }
+
+        return $html . '>';
+    }
+
+    /**
+     * Keep only layout declarations from a legacy inline style. The property
+     * allowlist is what keeps resource-loading/expression values out (a
+     * `background: url(...)` declaration is dropped whole, not scrubbed); the
+     * value guard is belt-and-suspenders for the handful of properties that
+     * could otherwise carry a `javascript:`/`expression()` payload.
+     */
+    private function sanitizeLegacyImgStyle(string $style): string
+    {
+        $allowedProps = [
+            'margin', 'margin-left', 'margin-right', 'margin-top', 'margin-bottom',
+            'float', 'clear', 'vertical-align', 'display',
+            'width', 'height', 'max-width', 'max-height', 'border', 'padding',
+        ];
+
+        $declarations = [];
+        foreach (explode(';', $style) as $declaration) {
+            if (strpos($declaration, ':') === false) {
+                continue;
+            }
+            [$prop, $value] = explode(':', $declaration, 2);
+            $prop = strtolower(trim($prop));
+            $value = trim($value);
+
+            if (!in_array($prop, $allowedProps, true) || $value === '') {
+                continue;
+            }
+            if (preg_match('/url\s*\(|expression\s*\(|javascript\s*:/i', $value)) {
+                continue;
+            }
+
+            $declarations[] = "$prop: $value";
+        }
+
+        return implode('; ', $declarations);
     }
 
     /**

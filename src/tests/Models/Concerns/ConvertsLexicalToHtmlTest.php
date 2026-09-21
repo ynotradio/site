@@ -1033,6 +1033,102 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringNotContainsString('&lt;hr', $html);
     }
 
+    /**
+     * Real production case: the CDs-of-the-Week front-page blurb has two CDs,
+     * and the DJ hand-wrote an <img> tag for the second one's review image.
+     * Lexical stores it as literal text, so it rendered as visible escaped
+     * code until normalizeLegacyHtmlArtifacts() learned to recover it.
+     */
+    public function testLegacyImgTagTypedAsTextIsRecoveredAsRealImage(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<img src="https://res.cloudinary.com/duhacumtz/image/upload/c_fill,w_200,h_200,dpr_auto,q_auto:good,f_auto/prod/uploads/1789997973953-b7ca4923" '
+                . 'alt="Beck - Ride Lonesome" height="90" border="0" align="left" '
+                . 'style="margin: 0px 10px 0px 0px;" title="" /><font size=4>',
+            'Beck</font>',
+        ]));
+
+        $this->assertStringContainsString(
+            '<img src="https://res.cloudinary.com/duhacumtz/image/upload/c_fill,w_200,h_200,dpr_auto,q_auto:good,f_auto/prod/uploads/1789997973953-b7ca4923"'
+                . ' alt="Beck - Ride Lonesome"',
+            $html,
+        );
+        $this->assertStringContainsString('<span class="lexical-text--large">Beck</span>', $html);
+        $this->assertStringNotContainsString('&lt;img', $html);
+    }
+
+    public function testRecoveredLegacyImgTagKeepsLayoutAttributes(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<img src="https://example.com/cover.jpg" alt="Cover" width="200" height="90" '
+                . 'border="0" align="left" style="margin: 0px 10px 0px 0px;" />',
+        ]));
+
+        $this->assertStringContainsString('alt="Cover"', $html);
+        $this->assertStringContainsString('width="200"', $html);
+        $this->assertStringContainsString('height="90"', $html);
+        $this->assertStringContainsString('border="0"', $html);
+        $this->assertStringContainsString('align="left"', $html);
+        $this->assertStringContainsString('style="margin: 0px 10px 0px 0px"', $html);
+    }
+
+    public function testRecoveredLegacyImgTagSupportsSingleQuotedAttributes(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            "<img src='https://example.com/cover.jpg' alt='Cover' height='75' />",
+        ]));
+
+        $this->assertStringContainsString('<img src="https://example.com/cover.jpg" alt="Cover" height="75">', $html);
+        $this->assertStringNotContainsString('&lt;img', $html);
+    }
+
+    public function testRecoveredLegacyImgTagDropsEventHandlersAndUnknownAttributes(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<img src="https://example.com/cover.jpg" alt="Cover" onerror="alert(1)" '
+                . 'onclick="alert(2)" data-tracker="x" />',
+        ]));
+
+        $this->assertStringContainsString('<img src="https://example.com/cover.jpg"', $html);
+        $this->assertStringNotContainsString('onerror', $html);
+        $this->assertStringNotContainsString('onclick', $html);
+        $this->assertStringNotContainsString('data-tracker', $html);
+    }
+
+    public function testRecoveredLegacyImgTagWithUnsafeSrcIsDropped(): void
+    {
+        foreach (['javascript:alert(1)', 'data:image/svg+xml,<svg onload=alert(1)>'] as $src) {
+            $html = $this->converter->convert($this->textNodesJson([
+                '<img src="' . htmlspecialchars($src, ENT_QUOTES, 'UTF-8') . '" alt="Bad" />',
+            ]));
+
+            $this->assertStringNotContainsString('<img', $html, "Dropped for src: $src");
+            $this->assertStringNotContainsString('&lt;img', $html, "Dropped for src: $src");
+        }
+    }
+
+    public function testRecoveredLegacyImgTagWithoutSrcIsDropped(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson(['<img alt="No source" />']));
+
+        $this->assertStringNotContainsString('<img', $html);
+        $this->assertStringNotContainsString('&lt;img', $html);
+    }
+
+    public function testRecoveredLegacyImgStyleDropsUnsafeDeclarations(): void
+    {
+        $html = $this->converter->convert($this->textNodesJson([
+            '<img src="https://example.com/cover.jpg" alt="Cover" '
+                . 'style="margin: 0px 10px 0px 0px; background: url(https://evil.test/x.png); '
+                . 'width: expression(alert(1));" />',
+        ]));
+
+        $this->assertStringContainsString('style="margin: 0px 10px 0px 0px"', $html);
+        $this->assertStringNotContainsString('background', $html);
+        $this->assertStringNotContainsString('url(', $html);
+        $this->assertStringNotContainsString('expression', $html);
+    }
+
     public function testMatchedLegacyBoldTagAcrossSiblingTextNodesIsRecovered(): void
     {
         $html = $this->converter->convert($this->textNodesJson([
@@ -1254,6 +1350,7 @@ class ConvertsLexicalToHtmlTest extends TestCase
                             ['type' => 'text', 'text' => '<font size=4>large</font> '],
                             ['type' => 'text', 'text' => '<font size=5>xlarge</font> '],
                             ['type' => 'text', 'text' => '<hr /> '],
+                            ['type' => 'text', 'text' => '<img src="https://example.com/kitchen.jpg" alt="Kitchen" height="50" align="left" /> '],
                             ['type' => 'text', 'text' => '<b>recovered bold'],
                             ['type' => 'text', 'text' => '</b> <i>recovered italic'],
                             ['type' => 'text', 'text' => '</i> <u>recovered underline</u>'],
@@ -1310,6 +1407,10 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringContainsString('<strong>recovered bold</strong>', $html);
         $this->assertStringContainsString('<em>recovered italic</em>', $html);
         $this->assertStringContainsString('<u>recovered underline</u>', $html);
+        $this->assertStringContainsString(
+            '<img src="https://example.com/kitchen.jpg" alt="Kitchen" height="50" align="left">',
+            $html,
+        );
         // No escaped legacy markup should survive anywhere in the document
         $this->assertStringNotContainsString('&lt;b&gt;', $html);
         $this->assertStringNotContainsString('&lt;/b&gt;', $html);
@@ -1319,6 +1420,7 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringNotContainsString('&lt;font', $html);
         $this->assertStringNotContainsString('&lt;/font&gt;', $html);
         $this->assertStringNotContainsString('&lt;hr', $html);
+        $this->assertStringNotContainsString('&lt;img', $html);
         // No orphaned spans — every </span> pairs with a lexical-text-- open
         $this->assertSame(
             substr_count($html, '<span class="lexical-text--'),
