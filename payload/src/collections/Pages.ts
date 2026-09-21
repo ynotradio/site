@@ -15,6 +15,24 @@ import { pageSlugify } from './hooks/slugUtils';
 import { legacyIdField } from './shared/legacyIdField';
 
 /**
+ * An HTML page with an empty `contentHtml` body renders nothing on the site
+ * (the legacy CP textarea had the same failure mode, silently). Block the
+ * save rather than publish a blank page. Untyped pages count as HTML to
+ * match the field's admin.condition and the collection's 'html' default.
+ */
+export const validateContentHtmlPresent = (
+  value: unknown,
+  { data }: { data?: { contentType?: unknown } },
+): string | true => {
+  const contentType = data?.contentType ?? 'html';
+  const isEmpty = value === undefined || value === null || String(value).trim() === '';
+  if (contentType !== 'richText' && isEmpty) {
+    return 'HTML pages need a body — contentHtml is empty, which would render nothing on the site.';
+  }
+  return true;
+};
+
+/**
  * Evergreen custom-text pages addressed by a stable permalink (slug).
  *
  * Distinct from `Posts` (front-page stories with date windows): Pages are
@@ -102,6 +120,7 @@ export const Pages: CollectionConfig = {
     {
       name: 'contentHtml',
       type: 'code',
+      validate: validateContentHtmlPresent,
       admin: {
         language: 'html',
         description:

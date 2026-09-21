@@ -152,6 +152,25 @@ describe('Pages', () => {
     expect(condition!({})).toBe(false);
   });
 
+  it('blocks an empty contentHtml body on html (and untyped) pages but not richText pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      validate?: (value: unknown, args: { data?: { contentType?: string } }) => string | true;
+    };
+    const { validate } = contentHtmlField!;
+
+    expect(validate!('', { data: { contentType: 'html' } })).toMatch(/empty/);
+    expect(validate!(null, { data: { contentType: 'html' } })).toMatch(/empty/);
+    expect(validate!(undefined, { data: {} })).toMatch(/empty/); // untyped defaults to html
+    expect(validate!('   ', { data: { contentType: 'html' } })).toMatch(/empty/);
+
+    expect(validate!('<iframe src="https://x"></iframe>', { data: { contentType: 'html' } })).toBe(
+      true,
+    );
+    // Hidden on richText pages — an absent contentHtml must not block those saves.
+    expect(validate!(undefined, { data: { contentType: 'richText' } })).toBe(true);
+  });
+
   it('configures content field editor with the full custom-text feature set', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content') as {
