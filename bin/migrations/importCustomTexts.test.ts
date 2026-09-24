@@ -410,6 +410,109 @@ describe('importCustomTexts', () => {
       expect(callData.title).toBe('Top221of2021');
     });
 
+    it('should import as raw HTML verbatim when rawHtml is true (no Lexical conversion)', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-rodney' });
+
+      const rawBlob = '<div class="episodes"><iframe src="https://mixcloud.com/x"></iframe></div>';
+      const customText: CustomText = {
+        id: 8,
+        title: 'Rodney Anonymous',
+        html: rawBlob,
+        permalink: 'rodney-anonymous',
+        status: 'active',
+      };
+
+      const result = await importCustomText(mockPayload as Payload, customText, true);
+
+      expect(result).toBe('success');
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('html');
+      expect(callData.contentHtml).toBe(rawBlob);
+      expect(callData).not.toHaveProperty('content');
+      // Raw mode skips the converter and its image-import side effects entirely.
+      expect(mockConvertHtmlToLexicalEnhanced).not.toHaveBeenCalled();
+      expect(mockResolveImageUploads).not.toHaveBeenCalled();
+    });
+
+    it('should tag Lexical imports with contentType "richText"', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-donate' });
+
+      const customText: CustomText = {
+        id: 5,
+        title: 'Support Y-Not Radio',
+        html: '<p>Donate!</p>',
+        permalink: 'donate',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('richText');
+      expect(callData).not.toHaveProperty('contentHtml');
+      expect(callData.content).toBeDefined();
+    });
+
+    it('should keep an HTML title verbatim in raw-HTML mode (banner stays the h1)', async () => {
+      // pages.php renders `<h1>${title}</h1>` and the legacy MySQL path stores
+      // the banner <img> in the title column. Rewriting it to plain text would
+      // add a synthetic text heading and drop the banner on cutover, so raw
+      // mode must keep the title as-is (headerImage still gets imported).
+      mockImportImageFromUrl.mockResolvedValue({
+        success: true,
+        mediaId: 'media-banner-123',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top225' });
+
+      const bannerTitle = '<img src="https://i.imgur.com/U7gvgiH.gif" width="685">';
+      const customText: CustomText = {
+        id: 71,
+        title: bannerTitle,
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top225of2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe(bannerTitle);
+      expect(callData.headerImage).toBe('media-banner-123');
+    });
+
+    it('should keep a non-img HTML title verbatim in raw-HTML mode without a headerImage', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-sessions25' });
+
+      const centerTitle = '<center>Y-Not Sessions 2025</center>';
+      const customText: CustomText = {
+        id: 73,
+        title: centerTitle,
+        html: '<p>Sessions info</p>',
+        permalink: 'ynotsessions2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe(centerTitle);
+      expect(callData).not.toHaveProperty('headerImage');
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+    });
+
     it('should not attempt an image import when title HTML has no <img>', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
