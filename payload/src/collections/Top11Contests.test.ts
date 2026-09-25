@@ -17,7 +17,7 @@ describe('Top11Contests', () => {
     expect(Top11Contests.admin?.group).toBe('Top 11');
   });
 
-  it('uses immutable lifecycle statuses', () => {
+  it('uses the contest lifecycle statuses', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     const statusField = allFields.find((field) => field.name === 'status') as {
       options?: Array<{ value: string }>;
@@ -110,8 +110,25 @@ describe('Top11Contests', () => {
     expect(displayTitleField?.admin?.hidden).toBe(true);
   });
 
+  it('lets editors change any field on a published or archived contest', async () => {
+    const data = { weekOf: '2026-09-23T00:00:00.000Z', entries: [{ song: 2 }, { song: 1 }] };
+    const hooks = Top11Contests.hooks?.beforeChange ?? [];
+    await Promise.all(
+      ['published', 'archived'].map(async (status) => {
+        const originalDoc = { status, weekOf: '2026-09-16T00:00:00.000Z' };
+        let result: unknown = data;
+        // eslint-disable-next-line no-restricted-syntax -- hooks run in order
+        for (const hook of hooks) {
+          // eslint-disable-next-line no-await-in-loop
+          result = await hook({ data: result, originalDoc, operation: 'update' } as never);
+        }
+        expect(result).toMatchObject({ slug: '2026-09-23', entries: [{ song: 2 }, { song: 1 }] });
+      }),
+    );
+  });
+
   describe('displayTitle derivation hook', () => {
-    const displayTitleHook = Top11Contests.hooks?.beforeChange?.[2];
+    const displayTitleHook = Top11Contests.hooks?.beforeChange?.[1];
 
     it('derives a human-readable title from weekOf on create', () => {
       const data = { weekOf: '2026-06-25T00:00:00.000Z' };
@@ -126,6 +143,15 @@ describe('Top11Contests', () => {
         displayTitle?: string;
       };
       expect(result.displayTitle).toBe('Thu, Jun 25, 2026');
+    });
+
+    it('moves the slug along with weekOf so a date change updates the URL', () => {
+      const data = { weekOf: '2026-09-23T00:00:00.000Z' };
+      const originalDoc = { weekOf: '2026-09-16T00:00:00.000Z', slug: '2026-09-16' };
+      const result = displayTitleHook?.({ data, originalDoc, operation: 'update' } as never) as {
+        slug?: string;
+      };
+      expect(result.slug).toBe('2026-09-23');
     });
 
     it('leaves data untouched when there is no usable weekOf', () => {
@@ -220,7 +246,7 @@ describe('Top11Contests', () => {
   });
 
   describe('displayOrder derivation hook', () => {
-    const renumberHook = Top11Contests.hooks?.beforeChange?.[1];
+    const renumberHook = Top11Contests.hooks?.beforeChange?.[0];
 
     it('renumbers entries to match row position', () => {
       const data = {
