@@ -332,11 +332,14 @@ export const Top11Contests: CollectionConfig = {
           ? new Date()
           : new Date(sourceWeekOf.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        // Strip each entry row's own sub-document id so Payload generates
+        // Strip each entry and nominee row's own sub-document id so Payload generates
         // fresh ones on create, instead of trying to reuse ids that already
         // belong to rows on the source contest.
         const clonedEntries = (sourceContest.entries ?? []).map(
           ({ id: _entryId, ...entry }) => entry,
+        );
+        const clonedNominees = (sourceContest.nominees ?? []).map(
+          ({ id: _nomineeId, ...nominee }) => nominee,
         );
 
         const clonedContest = await req.payload.create({
@@ -346,6 +349,7 @@ export const Top11Contests: CollectionConfig = {
             status: 'draft',
             messageSnapshot: sourceContest.messageSnapshot,
             entries: clonedEntries,
+            nominees: clonedNominees,
             settings: sourceContest.settings,
           },
           req,
