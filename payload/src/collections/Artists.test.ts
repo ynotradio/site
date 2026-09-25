@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Artists } from './Artists';
+import { preventDuplicateArtistName } from './hooks/artistDedup';
 import { flattenRowFields } from './testUtils';
 
 describe('Artists', () => {
@@ -99,5 +100,9 @@ describe('Artists', () => {
     expect(recordsField?.type).toBe('join');
     expect(recordsField?.collection).toBe('records');
     expect(recordsField?.on).toBe('artist');
+  });
+
+  it('registers the duplicate-name guard as a beforeValidate hook', () => {
+    expect(Artists.hooks?.beforeValidate).toContain(preventDuplicateArtistName);
   });
 });

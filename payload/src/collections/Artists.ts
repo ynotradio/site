@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { preventDuplicateArtistName } from './hooks/artistDedup';
 import { slugField } from './shared/slugField';
 
 export const Artists: CollectionConfig = {
@@ -24,6 +25,10 @@ export const Artists: CollectionConfig = {
     create: ({ req }) => Boolean(req.user),
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
+  },
+  hooks: {
+    // Block create/rename that duplicates an existing artist (case/space-insensitive).
+    beforeValidate: [preventDuplicateArtistName],
   },
   fields: [
     {
