@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { APIError } from 'payload';
-import { buildCsv, parseTop11Id } from './utils';
+import { buildCsv, parseTop11Id, top11SortKey } from './utils';
 
 describe('top11 utils', () => {
+  it('sorts names ignoring a whole leading article', () => {
+    expect(top11SortKey('The War On Drugs')).toBe('war on drugs');
+    expect(top11SortKey('A Giant Dog')).toBe('giant dog');
+    expect(top11SortKey('An Horse')).toBe('horse');
+    expect(top11SortKey('Theo Katzman')).toBe('theo katzman');
+    expect(top11SortKey('Anthrax')).toBe('anthrax');
+    expect(top11SortKey('The')).toBe('the');
+  });
+
   it('parses positive ids', () => {
     expect(parseTop11Id('7')).toBe(7);
   });

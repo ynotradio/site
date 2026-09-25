@@ -24,6 +24,15 @@ export const parseTop11Id = (value: string | undefined, fieldName = 'id'): numbe
   return parsed;
 };
 
+/**
+ * File "The War On Drugs" under W, not T. Keep in sync with
+ * PostgresTop11::sortKey() in src/models/implementations/PostgresTop11.php.
+ */
+export const top11SortKey = (name: string): string => name
+  .trim()
+  .toLowerCase()
+  .replace(/^(the|a|an)\s+/, '');
+
 const FORMULA_TRIGGER_CHARS = ['=', '+', '-', '@', '\t', '\r'];
 
 const escapeCsvValue = (value: string): string => {

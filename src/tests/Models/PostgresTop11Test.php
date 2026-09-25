@@ -145,7 +145,40 @@ class PostgresTop11Test extends TestCase
         $songs = $this->top11->getAllSongs();
 
         $this->assertCount(2, $songs);
-        $this->assertSame(['id' => 10, 'song' => 'Chance To Bleed', 'artist' => 'Kurt Vile'], $songs[0]);
+        $this->assertSame(['id' => 20, 'song' => 'Sun Has Set', 'artist' => 'beabadoobee'], $songs[0]);
+        $this->assertSame(['id' => 10, 'song' => 'Chance To Bleed', 'artist' => 'Kurt Vile'], $songs[1]);
+    }
+
+    public function testGetAllSongsSortsArtistsIgnoringLeadingArticles(): void
+    {
+        $contestStmt = $this->stubActiveContest(1);
+        $nomineesStmt = $this->createMock(PDOStatement::class);
+        $nomineesStmt->method('execute')->willReturn(true);
+        $nomineesStmt->method('fetch')->willReturnOnConsecutiveCalls(
+            ['id' => 1, 'song' => 'Who\'s That', 'artist' => 'The War On Drugs'],
+            ['id' => 2, 'song' => 'Burning Out', 'artist' => 'The Linda Lindas'],
+            ['id' => 3, 'song' => 'Zoom 97', 'artist' => 'Kurt Vile'],
+            ['id' => 4, 'song' => 'Sun Has Set', 'artist' => 'beabadoobee'],
+            ['id' => 5, 'song' => 'Marianne', 'artist' => 'A Giant Dog'],
+            false,
+        );
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $nomineesStmt);
+
+        $artists = array_column($this->top11->getAllSongs(), 'artist');
+
+        $this->assertSame(
+            ['beabadoobee', 'A Giant Dog', 'Kurt Vile', 'The Linda Lindas', 'The War On Drugs'],
+            $artists
+        );
+    }
+
+    public function testSortKeyOnlyStripsWholeLeadingArticles(): void
+    {
+        $this->assertSame('war on drugs', PostgresTop11::sortKey('The War On Drugs'));
+        $this->assertSame('theo katzman', PostgresTop11::sortKey('Theo Katzman'));
+        $this->assertSame('anthrax', PostgresTop11::sortKey('Anthrax'));
+        $this->assertSame('the', PostgresTop11::sortKey('The'));
     }
 
     public function testGetAllSongsReturnsEmptyWhenNoActiveContest(): void

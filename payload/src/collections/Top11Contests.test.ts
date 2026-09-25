@@ -252,6 +252,53 @@ describe('Top11Contests', () => {
     expect(displayOrderField?.hidden).toBe(true);
   });
 
+  describe('nominee sort hook', () => {
+    const sortHook = Top11Contests.hooks?.beforeChange?.at(-1);
+    const songs = [
+      { id: 1, title: "Who's That", artist: { name: 'The War On Drugs' } },
+      { id: 2, title: 'Zoom 97', artist: { name: 'Kurt Vile' } },
+      { id: 3, title: 'Sun Has Set', artist: { name: 'beabadoobee' } },
+      { id: 4, title: 'Burning Out', artist: { name: 'The Linda Lindas' } },
+      { id: 5, title: 'Anthem', artist: { name: 'Kurt Vile' } },
+    ];
+    const req = {
+      user: { role: 'editor' },
+      payload: { find: vi.fn().mockResolvedValue({ docs: songs }) },
+    };
+
+    it('orders nominees by artist then title, ignoring a leading "The"', async () => {
+      const data = {
+        nominees: [
+          { id: 'a', song: 1 },
+          { id: 'b', song: 2 },
+          { id: 'c', song: 3 },
+          { id: 'd', song: 4 },
+          { id: 'e', song: { id: 5 } },
+        ],
+      };
+
+      const result = (await sortHook?.({ data, req } as never)) as {
+        nominees: Array<{ id: string }>;
+      };
+
+      expect(result.nominees.map((n) => n.id)).toEqual(['c', 'e', 'b', 'd', 'a']);
+    });
+
+    it('leaves data untouched when nominees are not part of the change', async () => {
+      const data = { status: 'open' };
+      expect(await sortHook?.({ data, req } as never)).toBe(data);
+    });
+  });
+
+  it('hides nominee drag handles since order is derived', () => {
+    const nomineesField = Top11Contests.fields.find(
+      (field) => 'name' in field && field.name === 'nominees',
+    ) as {
+      admin?: { isSortable?: boolean };
+    };
+    expect(nomineesField.admin?.isSortable).toBe(false);
+  });
+
   describe('displayOrder derivation hook', () => {
     const renumberHook = Top11Contests.hooks?.beforeChange?.[0];
 
