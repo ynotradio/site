@@ -220,7 +220,7 @@ describe('Top11Contests', () => {
   });
 
   describe('nominee sort hook', () => {
-    const sortHook = Top11Contests.hooks?.beforeChange?.[3];
+    const sortHook = Top11Contests.hooks?.beforeChange?.at(-1);
     const songs = [
       { id: 1, title: "Who's That", artist: { name: 'The War On Drugs' } },
       { id: 2, title: 'Zoom 97', artist: { name: 'Kurt Vile' } },
