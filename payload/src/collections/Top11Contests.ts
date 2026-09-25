@@ -202,6 +202,8 @@ export const Top11Contests: CollectionConfig = {
   enableRichTextLink: false,
   enableRichTextRelationship: false,
   enableQueryPresets: true,
+  // Duplicate copies status and week as-is; Clone as New Draft resets both.
+  disableDuplicate: true,
   labels: {
     singular: 'Contest',
     plural: 'Contests',
@@ -214,6 +216,9 @@ export const Top11Contests: CollectionConfig = {
       'Weekly Top 11 contests and published results. Editors can change any field or status at any time.',
     groupBy: true,
     components: {
+      edit: {
+        beforeDocumentControls: ['/payload/src/features/top11/Top11CloneButton#Top11CloneButton'],
+      },
       views: {
         edit: {
           controls: {

@@ -17,6 +17,13 @@ describe('Top11Contests', () => {
     expect(Top11Contests.admin?.group).toBe('Top 11');
   });
 
+  it('replaces Duplicate with a Clone as New Draft button on the edit view', () => {
+    expect(Top11Contests.disableDuplicate).toBe(true);
+    expect(Top11Contests.admin?.components?.edit?.beforeDocumentControls).toEqual([
+      '/payload/src/features/top11/Top11CloneButton#Top11CloneButton',
+    ]);
+  });
+
   it('uses the contest lifecycle statuses', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     const statusField = allFields.find((field) => field.name === 'status') as {
