@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { hasRole, adminOnlyNav } from '../utils/auth';
+import { hasRole } from '../utils/auth';
 
 export const Top11WinnerDraws: CollectionConfig = {
   slug: 'top11-winner-draws',
@@ -11,7 +11,6 @@ export const Top11WinnerDraws: CollectionConfig = {
     plural: 'Winner Draws',
   },
   admin: {
-    hidden: adminOnlyNav,
     defaultColumns: ['contest', 'contestantEmail', 'contestantPhone', 'drawnBy', 'createdAt'],
     group: 'Top 11',
     description: 'Auditable winner selection log for Top 11 contests.',

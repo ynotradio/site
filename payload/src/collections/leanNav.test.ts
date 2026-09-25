@@ -15,17 +15,27 @@ import { ModernRockMadnessVotes } from './MadnessVotes';
 import { ModernRockMadnessMatchEvents } from './MadnessMatchEvents';
 
 const hiddenFromEditors: Array<[string, CollectionConfig]> = [
-  ['Top11Votes', Top11Votes],
-  ['Top11WriteIns', Top11WriteIns],
-  ['Top11WinnerDraws', Top11WinnerDraws],
-  ['Top11Contestants', Top11Contestants],
   ['YearEndPollVotes', YearEndPollVotes],
   ['MadnessVotes', ModernRockMadnessVotes],
   ['MadnessMatchEvents', ModernRockMadnessMatchEvents],
 ];
 
+// Payload's admin.hidden removes the collection's admin routes too, not just
+// the nav entry. Editors reach these from the Top 11 Contest Controls links,
+// so hiding them turns those links into 404s.
+const linkedFromContestControls: Array<[string, CollectionConfig]> = [
+  ['Top11Votes', Top11Votes],
+  ['Top11WriteIns', Top11WriteIns],
+  ['Top11WinnerDraws', Top11WinnerDraws],
+  ['Top11Contestants', Top11Contestants],
+];
+
 describe('lean editor nav', () => {
   it.each(hiddenFromEditors)('%s is hidden from non-admin nav', (_name, collection) => {
     expect(collection.admin?.hidden).toBe(adminOnlyNav);
+  });
+
+  it.each(linkedFromContestControls)('%s stays reachable for editors', (_name, collection) => {
+    expect(collection.admin?.hidden).toBeUndefined();
   });
 });
