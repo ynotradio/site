@@ -113,6 +113,7 @@ export const WinnerDrawResult: StoryObj<typeof WinnerDrawCard> = {
           firstName: 'Jane',
           lastName: 'Doe',
           email: 'jane@example.com',
+          phone: '215-555-0100',
         },
         drawLogId: 1,
         totalEntries: 4,

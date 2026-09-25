@@ -15,6 +15,7 @@ describe('Top11WinnerDraws', () => {
     expect(names).toContain('contest');
     expect(names).toContain('contestant');
     expect(names).toContain('contestantEmail');
+    expect(names).toContain('contestantPhone');
     expect(names).toContain('drawnBy');
     expect(names).toContain('excludePriorWinners');
   });

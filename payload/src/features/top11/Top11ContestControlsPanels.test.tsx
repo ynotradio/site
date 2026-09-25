@@ -119,6 +119,7 @@ describe('WinnerDrawCard', () => {
             firstName: 'Jane',
             lastName: 'Doe',
             email: 'jane@example.com',
+            phone: '215-555-0100',
           },
           drawLogId: 1,
           totalEntries: 4,
@@ -130,6 +131,7 @@ describe('WinnerDrawCard', () => {
     );
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+    expect(screen.getByText('215-555-0100')).toBeInTheDocument();
     expect(screen.getByText(/Drawn from 3 of 4 eligible entries/)).toBeInTheDocument();
   });
 

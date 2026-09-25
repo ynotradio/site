@@ -61,6 +61,7 @@ type ContestantDoc = {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string | null;
   enteredContest: boolean;
   newsletterOptIn: boolean;
 };
@@ -589,6 +590,7 @@ export const Top11Contests: CollectionConfig = {
             contest: contestId,
             contestant: winner.id,
             contestantEmail: winner.email,
+            contestantPhone: winner.phone || null,
             drawnBy:
               req.user && typeof req.user === 'object' ? (req.user as { id?: unknown }).id : null,
             excludePriorWinners: shouldExcludePriorWinners,
