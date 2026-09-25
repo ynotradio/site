@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { APIError } from 'payload';
-import { hasRole } from '../utils/auth';
+import { hasRole, adminOnlyNav } from '../utils/auth';
 
 type ContestWithStatus = {
   id: number;
@@ -22,6 +22,7 @@ export const Top11Votes: CollectionConfig = {
     plural: 'Votes',
   },
   admin: {
+    hidden: adminOnlyNav,
     defaultColumns: ['contest', 'song', 'voterEmail', 'voteSource', 'createdAt'],
     group: 'Top 11',
     description: 'Top 11 votes tied to a specific weekly contest.',
