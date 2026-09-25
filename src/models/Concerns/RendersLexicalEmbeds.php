@@ -27,7 +27,8 @@ trait RendersLexicalEmbeds
         }
 
         $hideCoverImage = !array_key_exists('hideCoverImage', $fields) || $fields['hideCoverImage'] !== false;
-        $embed = $this->normalizeEmbedUrl($url, $hideCoverImage);
+        $miniPlayer = ($fields['miniPlayer'] ?? false) === true;
+        $embed = $this->normalizeEmbedUrl($url, $hideCoverImage, $miniPlayer);
         $embed = $this->applyEmbedLayoutOverride($embed, $fields);
         $src = htmlspecialchars($embed['src'], ENT_QUOTES, 'UTF-8');
 
@@ -63,7 +64,7 @@ trait RendersLexicalEmbeds
      *
      * @return array{provider:string, src:string, layout:string, height:int}
      */
-    protected function normalizeEmbedUrl(string $url, bool $hideCoverImage = true): array
+    protected function normalizeEmbedUrl(string $url, bool $hideCoverImage = true, bool $miniPlayer = false): array
     {
         // YouTube -> /embed/<id>
         if (str_contains($url, 'youtube.com') || str_contains($url, 'youtu.be')) {
@@ -104,9 +105,10 @@ trait RendersLexicalEmbeds
             $feed = $this->extractMixcloudFeed($url);
             if ($feed !== null) {
                 $hideCover = $hideCoverImage ? '1' : '0';
-                $src = "https://player-widget.mixcloud.com/widget/iframe/?hide_cover={$hideCover}&feed="
+                $mini = $miniPlayer ? 'mini=1&hide_artwork=1&' : '';
+                $src = "https://player-widget.mixcloud.com/widget/iframe/?{$mini}hide_cover={$hideCover}&feed="
                     . rawurlencode($feed);
-                return ['provider' => 'mixcloud', 'src' => $src, 'layout' => 'audio', 'height' => 120];
+                return ['provider' => 'mixcloud', 'src' => $src, 'layout' => 'audio', 'height' => $miniPlayer ? 60 : 120];
             }
             // Genre/discover/hub URLs aren't single feeds; fall through to generic.
         }
