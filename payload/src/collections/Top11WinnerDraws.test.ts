@@ -19,15 +19,18 @@ describe('Top11WinnerDraws', () => {
     expect(names).toContain('excludePriorWinners');
   });
 
-  it('defaults excludePriorWinners to true, so the lookback exclusion applies unless explicitly overridden', () => {
+  it('keeps excludePriorWinners only as a read-only record of past draws', () => {
     const allFields = flattenRowFields(Top11WinnerDraws.fields);
     const excludeField = allFields.find((field) => field.name === 'excludePriorWinners') as {
       type?: string;
       defaultValue?: boolean;
+      admin?: { readOnly?: boolean };
     };
 
     expect(excludeField.type).toBe('checkbox');
-    expect(excludeField.defaultValue).toBe(true);
+    expect(excludeField.defaultValue).toBeUndefined();
+    expect(excludeField.admin?.readOnly).toBe(true);
+    expect(Top11WinnerDraws.admin?.defaultColumns).not.toContain('excludePriorWinners');
   });
 
   it('restricts create/read to admin/editor and update/delete to admin only', () => {

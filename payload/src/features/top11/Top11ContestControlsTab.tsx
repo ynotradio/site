@@ -157,7 +157,7 @@ export const Top11ContestControlsTab: React.FC = () => {
         lastWinner={lastWinner}
         onSetStatus={handleSetStatus}
         onClone={handleClone}
-        onPickWinner={() => handlePickWinner()}
+        onPickWinner={handlePickWinner}
       />
     </Gutter>
   );

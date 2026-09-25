@@ -255,6 +255,34 @@ describe('Top11Contests', () => {
     expect(paths).toContain('/:id/pick-winner');
   });
 
+  describe('/:id/pick-winner', () => {
+    const pickWinnerEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/pick-winner');
+
+    it('draws from every entered contestant, including prior winners', async () => {
+      const contestants = [{ id: 11, email: 'past-winner@example.com' }];
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'top11-contestants') return { docs: contestants };
+        if (collection === 'top11-winner-draws') return { docs: [{ contestantEmail: 'past-winner@example.com' }] };
+        return { docs: [] };
+      });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      const response = await pickWinnerEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body).toEqual({ winner: contestants[0], drawLogId: 99, totalEntries: 1 });
+      expect(find).not.toHaveBeenCalledWith(
+        expect.objectContaining({ collection: 'top11-winner-draws' }),
+      );
+      expect(create.mock.calls[0][0].data).not.toHaveProperty('excludePriorWinners');
+    });
+  });
+
   describe('/:id/stats write-in grouping', () => {
     const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
 

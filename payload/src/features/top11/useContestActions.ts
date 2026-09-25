@@ -8,7 +8,7 @@ interface ContestActions {
   lastWinner: Top11PickWinnerResult | null;
   handleSetStatus: (status: Top11ContestStatus) => Promise<void>;
   handleClone: () => Promise<void>;
-  handlePickWinner: (excludePriorWinners?: boolean) => Promise<void>;
+  handlePickWinner: () => Promise<void>;
 }
 
 const STATUS_ENDPOINT: Record<Top11ContestStatus, string | null> = {
@@ -92,25 +92,20 @@ export const useContestActions = (
     });
   }, [contestId, withSaving]);
 
-  const handlePickWinner = useCallback(
-    async (excludePriorWinners?: boolean) => {
-      if (!contestId) return;
-      await withSaving('Pick winner', async () => {
-        const res = await fetch(`/api/top11-contests/${contestId}/pick-winner`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(excludePriorWinners === undefined ? {} : { excludePriorWinners }),
-        });
-        if (!res.ok) {
-          throw new Error(await parseErrorMessage(res, 'Could not pick a winner.'));
-        }
-        const result: Top11PickWinnerResult = await res.json();
-        setLastWinner(result);
-        return `Winner picked: ${result.winner.firstName} ${result.winner.lastName}.`;
+  const handlePickWinner = useCallback(async () => {
+    if (!contestId) return;
+    await withSaving('Pick winner', async () => {
+      const res = await fetch(`/api/top11-contests/${contestId}/pick-winner`, {
+        method: 'POST',
       });
-    },
-    [contestId, withSaving],
-  );
+      if (!res.ok) {
+        throw new Error(await parseErrorMessage(res, 'Could not pick a winner.'));
+      }
+      const result: Top11PickWinnerResult = await res.json();
+      setLastWinner(result);
+      return `Winner picked: ${result.winner.firstName} ${result.winner.lastName}.`;
+    });
+  }, [contestId, withSaving]);
 
   return {
     saving,
