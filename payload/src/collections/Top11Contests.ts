@@ -11,6 +11,7 @@ import {
   getTop11ContestStatusFromData,
   parseTop11Id,
   requireTop11Manager,
+  top11SortKey,
   validateTop11StatusTransition,
 } from '../features/top11/utils';
 import { hasRole } from '../utils/auth';
@@ -279,6 +280,37 @@ export const Top11Contests: CollectionConfig = {
         }
 
         return { ...data, displayTitle: formatWeekOfTitle(rawWeekOf) };
+      },
+      async ({ data, req }) => {
+        // Nominees aren't ranked, so keep them in the ballot order voters see
+        // on top11.php: artist, then title, ignoring a leading "The/A/An".
+        if (!data || !Array.isArray(data.nominees) || data.nominees.length < 2) {
+          return data;
+        }
+
+        const nominees = data.nominees as ContestNominee[];
+        const songs = await findAllDocs<SongDoc>({
+          payload: req.payload,
+          collection: 'songs',
+          where: { id: { in: nominees.map(({ song }) => relationshipId(song)) } },
+          depth: 1,
+          req,
+          user: req.user,
+        });
+        const sortKeys = new Map(songs.map((song) => {
+          const artistName = song.artist && typeof song.artist === 'object' ? song.artist.name ?? '' : '';
+          return [song.id, [top11SortKey(artistName), top11SortKey(song.title)]] as const;
+        }));
+        const keyFor = (nominee: ContestNominee) => sortKeys.get(relationshipId(nominee.song)) ?? ['', ''];
+
+        return {
+          ...data,
+          nominees: [...nominees].sort((a, b) => {
+            const [artistA, titleA] = keyFor(a);
+            const [artistB, titleB] = keyFor(b);
+            return artistA.localeCompare(artistB) || titleA.localeCompare(titleB);
+          }),
+        };
       },
     ],
   },
@@ -777,8 +809,10 @@ export const Top11Contests: CollectionConfig = {
       ],
       admin: {
         description:
-          "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart.",
+          "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart. "
+          + 'Sorted by artist on save, ignoring a leading "The", "A" or "An".',
         initCollapsed: true,
+        isSortable: false,
         components: {
           RowLabel: '/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel',
         },

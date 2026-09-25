@@ -161,7 +161,6 @@ class PostgresTop11 implements Top11
             LEFT JOIN songs s ON s.id = n.song_id
             LEFT JOIN artists a ON a.id = s.artist_id
             WHERE n._parent_id = :id
-            ORDER BY LOWER(a.name), LOWER(s.title)
         ");
         $stmt->execute([':id' => $contestId]);
 
@@ -174,7 +173,19 @@ class PostgresTop11 implements Top11
             ];
         }
 
+        usort($songs, static fn (array $a, array $b): int => [self::sortKey($a['artist']), self::sortKey($a['song'])]
+            <=> [self::sortKey($b['artist']), self::sortKey($b['song'])]);
+
         return $songs;
+    }
+
+    /**
+     * File "The War On Drugs" under W, not T. Keep in sync with
+     * top11SortKey() in payload/src/features/top11/utils.ts.
+     */
+    public static function sortKey(string $name): string
+    {
+        return preg_replace('/^(the|a|an)\s+/', '', strtolower(trim($name))) ?? '';
     }
 
     /** {@inheritdoc} */
