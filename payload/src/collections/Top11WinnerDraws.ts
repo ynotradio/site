@@ -11,7 +11,7 @@ export const Top11WinnerDraws: CollectionConfig = {
     plural: 'Winner Draws',
   },
   admin: {
-    defaultColumns: ['contest', 'contestantEmail', 'excludePriorWinners', 'drawnBy', 'createdAt'],
+    defaultColumns: ['contest', 'contestantEmail', 'drawnBy', 'createdAt'],
     group: 'Top 11',
     description: 'Auditable winner selection log for Top 11 contests.',
     groupBy: true,
@@ -53,9 +53,14 @@ export const Top11WinnerDraws: CollectionConfig = {
       },
     },
     {
+      // Historical only: draws no longer exclude prior winners (#899), so
+      // new draws leave this unset. Kept so past draws' records survive.
       name: 'excludePriorWinners',
       type: 'checkbox',
-      defaultValue: true,
+      admin: {
+        readOnly: true,
+        description: 'Legacy: whether this past draw excluded recent prior winners.',
+      },
     },
   ],
   timestamps: true,

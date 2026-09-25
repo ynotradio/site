@@ -116,8 +116,6 @@ export const WinnerDrawResult: StoryObj<typeof WinnerDrawCard> = {
         },
         drawLogId: 1,
         totalEntries: 4,
-        eligibleEntries: 3,
-        excludePriorWinners: true,
       }}
       onPickWinner={async () => {}}
     />

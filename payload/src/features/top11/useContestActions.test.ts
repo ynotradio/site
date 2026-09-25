@@ -81,8 +81,6 @@ describe('useContestActions', () => {
       },
       drawLogId: 1,
       totalEntries: 3,
-      eligibleEntries: 2,
-      excludePriorWinners: true,
     };
     global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => winnerResult });
     const onComplete = vi.fn().mockResolvedValue(undefined);

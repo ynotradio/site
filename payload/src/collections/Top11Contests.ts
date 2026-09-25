@@ -26,10 +26,6 @@ type ContestDoc = {
   id: number;
   status: string;
   weekOf: string;
-  settings?: {
-    excludePriorWinners?: boolean;
-    priorWinnerLookbackContests?: number;
-  };
   entries?: ContestEntry[];
   nominees?: ContestNominee[];
   messageSnapshot?: unknown;
@@ -62,11 +58,6 @@ type WriteInDoc = {
   id: number;
   writeIn: string;
   display: boolean;
-};
-
-type WinnerDrawDoc = {
-  contestantEmail?: string | null;
-  createdAt: string;
 };
 
 const relationshipId = (value: number | { id: number }): number => (typeof value === 'object' ? value.id : value);
@@ -341,7 +332,6 @@ export const Top11Contests: CollectionConfig = {
             messageSnapshot: sourceContest.messageSnapshot,
             entries: clonedEntries,
             nominees: clonedNominees,
-            settings: sourceContest.settings,
           },
           req,
           user: req.user,
@@ -510,17 +500,6 @@ export const Top11Contests: CollectionConfig = {
         requireTop11Manager(req);
 
         const contestId = parseTop11Id(req.routeParams?.id, 'contest id');
-        const body = (await req.json()) as { excludePriorWinners?: boolean };
-
-        const contest = (await req.payload.findByID({
-          collection: 'top11-contests',
-          id: contestId,
-          depth: 0,
-          req,
-          user: req.user,
-          overrideAccess: false,
-        })) as ContestDoc;
-
         const contestants = await findAllDocs<ContestantDoc>({
           payload: req.payload,
           collection: 'top11-contestants',
@@ -539,44 +518,8 @@ export const Top11Contests: CollectionConfig = {
           throw new APIError('No eligible contestants found for this contest', 400);
         }
 
-        const settingsExcludePriorWinners = contest.settings?.excludePriorWinners ?? true;
-        const shouldExcludePriorWinners = body.excludePriorWinners ?? settingsExcludePriorWinners;
-
-        let eligibleContestants = contestants;
-
-        if (shouldExcludePriorWinners) {
-          const lookbackContests = contest.settings?.priorWinnerLookbackContests ?? 8;
-
-          const priorWinners = await findAllDocs<WinnerDrawDoc>({
-            payload: req.payload,
-            collection: 'top11-winner-draws',
-            sort: '-createdAt',
-            req,
-            user: req.user,
-          });
-
-          // 0 means no lookback limit: check the full all-time winner history.
-          let recentPriorWinners = priorWinners;
-          if (lookbackContests > 0) {
-            recentPriorWinners = priorWinners.slice(0, lookbackContests);
-          }
-
-          const priorWinnerEmails = new Set(
-            recentPriorWinners.map((winner) => winner.contestantEmail).filter(Boolean),
-          );
-
-          eligibleContestants = contestants.filter(
-            (contestant) => !priorWinnerEmails.has(contestant.email),
-          );
-
-          if (eligibleContestants.length === 0) {
-            throw new APIError('No eligible contestants remain after excluding prior winners', 400);
-          }
-        }
-
         // node:crypto randomInt provides cryptographically secure randomness for fair draws.
-        const winnerIndex = randomInt(eligibleContestants.length);
-        const winner = eligibleContestants[winnerIndex];
+        const winner = contestants[randomInt(contestants.length)];
 
         const winnerLog = await req.payload.create({
           collection: 'top11-winner-draws',
@@ -586,7 +529,6 @@ export const Top11Contests: CollectionConfig = {
             contestantEmail: winner.email,
             drawnBy:
               req.user && typeof req.user === 'object' ? (req.user as { id?: unknown }).id : null,
-            excludePriorWinners: shouldExcludePriorWinners,
           },
           req,
           user: req.user,
@@ -597,8 +539,6 @@ export const Top11Contests: CollectionConfig = {
           winner,
           drawLogId: winnerLog.id,
           totalEntries: contestants.length,
-          eligibleEntries: eligibleContestants.length,
-          excludePriorWinners: shouldExcludePriorWinners,
         });
       },
     },
@@ -775,31 +715,6 @@ export const Top11Contests: CollectionConfig = {
           RowLabel: '/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel',
         },
       },
-    },
-    {
-      name: 'settings',
-      type: 'group',
-      fields: [
-        {
-          name: 'excludePriorWinners',
-          type: 'checkbox',
-          defaultValue: true,
-          admin: {
-            description: 'Default winner draw behavior to exclude recent prior winners.',
-          },
-        },
-        {
-          name: 'priorWinnerLookbackContests',
-          type: 'number',
-          defaultValue: 8,
-          min: 0,
-          admin: {
-            description:
-              'How many of the most recent past contests to check for prior winners to exclude. 0 excludes winners from all contests ever.',
-            condition: (_data, siblingData) => Boolean(siblingData?.excludePriorWinners),
-          },
-        },
-      ],
     },
   ],
   timestamps: true,
