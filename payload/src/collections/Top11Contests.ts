@@ -5,14 +5,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { slugField } from './shared/slugField';
 import { EmbedFeature } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
-import {
-  assertPublishedContestImmutability,
-  findAllDocs,
-  getTop11ContestStatusFromData,
-  parseTop11Id,
-  requireTop11Manager,
-  validateTop11StatusTransition,
-} from '../features/top11/utils';
+import { findAllDocs, parseTop11Id, requireTop11Manager } from '../features/top11/utils';
 import { hasRole } from '../utils/auth';
 
 type ContestEntry = {
@@ -93,6 +86,11 @@ const formatWeekOfTitle = (weekOf: string): string => {
     day: 'numeric',
     timeZone: 'UTC',
   });
+};
+
+const formatWeekOfSlug = (weekOf: string): string | undefined => {
+  const date = new Date(weekOf);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
 };
 
 const setContestStatus = async (req: EndpointRequest, status: string): Promise<Response> => {
@@ -212,7 +210,8 @@ export const Top11Contests: CollectionConfig = {
     useAsTitle: 'displayTitle',
     defaultColumns: ['weekOf', 'status', 'votingOpensAt', 'votingClosesAt', 'updatedAt'],
     group: 'Top 11',
-    description: 'Immutable weekly Top 11 contests and published results snapshots.',
+    description:
+      'Weekly Top 11 contests and published results. Editors can change any field or status at any time.',
     groupBy: true,
     components: {
       views: {
@@ -238,21 +237,6 @@ export const Top11Contests: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data, operation, originalDoc }) => {
-        if (operation !== 'update' || !originalDoc) {
-          return data;
-        }
-
-        const rawOriginalStatus = originalDoc.status;
-        const originalStatus = typeof rawOriginalStatus === 'string' ? rawOriginalStatus : 'draft';
-        const dataAsRecord = data as Record<string, unknown>;
-        const nextStatus = getTop11ContestStatusFromData(dataAsRecord) ?? originalStatus;
-
-        assertPublishedContestImmutability(originalStatus, dataAsRecord);
-        validateTop11StatusTransition(originalStatus, nextStatus);
-
-        return data;
-      },
       ({ data }) => {
         // Editors reorder entries by dragging rows; displayOrder is derived
         // from row position rather than typed in manually.
@@ -278,7 +262,14 @@ export const Top11Contests: CollectionConfig = {
           return data;
         }
 
-        return { ...data, displayTitle: formatWeekOfTitle(rawWeekOf) };
+        // Keep the URL slug in step with weekOf so moving a contest's date
+        // also moves its URL. Payload's slugField only generates on create.
+        const weekOfSlug = formatWeekOfSlug(rawWeekOf);
+        return {
+          ...data,
+          displayTitle: formatWeekOfTitle(rawWeekOf),
+          ...(weekOfSlug ? { slug: weekOfSlug } : {}),
+        };
       },
     ],
   },
@@ -662,10 +653,7 @@ export const Top11Contests: CollectionConfig = {
     },
     slugField({
       useAsSlug: 'weekOf',
-      slugify: ({ valueToSlugify }) => {
-        const date = new Date(String(valueToSlugify));
-        return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
-      },
+      slugify: ({ valueToSlugify }) => formatWeekOfSlug(String(valueToSlugify)),
     }),
     {
       type: 'row',
