@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload';
-import { hasRole, adminOnlyNav } from '../utils/auth';
+import { hasRole } from '../utils/auth';
 
 export const Top11WriteIns: CollectionConfig = {
   slug: 'top11-write-ins',
@@ -11,7 +11,6 @@ export const Top11WriteIns: CollectionConfig = {
     plural: 'Write-ins',
   },
   admin: {
-    hidden: adminOnlyNav,
     defaultColumns: ['contest', 'writeIn', 'voterEmail', 'display', 'createdAt'],
     group: 'Top 11',
     description: 'Write-in submissions for Top 11 contests.',
