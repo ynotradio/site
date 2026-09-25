@@ -20,7 +20,11 @@ import * as migration_20260706_202828_add_top11_contests_nominees from './202607
 import * as migration_20260706_210000_add_top11_votes_nominee_constraint from './20260706_210000_add_top11_votes_nominee_constraint';
 import * as migration_20260706_220000_relax_top11_votes_voterkey_uniqueness from './20260706_220000_relax_top11_votes_voterkey_uniqueness';
 import * as migration_20260920_000000_add_top11_votes_open_status_constraint from './20260920_000000_add_top11_votes_open_status_constraint';
+import * as migration_20260925_000000_drop_top11_winner_lookback_settings from './20260925_000000_drop_top11_winner_lookback_settings';
+import * as migration_20260925_010000_add_top11_winner_draws_contestant_phone from './20260925_010000_add_top11_winner_draws_contestant_phone';
 import * as migration_20260405_000000_add_year_end_poll_tables from './20260405_000000_add_year_end_poll_tables';
+import * as migration_20260905_000000_add_editor_events_collection from './20260905_000000_add_editor_events_collection';
+import * as migration_20260922_000000_add_payload_3_90_columns from './20260922_000000_add_payload_3_90_columns';
 
 export const migrations = [
   {
@@ -134,8 +138,28 @@ export const migrations = [
     name: '20260920_000000_add_top11_votes_open_status_constraint',
   },
   {
+    up: migration_20260925_000000_drop_top11_winner_lookback_settings.up,
+    down: migration_20260925_000000_drop_top11_winner_lookback_settings.down,
+    name: '20260925_000000_drop_top11_winner_lookback_settings',
+  },
+  {
+    up: migration_20260925_010000_add_top11_winner_draws_contestant_phone.up,
+    down: migration_20260925_010000_add_top11_winner_draws_contestant_phone.down,
+    name: '20260925_010000_add_top11_winner_draws_contestant_phone',
+  },
+  {
     up: migration_20260405_000000_add_year_end_poll_tables.up,
     down: migration_20260405_000000_add_year_end_poll_tables.down,
     name: '20260405_000000_add_year_end_poll_tables',
+  },
+  {
+    up: migration_20260905_000000_add_editor_events_collection.up,
+    down: migration_20260905_000000_add_editor_events_collection.down,
+    name: '20260905_000000_add_editor_events_collection',
+  },
+  {
+    up: migration_20260922_000000_add_payload_3_90_columns.up,
+    down: migration_20260922_000000_add_payload_3_90_columns.down,
+    name: '20260922_000000_add_payload_3_90_columns',
   },
 ];

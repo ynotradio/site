@@ -17,7 +17,14 @@ describe('Top11Contests', () => {
     expect(Top11Contests.admin?.group).toBe('Top 11');
   });
 
-  it('uses immutable lifecycle statuses', () => {
+  it('replaces Duplicate with a Clone as New Draft button on the edit view', () => {
+    expect(Top11Contests.disableDuplicate).toBe(true);
+    expect(Top11Contests.admin?.components?.edit?.beforeDocumentControls).toEqual([
+      '/payload/src/features/top11/Top11CloneButton#Top11CloneButton',
+    ]);
+  });
+
+  it('uses the contest lifecycle statuses', () => {
     const allFields = flattenRowFields(Top11Contests.fields);
     const statusField = allFields.find((field) => field.name === 'status') as {
       options?: Array<{ value: string }>;
@@ -110,8 +117,25 @@ describe('Top11Contests', () => {
     expect(displayTitleField?.admin?.hidden).toBe(true);
   });
 
+  it('lets editors change any field on a published or archived contest', async () => {
+    const data = { weekOf: '2026-09-23T00:00:00.000Z', entries: [{ song: 2 }, { song: 1 }] };
+    const hooks = Top11Contests.hooks?.beforeChange ?? [];
+    await Promise.all(
+      ['published', 'archived'].map(async (status) => {
+        const originalDoc = { status, weekOf: '2026-09-16T00:00:00.000Z' };
+        let result: unknown = data;
+        // eslint-disable-next-line no-restricted-syntax -- hooks run in order
+        for (const hook of hooks) {
+          // eslint-disable-next-line no-await-in-loop
+          result = await hook({ data: result, originalDoc, operation: 'update' } as never);
+        }
+        expect(result).toMatchObject({ slug: '2026-09-23', entries: [{ song: 2 }, { song: 1 }] });
+      }),
+    );
+  });
+
   describe('displayTitle derivation hook', () => {
-    const displayTitleHook = Top11Contests.hooks?.beforeChange?.[2];
+    const displayTitleHook = Top11Contests.hooks?.beforeChange?.[1];
 
     it('derives a human-readable title from weekOf on create', () => {
       const data = { weekOf: '2026-06-25T00:00:00.000Z' };
@@ -126,6 +150,15 @@ describe('Top11Contests', () => {
         displayTitle?: string;
       };
       expect(result.displayTitle).toBe('Thu, Jun 25, 2026');
+    });
+
+    it('moves the slug along with weekOf so a date change updates the URL', () => {
+      const data = { weekOf: '2026-09-23T00:00:00.000Z' };
+      const originalDoc = { weekOf: '2026-09-16T00:00:00.000Z', slug: '2026-09-16' };
+      const result = displayTitleHook?.({ data, originalDoc, operation: 'update' } as never) as {
+        slug?: string;
+      };
+      expect(result.slug).toBe('2026-09-23');
     });
 
     it('leaves data untouched when there is no usable weekOf', () => {
@@ -219,8 +252,55 @@ describe('Top11Contests', () => {
     expect(displayOrderField?.hidden).toBe(true);
   });
 
+  describe('nominee sort hook', () => {
+    const sortHook = Top11Contests.hooks?.beforeChange?.at(-1);
+    const songs = [
+      { id: 1, title: "Who's That", artist: { name: 'The War On Drugs' } },
+      { id: 2, title: 'Zoom 97', artist: { name: 'Kurt Vile' } },
+      { id: 3, title: 'Sun Has Set', artist: { name: 'beabadoobee' } },
+      { id: 4, title: 'Burning Out', artist: { name: 'The Linda Lindas' } },
+      { id: 5, title: 'Anthem', artist: { name: 'Kurt Vile' } },
+    ];
+    const req = {
+      user: { role: 'editor' },
+      payload: { find: vi.fn().mockResolvedValue({ docs: songs }) },
+    };
+
+    it('orders nominees by artist then title, ignoring a leading "The"', async () => {
+      const data = {
+        nominees: [
+          { id: 'a', song: 1 },
+          { id: 'b', song: 2 },
+          { id: 'c', song: 3 },
+          { id: 'd', song: 4 },
+          { id: 'e', song: { id: 5 } },
+        ],
+      };
+
+      const result = (await sortHook?.({ data, req } as never)) as {
+        nominees: Array<{ id: string }>;
+      };
+
+      expect(result.nominees.map((n) => n.id)).toEqual(['c', 'e', 'b', 'd', 'a']);
+    });
+
+    it('leaves data untouched when nominees are not part of the change', async () => {
+      const data = { status: 'open' };
+      expect(await sortHook?.({ data, req } as never)).toBe(data);
+    });
+  });
+
+  it('hides nominee drag handles since order is derived', () => {
+    const nomineesField = Top11Contests.fields.find(
+      (field) => 'name' in field && field.name === 'nominees',
+    ) as {
+      admin?: { isSortable?: boolean };
+    };
+    expect(nomineesField.admin?.isSortable).toBe(false);
+  });
+
   describe('displayOrder derivation hook', () => {
-    const renumberHook = Top11Contests.hooks?.beforeChange?.[1];
+    const renumberHook = Top11Contests.hooks?.beforeChange?.[0];
 
     it('renumbers entries to match row position', () => {
       const data = {
@@ -253,6 +333,119 @@ describe('Top11Contests', () => {
     expect(paths).toContain('/clone');
     expect(paths).toContain('/:id/stats');
     expect(paths).toContain('/:id/pick-winner');
+  });
+
+  describe('/clone', () => {
+    const cloneEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/clone');
+
+    it('copies entries and the nominee ballot without reusing row ids', async () => {
+      const findByID = vi.fn().mockResolvedValue({
+        id: 5,
+        status: 'published',
+        weekOf: '2026-09-16T00:00:00.000Z',
+        entries: [
+          { id: 'e1', song: 7 },
+          { id: 'e2', song: 3 },
+        ],
+        nominees: [
+          { id: 'n1', song: 7 },
+          { id: 'n2', song: 12 },
+        ],
+      });
+      const create = vi.fn().mockImplementation(async ({ data }) => ({ id: 6, ...data }));
+      const req = {
+        user: { role: 'admin' },
+        json: async () => ({ sourceContestId: 5 }),
+        payload: { findByID, create },
+      };
+
+      await cloneEndpoint?.handler(req as never);
+
+      const { data } = create.mock.calls[0][0];
+      expect(data.status).toBe('draft');
+      expect(data.weekOf).toBe('2026-09-23T00:00:00.000Z');
+      expect(data.entries).toEqual([{ song: 7 }, { song: 3 }]);
+      expect(data.nominees).toEqual([{ song: 7 }, { song: 12 }]);
+    });
+
+    it('clones a contest with no nominees to an empty ballot', async () => {
+      const findByID = vi.fn().mockResolvedValue({
+        id: 5,
+        weekOf: '2026-09-16T00:00:00.000Z',
+        entries: [{ id: 'e1', song: 7 }],
+      });
+      const create = vi.fn().mockImplementation(async ({ data }) => ({ id: 6, ...data }));
+      const req = {
+        user: { role: 'admin' },
+        json: async () => ({ sourceContestId: 5 }),
+        payload: { findByID, create },
+      };
+
+      await cloneEndpoint?.handler(req as never);
+
+      expect(create.mock.calls[0][0].data.nominees).toEqual([]);
+    });
+  });
+
+  describe('/:id/pick-winner', () => {
+    const pickWinnerEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/pick-winner');
+
+    it('draws from every entered contestant, including prior winners', async () => {
+      const contestants = [{ id: 11, email: 'past-winner@example.com' }];
+      const find = vi.fn().mockImplementation(async ({ collection }: { collection: string }) => {
+        if (collection === 'top11-contestants') return { docs: contestants };
+        if (collection === 'top11-winner-draws') return { docs: [{ contestantEmail: 'past-winner@example.com' }] };
+        return { docs: [] };
+      });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      const response = await pickWinnerEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(body).toEqual({ winner: contestants[0], drawLogId: 99, totalEntries: 1 });
+      expect(find).not.toHaveBeenCalledWith(
+        expect.objectContaining({ collection: 'top11-winner-draws' }),
+      );
+      expect(create.mock.calls[0][0].data).not.toHaveProperty('excludePriorWinners');
+    });
+
+    it("stores the winner's phone number on the draw log and returns it", async () => {
+      const contestant = { id: 11, email: 'pat@example.com', phone: '215-555-0100' };
+      const find = vi.fn().mockResolvedValue({ docs: [contestant] });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      const response = await pickWinnerEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(create.mock.calls[0][0].data.contestantPhone).toBe('215-555-0100');
+      expect(body.winner.phone).toBe('215-555-0100');
+    });
+
+    it('stores a null phone when the winner did not give one', async () => {
+      const find = vi
+        .fn()
+        .mockResolvedValue({ docs: [{ id: 11, email: 'pat@example.com', phone: '' }] });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      await pickWinnerEndpoint?.handler(req as never);
+
+      expect(create.mock.calls[0][0].data.contestantPhone).toBeNull();
+    });
   });
 
   describe('/:id/stats write-in grouping', () => {

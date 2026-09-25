@@ -119,18 +119,18 @@ describe('WinnerDrawCard', () => {
             firstName: 'Jane',
             lastName: 'Doe',
             email: 'jane@example.com',
+            phone: '215-555-0100',
           },
           drawLogId: 1,
           totalEntries: 4,
-          eligibleEntries: 3,
-          excludePriorWinners: true,
         }}
         onPickWinner={vi.fn()}
       />,
     );
     expect(screen.getByText('Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('jane@example.com')).toBeInTheDocument();
-    expect(screen.getByText(/Drawn from 3 of 4 eligible entries/)).toBeInTheDocument();
+    expect(screen.getByText('215-555-0100')).toBeInTheDocument();
+    expect(screen.getByText('Drawn from 4 entries')).toBeInTheDocument();
   });
 
   it('disables Pick Winner and shows a hint when not eligible', () => {

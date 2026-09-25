@@ -4,10 +4,6 @@ export interface Top11Contest {
   id: number;
   status: Top11ContestStatus;
   weekOf: string;
-  settings?: {
-    excludePriorWinners?: boolean;
-    priorWinnerLookbackContests?: number;
-  };
 }
 
 export interface Top11RankedSong {
@@ -41,12 +37,11 @@ export interface Top11Winner {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string | null;
 }
 
 export interface Top11PickWinnerResult {
   winner: Top11Winner;
   drawLogId: number;
   totalEntries: number;
-  eligibleEntries: number;
-  excludePriorWinners: boolean;
 }

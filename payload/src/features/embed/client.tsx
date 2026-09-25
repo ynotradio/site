@@ -7,11 +7,14 @@ export interface EmbedComponentProps {
   url: string;
   caption?: string;
   hideCoverImage?: boolean;
+  miniPlayer?: boolean;
 }
 
-export const EmbedComponent: React.FC<EmbedComponentProps> = ({ url, caption, hideCoverImage }) => {
+export const EmbedComponent: React.FC<EmbedComponentProps> = ({
+  url, caption, hideCoverImage, miniPlayer,
+}) => {
   // Convert to proper embed URL if needed
-  const { embedUrl, type } = detectEmbedType(url, { hideCoverImage });
+  const { embedUrl, type } = detectEmbedType(url, { hideCoverImage, miniPlayer });
 
   return (
     <div className={`embed-container embed-container--${type}`}>

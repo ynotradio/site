@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole } from '../utils/auth';
+import { preventDuplicateArtistName } from './hooks/artistDedup';
 import { slugField } from './shared/slugField';
 
 export const Artists: CollectionConfig = {
@@ -25,6 +26,10 @@ export const Artists: CollectionConfig = {
     update: ({ req }) => hasRole(req.user, ['admin', 'editor']),
     delete: ({ req }) => hasRole(req.user, ['admin', 'editor']),
   },
+  hooks: {
+    // Block create/rename that duplicates an existing artist (case/space-insensitive).
+    beforeValidate: [preventDuplicateArtistName],
+  },
   fields: [
     {
       name: 'name',
@@ -32,7 +37,7 @@ export const Artists: CollectionConfig = {
       required: true,
       index: true,
     },
-    slugField({ useAsSlug: 'name' }),
+    slugField({ useAsSlug: 'name', adminOnly: true }),
     {
       name: 'bio',
       type: 'richText',
@@ -67,6 +72,30 @@ export const Artists: CollectionConfig = {
       hasMany: true,
       admin: {
         description: 'Band members (many-to-many relationship)',
+      },
+    },
+    {
+      // Virtual field: surfaces every Song whose `artist` points here, so the
+      // whole catalog can be viewed and edited from the artist's page. No new
+      // column is stored — it reads the existing songs.artist relationship.
+      name: 'songs',
+      type: 'join',
+      collection: 'songs',
+      on: 'artist',
+      admin: {
+        description: "This artist's songs. Add or edit them here without leaving the page.",
+        defaultColumns: ['title', 'releaseDate', 'featureOnNewMusic'],
+      },
+    },
+    {
+      // Virtual field: surfaces every Record (album/EP) whose `artist` points here.
+      name: 'records',
+      type: 'join',
+      collection: 'records',
+      on: 'artist',
+      admin: {
+        description: "This artist's albums and EPs. Add or edit them here.",
+        defaultColumns: ['title', 'releaseDate', 'label'],
       },
     },
     {

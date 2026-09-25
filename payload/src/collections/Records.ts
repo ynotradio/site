@@ -69,14 +69,17 @@ export const Records: CollectionConfig = {
         description: 'Album title',
       },
     },
-    slugField({ slugify: musicSlugify }),
+    slugField({ slugify: musicSlugify, adminOnly: true }),
     {
       name: 'artist',
       type: 'relationship',
       relationTo: 'artists',
       required: true,
       admin: {
-        description: 'Select the artist — create them in the Artists collection first if needed',
+        allowCreate: true,
+        allowEdit: true,
+        description:
+          'Start typing the artist\'s name. If they aren\'t listed yet, choose "Add new" to create them right here — no need to leave this form.',
       },
     },
     {

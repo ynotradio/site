@@ -61,13 +61,33 @@ export interface DetectEmbedTypeOptions {
    * Defaults to true — most Mixcloud embeds on this site hide the cover.
    */
   hideCoverImage?: boolean;
+  /** Mixcloud only: use the 60px mini player instead of the full widget. */
+  miniPlayer?: boolean;
+}
+
+/**
+ * Editors often paste a provider's whole `<iframe ...>` embed code into the
+ * URL field. Pull out its `src` so the stored value is a plain URL; anything
+ * that isn't iframe markup is returned trimmed and otherwise unchanged.
+ */
+export function extractEmbedSrc(value: string): string {
+  const trimmed = value.trim();
+  if (!/<iframe\b/i.test(trimmed)) {
+    return trimmed;
+  }
+  const match = trimmed.match(/\ssrc\s*=\s*(["'])(.*?)\1/i);
+  return match ? match[2].replace(/&amp;/g, '&').trim() : trimmed;
 }
 
 /**
  * Detect and normalize a Mixcloud embed URL. Returns null if `url` isn't a
  * mixcloud.com URL, so the caller can fall through to the generic embed type.
  */
-function detectMixcloudEmbed(url: string, hideCoverImage: boolean): EmbedInfo | null {
+function detectMixcloudEmbed(
+  url: string,
+  hideCoverImage: boolean,
+  miniPlayer: boolean,
+): EmbedInfo | null {
   if (!url.includes('mixcloud.com')) {
     return null;
   }
@@ -85,7 +105,7 @@ function detectMixcloudEmbed(url: string, hideCoverImage: boolean): EmbedInfo | 
   if (feed) {
     return {
       type: 'mixcloud',
-      embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
+      embedUrl: `https://player-widget.mixcloud.com/widget/iframe/?${miniPlayer ? 'mini=1&hide_artwork=1&' : ''}hide_cover=${hideCoverImage ? 1 : 0}&feed=${encodeURIComponent(feed)}`,
       originalUrl: url,
     };
   }
@@ -94,7 +114,7 @@ function detectMixcloudEmbed(url: string, hideCoverImage: boolean): EmbedInfo | 
 }
 
 export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {}): EmbedInfo {
-  const { hideCoverImage = true } = options;
+  const { hideCoverImage = true, miniPlayer = false } = options;
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const videoId = extractYouTubeId(url);
     if (videoId) {
@@ -140,7 +160,7 @@ export function detectEmbedType(url: string, options: DetectEmbedTypeOptions = {
   }
 
   // Mixcloud — the dominant provider in the legacy custom-text content.
-  const mixcloudEmbed = detectMixcloudEmbed(url, hideCoverImage);
+  const mixcloudEmbed = detectMixcloudEmbed(url, hideCoverImage, miniPlayer);
   if (mixcloudEmbed) {
     return mixcloudEmbed;
   }

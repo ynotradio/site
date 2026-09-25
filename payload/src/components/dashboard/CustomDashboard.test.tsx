@@ -601,4 +601,61 @@ describe('CustomDashboard', () => {
       });
     });
   });
+
+  describe('Top 11 current contest shortcut', () => {
+    const stubFetchByUrl = (top11Response: Promise<Response>) => {
+      vi.stubGlobal(
+        'fetch',
+        vi
+          .fn()
+          .mockImplementation((url: string) => (url.startsWith('/api/top11-contests') ? top11Response : makePayloadResponse([]))),
+      );
+    };
+
+    it("links straight to the newest contest's controls", async () => {
+      stubFetchByUrl(
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ docs: [{ id: 42 }] }),
+        } as Response),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('This Week').closest('a')).toHaveAttribute(
+          'href',
+          '/admin/collections/top11-contests/42/controls',
+        );
+      });
+      expect(fetch).toHaveBeenCalledWith('/api/top11-contests?limit=1&sort=-weekOf&depth=0');
+    });
+
+    it('omits the shortcut when there are no contests', async () => {
+      stubFetchByUrl(
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ docs: [] }),
+        } as Response),
+      );
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      expect(screen.queryByText('This Week')).not.toBeInTheDocument();
+    });
+
+    it('omits the shortcut when the request fails', async () => {
+      stubFetchByUrl(Promise.reject(new Error('Network error')));
+
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+
+      expect(screen.queryByText('This Week')).not.toBeInTheDocument();
+    });
+  });
 });

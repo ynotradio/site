@@ -130,14 +130,14 @@ describe('Top11ContestControlsTab', () => {
     });
   });
 
-  it('shows no-transitions hint for an archived contest', async () => {
+  it('lets editors unarchive an archived contest', async () => {
     vi.mocked(useDocumentInfo).mockReturnValue({
       data: { id: 1 },
     } as ReturnType<typeof useDocumentInfo>);
     mockFetchSequence({ ...CONTEST, status: 'archived' });
     render(<Top11ContestControlsTab />);
     await waitFor(() => {
-      expect(screen.getByText('No further transitions available.')).toBeInTheDocument();
+      expect(screen.getByText('Unarchive')).toBeInTheDocument();
     });
   });
 
