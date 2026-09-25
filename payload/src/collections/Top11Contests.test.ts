@@ -281,6 +281,59 @@ describe('Top11Contests', () => {
     expect(paths).toContain('/:id/pick-winner');
   });
 
+  describe('/clone', () => {
+    const cloneEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/clone');
+
+    it('copies entries and the nominee ballot without reusing row ids', async () => {
+      const findByID = vi.fn().mockResolvedValue({
+        id: 5,
+        status: 'published',
+        weekOf: '2026-09-16T00:00:00.000Z',
+        entries: [
+          { id: 'e1', song: 7 },
+          { id: 'e2', song: 3 },
+        ],
+        nominees: [
+          { id: 'n1', song: 7 },
+          { id: 'n2', song: 12 },
+        ],
+        settings: { excludePriorWinners: true },
+      });
+      const create = vi.fn().mockImplementation(async ({ data }) => ({ id: 6, ...data }));
+      const req = {
+        user: { role: 'admin' },
+        json: async () => ({ sourceContestId: 5 }),
+        payload: { findByID, create },
+      };
+
+      await cloneEndpoint?.handler(req as never);
+
+      const { data } = create.mock.calls[0][0];
+      expect(data.status).toBe('draft');
+      expect(data.weekOf).toBe('2026-09-23T00:00:00.000Z');
+      expect(data.entries).toEqual([{ song: 7 }, { song: 3 }]);
+      expect(data.nominees).toEqual([{ song: 7 }, { song: 12 }]);
+    });
+
+    it('clones a contest with no nominees to an empty ballot', async () => {
+      const findByID = vi.fn().mockResolvedValue({
+        id: 5,
+        weekOf: '2026-09-16T00:00:00.000Z',
+        entries: [{ id: 'e1', song: 7 }],
+      });
+      const create = vi.fn().mockImplementation(async ({ data }) => ({ id: 6, ...data }));
+      const req = {
+        user: { role: 'admin' },
+        json: async () => ({ sourceContestId: 5 }),
+        payload: { findByID, create },
+      };
+
+      await cloneEndpoint?.handler(req as never);
+
+      expect(create.mock.calls[0][0].data.nominees).toEqual([]);
+    });
+  });
+
   describe('/:id/stats write-in grouping', () => {
     const statsEndpoint = Top11Contests.endpoints?.find((e) => e.path === '/:id/stats');
 
