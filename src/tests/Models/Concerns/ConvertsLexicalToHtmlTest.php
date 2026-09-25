@@ -312,6 +312,30 @@ class ConvertsLexicalToHtmlTest extends TestCase
         $this->assertStringNotContainsString('height="120"', $html);
     }
 
+    public function testEmbedBlockMiniPlayerFieldRendersMixcloudShowUrlAsMiniPlayer(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJsonWithFields(
+                'https://www.mixcloud.com/ynotradio/top-11-11-92426/',
+                ['miniPlayer' => true]
+            )
+        );
+
+        $this->assertStringContainsString('?mini=1&amp;hide_artwork=1&amp;hide_cover=1&amp;feed=%2Fynotradio%2Ftop-11-11-92426%2F', $html);
+        $this->assertStringContainsString('height="60"', $html);
+        $this->assertStringNotContainsString('height="120"', $html);
+    }
+
+    public function testEmbedBlockWithoutMiniPlayerFieldKeepsFullMixcloudPlayer(): void
+    {
+        $html = $this->converter->convert(
+            $this->embedBlockJson('https://www.mixcloud.com/ynotradio/top-11-11-92426/')
+        );
+
+        $this->assertStringNotContainsString('mini=1', $html);
+        $this->assertStringContainsString('height="120"', $html);
+    }
+
     public function testEmbedBlockPassesThroughLegacyWwwMixcloudWidgetUrl(): void
     {
         // The format actually stored in ~180 of the 35 active custom-text pages
