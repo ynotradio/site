@@ -131,6 +131,7 @@ export const CustomDashboard: React.FC = () => {
   const baseURL = config?.routes?.admin || '/admin';
   const [secondaryOpen, setSecondaryOpen] = useState(false);
   const [mrmActive, setMrmActive] = useState(false);
+  const [currentTop11Id, setCurrentTop11Id] = useState<number | null>(null);
 
   useEffect(() => {
     fetch('/api/modern-rock-madness-tournaments?limit=10&sort=-startDate')
@@ -142,6 +143,20 @@ export const CustomDashboard: React.FC = () => {
         // On fetch error, keep the tile hidden
         // eslint-disable-next-line no-console
         console.error('Failed to load tournament data for dashboard:', err);
+      });
+  }, []);
+
+  useEffect(() => {
+    // The newest contest by week is "this week's" -- link its controls tab
+    // so editors skip View All → pick the week → Contest Controls.
+    fetch('/api/top11-contests?limit=1&sort=-weekOf&depth=0')
+      .then((res) => res.json())
+      .then((data: { docs?: Array<{ id?: unknown }> }) => {
+        const id = data.docs?.[0]?.id;
+        if (typeof id === 'number') setCurrentTop11Id(id);
+      })
+      .catch(() => {
+        // Without a current contest the tile keeps its View All / Add New links.
       });
   }, []);
 
@@ -173,6 +188,14 @@ export const CustomDashboard: React.FC = () => {
                 {'tool' in collection && collection.tool && (
                   <Link href={collection.tool.href} className="primary-card-action">
                     {collection.tool.label}
+                  </Link>
+                )}
+                {collection.slug === 'top11-contests' && currentTop11Id !== null && (
+                  <Link
+                    href={`${baseURL}/collections/top11-contests/${currentTop11Id}/controls`}
+                    className="primary-card-action"
+                  >
+                    This Week
                   </Link>
                 )}
               </div>
