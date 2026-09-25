@@ -1,5 +1,6 @@
 import { slugField as basePayloadSlugField } from 'payload';
 import type { Slugify } from 'payload/shared';
+import { adminOnlyCondition } from '../../utils/auth';
 import { slugifyText } from '../hooks/slugUtils';
 
 /**
@@ -27,7 +28,15 @@ import { slugifyText } from '../hooks/slugUtils';
  * still surfaces the DB's clear "must be unique" message, never the opaque one.
  */
 
-type SlugFieldOptions = Parameters<typeof basePayloadSlugField>[0];
+type BaseSlugFieldOptions = Parameters<typeof basePayloadSlugField>[0];
+type SlugFieldOptions = BaseSlugFieldOptions & {
+  /**
+   * Hide the slug field (and its lock/unlock control) from non-admin editors.
+   * The slug is still generated server-side, so hiding it never blocks a save;
+   * it just removes an internal, confusing field from the editor's view.
+   */
+  adminOnly?: boolean;
+};
 
 /**
  * Last-resort slug used only when there is genuinely no source text to slugify.
@@ -93,8 +102,17 @@ export function makeSafeSlugify(slugify?: Slugify): Slugify {
  * from `'payload'` directly.
  */
 export function slugField(options?: SlugFieldOptions) {
-  return basePayloadSlugField({
-    ...options,
-    slugify: makeSafeSlugify(options?.slugify),
+  const { adminOnly, ...baseOptions } = options ?? {};
+  const field = basePayloadSlugField({
+    ...baseOptions,
+    slugify: makeSafeSlugify(baseOptions.slugify),
   });
+  if (!adminOnly) return field;
+  // The helper returns a sidebar `row` wrapping the slug + generateSlug fields;
+  // a condition on the row hides both from non-admins. Generation is a
+  // server-side hook, so the hidden field is still populated on save.
+  return {
+    ...field,
+    admin: { ...field.admin, condition: adminOnlyCondition },
+  };
 }

@@ -7,7 +7,10 @@
  * content (notably new music).
  */
 import { describe, it, expect } from 'vitest';
-import { coerceSlug, makeSafeSlugify, SLUG_FALLBACK } from './slugField';
+import { coerceSlug, makeSafeSlugify, SLUG_FALLBACK, slugField } from './slugField';
+import { adminOnlyCondition } from '../../utils/auth';
+
+type RowField = { admin?: { condition?: unknown } };
 
 const req = { payload: {} } as never;
 
@@ -77,5 +80,25 @@ describe('makeSafeSlugify', () => {
   it('slugifies the source field when no custom slugify is given', () => {
     const safe = makeSafeSlugify();
     expect(safe({ data: {}, req, valueToSlugify: 'The National' })).toBe('the-national');
+  });
+});
+
+describe('slugField adminOnly', () => {
+  it('hides the slug field from non-admins when adminOnly is set', () => {
+    const field = slugField({ useAsSlug: 'name', adminOnly: true }) as RowField;
+    expect(field.admin?.condition).toBe(adminOnlyCondition);
+    // The admin-only condition returns false (hidden) for an editor.
+    const condition = field.admin?.condition as (
+      d: unknown,
+      s: unknown,
+      ctx: { user: unknown },
+    ) => boolean;
+    expect(condition({}, {}, { user: { role: 'editor' } })).toBe(false);
+    expect(condition({}, {}, { user: { role: 'admin' } })).toBe(true);
+  });
+
+  it('does not set a visibility condition by default', () => {
+    const field = slugField({ useAsSlug: 'name' }) as RowField;
+    expect(field.admin?.condition).toBeUndefined();
   });
 });
