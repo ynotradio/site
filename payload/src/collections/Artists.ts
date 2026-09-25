@@ -70,6 +70,30 @@ export const Artists: CollectionConfig = {
       },
     },
     {
+      // Virtual field: surfaces every Song whose `artist` points here, so the
+      // whole catalog can be viewed and edited from the artist's page. No new
+      // column is stored — it reads the existing songs.artist relationship.
+      name: 'songs',
+      type: 'join',
+      collection: 'songs',
+      on: 'artist',
+      admin: {
+        description: "This artist's songs. Add or edit them here without leaving the page.",
+        defaultColumns: ['title', 'releaseDate', 'featureOnNewMusic'],
+      },
+    },
+    {
+      // Virtual field: surfaces every Record (album/EP) whose `artist` points here.
+      name: 'records',
+      type: 'join',
+      collection: 'records',
+      on: 'artist',
+      admin: {
+        description: "This artist's albums and EPs. Add or edit them here.",
+        defaultColumns: ['title', 'releaseDate', 'label'],
+      },
+    },
+    {
       name: 'musicbrainzId',
       type: 'text',
       unique: true,
