@@ -24,6 +24,7 @@ import * as migration_20260925_000000_drop_top11_winner_lookback_settings from '
 import * as migration_20260925_010000_add_top11_winner_draws_contestant_phone from './20260925_010000_add_top11_winner_draws_contestant_phone';
 import * as migration_20260405_000000_add_year_end_poll_tables from './20260405_000000_add_year_end_poll_tables';
 import * as migration_20260905_000000_add_editor_events_collection from './20260905_000000_add_editor_events_collection';
+import * as migration_20260922_000000_add_payload_3_90_columns from './20260922_000000_add_payload_3_90_columns';
 
 export const migrations = [
   {
@@ -155,5 +156,10 @@ export const migrations = [
     up: migration_20260905_000000_add_editor_events_collection.up,
     down: migration_20260905_000000_add_editor_events_collection.down,
     name: '20260905_000000_add_editor_events_collection',
+  },
+  {
+    up: migration_20260922_000000_add_payload_3_90_columns.up,
+    down: migration_20260922_000000_add_payload_3_90_columns.down,
+    name: '20260922_000000_add_payload_3_90_columns',
   },
 ];
