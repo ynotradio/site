@@ -11,7 +11,7 @@ export const Top11WinnerDraws: CollectionConfig = {
     plural: 'Winner Draws',
   },
   admin: {
-    defaultColumns: ['contest', 'contestantEmail', 'drawnBy', 'createdAt'],
+    defaultColumns: ['contest', 'contestantEmail', 'contestantPhone', 'drawnBy', 'createdAt'],
     group: 'Top 11',
     description: 'Auditable winner selection log for Top 11 contests.',
     groupBy: true,
@@ -42,6 +42,10 @@ export const Top11WinnerDraws: CollectionConfig = {
       type: 'email',
       required: true,
       index: true,
+    },
+    {
+      name: 'contestantPhone',
+      type: 'text',
     },
     {
       name: 'drawnBy',

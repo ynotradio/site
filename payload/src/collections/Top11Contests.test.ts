@@ -359,6 +359,39 @@ describe('Top11Contests', () => {
       );
       expect(create.mock.calls[0][0].data).not.toHaveProperty('excludePriorWinners');
     });
+
+    it("stores the winner's phone number on the draw log and returns it", async () => {
+      const contestant = { id: 11, email: 'pat@example.com', phone: '215-555-0100' };
+      const find = vi.fn().mockResolvedValue({ docs: [contestant] });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      const response = await pickWinnerEndpoint?.handler(req as never);
+      const body = await (response as Response).json();
+
+      expect(create.mock.calls[0][0].data.contestantPhone).toBe('215-555-0100');
+      expect(body.winner.phone).toBe('215-555-0100');
+    });
+
+    it('stores a null phone when the winner did not give one', async () => {
+      const find = vi
+        .fn()
+        .mockResolvedValue({ docs: [{ id: 11, email: 'pat@example.com', phone: '' }] });
+      const create = vi.fn().mockResolvedValue({ id: 99 });
+      const req = {
+        user: { id: 1, role: 'admin' },
+        routeParams: { id: '1' },
+        payload: { find, create },
+      };
+
+      await pickWinnerEndpoint?.handler(req as never);
+
+      expect(create.mock.calls[0][0].data.contestantPhone).toBeNull();
+    });
   });
 
   describe('/:id/stats write-in grouping', () => {

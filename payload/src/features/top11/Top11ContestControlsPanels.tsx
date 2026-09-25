@@ -265,6 +265,9 @@ export const WinnerDrawCard: React.FC<WinnerDrawCardProps> = ({
           {`${lastWinner.winner.firstName} ${lastWinner.winner.lastName}`}
         </span>
         <span className="top11-controls-tab__winner-detail">{lastWinner.winner.email}</span>
+        {lastWinner.winner.phone && (
+          <span className="top11-controls-tab__winner-detail">{lastWinner.winner.phone}</span>
+        )}
         <span className="top11-controls-tab__winner-detail">
           {`Drawn from ${lastWinner.totalEntries} ${lastWinner.totalEntries === 1 ? 'entry' : 'entries'}`}
         </span>
