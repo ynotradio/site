@@ -126,8 +126,10 @@ class PostgresTop11 implements Top11
     {
         // Matches legacy MySQL's placement-99 date row verbatim (e.g. "July 2,
         // 2026", no weekday) -- SqlTop11::getAll() returns that string as-is.
+        // A contest's weekOf is its voting week, but its entries are the
+        // previous week's results, so the heading shows weekOf minus 7 days.
         $date = new \DateTime($weekOf);
-        return $date->format('F j, Y');
+        return $date->modify('-7 days')->format('F j, Y');
     }
 
     /** {@inheritdoc} */
