@@ -119,14 +119,41 @@ class PostgresTop11Test extends TestCase
 
         $weekOfStmt = $this->createMock(PDOStatement::class);
         $weekOfStmt->method('execute')->willReturn(true);
-        $weekOfStmt->method('fetch')->willReturn(['week_of' => '2026-07-02', 'status' => 'open']);
+        $weekOfStmt->method('fetch')->willReturn(['week_of' => '2026-07-09', 'status' => 'open']);
 
-        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $entriesStmt, $weekOfStmt);
+        $priorStmt = $this->createMock(PDOStatement::class);
+        $priorStmt->method('execute')->willReturn(true);
+        $priorStmt->method('fetch')->willReturn(['week_of' => '2026-07-02']);
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $entriesStmt, $weekOfStmt, $priorStmt);
 
         $entries = $this->top11->getAll();
 
+        // Entries are the previous contest's results, so the heading is that contest's week_of.
         $titleRow = array_values(array_filter($entries, fn ($e) => $e['placement'] === 99))[0];
         $this->assertSame('July 2, 2026', $titleRow['artist']);
+    }
+
+    public function testGetAllFallsBackToOwnWeekOfWhenNoPriorContestExists(): void
+    {
+        $contestStmt = $this->stubActiveContest(1);
+
+        $entriesStmt = $this->createMock(PDOStatement::class);
+        $entriesStmt->method('execute')->willReturn(true);
+        $entriesStmt->method('fetch')->willReturn(false);
+
+        $weekOfStmt = $this->createMock(PDOStatement::class);
+        $weekOfStmt->method('execute')->willReturn(true);
+        $weekOfStmt->method('fetch')->willReturn(['week_of' => '2026-07-09', 'status' => 'open']);
+
+        $priorStmt = $this->createMock(PDOStatement::class);
+        $priorStmt->method('execute')->willReturn(true);
+        $priorStmt->method('fetch')->willReturn(false);
+
+        $this->mockDb->method('prepare')->willReturnOnConsecutiveCalls($contestStmt, $entriesStmt, $weekOfStmt, $priorStmt);
+
+        $titleRow = array_values(array_filter($this->top11->getAll(), fn ($e) => $e['placement'] === 99))[0];
+        $this->assertSame('July 9, 2026', $titleRow['artist']);
     }
 
     public function testGetAllSongsReturnsNomineePoolNotEntries(): void

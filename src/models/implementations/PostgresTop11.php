@@ -116,10 +116,30 @@ class PostgresTop11 implements Top11
         $stmt->execute([':id' => $contestId]);
         $contest = $stmt->fetch();
 
-        $entries[] = ['placement' => 99, 'artist' => $this->formatWeekOf($contest['week_of']), 'song' => '', 'note' => ''];
+        $entries[] = ['placement' => 99, 'artist' => $this->formatWeekOf($this->getResultsWeekOf($contestId, $contest['week_of'])), 'song' => '', 'note' => ''];
         $entries[] = ['placement' => 98, 'artist' => $contest['status'] === 'open' ? 'open' : 'closed', 'song' => '', 'note' => ''];
 
         return $entries;
+    }
+
+    /**
+     * A contest's week_of is its voting week, but its entries are the previous
+     * contest's results, so the heading date is the week_of of the most recent
+     * contest before this one. Falls back to this contest's own week_of when
+     * there is none.
+     */
+    private function getResultsWeekOf(int $contestId, string $weekOf): string
+    {
+        $stmt = $this->db->prepare("
+            SELECT week_of FROM top11_contests
+            WHERE week_of < :week_of AND id <> :id
+            ORDER BY week_of DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':week_of' => $weekOf, ':id' => $contestId]);
+        $row = $stmt->fetch();
+
+        return $row ? $row['week_of'] : $weekOf;
     }
 
     private function formatWeekOf(string $weekOf): string
