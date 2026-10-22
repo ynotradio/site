@@ -147,6 +147,7 @@ export function checkForPhpErrors(pageContent: string): string[] {
     'Fatal error',
     'Parse error',
     'Warning:',
+    'Deprecated:',
     'Connection failed',
     'Database error',
     'SQLSTATE',
