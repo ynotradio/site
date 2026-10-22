@@ -5,7 +5,7 @@
 
 env:
   NODE_VERSION: "22"
-  PHP_VERSION: "7.4"
+  PHP_VERSION: "8.3"
   CI: "true"
   # Set to "true" by check-changes.sh for PR builds when no PHP/JS files changed.
   # Enables steps to exit early and save build minutes.
@@ -101,10 +101,9 @@ steps:
       queue: "default"
 
   # PHP Lint (CodeSniffer) — skipped on JS-only PRs
-  # Runs inside the pinned PHP_VERSION image (php:7.4-fpm, same base prod
+  # Runs inside the pinned PHP_VERSION image (php:8.3-fpm, same base prod
   # runs — see bin/docker/phpfpm/Dockerfile) instead of composer:2, which
-  # tracks latest PHP and would silently pass code that fatals on prod's
-  # actual PHP 7.4 (e.g. trait constants, which need PHP 8.2+).
+  # tracks latest PHP and could silently pass code that fatals on prod.
   - label: ":php: PHP Lint"
     key: "php-lint"
     command: |

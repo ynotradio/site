@@ -1,6 +1,6 @@
 # Pre-built PHP-FPM image with extensions
 # Avoids 10+ minute compilation time on every CI run
-FROM php:7.4-fpm
+FROM php:8.3-fpm
 
 # Install system dependencies and PHP extensions (the slow part)
 RUN apt-get update \

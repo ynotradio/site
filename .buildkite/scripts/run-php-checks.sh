@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # .buildkite/scripts/run-php-checks.sh
 # Runs PHP lint (phpcs) and/or unit tests (phpunit) inside the pinned PHP_VERSION
-# image (php:7.4-fpm, same base prod runs — see bin/docker/phpfpm/Dockerfile).
+# image (php:8.3-fpm, same base prod runs — see bin/docker/phpfpm/Dockerfile).
 #
 # The docker#v5.11.0 plugin has no registry-login step, so pulling the private
 # ghcr.io/ynotradio/site/phpfpm-dev image needs a manual `docker login` first;
