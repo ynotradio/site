@@ -4,7 +4,7 @@ Caddy (TLS, redirects) → Apache (`.htaccess`) → php-fpm 8.3, plus MySQL 8. R
 
 ## Build a box
 
-1. Create an Ubuntu LTS Lightsail instance with `cloud-init.yaml` as user data. Open ports 80 and 443.
+1. Create an Ubuntu LTS Lightsail instance with `launch.sh` as the launch script. Open ports 80 and 443.
 2. Create the secret files (not in git):
    - `/opt/ynot/.env`: the keys in the old box's `~/htdocs/.env` (`DB_HOST=mysql`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT=3306`, `USE_POSTGRES_*` flags copied from old prod, Auth0, Postgres, Cloudinary).
    - `/opt/ynot/mysql.env`: `MYSQL_ROOT_PASSWORD`, `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`.
@@ -42,4 +42,4 @@ INSECURE=1 bin/verify-migration.sh verify --target 127.0.0.1
 
 ## Backups
 
-`cloud-init.yaml` installs a nightly `mysqldump` to `/opt/ynot/backups` (14 days). It stays on the instance, so also take Lightsail snapshots.
+`launch.sh` installs a nightly `mysqldump` to `/opt/ynot/backups` (14 days). It stays on the instance, so also take Lightsail snapshots.
