@@ -18,5 +18,44 @@ return [
     // all-or-nothing. A permalink here (or in the comma-separated env var
     // USE_POSTGRES_CUSTOMTEXT_PERMALINKS, unioned with this list) serves from
     // Postgres even while the global flag is off. CP routes still force MySQL.
-    'postgres_customtext_permalinks' => [],
+    // All 35 active pages were imported to Payload and cut over 2026-10-22.
+    // Listed here, not only in the env var, because every deploy rewrites the
+    // prod .env from a secret that has USE_POSTGRES_CUSTOMTEXT=false.
+    'postgres_customtext_permalinks' => [
+        'donate',
+        'contests',
+        'modern-rock-madness',
+        'y-not-contests-2',
+        'future-friday',
+        'y100-rocks',
+        'shows',
+        'rodney-anonymous',
+        'words-with-nerds',
+        'modern-rock-madness-draft',
+        'top1000',
+        'quarantine-takeovers',
+        'top220of2020',
+        'yearendpoll2020',
+        'ynotsessions2020',
+        'top221of2021',
+        'yearendpoll2021',
+        'ynotsessions2021',
+        'dollar-stroll-raffle-contest-1',
+        'player-test',
+        'top222of2022',
+        'yearendpoll2022',
+        'ynotsessions2022',
+        'top223of2023',
+        'yearendpoll2023',
+        'ynotsessions2023',
+        't-shirts',
+        'top224of2024',
+        'yearendpoll2024',
+        'ynotsessions2024',
+        'y100:-20-years-gone',
+        'remembering-starla',
+        'top225of2025',
+        'yearendpoll2025',
+        'ynotsessions2025',
+    ],
 ];

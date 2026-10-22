@@ -2,6 +2,16 @@
 
 Companion to [15-custom-text-strategy.md](./15-custom-text-strategy.md). Moves the 35 active `custom_texts` from MySQL to Payload `pages` without changing what visitors see. Production keeps reading MySQL until the last step.
 
+## Status: cut over 2026-10-22
+
+All 35 pages were imported to prod Neon and served from Postgres, verified page by page against MySQL. The cutover is the `postgres_customtext_permalinks` list in `src/config/features.php`. It is in code because every deploy rewrites the prod `.env` from the Buildkite secret `ENV_PHP_CONTENTS`, which sets `USE_POSTGRES_CUSTOMTEXT=false` (env beats config), so an allowlist set only on the box disappears at the next deploy.
+
+- **Roll a page back:** remove its permalink from the config list (PR + deploy), or for an immediate stop add `USE_POSTGRES_CUSTOMTEXT_PERMALINKS` without it on the box. The next deploy undoes the box edit.
+- **A page created in Payload later is not served until its permalink is added to the list.** To serve every Payload page automatically, change the secret to `USE_POSTGRES_CUSTOMTEXT=true`.
+- MySQL `custom_texts` and the control panel screens are untouched and now stale for these pages.
+
+The sections below are the original plan and the pre-import state.
+
 ## State checked 2026-10-22 (read-only)
 
 | Check                                                        | Result                                                                           |

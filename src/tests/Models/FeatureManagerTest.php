@@ -111,12 +111,15 @@ class FeatureManagerTest extends TestCase
     }
 
     /**
-     * Test that custom text defaults to MySQL for every permalink (and none)
+     * Test that, with no flags set, only permalinks on the config allowlist
+     * (the pages cut over 2026-10-22) use Postgres
      */
-    public function testUsePostgresForCustomTextDefaultsFalse(): void
+    public function testUsePostgresForCustomTextUsesConfigAllowlist(): void
     {
         $this->assertFalse(FeatureManager::usePostgresForCustomText(null));
-        $this->assertFalse(FeatureManager::usePostgresForCustomText('donate'));
+        $this->assertFalse(FeatureManager::usePostgresForCustomText('not-a-real-page'));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('donate'));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('y100:-20-years-gone'));
     }
 
     /**
@@ -138,12 +141,13 @@ class FeatureManagerTest extends TestCase
      */
     public function testUsePostgresForCustomTextPerPermalinkAllowlist(): void
     {
-        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS=donate, shows');
+        putenv('USE_POSTGRES_CUSTOMTEXT_PERMALINKS=new-page, another-page');
 
-        // Listed permalinks cut over; unlisted ones stay on MySQL.
+        // Env-listed permalinks join the config allowlist; unlisted ones stay on MySQL.
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('new-page'));
+        $this->assertTrue(FeatureManager::usePostgresForCustomText('another-page'));
         $this->assertTrue(FeatureManager::usePostgresForCustomText('donate'));
-        $this->assertTrue(FeatureManager::usePostgresForCustomText('shows'));
-        $this->assertFalse(FeatureManager::usePostgresForCustomText('contests'));
+        $this->assertFalse(FeatureManager::usePostgresForCustomText('not-a-real-page'));
         // No single permalink (e.g. CP list views) never matches the allowlist.
         $this->assertFalse(FeatureManager::usePostgresForCustomText(null));
 

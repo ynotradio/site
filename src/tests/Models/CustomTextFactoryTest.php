@@ -45,7 +45,7 @@ class CustomTextFactoryTest extends TestCase
         // allowlist still resolves to MySQL. (The Postgres branch needs a live
         // connection, so only the MySQL path is asserted here.)
         $db = $this->createMock(\mysqli::class);
-        $model = CustomTextFactory::create($db, 'contests');
+        $model = CustomTextFactory::create($db, 'not-a-real-page');
 
         $this->assertInstanceOf(SqlCustomText::class, $model);
     }
