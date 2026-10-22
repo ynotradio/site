@@ -136,11 +136,10 @@ class PostgresCustomTextTest extends TestCase
     {
         $result = $this->findHtmlPage([
             'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
-            'header_image_alt' => 'Top 224 banner',
         ]);
 
         $this->assertSame(
-            '<img src="https://res.cloudinary.com/x/banner.gif" alt="Top 224 banner" width="685">',
+            '<img src="https://res.cloudinary.com/x/banner.gif" alt="Top 224 of 2024" width="685">',
             $result['title']
         );
         $this->assertArrayNotHasKey('header_image_url', $result);
@@ -154,26 +153,27 @@ class PostgresCustomTextTest extends TestCase
         $result = $this->findHtmlPage([
             'header_image_url' => 'https://res.cloudinary.com/undefined/image/upload/banner.gif',
             'header_image_filename' => 'banner.gif',
-            'header_image_alt' => 'Banner',
         ]);
 
         putenv('CLOUDINARY_CLOUD_NAME');
 
         $this->assertSame(
-            '<img src="https://res.cloudinary.com/demo/image/upload/banner.gif" alt="Banner" width="685">',
+            '<img src="https://res.cloudinary.com/demo/image/upload/banner.gif" alt="Top 224 of 2024" width="685">',
             $result['title']
         );
         $this->assertArrayNotHasKey('header_image_filename', $result);
     }
 
-    public function testHeaderImageFallsBackToTitleForAltText(): void
+    public function testHeaderImageAltIsThePageTitleNotTheStaleMediaAlt(): void
     {
         $result = $this->findHtmlPage([
+            'title' => 'Rock & Roll',
             'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
-            'header_image_alt' => '',
+            'header_image_alt' => 'logo',
         ]);
 
-        $this->assertStringContainsString('alt="Top 224 of 2024"', $result['title']);
+        $this->assertStringContainsString('alt="Rock &amp; Roll"', $result['title']);
+        $this->assertStringNotContainsString('logo', $result['title']);
     }
 
     public function testCenterTitleWrapsTextAndBannerHeadings(): void

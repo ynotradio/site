@@ -31,8 +31,7 @@ class PostgresCustomText implements CustomText {
                 pages.center_title,
                 pages.legacy_id,
                 media.url as header_image_url,
-                media.filename as header_image_filename,
-                media.alt as header_image_alt
+                media.filename as header_image_filename
             FROM pages
             LEFT JOIN media ON media.id = pages.header_image_id
             $tail
@@ -164,11 +163,12 @@ class PostgresCustomText implements CustomText {
 
         $imageUrl = $this->headerImageUrl($row);
         if ($imageUrl !== '') {
-            $alt = $row['header_image_alt'] ?: $title;
+            // media.alt is not used: banners reuse media rows from earlier imports
+            // whose alt text is stale (e.g. "logo").
             $heading = sprintf(
                 '<img src="%s" alt="%s" width="685">',
                 htmlspecialchars($imageUrl, ENT_QUOTES),
-                htmlspecialchars($alt, ENT_QUOTES)
+                htmlspecialchars(strip_tags($title), ENT_QUOTES)
             );
         } elseif (strpos(ltrim($title), '<') === 0) {
             $heading = $title;
@@ -196,8 +196,7 @@ class PostgresCustomText implements CustomText {
         unset(
             $row['center_title'],
             $row['header_image_url'],
-            $row['header_image_filename'],
-            $row['header_image_alt']
+            $row['header_image_filename']
         );
 
         if ($contentType === 'html') {
