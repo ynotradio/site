@@ -112,6 +112,88 @@ class PostgresCustomTextTest extends TestCase
         $this->customText->findByPermalink('y100:-20-years-gone');
     }
 
+    private function findHtmlPage(array $overrides): array
+    {
+        $row = array_merge([
+            'id' => 9,
+            'permalink' => 'top224of2024',
+            'title' => 'Top 224 of 2024',
+            'html' => null,
+            'content_html' => '<p>body</p>',
+            'content_type' => 'html',
+            'legacy_id' => 70,
+        ], $overrides);
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        return $this->customText->findByPermalink($row['permalink']);
+    }
+
+    public function testHeaderImageReplacesTitleTextInTheHeading(): void
+    {
+        $result = $this->findHtmlPage([
+            'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
+            'header_image_alt' => 'Top 224 banner',
+        ]);
+
+        $this->assertSame(
+            '<img src="https://res.cloudinary.com/x/banner.gif" alt="Top 224 banner" width="685">',
+            $result['title']
+        );
+        $this->assertArrayNotHasKey('header_image_url', $result);
+        $this->assertArrayNotHasKey('center_title', $result);
+    }
+
+    public function testHeaderImageUsesCloudinaryFilenameWhenCloudNameIsSet(): void
+    {
+        putenv('CLOUDINARY_CLOUD_NAME=demo');
+
+        $result = $this->findHtmlPage([
+            'header_image_url' => 'https://res.cloudinary.com/undefined/image/upload/banner.gif',
+            'header_image_filename' => 'banner.gif',
+            'header_image_alt' => 'Banner',
+        ]);
+
+        putenv('CLOUDINARY_CLOUD_NAME');
+
+        $this->assertSame(
+            '<img src="https://res.cloudinary.com/demo/image/upload/banner.gif" alt="Banner" width="685">',
+            $result['title']
+        );
+        $this->assertArrayNotHasKey('header_image_filename', $result);
+    }
+
+    public function testHeaderImageFallsBackToTitleForAltText(): void
+    {
+        $result = $this->findHtmlPage([
+            'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
+            'header_image_alt' => '',
+        ]);
+
+        $this->assertStringContainsString('alt="Top 224 of 2024"', $result['title']);
+    }
+
+    public function testCenterTitleWrapsTextAndBannerHeadings(): void
+    {
+        $text = $this->findHtmlPage(['center_title' => true]);
+        $this->assertSame('<center>Top 224 of 2024</center>', $text['title']);
+    }
+
+    public function testPlainTitlesAreEscaped(): void
+    {
+        $plain = $this->findHtmlPage(['title' => 'Rock & Roll <3, We\'re Back']);
+        $this->assertSame('Rock &amp; Roll &lt;3, We\'re Back', $plain['title']);
+    }
+
+    public function testLegacyHtmlTitlesPassThrough(): void
+    {
+        $legacy = $this->findHtmlPage(['title' => '<img src="https://i.imgur.com/a.png" width="685">']);
+        $this->assertSame('<img src="https://i.imgur.com/a.png" width="685">', $legacy['title']);
+    }
+
     public function testFindByPermalinkReturnsNullWhenNotFound(): void
     {
         $mockStmt = $this->createMock(PDOStatement::class);

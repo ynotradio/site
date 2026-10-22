@@ -19,20 +19,31 @@ class PostgresCustomText implements CustomText {
         $this->db = $db;
     }
 
-    public function getAll(): array {
-        $stmt = $this->db->prepare("
+    private function selectPages(string $tail): string {
+        return "
             SELECT
-                id,
-                slug as permalink,
-                title,
-                content as html,
-                content_html,
-                content_type,
-                legacy_id
+                pages.id,
+                pages.slug as permalink,
+                pages.title,
+                pages.content as html,
+                pages.content_html,
+                pages.content_type,
+                pages.center_title,
+                pages.legacy_id,
+                media.url as header_image_url,
+                media.filename as header_image_filename,
+                media.alt as header_image_alt
             FROM pages
-            WHERE _status = 'published'
-            ORDER BY title ASC
-        ");
+            LEFT JOIN media ON media.id = pages.header_image_id
+            $tail
+        ";
+    }
+
+    public function getAll(): array {
+        $stmt = $this->db->prepare($this->selectPages("
+            WHERE pages._status = 'published'
+            ORDER BY pages.title ASC
+        "));
         
         $stmt->execute();
         $results = $stmt->fetchAll();
@@ -41,19 +52,10 @@ class PostgresCustomText implements CustomText {
     }
 
     public function getById(int $id): ?array {
-        $stmt = $this->db->prepare("
-            SELECT
-                id,
-                slug as permalink,
-                title,
-                content as html,
-                content_html,
-                content_type,
-                legacy_id
-            FROM pages
-            WHERE id = :id
-                AND _status = 'published'
-        ");
+        $stmt = $this->db->prepare($this->selectPages("
+            WHERE pages.id = :id
+                AND pages._status = 'published'
+        "));
         
         $stmt->execute(['id' => $id]);
         $result = $stmt->fetch();
@@ -66,21 +68,12 @@ class PostgresCustomText implements CustomText {
     }
 
     public function findByPermalink(string $permalink): ?array {
-        $stmt = $this->db->prepare("
-            SELECT
-                id,
-                slug as permalink,
-                title,
-                content as html,
-                content_html,
-                content_type,
-                legacy_id
-            FROM pages
-            WHERE slug IN (:permalink, :slugified)
-                AND _status = 'published'
-            ORDER BY (slug = :exact) DESC
+        $stmt = $this->db->prepare($this->selectPages("
+            WHERE pages.slug IN (:permalink, :slugified)
+                AND pages._status = 'published'
+            ORDER BY (pages.slug = :exact) DESC
             LIMIT 1
-        ");
+        "));
 
         $stmt->execute([
             'permalink' => $permalink,
@@ -150,6 +143,42 @@ class PostgresCustomText implements CustomText {
         return $permalink;
     }
 
+    // Same convention as PostgresAd: Cloudinary base + media.filename, untransformed
+    // so animated GIF banners are served as uploaded.
+    private function headerImageUrl(array $row): string {
+        $cloudName = getenv('CLOUDINARY_CLOUD_NAME');
+        if ($cloudName && !empty($row['header_image_filename'])) {
+            return "https://res.cloudinary.com/{$cloudName}/image/upload/{$row['header_image_filename']}";
+        }
+        return (string) ($row['header_image_url'] ?? '');
+    }
+
+    /**
+     * pages.php renders `<h1>{title}</h1>`, so the heading is built here: the
+     * header image (when set) replaces the title text, and centerTitle wraps
+     * the result in <center>, matching the legacy markup. A title that already
+     * starts with "<" is legacy HTML and passes through untouched.
+     */
+    private function renderHeading(array $row): string {
+        $title = (string) ($row['title'] ?? '');
+
+        $imageUrl = $this->headerImageUrl($row);
+        if ($imageUrl !== '') {
+            $alt = $row['header_image_alt'] ?: $title;
+            $heading = sprintf(
+                '<img src="%s" alt="%s" width="685">',
+                htmlspecialchars($imageUrl, ENT_QUOTES),
+                htmlspecialchars($alt, ENT_QUOTES)
+            );
+        } elseif (strpos(ltrim($title), '<') === 0) {
+            $heading = $title;
+        } else {
+            $heading = htmlspecialchars($title, ENT_NOQUOTES);
+        }
+
+        return !empty($row['center_title']) ? "<center>$heading</center>" : $heading;
+    }
+
     /**
      * Format result to match the legacy MySQL output shape (id, permalink,
      * title, html, legacy_id).
@@ -163,6 +192,13 @@ class PostgresCustomText implements CustomText {
      */
     private function formatResult(array $row): array {
         $contentType = $row['content_type'] ?? 'richText';
+        $row['title'] = $this->renderHeading($row);
+        unset(
+            $row['center_title'],
+            $row['header_image_url'],
+            $row['header_image_filename'],
+            $row['header_image_alt']
+        );
 
         if ($contentType === 'html') {
             // Raw HTML authored in Payload — rendered as-is, no conversion and
