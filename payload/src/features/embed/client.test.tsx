@@ -169,7 +169,7 @@ describe('EmbedComponent', () => {
 
       render(<EmbedComponent url={testUrl} />);
 
-      expect(spy).toHaveBeenCalledWith(testUrl, { hideCoverImage: undefined });
+      expect(spy).toHaveBeenCalledWith(testUrl, { hideCoverImage: undefined, miniPlayer: undefined });
       spy.mockRestore();
     });
   });
@@ -189,6 +189,13 @@ describe('EmbedComponent', () => {
 
       const iframe = container.querySelector('iframe') as HTMLIFrameElement;
       expect(iframe.src).toContain('hide_cover=0');
+    });
+
+    it('should use the mini player when miniPlayer is true', () => {
+      const { container } = render(<EmbedComponent url={mixcloudUrl} miniPlayer />);
+
+      const iframe = container.querySelector('iframe') as HTMLIFrameElement;
+      expect(iframe.src).toContain('mini=1');
     });
   });
 });

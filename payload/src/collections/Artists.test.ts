@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { Artists } from './Artists';
+import { preventDuplicateArtistName } from './hooks/artistDedup';
 import { flattenRowFields } from './testUtils';
 
 describe('Artists', () => {
@@ -83,5 +84,25 @@ describe('Artists', () => {
     expect(Artists.admin?.defaultColumns).toContain('photo');
     expect(Artists.admin?.defaultColumns).toContain('musicbrainzId');
     expect(Artists.admin?.defaultColumns).toContain('slug');
+  });
+
+  it('has a songs join field on songs.artist for bidirectional editing', () => {
+    const fields = flattenRowFields(Artists.fields as Record<string, unknown>[]);
+    const songsField = fields.find((f) => f.name === 'songs');
+    expect(songsField?.type).toBe('join');
+    expect(songsField?.collection).toBe('songs');
+    expect(songsField?.on).toBe('artist');
+  });
+
+  it('has a records join field on records.artist for bidirectional editing', () => {
+    const fields = flattenRowFields(Artists.fields as Record<string, unknown>[]);
+    const recordsField = fields.find((f) => f.name === 'records');
+    expect(recordsField?.type).toBe('join');
+    expect(recordsField?.collection).toBe('records');
+    expect(recordsField?.on).toBe('artist');
+  });
+
+  it('registers the duplicate-name guard as a beforeValidate hook', () => {
+    expect(Artists.hooks?.beforeValidate).toContain(preventDuplicateArtistName);
   });
 });

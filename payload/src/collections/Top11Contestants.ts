@@ -20,6 +20,7 @@ type ContestantDoc = {
 
 export const Top11Contestants: CollectionConfig = {
   slug: 'top11-contestants',
+  defaultSort: '-createdAt',
   enableRichTextLink: false,
   enableRichTextRelationship: false,
   enableQueryPresets: true,
@@ -33,6 +34,7 @@ export const Top11Contestants: CollectionConfig = {
       'firstName',
       'lastName',
       'email',
+      'contest',
       'enteredContest',
       'newsletterOptIn',
       'createdAt',

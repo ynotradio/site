@@ -116,10 +116,30 @@ class PostgresTop11 implements Top11
         $stmt->execute([':id' => $contestId]);
         $contest = $stmt->fetch();
 
-        $entries[] = ['placement' => 99, 'artist' => $this->formatWeekOf($contest['week_of']), 'song' => '', 'note' => ''];
+        $entries[] = ['placement' => 99, 'artist' => $this->formatWeekOf($this->getResultsWeekOf($contestId, $contest['week_of'])), 'song' => '', 'note' => ''];
         $entries[] = ['placement' => 98, 'artist' => $contest['status'] === 'open' ? 'open' : 'closed', 'song' => '', 'note' => ''];
 
         return $entries;
+    }
+
+    /**
+     * A contest's week_of is its voting week, but its entries are the previous
+     * contest's results, so the heading date is the week_of of the most recent
+     * contest before this one. Falls back to this contest's own week_of when
+     * there is none.
+     */
+    private function getResultsWeekOf(int $contestId, string $weekOf): string
+    {
+        $stmt = $this->db->prepare("
+            SELECT week_of FROM top11_contests
+            WHERE week_of < :week_of AND id <> :id
+            ORDER BY week_of DESC
+            LIMIT 1
+        ");
+        $stmt->execute([':week_of' => $weekOf, ':id' => $contestId]);
+        $row = $stmt->fetch();
+
+        return $row ? $row['week_of'] : $weekOf;
     }
 
     private function formatWeekOf(string $weekOf): string
@@ -161,7 +181,6 @@ class PostgresTop11 implements Top11
             LEFT JOIN songs s ON s.id = n.song_id
             LEFT JOIN artists a ON a.id = s.artist_id
             WHERE n._parent_id = :id
-            ORDER BY LOWER(a.name), LOWER(s.title)
         ");
         $stmt->execute([':id' => $contestId]);
 
@@ -174,7 +193,19 @@ class PostgresTop11 implements Top11
             ];
         }
 
+        usort($songs, static fn (array $a, array $b): int => [self::sortKey($a['artist']), self::sortKey($a['song'])]
+            <=> [self::sortKey($b['artist']), self::sortKey($b['song'])]);
+
         return $songs;
+    }
+
+    /**
+     * File "The War On Drugs" under W, not T. Keep in sync with
+     * top11SortKey() in payload/src/features/top11/utils.ts.
+     */
+    public static function sortKey(string $name): string
+    {
+        return preg_replace('/^(the|a|an)\s+/', '', strtolower(trim($name))) ?? '';
     }
 
     /** {@inheritdoc} */

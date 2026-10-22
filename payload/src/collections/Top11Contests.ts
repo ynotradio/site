@@ -6,12 +6,10 @@ import { slugField } from './shared/slugField';
 import { EmbedFeature } from '../features/embed';
 import { ImageAlignmentUploadFeature } from '../features/image-alignment';
 import {
-  assertPublishedContestImmutability,
   findAllDocs,
-  getTop11ContestStatusFromData,
   parseTop11Id,
   requireTop11Manager,
-  validateTop11StatusTransition,
+  top11SortKey,
 } from '../features/top11/utils';
 import { hasRole } from '../utils/auth';
 
@@ -33,10 +31,6 @@ type ContestDoc = {
   id: number;
   status: string;
   weekOf: string;
-  settings?: {
-    excludePriorWinners?: boolean;
-    priorWinnerLookbackContests?: number;
-  };
   entries?: ContestEntry[];
   nominees?: ContestNominee[];
   messageSnapshot?: unknown;
@@ -61,6 +55,7 @@ type ContestantDoc = {
   firstName: string;
   lastName: string;
   email: string;
+  phone?: string | null;
   enteredContest: boolean;
   newsletterOptIn: boolean;
 };
@@ -69,11 +64,6 @@ type WriteInDoc = {
   id: number;
   writeIn: string;
   display: boolean;
-};
-
-type WinnerDrawDoc = {
-  contestantEmail?: string | null;
-  createdAt: string;
 };
 
 const relationshipId = (value: number | { id: number }): number => (typeof value === 'object' ? value.id : value);
@@ -93,6 +83,11 @@ const formatWeekOfTitle = (weekOf: string): string => {
     day: 'numeric',
     timeZone: 'UTC',
   });
+};
+
+const formatWeekOfSlug = (weekOf: string): string | undefined => {
+  const date = new Date(weekOf);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
 };
 
 const setContestStatus = async (req: EndpointRequest, status: string): Promise<Response> => {
@@ -204,6 +199,8 @@ export const Top11Contests: CollectionConfig = {
   enableRichTextLink: false,
   enableRichTextRelationship: false,
   enableQueryPresets: true,
+  // Duplicate copies status and week as-is; Clone as New Draft resets both.
+  disableDuplicate: true,
   labels: {
     singular: 'Contest',
     plural: 'Contests',
@@ -212,9 +209,13 @@ export const Top11Contests: CollectionConfig = {
     useAsTitle: 'displayTitle',
     defaultColumns: ['weekOf', 'status', 'votingOpensAt', 'votingClosesAt', 'updatedAt'],
     group: 'Top 11',
-    description: 'Immutable weekly Top 11 contests and published results snapshots.',
+    description:
+      'Weekly Top 11 contests and published results. Editors can change any field or status at any time.',
     groupBy: true,
     components: {
+      edit: {
+        beforeDocumentControls: ['/payload/src/features/top11/Top11CloneButton#Top11CloneButton'],
+      },
       views: {
         edit: {
           controls: {
@@ -238,21 +239,6 @@ export const Top11Contests: CollectionConfig = {
   },
   hooks: {
     beforeChange: [
-      ({ data, operation, originalDoc }) => {
-        if (operation !== 'update' || !originalDoc) {
-          return data;
-        }
-
-        const rawOriginalStatus = originalDoc.status;
-        const originalStatus = typeof rawOriginalStatus === 'string' ? rawOriginalStatus : 'draft';
-        const dataAsRecord = data as Record<string, unknown>;
-        const nextStatus = getTop11ContestStatusFromData(dataAsRecord) ?? originalStatus;
-
-        assertPublishedContestImmutability(originalStatus, dataAsRecord);
-        validateTop11StatusTransition(originalStatus, nextStatus);
-
-        return data;
-      },
       ({ data }) => {
         // Editors reorder entries by dragging rows; displayOrder is derived
         // from row position rather than typed in manually.
@@ -278,7 +264,47 @@ export const Top11Contests: CollectionConfig = {
           return data;
         }
 
-        return { ...data, displayTitle: formatWeekOfTitle(rawWeekOf) };
+        // Keep the URL slug in step with weekOf so moving a contest's date
+        // also moves its URL. Payload's slugField only generates on create.
+        const weekOfSlug = formatWeekOfSlug(rawWeekOf);
+        return {
+          ...data,
+          displayTitle: formatWeekOfTitle(rawWeekOf),
+          ...(weekOfSlug ? { slug: weekOfSlug } : {}),
+        };
+      },
+      async ({ data, req }) => {
+        // Nominees aren't ranked, so keep them in the ballot order voters see
+        // on top11.php: artist, then title, ignoring a leading "The/A/An".
+        if (!data || !Array.isArray(data.nominees) || data.nominees.length < 2) {
+          return data;
+        }
+
+        const nominees = data.nominees as ContestNominee[];
+        const songs = await findAllDocs<SongDoc>({
+          payload: req.payload,
+          collection: 'songs',
+          where: { id: { in: nominees.map(({ song }) => relationshipId(song)) } },
+          depth: 1,
+          req,
+          user: req.user,
+        });
+        const sortKeys = new Map(
+          songs.map((song) => {
+            const artistName = song.artist && typeof song.artist === 'object' ? (song.artist.name ?? '') : '';
+            return [song.id, [top11SortKey(artistName), top11SortKey(song.title)]] as const;
+          }),
+        );
+        const keyFor = (nominee: ContestNominee) => sortKeys.get(relationshipId(nominee.song)) ?? ['', ''];
+
+        return {
+          ...data,
+          nominees: [...nominees].sort((a, b) => {
+            const [artistA, titleA] = keyFor(a);
+            const [artistB, titleB] = keyFor(b);
+            return artistA.localeCompare(artistB) || titleA.localeCompare(titleB);
+          }),
+        };
       },
     ],
   },
@@ -332,11 +358,14 @@ export const Top11Contests: CollectionConfig = {
           ? new Date()
           : new Date(sourceWeekOf.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-        // Strip each entry row's own sub-document id so Payload generates
+        // Strip each entry and nominee row's own sub-document id so Payload generates
         // fresh ones on create, instead of trying to reuse ids that already
         // belong to rows on the source contest.
         const clonedEntries = (sourceContest.entries ?? []).map(
           ({ id: _entryId, ...entry }) => entry,
+        );
+        const clonedNominees = (sourceContest.nominees ?? []).map(
+          ({ id: _nomineeId, ...nominee }) => nominee,
         );
 
         const clonedContest = await req.payload.create({
@@ -346,7 +375,7 @@ export const Top11Contests: CollectionConfig = {
             status: 'draft',
             messageSnapshot: sourceContest.messageSnapshot,
             entries: clonedEntries,
-            settings: sourceContest.settings,
+            nominees: clonedNominees,
           },
           req,
           user: req.user,
@@ -515,17 +544,6 @@ export const Top11Contests: CollectionConfig = {
         requireTop11Manager(req);
 
         const contestId = parseTop11Id(req.routeParams?.id, 'contest id');
-        const body = (await req.json()) as { excludePriorWinners?: boolean };
-
-        const contest = (await req.payload.findByID({
-          collection: 'top11-contests',
-          id: contestId,
-          depth: 0,
-          req,
-          user: req.user,
-          overrideAccess: false,
-        })) as ContestDoc;
-
         const contestants = await findAllDocs<ContestantDoc>({
           payload: req.payload,
           collection: 'top11-contestants',
@@ -544,44 +562,8 @@ export const Top11Contests: CollectionConfig = {
           throw new APIError('No eligible contestants found for this contest', 400);
         }
 
-        const settingsExcludePriorWinners = contest.settings?.excludePriorWinners ?? true;
-        const shouldExcludePriorWinners = body.excludePriorWinners ?? settingsExcludePriorWinners;
-
-        let eligibleContestants = contestants;
-
-        if (shouldExcludePriorWinners) {
-          const lookbackContests = contest.settings?.priorWinnerLookbackContests ?? 8;
-
-          const priorWinners = await findAllDocs<WinnerDrawDoc>({
-            payload: req.payload,
-            collection: 'top11-winner-draws',
-            sort: '-createdAt',
-            req,
-            user: req.user,
-          });
-
-          // 0 means no lookback limit: check the full all-time winner history.
-          let recentPriorWinners = priorWinners;
-          if (lookbackContests > 0) {
-            recentPriorWinners = priorWinners.slice(0, lookbackContests);
-          }
-
-          const priorWinnerEmails = new Set(
-            recentPriorWinners.map((winner) => winner.contestantEmail).filter(Boolean),
-          );
-
-          eligibleContestants = contestants.filter(
-            (contestant) => !priorWinnerEmails.has(contestant.email),
-          );
-
-          if (eligibleContestants.length === 0) {
-            throw new APIError('No eligible contestants remain after excluding prior winners', 400);
-          }
-        }
-
         // node:crypto randomInt provides cryptographically secure randomness for fair draws.
-        const winnerIndex = randomInt(eligibleContestants.length);
-        const winner = eligibleContestants[winnerIndex];
+        const winner = contestants[randomInt(contestants.length)];
 
         const winnerLog = await req.payload.create({
           collection: 'top11-winner-draws',
@@ -589,9 +571,9 @@ export const Top11Contests: CollectionConfig = {
             contest: contestId,
             contestant: winner.id,
             contestantEmail: winner.email,
+            contestantPhone: winner.phone || null,
             drawnBy:
               req.user && typeof req.user === 'object' ? (req.user as { id?: unknown }).id : null,
-            excludePriorWinners: shouldExcludePriorWinners,
           },
           req,
           user: req.user,
@@ -602,8 +584,6 @@ export const Top11Contests: CollectionConfig = {
           winner,
           drawLogId: winnerLog.id,
           totalEntries: contestants.length,
-          eligibleEntries: eligibleContestants.length,
-          excludePriorWinners: shouldExcludePriorWinners,
         });
       },
     },
@@ -662,10 +642,7 @@ export const Top11Contests: CollectionConfig = {
     },
     slugField({
       useAsSlug: 'weekOf',
-      slugify: ({ valueToSlugify }) => {
-        const date = new Date(String(valueToSlugify));
-        return Number.isNaN(date.getTime()) ? undefined : date.toISOString().slice(0, 10);
-      },
+      slugify: ({ valueToSlugify }) => formatWeekOfSlug(String(valueToSlugify)),
     }),
     {
       type: 'row',
@@ -777,37 +754,14 @@ export const Top11Contests: CollectionConfig = {
       ],
       admin: {
         description:
-          "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart.",
+          "This week's nominee pool -- the full ballot voters choose from. Distinct from entries, which is last week's ranked results chart. "
+          + 'Sorted by artist on save, ignoring a leading "The", "A" or "An".',
         initCollapsed: true,
+        isSortable: false,
         components: {
           RowLabel: '/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel',
         },
       },
-    },
-    {
-      name: 'settings',
-      type: 'group',
-      fields: [
-        {
-          name: 'excludePriorWinners',
-          type: 'checkbox',
-          defaultValue: true,
-          admin: {
-            description: 'Default winner draw behavior to exclude recent prior winners.',
-          },
-        },
-        {
-          name: 'priorWinnerLookbackContests',
-          type: 'number',
-          defaultValue: 8,
-          min: 0,
-          admin: {
-            description:
-              'How many of the most recent past contests to check for prior winners to exclude. 0 excludes winners from all contests ever.',
-            condition: (_data, siblingData) => Boolean(siblingData?.excludePriorWinners),
-          },
-        },
-      ],
     },
   ],
   timestamps: true,

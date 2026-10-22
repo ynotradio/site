@@ -18,6 +18,13 @@ const activeTournamentResponse = {
 
 const noActiveTournamentResponse = { docs: [] };
 
+const currentTop11Mock = {
+  url: '/api/top11-contests',
+  method: 'GET',
+  status: 200,
+  response: { docs: [{ id: 42 }] },
+};
+
 const meta: Meta<typeof CustomDashboard> = {
   title: 'Components/Dashboard/CustomDashboard',
   component: CustomDashboard,
@@ -30,6 +37,7 @@ const meta: Meta<typeof CustomDashboard> = {
         status: 200,
         response: noActiveTournamentResponse,
       },
+      currentTop11Mock,
     ],
   },
   tags: ['autodocs'],
@@ -58,6 +66,7 @@ export const WithSpecialEvents: Story = {
         status: 200,
         response: activeTournamentResponse,
       },
+      currentTop11Mock,
     ],
     docs: {
       description: {

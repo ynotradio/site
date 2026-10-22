@@ -5,6 +5,7 @@ import type {
   PayloadRequest,
 } from 'payload';
 import type { Slugify } from 'payload/shared';
+import { logEditorEvent } from './observability';
 
 export function slugifyText(text: string): string {
   return text
@@ -240,10 +241,25 @@ export const dedupeMusicSlug = (collectionSlug: 'songs' | 'records'): Collection
   }
 
   const excludeId = (originalDoc as { id?: number | string } | undefined)?.id;
-  updatedData.slug = await findUniqueSlug(req.payload, collectionSlug, base, excludeId, req);
+  const resolved = await findUniqueSlug(req.payload, collectionSlug, base, excludeId, req);
+  updatedData.slug = resolved;
   // Lock the de-duplicated slug so the generateSlug hooks don't rebuild the
   // colliding base value.
   updatedData.generateSlug = false;
+
+  // Record when a collision was actually auto-resolved, so the team can see how
+  // often duplicate slugs happen (best-effort; never blocks the save).
+  if (resolved !== base) {
+    await logEditorEvent(req, {
+      type: 'auto-resolved',
+      collectionSlug,
+      operation: 'beforeValidate',
+      message: `Slug collision auto-resolved: "${base}" → "${resolved}"`,
+      fieldPath: 'slug',
+      details: { base, resolved },
+    });
+  }
+
   return updatedData;
 };
 

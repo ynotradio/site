@@ -1,6 +1,7 @@
 import type { FeatureProviderServer } from '@payloadcms/richtext-lexical';
 import type { Block } from 'payload';
 import { BlocksFeature } from '@payloadcms/richtext-lexical';
+import { extractEmbedSrc } from './utils';
 
 export type { EmbedType, EmbedInfo } from './utils';
 export {
@@ -10,7 +11,10 @@ export {
   extractSpotifyInfo,
   extractSoundCloudInfo,
   extractMixcloudFeed,
+  extractEmbedSrc,
 } from './utils';
+
+const isMixcloudUrl = (siblingData: { url?: unknown } | undefined): boolean => typeof siblingData?.url === 'string' && siblingData.url.includes('mixcloud.com');
 
 export const EmbedBlock: Block = {
   slug: 'embed',
@@ -22,9 +26,12 @@ export const EmbedBlock: Block = {
       type: 'text',
       required: true,
       label: 'Embed URL',
+      hooks: {
+        beforeValidate: [({ value }) => (typeof value === 'string' ? extractEmbedSrc(value) : value)],
+      },
       admin: {
         description:
-          'Paste a URL: YouTube, Vimeo, Mixcloud, OpenDrive, Spotify, SoundCloud, or any iframe URL',
+          'Paste a URL or embed code: YouTube, Vimeo, Mixcloud, OpenDrive, Spotify, SoundCloud, or any iframe URL',
       },
     },
     {
@@ -42,7 +49,17 @@ export const EmbedBlock: Block = {
       defaultValue: true,
       admin: {
         description: 'Mixcloud only: hides the show cover art in the player. Uncheck to show it.',
-        condition: (_data, siblingData) => typeof siblingData?.url === 'string' && siblingData.url.includes('mixcloud.com'),
+        condition: (_data, siblingData) => isMixcloudUrl(siblingData),
+      },
+    },
+    {
+      name: 'miniPlayer',
+      type: 'checkbox',
+      label: 'Mini player',
+      defaultValue: false,
+      admin: {
+        description: 'Mixcloud only: use the slim 60px player instead of the full-size one.',
+        condition: (_data, siblingData) => isMixcloudUrl(siblingData),
       },
     },
     {

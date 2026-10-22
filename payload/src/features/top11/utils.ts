@@ -24,53 +24,14 @@ export const parseTop11Id = (value: string | undefined, fieldName = 'id'): numbe
   return parsed;
 };
 
-export const getTop11ContestStatusFromData = (
-  data: Record<string, unknown> | null | undefined,
-): string | undefined => {
-  const status = data?.status;
-  return typeof status === 'string' ? status : undefined;
-};
-
-export const validateTop11StatusTransition = (currentStatus: string, nextStatus: string): void => {
-  const allowedTransitions: Record<string, string[]> = {
-    draft: ['draft', 'open', 'archived'],
-    open: ['open', 'closed', 'archived'],
-    closed: ['closed', 'open', 'published', 'archived'],
-    published: ['published', 'archived'],
-    archived: ['archived'],
-  };
-
-  const allowed = allowedTransitions[currentStatus] ?? [];
-  if (!allowed.includes(nextStatus)) {
-    throw new APIError(
-      `Invalid Top 11 contest status transition: ${currentStatus} -> ${nextStatus}`,
-      400,
-    );
-  }
-};
-
-export const assertPublishedContestImmutability = (
-  originalStatus: string,
-  data: Record<string, unknown> | null | undefined,
-): void => {
-  if (originalStatus === 'archived') {
-    throw new APIError('Archived Top 11 contests are immutable', 409);
-  }
-
-  if (originalStatus !== 'published' || !data) {
-    return;
-  }
-
-  const mutableKeys = new Set(['status']);
-  const attemptedMutations = Object.keys(data).filter((key) => !mutableKeys.has(key));
-
-  if (attemptedMutations.length > 0) {
-    throw new APIError(
-      'Published Top 11 contests are immutable except for transitioning to archived',
-      409,
-    );
-  }
-};
+/**
+ * File "The War On Drugs" under W, not T. Keep in sync with
+ * PostgresTop11::sortKey() in src/models/implementations/PostgresTop11.php.
+ */
+export const top11SortKey = (name: string): string => name
+  .trim()
+  .toLowerCase()
+  .replace(/^(the|a|an)\s+/, '');
 
 const FORMULA_TRIGGER_CHARS = ['=', '+', '-', '@', '\t', '\r'];
 

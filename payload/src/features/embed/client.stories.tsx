@@ -84,6 +84,14 @@ export const MixcloudMiniPlayer: Story = {
   },
 };
 
+export const MixcloudShowAsMiniPlayer: Story = {
+  args: {
+    url: 'https://www.mixcloud.com/ynotradio/top-11-11-92426/',
+    caption: 'Mixcloud show URL with the Mini player checkbox on',
+    miniPlayer: true,
+  },
+};
+
 export const OpenDrivePlayer: Story = {
   args: {
     url: 'https://www.opendrive.com/player/216190430_XqukK',

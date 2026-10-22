@@ -12,10 +12,10 @@ import './Top11ContestControlsTab.css';
 
 export const NEXT_STATUSES: Record<Top11ContestStatus, Top11ContestStatus[]> = {
   draft: ['open'],
-  open: ['closed'],
+  open: ['closed', 'draft'],
   closed: ['open', 'published'],
-  published: ['archived'],
-  archived: [],
+  published: ['archived', 'closed'],
+  archived: ['published'],
 };
 
 // Labels are keyed by "from status -> to status" since the same target
@@ -27,6 +27,9 @@ const TRANSITION_LABEL: Record<string, string> = {
   'closed->open': 'Reopen Voting',
   'closed->published': 'Publish Results',
   'published->archived': 'Archive',
+  'open->draft': 'Back to Draft',
+  'published->closed': 'Unpublish',
+  'archived->published': 'Unarchive',
 };
 
 const STATUS_LABEL: Record<Top11ContestStatus, string> = {
@@ -117,9 +120,6 @@ export const StatusCard: React.FC<StatusCardProps> = ({
       <RelatedLinks contestId={contest.id} />
 
       <div className="top11-controls-tab__actions">
-        {availableTransitions.length === 0 && (
-          <span className="top11-controls-tab__hint">No further transitions available.</span>
-        )}
         {availableTransitions.map((nextStatus) => {
           const transitionKey = `${contest.status}->${nextStatus}`;
           return (
@@ -265,9 +265,11 @@ export const WinnerDrawCard: React.FC<WinnerDrawCardProps> = ({
           {`${lastWinner.winner.firstName} ${lastWinner.winner.lastName}`}
         </span>
         <span className="top11-controls-tab__winner-detail">{lastWinner.winner.email}</span>
+        {lastWinner.winner.phone && (
+          <span className="top11-controls-tab__winner-detail">{lastWinner.winner.phone}</span>
+        )}
         <span className="top11-controls-tab__winner-detail">
-          {`Drawn from ${lastWinner.eligibleEntries} of ${lastWinner.totalEntries} eligible entries`}
-          {lastWinner.excludePriorWinners ? ' (prior winners excluded)' : ''}
+          {`Drawn from ${lastWinner.totalEntries} ${lastWinner.totalEntries === 1 ? 'entry' : 'entries'}`}
         </span>
       </div>
     )}

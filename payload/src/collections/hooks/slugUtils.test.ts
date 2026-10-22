@@ -692,6 +692,40 @@ describe('dedupeMusicSlug', () => {
     expect(result.slug).toBe('the-band--collide-2');
   });
 
+  it('logs an auto-resolved observability event when a collision is suffixed', async () => {
+    const find = vi
+      .fn()
+      .mockResolvedValueOnce({ totalDocs: 1 })
+      .mockResolvedValueOnce({ totalDocs: 0 });
+    const create = vi.fn().mockResolvedValue({ id: 1 });
+    const data = { title: 'Collide', artist: { id: 1, name: 'The Band' } };
+    await dedupeMusicSlug('songs')({
+      data,
+      req: { payload: { find, create }, user: { id: 1 }, headers: { get: () => undefined } },
+    } as never);
+    const events = create.mock.calls
+      .map((c) => c[0])
+      .filter((a) => a.collection === 'editor-events');
+    expect(events).toHaveLength(1);
+    expect(events[0].data).toMatchObject({
+      type: 'auto-resolved',
+      collectionSlug: 'songs',
+      fieldPath: 'slug',
+    });
+    expect(events[0].data.message).toContain('the-band--collide-2');
+  });
+
+  it('does NOT log when there is no collision', async () => {
+    const find = vi.fn().mockResolvedValue({ totalDocs: 0 });
+    const create = vi.fn().mockResolvedValue({ id: 1 });
+    const data = { title: 'Unique', artist: { id: 1, name: 'The Band' } };
+    await dedupeMusicSlug('songs')({
+      data,
+      req: { payload: { find, create }, user: { id: 1 }, headers: { get: () => undefined } },
+    } as never);
+    expect(create).not.toHaveBeenCalled();
+  });
+
   it('keeps incrementing until it finds a free slug', async () => {
     const find = vi
       .fn()

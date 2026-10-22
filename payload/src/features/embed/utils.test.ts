@@ -11,6 +11,7 @@ import {
   extractSpotifyInfo,
   extractSoundCloudInfo,
   extractMixcloudFeed,
+  extractEmbedSrc,
   detectEmbedType,
 } from './utils';
 
@@ -277,6 +278,39 @@ describe('detectEmbedType', () => {
       expect(result.embedUrl).toBe(
         'https://player-widget.mixcloud.com/widget/iframe/?hide_cover=0&feed=%2Fynotradio%2Frodney-anonymous-6526%2F',
       );
+    });
+
+    it('should use the mini player when miniPlayer is true', () => {
+      const url = 'https://www.mixcloud.com/ynotradio/top-11-11-92426/';
+      const result = detectEmbedType(url, { miniPlayer: true });
+      expect(result.embedUrl).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?mini=1&hide_artwork=1&hide_cover=1&feed=%2Fynotradio%2Ftop-11-11-92426%2F',
+      );
+    });
+  });
+
+  describe('extractEmbedSrc', () => {
+    it('pulls the src out of pasted Mixcloud mini-player embed code', () => {
+      const code = '<iframe width="100%" height="60" '
+        + 'src="https://player-widget.mixcloud.com/widget/iframe/?mini=1&amp;hide_cover=1&amp;feed=%2Fynotradio%2Ftop-11-11-92426%2F" '
+        + 'frameborder="0" allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;" ></iframe>';
+      expect(extractEmbedSrc(code)).toBe(
+        'https://player-widget.mixcloud.com/widget/iframe/?mini=1&hide_cover=1&feed=%2Fynotradio%2Ftop-11-11-92426%2F',
+      );
+    });
+
+    it('handles single-quoted src attributes', () => {
+      expect(extractEmbedSrc("<iframe src='https://example.com/embed'></iframe>")).toBe('https://example.com/embed');
+    });
+
+    it('returns a plain URL trimmed and otherwise unchanged', () => {
+      expect(extractEmbedSrc('  https://www.mixcloud.com/ynotradio/show/  ')).toBe(
+        'https://www.mixcloud.com/ynotradio/show/',
+      );
+    });
+
+    it('returns iframe markup without a src unchanged so validation can reject it', () => {
+      expect(extractEmbedSrc('<iframe></iframe>')).toBe('<iframe></iframe>');
     });
   });
 
