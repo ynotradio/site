@@ -37,6 +37,39 @@ interface ImportStats {
   errors: number;
 }
 
+const PERMALINK_TITLE_PREFIXES: Record<string, string> = {
+  yearendpoll: 'Year End Poll',
+  ynotsessions: 'Y-Not Sessions',
+};
+
+// "top224of2024" -> "Top 224 of 2024", "yearendpoll2025" -> "Year End Poll 2025"
+export function titleFromPermalink(permalink: string): string {
+  const words = permalink
+    .replace(/([a-z])(\d)/gi, '$1 $2')
+    .replace(/(\d)([a-z])/gi, '$1 $2')
+    .split(/[-\s]+/)
+    .filter(Boolean);
+
+  return words
+    .map((word, index) => {
+      if (PERMALINK_TITLE_PREFIXES[word]) return PERMALINK_TITLE_PREFIXES[word];
+      if (index > 0 && word === 'of') return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
+
+// Legacy titles can be HTML: a banner <img> (no text) or `<center>Text</center>`.
+export function plainTitleFor(
+  legacyTitle: string,
+  permalink: string | undefined,
+  id: number,
+): string {
+  const text = legacyTitle.replace(/<[^>]*>/g, '').trim();
+  if (text) return text;
+  return permalink ? titleFromPermalink(permalink) : `Custom Text ${id}`;
+}
+
 /**
  * Import a single custom_text as a post
  */
@@ -62,6 +95,7 @@ async function importCustomText(
     // Generate proper title from permalink if title is HTML
     let { title } = customText;
     let headerImage: string | undefined;
+    let centerTitle = false;
     if (title && title.trim().startsWith('<')) {
       // Title is HTML — usually a stylized banner <img> used in place of a
       // real heading. Extract and import that image as the page's headerImage
@@ -82,11 +116,11 @@ async function importCustomText(
       }
 
       if (rawHtml) {
-        // Raw-HTML pages keep the HTML title verbatim: pages.php renders
-        // `<h1>${title}</h1>`, and the legacy MySQL path stores the banner
-        // <img> in the title column. Converting it to plain text would swap
-        // the banner for a synthetic text heading on cutover.
-        logger.info('  Keeping HTML title verbatim (raw-HTML mode)');
+        // The banner <img> becomes headerImage and a `<center>` wrapper becomes
+        // centerTitle; pages.php rebuilds the same <h1> from those fields.
+        title = plainTitleFor(customText.title, customText.permalink, customText.id);
+        centerTitle = /^\s*<center[\s>]/i.test(customText.title);
+        logger.info(`  Converted HTML title to: "${title}"${centerTitle ? ' (centered)' : ''}`);
       } else if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
         title = customText.permalink
@@ -247,6 +281,9 @@ async function importCustomText(
     };
     if (headerImage) {
       data.headerImage = headerImage;
+    }
+    if (centerTitle) {
+      data.centerTitle = true;
     }
 
     if (existingId !== undefined) {

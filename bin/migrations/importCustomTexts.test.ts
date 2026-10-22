@@ -459,11 +459,7 @@ describe('importCustomTexts', () => {
       expect(callData.content).toBeDefined();
     });
 
-    it('should keep an HTML title verbatim in raw-HTML mode (banner stays the h1)', async () => {
-      // pages.php renders `<h1>${title}</h1>` and the legacy MySQL path stores
-      // the banner <img> in the title column. Rewriting it to plain text would
-      // add a synthetic text heading and drop the banner on cutover, so raw
-      // mode must keep the title as-is (headerImage still gets imported).
+    it('should turn a banner <img> title into a plain title plus headerImage in raw-HTML mode', async () => {
       mockImportImageFromUrl.mockResolvedValue({
         success: true,
         mediaId: 'media-banner-123',
@@ -486,11 +482,12 @@ describe('importCustomTexts', () => {
       await importCustomText(mockPayload as Payload, customText, true);
 
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
-      expect(callData.title).toBe(bannerTitle);
+      expect(callData.title).toBe('Top 225 of 2025');
       expect(callData.headerImage).toBe('media-banner-123');
+      expect(callData).not.toHaveProperty('centerTitle');
     });
 
-    it('should keep a non-img HTML title verbatim in raw-HTML mode without a headerImage', async () => {
+    it('should turn a <center> title into plain text plus centerTitle in raw-HTML mode', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
       (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
@@ -508,7 +505,8 @@ describe('importCustomTexts', () => {
       await importCustomText(mockPayload as Payload, customText, true);
 
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
-      expect(callData.title).toBe(centerTitle);
+      expect(callData.title).toBe('Y-Not Sessions 2025');
+      expect(callData.centerTitle).toBe(true);
       expect(callData).not.toHaveProperty('headerImage');
       expect(mockImportImageFromUrl).not.toHaveBeenCalled();
     });
@@ -532,6 +530,33 @@ describe('importCustomTexts', () => {
       expect(mockImportImageFromUrl).not.toHaveBeenCalled();
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
       expect(callData).not.toHaveProperty('headerImage');
+    });
+  });
+
+  describe('titleFromPermalink', () => {
+    it.each([
+      ['top224of2024', 'Top 224 of 2024'],
+      ['top1000', 'Top 1000'],
+      ['yearendpoll2025', 'Year End Poll 2025'],
+      ['ynotsessions2024', 'Y-Not Sessions 2024'],
+      ['future-friday', 'Future Friday'],
+      ['modern-rock-madness-draft', 'Modern Rock Madness Draft'],
+    ])('%s -> %s', async (permalink, expected) => {
+      const { titleFromPermalink } = await import('./importCustomTexts');
+      expect(titleFromPermalink(permalink)).toBe(expected);
+    });
+  });
+
+  describe('plainTitleFor', () => {
+    it('keeps text from a tagged title and falls back to the permalink for image-only titles', async () => {
+      const { plainTitleFor } = await import('./importCustomTexts');
+      expect(plainTitleFor('<center>Y-Not Sessions 2025</center>', 'ynotsessions2025', 73)).toBe(
+        'Y-Not Sessions 2025',
+      );
+      expect(plainTitleFor('<img src="https://i.imgur.com/a.png">', 'top1000', 12)).toBe('Top 1000');
+      expect(plainTitleFor('<img src="https://i.imgur.com/a.png">', undefined, 12)).toBe(
+        'Custom Text 12',
+      );
     });
   });
 });
