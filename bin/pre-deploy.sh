@@ -56,7 +56,7 @@ ssh ynotradio "mkdir -p ${BACKUP_DIR} && \
 # Change to the src directory
 cd "$(dirname "$0")/../src"
 
-# Run composer install using Docker PHP 7.4
+# Run composer install using Docker
 echo "📦 Running composer install..."
 docker run --rm -v "$(pwd):/app" -w /app composer:2 composer install --no-dev --optimize-autoloader
 

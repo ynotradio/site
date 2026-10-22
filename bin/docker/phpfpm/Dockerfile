@@ -1,4 +1,4 @@
-FROM php:7.4-fpm
+FROM php:8.3-fpm
 
 # Debian 11 (bullseye) reached end-of-LTS in Aug 2026: its packages were
 # removed from deb.debian.org and now live only on archive.debian.org. Point
