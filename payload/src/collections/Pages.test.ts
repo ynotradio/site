@@ -106,6 +106,26 @@ describe('Pages', () => {
     expect(headerImageField?.required).toBeFalsy();
   });
 
+  it('has centerTitle as a checkbox defaulting to false', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const centerTitleField = fields.find((f) => f.name === 'centerTitle') as {
+      type?: string;
+      defaultValue?: boolean;
+    };
+    expect(centerTitleField?.type).toBe('checkbox');
+    expect(centerTitleField?.defaultValue).toBe(false);
+  });
+
+  it('labels the HTML body "Content HTML" and uses the auto-height editor', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      label?: string;
+      admin?: { components?: { Field?: string } };
+    };
+    expect(contentHtmlField?.label).toBe('Content HTML');
+    expect(contentHtmlField?.admin?.components?.Field).toContain('AutoHeightCodeField');
+  });
+
   it('has content as a richText field', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content');

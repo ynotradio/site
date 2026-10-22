@@ -27,7 +27,7 @@ export const validateContentHtmlPresent = (
   const contentType = data?.contentType ?? 'html';
   const isEmpty = value === undefined || value === null || String(value).trim() === '';
   if (contentType !== 'richText' && isEmpty) {
-    return 'HTML pages need a body — contentHtml is empty, which would render nothing on the site.';
+    return 'HTML pages need a body — Content HTML is empty, which would render nothing on the site.';
   }
   return true;
 };
@@ -67,7 +67,7 @@ export const Pages: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'slug', '_status', 'updatedAt'],
+    defaultColumns: ['title', 'slug', 'headerImage', '_status', 'updatedAt'],
     group: 'Content',
     listSearchableFields: ['title', 'slug'],
     description:
@@ -86,7 +86,9 @@ export const Pages: CollectionConfig = {
       type: 'text',
       required: true,
       admin: {
-        description: 'Page title displayed in the <h1>',
+        description:
+          "Plain text. Shown as the page heading, or as the banner image's alt text "
+          + 'when a Header Image is set.',
       },
     },
     slugField({ useAsSlug: 'title', slugify: pageSlugify }),
@@ -96,9 +98,19 @@ export const Pages: CollectionConfig = {
       relationTo: 'media',
       admin: {
         description:
-          'Optional banner graphic shown above the title. Some legacy pages used a '
-          + 'stylized image in place of a real text title — this preserves that banner '
-          + 'without losing a plain-text `title` for admin lists, search, and SEO.',
+          'Optional banner. Replaces the title text in the page heading. Some legacy '
+          + 'pages used a stylized image in place of a text title.',
+        components: {
+          Cell: '/payload/src/components/cells/ThumbnailCell#ThumbnailCell',
+        },
+      },
+    },
+    {
+      name: 'centerTitle',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Center the page heading (title or banner image).',
       },
     },
     {
@@ -119,10 +131,18 @@ export const Pages: CollectionConfig = {
     },
     {
       name: 'contentHtml',
+      label: 'Content HTML',
       type: 'code',
       validate: validateContentHtmlPresent,
       admin: {
         language: 'html',
+        editorOptions: {
+          wordWrap: 'on',
+          scrollBeyondLastLine: false,
+        },
+        components: {
+          Field: '/payload/src/components/fields/AutoHeightCodeField#AutoHeightCodeField',
+        },
         description:
           'Raw HTML page body, rendered verbatim on the site. Trusted editors '
           + 'only — markup is not sanitized (same as the legacy control panel).',

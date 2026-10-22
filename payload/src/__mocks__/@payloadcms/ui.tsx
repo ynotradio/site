@@ -24,6 +24,17 @@ export const FieldLabel: React.FC<FieldLabelProps> = ({ label, required }) => (
   </label>
 );
 
+export const CodeField: React.FC<{
+  field?: { label?: string; admin?: { editorProps?: { height?: number } } };
+}> = ({ field }) => (
+  <textarea
+    readOnly
+    aria-label={field?.label}
+    style={{ width: '100%', height: field?.admin?.editorProps?.height ?? 56 }}
+    value={`<p>height: ${field?.admin?.editorProps?.height ?? 'default'}</p>`}
+  />
+);
+
 export const useField = () => ({
   value: mockFieldValue,
   setValue: (newValue: string) => {
