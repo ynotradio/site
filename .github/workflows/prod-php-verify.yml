@@ -1,0 +1,39 @@
+name: Prod PHP Verify
+
+# Replays the committed route baseline (bin/migration-baseline) against the
+# live legacy site and checks the TLS cert. See docs/PROD_MIGRATION_TEST_PLAN.md.
+
+on:
+  schedule:
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Replay route baseline
+        env:
+          BASELINE_DIR: bin/migration-baseline
+        run: bin/verify-migration.sh verify
+
+      - name: Check TLS
+        run: bin/verify-migration.sh tls
+
+      - name: Create issue on failure
+        if: failure()
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Prod PHP verify failed',
+              body: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              labels: ['bug', 'production'],
+            });

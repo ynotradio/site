@@ -92,6 +92,7 @@ cmd_verify() {
       fail=1
       continue
     fi
+    [ -f "$BASELINE_DIR/bodies/$scheme.$s.body" ] || continue
     local changed
     changed="$(diff "$BASELINE_DIR/bodies/$scheme.$s.body" "$tmp/bodies/$scheme.$s.body" | grep -c '^[<>]' || true)"
     if [ "$changed" -gt "$DIFF_MAX" ]; then
