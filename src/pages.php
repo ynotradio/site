@@ -8,7 +8,7 @@ require ("partials/_header.php");
 
 $page = $_GET['page'];
 $db = open_db();
-$customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+$customTextModel = \YNotRadio\Models\CustomTextFactory::create($db, $page);
 $custom_text = $customTextModel->findByPermalink($page);
 
 /*----- CONTENT ------*/

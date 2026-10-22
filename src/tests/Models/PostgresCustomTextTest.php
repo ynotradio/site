@@ -82,7 +82,7 @@ class PostgresCustomTextTest extends TestCase
         $mockStmt = $this->createMock(PDOStatement::class);
         $mockStmt->expects($this->once())
             ->method('execute')
-            ->with(['permalink' => 'donate'])
+            ->with(['permalink' => 'donate', 'exact' => 'donate', 'slugified' => 'donate'])
             ->willReturn(true);
         $mockStmt->expects($this->once())->method('fetch')->willReturn($row);
         $this->mockDb->expects($this->once())->method('prepare')->willReturn($mockStmt);
@@ -93,6 +93,105 @@ class PostgresCustomTextTest extends TestCase
         $this->assertSame('donate', $result['permalink']);
         $this->assertStringContainsString('Please donate', $result['html']);
         $this->assertStringContainsString('<p>', $result['html']);
+    }
+
+    public function testFindByPermalinkFallsBackToSlugifiedLegacyPermalink(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->with([
+                'permalink' => 'y100:-20-years-gone',
+                'exact' => 'y100:-20-years-gone',
+                'slugified' => 'y100-20-years-gone',
+            ])
+            ->willReturn(true);
+        $mockStmt->method('fetch')->willReturn(false);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $this->customText->findByPermalink('y100:-20-years-gone');
+    }
+
+    private function findHtmlPage(array $overrides): array
+    {
+        $row = array_merge([
+            'id' => 9,
+            'permalink' => 'top224of2024',
+            'title' => 'Top 224 of 2024',
+            'html' => null,
+            'content_html' => '<p>body</p>',
+            'content_type' => 'html',
+            'legacy_id' => 70,
+        ], $overrides);
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        return $this->customText->findByPermalink($row['permalink']);
+    }
+
+    public function testHeaderImageReplacesTitleTextInTheHeading(): void
+    {
+        $result = $this->findHtmlPage([
+            'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
+        ]);
+
+        $this->assertSame(
+            '<img src="https://res.cloudinary.com/x/banner.gif" alt="Top 224 of 2024" width="685">',
+            $result['title']
+        );
+        $this->assertArrayNotHasKey('header_image_url', $result);
+        $this->assertArrayNotHasKey('center_title', $result);
+    }
+
+    public function testHeaderImageUsesCloudinaryFilenameWhenCloudNameIsSet(): void
+    {
+        putenv('CLOUDINARY_CLOUD_NAME=demo');
+
+        $result = $this->findHtmlPage([
+            'header_image_url' => 'https://res.cloudinary.com/undefined/image/upload/banner.gif',
+            'header_image_filename' => 'banner.gif',
+        ]);
+
+        putenv('CLOUDINARY_CLOUD_NAME');
+
+        $this->assertSame(
+            '<img src="https://res.cloudinary.com/demo/image/upload/banner.gif" alt="Top 224 of 2024" width="685">',
+            $result['title']
+        );
+        $this->assertArrayNotHasKey('header_image_filename', $result);
+    }
+
+    public function testHeaderImageAltIsThePageTitleNotTheStaleMediaAlt(): void
+    {
+        $result = $this->findHtmlPage([
+            'title' => 'Rock & Roll',
+            'header_image_url' => 'https://res.cloudinary.com/x/banner.gif',
+            'header_image_alt' => 'logo',
+        ]);
+
+        $this->assertStringContainsString('alt="Rock &amp; Roll"', $result['title']);
+        $this->assertStringNotContainsString('logo', $result['title']);
+    }
+
+    public function testCenterTitleWrapsTextAndBannerHeadings(): void
+    {
+        $text = $this->findHtmlPage(['center_title' => true]);
+        $this->assertSame('<center>Top 224 of 2024</center>', $text['title']);
+    }
+
+    public function testPlainTitlesAreEscaped(): void
+    {
+        $plain = $this->findHtmlPage(['title' => 'Rock & Roll <3, We\'re Back']);
+        $this->assertSame('Rock &amp; Roll &lt;3, We\'re Back', $plain['title']);
+    }
+
+    public function testLegacyHtmlTitlesPassThrough(): void
+    {
+        $legacy = $this->findHtmlPage(['title' => '<img src="https://i.imgur.com/a.png" width="685">']);
+        $this->assertSame('<img src="https://i.imgur.com/a.png" width="685">', $legacy['title']);
     }
 
     public function testFindByPermalinkReturnsNullWhenNotFound(): void
@@ -145,6 +244,63 @@ class PostgresCustomTextTest extends TestCase
 
         $this->assertStringContainsString('<img src="https://i.imgur.com/1QIvI46.png"', $result['title']);
         $this->assertStringContainsString('font-size: small', $result['html']);
+    }
+
+    public function testHtmlModePagesAreRenderedVerbatim(): void
+    {
+        $rawHtml = '<div class="episodes"><iframe src="https://mixcloud.com/x"></iframe>'
+            . '<table><tr><td>1</td></tr></table></div>';
+        $row = [
+            'id' => 11,
+            'permalink' => 'rodney-anonymous',
+            'title' => 'Rodney Anonymous',
+            'html' => null,
+            'content_html' => $rawHtml,
+            'content_type' => 'html',
+            'legacy_id' => 143,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('rodney-anonymous');
+
+        // Raw HTML comes through untouched — no Lexical conversion, no escaping.
+        $this->assertSame($rawHtml, $result['html']);
+        // Intermediate columns are not leaked into the legacy output shape.
+        $this->assertArrayNotHasKey('content_html', $result);
+        $this->assertArrayNotHasKey('content_type', $result);
+    }
+
+    public function testHtmlModeSkipsLegacyPerPageFixups(): void
+    {
+        // future-friday gets an image-title + table-CSS fix-up on the lossy
+        // Lexical path. In HTML mode the raw blob already carries the real
+        // content, so that fix-up must NOT be applied.
+        $rawHtml = '<h2>This week\'s playlist</h2><table><tr><td>Song</td></tr></table>';
+        $row = [
+            'id' => 8,
+            'permalink' => 'future-friday',
+            'title' => 'Future Friday',
+            'html' => null,
+            'content_html' => $rawHtml,
+            'content_type' => 'html',
+            'legacy_id' => 18,
+        ];
+
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn($row);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $result = $this->customText->findByPermalink('future-friday');
+
+        $this->assertSame('Future Friday', $result['title']);
+        $this->assertStringNotContainsString('i.imgur.com', $result['title']);
+        $this->assertStringNotContainsString('font-size: small', $result['html']);
+        $this->assertSame($rawHtml, $result['html']);
     }
 
     public function testWritesAreDisabled(): void

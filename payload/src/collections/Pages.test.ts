@@ -106,10 +106,89 @@ describe('Pages', () => {
     expect(headerImageField?.required).toBeFalsy();
   });
 
+  it('has centerTitle as a checkbox defaulting to false', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const centerTitleField = fields.find((f) => f.name === 'centerTitle') as {
+      type?: string;
+      defaultValue?: boolean;
+    };
+    expect(centerTitleField?.type).toBe('checkbox');
+    expect(centerTitleField?.defaultValue).toBe(false);
+  });
+
+  it('labels the HTML body "Content HTML" and uses the auto-height editor', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      label?: string;
+      admin?: { components?: { Field?: string } };
+    };
+    expect(contentHtmlField?.label).toBe('Content HTML');
+    expect(contentHtmlField?.admin?.components?.Field).toContain('AutoHeightCodeField');
+  });
+
   it('has content as a richText field', () => {
     const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
     const contentField = fields.find((f) => f.name === 'content');
     expect(contentField?.type).toBe('richText');
+  });
+
+  it('has contentType as a required select defaulting to HTML', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentTypeField = fields.find((f) => f.name === 'contentType') as {
+      type?: string;
+      required?: boolean;
+      defaultValue?: string;
+      options?: { value: string }[];
+    };
+    expect(contentTypeField?.type).toBe('select');
+    expect(contentTypeField?.required).toBe(true);
+    expect(contentTypeField?.defaultValue).toBe('html');
+    expect(contentTypeField?.options?.map((o) => o.value)).toEqual(['html', 'richText']);
+  });
+
+  it('has contentHtml as an HTML code field shown for html (and untyped) pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      type?: string;
+      admin?: { language?: string; condition?: (data: unknown) => boolean };
+    };
+    expect(contentHtmlField?.type).toBe('code');
+    expect(contentHtmlField?.admin?.language).toBe('html');
+
+    const { condition } = contentHtmlField!.admin!;
+    expect(condition!({ contentType: 'html' })).toBe(true);
+    expect(condition!({})).toBe(true); // new page, defaults to HTML
+    expect(condition!({ contentType: 'richText' })).toBe(false);
+  });
+
+  it('shows the richText content field only for richText pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentField = fields.find((f) => f.name === 'content') as {
+      admin?: { condition?: (data: unknown) => boolean };
+    };
+    const { condition } = contentField!.admin!;
+    expect(condition!({ contentType: 'richText' })).toBe(true);
+    expect(condition!({ contentType: 'html' })).toBe(false);
+    expect(condition!({})).toBe(false);
+  });
+
+  it('blocks an empty contentHtml body on html (and untyped) pages but not richText pages', () => {
+    const fields = flattenRowFields(Pages.fields as Record<string, unknown>[]);
+    const contentHtmlField = fields.find((f) => f.name === 'contentHtml') as {
+      validate?: (value: unknown, args: { data?: { contentType?: string } }) => string | true;
+    };
+    const { validate } = contentHtmlField!;
+
+    expect(validate!('', { data: { contentType: 'html' } })).toMatch(/empty/);
+    expect(validate!(null, { data: { contentType: 'html' } })).toMatch(/empty/);
+    expect(validate!(undefined, { data: {} })).toMatch(/empty/); // untyped defaults to html
+    expect(validate!('   ', { data: { contentType: 'html' } })).toMatch(/empty/);
+
+    expect(validate!('<iframe src="https://x"></iframe>', { data: { contentType: 'html' } })).toBe(
+      true,
+    );
+    // Hidden on richText pages — an absent contentHtml must not block those saves.
+    expect(validate!(undefined, { data: { contentType: 'richText' } })).toBe(true);
   });
 
   it('configures content field editor with the full custom-text feature set', () => {

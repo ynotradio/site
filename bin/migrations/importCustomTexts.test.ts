@@ -410,6 +410,107 @@ describe('importCustomTexts', () => {
       expect(callData.title).toBe('Top221of2021');
     });
 
+    it('should import as raw HTML verbatim when rawHtml is true (no Lexical conversion)', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-rodney' });
+
+      const rawBlob = '<div class="episodes"><iframe src="https://mixcloud.com/x"></iframe></div>';
+      const customText: CustomText = {
+        id: 8,
+        title: 'Rodney Anonymous',
+        html: rawBlob,
+        permalink: 'rodney-anonymous',
+        status: 'active',
+      };
+
+      const result = await importCustomText(mockPayload as Payload, customText, true);
+
+      expect(result).toBe('success');
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('html');
+      expect(callData.contentHtml).toBe(rawBlob);
+      expect(callData).not.toHaveProperty('content');
+      // Raw mode skips the converter and its image-import side effects entirely.
+      expect(mockConvertHtmlToLexicalEnhanced).not.toHaveBeenCalled();
+      expect(mockResolveImageUploads).not.toHaveBeenCalled();
+    });
+
+    it('should tag Lexical imports with contentType "richText"', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-donate' });
+
+      const customText: CustomText = {
+        id: 5,
+        title: 'Support Y-Not Radio',
+        html: '<p>Donate!</p>',
+        permalink: 'donate',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.contentType).toBe('richText');
+      expect(callData).not.toHaveProperty('contentHtml');
+      expect(callData.content).toBeDefined();
+    });
+
+    it('should turn a banner <img> title into a plain title plus headerImage in raw-HTML mode', async () => {
+      mockImportImageFromUrl.mockResolvedValue({
+        success: true,
+        mediaId: 'media-banner-123',
+      });
+
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-top225' });
+
+      const bannerTitle = '<img src="https://i.imgur.com/U7gvgiH.gif" width="685">';
+      const customText: CustomText = {
+        id: 71,
+        title: bannerTitle,
+        html: '<table><tr><td>Song</td></tr></table>',
+        permalink: 'top225of2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe('Top 225 of 2025');
+      expect(callData.headerImage).toBe('media-banner-123');
+      expect(callData).not.toHaveProperty('centerTitle');
+    });
+
+    it('should turn a <center> title into plain text plus centerTitle in raw-HTML mode', async () => {
+      const { importCustomText } = await import('./importCustomTexts');
+
+      (mockPayload.find as Mock).mockResolvedValue({ totalDocs: 0, docs: [] });
+      (mockPayload.create as Mock).mockResolvedValue({ id: 'page-sessions25' });
+
+      const centerTitle = '<center>Y-Not Sessions 2025</center>';
+      const customText: CustomText = {
+        id: 73,
+        title: centerTitle,
+        html: '<p>Sessions info</p>',
+        permalink: 'ynotsessions2025',
+        status: 'active',
+      };
+
+      await importCustomText(mockPayload as Payload, customText, true);
+
+      const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
+      expect(callData.title).toBe('Y-Not Sessions 2025');
+      expect(callData.centerTitle).toBe(true);
+      expect(callData).not.toHaveProperty('headerImage');
+      expect(mockImportImageFromUrl).not.toHaveBeenCalled();
+    });
+
     it('should not attempt an image import when title HTML has no <img>', async () => {
       const { importCustomText } = await import('./importCustomTexts');
 
@@ -429,6 +530,33 @@ describe('importCustomTexts', () => {
       expect(mockImportImageFromUrl).not.toHaveBeenCalled();
       const callData = (mockPayload.create as Mock).mock.calls[0][0].data;
       expect(callData).not.toHaveProperty('headerImage');
+    });
+  });
+
+  describe('titleFromPermalink', () => {
+    it.each([
+      ['top224of2024', 'Top 224 of 2024'],
+      ['top1000', 'Top 1000'],
+      ['yearendpoll2025', 'Year End Poll 2025'],
+      ['ynotsessions2024', 'Y-Not Sessions 2024'],
+      ['future-friday', 'Future Friday'],
+      ['modern-rock-madness-draft', 'Modern Rock Madness Draft'],
+    ])('%s -> %s', async (permalink, expected) => {
+      const { titleFromPermalink } = await import('./importCustomTexts');
+      expect(titleFromPermalink(permalink)).toBe(expected);
+    });
+  });
+
+  describe('plainTitleFor', () => {
+    it('keeps text from a tagged title and falls back to the permalink for image-only titles', async () => {
+      const { plainTitleFor } = await import('./importCustomTexts');
+      expect(plainTitleFor('<center>Y-Not Sessions 2025</center>', 'ynotsessions2025', 73)).toBe(
+        'Y-Not Sessions 2025',
+      );
+      expect(plainTitleFor('<img src="https://i.imgur.com/a.png">', 'top1000', 12)).toBe('Top 1000');
+      expect(plainTitleFor('<img src="https://i.imgur.com/a.png">', undefined, 12)).toBe(
+        'Custom Text 12',
+      );
     });
   });
 });

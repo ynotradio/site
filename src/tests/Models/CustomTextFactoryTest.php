@@ -39,6 +39,17 @@ class CustomTextFactoryTest extends TestCase
         putenv('USE_POSTGRES_CUSTOMTEXT');
     }
 
+    public function testNonAllowlistedPermalinkKeepsSqlCustomText(): void
+    {
+        // With no flags set, a permalink that isn't on the per-permalink
+        // allowlist still resolves to MySQL. (The Postgres branch needs a live
+        // connection, so only the MySQL path is asserted here.)
+        $db = $this->createMock(\mysqli::class);
+        $model = CustomTextFactory::create($db, 'contests');
+
+        $this->assertInstanceOf(SqlCustomText::class, $model);
+    }
+
     public function testControlPanelRequestForcesSqlCustomText(): void
     {
         // Even with the flag enabled, /cp routes must resolve to MySQL so the

@@ -12,7 +12,7 @@ require ("partials/_header.php");
 <div class="row">  <div class="nine columns content">
     <?php
       $db = open_db();
-      $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db);
+      $customTextModel = \YNotRadio\Models\CustomTextFactory::create($db, 'shows');
       $custom_text = $customTextModel->findByPermalink('shows');
       echo "<h1>".$custom_text['title']."</h1>" .
       $custom_text['html'];

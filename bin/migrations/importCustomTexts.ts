@@ -22,6 +22,12 @@ const logger = createLogger('CustomTextsImport');
 
 interface ImportOptions {
   env: 'dev' | 'prod';
+  // When true, import each custom_text as a raw-HTML page (contentType 'html',
+  // the blob stored verbatim in contentHtml) instead of converting it to
+  // Lexical — the lossless path for the embed/table/form-heavy legacy pages the
+  // HTML->Lexical->HTML round-trip mangled. See
+  // docs/payload-migration/15-custom-text-strategy.md.
+  rawHtml: boolean;
 }
 
 interface ImportStats {
@@ -31,12 +37,46 @@ interface ImportStats {
   errors: number;
 }
 
+const PERMALINK_TITLE_PREFIXES: Record<string, string> = {
+  yearendpoll: 'Year End Poll',
+  ynotsessions: 'Y-Not Sessions',
+};
+
+// "top224of2024" -> "Top 224 of 2024", "yearendpoll2025" -> "Year End Poll 2025"
+export function titleFromPermalink(permalink: string): string {
+  const words = permalink
+    .replace(/([a-z])(\d)/gi, '$1 $2')
+    .replace(/(\d)([a-z])/gi, '$1 $2')
+    .split(/[-\s]+/)
+    .filter(Boolean);
+
+  return words
+    .map((word, index) => {
+      if (PERMALINK_TITLE_PREFIXES[word]) return PERMALINK_TITLE_PREFIXES[word];
+      if (index > 0 && word === 'of') return word;
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(' ');
+}
+
+// Legacy titles can be HTML: a banner <img> (no text) or `<center>Text</center>`.
+export function plainTitleFor(
+  legacyTitle: string,
+  permalink: string | undefined,
+  id: number,
+): string {
+  const text = legacyTitle.replace(/<[^>]*>/g, '').trim();
+  if (text) return text;
+  return permalink ? titleFromPermalink(permalink) : `Custom Text ${id}`;
+}
+
 /**
  * Import a single custom_text as a post
  */
 async function importCustomText(
   payload: any,
   customText: CustomText,
+  rawHtml = false,
 ): Promise<'success' | 'skipped' | 'error'> {
   const legacyId = customText.id;
 
@@ -55,10 +95,11 @@ async function importCustomText(
     // Generate proper title from permalink if title is HTML
     let { title } = customText;
     let headerImage: string | undefined;
+    let centerTitle = false;
     if (title && title.trim().startsWith('<')) {
       // Title is HTML — usually a stylized banner <img> used in place of a
       // real heading. Extract and import that image as the page's headerImage
-      // so the banner isn't lost, then fall back to a readable text title.
+      // (admin-side banner; the legacy front end renders it from the title).
       const imgMatch = title.match(/<img[^>]+src=["']([^"']+)["']/i);
       if (imgMatch) {
         const [, imageUrl] = imgMatch;
@@ -74,74 +115,122 @@ async function importCustomText(
         }
       }
 
-      if (customText.permalink) {
+      if (rawHtml) {
+        // The banner <img> becomes headerImage and a `<center>` wrapper becomes
+        // centerTitle; pages.php rebuilds the same <h1> from those fields.
+        title = plainTitleFor(customText.title, customText.permalink, customText.id);
+        centerTitle = /^\s*<center[\s>]/i.test(customText.title);
+        logger.info(`  Converted HTML title to: "${title}"${centerTitle ? ' (centered)' : ''}`);
+      } else if (customText.permalink) {
         // Convert permalink to title case: "top220of2020" -> "Top 220 Of 2020"
         title = customText.permalink
           .split('-')
           .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(' ');
+        logger.info(`  Converted HTML title to: "${title}"`);
       } else {
         title = `Custom Text ${customText.id}`;
+        logger.info(`  Converted HTML title to: "${title}"`);
       }
-      logger.info(`  Converted HTML title to: "${title}"`);
     }
 
-    // Convert HTML content to Lexical format using enhanced converter
+    // Raw-HTML mode stores the legacy blob verbatim, skipping the
+    // HTML->Lexical conversion and its image-import side effects entirely.
+    // Before any charset normalization, run verifyCustomTextCharset.ts — it
+    // classifies the actual stored bytes per row instead of assuming.
     let content;
-    try {
-      content = convertHtmlToLexicalEnhanced(customText.html || '');
+    let contentHtml: string | undefined;
+    if (rawHtml) {
+      contentHtml = customText.html || '';
+    } else {
+    // Convert HTML content to Lexical format using enhanced converter
+      try {
+        content = convertHtmlToLexicalEnhanced(customText.html || '');
 
-      // Check if content is empty or just has empty paragraph. This must run
-      // BEFORE resolving image uploads below — otherwise a body that's
-      // entirely an image (a banner <img>, a show-directory grid, etc.) looks
-      // empty if every image import fails and gets replaced with the
-      // "(No content available)" fallback, silently discarding pages that
-      // had real (if unmigrated) content.
-      const hasContent = content.root.children.some((child: any) => {
-        if (child.type === 'paragraph') {
-          return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
+        // Check if content is empty or just has empty paragraph. This must run
+        // BEFORE resolving image uploads below — otherwise a body that's
+        // entirely an image (a banner <img>, a show-directory grid, etc.) looks
+        // empty if every image import fails and gets replaced with the
+        // "(No content available)" fallback, silently discarding pages that
+        // had real (if unmigrated) content.
+        const hasContent = content.root.children.some((child: any) => {
+          if (child.type === 'paragraph') {
+            return child.children.some((textNode: any) => textNode.text && textNode.text.trim());
+          }
+          return true;
+        });
+
+        // Download and upload each inline <img> to Media/Cloudinary via the
+        // same importImageFromUrl helper the headerImage import uses, turning
+        // the converter's placeholder upload nodes into real Media references.
+        // Images that fail to import are dropped rather than left broken.
+        content = await resolveImageUploads(payload, content);
+
+        // An image-only body has real content (hasContent === true) but ends
+        // up with zero children if every image failed to import — Payload's
+        // rich-text field needs at least one block, so leave a note rather
+        // than an empty root.
+        if (hasContent && content.root.children.length === 0) {
+          logger.warn(
+            `  Custom text ${customText.id} had only image content, which failed to import`,
+          );
+          content.root.children = [
+            {
+              type: 'paragraph',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'text',
+                  text: '(Image content failed to import)',
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  detail: 0,
+                  version: 1,
+                },
+              ],
+              direction: 'ltr',
+            },
+          ];
         }
-        return true;
-      });
 
-      // Download and upload each inline <img> to Media/Cloudinary via the
-      // same importImageFromUrl helper the headerImage import uses, turning
-      // the converter's placeholder upload nodes into real Media references.
-      // Images that fail to import are dropped rather than left broken.
-      content = await resolveImageUploads(payload, content);
-
-      // An image-only body has real content (hasContent === true) but ends
-      // up with zero children if every image failed to import — Payload's
-      // rich-text field needs at least one block, so leave a note rather
-      // than an empty root.
-      if (hasContent && content.root.children.length === 0) {
-        logger.warn(
-          `  Custom text ${customText.id} had only image content, which failed to import`,
-        );
-        content.root.children = [
-          {
-            type: 'paragraph',
-            format: '',
-            indent: 0,
-            version: 1,
-            children: [
-              {
-                type: 'text',
-                text: '(Image content failed to import)',
-                format: 0,
-                mode: 'normal',
-                style: '',
-                detail: 0,
-                version: 1,
-              },
-            ],
-            direction: 'ltr',
-          },
-        ];
-      }
-
-      if (!hasContent) {
-        logger.warn(`  Custom text ${customText.id} has empty content, using fallback`);
+        if (!hasContent) {
+          logger.warn(`  Custom text ${customText.id} has empty content, using fallback`);
+          content = {
+            root: {
+              type: 'root',
+              format: '',
+              indent: 0,
+              version: 1,
+              children: [
+                {
+                  type: 'paragraph',
+                  format: '',
+                  indent: 0,
+                  version: 1,
+                  children: [
+                    {
+                      type: 'text',
+                      text: '(No content available)',
+                      format: 0,
+                      mode: 'normal',
+                      style: '',
+                      detail: 0,
+                      version: 1,
+                    },
+                  ],
+                  direction: 'ltr',
+                },
+              ],
+              direction: 'ltr',
+            },
+          };
+        }
+      } catch (conversionError) {
+        logger.error(`  Error converting content for custom_text ${customText.id}:`, conversionError);
+        // Use fallback content
         content = {
           root: {
             type: 'root',
@@ -172,38 +261,6 @@ async function importCustomText(
           },
         };
       }
-    } catch (conversionError) {
-      logger.error(`  Error converting content for custom_text ${customText.id}:`, conversionError);
-      // Use fallback content
-      content = {
-        root: {
-          type: 'root',
-          format: '',
-          indent: 0,
-          version: 1,
-          children: [
-            {
-              type: 'paragraph',
-              format: '',
-              indent: 0,
-              version: 1,
-              children: [
-                {
-                  type: 'text',
-                  text: '(No content available)',
-                  format: 0,
-                  mode: 'normal',
-                  style: '',
-                  detail: 0,
-                  version: 1,
-                },
-              ],
-              direction: 'ltr',
-            },
-          ],
-          direction: 'ltr',
-        },
-      };
     }
 
     // Generate slug from permalink
@@ -211,16 +268,22 @@ async function importCustomText(
 
     const data: Record<string, unknown> = {
       title,
-      content,
       slug,
       // generateSlug: false ensures the pageSlugify hook doesn't overwrite
       // our permalink-derived slug.
       generateSlug: false,
       _status: 'published' as const,
       legacyId,
+      // Discriminator on the Pages collection (payload/src/collections/Pages.ts):
+      // 'html' pages render contentHtml verbatim; 'richText' pages convert.
+      contentType: rawHtml ? 'html' : 'richText',
+      ...(rawHtml ? { contentHtml } : { content }),
     };
     if (headerImage) {
       data.headerImage = headerImage;
+    }
+    if (centerTitle) {
+      data.centerTitle = true;
     }
 
     if (existingId !== undefined) {
@@ -286,7 +349,7 @@ async function importCustomTexts(options: ImportOptions): Promise<void> {
         );
       }
 
-      const result = await importCustomText(payload, customText);
+      const result = await importCustomText(payload, customText, options.rawHtml);
 
       if (result === 'success') {
         stats.success += 1;
@@ -338,10 +401,16 @@ if (isMainModule()) {
     .name('importCustomTexts')
     .description('Import custom_texts from MySQL to Payload CMS')
     .option('--env <environment>', 'Target environment (dev or prod)', 'dev')
+    .option(
+      '--raw-html',
+      'Import each page as raw HTML (contentType html, verbatim) instead of converting to Lexical',
+      false,
+    )
     .action(async (options) => {
       try {
         await importCustomTexts({
           env: options.env,
+          rawHtml: Boolean(options.rawHtml),
         });
         process.exit(0);
       } catch (error) {

@@ -38,6 +38,7 @@ import { TextStateFeatureClient as TextStateFeatureClient_e70f5e05f09f93e00b997e
 import { TableFeatureClient as TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { PostsListHeader as PostsListHeader_bb65c0e3a5c16be042e54d2df483005c } from '../../../payload/src/features/story-order/PostsListHeader'
+import { AutoHeightCodeField as AutoHeightCodeField_1aa46d6aa32d33d399837a233a01863d } from '../../../payload/src/components/fields/AutoHeightCodeField'
 import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
 import { Top11EntryRowLabel as Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
 import { Top11NomineeRowLabel as Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
@@ -107,6 +108,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#TableFeatureClient": TableFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#BlocksFeatureClient": BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/payload/src/features/story-order/PostsListHeader#PostsListHeader": PostsListHeader_bb65c0e3a5c16be042e54d2df483005c,
+  "/payload/src/components/fields/AutoHeightCodeField#AutoHeightCodeField": AutoHeightCodeField_1aa46d6aa32d33d399837a233a01863d,
   "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
   "/payload/src/components/Top11ArrayRowLabel#Top11EntryRowLabel": Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90,
   "/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel": Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90,
