@@ -78,7 +78,7 @@ class PostgresDeejay implements Deejay {
                 d.external_connect_url,
                 d.sort_order as sort,
                 {$photoUrlCase},
-                string_agg(p.name, ' & ' ORDER BY dr.order) as name,
+                COALESCE(NULLIF(d.display_name, ''), string_agg(p.name, ' & ' ORDER BY dr.order)) as name,
                 'no' as deleted
             FROM djs d
             LEFT JOIN djs_rels dr ON d.id = dr.parent_id AND dr.path = 'person'
@@ -87,7 +87,7 @@ class PostgresDeejay implements Deejay {
             WHERE d.id = :id 
               AND COALESCE(d.on_air, true) = true
               AND d._status = 'published'
-            GROUP BY d.id, d.email, d.description, d.external_connect_text, 
+            GROUP BY d.id, d.display_name, d.email, d.description, d.external_connect_text,
                      d.external_connect_url, d.sort_order, m.filename, m.legacy_url
         ");
         
@@ -120,7 +120,7 @@ class PostgresDeejay implements Deejay {
                 d.external_connect_url,
                 d.sort_order as sort,
                 {$photoUrlCase},
-                string_agg(p.name, ' & ' ORDER BY dr.order) as name,
+                COALESCE(NULLIF(d.display_name, ''), string_agg(p.name, ' & ' ORDER BY dr.order)) as name,
                 'no' as deleted
             FROM djs d
             LEFT JOIN djs_rels dr ON d.id = dr.parent_id AND dr.path = 'person'
@@ -128,7 +128,7 @@ class PostgresDeejay implements Deejay {
             LEFT JOIN media m ON d.photo_id = m.id
             WHERE COALESCE(d.on_air, true) = true
               AND d._status = 'published'
-            GROUP BY d.id, d.email, d.description, d.external_connect_text, 
+            GROUP BY d.id, d.display_name, d.email, d.description, d.external_connect_text,
                      d.external_connect_url, d.sort_order, m.filename, m.legacy_url
             ORDER BY d.sort_order ASC
             LIMIT :limit
