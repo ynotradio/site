@@ -1,8 +1,20 @@
 import type { CollectionConfig } from 'payload';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { hasRole, adminOnlyCondition } from '../utils/auth';
-import { generateDJDisplayName } from './hooks/displayNameHooks';
+import { generateDJDisplayName, linkPersonToDJ } from './hooks/displayNameHooks';
 import { legacyIdField } from './shared/legacyIdField';
+
+// Scripts and legacy imports create DJs with only a linked person, and the
+// beforeChange hook derives the name from them, so a name is required only
+// when there is no person to derive it from.
+export const validateDJNamePresent = (
+  value: unknown,
+  { data }: { data?: { person?: unknown } },
+): string | true => {
+  const hasName = typeof value === 'string' && value.trim() !== '';
+  const hasPerson = Array.isArray(data?.person) && data.person.length > 0;
+  return hasName || hasPerson ? true : 'Enter the DJ name.';
+};
 
 export const DJs: CollectionConfig = {
   slug: 'djs',
@@ -27,7 +39,7 @@ export const DJs: CollectionConfig = {
   },
   defaultSort: 'sortOrder',
   hooks: {
-    beforeChange: [generateDJDisplayName],
+    beforeChange: [generateDJDisplayName, linkPersonToDJ],
   },
   access: {
     read: () => true, // Public read access
@@ -38,21 +50,33 @@ export const DJs: CollectionConfig = {
   fields: [
     {
       name: 'displayName',
+      label: 'Name',
       type: 'text',
+      validate: validateDJNamePresent,
       admin: {
-        position: 'sidebar',
-        description:
-          'Shown on the website — auto-generated from linked person name(s), but can be overridden',
+        description: 'The DJ name shown on the DJ page and in the schedule.',
       },
     },
     {
-      name: 'person',
-      type: 'relationship',
-      relationTo: 'people',
-      hasMany: true,
+      type: 'collapsible',
+      label: 'Linked people (optional)',
       admin: {
-        description: 'The real person(s) behind this DJ name — select multiple for co-hosted shows',
+        initCollapsed: true,
+        description:
+          'A Person is created from the name when a new DJ is saved. Only open this to link '
+          + 'an existing person or to add co-hosts.',
       },
+      fields: [
+        {
+          name: 'person',
+          type: 'relationship',
+          relationTo: 'people',
+          hasMany: true,
+          admin: {
+            description: 'The real person(s) behind this DJ — select several for co-hosted shows',
+          },
+        },
+      ],
     },
     {
       name: 'description',
