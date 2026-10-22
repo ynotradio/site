@@ -64,6 +64,33 @@ class PostgresDeejayTest extends TestCase
     }
 
     /**
+     * The DJ's own name wins over the linked people's names, which are only a fallback
+     */
+    public function testNameQueriesPreferDisplayNameOverLinkedPeople(): void
+    {
+        $queries = [];
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->method('execute')->willReturn(true);
+        $mockStmt->method('fetch')->willReturn(false);
+        $mockStmt->method('fetchAll')->willReturn([]);
+        $this->mockDb->method('prepare')->willReturnCallback(
+            function (string $sql) use (&$queries, $mockStmt) {
+                $queries[] = $sql;
+                return $mockStmt;
+            }
+        );
+
+        $this->deejay->getById(1);
+        $this->deejay->getAll();
+
+        $this->assertCount(2, $queries);
+        foreach ($queries as $sql) {
+            $this->assertStringContainsString("COALESCE(NULLIF(d.display_name, ''), string_agg(p.name", $sql);
+            $this->assertStringContainsString('GROUP BY d.id, d.display_name', $sql);
+        }
+    }
+
+    /**
      * Test getById returns null when deejay doesn't exist
      */
     public function testGetByIdReturnsNullWhenNotFound(): void
