@@ -76,18 +76,31 @@ class PostgresCustomText implements CustomText {
                 content_type,
                 legacy_id
             FROM pages
-            WHERE slug = :permalink
+            WHERE slug IN (:permalink, :slugified)
                 AND _status = 'published'
+            ORDER BY (slug = :exact) DESC
+            LIMIT 1
         ");
-        
-        $stmt->execute(['permalink' => $permalink]);
+
+        $stmt->execute([
+            'permalink' => $permalink,
+            'exact' => $permalink,
+            'slugified' => $this->slugify($permalink),
+        ]);
         $result = $stmt->fetch();
-        
+
         if (!$result) {
             return null;
         }
-        
+
         return $this->formatResult($result);
+    }
+
+    private function slugify(string $text): string {
+        $slug = preg_replace('/[^\w\s-]+/', '', strtolower($text));
+        $slug = preg_replace('/\s+/', '-', $slug);
+        $slug = preg_replace('/-+/', '-', $slug);
+        return trim($slug, '-');
     }
 
     public function add(array $data): int {

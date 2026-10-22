@@ -82,7 +82,7 @@ class PostgresCustomTextTest extends TestCase
         $mockStmt = $this->createMock(PDOStatement::class);
         $mockStmt->expects($this->once())
             ->method('execute')
-            ->with(['permalink' => 'donate'])
+            ->with(['permalink' => 'donate', 'exact' => 'donate', 'slugified' => 'donate'])
             ->willReturn(true);
         $mockStmt->expects($this->once())->method('fetch')->willReturn($row);
         $this->mockDb->expects($this->once())->method('prepare')->willReturn($mockStmt);
@@ -93,6 +93,23 @@ class PostgresCustomTextTest extends TestCase
         $this->assertSame('donate', $result['permalink']);
         $this->assertStringContainsString('Please donate', $result['html']);
         $this->assertStringContainsString('<p>', $result['html']);
+    }
+
+    public function testFindByPermalinkFallsBackToSlugifiedLegacyPermalink(): void
+    {
+        $mockStmt = $this->createMock(PDOStatement::class);
+        $mockStmt->expects($this->once())
+            ->method('execute')
+            ->with([
+                'permalink' => 'y100:-20-years-gone',
+                'exact' => 'y100:-20-years-gone',
+                'slugified' => 'y100-20-years-gone',
+            ])
+            ->willReturn(true);
+        $mockStmt->method('fetch')->willReturn(false);
+        $this->mockDb->method('prepare')->willReturn($mockStmt);
+
+        $this->customText->findByPermalink('y100:-20-years-gone');
     }
 
     public function testFindByPermalinkReturnsNullWhenNotFound(): void
