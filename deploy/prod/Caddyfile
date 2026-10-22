@@ -1,0 +1,19 @@
+{
+	email tjnicolaides@gmail.com
+	{$CADDY_EXTRA}
+}
+
+http://www.ynotradio.net, http://ynotradio.net {
+	handle /.well-known/acme-challenge/* {
+		respond 404
+	}
+	redir https://{host}{uri} 302
+}
+
+ynotradio.net {
+	redir https://www.ynotradio.net{uri} permanent
+}
+
+www.ynotradio.net {
+	reverse_proxy apache:80
+}

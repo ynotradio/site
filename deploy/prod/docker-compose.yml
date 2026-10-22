@@ -1,0 +1,68 @@
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    environment:
+      CADDY_EXTRA: ${CADDY_EXTRA:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      - apache
+
+  apache:
+    image: httpd:2.4
+    restart: unless-stopped
+    volumes:
+      - ./apache/httpd-vhost.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf:ro
+      - ../../src:/app:ro
+    command: >
+      sh -c "for m in proxy proxy_fcgi rewrite remoteip; do echo LoadModule $${m}_module modules/mod_$${m}.so >> /usr/local/apache2/conf/httpd.conf; done &&
+             echo 'Include conf/extra/httpd-vhosts.conf' >> /usr/local/apache2/conf/httpd.conf &&
+             httpd-foreground"
+    depends_on:
+      - phpfpm
+
+  phpfpm:
+    build:
+      context: ../..
+      dockerfile: bin/docker/phpfpm/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ${YNOT_ENV_FILE:-/opt/ynot/.env}
+    volumes:
+      - ../../src:/app
+      - ./php/prod.ini:/usr/local/etc/php/conf.d/zz-prod.ini:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    env_file:
+      - ${YNOT_MYSQL_ENV_FILE:-/opt/ynot/mysql.env}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD-SHELL', 'mysqladmin ping -h localhost -p"$$MYSQL_ROOT_PASSWORD"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  composer:
+    build:
+      context: ../..
+      dockerfile: bin/docker/phpfpm/Dockerfile
+    profiles: ['tools']
+    working_dir: /app
+    volumes:
+      - ../../src:/app
+    entrypoint: ['composer']
+
+volumes:
+  caddy_data:
+  mysql_data:

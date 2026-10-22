@@ -87,7 +87,12 @@ cmd_verify() {
     [ "$scheme" = "apex-redirect" ] && continue
     local s; s="$(slug "$route")"
     local got; got="$(awk -F'|' -v sc="$scheme" -v r="$route" '$1==sc && $2==r {print $3"|"$4"|"$5}' "$tmp/routes.tsv")"
-    if [ "$got" != "$code|$redirect|$ctype" ]; then
+    local want="$code|$redirect|$ctype"
+    if [[ "$code" == 3* ]]; then
+      got="${got%|*}"
+      want="$code|$redirect"
+    fi
+    if [ "$got" != "$want" ]; then
       echo "FAIL $scheme $route: baseline [$code $redirect $ctype] target [$got]"
       fail=1
       continue

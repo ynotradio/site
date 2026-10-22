@@ -1,0 +1,24 @@
+#cloud-config
+# Paste as the user-data script when creating a Lightsail instance (Ubuntu LTS).
+# Secrets (/opt/ynot/.env, /opt/ynot/mysql.env) are added by hand afterwards; see README.md.
+package_update: true
+packages:
+  - docker.io
+  - docker-compose-v2
+  - git
+write_files:
+  - path: /opt/ynot/backup-mysql.sh
+    permissions: '0755'
+    content: |
+      #!/bin/sh
+      set -eu
+      mkdir -p /opt/ynot/backups
+      docker exec prod-mysql-1 sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --all-databases' \
+        | gzip > "/opt/ynot/backups/mysql-$(date +%F).sql.gz"
+      find /opt/ynot/backups -name 'mysql-*.sql.gz' -mtime +14 -delete
+  - path: /etc/cron.d/ynot-mysql-backup
+    content: |
+      15 3 * * * root /opt/ynot/backup-mysql.sh
+runcmd:
+  - systemctl enable --now docker
+  - git clone https://github.com/ynotradio/site.git /opt/ynot/site
