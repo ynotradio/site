@@ -7,7 +7,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Payload } from 'payload';
-import { generateDJDisplayName, generateMusicDisplayName } from './displayNameHooks';
+import {
+  generateDJDisplayName,
+  generateMusicDisplayName,
+  linkPersonToDJ,
+} from './displayNameHooks';
 
 // Helper to create a mock request object
 const createMockReq = (payload: Partial<Payload>) => ({
@@ -68,7 +72,7 @@ describe('DJs displayName beforeChange hook', () => {
       operation: 'create',
     });
 
-    expect(result.displayName).toBe('John Doe, Jane Smith');
+    expect(result.displayName).toBe('John Doe & Jane Smith');
   });
 
   it('should handle person objects instead of IDs', async () => {
@@ -85,25 +89,15 @@ describe('DJs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('John Doe');
   });
 
-  it('should generate fallback displayName when no person', async () => {
+  it('should leave displayName empty when no name and no person so validation rejects it', async () => {
     const result = await generateDJDisplayName({
       data: { id: 123 },
       req: createMockReq(mockPayload),
       operation: 'create',
     });
 
-    expect(result.displayName).toBe('DJ #123');
+    expect(result.displayName).toBeUndefined();
     expect(mockPayload.find).not.toHaveBeenCalled();
-  });
-
-  it('should generate fallback displayName for new DJ', async () => {
-    const result = await generateDJDisplayName({
-      data: {},
-      req: createMockReq(mockPayload),
-      operation: 'create',
-    });
-
-    expect(result.displayName).toBe('DJ #New');
   });
 
   it('should use fallback displayName when person IDs are given but no docs returned', async () => {
@@ -132,7 +126,7 @@ describe('DJs displayName beforeChange hook', () => {
       operation: 'create',
     });
 
-    expect(result.displayName).toBe(', Jane Smith');
+    expect(result.displayName).toBe(' & Jane Smith');
   });
 
   it('should handle person fetch error gracefully', async () => {
@@ -168,6 +162,71 @@ describe('DJs displayName beforeChange hook', () => {
 
     consoleErrorSpy.mockRestore();
     process.env.NODE_ENV = originalEnv;
+  });
+});
+
+describe('DJs linkPersonToDJ beforeChange hook', () => {
+  let mockPayload: Partial<Payload>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPayload = { find: vi.fn(), create: vi.fn() };
+  });
+
+  const run = (data: Record<string, unknown>, operation: 'create' | 'update' = 'create') => linkPersonToDJ({
+    data,
+    req: createMockReq(mockPayload),
+    operation,
+  } as never);
+
+  it('creates a person from the name when a new DJ has none linked', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({ docs: [] });
+    (mockPayload.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 7, name: 'Izzy' });
+
+    const result = await run({ displayName: 'Izzy' });
+
+    expect(mockPayload.create).toHaveBeenCalledWith(
+      expect.objectContaining({ collection: 'people', data: { name: 'Izzy' } }),
+    );
+    expect(result.person).toEqual([7]);
+  });
+
+  it('reuses a person that already has the exact name', async () => {
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockResolvedValue({
+      docs: [{ id: 3, name: 'Izzy' }],
+    });
+
+    const result = await run({ displayName: ' Izzy ' });
+
+    expect(mockPayload.create).not.toHaveBeenCalled();
+    expect(result.person).toEqual([3]);
+  });
+
+  it('leaves DJs that already have a person, and updates, alone', async () => {
+    const linked = await run({ displayName: 'Izzy', person: [1] });
+    const updated = await run({ displayName: 'Izzy' }, 'update');
+
+    expect(mockPayload.find).not.toHaveBeenCalled();
+    expect(linked.person).toEqual([1]);
+    expect(updated.person).toBeUndefined();
+  });
+
+  it('does nothing without a name', async () => {
+    const result = await run({ displayName: '  ' });
+
+    expect(mockPayload.find).not.toHaveBeenCalled();
+    expect(result.person).toBeUndefined();
+  });
+
+  it('does not block the save when linking fails', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    (mockPayload.find as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('DB error'));
+
+    const result = await run({ displayName: 'Izzy' });
+
+    expect(result.displayName).toBe('Izzy');
+    expect(result.person).toBeUndefined();
+    consoleErrorSpy.mockRestore();
   });
 });
 
