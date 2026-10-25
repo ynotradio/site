@@ -30,10 +30,10 @@ export const generateDJDisplayName: CollectionBeforeChangeHook = async ({ data, 
           console.error('Error fetching person names for DJ:', error);
         }
       }
-    }
 
-    if (!updatedData.displayName) {
-      updatedData.displayName = `DJ #${updatedData.id || 'New'}`;
+      if (!updatedData.displayName) {
+        updatedData.displayName = `DJ #${updatedData.id || 'New'}`;
+      }
     }
   }
 

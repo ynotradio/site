@@ -89,25 +89,15 @@ describe('DJs displayName beforeChange hook', () => {
     expect(result.displayName).toBe('John Doe');
   });
 
-  it('should generate fallback displayName when no person', async () => {
+  it('should leave displayName empty when no name and no person so validation rejects it', async () => {
     const result = await generateDJDisplayName({
       data: { id: 123 },
       req: createMockReq(mockPayload),
       operation: 'create',
     });
 
-    expect(result.displayName).toBe('DJ #123');
+    expect(result.displayName).toBeUndefined();
     expect(mockPayload.find).not.toHaveBeenCalled();
-  });
-
-  it('should generate fallback displayName for new DJ', async () => {
-    const result = await generateDJDisplayName({
-      data: {},
-      req: createMockReq(mockPayload),
-      operation: 'create',
-    });
-
-    expect(result.displayName).toBe('DJ #New');
   });
 
   it('should use fallback displayName when person IDs are given but no docs returned', async () => {
