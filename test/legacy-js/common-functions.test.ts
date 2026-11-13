@@ -9,12 +9,8 @@
  * legacy .live() method and will be tested with E2E Playwright tests.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
-
-// Store original globals to restore later
-const originalDocument = global.document;
-const originalOption = (global as unknown as { Option: unknown }).Option;
 
 describe('setDays', () => {
   let dom: JSDOM;
@@ -41,8 +37,8 @@ describe('setDays', () => {
       </html>
     `);
     // Replace global document and Option for the legacy function
-    global.document = dom.window.document;
-    (global as unknown as { Option: typeof Option }).Option = dom.window.Option as typeof Option;
+    vi.stubGlobal('document', dom.window.document);
+    vi.stubGlobal('Option', dom.window.Option);
 
     // Clear module cache and re-require to pick up new globals
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
@@ -51,8 +47,7 @@ describe('setDays', () => {
   });
 
   afterEach(() => {
-    global.document = originalDocument;
-    (global as unknown as { Option: unknown }).Option = originalOption;
+    vi.unstubAllGlobals();
   });
 
   it('populates 31 days for January', () => {
@@ -129,8 +124,8 @@ describe('setDays', () => {
         </body>
       </html>
     `);
-    global.document = newDom.window.document;
-    (global as unknown as { Option: typeof Option }).Option = newDom.window.Option as typeof Option;
+    vi.stubGlobal('document', newDom.window.document);
+    vi.stubGlobal('Option', newDom.window.Option);
 
     // Clear cache and re-import
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
@@ -172,7 +167,7 @@ describe('checkForm', () => {
       </html>
     `);
     // Replace global document for the legacy function
-    global.document = dom.window.document;
+    vi.stubGlobal('document', dom.window.document);
 
     // Clear module cache and re-require to pick up new globals
     delete require.cache[require.resolve('../../src/js/common_functions.js')];
@@ -181,7 +176,7 @@ describe('checkForm', () => {
   });
 
   afterEach(() => {
-    global.document = originalDocument;
+    vi.unstubAllGlobals();
   });
 
   it('concatenates date fields into birthday input', () => {

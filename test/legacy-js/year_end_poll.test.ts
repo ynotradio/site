@@ -11,7 +11,7 @@
  * See yr_end_poll.test.ts for tests of yr_end_poll.js (with underscore).
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires, import/extensions
@@ -34,17 +34,13 @@ function setupDom(html: string): void {
   });
 
   // Set up globals for jQuery
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).window = dom.window;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).document = dom.window.document;
+  vi.stubGlobal('window', dom.window);
+  vi.stubGlobal('document', dom.window.document);
 
   // Load jQuery into the jsdom window using the factory pattern (jQuery 4.x)
   $ = jQueryFactory(dom.window);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).$ = $;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (global as any).jQuery = $;
+  vi.stubGlobal('$', $);
+  vi.stubGlobal('jQuery', $);
 
   // Create wrapper functions that use the test's jQuery instance
   enableSubmit = function enableSubmitWrapper() {
@@ -103,15 +99,7 @@ function setupDom(html: string): void {
 }
 
 function teardownDom(): void {
-  // Clean up globals
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (global as any).window;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (global as any).document;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (global as any).$;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  delete (global as any).jQuery;
+  vi.unstubAllGlobals();
 }
 
 describe('enableSubmit', () => {

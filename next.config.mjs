@@ -2,10 +2,10 @@ import { withPayload } from '@payloadcms/next/withPayload';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Experimental features required by Payload
-  experimental: {
-    reactCompiler: false,
-  },
+  // Payload does not support the React Compiler yet
+  reactCompiler: false,
+  // Stop `next dev` from writing an agent-rules block into AGENTS.md
+  agentRules: false,
   // Use build-specific tsconfig that excludes bin directory.
   // ignoreBuildErrors: payload-types.ts is generated at runtime and may not
   // exist during Docker image builds. TypeScript is checked separately by CI.
