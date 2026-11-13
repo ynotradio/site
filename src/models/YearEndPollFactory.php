@@ -5,7 +5,6 @@ namespace YNotRadio\Models;
 require_once(__DIR__ . "/YearEndPoll.php");
 require_once(__DIR__ . "/implementations/SqlYearEndPoll.php");
 require_once(__DIR__ . "/implementations/PostgresYearEndPoll.php");
-require_once(__DIR__ . "/FeatureManager.php");
 require_once(__DIR__ . "/../lib/Database.php");
 
 use YNotRadio\Models\Implementations\PostgresYearEndPoll;
@@ -15,15 +14,15 @@ use YNotRadio\Lib\Database;
 class YearEndPollFactory
 {
     /**
-     * Postgres when `use_postgres_yearendpoll` is on. The legacy CP screens
-     * always get MySQL because FeatureManager suppresses use_postgres_* on /cp.
+     * The legacy /cp screens pass a MySQL connection and read past polls from
+     * MySQL until #933 removes them; everything else reads Payload's Postgres.
      */
     public static function create(?\mysqli $db = null): YearEndPoll
     {
-        if (FeatureManager::isEnabled('use_postgres_yearendpoll')) {
-            return new PostgresYearEndPoll(Database::getPostgres());
+        if ($db instanceof \mysqli) {
+            return new SqlYearEndPoll($db);
         }
 
-        return new SqlYearEndPoll($db);
+        return new PostgresYearEndPoll(Database::getPostgres());
     }
 }
