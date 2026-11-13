@@ -66,18 +66,23 @@ test.describe('Year End Poll', () => {
 
       await captureScreenshot(page, testInfo, 'poll-dashboard');
 
-      await expect(page.getByRole('link', { name: 'songs' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'albums' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'artists' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'concerts' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'new artists' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'philly artists' })).toBeVisible();
+      const categories = [
+        'songs',
+        'albums',
+        'artists',
+        'concerts',
+        'new artists',
+        'philly artists',
+        'tv dramas',
+        'tv comedies',
+        'best movies',
+        'worst movies',
+        'unnecessary sequels',
+      ];
+      await Promise.all(
+        categories.map((name) => expect(page.getByRole('link', { name, exact: true })).toBeVisible()),
+      );
       await expect(page.getByRole('link', { name: /most anticipated/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'tv dramas' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'tv comedies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'best movies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'worst movies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'unnecessary sequels' })).toBeVisible();
     });
 
     test('albums voting form is visible when category selected', async ({ page }, testInfo) => {
@@ -158,9 +163,8 @@ test.describe('Year End Poll', () => {
     test('write-in field is disabled until checkbox is checked', async ({ page }) => {
       await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=songs`);
 
-      const writeInArea = page.locator('.control-group:has(.form-other)');
-      const writeInCheckbox = writeInArea.locator('input[type="checkbox"]');
-      const writeInField = writeInArea.locator('input[type="text"]');
+      const writeInCheckbox = page.locator('#song_write_in');
+      const writeInField = page.locator('#write_in_value');
 
       const hasWriteIn = (await writeInCheckbox.count()) > 0;
       test.skip(!hasWriteIn, 'This poll category does not have write-in option');
