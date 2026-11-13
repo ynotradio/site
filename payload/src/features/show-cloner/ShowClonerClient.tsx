@@ -38,7 +38,7 @@ export const ShowClonerClient: React.FC = () => {
   useEffect(() => {
     setStepNav([
       {
-        label: 'Shows',
+        label: 'Schedule',
         url: '/admin/collections/shows',
       },
       {
@@ -51,9 +51,8 @@ export const ShowClonerClient: React.FC = () => {
     loadShows();
   }, [loadShows]);
 
-  const selectedRangeShows = (sourceStartDate && sourceEndDate)
-    ? getShowsInRange(shows, sourceStartDate, sourceEndDate)
-    : [];
+  const hasRange = sourceStartDate && sourceEndDate;
+  const selectedRangeShows = hasRange ? getShowsInRange(shows, sourceStartDate, sourceEndDate) : [];
 
   const selectedRangeDateGroups = groupShowsByDate(selectedRangeShows);
 

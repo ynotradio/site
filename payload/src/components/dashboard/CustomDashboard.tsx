@@ -40,7 +40,7 @@ const PRIMARY_COLLECTIONS = [
   },
   {
     slug: 'shows',
-    label: 'Shows',
+    label: 'Schedule',
     icon: '📻',
     description: 'Build the weekly schedule. Use Show Cloner to copy a week to new dates.',
     tool: { href: '/admin/show-cloner', label: 'Clone' },

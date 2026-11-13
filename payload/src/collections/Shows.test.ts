@@ -8,6 +8,10 @@ describe('Shows', () => {
     expect(Shows.slug).toBe('shows');
   });
 
+  it('is labeled Schedule in the admin', () => {
+    expect(Shows.labels).toEqual({ singular: 'Show', plural: 'Schedule' });
+  });
+
   it('uses date as admin title', () => {
     expect(Shows.admin?.useAsTitle).toBe('date');
   });

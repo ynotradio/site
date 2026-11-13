@@ -9,7 +9,7 @@ export const Shows: CollectionConfig = {
   enableQueryPresets: true,
   labels: {
     singular: 'Show',
-    plural: 'Shows',
+    plural: 'Schedule',
   },
   admin: {
     useAsTitle: 'date',

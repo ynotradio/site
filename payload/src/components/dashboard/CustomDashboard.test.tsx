@@ -111,7 +111,7 @@ describe('CustomDashboard', () => {
       expect(screen.getByText('CD of the Week')).toBeInTheDocument();
       expect(screen.getByText('Concerts')).toBeInTheDocument();
       expect(screen.getByText('On Demand')).toBeInTheDocument();
-      expect(screen.getByText('Shows')).toBeInTheDocument();
+      expect(screen.getByText('Schedule')).toBeInTheDocument();
       expect(screen.getByText('DJs')).toBeInTheDocument();
       expect(screen.getByText('Top 11')).toBeInTheDocument();
       expect(screen.getByText('Pages')).toBeInTheDocument();
