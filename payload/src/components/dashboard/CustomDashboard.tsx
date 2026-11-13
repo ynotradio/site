@@ -40,7 +40,7 @@ const PRIMARY_COLLECTIONS = [
   },
   {
     slug: 'shows',
-    label: 'Shows',
+    label: 'Schedule',
     icon: '📻',
     description: 'Build the weekly schedule. Use Show Cloner to copy a week to new dates.',
     tool: { href: '/admin/show-cloner', label: 'Clone' },
@@ -57,6 +57,12 @@ const PRIMARY_COLLECTIONS = [
     label: 'Top 11',
     icon: '🎶',
     description: 'Run the weekly Top 11 contest: open voting, pick a winner, publish results.',
+  },
+  {
+    slug: 'pages',
+    label: 'Pages',
+    icon: '📄',
+    description: 'Edit custom pages like Donate and Contests. Add an optional header image.',
   },
 ] as const;
 

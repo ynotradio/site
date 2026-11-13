@@ -103,7 +103,7 @@ describe('CustomDashboard', () => {
   });
 
   describe('primary collections', () => {
-    it('renders all 8 primary collection cards', () => {
+    it('renders all 9 primary collection cards', () => {
       render(<CustomDashboard />);
 
       expect(screen.getByText('Posts')).toBeInTheDocument();
@@ -111,9 +111,10 @@ describe('CustomDashboard', () => {
       expect(screen.getByText('CD of the Week')).toBeInTheDocument();
       expect(screen.getByText('Concerts')).toBeInTheDocument();
       expect(screen.getByText('On Demand')).toBeInTheDocument();
-      expect(screen.getByText('Shows')).toBeInTheDocument();
+      expect(screen.getByText('Schedule')).toBeInTheDocument();
       expect(screen.getByText('DJs')).toBeInTheDocument();
       expect(screen.getByText('Top 11')).toBeInTheDocument();
+      expect(screen.getByText('Pages')).toBeInTheDocument();
     });
 
     it('renders primary collection descriptions', () => {
@@ -173,7 +174,7 @@ describe('CustomDashboard', () => {
     it('applies correct CSS classes to primary cards', () => {
       const { container } = render(<CustomDashboard />);
       const primaryCards = container.querySelectorAll('.primary-card');
-      expect(primaryCards).toHaveLength(8);
+      expect(primaryCards).toHaveLength(9);
     });
   });
 
@@ -181,8 +182,8 @@ describe('CustomDashboard', () => {
     it('renders View All and Add New links for each primary collection', () => {
       render(<CustomDashboard />);
 
-      expect(screen.getAllByText('View All')).toHaveLength(8);
-      expect(screen.getAllByText('+ Add New')).toHaveLength(8);
+      expect(screen.getAllByText('View All')).toHaveLength(9);
+      expect(screen.getAllByText('+ Add New')).toHaveLength(9);
     });
 
     it('generates correct View All href for each collection', () => {
@@ -198,6 +199,7 @@ describe('CustomDashboard', () => {
         'shows',
         'djs',
         'top11-contests',
+        'pages',
       ];
 
       viewAllLinks.forEach((link, i) => {
@@ -218,6 +220,7 @@ describe('CustomDashboard', () => {
         'shows',
         'djs',
         'top11-contests',
+        'pages',
       ];
 
       addNewLinks.forEach((link, i) => {
