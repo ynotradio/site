@@ -22,6 +22,25 @@ describe('parsePickLine', () => {
     });
   });
 
+  it('tolerates hand-typed quote mistakes from the legacy lists', () => {
+    expect(parsePickLine('Fat Dog ""Pray to That"')).toEqual({
+      artist: 'Fat Dog',
+      title: 'Pray to That',
+    });
+    expect(parsePickLine('Psychedelic Porn Crumpets “Incubator (V2000)')).toEqual({
+      artist: 'Psychedelic Porn Crumpets',
+      title: 'Incubator (V2000)',
+    });
+    expect(parsePickLine('Jay Som "Float" (ft. Jim Atkins)')).toEqual({
+      artist: 'Jay Som',
+      title: 'Float (ft. Jim Atkins)',
+    });
+    expect(parsePickLine('Garbage "The "Real" One"')).toEqual({
+      artist: 'Garbage',
+      title: 'The "Real" One',
+    });
+  });
+
   it('reads Artist - Title and strips list numbering', () => {
     expect(parsePickLine('3. Wet Leg - moisturizer')).toEqual({
       artist: 'Wet Leg',

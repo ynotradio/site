@@ -2,9 +2,14 @@ import type { CollectionBeforeChangeHook } from 'payload';
 
 export type Pick = { artist: string; title: string };
 
+const QUOTES = /["“”]/;
+const stripQuotes = (text: string) => text.replace(/^["“”\s]+|["“”\s]+$/g, '');
+
 /**
  * Parses `Artist "Title"` (the legacy song format) or `Artist - Title`.
- * A line with neither is kept whole as the title.
+ * A line with neither is kept whole as the title. Hand-typed legacy lists
+ * have doubled, unclosed and mid-line quotes (`Jay Som "Float" (ft. X)`),
+ * so the title runs from the first quote to the end, minus quote marks.
  */
 export const parsePickLine = (line: string): Pick | null => {
   const text = line
@@ -13,8 +18,13 @@ export const parsePickLine = (line: string): Pick | null => {
     .trim();
   if (!text) return null;
 
-  const quoted = text.match(/^(.*?)\s*[“"](.+)[”"]$/);
-  if (quoted && quoted[1]) return { artist: quoted[1].trim(), title: quoted[2].trim() };
+  const quote = text.search(QUOTES);
+  if (quote > 0) {
+    const rest = text.slice(quote);
+    const close = Math.max(rest.lastIndexOf('"'), rest.lastIndexOf('”'), rest.lastIndexOf('“'));
+    const title = close > 0 ? `${rest.slice(0, close)} ${rest.slice(close + 1)}` : rest;
+    return { artist: text.slice(0, quote).trim(), title: stripQuotes(title).replace(/\s+/g, ' ') };
+  }
 
   const dash = text.indexOf(' - ');
   if (dash > 0) return { artist: text.slice(0, dash).trim(), title: text.slice(dash + 3).trim() };

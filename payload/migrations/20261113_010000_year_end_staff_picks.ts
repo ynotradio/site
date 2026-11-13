@@ -33,7 +33,7 @@ const statementsUp = [
       "show_name" varchar,
       "sort_order" numeric DEFAULT 100,
       "details" varchar,
-      "mixcloud_url" varchar,
+      "mixcloud_urls" varchar,
       "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
       "created_at" timestamp(3) with time zone DEFAULT now() NOT NULL
     );

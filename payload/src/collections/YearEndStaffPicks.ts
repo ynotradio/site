@@ -108,9 +108,12 @@ export const YearEndStaffPicks: CollectionConfig = {
       admin: { description: 'Role and time slot, one per line (e.g. "Music Director").' },
     },
     {
-      name: 'mixcloudUrl',
-      type: 'text',
-      admin: { description: 'Their best-of show on Mixcloud, shown as a mini player.' },
+      name: 'mixcloudUrls',
+      type: 'textarea',
+      admin: {
+        description:
+          'Mixcloud show links, one per line (best-of show first). Each shows as a mini player.',
+      },
     },
     ...pickList('songs', 'Song'),
     ...pickList('albums', 'Album'),
