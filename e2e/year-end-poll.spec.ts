@@ -34,12 +34,14 @@ test.describe('Year End Poll', () => {
 
   test.beforeAll(async () => {
     const login = await request.newContext({ baseURL: PAYLOAD_BASE_URL });
-    const res = await login.post('/api/users/login', {
-      data: {
-        email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
-        password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
-      },
-    });
+    const credentials = {
+      email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+      password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
+    };
+    let res = await login.post('/api/users/login', { data: credentials });
+    if (!res.ok()) {
+      res = await login.post('/api/users/first-register', { data: credentials });
+    }
     expect(res.ok(), `Payload login: ${await res.text()}`).toBeTruthy();
     const { token } = await res.json();
     await login.dispose();
