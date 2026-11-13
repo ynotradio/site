@@ -22,14 +22,14 @@ class YearEndPollController
      * @param \mysqli $db Database connection
      * @throws \Exception If model creation fails
      */
-    public function __construct(\mysqli $db)
+    public function __construct(?\mysqli $db = null)
     {
-        if (!$db) {
-            throw new \InvalidArgumentException('Database connection is required');
-        }
-        
-        // Initialize the model
         $this->pollModel = YearEndPollFactory::create($db);
+    }
+
+    public function getPollInfo(): ?array
+    {
+        return $this->pollModel->getPollInfo();
     }
     
     /**
@@ -123,23 +123,7 @@ class YearEndPollController
     public function processVotes(string $pollName, array $votes, string $ip, string $writeInValue = ''): bool
     {
         try {
-            // Record the votes for the poll options
-            $this->pollModel->addVotes($pollName, $votes);
-            
-            // Special handling for song votes
-            if ($pollName === 'songs') {
-                $this->pollModel->addSongVotes($ip, $votes, $writeInValue);
-            }
-            
-            // Record write-in if provided
-            if (!empty($writeInValue)) {
-                $this->pollModel->addWriteInVote($ip, $pollName, $writeInValue);
-            }
-            
-            // Record that this IP has voted in this poll
-            $this->pollModel->recordVoterIp($ip, $pollName);
-            
-            return true;
+            return $this->pollModel->recordBallot($ip, $pollName, $votes, $writeInValue);
         } catch (\Exception $e) {
             error_log("Vote Error: " . $e->getMessage());
             return false;

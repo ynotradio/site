@@ -1,5 +1,13 @@
 <?php
 
+require_once __DIR__ . '/partials/__env_loader.php';
+require_once __DIR__ . '/models/FeatureManager.php';
+
+if (\YNotRadio\Models\FeatureManager::isEnabled('use_postgres_yearendpoll')) {
+    require __DIR__ . '/partials/_year_end_poll_payload_page.php';
+    return;
+}
+
 // Allow E2E tests to force the poll open via environment variable
 $forcePollOpen = getenv('FORCE_YEAR_END_POLL_OPEN') === 'true';
 

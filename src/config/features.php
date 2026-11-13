@@ -4,6 +4,11 @@ return [
     // Top 11 @ 11 reads from Postgres/Payload. Cut over 2026-09-20.
     'use_postgres_top11' => true,
 
+    // Year End Poll reads/writes Postgres/Payload with Auth0 voter identity.
+    // Preview with an `FF=use_postgres_yearendpoll` cookie, which survives the
+    // Auth0 login redirect and form posts (`?ff=` only lasts one request).
+    'use_postgres_yearendpoll' => false,
+
     // Custom text reads are flagged between MySQL and Postgres while the
     // Postgres/Payload front-end output is validated. Default off (MySQL);
     // flip to true (env var USE_POSTGRES_CUSTOMTEXT or `?ff=use_postgres_customtext`)
