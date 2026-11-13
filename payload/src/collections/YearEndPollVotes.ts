@@ -3,6 +3,7 @@ import { hasRole, adminOnlyNav } from '../utils/auth';
 import {
   enforceUserId,
   rejectDuplicateVote,
+  rejectUnknownNominee,
   enforceMaxPicks,
   incrementNomineeVoteCount,
   decrementNomineeVoteCount,
@@ -46,7 +47,7 @@ export const YearEndPollVotes: CollectionConfig = {
   },
   hooks: {
     // Run in order: enforce identity → check dupe → check maxPicks
-    beforeChange: [enforceUserId, rejectDuplicateVote, enforceMaxPicks],
+    beforeChange: [enforceUserId, rejectUnknownNominee, rejectDuplicateVote, enforceMaxPicks],
     afterChange: [incrementNomineeVoteCount],
     afterDelete: [decrementNomineeVoteCount],
   },

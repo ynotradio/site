@@ -115,6 +115,22 @@ export const YearEndPolls: CollectionConfig = {
         description: 'Optional banner image for the poll',
       },
     },
+    {
+      name: 'introHtml',
+      type: 'code',
+      admin: {
+        language: 'html',
+        description: 'Shown above the categories while voting is open (prize, countdown dates).',
+      },
+    },
+    {
+      name: 'closedHtml',
+      type: 'code',
+      admin: {
+        language: 'html',
+        description: 'Shown instead of the ballot once voting closes.',
+      },
+    },
   ],
   timestamps: true,
 };

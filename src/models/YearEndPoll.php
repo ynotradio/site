@@ -37,46 +37,21 @@ interface YearEndPoll
     public function hasVoted(string $ip, string $pollName): bool;
 
     /**
-     * Add votes for a specific poll
+     * Record one voter's full ballot for a poll: the picked option IDs plus an
+     * optional write-in, and mark the voter as having voted in that poll.
      *
-     * @param string $pollName The name of the poll
-     * @param array $votes Array of option IDs that were voted for
-     * @return bool True if votes were added successfully
-     * @throws \Exception If votes cannot be recorded
+     * @param string $voter IP address (MySQL) or Auth0 user ID (Postgres)
+     * @throws \Exception If the ballot cannot be recorded
      */
-    public function addVotes(string $pollName, array $votes): bool;
+    public function recordBallot(string $voter, string $pollName, array $votes, string $writeInValue = ''): bool;
 
     /**
-     * Add a manual write-in vote
+     * The poll's name, voting window and page copy, or null when the
+     * implementation has none (MySQL keeps the copy hardcoded in yearendpoll.php).
      *
-     * @param string $ip The voter's IP address
-     * @param string $pollName The name of the poll
-     * @param string $writeInValue The manual write-in value
-     * @return bool True if write-in was added successfully
-     * @throws \Exception If write-in cannot be recorded
+     * @return array{name: string, opensAt: ?string, closesAt: ?string, introHtml: string, closedHtml: string}|null
      */
-    public function addWriteInVote(string $ip, string $pollName, string $writeInValue): bool;
-
-    /**
-     * Add a voter's IP to the record for a specific poll
-     *
-     * @param string $ip The voter's IP address
-     * @param string $pollName The name of the poll
-     * @return bool True if IP was recorded successfully
-     * @throws \Exception If IP cannot be recorded
-     */
-    public function recordVoterIp(string $ip, string $pollName): bool;
-
-    /**
-     * Add specific votes for songs poll (which has a special structure)
-     *
-     * @param string $ip The voter's IP address
-     * @param array $votes Array of song IDs that were voted for
-     * @param string $writeInValue Optional write-in value
-     * @return bool True if song votes were added successfully
-     * @throws \Exception If song votes cannot be recorded
-     */
-    public function addSongVotes(string $ip, array $votes, string $writeInValue = ''): bool;
+    public function getPollInfo(): ?array;
 
     /**
      * Format the header for a poll

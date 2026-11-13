@@ -1,227 +1,123 @@
 /**
  * Year End Poll E2E Tests
  *
- * Tests for the Y-Not Radio Year End Poll feature.
- * The poll allows users to vote in 12 categories with different max picks,
- * and enter a contest for prizes.
+ * yearendpoll.php renders the open (or most recent closed) Year End Poll from
+ * Payload. These tests seed a poll dated year 2100 through the Payload REST
+ * API so it outranks any real poll, then delete it afterwards.
  *
- * Poll Categories (from SqlYearEndPoll model):
- * - songs (20 picks), albums (10), artists (5), concerts (2),
- *   new_artists (3), philly_artists (5), most_anticipated_albums (2),
- *   tv_dramas (3), tv_comedies (3), best_movies (3),
- *   worst_movies (2), unnecessary_sequels (2)
- *
- * Note: The poll is seasonal. When closed, yearendpoll.php redirects.
- * Set FORCE_YEAR_END_POLL_OPEN=true in .env.local to test the active state.
+ * Voting itself needs an Auth0 login, which E2E can't do; the ballot write
+ * path is covered by src/tests/Models/PostgresYearEndPollTest.php.
  */
-import { test, expect, Page } from '@playwright/test';
+import {
+  test, expect, request, APIRequestContext,
+} from '@playwright/test';
 import { checkForPhpErrors, captureScreenshot, navigateWithRetry } from './utils/test-helpers';
 
 const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
+const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
+const POLL_URL = `${LEGACY_BASE_URL}/yearendpoll.php`;
 
-/**
- * Check if poll is currently active (not redirecting)
- */
-async function isPollActive(page: Page): Promise<boolean> {
-  const { finalUrl } = await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
-  return finalUrl.includes('yearendpoll.php') && !finalUrl.includes('page=');
+let api: APIRequestContext;
+let pollId: number;
+let categoryId: number;
+
+const hoursFromNow = (hours: number) => new Date(Date.now() + hours * 3_600_000).toISOString();
+
+async function createDoc(collection: string, data: Record<string, unknown>): Promise<number> {
+  const res = await api.post(`/api/${collection}`, { data });
+  expect(res.ok(), `create ${collection}: ${await res.text()}`).toBeTruthy();
+  return (await res.json()).doc.id;
 }
 
 test.describe('Year End Poll', () => {
-  test.describe('Page Accessibility', () => {
-    test('yearendpoll.php is accessible and returns valid response', async ({ page }) => {
-      const { status } = await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
+  test.describe.configure({ mode: 'serial' });
 
-      expect(status).toBe(200);
+  test.beforeAll(async () => {
+    const login = await request.newContext({ baseURL: PAYLOAD_BASE_URL });
+    const credentials = {
+      email: process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net',
+      password: process.env.PAYLOAD_DEV_PASSWORD || 'password',
+    };
+    let res = await login.post('/api/users/login', { data: credentials });
+    if (!res.ok()) {
+      res = await login.post('/api/users/first-register', { data: credentials });
+    }
+    expect(res.ok(), `Payload login: ${await res.text()}`).toBeTruthy();
+    const { token } = await res.json();
+    await login.dispose();
 
-      const pageContent = await page.content();
-      const errors = checkForPhpErrors(pageContent);
-      expect(errors).toHaveLength(0);
+    api = await request.newContext({
+      baseURL: PAYLOAD_BASE_URL,
+      extraHTTPHeaders: { Authorization: `JWT ${token}` },
     });
 
-    test('staff picks page loads correctly', async ({ page }) => {
-      const { status } = await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendstaffpicks.php`);
-
-      expect(status).toBe(200);
-
-      const pageContent = await page.content();
-      const errors = checkForPhpErrors(pageContent);
-      expect(errors).toHaveLength(0);
-
-      await expect(page.getByRole('heading', { name: /Y-Not Staff Favorites/i })).toBeVisible();
+    pollId = await createDoc('year-end-polls', {
+      name: 'E2E Year End Poll',
+      year: 2100,
+      slug: `e2e-yep-${Date.now()}`,
+      status: 'open',
+      votingOpensAt: hoursFromNow(-1),
+      votingClosesAt: hoursFromNow(24),
+      introHtml: '<p id="e2e-intro">Vote for your favorites of the year!</p>',
+      closedHtml: '<p id="e2e-closed">Voting is closed. Thanks!</p>',
     });
-  });
-
-  test.describe('Poll Active State', () => {
-    test.beforeEach(async ({ page }) => {
-      const active = await isPollActive(page);
-      test.skip(
-        !active,
-        'Poll is currently closed/redirecting — set FORCE_YEAR_END_POLL_OPEN=true to test',
-      );
-    });
-
-    test('poll dashboard displays all 12 categories', async ({ page }, testInfo) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
-
-      await captureScreenshot(page, testInfo, 'poll-dashboard');
-
-      await expect(page.getByRole('link', { name: 'songs' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'albums' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'artists' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'concerts' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'new artists' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'philly artists' })).toBeVisible();
-      await expect(page.getByRole('link', { name: /most anticipated/i })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'tv dramas' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'tv comedies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'best movies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'worst movies' })).toBeVisible();
-      await expect(page.getByRole('link', { name: 'unnecessary sequels' })).toBeVisible();
-    });
-
-    test('albums voting form is visible when category selected', async ({ page }, testInfo) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
-
-      await captureScreenshot(page, testInfo, 'poll-albums-form');
-
-      const form = page.locator('form[name*="year_end"]');
-      await expect(form).toBeVisible({ timeout: 10000 });
-    });
-
-    test('albums voting form has checkbox options', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
-
-      const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
-      const checkboxCount = await checkboxes.count();
-      expect(checkboxCount).toBeGreaterThan(0);
-    });
-
-    test('albums voting form shows seeded artist and album names', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
-
-      // These are seeded in bin/seed-legacy.sh
-      await expect(page.getByText('Franz Ferdinand')).toBeVisible();
-      await expect(page.getByText('The Human Fear')).toBeVisible();
-      await expect(page.getByText('Wet Leg')).toBeVisible();
-    });
-
-    test('submit button is initially disabled', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=albums`);
-
-      const submitButton = page.locator('#vote');
-      await expect(submitButton).toBeVisible();
-      await expect(submitButton).toBeDisabled();
-    });
-
-    test('submit button shows remaining pick count', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=concerts`);
-
-      const submitButton = page.locator('#vote');
-      await expect(submitButton).toHaveText(/Pick 2 more!/i);
-    });
-
-    test('submit button decrements count after selecting a checkbox', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=concerts`);
-
-      const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
-      await checkboxes.first().check();
-
-      const submitButton = page.locator('#vote');
-      await expect(submitButton).toHaveText(/Pick 1 more!/i);
-    });
-
-    test('checkbox selection respects max picks limit', async ({ page }, testInfo) => {
-      // artists category has max 5 picks
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=artists`);
-
-      const checkboxes = page.locator('input[type="checkbox"][name="year_end_votes[]"]');
-      const checkboxCount = await checkboxes.count();
-      expect(checkboxCount).toBeGreaterThan(0);
-
-      for (let i = 0; i < Math.min(5, checkboxCount); i += 1) {
-        // eslint-disable-next-line no-await-in-loop
-        await checkboxes.nth(i).check();
-      }
-
-      await captureScreenshot(page, testInfo, 'poll-artists-max-selected');
-
-      const submitButton = page.locator('#vote');
-      await expect(submitButton).not.toBeDisabled({ timeout: 5000 });
-
-      const checkedCount = await page
-        .locator('input[type="checkbox"][name="year_end_votes[]"]:checked')
-        .count();
-      expect(checkedCount).toBe(5);
-    });
-
-    test('write-in field is disabled until checkbox is checked', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=songs`);
-
-      const writeInArea = page.locator('.control-group:has(.form-other)');
-      const writeInCheckbox = writeInArea.locator('input[type="checkbox"]');
-      const writeInField = writeInArea.locator('input[type="text"]');
-
-      const hasWriteIn = (await writeInCheckbox.count()) > 0;
-      test.skip(!hasWriteIn, 'This poll category does not have write-in option');
-
-      await expect(writeInField).toBeDisabled();
-      await writeInCheckbox.check();
-      await expect(writeInField).toBeEnabled();
-    });
-
-    test('all 12 poll category links are present on dashboard', async ({ page }) => {
-      await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
-
-      const allPollLinks = page.locator('a.poll');
-      await expect(allPollLinks).toHaveCount(12);
+    categoryId = await createDoc('year-end-poll-categories', {
+      poll: pollId,
+      slug: 'e2e-songs',
+      displayName: 'E2E Songs',
+      categoryType: 'custom',
+      maxPicks: 2,
+      requiredForContest: true,
+      bulkNominees: "The War On Drugs - Who's That\nBeck - Run Away\nBlondshell - Violins",
     });
   });
 
-  test.describe('Poll Closed State', () => {
-    test('closed poll redirects away from yearendpoll.php', async ({ page }, testInfo) => {
-      const { finalUrl } = await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php`);
-
-      const isActive = finalUrl.includes('yearendpoll.php') && !finalUrl.includes('page=');
-      test.skip(isActive, 'Poll is currently active — this test requires the poll to be closed');
-
-      await captureScreenshot(page, testInfo, 'poll-closed-redirect');
-
-      expect(finalUrl).toMatch(/pages\.php|top\d+/i);
-
-      const pageContent = await page.content();
-      const errors = checkForPhpErrors(pageContent);
-      expect(errors).toHaveLength(0);
-    });
+  test.afterAll(async () => {
+    if (categoryId) await api.delete(`/api/year-end-poll-categories/${categoryId}`);
+    if (pollId) await api.delete(`/api/year-end-polls/${pollId}`);
+    await api?.dispose();
   });
 
-  test.describe('Error Handling', () => {
-    test.beforeEach(async ({ page }) => {
-      const active = await isPollActive(page);
-      test.skip(!active, 'Poll is closed — error handling tests require active poll');
+  test('open poll shows its Payload copy and asks visitors to log in', async ({
+    page,
+  }, testInfo) => {
+    const { status } = await navigateWithRetry(page, POLL_URL);
+    expect(status).toBe(200);
+    expect(checkForPhpErrors(await page.content())).toHaveLength(0);
+
+    await expect(page.getByRole('heading', { name: 'E2E Year End Poll', level: 1 })).toBeVisible();
+    await expect(page.locator('#e2e-intro')).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Log in to Vote' })).toHaveAttribute(
+      'href',
+      'auth_login.php?returnTo=/yearendpoll.php',
+    );
+    await expect(page.locator('input[name="year_end_votes[]"]')).toHaveCount(0);
+
+    await captureScreenshot(page, testInfo, 'yep-open-logged-out');
+  });
+
+  test('anonymous vote submissions are ignored', async ({ page }) => {
+    await navigateWithRetry(page, POLL_URL);
+    const res = await page.request.post(POLL_URL, {
+      form: { poll: 'e2e-songs', 'year_end_votes[]': 'anything' },
     });
+    expect(res.status()).toBe(200);
+    const body = await res.text();
+    expect(checkForPhpErrors(body)).toHaveLength(0);
+    expect(body).not.toContain('Your votes have been recorded');
+  });
 
-    test('invalid poll parameter is handled gracefully', async ({ page }) => {
-      const { status } = await navigateWithRetry(
-        page,
-        `${LEGACY_BASE_URL}/yearendpoll.php?poll=invalid_poll_name`,
-      );
-
-      expect(status).toBe(200);
-
-      const pageContent = await page.content();
-      const errors = checkForPhpErrors(pageContent);
-      expect(errors).toHaveLength(0);
+  test('closed poll shows the closed copy instead of the ballot', async ({ page }, testInfo) => {
+    const res = await api.patch(`/api/year-end-polls/${pollId}`, {
+      data: { votingClosesAt: hoursFromNow(-0.5) },
     });
+    expect(res.ok()).toBeTruthy();
 
-    test('empty poll param loads dashboard', async ({ page }) => {
-      const { status } = await navigateWithRetry(page, `${LEGACY_BASE_URL}/yearendpoll.php?poll=`);
+    await navigateWithRetry(page, POLL_URL);
+    await expect(page.locator('#e2e-closed')).toBeVisible();
+    await expect(page.locator('#e2e-intro')).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Log in to Vote' })).toHaveCount(0);
 
-      expect(status).toBe(200);
-
-      const pageContent = await page.content();
-      const errors = checkForPhpErrors(pageContent);
-      expect(errors).toHaveLength(0);
-    });
+    await captureScreenshot(page, testInfo, 'yep-closed');
   });
 });

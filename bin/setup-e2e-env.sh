@@ -57,9 +57,6 @@ POSTGRES_USER=ynot_postgres_user
 POSTGRES_PASSWORD=ynot_postgres_pass
 POSTGRES_SSL_MODE=disable
 
-# Force seasonal features open for E2E testing
-FORCE_YEAR_END_POLL_OPEN=true
-
 # Configure for legacy PHP site with MySQL (inside Docker network)
 DB_HOST=mysql
 DB_PORT=3306
