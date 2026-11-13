@@ -58,6 +58,12 @@ const PRIMARY_COLLECTIONS = [
     icon: '🎶',
     description: 'Run the weekly Top 11 contest: open voting, pick a winner, publish results.',
   },
+  {
+    slug: 'pages',
+    label: 'Pages',
+    icon: '📄',
+    description: 'Edit custom pages like Donate and Contests. Add an optional header image.',
+  },
 ] as const;
 
 const SECONDARY_COLLECTIONS = [
