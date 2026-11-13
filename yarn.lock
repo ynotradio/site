@@ -1657,22 +1657,22 @@
   resolved "https://registry.yarnpkg.com/@neoconfetti/react/-/react-1.0.0.tgz#9a619d980a2285a829b1f8c78ca6484f0364a370"
   integrity sha512-klcSooChXXOzIm+SE5IISIAn3bYzYfPjbX7D7HoqZL84oAfgREeSg5vSIaSFH+DaGzzvImTyWe1OyrJ67vik4A==
 
-"@netlify/functions@^6.0.0":
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/@netlify/functions/-/functions-6.0.0.tgz#4982472ed73c6bd5360a6efd8694feb22d0510bb"
-  integrity sha512-Pee+FoFnAtdejTkl62a7mZxj6Wx4eqVNuYyDc5T4XPJN9GaAWaUf4cZQFlf2m4Fqq0HoghjtcPKo+BZviVPPKA==
+"@netlify/functions@^6.0.3":
+  version "6.0.3"
+  resolved "https://registry.yarnpkg.com/@netlify/functions/-/functions-6.0.3.tgz#ceb8748ccce0e11ecc85e9d0432829af7d9e0597"
+  integrity sha512-6KHpsR2L4VQL2gMm3VvG46xBNTga/SbOziluInR0++gkvOuQ/T2pxsxf2Rys5wOikpNY3Zv1IoE52/pWBJjZ9Q==
   dependencies:
-    "@netlify/types" "3.0.0"
+    "@netlify/types" "3.3.0"
 
-"@netlify/plugin-nextjs@^5.15.13":
-  version "5.15.13"
-  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.15.13.tgz#1e439fa3d20eb7db2cd6f66110934ae34706647a"
-  integrity sha512-gBmWtgG13ZW4ytNMCvacfwZemtdtV/Ekc+6RBYvI5fndjmDvKxgFHylsw7oli+PHMGAtNqaJrN8QccGnDReu6A==
+"@netlify/plugin-nextjs@^5.16.5":
+  version "5.16.5"
+  resolved "https://registry.yarnpkg.com/@netlify/plugin-nextjs/-/plugin-nextjs-5.16.5.tgz#0cfd70e67c3fc2554089302871a0d23d74ec166c"
+  integrity sha512-pt0j/YCZr5Kn2ziGS4Ps+RvREEn5LN2M9iv9iqEgNWZGb4esu7MCMy4RIYS0UR3JuBHxVtsvPHo0gEv+RKFpag==
 
-"@netlify/types@3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@netlify/types/-/types-3.0.0.tgz#80e6a3d399b681e32b1f4ef2b75937e748ff3a65"
-  integrity sha512-zRCidsQgI4CZWrZB/kmwdPf0QbSNljakfNSLizFvrsSA3UcUrTWSBNMVKmZnob92/8ESeUN0ewXLOlffJU+ATQ==
+"@netlify/types@3.3.0":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@netlify/types/-/types-3.3.0.tgz#fb3375d437d654538b328e24bd72dc4ea799b97a"
+  integrity sha512-u/uh0vOFslJsTcG8nnynAKnTpVIakXbv3mkBG9DTqKZrDEzmfLKDZ3I7evHA3/CYUmNB24pNrzlHj2nIsqEwzg==
 
 "@next/env@16.3.0-preview.5":
   version "16.3.0-preview.5"
