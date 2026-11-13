@@ -2,6 +2,9 @@ import { sql } from '@payloadcms/db-postgres';
 import type { MigrateUpArgs, MigrateDownArgs } from '@payloadcms/db-postgres';
 
 const statementsUp = [
+  sql`ALTER TABLE "year_end_polls" ADD COLUMN IF NOT EXISTS "intro_html" varchar;`,
+  sql`ALTER TABLE "year_end_polls" ADD COLUMN IF NOT EXISTS "closed_html" varchar;`,
+  sql`ALTER TABLE "year_end_poll_categories" ADD COLUMN IF NOT EXISTS "required_for_contest" boolean DEFAULT false;`,
   sql`
     CREATE TABLE IF NOT EXISTS "year_end_poll_write_ins" (
       "id" serial PRIMARY KEY NOT NULL,
@@ -83,6 +86,9 @@ const statementsDown = [
   sql`ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "year_end_poll_contestants_id";`,
   sql`DROP TABLE IF EXISTS "year_end_poll_write_ins" CASCADE;`,
   sql`DROP TABLE IF EXISTS "year_end_poll_contestants" CASCADE;`,
+  sql`ALTER TABLE "year_end_poll_categories" DROP COLUMN IF EXISTS "required_for_contest";`,
+  sql`ALTER TABLE "year_end_polls" DROP COLUMN IF EXISTS "closed_html";`,
+  sql`ALTER TABLE "year_end_polls" DROP COLUMN IF EXISTS "intro_html";`,
 ];
 
 export async function up({ db }: MigrateUpArgs): Promise<void> {

@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
-import { validateNominees } from './hooks/yearEndPollCategoryHooks';
+import { appendBulkNominees, validateNominees } from './hooks/yearEndPollCategoryHooks';
 
 /**
  * YearEndPollCategories Collection
@@ -40,7 +40,7 @@ export const YearEndPollCategories: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   hooks: {
-    beforeChange: [validateNominees],
+    beforeChange: [appendBulkNominees, validateNominees],
   },
   fields: [
     {
@@ -137,6 +137,23 @@ export const YearEndPollCategories: CollectionConfig = {
           },
         },
       ],
+    },
+    {
+      name: 'requiredForContest',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Voters must finish this category before they can enter the prize drawing.',
+      },
+    },
+    {
+      name: 'bulkNominees',
+      type: 'textarea',
+      virtual: true,
+      admin: {
+        description:
+          'Paste one nominee per line (e.g. "Artist - Song") and save. Each line is added as a custom-label nominee; lines already on the list are skipped.',
+      },
     },
     {
       name: 'nominees',
