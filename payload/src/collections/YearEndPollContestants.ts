@@ -11,7 +11,15 @@ export const YearEndPollContestants: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'email', 'phone', 'hometown', 'newsletterOptIn', 'createdAt'],
+    defaultColumns: [
+      'name',
+      'email',
+      'phone',
+      'hometown',
+      'enteredContest',
+      'newsletterOptIn',
+      'createdAt',
+    ],
     group: 'Polls & Contests',
     description: 'Prize entries from voters who finished the first two rows of polls.',
     groupBy: true,
@@ -64,10 +72,16 @@ export const YearEndPollContestants: CollectionConfig = {
       type: 'row',
       fields: [
         {
+          name: 'enteredContest',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: { width: '25%' },
+        },
+        {
           name: 'newsletterOptIn',
           type: 'checkbox',
           defaultValue: false,
-          admin: { width: '50%' },
+          admin: { width: '25%' },
         },
         {
           name: 'userId',

@@ -42,6 +42,7 @@ const statementsUp = [
       "hometown" varchar,
       "email" varchar NOT NULL,
       "phone" varchar,
+      "entered_contest" boolean DEFAULT true,
       "newsletter_opt_in" boolean DEFAULT false,
       "user_id" varchar,
       "updated_at" timestamp(3) with time zone DEFAULT now() NOT NULL,
