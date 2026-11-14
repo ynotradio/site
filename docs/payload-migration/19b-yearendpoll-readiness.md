@@ -8,15 +8,17 @@ Voting opens **Nov 30, 2026**.
 
 ## Done
 
-| Item                         | Where                                                                             |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| Vote tally (`voteCount`)     | #833, `yearEndPollVoteHooks.ts`                                                   |
-| Vote-to-nominee validation   | `rejectUnknownNominee` in `yearEndPollVoteHooks.ts`; PHP adapter checks the same  |
-| Write-ins, prize entries     | `YearEndPollWriteIns`, `YearEndPollContestants` collections                       |
-| Page copy and window in data | `introHtml`, `closedHtml`, `votingOpensAt/ClosesAt` on `YearEndPolls`             |
-| Prize-entry rule in data     | `requiredForContest` on `YearEndPollCategories`                                   |
-| Bulk nominee entry           | `bulkNominees` paste box on `YearEndPollCategories` (one per line, dupes skipped) |
-| PHP adapter                  | `src/models/implementations/PostgresYearEndPoll.php`, used by `yearendpoll.php`   |
+| Item                         | Where                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------- |
+| Vote tally (`voteCount`)     | #833, `yearEndPollVoteHooks.ts`                                                         |
+| Vote-to-nominee validation   | `rejectUnknownNominee` in `yearEndPollVoteHooks.ts`; PHP adapter checks the same        |
+| Write-ins, prize entries     | `YearEndPollWriteIns`, `YearEndPollContestants` collections                             |
+| Page copy and window in data | `introHtml`, `closedHtml`, `votingOpensAt/ClosesAt` on `YearEndPolls`                   |
+| Prize-entry rule in data     | `requiredForContest` on `YearEndPollCategories`                                         |
+| Bulk nominee entry           | `bulkNominees` paste box on `YearEndPollCategories` (one per line, dupes skipped)       |
+| PHP adapter                  | `src/models/implementations/PostgresYearEndPoll.php`, used by `yearendpoll.php`         |
+| Staff picks                  | `YearEndStaffPicks` collection, `PostgresYearEndStaffPick.php`, `yearendstaffpicks.php` |
+| Staff picks importer         | `yarn import:staff-picks --year 2025` (parses legacy HTML; re-runnable)                 |
 
 No flag: the poll wasn't live, so `yearendpoll.php` switched outright. Voters
 log in with Auth0 (same as Top 11), and `user_id` replaces legacy IP dedup.
@@ -25,11 +27,11 @@ MySQL until #933 removes them.
 
 ## Remaining before Nov 30
 
-- [ ] Run migration `20261113_000000_year_end_poll_cutover_schema` in prod (Netlify build)
+- [ ] Run migrations `20261113_000000_year_end_poll_cutover_schema` and `20261113_010000_year_end_staff_picks` in prod (Netlify build)
+- [ ] `yarn import:staff-picks --year 2025 --from prod-mysql --to prod-neon` (27 picks; 2 commented-out picks skipped)
 - [ ] Add `https://www.ynotradio.net/yearendpoll.php` to Auth0 Allowed Callback URLs
 - [ ] Josh creates the 2026 poll + categories in Payload, pastes nominees
 - [ ] QA on prod with a test vote, then delete it in Payload
-- [ ] `yearendstaffpicks.php` → `YearEndPollResults` staff-picks block (still MySQL)
 - [ ] Sorted results view for tabulating (nominee `voteCount` is visible per category today)
 
 ## Decisions

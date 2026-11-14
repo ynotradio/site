@@ -30,6 +30,7 @@ import { YearEndPollVotes } from './payload/src/collections/YearEndPollVotes';
 import { YearEndPollResults } from './payload/src/collections/YearEndPollResults';
 import { YearEndPollWriteIns } from './payload/src/collections/YearEndPollWriteIns';
 import { YearEndPollContestants } from './payload/src/collections/YearEndPollContestants';
+import { YearEndStaffPicks } from './payload/src/collections/YearEndStaffPicks';
 import { Top11Contests } from './payload/src/collections/Top11Contests';
 import { Top11Votes } from './payload/src/collections/Top11Votes';
 import { Top11WriteIns } from './payload/src/collections/Top11WriteIns';
@@ -249,6 +250,7 @@ export default buildConfig({
     YearEndPollVotes,
     YearEndPollWriteIns,
     YearEndPollContestants,
+    YearEndStaffPicks,
     Top11Contests,
     Top11Votes,
     Top11WriteIns,

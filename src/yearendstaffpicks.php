@@ -7,70 +7,70 @@ require "functions/main_fns.php";
 require "models/YearEndStaffPickFactory.php";
 require "partials/_header.php";
 
-$db = open_db();
-$staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create($db);
+$staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create();
 
-/*----- CONTENT ------*/
+try {
+  $year = $staffPickModel->getYear();
+  $staffPicks = $staffPickModel->getAll();
+} catch (\Exception $err) {
+  error_log("Staff picks: " . $err->getMessage());
+  $year = null;
+  $staffPicks = [];
+}
+
+$e = function ($text) {
+  return htmlspecialchars((string)$text, ENT_QUOTES);
+};
 ?>
 <div class="row">
-  <div class="twelve columns content" style="white-space:nowrap;">
+  <div class="twelve columns content">
+    <h1><?= $year ? $e($year) . ' ' : '' ?>Y-Not Staff Favorites</h1>
+    <p><a href="yearendpoll.php">Go back to the Year End Poll</a></p>
 
-    <div class="twelve" style="display:inline-block;">
-      <div class="twelve columns" style="max-width: 100%">
-        <div class="center top-spacer_20 bottom-spacer_20"><img src="https://i.imgur.com/U7gvgiH.gif" alt="YNot Year End Poll 2025" style="max-width: 100%"></div>
+    <?php if (!$staffPicks): ?>
+      <p>Staff picks are coming soon.</p>
+    <?php endif; ?>
 
-        <!-- <div class="six columns"><div class="center top-spacer_20 bottom-spacer_20"><a href="https://gopuff.onelink.me/QbZT/YNotRadio"><img src="https://i.imgur.com/HYYkf7G.png" style="max-width: 100%" /></a></div> -->
-      </div>
-      <div class="twelve columns top-spacer_20">
-
-        <h1><?php echo date('Y'); ?> Y-Not Staff Favorites</h1>
-      </div>
-      <!--
-    <div class="column three">
-    <a href="http://LNPhilly.com">
-      <img style="margin-right: 1em; margin-top: 1em; margin-bottom: 1em; max-width: 200px;" src="http://i.imgur.com/cfpO3Qu.gif" /></a>
-    </div>
--->
-    </div>
-    <div class="twelve columns top-spacer_20">
-      <table width="100%" border="0" cellspacing="5">
+    <?php foreach ($staffPicks as $pick): ?>
+      <table class="year_end_staff_pick">
         <tr>
-          <td bgcolor="#666666">
-            <div align="center"><strong><a href="yearendpoll.php">Go back to 2025 YEAR END POLL</a></strong></div>
+          <td colspan="2" class="bottom-spacer_20">
+            <div style="float: left;">
+              <strong><?= $e($pick['name']) ?><?php if ($pick['showName'] !== ''): ?><br><em><?= $e($pick['showName']) ?></em><?php endif; ?></strong>
+            </div>
+            <div style="float: right;">
+              <strong><?= implode('<br>', array_map($e, $pick['details'])) ?></strong>
+            </div>
           </td>
-          <!-- <td bgcolor="#CCCCCC"><div align="center"><strong><a href="pages.php?page=yearendpoll2019">YEAR END POLL RESULTS</a></strong></div></td> -->
-          <!-- <td bgcolor="#CCCCCC"><div align="center"><strong><a href="yearendstaffpicks.php">Y-NOT STAFF FAVORITES</a></strong></div></td> -->
+        </tr>
+        <tr>
+          <td width="50%">
+            <?php if ($pick['songs']): ?>
+              <h3><u>Top <?= count($pick['songs']) ?> Songs</u></h3>
+              <ol>
+                <?php foreach ($pick['songs'] as $song): ?>
+                  <li><?= $e($song['artist']) ?><?= $song['artist'] !== '' ? ' ' : '' ?>"<?= $e($song['title']) ?>"</li>
+                <?php endforeach; ?>
+              </ol>
+            <?php endif; ?>
+          </td>
+          <td width="50%">
+            <?php if ($pick['albums']): ?>
+              <h3><u>Top <?= count($pick['albums']) ?> Albums</u></h3>
+              <ol>
+                <?php foreach ($pick['albums'] as $album): ?>
+                  <li><?= $e($album['artist']) ?><?= $album['artist'] !== '' ? ' - ' : '' ?><i><?= $e($album['title']) ?></i></li>
+                <?php endforeach; ?>
+              </ol>
+            <?php endif; ?>
+            <?php foreach ($pick['players'] as $src): ?>
+              <iframe width="100%" height="60" src="<?= $e($src) ?>" frameborder="0" allow="encrypted-media; fullscreen; autoplay"></iframe>
+            <?php endforeach; ?>
+          </td>
         </tr>
       </table>
-
-
-
-    </div>
-
-
-    <!--	<a href='pages.php?page=top214of2014'>TOP 214 OF 2014</a> | -->
-    <!--	<a href="yearendpoll.php">2015 YEAR END POLL</a>-->
-    <!--	<a href='yearendstaffpicks.php'>Y-NOT STAFF FAVORITES</a> -->
-    <!-- </div> -->
-
-
-
-
-
-    <!-- <center><h3>Vote now for your favorite songs, albums, and more in <a href="yearendpoll.php">Y-Not's 2014 Year End Poll</a>!</h3></center>	-->
-
-
-    <?php
-    try {
-      $staffPicks = $staffPickModel->getAll();
-      foreach ($staffPicks as $pick) {
-        echo $pick['html'] . "<br>";
-      }
-    } catch (\Exception $e) {
-      echo "<p>Error loading staff picks: " . $e->getMessage() . "</p>";
-    }
-    ?>
-    <div><a href="yearendpoll.php">Go Back To Year End Poll</a></div>
+      <br>
+    <?php endforeach; ?>
   </div>
-</div> <!-- end of row div -->
+</div>
 <?php require "partials/_footer.php"; ?>
