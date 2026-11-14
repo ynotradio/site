@@ -50,7 +50,14 @@ const appendPasted = (
 
   const current = Array.isArray(data[listField]) ? data[listField] : originalDoc?.[listField];
   const existing = (current ?? []) as Pick[];
-  return { ...rest, [listField]: [...existing, ...parsePickLines(pasted)] };
+  const key = (pick: Pick) => `${pick.artist}\u0000${pick.title}`.toLowerCase();
+  const seen = new Set(existing.map(key));
+  const added = parsePickLines(pasted).filter((pick) => {
+    if (seen.has(key(pick))) return false;
+    seen.add(key(pick));
+    return true;
+  });
+  return { ...rest, [listField]: [...existing, ...added] };
 };
 
 export const appendPastedPicks: CollectionBeforeChangeHook = ({ data, originalDoc }) => {

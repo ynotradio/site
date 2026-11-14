@@ -21,6 +21,7 @@ describe('YearEndStaffPicks', () => {
     ['songs', 'albums'].forEach((name) => {
       expect(field(name)?.type).toBe('array');
       expect(field(`${name}Paste`)?.virtual).toBe(true);
+      expect(field(`${name}Paste`)?.admin?.readOnly).toBe(false);
     });
   });
 

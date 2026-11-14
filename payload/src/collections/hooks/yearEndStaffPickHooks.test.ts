@@ -93,6 +93,17 @@ describe('appendPastedPicks', () => {
     ]);
   });
 
+  it('skips pasted entries already on the list or repeated, ignoring case', () => {
+    const result = run({
+      songs: [{ artist: 'Garbage', title: 'Chinese Fire Horse' }],
+      songsPaste: 'garbage - chinese fire horse\nSpoon "Chateau Blues"\nSPOON - CHATEAU BLUES',
+    });
+    expect(result.songs).toEqual([
+      { artist: 'Garbage', title: 'Chinese Fire Horse' },
+      { artist: 'Spoon', title: 'Chateau Blues' },
+    ]);
+  });
+
   it('leaves lists alone when nothing was pasted', () => {
     expect(run({ songs: [], songsPaste: ' ' })).toEqual({ songs: [] });
   });

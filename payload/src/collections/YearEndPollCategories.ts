@@ -148,6 +148,7 @@ export const YearEndPollCategories: CollectionConfig = {
     },
     {
       name: 'bulkNominees',
+      label: 'Paste nominees',
       type: 'textarea',
       virtual: true,
       admin: {

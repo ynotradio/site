@@ -25,10 +25,13 @@ const pickList = (name: 'songs' | 'albums', label: string): Field[] => [
   },
   {
     name: `${name}Paste`,
+    label: `Paste ${name}`,
     type: 'textarea',
     virtual: true,
     admin: {
-      description: `Paste ${name} one per line as Artist - Title or Artist "Title", then save. They're added to the end of the list.`,
+      // Payload makes virtual fields read-only in the admin unless told otherwise.
+      readOnly: false,
+      description: `Paste ${name} one per line as Artist - Title or Artist "Title", then save. They're added to the end of the list; ones already on it are skipped.`,
     },
   },
 ];
@@ -80,6 +83,7 @@ export const YearEndStaffPicks: CollectionConfig = {
         },
         {
           name: 'dj',
+          label: 'DJ',
           type: 'relationship',
           relationTo: 'djs',
           admin: { width: '40%', description: 'Optional link to their DJ profile.' },
@@ -109,6 +113,7 @@ export const YearEndStaffPicks: CollectionConfig = {
     },
     {
       name: 'mixcloudUrls',
+      label: 'Mixcloud links',
       type: 'textarea',
       admin: {
         description:
