@@ -151,6 +151,8 @@ export const YearEndPollCategories: CollectionConfig = {
       type: 'textarea',
       virtual: true,
       admin: {
+        // Payload makes virtual fields read-only in the admin unless told otherwise.
+        readOnly: false,
         description:
           'Paste one nominee per line (e.g. "Artist - Song") and save. Each line is added as a custom-label nominee; lines already on the list are skipped.',
       },
