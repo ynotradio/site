@@ -8,6 +8,31 @@ type NomineeRow = {
   customLabel?: unknown;
 };
 
+export const appendBulkNominees: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
+  const { bulkNominees, ...rest } = data;
+  if (typeof bulkNominees !== 'string' || bulkNominees.trim() === '') return rest;
+
+  const nominees: NomineeRow[] = Array.isArray(data.nominees)
+    ? data.nominees
+    : (originalDoc?.nominees ?? []);
+  const seen = new Set(
+    nominees
+      .map((row) => (typeof row.customLabel === 'string' ? row.customLabel.trim().toLowerCase() : ''))
+      .filter(Boolean),
+  );
+
+  const added: NomineeRow[] = [];
+  bulkNominees.split(/\r?\n/).forEach((line) => {
+    const label = line.trim();
+    const key = label.toLowerCase();
+    if (!label || seen.has(key)) return;
+    seen.add(key);
+    added.push({ customLabel: label });
+  });
+
+  return { ...rest, nominees: [...nominees, ...added] };
+};
+
 /**
  * Validates that every nominee row in a YearEndPollCategory has at least one
  * typed field populated (song, record, artist, concert, or customLabel).

@@ -24,6 +24,14 @@ describe('YearEndPollCategories', () => {
     expect(YearEndPollCategories.slug).toBe('year-end-poll-categories');
   });
 
+  it('keeps the bulk nominee paste box editable in the admin', () => {
+    const field = YearEndPollCategories.fields.find(
+      (f) => (f as { name?: string }).name === 'bulkNominees',
+    ) as { virtual?: boolean; admin?: { readOnly?: boolean } };
+    expect(field.virtual).toBe(true);
+    expect(field.admin?.readOnly).toBe(false);
+  });
+
   it('uses displayName as admin title', () => {
     expect(YearEndPollCategories.admin?.useAsTitle).toBe('displayName');
   });

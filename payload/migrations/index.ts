@@ -26,6 +26,7 @@ import * as migration_20260405_000000_add_year_end_poll_tables from './20260405_
 import * as migration_20260905_000000_add_editor_events_collection from './20260905_000000_add_editor_events_collection';
 import * as migration_20260922_000000_add_payload_3_90_columns from './20260922_000000_add_payload_3_90_columns';
 import * as migration_20260919_000000_add_pages_content_type from './20260919_000000_add_pages_content_type';
+import * as migration_20261113_000000_year_end_poll_cutover_schema from './20261113_000000_year_end_poll_cutover_schema';
 
 export const migrations = [
   {
@@ -167,5 +168,10 @@ export const migrations = [
     up: migration_20260919_000000_add_pages_content_type.up,
     down: migration_20260919_000000_add_pages_content_type.down,
     name: '20260919_000000_add_pages_content_type',
+  },
+  {
+    up: migration_20261113_000000_year_end_poll_cutover_schema.up,
+    down: migration_20261113_000000_year_end_poll_cutover_schema.down,
+    name: '20261113_000000_year_end_poll_cutover_schema',
   },
 ];

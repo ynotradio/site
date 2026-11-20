@@ -55,6 +55,27 @@ export const rejectDuplicateVote: CollectionBeforeChangeHook = async ({ data, re
   return data;
 };
 
+export const rejectUnknownNominee: CollectionBeforeChangeHook = async ({
+  data,
+  req,
+  operation,
+}) => {
+  if (operation !== 'create') return data;
+
+  const categoryId = typeof data.category === 'object' ? data.category?.id : data.category;
+  const categoryDoc = await req.payload.findByID({
+    collection: 'year-end-poll-categories',
+    id: categoryId as string | number,
+  });
+
+  const nominees = (categoryDoc as { nominees?: { id?: string }[] }).nominees ?? [];
+  if (!nominees.some((nominee) => nominee.id === data.nomineeId)) {
+    throw new Error('That nominee is not part of this category.');
+  }
+
+  return data;
+};
+
 /**
  * Rejects a create operation when the voter has already reached the category's
  * `maxPicks` limit. This is a server-side safeguard; the DB unique index does

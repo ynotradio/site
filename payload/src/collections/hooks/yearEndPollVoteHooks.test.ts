@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   enforceUserId,
   rejectDuplicateVote,
+  rejectUnknownNominee,
   enforceMaxPicks,
   incrementNomineeVoteCount,
   decrementNomineeVoteCount,
@@ -96,6 +97,57 @@ describe('rejectDuplicateVote', () => {
       collection: {} as any,
     });
     expect(result).toEqual(data);
+  });
+});
+
+describe('rejectUnknownNominee', () => {
+  const reqWithNominees = (nominees: { id: string }[] | undefined) => ({
+    ...makeReq({ id: 1 }),
+    payload: { findByID: vi.fn().mockResolvedValue({ nominees }) } as any,
+  });
+
+  it('passes through on update operations', async () => {
+    const data = { userId: 'u1', nomineeId: 'n1', category: 1 };
+    const result = await rejectUnknownNominee({
+      data,
+      req: reqWithNominees([]),
+      operation: 'update',
+      collection: {} as any,
+    });
+    expect(result).toEqual(data);
+  });
+
+  it('allows a nominee that belongs to the category', async () => {
+    const data = { userId: 'u1', nomineeId: 'n2', category: { id: 1 } };
+    const result = await rejectUnknownNominee({
+      data,
+      req: reqWithNominees([{ id: 'n1' }, { id: 'n2' }]),
+      operation: 'create',
+      collection: {} as any,
+    });
+    expect(result).toEqual(data);
+  });
+
+  it('rejects a nominee id from another category', async () => {
+    await expect(
+      rejectUnknownNominee({
+        data: { userId: 'u1', nomineeId: 'other', category: 1 },
+        req: reqWithNominees([{ id: 'n1' }]),
+        operation: 'create',
+        collection: {} as any,
+      }),
+    ).rejects.toThrow('not part of this category');
+  });
+
+  it('rejects when the category has no nominees', async () => {
+    await expect(
+      rejectUnknownNominee({
+        data: { userId: 'u1', nomineeId: 'n1', category: 1 },
+        req: reqWithNominees(undefined),
+        operation: 'create',
+        collection: {} as any,
+      }),
+    ).rejects.toThrow('not part of this category');
   });
 });
 

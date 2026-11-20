@@ -91,6 +91,29 @@ class SqlYearEndPoll implements YearEndPoll
     /**
      * {@inheritdoc}
      */
+    public function recordBallot(string $voter, string $pollName, array $votes, string $writeInValue = ''): bool
+    {
+        $this->addVotes($pollName, $votes);
+
+        if ($pollName === 'songs') {
+            $this->addSongVotes($voter, $votes, $writeInValue);
+        }
+
+        if (!empty($writeInValue)) {
+            $this->addWriteInVote($voter, $pollName, $writeInValue);
+        }
+
+        return $this->recordVoterIp($voter, $pollName);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPollInfo(): ?array
+    {
+        return null;
+    }
+
     public function addVotes(string $pollName, array $votes): bool
     {
         foreach ($votes as $value) {
