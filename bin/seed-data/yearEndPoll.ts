@@ -2,12 +2,13 @@
 import type { Payload } from 'payload';
 
 export const SEED_POLL_SLUG = 'yep-2026-seed';
+export const SEED_POLL_YEAR = 2026;
 const STAFF_PICKS_YEAR = 2025;
 
 const DAY = 24 * 60 * 60 * 1000;
 
 /** The 12 legacy categories, with the legacy max picks and prize-entry rule. */
-const CATEGORIES: {
+export const CATEGORIES: {
   slug: string;
   displayName: string;
   categoryType: 'songs' | 'albums' | 'artists' | 'concerts' | 'custom';
@@ -271,7 +272,7 @@ export async function seedYearEndPoll(payload: Payload): Promise<void> {
       collection: 'year-end-polls',
       data: {
         name: 'Y-Not Year End Poll 2026',
-        year: 2026,
+        year: SEED_POLL_YEAR,
         slug: SEED_POLL_SLUG,
         status: 'open',
         votingOpensAt: new Date(Date.now() - DAY).toISOString(),
