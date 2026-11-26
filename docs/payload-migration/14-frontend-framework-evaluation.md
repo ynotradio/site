@@ -1092,6 +1092,8 @@ describe('MrmMatchCard', () => {
 
 Regardless of framework choice, the CSS approach should lean into modern platform features and minimize tooling:
 
+> For moving the existing PHP-site CSS toward this incrementally rather than rebuilding it, see [Chapter 20: Legacy CSS Modernisation](20-legacy-css-modernisation.md).
+
 ### Recommended: Vanilla CSS + Design Tokens
 
 ```css
