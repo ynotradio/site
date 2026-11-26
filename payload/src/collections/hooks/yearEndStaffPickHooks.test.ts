@@ -19,6 +19,25 @@ describe('parsePickLine', () => {
     });
   });
 
+  it('splits at a dash outside quotes before trying the quote format', () => {
+    expect(parsePickLine('Christone "Kingfish" Ingram - Fresh Stitches')).toEqual({
+      artist: 'Christone "Kingfish" Ingram',
+      title: 'Fresh Stitches',
+    });
+    expect(parsePickLine('Wilco - Jesus, Etc. "Live"')).toEqual({
+      artist: 'Wilco',
+      title: 'Jesus, Etc. "Live"',
+    });
+    expect(parsePickLine('Big Thief – Vampire Empire')).toEqual({
+      artist: 'Big Thief',
+      title: 'Vampire Empire',
+    });
+    expect(parsePickLine('Beck "Loser - Remix"')).toEqual({
+      artist: 'Beck',
+      title: 'Loser - Remix',
+    });
+  });
+
   it('keeps quotes and dashes inside the title', () => {
     expect(parsePickLine('Jay Som (feat. Jim Adkins) "Float"')).toEqual({
       artist: 'Jay Som (feat. Jim Adkins)',

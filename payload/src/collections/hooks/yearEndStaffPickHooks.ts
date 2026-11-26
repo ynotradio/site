@@ -11,12 +11,32 @@ const stripQuotes = (text: string) => text.replace(/^["“”\s]+|["“”\s]+$/
  * have doubled, unclosed and mid-line quotes (`Jay Som "Float" (ft. X)`),
  * so the title runs from the first quote to the end, minus quote marks.
  */
+const dashOutsideQuotes = (text: string): number => {
+  let at = text.indexOf(' - ');
+  while (at >= 0) {
+    const quotesBefore = (text.slice(0, at).match(/["“”]/g) ?? []).length;
+    if (quotesBefore % 2 === 0) return at;
+    at = text.indexOf(' - ', at + 1);
+  }
+  return -1;
+};
+
 export const parsePickLine = (line: string): Pick | null => {
   const text = line
     .replace(/\s+/g, ' ')
     .replace(/^\d+[.)]\s*/, '')
+    .replace(/ [–—] /g, ' - ')
     .trim();
   if (!text) return null;
+
+  // A " - " outside quotes wins, so `Christone "Kingfish" Ingram - Fresh Stitches`
+  // and `Wilco - Jesus, Etc. "Live"` split at the dash.
+  const dash = dashOutsideQuotes(text);
+  if (dash > 0) {
+    const title = text.slice(dash + 3).trim();
+    const wrapped = /^["“].*["”]$/.test(title);
+    return { artist: text.slice(0, dash).trim(), title: wrapped ? stripQuotes(title) : title };
+  }
 
   const quote = text.search(QUOTES);
   if (quote > 0) {
@@ -29,9 +49,6 @@ export const parsePickLine = (line: string): Pick | null => {
       .replace(/\s*[-–—]$/, '');
     return { artist, title: stripQuotes(title).replace(/\s+/g, ' ') };
   }
-
-  const dash = text.indexOf(' - ');
-  if (dash > 0) return { artist: text.slice(0, dash).trim(), title: text.slice(dash + 3).trim() };
 
   return { artist: '', title: text };
 };
