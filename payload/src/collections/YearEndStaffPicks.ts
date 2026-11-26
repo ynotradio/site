@@ -35,6 +35,8 @@ const pickList = (name: 'songs' | 'albums', label: string): Field[] => [
     admin: {
       // Payload makes virtual fields read-only in the admin unless told otherwise.
       readOnly: false,
+      // Empties the box after a save, so a row deleted afterwards isn't pasted back in.
+      components: { Field: '/payload/src/components/fields/NomineeImportField#NomineeImportField' },
       description: `Paste ${name} one per line as Artist - Title or Artist "Title", then save. They're added to the end of the list; ones already on it are skipped.`,
     },
   },

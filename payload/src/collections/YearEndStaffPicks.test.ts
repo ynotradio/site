@@ -22,6 +22,9 @@ describe('YearEndStaffPicks', () => {
       expect(field(name)?.type).toBe('array');
       expect(field(`${name}Paste`)?.virtual).toBe(true);
       expect(field(`${name}Paste`)?.admin?.readOnly).toBe(false);
+      expect(field(`${name}Paste`)?.admin?.components?.Field).toBe(
+        '/payload/src/components/fields/NomineeImportField#NomineeImportField',
+      );
     });
   });
 
