@@ -17,9 +17,12 @@ const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 const POLL_URL = `${LEGACY_BASE_URL}/yearendpoll.php`;
 
+const STAFF_PICKS_URL = `${LEGACY_BASE_URL}/yearendstaffpicks.php`;
+
 let api: APIRequestContext;
 let pollId: number;
 let categoryId: number;
+let staffPickId: number;
 
 const hoursFromNow = (hours: number) => new Date(Date.now() + hours * 3_600_000).toISOString();
 
@@ -70,9 +73,16 @@ test.describe('Year End Poll', () => {
       requiredForContest: true,
       bulkNominees: "The War On Drugs - Who's That\nBeck - Run Away\nBlondshell - Violins",
     });
+    staffPickId = await createDoc('year-end-staff-picks', {
+      year: 2100,
+      name: 'E2E Staff DJ',
+      songs: [{ artist: 'Wet Leg', title: 'E2E Song Pick' }],
+      albums: [{ artist: 'HAIM', title: 'E2E Album Pick' }],
+    });
   });
 
   test.afterAll(async () => {
+    if (staffPickId) await api.delete(`/api/year-end-staff-picks/${staffPickId}`);
     if (categoryId) await api.delete(`/api/year-end-poll-categories/${categoryId}`);
     if (pollId) await api.delete(`/api/year-end-polls/${pollId}`);
     await api?.dispose();
@@ -107,6 +117,14 @@ test.describe('Year End Poll', () => {
     expect(body).not.toContain('Your votes have been recorded');
   });
 
+  test('staff picks stay hidden while the poll is taking votes', async ({ page }) => {
+    const { status } = await navigateWithRetry(page, STAFF_PICKS_URL);
+    expect(status).toBe(200);
+    expect(checkForPhpErrors(await page.content())).toHaveLength(0);
+    await expect(page.getByRole('heading', { name: /Y-Not Staff Favorites/i })).toBeVisible();
+    await expect(page.getByText('E2E Staff DJ')).toHaveCount(0);
+  });
+
   test('closed poll shows the closed copy instead of the ballot', async ({ page }, testInfo) => {
     const res = await api.patch(`/api/year-end-polls/${pollId}`, {
       data: { votingClosesAt: hoursFromNow(-0.5) },
@@ -119,5 +137,16 @@ test.describe('Year End Poll', () => {
     await expect(page.getByRole('link', { name: 'Log in to Vote' })).toHaveCount(0);
 
     await captureScreenshot(page, testInfo, 'yep-closed');
+  });
+
+  test('staff picks appear once the poll has closed', async ({ page }, testInfo) => {
+    await navigateWithRetry(page, STAFF_PICKS_URL);
+    expect(checkForPhpErrors(await page.content())).toHaveLength(0);
+    await expect(page.getByRole('heading', { name: /2100 Y-Not Staff Favorites/i })).toBeVisible();
+    await expect(page.getByText('E2E Staff DJ')).toBeVisible();
+    await expect(page.getByText('Wet Leg "E2E Song Pick"')).toBeVisible();
+    await expect(page.getByText('HAIM - E2E Album Pick')).toBeVisible();
+
+    await captureScreenshot(page, testInfo, 'yep-staff-picks');
   });
 });
