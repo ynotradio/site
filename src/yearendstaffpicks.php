@@ -7,12 +7,11 @@ require "functions/main_fns.php";
 require "models/YearEndStaffPickFactory.php";
 require "partials/_header.php";
 
-$staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create();
-
 try {
+  $staffPickModel = \YNotRadio\Models\YearEndStaffPickFactory::create();
   $year = $staffPickModel->getYear();
   $staffPicks = $staffPickModel->getAll();
-} catch (\Exception $err) {
+} catch (\Throwable $err) {
   error_log("Staff picks: " . $err->getMessage());
   $year = null;
   $staffPicks = [];
