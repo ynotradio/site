@@ -122,6 +122,20 @@ export const isMrmTileActive = (tournaments: MrmTournament[]): boolean => {
   });
 };
 
+export interface YearEndPollSummary {
+  status: string;
+}
+
+/**
+ * The Year End Poll tile shows from October through January, when the poll is
+ * set up, run and wrapped, and whenever a poll is in draft or open.
+ */
+export const isYearEndPollTileActive = (polls: YearEndPollSummary[], now = new Date()): boolean => {
+  const month = now.getMonth();
+  if (month >= 9 || month === 0) return true;
+  return polls.some((poll) => poll.status === 'draft' || poll.status === 'open');
+};
+
 /**
  * Custom dashboard component that highlights top-level user pages
  * and organizes collections into primary and secondary groups.
@@ -132,6 +146,18 @@ export const CustomDashboard: React.FC = () => {
   const [secondaryOpen, setSecondaryOpen] = useState(false);
   const [mrmActive, setMrmActive] = useState(false);
   const [currentTop11Id, setCurrentTop11Id] = useState<number | null>(null);
+  const [yepActive, setYepActive] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/year-end-polls?limit=10&sort=-year&depth=0')
+      .then((res) => res.json())
+      .then((data: { docs?: YearEndPollSummary[] }) => {
+        setYepActive(isYearEndPollTileActive(data.docs ?? []));
+      })
+      .catch(() => {
+        setYepActive(isYearEndPollTileActive([]));
+      });
+  }, []);
 
   useEffect(() => {
     fetch('/api/modern-rock-madness-tournaments?limit=10&sort=-startDate')
@@ -205,31 +231,62 @@ export const CustomDashboard: React.FC = () => {
       </section>
 
       {/* Special Events - only shown when at least one tile is active */}
-      {mrmActive && (
+      {(mrmActive || yepActive) && (
         <section className="section">
           <h2 className="section-title">Special Events</h2>
           <div className="primary-grid">
-            <div className="primary-card">
-              <div className="primary-card-icon">🏆</div>
-              <h3 className="primary-card-label">Modern Rock Madness</h3>
-              <p className="primary-card-description">
-                Annual tournament - manage brackets, matches, and results
-              </p>
-              <div className="primary-card-actions">
-                <Link
-                  href={`${baseURL}/collections/modern-rock-madness-tournaments`}
-                  className="primary-card-action"
-                >
-                  View All
-                </Link>
-                <Link
-                  href={`${baseURL}/collections/modern-rock-madness-matches`}
-                  className="primary-card-action"
-                >
-                  Matches
-                </Link>
+            {yepActive && (
+              <div className="primary-card">
+                <div className="primary-card-icon">🗳️</div>
+                <h3 className="primary-card-label">Year End Poll</h3>
+                <p className="primary-card-description">
+                  Set up the annual poll and its categories, and post staff picks
+                </p>
+                <div className="primary-card-actions">
+                  <Link
+                    href={`${baseURL}/collections/year-end-polls`}
+                    className="primary-card-action"
+                  >
+                    Polls
+                  </Link>
+                  <Link
+                    href={`${baseURL}/collections/year-end-poll-categories`}
+                    className="primary-card-action"
+                  >
+                    Categories
+                  </Link>
+                  <Link
+                    href={`${baseURL}/collections/year-end-staff-picks`}
+                    className="primary-card-action"
+                  >
+                    Staff Picks
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
+            {mrmActive && (
+              <div className="primary-card">
+                <div className="primary-card-icon">🏆</div>
+                <h3 className="primary-card-label">Modern Rock Madness</h3>
+                <p className="primary-card-description">
+                  Annual tournament - manage brackets, matches, and results
+                </p>
+                <div className="primary-card-actions">
+                  <Link
+                    href={`${baseURL}/collections/modern-rock-madness-tournaments`}
+                    className="primary-card-action"
+                  >
+                    View All
+                  </Link>
+                  <Link
+                    href={`${baseURL}/collections/modern-rock-madness-matches`}
+                    className="primary-card-action"
+                  >
+                    Matches
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       )}
