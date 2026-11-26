@@ -18,9 +18,10 @@ export const UPDATING_VOTE_COUNT = 'yearEndPollUpdatingVoteCount';
  * Votes bump each nominee's voteCount outside the admin form (yearendpoll.php
  * writes it directly), so an admin save would put back whatever counts the
  * form loaded. Existing rows keep their stored count on every update except
- * the vote tally's own.
+ * the vote tally's own. Counts are re-read here, as the last hook, because
+ * originalDoc was loaded before the nominee lookups, which can take seconds.
  */
-export const keepVoteCounts: CollectionBeforeChangeHook = ({
+export const keepVoteCounts: CollectionBeforeChangeHook = async ({
   data,
   originalDoc,
   operation,
@@ -33,8 +34,17 @@ export const keepVoteCounts: CollectionBeforeChangeHook = ({
   ) {
     return data;
   }
+  const current = originalDoc?.id == null
+    ? originalDoc
+    : await req.payload.findByID({
+      collection: 'year-end-poll-categories',
+      id: originalDoc.id,
+      depth: 0,
+      select: { nominees: { id: true, voteCount: true } },
+      req,
+    });
   const stored = new Map<unknown, unknown>(
-    ((originalDoc?.nominees ?? []) as NomineeRow[]).map((row) => [row.id, row.voteCount]),
+    ((current?.nominees ?? []) as NomineeRow[]).map((row) => [row.id, row.voteCount]),
   );
   const withStoredCount = (row: NomineeRow): NomineeRow => {
     if (row.id == null || !stored.has(row.id)) return row;

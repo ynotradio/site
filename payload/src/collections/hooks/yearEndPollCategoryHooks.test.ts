@@ -143,6 +143,7 @@ describe('appendBulkNominees', () => {
 });
 
 describe('keepVoteCounts', () => {
+  const findByID = vi.fn();
   const run = (
     data: Record<string, unknown>,
     originalDoc: Record<string, unknown> | undefined,
@@ -154,37 +155,50 @@ describe('keepVoteCounts', () => {
     data,
     originalDoc,
     operation,
-    req: { context } as unknown as HookArgs['req'],
+    req: { context, payload: { findByID } } as unknown as HookArgs['req'],
     collection: {} as any,
-  } as HookArgs) as Record<string, unknown>;
+  } as HookArgs) as Promise<Record<string, unknown>>;
 
-  const saved = {
+  const loaded = {
+    id: 9,
     nominees: [
       { id: 'a', voteCount: 50 },
       { id: 'b', voteCount: 7 },
     ],
   };
 
-  it('keeps stored counts when the admin form sends stale ones', () => {
-    const result = run(
+  beforeEach(() => {
+    findByID.mockReset();
+    findByID.mockResolvedValue({
+      nominees: [
+        { id: 'a', voteCount: 53 },
+        { id: 'b', voteCount: 7 },
+      ],
+    });
+  });
+
+  it('keeps the latest stored counts when the admin form sends stale ones', async () => {
+    const result = await run(
       { nominees: [{ id: 'a', voteCount: 10 }, { id: 'b', voteCount: 7 }, { customLabel: 'New' }] },
-      saved,
+      loaded,
     );
+    expect(findByID).toHaveBeenCalledWith(expect.objectContaining({ id: 9 }));
     expect(result.nominees).toEqual([
-      { id: 'a', voteCount: 50 },
+      { id: 'a', voteCount: 53 },
       { id: 'b', voteCount: 7 },
       { customLabel: 'New' },
     ]);
   });
 
-  it('lets the vote tally change counts', () => {
+  it('lets the vote tally change counts', async () => {
     const data = { nominees: [{ id: 'a', voteCount: 51 }] };
-    expect(run(data, saved, { context: { [UPDATING_VOTE_COUNT]: true } })).toBe(data);
+    expect(await run(data, loaded, { context: { [UPDATING_VOTE_COUNT]: true } })).toBe(data);
+    expect(findByID).not.toHaveBeenCalled();
   });
 
-  it('leaves creates alone so imports can set counts', () => {
+  it('leaves creates alone so imports can set counts', async () => {
     const data = { nominees: [{ customLabel: 'Wet Leg', voteCount: 42 }] };
-    expect(run(data, undefined, { operation: 'create' })).toBe(data);
+    expect(await run(data, undefined, { operation: 'create' })).toBe(data);
   });
 });
 

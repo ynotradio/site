@@ -55,7 +55,7 @@ export const YearEndPollCategories: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   hooks: {
-    beforeChange: [appendBulkNominees, keepVoteCounts, validateNominees],
+    beforeChange: [appendBulkNominees, validateNominees, keepVoteCounts],
   },
   fields: [
     {
