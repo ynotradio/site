@@ -11,8 +11,9 @@
  *   yarn import:yep --year 2025 [--from local-mysql|prod-mysql]
  *     [--to local-postgres|dev-neon|prod-neon] [--dry-run]
  *
- * The legacy tables hold one year only, so --year is required. Empty category
- * tables are skipped. Voters, IPs, write-ins and prize entrants are not copied.
+ * The legacy tables hold one year only, so --year is required. Only the
+ * categories in bin/seed-data/yearEndPoll.ts are imported, and empty ones are
+ * skipped. Voters, IPs, write-ins and prize entrants are not copied.
  * Re-runnable: an existing poll with the same slug is left alone.
  */
 import * as mysql from 'mysql2/promise';
@@ -62,19 +63,20 @@ async function main(): Promise<void> {
   const categories = [];
   for (const tableRow of tables) {
     const table = String(Object.values(tableRow)[0]);
-    if (!NOT_CATEGORIES.has(table)) {
+    const slug = table.replace(/^year_end_/, '');
+    const settings = legacyCategory(slug, options.year, KNOWN_CATEGORIES);
+    if (!settings && !NOT_CATEGORIES.has(table)) logger.info(`${table}: not a current category, skipped`);
+    if (settings) {
       const [rows] = await connection.query<mysql.RowDataPacket[]>(
         `SELECT * FROM \`${table}\` ORDER BY votes DESC, id`,
       );
       if (rows.length) {
-        const slug = table.replace(/^year_end_/, '');
         const nominees = rows
           .map((row) => ({
             customLabel: legacyNomineeLabel(row),
             voteCount: Number(row.votes) || 0,
           }))
           .filter((nominee) => nominee.customLabel);
-        const settings = legacyCategory(slug, options.year, KNOWN_CATEGORIES);
         const votes = nominees.reduce((n, x) => n + x.voteCount, 0);
         categories.push({ ...settings, nominees });
         logger.info(`${slug}: ${nominees.length} nominees, ${votes} votes`);

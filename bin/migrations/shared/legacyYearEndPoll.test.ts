@@ -39,13 +39,7 @@ describe('legacyCategory', () => {
     );
   });
 
-  it('falls back to a custom category named from the slug', () => {
-    expect(legacyCategory('late_night_tv', 2025, known)).toEqual({
-      slug: 'late_night_tv',
-      displayName: 'Late Night Tv',
-      categoryType: 'custom',
-      maxPicks: 3,
-      requiredForContest: false,
-    });
+  it('returns null for a table that is not a current category', () => {
+    expect(legacyCategory('late_night_tv', 2025, known)).toBeNull();
   });
 });

@@ -15,26 +15,19 @@ export const legacyNomineeLabel = (row: Record<string, unknown>): string => {
 };
 
 /**
- * Settings for a legacy category table, taken from the known category list
- * when the slug is on it. Years in the display name are shifted from the
- * list's poll year to the imported one ("Most Anticipated Albums of 2027" on
- * the 2026 list becomes "of 2026" for a 2025 poll).
+ * Settings for a legacy category table from the known category list, or null
+ * for a table that isn't on it (old categories such as late_night_tv). Years
+ * in the display name are shifted from the list's poll year to the imported
+ * one ("Most Anticipated Albums of 2027" on the 2026 list becomes "of 2026"
+ * for a 2025 poll).
  */
 export const legacyCategory = (
   slug: string,
   year: number,
   known: { year: number; categories: readonly KnownCategory[] },
-): KnownCategory => {
+): KnownCategory | null => {
   const match = known.categories.find((category) => category.slug === slug);
-  if (!match) {
-    const displayName = slug
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    return {
-      slug, displayName, categoryType: 'custom', maxPicks: 3, requiredForContest: false,
-    };
-  }
+  if (!match) return null;
   return {
     slug: match.slug,
     displayName: match.displayName.replace(/\b20\d\d\b/, (found) => String(Number(found) - known.year + year)),

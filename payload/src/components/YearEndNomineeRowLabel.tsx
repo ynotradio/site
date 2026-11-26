@@ -63,7 +63,7 @@ const YearEndNomineeRowLabel: React.FC = () => {
   const votes = data?.voteCount
     ? ` (${data.voteCount} ${data.voteCount === 1 ? 'vote' : 'votes'})`
     : '';
-  return <>{`${label || `Nominee ${String(rowNumber + 1).padStart(2, '0')}`}${votes}`}</>;
+  return <>{`${label || `Nominee ${String((rowNumber ?? 0) + 1).padStart(2, '0')}`}${votes}`}</>;
 };
 
 export default YearEndNomineeRowLabel;
