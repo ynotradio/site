@@ -3,6 +3,18 @@ import { hasRole } from '../utils/auth';
 import { appendBulkNominees, validateNominees } from './hooks/yearEndPollCategoryHooks';
 
 /**
+ * A nominee field shows when it matches the category type, or when the row
+ * already has a value in it, so changing the type never hides a linked entry.
+ */
+export const shownFor = (categoryType: string, field: string) => (
+  data: { categoryType?: unknown } | undefined,
+  siblingData: Record<string, unknown> | undefined,
+): boolean => {
+  const value = siblingData?.[field];
+  return data?.categoryType === categoryType || (value != null && value !== '');
+};
+
+/**
  * YearEndPollCategories Collection
  *
  * Each row represents one voting category within an annual poll (e.g., "Best Songs",
@@ -181,7 +193,7 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'songs',
               admin: {
-                condition: (data) => data?.categoryType === 'songs',
+                condition: shownFor('songs', 'song'),
                 width: '70%',
               },
             },
@@ -191,7 +203,7 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'records',
               admin: {
-                condition: (data) => data?.categoryType === 'albums',
+                condition: shownFor('albums', 'record'),
                 width: '70%',
               },
             },
@@ -200,7 +212,7 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'artists',
               admin: {
-                condition: (data) => data?.categoryType === 'artists',
+                condition: shownFor('artists', 'artist'),
                 width: '70%',
               },
             },
@@ -209,7 +221,7 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'concerts',
               admin: {
-                condition: (data) => data?.categoryType === 'concerts',
+                condition: shownFor('concerts', 'concert'),
                 width: '70%',
               },
             },
@@ -218,7 +230,7 @@ export const YearEndPollCategories: CollectionConfig = {
               label: 'Nominee',
               type: 'text',
               admin: {
-                condition: (data, siblingData) => data?.categoryType === 'custom' || Boolean(siblingData?.customLabel),
+                condition: shownFor('custom', 'customLabel'),
                 width: '70%',
               },
             },

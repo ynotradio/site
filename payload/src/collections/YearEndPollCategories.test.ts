@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { YearEndPollCategories } from './YearEndPollCategories';
+import { YearEndPollCategories, shownFor } from './YearEndPollCategories';
 import { flattenRowFields } from './testUtils';
 
 type NomineeField = { name: string; type?: string; relationTo?: string; defaultValue?: unknown };
@@ -18,6 +18,22 @@ function flattenNomineeFields(): NomineeField[] {
     return [f as NomineeField];
   });
 }
+
+describe('shownFor', () => {
+  const song = shownFor('songs', 'song');
+
+  it('shows the field that matches the category type', () => {
+    expect(song({ categoryType: 'songs' }, {})).toBe(true);
+    expect(song({ categoryType: 'custom' }, {})).toBe(false);
+  });
+
+  it('keeps showing a field that has a value after the type changes', () => {
+    expect(song({ categoryType: 'custom' }, { song: 12 })).toBe(true);
+    expect(shownFor('custom', 'customLabel')({ categoryType: 'songs' }, { customLabel: '' })).toBe(
+      false,
+    );
+  });
+});
 
 describe('YearEndPollCategories', () => {
   it('has the correct slug', () => {
