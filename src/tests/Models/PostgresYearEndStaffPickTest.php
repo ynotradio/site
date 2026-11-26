@@ -13,6 +13,9 @@ class PostgresYearEndStaffPickTest extends TestCase
     private array $results;
     private PostgresYearEndStaffPick $model;
 
+    /** @var string[] */
+    private array $prepared = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -39,6 +42,7 @@ class PostgresYearEndStaffPickTest extends TestCase
 
         $db = $this->createMock(PDO::class);
         $db->method('prepare')->willReturnCallback(function (string $sql) {
+            $this->prepared[] = $sql;
             $rows = [];
             foreach ($this->results as $needle => $value) {
                 if (strpos($sql, $needle) !== false) {
@@ -76,6 +80,13 @@ class PostgresYearEndStaffPickTest extends TestCase
             ['https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&hide_artwork=1&feed=%2Fynotradio%2Fjosh-t-landows-best-of-2025%2F'],
             $josh['players']
         );
+    }
+
+    public function testYearSkipsPollsStillInDraftOrOpen(): void
+    {
+        $this->model->getYear();
+        $sql = implode("\n", $this->prepared);
+        $this->assertMatchesRegularExpression("/NOT IN \(SELECT year FROM year_end_polls WHERE status IN \('draft', 'open'\)\)/", $sql);
     }
 
     public function testNoPicksYet(): void

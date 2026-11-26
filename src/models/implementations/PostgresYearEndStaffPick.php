@@ -23,9 +23,17 @@ class PostgresYearEndStaffPick implements YearEndStaffPick
         $this->db = $db;
     }
 
+    /**
+     * The newest year with picks, skipping a year whose poll is still in draft
+     * or open: staff enter that year's picks while voting runs, and they go
+     * public once the poll is closed.
+     */
     public function getYear(): ?int
     {
-        $stmt = $this->db->prepare('SELECT MAX(year) AS year FROM year_end_staff_picks');
+        $stmt = $this->db->prepare("
+            SELECT MAX(year) AS year FROM year_end_staff_picks
+            WHERE year NOT IN (SELECT year FROM year_end_polls WHERE status IN ('draft', 'open'))
+        ");
         $stmt->execute();
         $row = $stmt->fetch();
         return $row && $row['year'] !== null ? (int)$row['year'] : null;

@@ -53,7 +53,7 @@ export const YearEndStaffPicks: CollectionConfig = {
     defaultColumns: ['name', 'year', 'showName', 'sortOrder', 'updatedAt'],
     group: 'Polls & Contests',
     description:
-      "Each staff member's favorite songs and albums of the year, shown on the Staff Picks page.",
+      "Each staff member's favorite songs and albums of the year. A year's picks appear on the Staff Picks page once that year's poll is closed; until then the page keeps showing last year's.",
     groupBy: true,
   },
   access: {
