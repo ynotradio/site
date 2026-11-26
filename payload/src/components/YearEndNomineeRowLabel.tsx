@@ -12,6 +12,7 @@ type RowData = {
   record?: Relation;
   artist?: Relation;
   concert?: Relation;
+  voteCount?: number | null;
 };
 
 const COLLECTIONS = [
@@ -58,7 +59,10 @@ const YearEndNomineeRowLabel: React.FC = () => {
   }, [key, inlineName]);
 
   const label = data?.customLabel?.trim() || inlineName || fetched;
-  return <>{label || `Nominee ${String(rowNumber + 1).padStart(2, '0')}`}</>;
+  const votes = data?.voteCount
+    ? ` (${data.voteCount} ${data.voteCount === 1 ? 'vote' : 'votes'})`
+    : '';
+  return <>{`${label || `Nominee ${String(rowNumber + 1).padStart(2, '0')}`}${votes}`}</>;
 };
 
 export default YearEndNomineeRowLabel;
