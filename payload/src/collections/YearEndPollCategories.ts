@@ -179,7 +179,7 @@ export const YearEndPollCategories: CollectionConfig = {
       admin: {
         initCollapsed: true,
         components: {
-          RowLabel: '/payload/src/components/YearEndNomineeRowLabel',
+          RowLabel: '/payload/src/components/YearEndNomineeRowLabel#default',
         },
         description:
           'Nominees for this category. Each row shows the field that matches the category type above (set the type first).',

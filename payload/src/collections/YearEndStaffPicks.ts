@@ -10,7 +10,7 @@ const pickList = (name: 'songs' | 'albums', label: string): Field[] => [
     admin: {
       description: 'In ranked order. Drag rows to reorder.',
       initCollapsed: true,
-      components: { RowLabel: '/payload/src/components/StaffPickRowLabel' },
+      components: { RowLabel: '/payload/src/components/StaffPickRowLabel#default' },
     },
     fields: [
       {
