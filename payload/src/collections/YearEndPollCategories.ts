@@ -158,7 +158,7 @@ export const YearEndPollCategories: CollectionConfig = {
           Field: '/payload/src/components/fields/NomineeImportField#NomineeImportField',
         },
         description:
-          'Upload a .txt or .csv (artist and title columns), or paste one nominee per line (e.g. "Artist - Song"), then save. In a songs, albums, artists or concerts category, lines that exactly match an existing entry are linked to it; the rest become text nominees. Lines already on the list are skipped.',
+          'Upload a .txt or .csv, paste one nominee per line (e.g. "Artist - Song"), or copy the artist and title columns straight from a spreadsheet, then save. In a songs, albums, artists or concerts category, lines that exactly match an existing entry are linked to it; the rest become text nominees. Lines already on the list are skipped.',
       },
     },
     {
