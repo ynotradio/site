@@ -31,8 +31,7 @@ export const shownFor = (categoryType: string, field: string) => (
  * collection (e.g., TV shows, movies). Only one of the typed relationship fields
  * should be populated per nominee; `customLabel` is used for everything else.
  *
- * Per-category voting windows (votingOpensAt / votingClosesAt) are optional overrides;
- * if absent, the parent poll's window applies.
+ * Voting opens and closes on the parent poll's window.
  *
  * Modelled after ModernRockMadnessMatches.
  */
@@ -120,35 +119,6 @@ export const YearEndPollCategories: CollectionConfig = {
           min: 1,
           admin: {
             description: 'Maximum selections allowed per voter for this category',
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
-      type: 'row',
-      fields: [
-        {
-          name: 'votingOpensAt',
-          type: 'date',
-          admin: {
-            description:
-              'Optional per-category voting window override. If blank, uses the parent poll window.',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
-            width: '50%',
-          },
-        },
-        {
-          name: 'votingClosesAt',
-          type: 'date',
-          admin: {
-            description:
-              'Optional per-category voting window override. If blank, uses the parent poll window.',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
             width: '50%',
           },
         },

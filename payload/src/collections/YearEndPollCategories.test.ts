@@ -92,14 +92,10 @@ describe('YearEndPollCategories', () => {
     expect(maxPicksField?.defaultValue).toBe(3);
   });
 
-  it('has optional per-category voting window fields', () => {
-    const allFields = flattenRowFields(YearEndPollCategories.fields);
-    const opensField = allFields.find((f) => f.name === 'votingOpensAt');
-    const closesField = allFields.find((f) => f.name === 'votingClosesAt');
-    expect(opensField?.type).toBe('date');
-    expect(closesField?.type).toBe('date');
-    expect(opensField?.required).toBeFalsy();
-    expect(closesField?.required).toBeFalsy();
+  it('has no per-category voting window, since only the poll window is enforced', () => {
+    const names = flattenRowFields(YearEndPollCategories.fields).map((f) => f.name);
+    expect(names).not.toContain('votingOpensAt');
+    expect(names).not.toContain('votingClosesAt');
   });
 
   it('has a nominees array field', () => {
