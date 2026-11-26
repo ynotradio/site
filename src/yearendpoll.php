@@ -67,7 +67,8 @@ if ($isPollActive && $voterId !== '' && isset($_POST['poll'])) {
     $voteCount = count($votes) + ($writeInValue !== '' ? 1 : 0);
 
     if (!in_array($pollName, $controller->getPollNames(), true)
-        || $voteCount !== $controller->getMaxPicks($pollName)) {
+        || $voteCount < 1
+        || $voteCount > $controller->getMaxPicks($pollName)) {
         $voteError = true;
     } elseif (!$controller->hasVoted($ip, $pollName)) {
         $voteSuccess = $controller->processVotes($pollName, $votes, $ip, $writeInValue);
@@ -135,7 +136,7 @@ require __DIR__ . '/partials/_header.php';
 
         <?php if ($voteError): ?>
           <div class="twelve columns top-spacer_20 center error">
-            Wow, this is embarrassing...<br>It seems that you didn't pick enough, please try again.
+            Wow, this is embarrassing...<br>It seems that you picked too few or too many, please try again.
           </div>
         <?php elseif ($voteSuccess): ?>
           <div class="twelve columns top-spacer_20 center success">Thanks!<br>Your votes have been recorded!</div>
