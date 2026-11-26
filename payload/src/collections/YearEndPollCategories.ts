@@ -162,6 +162,10 @@ export const YearEndPollCategories: CollectionConfig = {
       name: 'nominees',
       type: 'array',
       admin: {
+        initCollapsed: true,
+        components: {
+          RowLabel: '/payload/src/components/YearEndNomineeRowLabel',
+        },
         description:
           'Nominees for this category. Each row shows the field that matches the category type above (set the type first).',
       },

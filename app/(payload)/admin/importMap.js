@@ -65,6 +65,7 @@ import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } fro
 import { CdOfTheWeekWizardTool as CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f } from '../../../payload/src/features/cd-of-the-week-wizard'
 import { LiveMatchTool as LiveMatchTool_8e09218c140287dbcfa6d389b5910882 } from '../../../payload/src/features/mrm-live'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
+import { default as default_7d1975fbeda1d8728647ed16e51beca1 } from '../../../payload/src/components/YearEndNomineeRowLabel'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
@@ -134,5 +135,6 @@ export const importMap = {
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
   "/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool": CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f,
   "/payload/src/features/mrm-live#LiveMatchTool": LiveMatchTool_8e09218c140287dbcfa6d389b5910882,
-  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
+  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
+  "/payload/src/components/YearEndNomineeRowLabel#default": default_7d1975fbeda1d8728647ed16e51beca1
 }
