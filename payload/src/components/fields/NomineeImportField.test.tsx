@@ -5,11 +5,13 @@ import { NomineeImportField } from './NomineeImportField';
 
 const setValue = vi.fn();
 let current = '';
+let modified = false;
 
 vi.mock('@payloadcms/ui', () => ({
   FieldLabel: ({ label }: { label: string }) => <label>{label}</label>,
   FieldDescription: ({ description }: { description: string }) => <p>{description}</p>,
   useField: () => ({ value: current, setValue }),
+  useFormModified: () => modified,
 }));
 vi.mock('@payloadcms/ui/shared', () => ({ mergeFieldStyles: () => ({}) }));
 
@@ -27,6 +29,16 @@ describe('NomineeImportField', () => {
       target: { files: [file] },
     });
     await waitFor(() => expect(setValue).toHaveBeenCalledWith('Beck - Run Away\nWet Leg - CPR'));
+  });
+
+  it('empties the box once the save lands', () => {
+    current = 'Wet Leg - CPR';
+    modified = true;
+    const { rerender } = render(<NomineeImportField {...props} />);
+    expect(setValue).not.toHaveBeenCalledWith('', true);
+    modified = false;
+    rerender(<NomineeImportField {...props} />);
+    expect(setValue).toHaveBeenCalledWith('', true);
   });
 
   it('shows pasted text and the description', () => {
