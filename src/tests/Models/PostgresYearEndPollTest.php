@@ -158,6 +158,18 @@ class PostgresYearEndPollTest extends TestCase
         $this->assertSame('Kurt Vile - Zoom 97', $this->executedMatching('INSERT INTO year_end_poll_write_ins')[0]['params'][':write_in']);
     }
 
+    public function testRecordBallotLocksVoterAndCategoryBeforeCheckingForAPriorBallot(): void
+    {
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+
+        $sql = array_column($this->executed, 'sql');
+        $lock = array_search(true, array_map(fn ($s) => strpos($s, 'pg_advisory_xact_lock') !== false, $sql), true);
+        $check = array_search(true, array_map(fn ($s) => strpos($s, 'FROM year_end_poll_votes') !== false, $sql), true);
+        $this->assertNotFalse($lock);
+        $this->assertLessThan($check, $lock);
+        $this->assertSame([':key' => 'auth0|abc:1'], $this->executed[$lock]['params']);
+    }
+
     public function testRecordBallotRejectsNomineeFromAnotherCategory(): void
     {
         $this->db->expects($this->never())->method('beginTransaction');

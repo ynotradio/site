@@ -220,6 +220,10 @@ class PostgresYearEndPoll implements YearEndPoll
 
         $this->db->beginTransaction();
         try {
+            // Serialize ballots per voter and category so two submitted at
+            // once can't both pass the hasVoted check.
+            $this->db->prepare('SELECT pg_advisory_xact_lock(hashtext(:key))')
+                ->execute([':key' => "{$voter}:{$category['id']}"]);
             if ($this->hasVoted($voter, $pollName)) {
                 throw new \RuntimeException('Voter already voted in this category');
             }
