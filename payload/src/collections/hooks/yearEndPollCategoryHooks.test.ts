@@ -58,6 +58,29 @@ describe('appendBulkNominees', () => {
     expect(fresh.nominees).toEqual([{ artist: 9 }]);
   });
 
+  it('links an exact name even when many others contain it', async () => {
+    const similar = Array.from({ length: 12 }, (_, i) => ({ id: 100 + i, name: `Rocket ${i}` }));
+    find.mockImplementation(async ({ where }) => ({
+      docs: where.name.equals ? [{ id: 3, name: 'Rocket' }] : similar,
+    }));
+    const result = await run({ categoryType: 'artists', nominees: [], bulkNominees: 'Rocket' });
+    expect(result.nominees).toEqual([{ artist: 3 }]);
+    expect(find.mock.calls[0][0]).not.toHaveProperty('limit');
+  });
+
+  it('falls back to a case-insensitive match when the case differs', async () => {
+    find.mockImplementation(async ({ where }) => ({
+      docs: where.name.like
+        ? [
+          { id: 8, name: 'HAIM' },
+          { id: 9, name: 'Haim Brothers' },
+        ]
+        : [],
+    }));
+    const result = await run({ categoryType: 'artists', nominees: [], bulkNominees: 'haim' });
+    expect(result.nominees).toEqual([{ artist: 8 }]);
+  });
+
   it('never looks anything up for a custom category', async () => {
     await run({ categoryType: 'custom', nominees: [], bulkNominees: 'The Studio' });
     expect(find).not.toHaveBeenCalled();

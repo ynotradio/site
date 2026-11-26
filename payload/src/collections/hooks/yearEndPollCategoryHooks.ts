@@ -34,18 +34,22 @@ const findExactMatch = async (
   link: Link,
   label: string,
 ): Promise<number | string | null> => {
-  const { docs } = await req.payload.find({
-    collection: link.collection,
-    where: { [link.nameField]: { like: label } },
-    limit: 10,
-    depth: 0,
-    pagination: false,
-    req,
-  });
-  const exact = docs.filter((doc) => {
-    const name = (doc as unknown as Record<string, unknown>)[link.nameField];
-    return comparable(name) === comparable(label);
-  });
+  const exactMatches = async (operator: 'equals' | 'like') => {
+    const { docs } = await req.payload.find({
+      collection: link.collection,
+      where: { [link.nameField]: { [operator]: label } },
+      depth: 0,
+      pagination: false,
+      req,
+    });
+    return docs.filter((doc) => {
+      const name = (doc as unknown as Record<string, unknown>)[link.nameField];
+      return comparable(name) === comparable(label);
+    });
+  };
+  // `equals` is case-sensitive; `like` catches case and spacing differences.
+  let exact = await exactMatches('equals');
+  if (exact.length === 0) exact = await exactMatches('like');
   return exact.length === 1 ? exact[0].id : null;
 };
 
