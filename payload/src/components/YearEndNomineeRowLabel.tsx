@@ -36,7 +36,10 @@ const YearEndNomineeRowLabel: React.FC = () => {
   const id = doc ? doc.id : picked?.value;
   const inlineName = doc && nameOf(doc);
   const key = picked && id !== undefined ? `${picked.collection}/${id}` : null;
-  const [fetched, setFetched] = useState<string | null>(key ? (labelCache.get(key) ?? null) : null);
+  const [, rerender] = useState(0);
+  // Read through the cache every render so the label follows the row's
+  // current link, not the one it had when the label first mounted.
+  const fetched = key ? (labelCache.get(key) ?? null) : null;
 
   useEffect(() => {
     if (!key || inlineName || labelCache.has(key)) {
@@ -47,10 +50,8 @@ const YearEndNomineeRowLabel: React.FC = () => {
       .then((response) => (response.ok ? response.json() : null))
       .then((fetchedDoc: Doc | null) => {
         const name = fetchedDoc && nameOf(fetchedDoc);
-        if (!cancelled && name) {
-          labelCache.set(key, name);
-          setFetched(name);
-        }
+        if (name) labelCache.set(key, name);
+        if (!cancelled && name) rerender((n) => n + 1);
       })
       .catch(() => undefined);
     return () => {

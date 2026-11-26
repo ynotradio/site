@@ -35,6 +35,28 @@ describe('YearEndNomineeRowLabel', () => {
     await waitFor(() => expect(screen.getByText('Metric')).toBeInTheDocument());
   });
 
+  it('follows the row when its link changes to an already-loaded entry', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => ({
+        ok: true,
+        json: async () => ({ name: url.includes('/31') ? 'Wet Leg' : 'Beck' }),
+      })),
+    );
+    useRowLabel.mockReturnValue({ data: { artist: 31 }, rowNumber: 0 });
+    const { rerender } = render(<YearEndNomineeRowLabel />);
+    await waitFor(() => expect(screen.getByText('Wet Leg')).toBeInTheDocument());
+
+    useRowLabel.mockReturnValue({ data: { artist: 32 }, rowNumber: 1 });
+    render(<YearEndNomineeRowLabel />);
+    await waitFor(() => expect(screen.getByText('Beck')).toBeInTheDocument());
+
+    useRowLabel.mockReturnValue({ data: { artist: 32 }, rowNumber: 0 });
+    rerender(<YearEndNomineeRowLabel />);
+    expect(screen.getAllByText('Beck')).toHaveLength(2);
+    expect(screen.queryByText('Wet Leg')).not.toBeInTheDocument();
+  });
+
   it('adds the vote count once there are votes', () => {
     useRowLabel.mockReturnValue({ data: { customLabel: 'Wet Leg', voteCount: 42 }, rowNumber: 0 });
     render(<YearEndNomineeRowLabel />);
