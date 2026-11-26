@@ -148,14 +148,17 @@ export const YearEndPollCategories: CollectionConfig = {
     },
     {
       name: 'bulkNominees',
-      label: 'Paste nominees',
+      label: 'Add nominees from a list',
       type: 'textarea',
       virtual: true,
       admin: {
         // Payload makes virtual fields read-only in the admin unless told otherwise.
         readOnly: false,
+        components: {
+          Field: '/payload/src/components/fields/NomineeImportField#NomineeImportField',
+        },
         description:
-          'Paste one nominee per line (e.g. "Artist - Song") and save. Each line is added as a custom-label nominee; lines already on the list are skipped.',
+          'Upload a .txt or .csv (artist and title columns), or paste one nominee per line (e.g. "Artist - Song"), then save. In a songs, albums, artists or concerts category, lines that exactly match an existing entry are linked to it; the rest become text nominees. Lines already on the list are skipped.',
       },
     },
     {

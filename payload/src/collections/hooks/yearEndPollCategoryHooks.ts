@@ -1,4 +1,5 @@
 import type { CollectionBeforeChangeHook } from 'payload';
+import { parseNomineeList } from './parseNomineeList';
 
 type NomineeRow = {
   song?: unknown;
@@ -8,27 +9,85 @@ type NomineeRow = {
   customLabel?: unknown;
 };
 
-export const appendBulkNominees: CollectionBeforeChangeHook = ({ data, originalDoc }) => {
+const LINKABLE = {
+  songs: { collection: 'songs', field: 'song', nameField: 'displayName' },
+  albums: { collection: 'records', field: 'record', nameField: 'displayName' },
+  artists: { collection: 'artists', field: 'artist', nameField: 'name' },
+  concerts: { collection: 'concerts', field: 'concert', nameField: 'titlePlain' },
+} as const;
+
+const comparable = (value: unknown) => String(value ?? '')
+  .toLowerCase()
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const idOf = (value: unknown): string | null => {
+  if (value == null) return null;
+  if (typeof value === 'object') return idOf((value as { id?: unknown }).id);
+  return String(value);
+};
+
+type Link = (typeof LINKABLE)[keyof typeof LINKABLE];
+
+const findExactMatch = async (
+  req: Parameters<CollectionBeforeChangeHook>[0]['req'],
+  link: Link,
+  label: string,
+): Promise<number | string | null> => {
+  const { docs } = await req.payload.find({
+    collection: link.collection,
+    where: { [link.nameField]: { like: label } },
+    limit: 10,
+    depth: 0,
+    pagination: false,
+    req,
+  });
+  const exact = docs.filter((doc) => {
+    const name = (doc as unknown as Record<string, unknown>)[link.nameField];
+    return comparable(name) === comparable(label);
+  });
+  return exact.length === 1 ? exact[0].id : null;
+};
+
+/**
+ * Adds one nominee per pasted/uploaded line. In a songs, albums, artists or
+ * concerts category a line that matches exactly one existing document by name
+ * is linked to it; anything else becomes a custom-label nominee. Lines already
+ * on the list are skipped.
+ */
+export const appendBulkNominees: CollectionBeforeChangeHook = async ({
+  data,
+  originalDoc,
+  req,
+}) => {
   const { bulkNominees, ...rest } = data;
   if (typeof bulkNominees !== 'string' || bulkNominees.trim() === '') return rest;
 
   const nominees: NomineeRow[] = Array.isArray(data.nominees)
     ? data.nominees
     : (originalDoc?.nominees ?? []);
-  const seen = new Set(
-    nominees
-      .map((row) => (typeof row.customLabel === 'string' ? row.customLabel.trim().toLowerCase() : ''))
-      .filter(Boolean),
-  );
+  const link = LINKABLE[(data.categoryType ?? originalDoc?.categoryType) as keyof typeof LINKABLE];
+  const seen = new Set<string>();
+  nominees.forEach((row) => {
+    if (typeof row.customLabel === 'string' && row.customLabel.trim()) {
+      seen.add(`label:${comparable(row.customLabel)}`);
+    }
+    const linkedId = link && idOf(row[link.field]);
+    if (link && linkedId) seen.add(`${link.field}:${linkedId}`);
+  });
 
   const added: NomineeRow[] = [];
-  bulkNominees.split(/\r?\n/).forEach((line) => {
-    const label = line.trim();
-    const key = label.toLowerCase();
-    if (!label || seen.has(key)) return;
-    seen.add(key);
-    added.push({ customLabel: label });
-  });
+  const lines = parseNomineeList(bulkNominees);
+  for (let i = 0; i < lines.length; i += 1) {
+    const label = lines[i];
+    // eslint-disable-next-line no-await-in-loop
+    const match = link ? await findExactMatch(req, link, label) : null;
+    const key = match ? `${link!.field}:${match}` : `label:${comparable(label)}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      added.push(match ? { [link!.field]: match } : { customLabel: label });
+    }
+  }
 
   return { ...rest, nominees: [...nominees, ...added] };
 };

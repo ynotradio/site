@@ -1,19 +1,82 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { appendBulkNominees, validateNominees } from './yearEndPollCategoryHooks';
 
 type HookArgs = Parameters<typeof validateNominees>[0];
 
 describe('appendBulkNominees', () => {
-  const run = (data: Record<string, unknown>, originalDoc?: Record<string, unknown>) => appendBulkNominees({
+  const find = vi.fn();
+  const run = async (data: Record<string, unknown>, originalDoc?: Record<string, unknown>) => (await appendBulkNominees({
     data,
     originalDoc,
-    req: { user: null, payload: {} } as HookArgs['req'],
+    req: { user: null, payload: { find } } as unknown as HookArgs['req'],
     operation: 'update',
     collection: {} as any,
-  } as HookArgs) as Record<string, unknown>;
+  } as HookArgs)) as Record<string, unknown>;
 
-  it('appends one custom-label nominee per non-blank line', () => {
-    const result = run({
+  beforeEach(() => {
+    find.mockReset().mockResolvedValue({ docs: [] });
+  });
+
+  it('links a line that matches exactly one song and keeps the rest as labels', async () => {
+    find.mockImplementation(async ({ where }) => ({
+      docs: /cpr/i.test(where.displayName.like)
+        ? [
+          { id: 5, displayName: 'Wet Leg - CPR' },
+          { id: 6, displayName: 'Wet Leg - CPR (Live)' },
+        ]
+        : [],
+    }));
+    const result = await run({
+      categoryType: 'songs',
+      nominees: [],
+      bulkNominees: 'wet leg – CPR\nWet Leg - CPR\nBeck - Run Away',
+    });
+    expect(find.mock.calls[0][0].collection).toBe('songs');
+    expect(result.nominees).toEqual([{ song: 5 }, { customLabel: 'Beck - Run Away' }]);
+  });
+
+  it('does not link when more than one document has the same name', async () => {
+    find.mockResolvedValue({
+      docs: [
+        { id: 1, name: 'Metric' },
+        { id: 2, name: 'metric' },
+      ],
+    });
+    const result = await run({ categoryType: 'artists', nominees: [], bulkNominees: 'Metric' });
+    expect(result.nominees).toEqual([{ customLabel: 'Metric' }]);
+  });
+
+  it('links an exact match and skips it when already linked', async () => {
+    find.mockResolvedValue({ docs: [{ id: 9, name: 'Metric' }] });
+    const result = await run({
+      categoryType: 'artists',
+      nominees: [{ artist: 9 }],
+      bulkNominees: 'Metric\nMetric',
+    });
+    expect(result.nominees).toEqual([{ artist: 9 }]);
+    const fresh = await run({ categoryType: 'artists', nominees: [], bulkNominees: 'Metric' });
+    expect(fresh.nominees).toEqual([{ artist: 9 }]);
+  });
+
+  it('never looks anything up for a custom category', async () => {
+    await run({ categoryType: 'custom', nominees: [], bulkNominees: 'The Studio' });
+    expect(find).not.toHaveBeenCalled();
+  });
+
+  it('reads an artist/title CSV', async () => {
+    const result = await run({
+      categoryType: 'custom',
+      nominees: [],
+      bulkNominees: 'Artist,Title\nWet Leg,CPR\n"Beck, Jr.",Run Away',
+    });
+    expect(result.nominees).toEqual([
+      { customLabel: 'Wet Leg - CPR' },
+      { customLabel: 'Beck, Jr. - Run Away' },
+    ]);
+  });
+
+  it('appends one custom-label nominee per non-blank line', async () => {
+    const result = await run({
       nominees: [{ song: 1 }],
       bulkNominees: 'Beck - Run Away\n\n  Blondshell - Violins \r\n',
     });
@@ -25,8 +88,8 @@ describe('appendBulkNominees', () => {
     expect(result).not.toHaveProperty('bulkNominees');
   });
 
-  it('skips lines already on the list or repeated, ignoring case', () => {
-    const result = run({
+  it('skips lines already on the list or repeated, ignoring case', async () => {
+    const result = await run({
       nominees: [{ customLabel: 'Beck - Run Away' }],
       bulkNominees: 'beck - run away\nKurt Vile - Zoom 97\nKURT VILE - ZOOM 97',
     });
@@ -36,13 +99,16 @@ describe('appendBulkNominees', () => {
     ]);
   });
 
-  it('appends to the saved nominees when the update omits them', () => {
-    const result = run({ bulkNominees: 'Caroline Rose - Chow Mein' }, { nominees: [{ song: 7 }] });
+  it('appends to the saved nominees when the update omits them', async () => {
+    const result = await run(
+      { bulkNominees: 'Caroline Rose - Chow Mein' },
+      { nominees: [{ song: 7 }] },
+    );
     expect(result.nominees).toEqual([{ song: 7 }, { customLabel: 'Caroline Rose - Chow Mein' }]);
   });
 
-  it('leaves data untouched when nothing was pasted', () => {
-    expect(run({ nominees: [{ song: 1 }], bulkNominees: '  ' })).toEqual({
+  it('leaves data untouched when nothing was pasted', async () => {
+    expect(await run({ nominees: [{ song: 1 }], bulkNominees: '  ' })).toEqual({
       nominees: [{ song: 1 }],
     });
   });
