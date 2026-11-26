@@ -67,7 +67,8 @@ export const parseNomineeList = (text: string): string[] => {
     return lines
       .map((line) => {
         const cells = split(line).filter(Boolean);
-        if (cells.length > 1 && RANK.test(cells[0])) cells.shift();
+        // Only a third column makes a leading number a rank; "311\tAmber" is a band.
+        if (cells.length > 2 && RANK.test(cells[0])) cells.shift();
         return normalizeLine(cells.join(' - '));
       })
       .filter(Boolean);

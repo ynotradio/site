@@ -52,6 +52,13 @@ describe('parseNomineeList', () => {
     ]);
   });
 
+  it('keeps a band named with a number in a two-column paste', () => {
+    expect(parseNomineeList('311\tAmber\nBlink-182\tDammit')).toEqual([
+      '311 - Amber',
+      'Blink-182 - Dammit',
+    ]);
+  });
+
   it('skips rows with no artist or title and handles a byte-order mark', () => {
     const bom = String.fromCharCode(0xfeff);
     expect(parseNomineeList(`${bom}Artist,Title\r\n,Severance\r\nWet Leg,\r\n,\r\n`)).toEqual([
