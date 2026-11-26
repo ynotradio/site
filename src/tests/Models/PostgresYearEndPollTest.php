@@ -194,6 +194,16 @@ class PostgresYearEndPollTest extends TestCase
         $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
     }
 
+    public function testWithNothingRequiredTheContestNeedsAtLeastOneVote(): void
+    {
+        $this->results['FROM year_end_poll_categories'][0]['required_for_contest'] = false;
+
+        $this->assertFalse($this->poll->canEnterContest('auth0|abc'));
+
+        $this->results['FROM year_end_poll_votes'] = [[1]];
+        $this->assertTrue($this->poll->canEnterContest('auth0|abc'));
+    }
+
     public function testCanEnterContestRequiresOnlyFlaggedCategories(): void
     {
         $this->assertFalse($this->poll->canEnterContest('auth0|abc'));

@@ -263,10 +263,24 @@ class PostgresYearEndPoll implements YearEndPoll
         }
     }
 
+    /**
+     * A voter can enter the prize drawing once they've finished every category
+     * marked required, or, when none is marked, once they've voted in any.
+     */
     public function canEnterContest(string $ip): bool
     {
-        foreach ($this->categories() as $slug => $category) {
-            if ($category['required_for_contest'] && !$this->hasVoted($ip, $slug)) {
+        $categories = $this->categories();
+        $required = array_filter($categories, fn ($category) => (bool)$category['required_for_contest']);
+        if (!$required) {
+            foreach (array_keys($categories) as $slug) {
+                if ($this->hasVoted($ip, $slug)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        foreach (array_keys($required) as $slug) {
+            if (!$this->hasVoted($ip, $slug)) {
                 return false;
             }
         }
