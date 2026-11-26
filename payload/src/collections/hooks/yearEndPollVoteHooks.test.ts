@@ -7,6 +7,7 @@ import {
   incrementNomineeVoteCount,
   decrementNomineeVoteCount,
 } from './yearEndPollVoteHooks';
+import { UPDATING_VOTE_COUNT } from './yearEndPollCategoryHooks';
 
 type HookArgs = Parameters<typeof enforceUserId>[0];
 
@@ -224,6 +225,7 @@ describe('incrementNomineeVoteCount', () => {
           { id: 'n2', voteCount: 0 },
         ],
       },
+      context: { [UPDATING_VOTE_COUNT]: true },
     });
     expect(result).toEqual(doc);
   });
@@ -281,6 +283,7 @@ describe('decrementNomineeVoteCount', () => {
       collection: 'year-end-poll-categories',
       id: 1,
       data: { nominees: [{ id: 'n1', voteCount: 2 }] },
+      context: { [UPDATING_VOTE_COUNT]: true },
     });
   });
 });

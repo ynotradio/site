@@ -3,6 +3,7 @@ import type {
   CollectionAfterDeleteHook,
   CollectionBeforeChangeHook,
 } from 'payload';
+import { UPDATING_VOTE_COUNT } from './yearEndPollCategoryHooks';
 
 /** Matches the `defaultValue` on the `maxPicks` field in YearEndPollCategories. */
 const DEFAULT_MAX_PICKS = 3;
@@ -144,6 +145,7 @@ const adjustNomineeVoteCount = async (
     collection: 'year-end-poll-categories',
     id: categoryId,
     data: { nominees: updatedNominees },
+    context: { [UPDATING_VOTE_COUNT]: true },
   });
 };
 

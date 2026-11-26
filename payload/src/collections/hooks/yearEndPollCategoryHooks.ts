@@ -2,11 +2,45 @@ import type { CollectionBeforeChangeHook } from 'payload';
 import { parseNomineeList } from './parseNomineeList';
 
 type NomineeRow = {
+  id?: unknown;
   song?: unknown;
   record?: unknown;
   artist?: unknown;
   concert?: unknown;
   customLabel?: unknown;
+  voteCount?: unknown;
+};
+
+/** Set on req.context by the vote tally so its own count changes go through. */
+export const UPDATING_VOTE_COUNT = 'yearEndPollUpdatingVoteCount';
+
+/**
+ * Votes bump each nominee's voteCount outside the admin form (yearendpoll.php
+ * writes it directly), so an admin save would put back whatever counts the
+ * form loaded. Existing rows keep their stored count on every update except
+ * the vote tally's own.
+ */
+export const keepVoteCounts: CollectionBeforeChangeHook = ({
+  data,
+  originalDoc,
+  operation,
+  req,
+}) => {
+  if (
+    operation !== 'update'
+    || req.context?.[UPDATING_VOTE_COUNT]
+    || !Array.isArray(data.nominees)
+  ) {
+    return data;
+  }
+  const stored = new Map<unknown, unknown>(
+    ((originalDoc?.nominees ?? []) as NomineeRow[]).map((row) => [row.id, row.voteCount]),
+  );
+  const withStoredCount = (row: NomineeRow): NomineeRow => {
+    if (row.id == null || !stored.has(row.id)) return row;
+    return { ...row, voteCount: stored.get(row.id) ?? 0 };
+  };
+  return { ...data, nominees: (data.nominees as NomineeRow[]).map(withStoredCount) };
 };
 
 const LINKABLE = {

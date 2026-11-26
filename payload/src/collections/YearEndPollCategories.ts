@@ -1,6 +1,10 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
-import { appendBulkNominees, validateNominees } from './hooks/yearEndPollCategoryHooks';
+import {
+  appendBulkNominees,
+  keepVoteCounts,
+  validateNominees,
+} from './hooks/yearEndPollCategoryHooks';
 
 /**
  * A nominee field shows when it matches the category type, or when the row
@@ -52,7 +56,7 @@ export const YearEndPollCategories: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   hooks: {
-    beforeChange: [appendBulkNominees, validateNominees],
+    beforeChange: [appendBulkNominees, keepVoteCounts, validateNominees],
   },
   fields: [
     {

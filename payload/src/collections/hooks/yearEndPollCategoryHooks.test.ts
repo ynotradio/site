@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { appendBulkNominees, validateNominees } from './yearEndPollCategoryHooks';
+import {
+  appendBulkNominees,
+  keepVoteCounts,
+  UPDATING_VOTE_COUNT,
+  validateNominees,
+} from './yearEndPollCategoryHooks';
 
 type HookArgs = Parameters<typeof validateNominees>[0];
 
@@ -134,6 +139,52 @@ describe('appendBulkNominees', () => {
     expect(await run({ nominees: [{ song: 1 }], bulkNominees: '  ' })).toEqual({
       nominees: [{ song: 1 }],
     });
+  });
+});
+
+describe('keepVoteCounts', () => {
+  const run = (
+    data: Record<string, unknown>,
+    originalDoc: Record<string, unknown> | undefined,
+    {
+      operation = 'update',
+      context = {},
+    }: { operation?: string; context?: Record<string, unknown> } = {},
+  ) => keepVoteCounts({
+    data,
+    originalDoc,
+    operation,
+    req: { context } as unknown as HookArgs['req'],
+    collection: {} as any,
+  } as HookArgs) as Record<string, unknown>;
+
+  const saved = {
+    nominees: [
+      { id: 'a', voteCount: 50 },
+      { id: 'b', voteCount: 7 },
+    ],
+  };
+
+  it('keeps stored counts when the admin form sends stale ones', () => {
+    const result = run(
+      { nominees: [{ id: 'a', voteCount: 10 }, { id: 'b', voteCount: 7 }, { customLabel: 'New' }] },
+      saved,
+    );
+    expect(result.nominees).toEqual([
+      { id: 'a', voteCount: 50 },
+      { id: 'b', voteCount: 7 },
+      { customLabel: 'New' },
+    ]);
+  });
+
+  it('lets the vote tally change counts', () => {
+    const data = { nominees: [{ id: 'a', voteCount: 51 }] };
+    expect(run(data, saved, { context: { [UPDATING_VOTE_COUNT]: true } })).toBe(data);
+  });
+
+  it('leaves creates alone so imports can set counts', () => {
+    const data = { nominees: [{ customLabel: 'Wet Leg', voteCount: 42 }] };
+    expect(run(data, undefined, { operation: 'create' })).toBe(data);
   });
 });
 
