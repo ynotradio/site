@@ -11,6 +11,14 @@ describe('parsePickLine', () => {
     });
   });
 
+  it('drops the dash in Artist - "Title"', () => {
+    expect(parsePickLine('Wet Leg - "CPR"')).toEqual({ artist: 'Wet Leg', title: 'CPR' });
+    expect(parsePickLine('HAIM – “Relationships”')).toEqual({
+      artist: 'HAIM',
+      title: 'Relationships',
+    });
+  });
+
   it('keeps quotes and dashes inside the title', () => {
     expect(parsePickLine('Jay Som (feat. Jim Adkins) "Float"')).toEqual({
       artist: 'Jay Som (feat. Jim Adkins)',
@@ -102,6 +110,14 @@ describe('appendPastedPicks', () => {
       { artist: 'Garbage', title: 'Chinese Fire Horse' },
       { artist: 'Spoon', title: 'Chateau Blues' },
     ]);
+  });
+
+  it('skips a re-pasted pick that was saved without an artist', () => {
+    const result = run({
+      albums: [{ artist: null, title: 'Sounds Like...' }],
+      albumsPaste: 'Sounds Like...',
+    });
+    expect(result.albums).toEqual([{ artist: null, title: 'Sounds Like...' }]);
   });
 
   it('leaves lists alone when nothing was pasted', () => {

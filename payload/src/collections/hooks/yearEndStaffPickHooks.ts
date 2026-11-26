@@ -23,7 +23,11 @@ export const parsePickLine = (line: string): Pick | null => {
     const rest = text.slice(quote);
     const close = Math.max(rest.lastIndexOf('"'), rest.lastIndexOf('”'), rest.lastIndexOf('“'));
     const title = close > 0 ? `${rest.slice(0, close)} ${rest.slice(close + 1)}` : rest;
-    return { artist: text.slice(0, quote).trim(), title: stripQuotes(title).replace(/\s+/g, ' ') };
+    const artist = text
+      .slice(0, quote)
+      .trim()
+      .replace(/\s*[-–—]$/, '');
+    return { artist, title: stripQuotes(title).replace(/\s+/g, ' ') };
   }
 
   const dash = text.indexOf(' - ');
@@ -50,7 +54,7 @@ const appendPasted = (
 
   const current = Array.isArray(data[listField]) ? data[listField] : originalDoc?.[listField];
   const existing = (current ?? []) as Pick[];
-  const key = (pick: Pick) => `${pick.artist}\u0000${pick.title}`.toLowerCase();
+  const key = (pick: Partial<Pick>) => `${pick.artist ?? ''}\u0000${pick.title ?? ''}`.toLowerCase();
   const seen = new Set(existing.map(key));
   const added = parsePickLines(pasted).filter((pick) => {
     if (seen.has(key(pick))) return false;
