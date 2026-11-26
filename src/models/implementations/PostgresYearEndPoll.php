@@ -35,7 +35,7 @@ class PostgresYearEndPoll implements YearEndPoll
     {
         if ($this->poll === false) {
             $stmt = $this->db->prepare("
-                SELECT id, name, voting_opens_at, voting_closes_at, intro_html, closed_html
+                SELECT id, name, status, voting_opens_at, voting_closes_at, intro_html, closed_html
                 FROM year_end_polls
                 WHERE status IN ('open', 'closed')
                 ORDER BY (status = 'open') DESC, year DESC
@@ -91,6 +91,7 @@ class PostgresYearEndPoll implements YearEndPoll
             'closesAt' => $poll['voting_closes_at'],
             'introHtml' => $poll['intro_html'] ?? '',
             'closedHtml' => $poll['closed_html'] ?? '',
+            'votingState' => $this->votingState(),
         ];
     }
 
@@ -166,16 +167,31 @@ class PostgresYearEndPoll implements YearEndPoll
         return (bool)$stmt->fetch();
     }
 
-    private function isVotingOpen(): bool
+    /**
+     * 'open' only when the poll's status is open and now is inside its window;
+     * 'upcoming' when it is open but the window hasn't started; else 'closed'.
+     */
+    private function votingState(): string
     {
         $poll = $this->poll();
-        if (!$poll) {
-            return false;
+        if (!$poll || ($poll['status'] ?? '') !== 'open') {
+            return 'closed';
         }
         $now = time();
         $opens = $poll['voting_opens_at'] ? strtotime($poll['voting_opens_at']) : null;
         $closes = $poll['voting_closes_at'] ? strtotime($poll['voting_closes_at']) : null;
-        return ($opens === null || $now >= $opens) && ($closes === null || $now <= $closes);
+        if ($opens !== null && $now < $opens) {
+            return 'upcoming';
+        }
+        if ($closes !== null && $now > $closes) {
+            return 'closed';
+        }
+        return 'open';
+    }
+
+    private function isVotingOpen(): bool
+    {
+        return $this->votingState() === 'open';
     }
 
     public function recordBallot(string $voter, string $pollName, array $votes, string $writeInValue = ''): bool

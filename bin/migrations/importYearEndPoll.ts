@@ -2,8 +2,10 @@
 /* eslint-disable no-await-in-loop */
 /**
  * Import a past Year End Poll from legacy MySQL (one `year_end_<category>`
- * table per category, with a running `votes` column) into Payload as a closed
- * poll whose nominees are text labels with their final vote counts.
+ * table per category, with a running `votes` column) into Payload as an
+ * archived poll whose nominees are text labels with their final vote counts.
+ * Archived, not closed: yearendpoll.php shows the newest open or closed poll,
+ * so a closed import would replace the current poll on the public page.
  *
  * Usage:
  *   yarn import:yep --year 2025 [--from local-mysql|prod-mysql]
@@ -98,7 +100,7 @@ async function main(): Promise<void> {
       name: `${options.year} Year End Poll`,
       year: options.year,
       slug,
-      status: 'closed',
+      status: 'archived',
     },
   });
   for (const category of categories) {

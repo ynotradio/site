@@ -36,10 +36,8 @@ if ($pollInfo === null) {
     exit;
 }
 
-$now = time();
-$opensAt = $pollInfo['opensAt'] ? strtotime($pollInfo['opensAt']) : null;
-$closesAt = $pollInfo['closesAt'] ? strtotime($pollInfo['closesAt']) : null;
-$isPollActive = ($opensAt === null || $now >= $opensAt) && ($closesAt === null || $now <= $closesAt);
+$isPollActive = $pollInfo['votingState'] === 'open';
+$isPollUpcoming = $pollInfo['votingState'] === 'upcoming';
 
 // Templates below take the voter key as $ip.
 $ip = $voterId;
@@ -96,7 +94,12 @@ require __DIR__ . '/partials/_header.php';
   <div class="twelve columns">
     <h1><?= htmlspecialchars($pollInfo['name']) ?></h1>
 
-    <?php if (!$isPollActive): ?>
+    <?php if ($isPollUpcoming): ?>
+      <?= $pollInfo['introHtml'] ?>
+      <div class="information center top-spacer_20">
+        <p><strong>Voting opens <?= htmlspecialchars(date('l, F j', strtotime($pollInfo['opensAt']))) ?>.</strong></p>
+      </div>
+    <?php elseif (!$isPollActive): ?>
       <?= $pollInfo['closedHtml'] ?>
     <?php else: ?>
       <?= $pollInfo['introHtml'] ?>
