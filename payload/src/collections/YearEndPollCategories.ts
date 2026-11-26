@@ -163,7 +163,7 @@ export const YearEndPollCategories: CollectionConfig = {
       type: 'array',
       admin: {
         description:
-          'Nominees for this category. Populate the typed relationship field that matches the category type, or use customLabel for categories without a matching collection (movies, TV shows, etc.).',
+          'Nominees for this category. Each row shows the field that matches the category type above (set the type first).',
       },
       fields: [
         {
@@ -174,31 +174,27 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'songs',
               admin: {
-                description: 'Song nominee (use for "songs" category type)',
-                width: '50%',
+                condition: (data) => data?.categoryType === 'songs',
+                width: '70%',
               },
             },
             {
               name: 'record',
+              label: 'Album / record',
               type: 'relationship',
               relationTo: 'records',
               admin: {
-                description: 'Album / record nominee (use for "albums" category type)',
-                width: '50%',
+                condition: (data) => data?.categoryType === 'albums',
+                width: '70%',
               },
             },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
             {
               name: 'artist',
               type: 'relationship',
               relationTo: 'artists',
               admin: {
-                description: 'Artist nominee (use for "artists" category type)',
-                width: '50%',
+                condition: (data) => data?.categoryType === 'artists',
+                width: '70%',
               },
             },
             {
@@ -206,21 +202,16 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'concerts',
               admin: {
-                description: 'Concert nominee (use for "concerts" category type)',
-                width: '50%',
+                condition: (data) => data?.categoryType === 'concerts',
+                width: '70%',
               },
             },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
             {
               name: 'customLabel',
+              label: 'Nominee',
               type: 'text',
               admin: {
-                description:
-                  'Plain-text label (use for "custom" category type — movies, TV shows, etc.)',
+                condition: (data, siblingData) => data?.categoryType === 'custom' || Boolean(siblingData?.customLabel),
                 width: '70%',
               },
             },
