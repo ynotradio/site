@@ -14,7 +14,7 @@ $maxPicks = $controller->getMaxPicks($pollName);
   <?= $controller->formatPollHeader($pollName, $category) ?>
 </h2>
 
-<form action="yearendpoll.php" method="post" name="year_end_<?= $pollName ?>" class="form-default">
+<form action="yearendpoll.php" method="post" name="year_end_<?= htmlspecialchars($pollName) ?>" class="form-default">
   <fieldset>
     <div class="control-group">
       <div class="controls">
@@ -25,7 +25,7 @@ $maxPicks = $controller->getMaxPicks($pollName);
               <?php 
               // Display option details (artist, title, etc.)
               for ($c = 1; $c <= count($columnNames) - 2; $c++) {
-                  echo $option[$columnNames[$c]];
+                  echo htmlspecialchars((string)$option[$columnNames[$c]], ENT_QUOTES, 'UTF-8', false);
                   if ($columnNames[$c + 1] != 'votes' && $option[$columnNames[$c + 1]] !== '') {
                       echo " - ";
                   }
@@ -49,7 +49,7 @@ $maxPicks = $controller->getMaxPicks($pollName);
       <button class="btn-info disabled" type="submit" disabled="disabled" id="vote">
         Pick <?= $maxPicks ?> more!
       </button>
-      <input type="hidden" name="poll" value="<?= $pollName ?>">
+      <input type="hidden" name="poll" value="<?= htmlspecialchars($pollName) ?>">
     </div>
   </fieldset>
 </form>
