@@ -13,7 +13,7 @@ import {
 } from '@playwright/test';
 import { checkForPhpErrors, captureScreenshot, navigateWithRetry } from './utils/test-helpers';
 
-const LEGACY_BASE_URL = process.env.LEGACY_BASE_URL || 'http://localhost:8080';
+const LEGACY_BASE_URL = process.env.PLAYWRIGHT_LEGACY_URL || process.env.LEGACY_BASE_URL || 'http://localhost:8080';
 const PAYLOAD_BASE_URL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000';
 const POLL_URL = `${LEGACY_BASE_URL}/yearendpoll.php`;
 
