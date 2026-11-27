@@ -9,16 +9,16 @@ function enableSubmit() {
 	var max = $('#max_pick').html();
 	$('input[type="checkbox"]').change(function() {
 		var numberOfChecked = $("input[type=checkbox]:checked").length;
-		if (numberOfChecked > max) {
-      $('#vote').text("You've picked too many.");
-      $('#vote').addClass('disabled');
-			$('#vote').attr('disabled', true);
-		} else if (numberOfChecked > 0) {
+		if (numberOfChecked == max) {
       $('#vote').text('Vote now!');
       $('#vote').removeClass('disabled');
 			$('#vote').attr('disabled', false);
+		} else if (numberOfChecked > max) {
+      $('#vote').text("You've picked too many.");
+      $('#vote').addClass('disabled');
+			$('#vote').attr('disabled', true);
 		} else {
-      $('#vote').text('Pick up to ' + max + '!');
+      $('#vote').text('Pick ' + (max - numberOfChecked) + ' more!');
       $('#vote').addClass('disabled');
 			$('#vote').attr('disabled', true);
 		}

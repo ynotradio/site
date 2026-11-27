@@ -26,6 +26,9 @@ class PostgresYearEndPoll implements YearEndPoll
     /** @var array<string, array<string, mixed>>|null */
     private ?array $categories = null;
 
+    /** @var array<string, array<int, array<string, mixed>>> nominee rows by category slug */
+    private array $pollValues = [];
+
     public function __construct(PDO $db)
     {
         $this->db = $db;
@@ -102,6 +105,9 @@ class PostgresYearEndPoll implements YearEndPoll
 
     public function getPollValues(string $pollName): array
     {
+        if (isset($this->pollValues[$pollName])) {
+            return $this->pollValues[$pollName];
+        }
         $category = $this->category($pollName);
         $stmt = $this->db->prepare("
             SELECT n.id,
@@ -120,7 +126,7 @@ class PostgresYearEndPoll implements YearEndPoll
         usort($rows, function ($a, $b) {
             return strcasecmp(self::sortKey($a['label']), self::sortKey($b['label']));
         });
-        return $rows;
+        return $this->pollValues[$pollName] = $rows;
     }
 
     private static function sortKey(string $label): string
@@ -133,9 +139,15 @@ class PostgresYearEndPoll implements YearEndPoll
         return ['id', 'label', 'votes'];
     }
 
+    /**
+     * Ballots need exactly this many picks, like the old site. A category with
+     * fewer nominees than its max asks for one pick per nominee instead, so it
+     * can still be voted.
+     */
     public function getMaxPicks(string $pollName): int
     {
-        return (int)$this->category($pollName)['max_picks'];
+        $max = (int)$this->category($pollName)['max_picks'];
+        return max(1, min($max, count($this->getPollValues($pollName))));
     }
 
     public function formatPollName(string $pollName): string
@@ -207,8 +219,9 @@ class PostgresYearEndPoll implements YearEndPoll
         $votes = array_values(array_unique(array_map('strval', $votes)));
         $writeInValue = trim($writeInValue);
         $picks = count($votes) + ($writeInValue !== '' ? 1 : 0);
-        if ($picks === 0 || $picks > (int)$category['max_picks']) {
-            throw new \InvalidArgumentException("Expected 1-{$category['max_picks']} picks, got {$picks}");
+        $required = $this->getMaxPicks($pollName);
+        if ($picks !== $required) {
+            throw new \InvalidArgumentException("Expected {$required} picks, got {$picks}");
         }
 
         $validIds = array_column($this->getPollValues($pollName), 'id');

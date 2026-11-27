@@ -117,8 +117,10 @@ export const YearEndPollCategories: CollectionConfig = {
           required: true,
           defaultValue: 3,
           min: 1,
+          label: 'Picks per ballot',
           admin: {
-            description: 'Maximum selections allowed per voter for this category',
+            description:
+              'Each voter picks exactly this many (or every nominee, if there are fewer).',
             width: '50%',
           },
         },

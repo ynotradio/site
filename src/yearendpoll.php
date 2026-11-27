@@ -67,8 +67,7 @@ if ($isPollActive && $voterId !== '' && isset($_POST['poll'])) {
     $voteCount = count($votes) + ($writeInValue !== '' ? 1 : 0);
 
     if (!in_array($pollName, $controller->getPollNames(), true)
-        || $voteCount < 1
-        || $voteCount > $controller->getMaxPicks($pollName)) {
+        || $voteCount !== $controller->getMaxPicks($pollName)) {
         $voteError = true;
     } elseif (!$controller->hasVoted($ip, $pollName)) {
         $voteSuccess = $controller->processVotes($pollName, $votes, $ip, $writeInValue);

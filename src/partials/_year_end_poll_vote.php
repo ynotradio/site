@@ -47,7 +47,7 @@ $maxPicks = $controller->getMaxPicks($pollName);
     
     <div class="form-actions">
       <button class="btn-info disabled" type="submit" disabled="disabled" id="vote">
-        Pick up to <?= $maxPicks ?>!
+        Pick <?= $maxPicks ?> more!
       </button>
       <input type="hidden" name="poll" value="<?= htmlspecialchars($pollName) ?>">
     </div>

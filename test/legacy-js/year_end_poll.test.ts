@@ -47,16 +47,16 @@ function setupDom(html: string): void {
     const max = $('#max_pick').html();
     $('input[type="checkbox"]').on('change', () => {
       const numberOfChecked = $('input[type=checkbox]:checked').length;
-      if (numberOfChecked > Number(max)) {
-        $('#vote').text("You've picked too many.");
-        $('#vote').addClass('disabled');
-        $('#vote').attr('disabled', 'disabled');
-      } else if (numberOfChecked > 0) {
+      if (numberOfChecked === Number(max)) {
         $('#vote').text('Vote now!');
         $('#vote').removeClass('disabled');
         $('#vote').attr('disabled', false as unknown as string);
+      } else if (numberOfChecked > Number(max)) {
+        $('#vote').text("You've picked too many.");
+        $('#vote').addClass('disabled');
+        $('#vote').attr('disabled', 'disabled');
       } else {
-        $('#vote').text('Pick up to ' + max + '!');
+        $('#vote').text('Pick ' + (Number(max) - numberOfChecked) + ' more!');
         $('#vote').addClass('disabled');
         $('#vote').attr('disabled', 'disabled');
       }
@@ -113,7 +113,7 @@ describe('enableSubmit', () => {
       <input type="checkbox" name="song" value="3" />
       <input type="checkbox" name="song" value="4" />
       <input type="checkbox" name="song" value="5" />
-      <button id="vote" disabled class="disabled">Pick up to 3!</button>
+      <button id="vote" disabled class="disabled">Pick 3 more!</button>
     </body>
     </html>
   `;
@@ -133,17 +133,17 @@ describe('enableSubmit', () => {
 
     expect($('#vote').attr('disabled')).toBe('disabled');
     expect($('#vote').hasClass('disabled')).toBe(true);
-    expect($('#vote').text()).toBe('Pick up to 3!');
+    expect($('#vote').text()).toBe('Pick 3 more!');
   });
 
-  it('enables the vote button with fewer than max picks, so short categories can be voted', () => {
+  it('keeps the vote button disabled with fewer than the required picks', () => {
     enableSubmit();
     $('input[type="checkbox"]').first().prop('checked', true);
     $('input[type="checkbox"]').first().trigger('change');
 
-    expect($('#vote').attr('disabled')).toBeFalsy();
-    expect($('#vote').hasClass('disabled')).toBe(false);
-    expect($('#vote').text()).toBe('Vote now!');
+    expect($('#vote').attr('disabled')).toBe('disabled');
+    expect($('#vote').hasClass('disabled')).toBe(true);
+    expect($('#vote').text()).toBe('Pick 2 more!');
   });
 
   it('enables vote button when exactly max checkboxes are checked', () => {

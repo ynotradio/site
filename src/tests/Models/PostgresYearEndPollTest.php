@@ -160,7 +160,7 @@ class PostgresYearEndPollTest extends TestCase
 
     public function testRecordBallotLocksVoterAndCategoryBeforeCheckingForAPriorBallot(): void
     {
-        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1', 'n2']);
 
         $sql = array_column($this->executed, 'sql');
         $lock = array_search(true, array_map(fn ($s) => strpos($s, 'pg_advisory_xact_lock') !== false, $sql), true);
@@ -183,6 +183,21 @@ class PostgresYearEndPollTest extends TestCase
         $this->poll->recordBallot('auth0|abc', 'movies', ['n1', 'n2']);
     }
 
+    public function testRecordBallotRejectsTooFewPicks(): void
+    {
+        $this->db->expects($this->never())->method('beginTransaction');
+        $this->expectException(\InvalidArgumentException::class);
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+    }
+
+    public function testCategoryWithFewerNomineesThanItsMaxRequiresOnePickPerNominee(): void
+    {
+        $this->results['FROM year_end_poll_categories'][0]['max_picks'] = '20';
+
+        $this->assertSame(2, $this->poll->getMaxPicks('songs'));
+        $this->assertTrue($this->poll->recordBallot('auth0|abc', 'songs', ['n1', 'n2']));
+    }
+
     public function testRecordBallotRejectsAnonymousVoter(): void
     {
         $this->expectException(\InvalidArgumentException::class);
@@ -203,7 +218,7 @@ class PostgresYearEndPollTest extends TestCase
         $this->db->expects($this->never())->method('commit');
 
         $this->expectException(\RuntimeException::class);
-        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1', 'n2']);
     }
 
     public function testWithNothingRequiredTheContestNeedsAtLeastOneVote(): void
