@@ -134,6 +134,38 @@ class PostgresTop11Test extends TestCase
         $this->assertSame('July 2, 2026', $titleRow['artist']);
     }
 
+    public function testGetAllHeadingSkipsDraftContestsForSkippedWeeks(): void
+    {
+        $contestStmt = $this->stubActiveContest(17);
+
+        $entriesStmt = $this->createMock(PDOStatement::class);
+        $entriesStmt->method('execute')->willReturn(true);
+        $entriesStmt->method('fetch')->willReturn(false);
+
+        $weekOfStmt = $this->createMock(PDOStatement::class);
+        $weekOfStmt->method('execute')->willReturn(true);
+        $weekOfStmt->method('fetch')->willReturn(['week_of' => '2026-12-03', 'status' => 'open']);
+
+        $priorStmt = $this->createMock(PDOStatement::class);
+        $priorStmt->method('execute')->willReturn(true);
+        $priorStmt->method('fetch')->willReturn(['week_of' => '2026-11-19']);
+
+        $priorSql = null;
+        $statements = [$contestStmt, $entriesStmt, $weekOfStmt, $priorStmt];
+        $this->mockDb->method('prepare')->willReturnCallback(function (string $sql) use (&$statements, &$priorSql) {
+            $stmt = array_shift($statements);
+            if ($stmt !== null && empty($statements)) {
+                $priorSql = $sql;
+            }
+            return $stmt;
+        });
+
+        $titleRow = array_values(array_filter($this->top11->getAll(), fn ($e) => $e['placement'] === 99))[0];
+
+        $this->assertStringContainsString("status <> 'draft'", $priorSql);
+        $this->assertSame('November 19, 2026', $titleRow['artist']);
+    }
+
     public function testGetAllFallsBackToOwnWeekOfWhenNoPriorContestExists(): void
     {
         $contestStmt = $this->stubActiveContest(1);
