@@ -2,7 +2,12 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import { CustomDashboard, isMrmTileActive, type MrmTournament } from './CustomDashboard';
+import {
+  CustomDashboard,
+  isMrmTileActive,
+  isYearEndPollTileActive,
+  type MrmTournament,
+} from './CustomDashboard';
 
 // Mock the Payload UI hook
 vi.mock('@payloadcms/ui', () => ({
@@ -26,6 +31,22 @@ function makePayloadResponse(docs: MrmTournament[]): Promise<Response> {
     json: () => Promise.resolve({ docs }),
   } as Response);
 }
+
+describe('isYearEndPollTileActive', () => {
+  const june = new Date('2026-06-15T12:00:00Z');
+
+  it('is active October through January', () => {
+    expect(isYearEndPollTileActive([], new Date('2026-10-01T12:00:00Z'))).toBe(true);
+    expect(isYearEndPollTileActive([], new Date('2027-01-20T12:00:00Z'))).toBe(true);
+    expect(isYearEndPollTileActive([], new Date('2027-02-10T12:00:00Z'))).toBe(false);
+  });
+
+  it('is active off-season when a poll is in draft or open', () => {
+    expect(isYearEndPollTileActive([{ status: 'draft' }], june)).toBe(true);
+    expect(isYearEndPollTileActive([{ status: 'open' }], june)).toBe(true);
+    expect(isYearEndPollTileActive([{ status: 'closed' }], june)).toBe(false);
+  });
+});
 
 describe('isMrmTileActive', () => {
   const NOW = new Date('2025-03-15T12:00:00.000Z');
@@ -89,10 +110,43 @@ describe('CustomDashboard', () => {
       },
     } as any);
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(makePayloadResponse([])));
+    // Outside Year End Poll season, so only the tiles under test appear.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-06-15T12:00:00Z'));
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
+  });
+
+  describe('Year End Poll tile', () => {
+    it('shows during poll season with links to polls, categories and staff picks', async () => {
+      vi.setSystemTime(new Date('2026-11-20T12:00:00Z'));
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+      await waitFor(() => expect(screen.getByText('Year End Poll')).toBeInTheDocument());
+      expect(screen.getByText('Polls').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/year-end-polls',
+      );
+      expect(screen.getByText('Categories').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/year-end-poll-categories',
+      );
+      expect(screen.getByText('Staff Picks').closest('a')).toHaveAttribute(
+        'href',
+        '/admin/collections/year-end-staff-picks',
+      );
+    });
+
+    it('is hidden off-season when no poll is in draft or open', async () => {
+      await act(async () => {
+        render(<CustomDashboard />);
+      });
+      expect(screen.queryByText('Year End Poll')).not.toBeInTheDocument();
+    });
   });
 
   describe('header', () => {

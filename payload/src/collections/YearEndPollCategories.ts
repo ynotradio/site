@@ -1,6 +1,22 @@
 import type { CollectionConfig } from 'payload';
 import { hasRole } from '../utils/auth';
-import { appendBulkNominees, validateNominees } from './hooks/yearEndPollCategoryHooks';
+import {
+  appendBulkNominees,
+  keepVoteCounts,
+  validateNominees,
+} from './hooks/yearEndPollCategoryHooks';
+
+/**
+ * A nominee field shows when it matches the category type, or when the row
+ * already has a value in it, so changing the type never hides a linked entry.
+ */
+export const shownFor = (categoryType: string, field: string) => (
+  data: { categoryType?: unknown } | undefined,
+  siblingData: Record<string, unknown> | undefined,
+): boolean => {
+  const value = siblingData?.[field];
+  return data?.categoryType === categoryType || (value != null && value !== '');
+};
 
 /**
  * YearEndPollCategories Collection
@@ -15,8 +31,7 @@ import { appendBulkNominees, validateNominees } from './hooks/yearEndPollCategor
  * collection (e.g., TV shows, movies). Only one of the typed relationship fields
  * should be populated per nominee; `customLabel` is used for everything else.
  *
- * Per-category voting windows (votingOpensAt / votingClosesAt) are optional overrides;
- * if absent, the parent poll's window applies.
+ * Voting opens and closes on the parent poll's window.
  *
  * Modelled after ModernRockMadnessMatches.
  */
@@ -40,7 +55,7 @@ export const YearEndPollCategories: CollectionConfig = {
     delete: ({ req }) => hasRole(req.user, ['admin']),
   },
   hooks: {
-    beforeChange: [appendBulkNominees, validateNominees],
+    beforeChange: [appendBulkNominees, validateNominees, keepVoteCounts],
   },
   fields: [
     {
@@ -110,35 +125,6 @@ export const YearEndPollCategories: CollectionConfig = {
       ],
     },
     {
-      type: 'row',
-      fields: [
-        {
-          name: 'votingOpensAt',
-          type: 'date',
-          admin: {
-            description:
-              'Optional per-category voting window override. If blank, uses the parent poll window.',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
-            width: '50%',
-          },
-        },
-        {
-          name: 'votingClosesAt',
-          type: 'date',
-          admin: {
-            description:
-              'Optional per-category voting window override. If blank, uses the parent poll window.',
-            date: {
-              pickerAppearance: 'dayAndTime',
-            },
-            width: '50%',
-          },
-        },
-      ],
-    },
-    {
       name: 'requiredForContest',
       type: 'checkbox',
       defaultValue: false,
@@ -148,21 +134,29 @@ export const YearEndPollCategories: CollectionConfig = {
     },
     {
       name: 'bulkNominees',
+      label: 'Add nominees from a list',
       type: 'textarea',
       virtual: true,
       admin: {
         // Payload makes virtual fields read-only in the admin unless told otherwise.
         readOnly: false,
+        components: {
+          Field: '/payload/src/components/fields/NomineeImportField#NomineeImportField',
+        },
         description:
-          'Paste one nominee per line (e.g. "Artist - Song") and save. Each line is added as a custom-label nominee; lines already on the list are skipped.',
+          'Upload a .txt or .csv, paste one nominee per line (e.g. "Artist - Song"), or copy the artist and title columns straight from a spreadsheet, then save. In a songs, albums, artists or concerts category, lines that exactly match an existing entry are linked to it; the rest become text nominees. Lines already on the list are skipped.',
       },
     },
     {
       name: 'nominees',
       type: 'array',
       admin: {
+        initCollapsed: true,
+        components: {
+          RowLabel: '/payload/src/components/YearEndNomineeRowLabel#default',
+        },
         description:
-          'Nominees for this category. Populate the typed relationship field that matches the category type, or use customLabel for categories without a matching collection (movies, TV shows, etc.).',
+          'Nominees for this category. Each row shows the field that matches the category type above (set the type first).',
       },
       fields: [
         {
@@ -173,31 +167,27 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'songs',
               admin: {
-                description: 'Song nominee (use for "songs" category type)',
-                width: '50%',
+                condition: shownFor('songs', 'song'),
+                width: '70%',
               },
             },
             {
               name: 'record',
+              label: 'Album / record',
               type: 'relationship',
               relationTo: 'records',
               admin: {
-                description: 'Album / record nominee (use for "albums" category type)',
-                width: '50%',
+                condition: shownFor('albums', 'record'),
+                width: '70%',
               },
             },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
             {
               name: 'artist',
               type: 'relationship',
               relationTo: 'artists',
               admin: {
-                description: 'Artist nominee (use for "artists" category type)',
-                width: '50%',
+                condition: shownFor('artists', 'artist'),
+                width: '70%',
               },
             },
             {
@@ -205,21 +195,16 @@ export const YearEndPollCategories: CollectionConfig = {
               type: 'relationship',
               relationTo: 'concerts',
               admin: {
-                description: 'Concert nominee (use for "concerts" category type)',
-                width: '50%',
+                condition: shownFor('concerts', 'concert'),
+                width: '70%',
               },
             },
-          ],
-        },
-        {
-          type: 'row',
-          fields: [
             {
               name: 'customLabel',
+              label: 'Nominee',
               type: 'text',
               admin: {
-                description:
-                  'Plain-text label (use for "custom" category type — movies, TV shows, etc.)',
+                condition: shownFor('custom', 'customLabel'),
                 width: '70%',
               },
             },

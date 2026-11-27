@@ -35,7 +35,7 @@ class PostgresYearEndPoll implements YearEndPoll
     {
         if ($this->poll === false) {
             $stmt = $this->db->prepare("
-                SELECT id, name, voting_opens_at, voting_closes_at, intro_html, closed_html
+                SELECT id, name, status, voting_opens_at, voting_closes_at, intro_html, closed_html
                 FROM year_end_polls
                 WHERE status IN ('open', 'closed')
                 ORDER BY (status = 'open') DESC, year DESC
@@ -91,6 +91,7 @@ class PostgresYearEndPoll implements YearEndPoll
             'closesAt' => $poll['voting_closes_at'],
             'introHtml' => $poll['intro_html'] ?? '',
             'closedHtml' => $poll['closed_html'] ?? '',
+            'votingState' => $this->votingState(),
         ];
     }
 
@@ -166,16 +167,31 @@ class PostgresYearEndPoll implements YearEndPoll
         return (bool)$stmt->fetch();
     }
 
-    private function isVotingOpen(): bool
+    /**
+     * 'open' only when the poll's status is open and now is inside its window;
+     * 'upcoming' when it is open but the window hasn't started; else 'closed'.
+     */
+    private function votingState(): string
     {
         $poll = $this->poll();
-        if (!$poll) {
-            return false;
+        if (!$poll || ($poll['status'] ?? '') !== 'open') {
+            return 'closed';
         }
         $now = time();
         $opens = $poll['voting_opens_at'] ? strtotime($poll['voting_opens_at']) : null;
         $closes = $poll['voting_closes_at'] ? strtotime($poll['voting_closes_at']) : null;
-        return ($opens === null || $now >= $opens) && ($closes === null || $now <= $closes);
+        if ($opens !== null && $now < $opens) {
+            return 'upcoming';
+        }
+        if ($closes !== null && $now > $closes) {
+            return 'closed';
+        }
+        return 'open';
+    }
+
+    private function isVotingOpen(): bool
+    {
+        return $this->votingState() === 'open';
     }
 
     public function recordBallot(string $voter, string $pollName, array $votes, string $writeInValue = ''): bool
@@ -204,6 +220,10 @@ class PostgresYearEndPoll implements YearEndPoll
 
         $this->db->beginTransaction();
         try {
+            // Serialize ballots per voter and category so two submitted at
+            // once can't both pass the hasVoted check.
+            $this->db->prepare('SELECT pg_advisory_xact_lock(hashtext(:key))')
+                ->execute([':key' => "{$voter}:{$category['id']}"]);
             if ($this->hasVoted($voter, $pollName)) {
                 throw new \RuntimeException('Voter already voted in this category');
             }
@@ -247,10 +267,24 @@ class PostgresYearEndPoll implements YearEndPoll
         }
     }
 
+    /**
+     * A voter can enter the prize drawing once they've finished every category
+     * marked required, or, when none is marked, once they've voted in any.
+     */
     public function canEnterContest(string $ip): bool
     {
-        foreach ($this->categories() as $slug => $category) {
-            if ($category['required_for_contest'] && !$this->hasVoted($ip, $slug)) {
+        $categories = $this->categories();
+        $required = array_filter($categories, fn ($category) => (bool)$category['required_for_contest']);
+        if (!$required) {
+            foreach (array_keys($categories) as $slug) {
+                if ($this->hasVoted($ip, $slug)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        foreach (array_keys($required) as $slug) {
+            if (!$this->hasVoted($ip, $slug)) {
                 return false;
             }
         }

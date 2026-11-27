@@ -2,6 +2,7 @@
 import { getPayloadHMR } from '@payloadcms/next/utilities';
 import config from '@payload-config';
 import { assertNotConnectedToProd } from './migrations/shared/payloadClient';
+import { seedYearEndPoll } from './seed-data/yearEndPoll';
 
 /**
  * Seed Payload database with sample data for testing
@@ -1339,6 +1340,8 @@ async function seed() {
 
     console.log(`   ✅ Wired ${mrmFlow.length} nextMatch bracket links`);
 
+    await seedYearEndPoll(payload);
+
     console.log('\n✅ Database seeded successfully!\n');
     console.log('📊 Summary:');
     console.log('   Users: 1 (admin)');
@@ -1353,6 +1356,7 @@ async function seed() {
     console.log('   MRM Tournament: 1 (Modern Rock Madness 2025, complete)');
     console.log('   MRM Bands: 64 (all 4 regions, from ynot_db.sql)');
     console.log('   MRM Matches: 63 (full bracket + nextMatch wired)');
+    console.log('   Year End Poll: 1 open 2026 poll (12 categories) + 3 2025 staff picks');
     console.log('\n🌐 View at: http://localhost:3000/admin');
     console.log(
       `   Login: ${process.env.PAYLOAD_DEV_EMAIL || 'admin@ynotradio.net'} / ${process.env.PAYLOAD_DEV_PASSWORD || 'password'}\n`,

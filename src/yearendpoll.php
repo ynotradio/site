@@ -28,18 +28,27 @@ $voterEmail = $userInfo['email'] ?? '';
 require_once __DIR__ . '/functions/main_fns.php';
 require_once __DIR__ . '/controllers/YearEndPollController.php';
 
-$controller = new \YNotRadio\Controllers\YearEndPollController();
-$pollInfo = $controller->getPollInfo();
-
-if ($pollInfo === null) {
-    header("Location: index.php");
+try {
+    $controller = new \YNotRadio\Controllers\YearEndPollController();
+    $pollInfo = $controller->getPollInfo();
+} catch (\Throwable $err) {
+    error_log("Year End Poll: " . $err->getMessage());
+    http_response_code(503);
+    require __DIR__ . '/partials/_header.php';
+    echo '<div class="row"><div class="twelve columns"><h1>Year End Poll</h1>'
+        . '<p>The Year End Poll is unavailable right now. Please try again in a few minutes.</p></div></div>';
+    require __DIR__ . '/partials/_footer.php';
     exit;
 }
 
-$now = time();
-$opensAt = $pollInfo['opensAt'] ? strtotime($pollInfo['opensAt']) : null;
-$closesAt = $pollInfo['closesAt'] ? strtotime($pollInfo['closesAt']) : null;
-$isPollActive = ($opensAt === null || $now >= $opensAt) && ($closesAt === null || $now <= $closesAt);
+// With no open or closed poll, send visitors to last year's results.
+if ($pollInfo === null) {
+    header("Location: pages.php?page=top225of2025");
+    exit;
+}
+
+$isPollActive = $pollInfo['votingState'] === 'open';
+$isPollUpcoming = $pollInfo['votingState'] === 'upcoming';
 
 // Templates below take the voter key as $ip.
 $ip = $voterId;
@@ -50,13 +59,16 @@ $contestSuccess = false;
 $contestError = false;
 
 if ($isPollActive && $voterId !== '' && isset($_POST['poll'])) {
-    $pollName = $_POST['poll'];
-    $votes = $_POST['year_end_votes'] ?? [];
-    $writeInValue = trim($_POST['write_in_value'] ?? '');
+    $pollName = is_string($_POST['poll']) ? $_POST['poll'] : '';
+    $votes = is_array($_POST['year_end_votes'] ?? null)
+        ? array_values(array_filter($_POST['year_end_votes'], 'is_string'))
+        : [];
+    $writeInValue = is_string($_POST['write_in_value'] ?? null) ? trim($_POST['write_in_value']) : '';
     $voteCount = count($votes) + ($writeInValue !== '' ? 1 : 0);
 
     if (!in_array($pollName, $controller->getPollNames(), true)
-        || $voteCount !== $controller->getMaxPicks($pollName)) {
+        || $voteCount < 1
+        || $voteCount > $controller->getMaxPicks($pollName)) {
         $voteError = true;
     } elseif (!$controller->hasVoted($ip, $pollName)) {
         $voteSuccess = $controller->processVotes($pollName, $votes, $ip, $writeInValue);
@@ -64,13 +76,14 @@ if ($isPollActive && $voterId !== '' && isset($_POST['poll'])) {
 }
 
 if ($isPollActive && $voterId !== '' && isset($_POST['contest_form'])) {
+    $field = fn (string $name): string => is_string($_POST[$name] ?? null) ? $_POST[$name] : '';
     $contestantData = [
-        'name' => $_POST['name'] ?? '',
-        'email' => $voterEmail !== '' ? $voterEmail : ($_POST['email'] ?? ''),
-        'phone' => $_POST['phone'] ?? '',
-        'hometown' => $_POST['hometown'] ?? '',
-        'contest' => $_POST['contest'] ?? '',
-        'newsletter' => $_POST['newsletter'] ?? '',
+        'name' => $field('name'),
+        'email' => $voterEmail !== '' ? $voterEmail : $field('email'),
+        'phone' => $field('phone'),
+        'hometown' => $field('hometown'),
+        'contest' => $field('contest'),
+        'newsletter' => $field('newsletter'),
     ];
 
     if (in_array('', array_map('trim', $contestantData), true)) {
@@ -96,8 +109,17 @@ require __DIR__ . '/partials/_header.php';
   <div class="twelve columns">
     <h1><?= htmlspecialchars($pollInfo['name']) ?></h1>
 
-    <?php if (!$isPollActive): ?>
-      <?= $pollInfo['closedHtml'] ?>
+    <?php if ($isPollUpcoming): ?>
+      <?= $pollInfo['introHtml'] ?>
+      <div class="information center top-spacer_20">
+        <p><strong>Voting opens <?= htmlspecialchars(date('l, F j', strtotime($pollInfo['opensAt']))) ?>.</strong></p>
+      </div>
+    <?php elseif (!$isPollActive): ?>
+      <?php if (trim($pollInfo['closedHtml']) !== ''): ?>
+        <?= $pollInfo['closedHtml'] ?>
+      <?php else: ?>
+        <p>Voting is closed. Thanks to everyone who voted!</p>
+      <?php endif; ?>
     <?php else: ?>
       <?= $pollInfo['introHtml'] ?>
 
@@ -114,7 +136,7 @@ require __DIR__ . '/partials/_header.php';
 
         <?php if ($voteError): ?>
           <div class="twelve columns top-spacer_20 center error">
-            Wow, this is embarrassing...<br>It seems that you didn't pick enough, please try again.
+            Wow, this is embarrassing...<br>It seems that you picked too few or too many, please try again.
           </div>
         <?php elseif ($voteSuccess): ?>
           <div class="twelve columns top-spacer_20 center success">Thanks!<br>Your votes have been recorded!</div>

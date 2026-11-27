@@ -31,6 +31,7 @@ class PostgresYearEndPollTest extends TestCase
             'FROM year_end_polls' => [[
                 'id' => 7,
                 'name' => 'Year End Poll 2026',
+                'status' => 'open',
                 'voting_opens_at' => '2000-01-01 00:00:00+00',
                 'voting_closes_at' => '2999-01-01 00:00:00+00',
                 'intro_html' => '<p>Vote!</p>',
@@ -103,6 +104,36 @@ class PostgresYearEndPollTest extends TestCase
         $this->assertSame('<p>Closed</p>', $info['closedHtml']);
     }
 
+    public function testVotingIsOpenInsideTheWindow(): void
+    {
+        $this->assertSame('open', $this->poll->getPollInfo()['votingState']);
+    }
+
+    public function testClosedStatusIsClosedEvenWithoutDates(): void
+    {
+        $this->results['FROM year_end_polls'][0]['status'] = 'closed';
+        $this->results['FROM year_end_polls'][0]['voting_opens_at'] = null;
+        $this->results['FROM year_end_polls'][0]['voting_closes_at'] = null;
+
+        $this->assertSame('closed', $this->poll->getPollInfo()['votingState']);
+        $this->expectException(\Exception::class);
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+    }
+
+    public function testOpenPollBeforeItsWindowIsUpcoming(): void
+    {
+        $this->results['FROM year_end_polls'][0]['voting_opens_at'] = '2999-01-01 00:00:00+00';
+
+        $this->assertSame('upcoming', $this->poll->getPollInfo()['votingState']);
+    }
+
+    public function testOpenPollPastItsWindowIsClosed(): void
+    {
+        $this->results['FROM year_end_polls'][0]['voting_closes_at'] = '2001-01-01 00:00:00+00';
+
+        $this->assertSame('closed', $this->poll->getPollInfo()['votingState']);
+    }
+
     public function testPollInfoIsNullWithoutAPoll(): void
     {
         $this->results['FROM year_end_polls'] = [];
@@ -125,6 +156,18 @@ class PostgresYearEndPollTest extends TestCase
         );
         $this->assertSame([':category' => 1, ':nominee' => 'n1'], $this->executedMatching('SET vote_count')[0]['params']);
         $this->assertSame('Kurt Vile - Zoom 97', $this->executedMatching('INSERT INTO year_end_poll_write_ins')[0]['params'][':write_in']);
+    }
+
+    public function testRecordBallotLocksVoterAndCategoryBeforeCheckingForAPriorBallot(): void
+    {
+        $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+
+        $sql = array_column($this->executed, 'sql');
+        $lock = array_search(true, array_map(fn ($s) => strpos($s, 'pg_advisory_xact_lock') !== false, $sql), true);
+        $check = array_search(true, array_map(fn ($s) => strpos($s, 'FROM year_end_poll_votes') !== false, $sql), true);
+        $this->assertNotFalse($lock);
+        $this->assertLessThan($check, $lock);
+        $this->assertSame([':key' => 'auth0|abc:1'], $this->executed[$lock]['params']);
     }
 
     public function testRecordBallotRejectsNomineeFromAnotherCategory(): void
@@ -161,6 +204,16 @@ class PostgresYearEndPollTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->poll->recordBallot('auth0|abc', 'songs', ['n1']);
+    }
+
+    public function testWithNothingRequiredTheContestNeedsAtLeastOneVote(): void
+    {
+        $this->results['FROM year_end_poll_categories'][0]['required_for_contest'] = false;
+
+        $this->assertFalse($this->poll->canEnterContest('auth0|abc'));
+
+        $this->results['FROM year_end_poll_votes'] = [[1]];
+        $this->assertTrue($this->poll->canEnterContest('auth0|abc'));
     }
 
     public function testCanEnterContestRequiresOnlyFlaggedCategories(): void

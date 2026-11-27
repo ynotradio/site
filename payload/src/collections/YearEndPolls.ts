@@ -108,6 +108,19 @@ export const YearEndPolls: CollectionConfig = {
       ],
     },
     {
+      // Virtual: reads year-end-poll-categories.poll, no column stored.
+      name: 'categories',
+      type: 'join',
+      collection: 'year-end-poll-categories',
+      on: 'poll',
+      defaultLimit: 50,
+      admin: {
+        description:
+          "This poll's categories. Open one to add nominees, or add a new category here.",
+        defaultColumns: ['displayName', 'categoryType', 'maxPicks', 'requiredForContest'],
+      },
+    },
+    {
       name: 'bannerImage',
       type: 'upload',
       relationTo: 'media',

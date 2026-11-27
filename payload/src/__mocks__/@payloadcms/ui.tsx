@@ -42,6 +42,22 @@ export const useField = () => ({
   },
 });
 
+type MockRowLabel = { data: Record<string, unknown>; rowNumber?: number };
+
+let mockRowLabel: MockRowLabel = { data: {}, rowNumber: 0 };
+
+export const useRowLabel = () => mockRowLabel;
+
+export const setMockRowLabel = (value: MockRowLabel) => {
+  mockRowLabel = value;
+};
+
+export const useFormModified = () => false;
+
+export const FieldDescription: React.FC<{ description?: string }> = ({ description }) => (
+  <div style={{ fontSize: 12, opacity: 0.7, marginTop: 4 }}>{description}</div>
+);
+
 export const useFormFields = (selector?: (fields: any) => any) => {
   if (selector) {
     return selector([mockFormFieldsValue]);
@@ -147,6 +163,7 @@ export const resetMocks = () => {
   mockRelationshipDocuments = {};
   mockNavOpen = true;
   mockPreferences = {};
+  mockRowLabel = { data: {}, rowNumber: 0 };
 };
 
 export const setMockDocuments = (docs: Record<string, Record<string, unknown>>) => {

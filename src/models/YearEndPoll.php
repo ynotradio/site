@@ -49,7 +49,10 @@ interface YearEndPoll
      * The poll's name, voting window and page copy, or null when the
      * implementation has none (MySQL keeps the copy hardcoded in yearendpoll.php).
      *
-     * @return array{name: string, opensAt: ?string, closesAt: ?string, introHtml: string, closedHtml: string}|null
+     * votingState is 'open' (ballot accepted), 'upcoming' (open poll whose
+     * window hasn't started) or 'closed'.
+     *
+     * @return array{name: string, opensAt: ?string, closesAt: ?string, introHtml: string, closedHtml: string, votingState: string}|null
      */
     public function getPollInfo(): ?array;
 
