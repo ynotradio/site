@@ -82,12 +82,12 @@ class PostgresYearEndStaffPickTest extends TestCase
         );
     }
 
-    public function testYearSkipsDraftPollsAndOpenPollsStillTakingVotes(): void
+    public function testYearSkipsOnlyDraftPolls(): void
     {
         $this->model->getYear();
         $sql = preg_replace('/\s+/', ' ', implode("\n", $this->prepared));
         $this->assertStringContainsString(
-            "WHERE status = 'draft' OR (status = 'open' AND (voting_closes_at IS NULL OR voting_closes_at > now()))",
+            "WHERE year NOT IN (SELECT year FROM year_end_polls WHERE status = 'draft')",
             $sql
         );
     }

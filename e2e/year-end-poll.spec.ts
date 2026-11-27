@@ -117,12 +117,29 @@ test.describe('Year End Poll', () => {
     expect(body).not.toContain('Your votes have been recorded');
   });
 
-  test('staff picks stay hidden while the poll is taking votes', async ({ page }) => {
+  test('staff picks stay hidden while the poll is a draft and show once it opens', async ({
+    page,
+  }, testInfo) => {
+    const setStatus = async (status: string) => {
+      const res = await api.patch(`/api/year-end-polls/${pollId}`, { data: { status } });
+      expect(res.ok()).toBeTruthy();
+    };
+
+    await setStatus('draft');
     const { status } = await navigateWithRetry(page, STAFF_PICKS_URL);
     expect(status).toBe(200);
     expect(checkForPhpErrors(await page.content())).toHaveLength(0);
     await expect(page.getByRole('heading', { name: /Y-Not Staff Favorites/i })).toBeVisible();
     await expect(page.getByText('E2E Staff DJ')).toHaveCount(0);
+
+    await setStatus('open');
+    await navigateWithRetry(page, STAFF_PICKS_URL);
+    await expect(page.getByRole('heading', { name: /2100 Y-Not Staff Favorites/i })).toBeVisible();
+    await expect(page.getByText('E2E Staff DJ')).toBeVisible();
+    await expect(page.getByText('Wet Leg "E2E Song Pick"')).toBeVisible();
+    await expect(page.getByText('HAIM - E2E Album Pick')).toBeVisible();
+
+    await captureScreenshot(page, testInfo, 'yep-staff-picks');
   });
 
   test('closed poll shows the closed copy instead of the ballot', async ({ page }, testInfo) => {
@@ -137,16 +154,5 @@ test.describe('Year End Poll', () => {
     await expect(page.getByRole('link', { name: 'Log in to Vote' })).toHaveCount(0);
 
     await captureScreenshot(page, testInfo, 'yep-closed');
-  });
-
-  test('staff picks appear once the poll has closed', async ({ page }, testInfo) => {
-    await navigateWithRetry(page, STAFF_PICKS_URL);
-    expect(checkForPhpErrors(await page.content())).toHaveLength(0);
-    await expect(page.getByRole('heading', { name: /2100 Y-Not Staff Favorites/i })).toBeVisible();
-    await expect(page.getByText('E2E Staff DJ')).toBeVisible();
-    await expect(page.getByText('Wet Leg "E2E Song Pick"')).toBeVisible();
-    await expect(page.getByText('HAIM - E2E Album Pick')).toBeVisible();
-
-    await captureScreenshot(page, testInfo, 'yep-staff-picks');
   });
 });
