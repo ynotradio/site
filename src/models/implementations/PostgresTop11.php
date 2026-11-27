@@ -125,14 +125,15 @@ class PostgresTop11 implements Top11
     /**
      * A contest's week_of is its voting week, but its entries are the previous
      * contest's results, so the heading date is the week_of of the most recent
-     * contest before this one. Falls back to this contest's own week_of when
-     * there is none.
+     * contest before this one. Skipped weeks (e.g. Thanksgiving) stay drafts
+     * and never ran, so drafts are ignored. Falls back to this contest's own
+     * week_of when there is none.
      */
     private function getResultsWeekOf(int $contestId, string $weekOf): string
     {
         $stmt = $this->db->prepare("
             SELECT week_of FROM top11_contests
-            WHERE week_of < :week_of AND id <> :id
+            WHERE week_of < :week_of AND id <> :id AND status <> 'draft'
             ORDER BY week_of DESC
             LIMIT 1
         ");
