@@ -1,5 +1,4 @@
 import { SlugField as SlugField_2b8867833a34864a02ddf429b0728a40 } from '@payloadcms/next/client'
-import { InlineDateField as InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1 } from '../../../payload/src/components/fields/InlineDateField'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { RscEntryLexicalField as RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
 import { LexicalDiffComponent as LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -40,6 +39,11 @@ import { BlocksFeatureClient as BlocksFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { PostsListHeader as PostsListHeader_bb65c0e3a5c16be042e54d2df483005c } from '../../../payload/src/features/story-order/PostsListHeader'
 import { AutoHeightCodeField as AutoHeightCodeField_1aa46d6aa32d33d399837a233a01863d } from '../../../payload/src/components/fields/AutoHeightCodeField'
 import { CdOfTheWeekListHeader as CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a } from '../../../payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader'
+import { InlineDateField as InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1 } from '../../../payload/src/components/fields/InlineDateField'
+import { NomineeImportField as NomineeImportField_85f46253d58e8d351ae0bab8f8ff6bc9 } from '../../../payload/src/components/fields/NomineeImportField'
+import { default as default_7d1975fbeda1d8728647ed16e51beca1 } from '../../../payload/src/components/YearEndNomineeRowLabel'
+import { default as default_244cff71e1030ae9fa3dc69ad5c3fc78 } from '../../../payload/src/components/StaffPickRowLabel'
+import { StaffPicksListHeader as StaffPicksListHeader_3c27feb7046b9727a5fc91f96f697ac8 } from '../../../payload/src/features/staff-picks-year/StaffPicksListHeader'
 import { Top11EntryRowLabel as Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
 import { Top11NomineeRowLabel as Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90 } from '../../../payload/src/components/Top11ArrayRowLabel'
 import { Top11CloneButton as Top11CloneButton_79aec402646f01f309e5e6e13efd7d78 } from '../../../payload/src/features/top11/Top11CloneButton'
@@ -65,14 +69,10 @@ import { ShowClonerTool as ShowClonerTool_e2cc4cc67d546366414ef30238f418ea } fro
 import { CdOfTheWeekWizardTool as CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f } from '../../../payload/src/features/cd-of-the-week-wizard'
 import { LiveMatchTool as LiveMatchTool_8e09218c140287dbcfa6d389b5910882 } from '../../../payload/src/features/mrm-live'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
-import { default as default_7d1975fbeda1d8728647ed16e51beca1 } from '../../../payload/src/components/YearEndNomineeRowLabel'
-import { NomineeImportField as NomineeImportField_3a9c1d5e7b2f4a60918c4d2e6f1b8a07 } from '../../../payload/src/components/fields/NomineeImportField'
-import { default as default_5b2e8c41d9f04a7e8a6c3b1f2d7e9a05 } from '../../../payload/src/components/StaffPickRowLabel'
 
 /** @type import('payload').ImportMap */
 export const importMap = {
   "@payloadcms/next/client#SlugField": SlugField_2b8867833a34864a02ddf429b0728a40,
-  "/payload/src/components/fields/InlineDateField#InlineDateField": InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalField": RscEntryLexicalField_44fe37237e0ebf4470c9990d8cb7b07e,
   "@payloadcms/richtext-lexical/rsc#LexicalDiffComponent": LexicalDiffComponent_44fe37237e0ebf4470c9990d8cb7b07e,
@@ -113,6 +113,11 @@ export const importMap = {
   "/payload/src/features/story-order/PostsListHeader#PostsListHeader": PostsListHeader_bb65c0e3a5c16be042e54d2df483005c,
   "/payload/src/components/fields/AutoHeightCodeField#AutoHeightCodeField": AutoHeightCodeField_1aa46d6aa32d33d399837a233a01863d,
   "/payload/src/features/cd-of-the-week-wizard/CdOfTheWeekListHeader#CdOfTheWeekListHeader": CdOfTheWeekListHeader_31d0af9ec142dcd6884466a402746e5a,
+  "/payload/src/components/fields/InlineDateField#InlineDateField": InlineDateField_7e2f7f1c4b0d4a6e8a1f2a8f3d3c10a1,
+  "/payload/src/components/fields/NomineeImportField#NomineeImportField": NomineeImportField_85f46253d58e8d351ae0bab8f8ff6bc9,
+  "/payload/src/components/YearEndNomineeRowLabel#default": default_7d1975fbeda1d8728647ed16e51beca1,
+  "/payload/src/components/StaffPickRowLabel#default": default_244cff71e1030ae9fa3dc69ad5c3fc78,
+  "/payload/src/features/staff-picks-year/StaffPicksListHeader#StaffPicksListHeader": StaffPicksListHeader_3c27feb7046b9727a5fc91f96f697ac8,
   "/payload/src/components/Top11ArrayRowLabel#Top11EntryRowLabel": Top11EntryRowLabel_3ade985a75be80a1da55f6b0d664ab90,
   "/payload/src/components/Top11ArrayRowLabel#Top11NomineeRowLabel": Top11NomineeRowLabel_3ade985a75be80a1da55f6b0d664ab90,
   "/payload/src/features/top11/Top11CloneButton#Top11CloneButton": Top11CloneButton_79aec402646f01f309e5e6e13efd7d78,
@@ -137,8 +142,5 @@ export const importMap = {
   "/payload/src/features/show-cloner#ShowClonerTool": ShowClonerTool_e2cc4cc67d546366414ef30238f418ea,
   "/payload/src/features/cd-of-the-week-wizard#CdOfTheWeekWizardTool": CdOfTheWeekWizardTool_faa3aa4cebb7b69da1d97cf9e121e42f,
   "/payload/src/features/mrm-live#LiveMatchTool": LiveMatchTool_8e09218c140287dbcfa6d389b5910882,
-  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1,
-  "/payload/src/components/YearEndNomineeRowLabel#default": default_7d1975fbeda1d8728647ed16e51beca1,
-  "/payload/src/components/fields/NomineeImportField#NomineeImportField": NomineeImportField_3a9c1d5e7b2f4a60918c4d2e6f1b8a07,
-  "/payload/src/components/StaffPickRowLabel#default": default_5b2e8c41d9f04a7e8a6c3b1f2d7e9a05
+  "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

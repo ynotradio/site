@@ -1,6 +1,7 @@
 import type { CollectionConfig, Field } from 'payload';
 import { hasRole } from '../utils/auth';
 import { appendPastedPicks } from './hooks/yearEndStaffPickHooks';
+import { startStaffPicksYear } from '../features/staff-picks-year/startStaffPicksYear';
 
 const pickList = (name: 'songs' | 'albums', label: string): Field[] => [
   {
@@ -57,7 +58,13 @@ export const YearEndStaffPicks: CollectionConfig = {
     description:
       "Each staff member's favorite songs and albums of the year. A year's picks appear on the Staff Picks page once that year's poll is open; while the poll is a draft the page keeps showing last year's.",
     groupBy: true,
+    components: {
+      beforeList: [
+        '/payload/src/features/staff-picks-year/StaffPicksListHeader#StaffPicksListHeader',
+      ],
+    },
   },
+  endpoints: [{ path: '/start-year', method: 'post', handler: startStaffPicksYear }],
   access: {
     read: () => true,
     create: ({ req }) => hasRole(req.user, ['admin', 'editor']),
