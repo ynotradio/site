@@ -9,7 +9,8 @@ describe('YearEndStaffPicks', () => {
   it('has the correct slug, group and sort', () => {
     expect(YearEndStaffPicks.slug).toBe('year-end-staff-picks');
     expect(YearEndStaffPicks.admin?.group).toBe('Polls & Contests');
-    expect(YearEndStaffPicks.defaultSort).toBe('sortOrder');
+    expect(YearEndStaffPicks.orderable).toBe(true);
+    expect(field('sortOrder')).toBeUndefined();
   });
 
   it('requires a year and a name', () => {

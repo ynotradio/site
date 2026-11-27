@@ -44,7 +44,7 @@ const pickList = (name: 'songs' | 'albums', label: string): Field[] => [
 
 export const YearEndStaffPicks: CollectionConfig = {
   slug: 'year-end-staff-picks',
-  defaultSort: 'sortOrder',
+  orderable: true,
   enableQueryPresets: true,
   labels: {
     singular: 'Staff Pick',
@@ -52,7 +52,7 @@ export const YearEndStaffPicks: CollectionConfig = {
   },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'year', 'showName', 'sortOrder', 'updatedAt'],
+    defaultColumns: ['name', 'year', 'showName', 'updatedAt'],
     group: 'Polls & Contests',
     description:
       "Each staff member's favorite songs and albums of the year. A year's picks appear on the Staff Picks page once that year's poll is open; while the poll is a draft the page keeps showing last year's.",
@@ -97,20 +97,9 @@ export const YearEndStaffPicks: CollectionConfig = {
       ],
     },
     {
-      type: 'row',
-      fields: [
-        {
-          name: 'showName',
-          type: 'text',
-          admin: { width: '50%', description: 'Shown in italics under the name.' },
-        },
-        {
-          name: 'sortOrder',
-          type: 'number',
-          defaultValue: 100,
-          admin: { width: '50%', description: 'Lower numbers show first.' },
-        },
-      ],
+      name: 'showName',
+      type: 'text',
+      admin: { description: 'Shown in italics under the name.' },
     },
     {
       name: 'details',

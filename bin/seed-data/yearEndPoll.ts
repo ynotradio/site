@@ -188,7 +188,6 @@ const STAFF_PICKS = [
   {
     name: 'Josh T. Landow',
     details: 'Owner / Program Director / Host',
-    sortOrder: 1,
     mixcloudUrls: 'https://www.mixcloud.com/ynotradio/josh-t-landows-best-of-2025/',
     songsPaste: [
       'Deep Sea Diver "SHOVEL"',
@@ -206,7 +205,6 @@ const STAFF_PICKS = [
   {
     name: 'Joey O.',
     details: 'Music Director\nThursdays 4-9pm',
-    sortOrder: 2,
     mixcloudUrls: 'https://www.mixcloud.com/ynotradio/joey-os-top-20-of-2025/',
     songsPaste: [
       'Wet Leg "Catch These Fists"',
@@ -221,7 +219,6 @@ const STAFF_PICKS = [
     name: 'Hannah',
     showName: 'Y-Not Philly',
     details: 'Mondays 1-5pm\nWednesdays 11am & 10pm',
-    sortOrder: 3,
     mixcloudUrls: [
       'https://www.mixcloud.com/ynotradio/hannahs-top-20-of-2025/',
       'https://www.mixcloud.com/ynotradio/y-not-philly-121025/',

@@ -70,7 +70,6 @@ async function main(): Promise<void> {
 
   const parsed = rows.map((row) => ({
     legacyId: row.id as number,
-    sortOrder: row.order_id as number,
     ...parseStaffPickHtml(row.html),
   }));
   parsed.forEach((pick) => {
@@ -113,7 +112,6 @@ async function main(): Promise<void> {
       showName: pick.showName,
       details: pick.details,
       mixcloudUrls: pick.mixcloudUrls,
-      sortOrder: pick.sortOrder,
       songs: pick.songs,
       albums: pick.albums,
     };

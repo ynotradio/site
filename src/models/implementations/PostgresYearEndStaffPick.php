@@ -50,7 +50,7 @@ class PostgresYearEndStaffPick implements YearEndStaffPick
             SELECT id, name, show_name, details, mixcloud_urls
             FROM year_end_staff_picks
             WHERE year = :year
-            ORDER BY sort_order, name
+            ORDER BY \"_order\", name
         ");
         $stmt->execute([':year' => $year]);
         $picks = [];

@@ -30,6 +30,7 @@ import * as migration_20261113_000000_year_end_poll_cutover_schema from './20261
 import * as migration_20261113_010000_year_end_staff_picks from './20261113_010000_year_end_staff_picks';
 import * as migration_20261126_000000_year_end_query_preset_collections from './20261126_000000_year_end_query_preset_collections';
 import * as migration_20261126_010000_drop_year_end_category_voting_window from './20261126_010000_drop_year_end_category_voting_window';
+import * as migration_20261127_000000_year_end_staff_picks_orderable from './20261127_000000_year_end_staff_picks_orderable';
 
 export const migrations = [
   {
@@ -191,5 +192,10 @@ export const migrations = [
     up: migration_20261126_010000_drop_year_end_category_voting_window.up,
     down: migration_20261126_010000_drop_year_end_category_voting_window.down,
     name: '20261126_010000_drop_year_end_category_voting_window',
+  },
+  {
+    up: migration_20261127_000000_year_end_staff_picks_orderable.up,
+    down: migration_20261127_000000_year_end_staff_picks_orderable.down,
+    name: '20261127_000000_year_end_staff_picks_orderable',
   },
 ];
