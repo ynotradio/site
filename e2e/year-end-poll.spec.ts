@@ -82,9 +82,13 @@ test.describe('Year End Poll', () => {
   });
 
   test.afterAll(async () => {
-    if (staffPickId) await api.delete(`/api/year-end-staff-picks/${staffPickId}`);
-    if (categoryId) await api.delete(`/api/year-end-poll-categories/${categoryId}`);
-    if (pollId) await api.delete(`/api/year-end-polls/${pollId}`);
+    const remove = async (path: string) => {
+      const res = await api.delete(path);
+      expect(res.ok(), `cleanup ${path}: ${await res.text()}`).toBeTruthy();
+    };
+    if (staffPickId) await remove(`/api/year-end-staff-picks/${staffPickId}`);
+    if (categoryId) await remove(`/api/year-end-poll-categories/${categoryId}`);
+    if (pollId) await remove(`/api/year-end-polls/${pollId}`);
     await api?.dispose();
   });
 
