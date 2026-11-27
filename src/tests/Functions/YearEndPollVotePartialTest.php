@@ -9,8 +9,11 @@ class YearEndPollVotePartialTest extends TestCase
     private function render(array $options, string $pollName = 'songs'): string
     {
         $controller = new class ($options) {
-            public function __construct(private array $options)
+            private $options;
+
+            public function __construct(array $options)
             {
+                $this->options = $options;
             }
 
             public function getPollValues(string $pollName): array
